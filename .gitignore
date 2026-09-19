@@ -1,0 +1,21 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Java / Maven
+api/target/
+api/*.log
+
+# Next.js
+apps/web/node_modules/
+apps/web/.next/
+apps/web/out/
+apps/web/.env.local
+apps/web/.env.*.local
+apps/web/*.tsbuildinfo
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+.claude
