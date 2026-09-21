@@ -1,0 +1,46 @@
+package com.htttdn.hrm.dto.response.common;
+
+public enum ErrorCode {
+    // Authentication / account
+    USERNAME_TAKEN,
+    EMAIL_TAKEN,
+    INVALID_CREDENTIALS,
+    ACCOUNT_PENDING,
+    ACCOUNT_LOCKED,
+    ACCOUNT_DISABLED,
+
+    // Employee
+    EMPLOYEE_NOT_FOUND,
+    EMPLOYEE_CODE_TAKEN,
+
+    // Organization
+    ORGANIZATION_UNIT_NOT_FOUND,
+    LOCATION_NOT_FOUND,
+
+    // Request / leave
+    REQUEST_NOT_FOUND,
+    REQUEST_ALREADY_PROCESSED,
+    INSUFFICIENT_LEAVE_BALANCE,
+
+    // Attendance
+    ATTENDANCE_NOT_FOUND,
+
+    // Payroll
+    PAYROLL_PERIOD_NOT_FOUND,
+    PAYROLL_PERIOD_LOCKED,
+    PAYSLIP_NOT_FOUND,
+
+    // Authorization
+    ROLE_NOT_FOUND,
+    PERMISSION_NOT_FOUND,
+    FORBIDDEN,
+
+    // Validation
+    VALIDATION_ERROR,
+
+    // Generic
+    RESOURCE_NOT_FOUND,
+    CONFLICT,
+    CONCURRENT_MODIFICATION,
+    INTERNAL_ERROR
+}
