@@ -34,7 +34,7 @@ Nhân viên nghỉ việc
 
 Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`. Khi đó phải có `deleted_by_account_id` và `deletion_reason` để có thể kiểm tra, khôi phục.
 
-### 1.2. Danh sách 20 bảng
+### 1.2. Danh sách 19 bảng
 
 | Nhóm | Các bảng |
 |---|---|
@@ -42,7 +42,7 @@ Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`. Khi đ�
 | Nhân sự | `employees`, `employee_assignments`, `employee_compensations` |
 | Tài khoản và RBAC | `accounts`, `permissions`, `roles`, `role_permissions`, `account_role_assignments`, `account_permission_overrides` |
 | Đơn từ | `employee_requests` |
-| Chấm công | `work_shifts`, `attendance_records`, `overtime_requests` |
+| Chấm công | `work_shifts`, `attendance_records` |
 | Tính lương | `payroll_periods`, `payslips`, `payslip_items` |
 
 ### 1.3. Sơ đồ quan hệ tổng quát
@@ -63,7 +63,6 @@ erDiagram
     ACCOUNT_ROLE_ASSIGNMENTS ||--o{ ACCOUNT_PERMISSION_OVERRIDES : customizes
     EMPLOYEES ||--o{ EMPLOYEE_REQUESTS : submits
     EMPLOYEES ||--o{ ATTENDANCE_RECORDS : has
-    EMPLOYEES ||--o{ OVERTIME_REQUESTS : requests
     PAYROLL_PERIODS ||--o{ PAYSLIPS : produces
     EMPLOYEES ||--o{ PAYSLIPS : receives
     PAYSLIPS ||--o{ PAYSLIP_ITEMS : details
@@ -342,7 +341,7 @@ employee.read                employee.manage
 request.self.read            request.self.create           request.self.cancel
 request.read                 request.approve               request.manage
 attendance.self.read         attendance.read               attendance.manage
-overtime.self.create         overtime.approve
+attendance.overtime.approve
 payroll.self.read            payroll.self.print
 payroll.calculate            payroll.approve               payroll.mark_paid
 payroll.lock                 report.hr.read                report.payroll.read
@@ -424,34 +423,17 @@ rbac.manage
 | `payable_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút được tính lương cơ bản |
 | `late_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút đi trễ |
 | `early_leave_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút về sớm |
+| `overtime_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút tăng ca đã được duyệt để tính lương |
+| `overtime_multiplier` | NUMERIC(8,4) | NOT NULL, DEFAULT 1, CHECK > 0 | Hệ số tăng ca, ví dụ 1.5/2.0/3.0 |
+| `overtime_approved_by_account_id` | BIGINT | FK → accounts | Người duyệt số phút tăng ca |
+| `overtime_approved_at` | TIMESTAMPTZ | | Thời điểm duyệt tăng ca |
 | `status` | VARCHAR(20) | NOT NULL | `PRESENT` / `ABSENT` / `PAID_LEAVE` / `UNPAID_LEAVE` / `HOLIDAY` / `MISSING_PUNCH` |
 | `note` | TEXT | | Lý do điều chỉnh thủ công |
 | `updated_by_account_id` | BIGINT | FK → accounts | Người sửa cuối |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-> `UNIQUE(employee_id, work_date)`. Nếu cần sửa công, HR ghi lý do vào `note`; `updated_by_account_id` và `updated_at` cho biết ai sửa và sửa lúc nào.
-
-### `overtime_requests` — Đăng ký và duyệt tăng ca
-
-| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
-|---|---|---|---|
-| `id` | BIGSERIAL | PK | Khóa chính |
-| `employee_id` | BIGINT | FK → employees, NOT NULL | Nhân viên tăng ca |
-| `work_date` | DATE | NOT NULL | Ngày tăng ca |
-| `start_at` | TIMESTAMPTZ | NOT NULL | Bắt đầu |
-| `end_at` | TIMESTAMPTZ | NOT NULL | Kết thúc |
-| `requested_minutes` | INTEGER | NOT NULL, CHECK > 0 | Số phút đề nghị |
-| `approved_minutes` | INTEGER | CHECK >= 0 | Số phút được duyệt |
-| `rate_multiplier` | NUMERIC(8,4) | CHECK > 0 | Hệ số tăng ca được duyệt, ví dụ 1.5/2.0/3.0 |
-| `reason` | TEXT | NOT NULL | Lý do tăng ca |
-| `status` | VARCHAR(20) | NOT NULL | `PENDING` / `APPROVED` / `REJECTED` / `CANCELLED` |
-| `approved_by_account_id` | BIGINT | FK → accounts | Người duyệt |
-| `approved_at` | TIMESTAMPTZ | | Thời điểm duyệt |
-| `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
-| `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
-
-> Chỉ đơn `APPROVED` được tính lương. `CHECK(end_at > start_at)` và `approved_minutes <= requested_minutes`.
+> `UNIQUE(employee_id, work_date)`. Nếu cần sửa công, HR ghi lý do vào `note`; `updated_by_account_id` và `updated_at` cho biết ai sửa và sửa lúc nào. Hệ thống không còn quy trình đăng ký tăng ca riêng: người có quyền `attendance.overtime.approve` nhập trực tiếp số phút và hệ số tăng ca được duyệt vào bản ghi chấm công.
 
 ---
 
@@ -532,8 +514,6 @@ Thực nhận
 | `id` | BIGSERIAL | PK | Khóa chính |
 | `payslip_id` | BIGINT | FK → payslips, NOT NULL | Phiếu lương |
 | `component_type` | VARCHAR(20) | NOT NULL | `BASIC_SALARY` / `ALLOWANCE` / `OVERTIME` |
-| `employee_compensation_id` | BIGINT | FK → employee_compensations | Nguồn lương/phụ cấp |
-| `overtime_request_id` | BIGINT | FK → overtime_requests | Nguồn tăng ca |
 | `description` | VARCHAR(250) | NOT NULL | Mô tả được snapshot |
 | `quantity` | NUMERIC(12,4) | NOT NULL, DEFAULT 1 | Ngày/giờ/số lượng |
 | `unit_rate` | NUMERIC(15,4) | NOT NULL, CHECK >= 0 | Đơn giá snapshot |
@@ -541,7 +521,7 @@ Thực nhận
 | `amount` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Thành tiền |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 
-> `BASIC_SALARY`/`ALLOWANCE` tham chiếu `employee_compensation_id`; `OVERTIME` tham chiếu `overtime_request_id`. Không xóa hoặc sửa item khi kỳ đã `APPROVED`.
+> Các dòng là dữ liệu snapshot dùng để giải thích cách hình thành phiếu lương, không giữ khóa ngoại về dữ liệu nguồn. Khi kỳ lương đạt `APPROVED`, không được xóa hoặc sửa các dòng này.
 
 ---
 
@@ -591,8 +571,6 @@ CREATE INDEX idx_requests_type_status
   ON employee_requests (request_type, status);
 CREATE INDEX idx_attendance_employee_date
   ON attendance_records (employee_id, work_date DESC);
-CREATE INDEX idx_overtime_employee_date
-  ON overtime_requests (employee_id, work_date DESC);
 CREATE INDEX idx_payslips_employee_period
   ON payslips (employee_id, payroll_period_id);
 CREATE INDEX idx_payslip_items_payslip
@@ -659,6 +637,16 @@ ALTER TABLE account_permission_overrides ADD CONSTRAINT chk_override_effect
 ALTER TABLE employee_compensations ADD CONSTRAINT chk_compensation_type
   CHECK (component_type IN ('BASIC_SALARY', 'ALLOWANCE'));
 
+ALTER TABLE attendance_records ADD CONSTRAINT chk_attendance_overtime_approval
+  CHECK (
+    overtime_minutes = 0
+    OR (
+      overtime_minutes > 0
+      AND overtime_approved_by_account_id IS NOT NULL
+      AND overtime_approved_at IS NOT NULL
+    )
+  );
+
 ALTER TABLE payroll_periods ADD CONSTRAINT chk_payroll_status
   CHECK (status IN ('DRAFT', 'CALCULATED', 'APPROVED', 'PAID', 'LOCKED', 'CANCELLED'));
 
@@ -675,7 +663,7 @@ ALTER TABLE payslips ADD CONSTRAINT chk_payslip_total
 - Khi hoàn tất đơn nghỉ việc: cập nhật nhân viên, kết thúc phân công và disable tài khoản trong cùng transaction.
 - Người duyệt chỉ được xử lý đơn thuộc phạm vi quyền hiệu lực.
 - Bản ghi chấm công đã dùng trong kỳ lương `APPROVED` trở lên không được sửa.
-- Chỉ tăng ca `APPROVED` được đưa vào lương và không được tính hai lần.
+- Chỉ số phút tăng ca đã có người duyệt và thời điểm duyệt mới được đưa vào lương; tổng phút tăng ca trên phiếu lương phải được tổng hợp từ các bản ghi chấm công thuộc đúng kỳ.
 - Tổng các `payslip_items` phải bằng các tổng tương ứng trên `payslips`.
 - Người tính lương không được đồng thời là người duyệt.
 - Kỳ lương từ `APPROVED` trở đi cùng phiếu lương con là immutable.
