@@ -6,7 +6,7 @@ export const metadata: Metadata = {
     default: "HRM",
     template: "%s | HRM",
   },
-  description: "Human resource management platform",
+  description: "Nền tảng quản trị nguồn nhân lực",
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
