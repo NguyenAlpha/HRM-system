@@ -15,7 +15,18 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The Spring Boot API is expected at `http://localhost:8080` by default; change `NEXT_PUBLIC_API_URL` in `.env.local` if needed.
+Open [http://localhost:3000](http://localhost:3000). The Spring Boot API is expected at `http://localhost:8080` by default; change `API_URL` in `.env.local` if needed.
+
+## Authentication portals
+
+| Portal | Login | Home | Accepted account |
+| --- | --- | --- | --- |
+| HRM workspace | `/login` | `/dashboard` | Any authenticated account without `SYSTEM_ADMIN` |
+| System administration | `/admin/login` | `/admin` | Account with `SYSTEM_ADMIN` |
+
+Access and refresh tokens are kept in separate HttpOnly cookies for each portal. Keep
+`AUTH_COOKIE_SECURE=false` only for local HTTP development; set it to `true` when the web
+application is served over HTTPS.
 
 ## Commands
 
