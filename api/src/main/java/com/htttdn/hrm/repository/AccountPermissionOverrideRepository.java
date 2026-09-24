@@ -11,6 +11,8 @@ import com.htttdn.hrm.entity.AccountPermissionOverride;
 
 public interface AccountPermissionOverrideRepository extends JpaRepository<AccountPermissionOverride, Long> {
 
+    boolean existsByPermissionId(Long permissionId);
+
     @Query("""
         SELECT permissionOverride
         FROM AccountPermissionOverride permissionOverride

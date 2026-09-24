@@ -28,6 +28,9 @@ Access and refresh tokens are kept in separate HttpOnly cookies for each portal.
 `AUTH_COOKIE_SECURE=false` only for local HTTP development; set it to `true` when the web
 application is served over HTTPS.
 
+The admin dashboard links to `/admin/rbac` for role and permission CRUD, module filtering,
+and granting/revoking permissions on roles. See [RBAC usage](docs/RBAC.md) for details.
+
 ## Commands
 
 ```bash

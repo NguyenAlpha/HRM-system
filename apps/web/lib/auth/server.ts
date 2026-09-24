@@ -275,3 +275,57 @@ export async function handleChangePassword(request: Request, portal: Portal): Pr
   }
   return response
 }
+
+// Only expose the role/permission endpoints, never an arbitrary upstream URL.
+export async function handleRbacRequest(request: Request, segments: string[]): Promise<NextResponse> {
+  const path = segments.join("/")
+  const routes = [
+    { pattern: /^(roles|permissions)$/, methods: ["GET", "POST"] },
+    { pattern: /^(roles|permissions)\/[1-9]\d*$/, methods: ["GET", "PUT", "DELETE"] },
+    { pattern: /^roles\/[1-9]\d*\/permissions$/, methods: ["GET", "POST"] },
+    { pattern: /^roles\/[1-9]\d*\/permissions\/[1-9]\d*$/, methods: ["DELETE"] },
+  ]
+  const route = routes.find((candidate) => candidate.pattern.test(path))
+  if (!route) {
+    return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
+  }
+  if (!route.methods.includes(request.method)) {
+    return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
+  }
+
+  const origin = request.headers.get("origin")
+  if (request.method !== "GET" && origin && origin !== new URL(request.url).origin) {
+    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
+  }
+
+  const cookieStore = await cookies()
+  const accessToken = cookieStore.get(PORTAL_CONFIG.admin.accessCookie)?.value
+  if (!accessToken) {
+    return NextResponse.json(failure("UNAUTHORIZED", "Phiên quản trị đã hết hạn"), { status: 401 })
+  }
+
+  let body: string | undefined
+  if (request.method === "POST" || request.method === "PUT") {
+    try {
+      body = JSON.stringify(await request.json())
+    } catch {
+      return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
+    }
+  }
+
+  const query = new URLSearchParams()
+  new URL(request.url).searchParams.forEach((value, key) => {
+    if (["page", "size", "sort", "module"].includes(key)) query.append(key, value)
+  })
+  const result = await callApi<unknown>(`/api/${path}?${query}`, {
+    method: request.method,
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body,
+  })
+  if (!result) return gatewayFailure()
+
+  return NextResponse.json(result.payload, {
+    status: result.response.status,
+    headers: { "Cache-Control": "no-store" },
+  })
+}

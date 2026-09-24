@@ -15,17 +15,29 @@ import com.htttdn.hrm.entity.Permission;
 import com.htttdn.hrm.entity.enums.PermissionModule;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
+import com.htttdn.hrm.repository.AccountPermissionOverrideRepository;
 import com.htttdn.hrm.repository.PermissionRepository;
+import com.htttdn.hrm.repository.RolePermissionRepository;
+import com.htttdn.hrm.security.CanManageRbac;
 import com.htttdn.hrm.service.PermissionService;
 
 @Service
 @Transactional
+@CanManageRbac
 public class PermissionServiceImpl implements PermissionService {
 
     private final PermissionRepository permissionRepository;
+    private final RolePermissionRepository rolePermissionRepository;
+    private final AccountPermissionOverrideRepository accountPermissionOverrideRepository;
 
-    public PermissionServiceImpl(PermissionRepository permissionRepository) {
+    public PermissionServiceImpl(
+        PermissionRepository permissionRepository,
+        RolePermissionRepository rolePermissionRepository,
+        AccountPermissionOverrideRepository accountPermissionOverrideRepository
+    ) {
         this.permissionRepository = permissionRepository;
+        this.rolePermissionRepository = rolePermissionRepository;
+        this.accountPermissionOverrideRepository = accountPermissionOverrideRepository;
     }
 
     @Override
@@ -66,9 +78,28 @@ public class PermissionServiceImpl implements PermissionService {
     @Override
     public PermissionResponse update(Long id, UpdatePermissionRequest request) {
         Permission permission = findPermissionOrThrow(id);
+        if ("rbac.manage".equals(permission.getCode()) && Boolean.FALSE.equals(request.isActive())) {
+            throw new ConflictException(ErrorCode.CONFLICT, "rbac.manage cannot be deactivated", "isActive");
+        }
         permission.setDescription(request.description());
         permission.setIsActive(request.isActive());
         return toResponse(permission);
+    }
+
+    @Override
+    public void delete(Long id) {
+        Permission permission = findPermissionOrThrow(id);
+        if ("rbac.manage".equals(permission.getCode())) {
+            throw new ConflictException(ErrorCode.CONFLICT, "rbac.manage cannot be deleted");
+        }
+        if (rolePermissionRepository.existsByIdPermissionId(id)
+            || accountPermissionOverrideRepository.existsByPermissionId(id)) {
+            throw new ConflictException(
+                ErrorCode.CONFLICT,
+                "Permission is in use; revoke its assignments or deactivate it instead"
+            );
+        }
+        permissionRepository.delete(permission);
     }
 
     private Permission findPermissionOrThrow(Long id) {

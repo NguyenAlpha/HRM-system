@@ -19,4 +19,6 @@ public interface PermissionService {
     Page<PermissionResponse> listByModule(PermissionModule module, Pageable pageable);
 
     PermissionResponse update(Long id, UpdatePermissionRequest request);
+
+    void delete(Long id);
 }

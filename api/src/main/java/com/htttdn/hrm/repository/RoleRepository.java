@@ -14,5 +14,7 @@ public interface RoleRepository extends JpaRepository<Role, Long> {
 
     boolean existsByCodeAndDeletedAtIsNull(String code);
 
+    boolean existsByCode(String code);
+
     Page<Role> findByDeletedAtIsNull(Pageable pageable);
 }

@@ -23,7 +23,7 @@ public interface RoleService {
 
     void softDelete(Long id);
 
-    void grantPermission(Long roleId, GrantPermissionRequest request);
+    void grantPermission(Long roleId, GrantPermissionRequest request, Long grantedByAccountId);
 
     void revokePermission(Long roleId, Long permissionId);
 
