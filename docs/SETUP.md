@@ -101,6 +101,7 @@ phải khai báo thêm biến môi trường.
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3000` | Origin được phép gọi API |
 | `COMPANY_SEED_ENABLED` | `true` | Seed company profile |
 | `RBAC_SEED_ENABLED` | `true` | Seed role, permission và mapping |
+| `RBAC_MANAGEMENT_ALLOWED_ROLES` | `SYSTEM_ADMIN` | Các role được CRUD role/permission, phân cách bằng dấu phẩy, không có prefix `ROLE_` |
 | `ADMIN_SEED_ENABLED` | `true` | Seed system admin |
 | `USER_SEED_ENABLED` | `true` | Seed các tài khoản nhân viên mẫu |
 

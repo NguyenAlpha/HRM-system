@@ -61,7 +61,7 @@ export function refreshSession(portal: Portal): Promise<SessionData> {
   return refreshRequest
 }
 
-async function authorizedRequest<T>(
+export async function authorizedRequest<T>(
   portal: Portal,
   path: string,
   init?: RequestInit,

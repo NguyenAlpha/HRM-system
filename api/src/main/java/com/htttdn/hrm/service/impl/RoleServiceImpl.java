@@ -25,10 +25,12 @@ import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.PermissionRepository;
 import com.htttdn.hrm.repository.RolePermissionRepository;
 import com.htttdn.hrm.repository.RoleRepository;
+import com.htttdn.hrm.security.CanManageRbac;
 import com.htttdn.hrm.service.RoleService;
 
 @Service
 @Transactional
+@CanManageRbac
 public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
@@ -50,7 +52,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public RoleResponse create(CreateRoleRequest request) {
-        if (roleRepository.existsByCodeAndDeletedAtIsNull(request.code())) {
+        if (roleRepository.existsByCode(request.code())) {
             throw new ConflictException(ErrorCode.CONFLICT, "Role code is already taken", "code");
         }
 
@@ -83,6 +85,9 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public RoleResponse update(Long id, UpdateRoleRequest request) {
         Role role = findRoleOrThrow(id);
+        if (Boolean.TRUE.equals(role.getIsSystem()) && Boolean.FALSE.equals(request.isActive())) {
+            throw new ConflictException(ErrorCode.CONFLICT, "System roles cannot be deactivated", "isActive");
+        }
         role.setName(request.name());
         role.setDescription(request.description());
         role.setIsActive(request.isActive());
@@ -96,12 +101,14 @@ public class RoleServiceImpl implements RoleService {
         if (Boolean.TRUE.equals(role.getIsSystem())) {
             throw new ConflictException(ErrorCode.CONFLICT, "System roles cannot be deleted");
         }
-        role.setDeletedAt(Instant.now());
+        Instant now = Instant.now();
+        role.setDeletedAt(now);
+        role.setUpdatedAt(now);
         role.setIsActive(false);
     }
 
     @Override
-    public void grantPermission(Long roleId, GrantPermissionRequest request) {
+    public void grantPermission(Long roleId, GrantPermissionRequest request, Long grantedByAccountId) {
         Role role = findRoleOrThrow(roleId);
         Permission permission = permissionRepository.findById(request.permissionId())
             .orElseThrow(() -> new ResourceNotFoundException(
@@ -112,12 +119,9 @@ public class RoleServiceImpl implements RoleService {
             throw new ConflictException(ErrorCode.CONFLICT, "Permission is already granted to this role");
         }
 
-        Account grantedBy = null;
-        if (request.grantedByAccountId() != null) {
-            grantedBy = accountRepository.findById(request.grantedByAccountId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                    ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + request.grantedByAccountId()));
-        }
+        Account grantedBy = accountRepository.findById(grantedByAccountId)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + grantedByAccountId));
 
         RolePermission rolePermission = RolePermission.builder()
             .id(id)
@@ -132,6 +136,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public void revokePermission(Long roleId, Long permissionId) {
+        findRoleOrThrow(roleId);
         RolePermissionId id = new RolePermissionId(roleId, permissionId);
         if (!rolePermissionRepository.existsById(id)) {
             throw new ResourceNotFoundException(ErrorCode.PERMISSION_NOT_FOUND, "Role does not have this permission");

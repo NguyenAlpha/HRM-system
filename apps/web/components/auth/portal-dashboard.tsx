@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { FormEvent, useEffect, useState } from "react"
 
@@ -11,6 +12,7 @@ import {
   refreshSession,
 } from "@/lib/auth/client"
 import { AuthApiError, type Portal, type SessionData } from "@/lib/auth/types"
+import { PortalSidebar } from "@/components/auth/portal-sidebar"
 
 interface PortalDashboardProps {
   portal: Portal
@@ -131,44 +133,7 @@ export function PortalDashboard({ portal }: PortalDashboardProps) {
 
   return (
     <main className={`portal-shell ${admin ? "admin-shell" : "hrm-shell"}`}>
-      <aside className="portal-sidebar">
-        <div className="brand sidebar-brand">
-          <span className="brand-mark">H</span>
-          <span>
-            <strong>HRM</strong>
-            <small>{admin ? "Admin Console" : "People Workspace"}</small>
-          </span>
-        </div>
-
-        <nav aria-label="Điều hướng chính">
-          <span className="nav-caption">Workspace</span>
-          <a className="nav-item active" href={config.homePath}>
-            <span>◫</span> Tổng quan
-          </a>
-          {admin ? (
-            <>
-              <span className="nav-item disabled"><span>◎</span> Tài khoản</span>
-              <span className="nav-item disabled"><span>◇</span> Vai trò</span>
-              <span className="nav-item disabled"><span>⌘</span> Phân quyền</span>
-            </>
-          ) : (
-            <>
-              <span className="nav-item disabled"><span>◎</span> Hồ sơ</span>
-              <span className="nav-item disabled"><span>◷</span> Chấm công</span>
-              <span className="nav-item disabled"><span>▱</span> Đơn từ</span>
-              <span className="nav-item disabled"><span>◈</span> Phiếu lương</span>
-            </>
-          )}
-        </nav>
-
-        <div className="sidebar-account">
-          <span className="avatar">{account.username.slice(0, 1).toUpperCase()}</span>
-          <span>
-            <strong>{account.username}</strong>
-            <small>{account.email}</small>
-          </span>
-        </div>
-      </aside>
+      <PortalSidebar portal={portal} account={account} />
 
       <section className="portal-content">
         <header className="portal-header">
@@ -177,9 +142,12 @@ export function PortalDashboard({ portal }: PortalDashboardProps) {
             <h1>{admin ? "Tổng quan quản trị" : `Xin chào, ${account.username}`}</h1>
             <p>{admin ? "Kiểm tra phiên quản trị và quyền RBAC hiện tại." : "Phiên đăng nhập HRM của bạn đang hoạt động."}</p>
           </div>
-          <button className="ghost-button" type="button" onClick={handleLogout} disabled={working}>
-            Đăng xuất
-          </button>
+          <div className="portal-actions">
+            {admin && <Link className="ghost-button" href="/admin/rbac">Quản lý vai trò & quyền</Link>}
+            <button className="ghost-button" type="button" onClick={handleLogout} disabled={working}>
+              Đăng xuất
+            </button>
+          </div>
         </header>
 
         {(message || error) && (
