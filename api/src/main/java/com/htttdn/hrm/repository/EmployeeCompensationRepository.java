@@ -11,4 +11,6 @@ public interface EmployeeCompensationRepository extends JpaRepository<EmployeeCo
     List<EmployeeCompensation> findByEmployeeId(Long employeeId);
 
     List<EmployeeCompensation> findByEmployeeIdAndEffectiveToIsNull(Long employeeId);
+
+    boolean existsByEmployeeId(Long employeeId);
 }

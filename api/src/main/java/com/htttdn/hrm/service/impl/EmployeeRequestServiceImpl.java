@@ -23,6 +23,7 @@ import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeRequestRepository;
+import com.htttdn.hrm.security.CurrentAccountProvider;
 import com.htttdn.hrm.service.EmployeeRequestService;
 import com.htttdn.hrm.service.EmployeeService;
 
@@ -34,17 +35,20 @@ public class EmployeeRequestServiceImpl implements EmployeeRequestService {
     private final EmployeeRepository employeeRepository;
     private final AccountRepository accountRepository;
     private final EmployeeService employeeService;
+    private final CurrentAccountProvider currentAccountProvider;
 
     public EmployeeRequestServiceImpl(
         EmployeeRequestRepository employeeRequestRepository,
         EmployeeRepository employeeRepository,
         AccountRepository accountRepository,
-        EmployeeService employeeService
+        EmployeeService employeeService,
+        CurrentAccountProvider currentAccountProvider
     ) {
         this.employeeRequestRepository = employeeRequestRepository;
         this.employeeRepository = employeeRepository;
         this.accountRepository = accountRepository;
         this.employeeService = employeeService;
+        this.currentAccountProvider = currentAccountProvider;
     }
 
     @Override
@@ -117,9 +121,7 @@ public class EmployeeRequestServiceImpl implements EmployeeRequestService {
         EmployeeRequest request = findRequestOrThrow(id);
         requireStatus(request, RequestStatus.PENDING);
 
-        Account reviewer = accountRepository.findById(reviewRequest.reviewerAccountId())
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + reviewRequest.reviewerAccountId()));
+        Account reviewer = findCurrentAccount();
 
         Instant now = Instant.now();
         request.setReviewedByAccount(reviewer);
@@ -146,9 +148,7 @@ public class EmployeeRequestServiceImpl implements EmployeeRequestService {
         EmployeeRequest request = findRequestOrThrow(id);
         requireStatus(request, RequestStatus.PENDING);
 
-        Account reviewer = accountRepository.findById(reviewRequest.reviewerAccountId())
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + reviewRequest.reviewerAccountId()));
+        Account reviewer = findCurrentAccount();
 
         Instant now = Instant.now();
         request.setStatus(RequestStatus.REJECTED);
@@ -185,6 +185,14 @@ public class EmployeeRequestServiceImpl implements EmployeeRequestService {
         return employeeRepository.findById(id)
             .filter(employee -> employee.getDeletedAt() == null)
             .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.EMPLOYEE_NOT_FOUND, "Employee not found: " + id));
+    }
+
+    private Account findCurrentAccount() {
+        Long accountId = currentAccountProvider.accountId();
+        return accountRepository.findById(accountId)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + accountId
+            ));
     }
 
     private EmployeeRequest findRequestOrThrow(Long id) {

@@ -26,9 +26,6 @@ public record AssignEmployeeRequest(
     @NotNull
     LocalDate effectiveFrom,
 
-    String reason,
-
-    @NotNull
-    Long createdByAccountId
+    String reason
 ) {
 }

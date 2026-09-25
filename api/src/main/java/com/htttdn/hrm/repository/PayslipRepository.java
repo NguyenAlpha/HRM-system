@@ -16,4 +16,6 @@ public interface PayslipRepository extends JpaRepository<Payslip, Long> {
     List<Payslip> findByPayrollPeriodId(Long payrollPeriodId);
 
     Page<Payslip> findByEmployeeId(Long employeeId, Pageable pageable);
+
+    boolean existsByEmployeeId(Long employeeId);
 }

@@ -7,86 +7,106 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.request.employee.AssignEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.CreateEmployeeRequest;
-import com.htttdn.hrm.dto.request.employee.SetCompensationRequest;
 import com.htttdn.hrm.dto.request.employee.SoftDeleteEmployeeRequest;
-import com.htttdn.hrm.dto.request.employee.UpdateEmployeeProfileRequest;
-import com.htttdn.hrm.dto.response.employee.EmployeeAssignmentResponse;
-import com.htttdn.hrm.dto.response.employee.EmployeeCompensationResponse;
-import com.htttdn.hrm.dto.response.employee.EmployeeResponse;
+import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
+import com.htttdn.hrm.dto.response.employee.EmployeeAssignmentResponse;
+import com.htttdn.hrm.dto.response.employee.EmployeeDetailResponse;
+import com.htttdn.hrm.dto.response.employee.EmployeeSummaryResponse;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeAssignment;
-import com.htttdn.hrm.entity.EmployeeCompensation;
 import com.htttdn.hrm.entity.JobPosition;
 import com.htttdn.hrm.entity.OrganizationUnit;
 import com.htttdn.hrm.entity.WorkLocation;
 import com.htttdn.hrm.entity.WorkShift;
 import com.htttdn.hrm.entity.enums.AccountStatus;
-import com.htttdn.hrm.entity.enums.CompensationType;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
+import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeCompensationRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
+import com.htttdn.hrm.repository.EmployeeRequestRepository;
 import com.htttdn.hrm.repository.JobPositionRepository;
 import com.htttdn.hrm.repository.OrganizationUnitRepository;
+import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.repository.WorkLocationRepository;
 import com.htttdn.hrm.repository.WorkShiftRepository;
+import com.htttdn.hrm.security.CurrentAccountProvider;
+import com.htttdn.hrm.service.EmployeeAccessScopeService;
 import com.htttdn.hrm.service.EmployeeService;
+import com.htttdn.hrm.service.RefreshTokenService;
 
 @Service
 @Transactional
 public class EmployeeServiceImpl implements EmployeeService {
 
+    private static final String EMPLOYEE_READ = "employee.read";
+    private static final String EMPLOYEE_MANAGE = "employee.manage";
+
     private final EmployeeRepository employeeRepository;
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
     private final EmployeeCompensationRepository employeeCompensationRepository;
+    private final EmployeeRequestRepository employeeRequestRepository;
+    private final AttendanceRecordRepository attendanceRecordRepository;
+    private final PayslipRepository payslipRepository;
     private final OrganizationUnitRepository organizationUnitRepository;
     private final WorkLocationRepository workLocationRepository;
     private final JobPositionRepository jobPositionRepository;
     private final WorkShiftRepository workShiftRepository;
     private final AccountRepository accountRepository;
+    private final RefreshTokenService refreshTokenService;
+    private final CurrentAccountProvider currentAccountProvider;
+    private final EmployeeAccessScopeService employeeAccessScopeService;
 
     public EmployeeServiceImpl(
         EmployeeRepository employeeRepository,
         EmployeeAssignmentRepository employeeAssignmentRepository,
         EmployeeCompensationRepository employeeCompensationRepository,
+        EmployeeRequestRepository employeeRequestRepository,
+        AttendanceRecordRepository attendanceRecordRepository,
+        PayslipRepository payslipRepository,
         OrganizationUnitRepository organizationUnitRepository,
         WorkLocationRepository workLocationRepository,
         JobPositionRepository jobPositionRepository,
         WorkShiftRepository workShiftRepository,
-        AccountRepository accountRepository
+        AccountRepository accountRepository,
+        RefreshTokenService refreshTokenService,
+        CurrentAccountProvider currentAccountProvider,
+        EmployeeAccessScopeService employeeAccessScopeService
     ) {
         this.employeeRepository = employeeRepository;
         this.employeeAssignmentRepository = employeeAssignmentRepository;
         this.employeeCompensationRepository = employeeCompensationRepository;
+        this.employeeRequestRepository = employeeRequestRepository;
+        this.attendanceRecordRepository = attendanceRecordRepository;
+        this.payslipRepository = payslipRepository;
         this.organizationUnitRepository = organizationUnitRepository;
         this.workLocationRepository = workLocationRepository;
         this.jobPositionRepository = jobPositionRepository;
         this.workShiftRepository = workShiftRepository;
         this.accountRepository = accountRepository;
+        this.refreshTokenService = refreshTokenService;
+        this.currentAccountProvider = currentAccountProvider;
+        this.employeeAccessScopeService = employeeAccessScopeService;
     }
 
     @Override
-    public EmployeeResponse create(CreateEmployeeRequest request) {
-        if (employeeRepository.existsByEmployeeCode(request.employeeCode())) {
-            throw new ConflictException(ErrorCode.EMPLOYEE_CODE_TAKEN, "Employee code is already taken", "employeeCode");
-        }
-        if (request.workEmail() != null && employeeRepository.existsByWorkEmail(request.workEmail())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Work email is already taken", "workEmail");
-        }
-        if (request.nationalId() != null && employeeRepository.existsByNationalId(request.nationalId())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "National ID is already taken", "nationalId");
-        }
+    @PreAuthorize("hasAuthority('employee.manage') and hasAuthority('employee.sensitive.manage')")
+    public EmployeeDetailResponse create(CreateEmployeeRequest request) {
+        employeeAccessScopeService.requireCompanyWide(EMPLOYEE_MANAGE);
+        employeeAccessScopeService.requireCompanyWide("employee.sensitive.manage");
+        validateCreateUniqueness(request);
 
         Instant now = Instant.now();
         Employee employee = Employee.builder()
@@ -113,24 +133,36 @@ public class EmployeeServiceImpl implements EmployeeService {
             .updatedAt(now)
             .build();
 
-        return toResponse(employeeRepository.save(employee));
+        return toDetailResponse(employeeRepository.save(employee));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public EmployeeResponse getById(Long id) {
-        return toResponse(findEmployeeOrThrow(id));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<EmployeeResponse> list(Pageable pageable) {
-        return employeeRepository.findByDeletedAtIsNull(pageable).map(this::toResponse);
-    }
-
-    @Override
-    public EmployeeResponse updateProfile(Long id, UpdateEmployeeProfileRequest request) {
+    @PreAuthorize("hasAuthority('employee.read')")
+    public EmployeeDetailResponse getById(Long id) {
         Employee employee = findEmployeeOrThrow(id);
+        employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_READ);
+        return toDetailResponse(employee);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAuthority('employee.read')")
+    public Page<EmployeeSummaryResponse> list(Pageable pageable) {
+        return employeeRepository.findAll(employeeAccessScopeService.accessibleEmployees(EMPLOYEE_READ), pageable)
+            .map(this::toSummaryResponse);
+    }
+
+    @Override
+    @PreAuthorize("hasAuthority('employee.manage')")
+    public EmployeeDetailResponse update(Long id, UpdateEmployeeRequest request) {
+        Employee employee = findEmployeeOrThrow(id);
+        employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_MANAGE);
+        if (request.workEmail() != null
+            && employeeRepository.existsByWorkEmailAndIdNot(request.workEmail(), id)) {
+            throw new ConflictException(ErrorCode.CONFLICT, "Work email is already taken", "workEmail");
+        }
+
         employee.setFullName(request.fullName());
         employee.setDateOfBirth(request.dateOfBirth());
         employee.setGender(request.gender());
@@ -138,62 +170,50 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setMajor(request.major());
         employee.setInstitution(request.institution());
         employee.setGraduationYear(request.graduationYear());
-        employee.setNationalId(request.nationalId());
-        employee.setPersonalEmail(request.personalEmail());
         employee.setWorkEmail(request.workEmail());
         employee.setPhone(request.phone());
-        employee.setAddress(request.address());
-        employee.setTaxCode(request.taxCode());
-        employee.setBankName(request.bankName());
-        employee.setBankAccountNumber(request.bankAccountNumber());
-        employee.setBankAccountHolder(request.bankAccountHolder());
         employee.setUpdatedAt(Instant.now());
-        return toResponse(employee);
+        return toDetailResponse(employee);
     }
 
     @Override
-    public EmployeeAssignmentResponse assignDepartment(Long employeeId, AssignEmployeeRequest request) {
+    @PreAuthorize("hasAuthority('employee.manage')")
+    public EmployeeAssignmentResponse assign(Long employeeId, AssignEmployeeRequest request) {
         Employee employee = findEmployeeOrThrow(employeeId);
+        employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_MANAGE);
+        employeeAccessScopeService.requireDestinationAccess(
+            request.organizationUnitId(), request.workLocationId(), EMPLOYEE_MANAGE
+        );
 
         if (request.managerEmployeeId() != null && request.managerEmployeeId().equals(employeeId)) {
             throw new BusinessException(
-                ErrorCode.VALIDATION_ERROR, "An employee cannot be their own manager", "managerEmployeeId");
+                ErrorCode.VALIDATION_ERROR, "An employee cannot be their own manager", "managerEmployeeId"
+            );
         }
 
         OrganizationUnit organizationUnit = organizationUnitRepository.findById(request.organizationUnitId())
-            .filter(unit -> unit.getDeletedAt() == null)
+            .filter(unit -> unit.getDeletedAt() == null && Boolean.TRUE.equals(unit.getIsActive()))
             .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ORGANIZATION_UNIT_NOT_FOUND, "Organization unit not found: " + request.organizationUnitId()));
-
+                ErrorCode.ORGANIZATION_UNIT_NOT_FOUND,
+                "Active organization unit not found: " + request.organizationUnitId()
+            ));
         WorkLocation workLocation = workLocationRepository.findById(request.workLocationId())
-            .filter(location -> location.getDeletedAt() == null)
+            .filter(location -> location.getDeletedAt() == null && Boolean.TRUE.equals(location.getIsActive()))
             .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.LOCATION_NOT_FOUND, "Work location not found: " + request.workLocationId()));
-
+                ErrorCode.LOCATION_NOT_FOUND,
+                "Active work location not found: " + request.workLocationId()
+            ));
         JobPosition position = jobPositionRepository.findById(request.positionId())
-            .filter(p -> p.getDeletedAt() == null)
+            .filter(value -> value.getDeletedAt() == null && Boolean.TRUE.equals(value.getIsActive()))
             .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND, "Job position not found: " + request.positionId()));
-
-        WorkShift shift = null;
-        if (request.shiftId() != null) {
-            shift = workShiftRepository.findById(request.shiftId())
-                .filter(s -> s.getDeletedAt() == null)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                    ErrorCode.RESOURCE_NOT_FOUND, "Work shift not found: " + request.shiftId()));
-        }
-
-        Employee manager = null;
-        if (request.managerEmployeeId() != null) {
-            manager = findEmployeeOrThrow(request.managerEmployeeId());
-        }
-
-        Account createdBy = accountRepository.findById(request.createdByAccountId())
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + request.createdByAccountId()));
+                ErrorCode.RESOURCE_NOT_FOUND, "Active job position not found: " + request.positionId()
+            ));
+        WorkShift shift = findActiveShift(request.shiftId());
+        Employee manager = findManager(request.managerEmployeeId());
+        Account createdBy = findCurrentAccount();
 
         employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employeeId)
-            .ifPresent(current -> current.setEffectiveTo(request.effectiveFrom().minusDays(1)));
+            .ifPresent(current -> closeCurrentAssignment(current, request.effectiveFrom()));
 
         EmployeeAssignment assignment = EmployeeAssignment.builder()
             .employee(employee)
@@ -210,106 +230,180 @@ public class EmployeeServiceImpl implements EmployeeService {
             .createdAt(Instant.now())
             .build();
 
-        return toResponse(employeeAssignmentRepository.save(assignment));
+        return toAssignmentResponse(employeeAssignmentRepository.save(assignment));
     }
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("hasAuthority('employee.read')")
     public EmployeeAssignmentResponse getCurrentAssignment(Long employeeId) {
-        return employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employeeId)
-            .map(this::toResponse)
+        findEmployeeOrThrow(employeeId);
+        employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_READ);
+        return findCurrentAssignment(employeeId)
+            .map(this::toAssignmentResponse)
             .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND, "No active assignment for employee: " + employeeId));
-    }
-
-    @Override
-    public EmployeeCompensationResponse setCompensation(Long employeeId, SetCompensationRequest request) {
-        Employee employee = findEmployeeOrThrow(employeeId);
-        Account approvedBy = accountRepository.findById(request.approvedByAccountId())
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + request.approvedByAccountId()));
-
-        List<EmployeeCompensation> existing = employeeCompensationRepository.findByEmployeeIdAndEffectiveToIsNull(employeeId);
-        LocalDate closingDate = request.effectiveFrom().minusDays(1);
-        for (EmployeeCompensation compensation : existing) {
-            boolean sameCode = compensation.getComponentCode().equals(request.componentCode());
-            boolean bothBasicSalary = compensation.getComponentType() == CompensationType.BASIC_SALARY
-                && request.componentType() == CompensationType.BASIC_SALARY;
-            if (sameCode || bothBasicSalary) {
-                compensation.setEffectiveTo(closingDate);
-            }
-        }
-
-        EmployeeCompensation compensation = EmployeeCompensation.builder()
-            .employee(employee)
-            .componentType(request.componentType())
-            .componentCode(request.componentCode())
-            .componentName(request.componentName())
-            .monthlyAmount(request.monthlyAmount())
-            .effectiveFrom(request.effectiveFrom())
-            .approvedByAccount(approvedBy)
-            .note(request.note())
-            .createdAt(Instant.now())
-            .build();
-
-        return toResponse(employeeCompensationRepository.save(compensation));
+                ErrorCode.RESOURCE_NOT_FOUND, "No active assignment for employee: " + employeeId
+            ));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<EmployeeCompensationResponse> getActiveCompensations(Long employeeId, LocalDate asOfDate) {
-        return employeeCompensationRepository.findByEmployeeId(employeeId).stream()
-            .filter(c -> !c.getEffectiveFrom().isAfter(asOfDate))
-            .filter(c -> c.getEffectiveTo() == null || !c.getEffectiveTo().isBefore(asOfDate))
-            .map(this::toResponse)
+    @PreAuthorize("hasAuthority('employee.read')")
+    public List<EmployeeAssignmentResponse> listAssignments(Long employeeId) {
+        findEmployeeOrThrow(employeeId);
+        employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_READ);
+        return employeeAssignmentRepository.findByEmployeeIdOrderByEffectiveFromDesc(employeeId).stream()
+            .map(this::toAssignmentResponse)
             .toList();
     }
 
     @Override
+    @PreAuthorize("hasAuthority('employee.manage')")
     public void completeResignation(Long employeeId, LocalDate terminationDate, String terminationReason) {
         Employee employee = findEmployeeOrThrow(employeeId);
+        employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_MANAGE);
+        if (terminationDate.isBefore(employee.getHireDate())) {
+            throw new BusinessException(
+                ErrorCode.VALIDATION_ERROR, "terminationDate must not be before hireDate", "terminationDate"
+            );
+        }
+        if (isEmploymentEnded(employee.getEmploymentStatus())) {
+            throw new ConflictException(ErrorCode.CONFLICT, "Employee employment has already ended");
+        }
+
         employee.setEmploymentStatus(EmploymentStatus.RESIGNED);
         employee.setTerminationDate(terminationDate);
         employee.setTerminationReason(terminationReason);
         employee.setUpdatedAt(Instant.now());
 
         employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employeeId)
-            .ifPresent(assignment -> assignment.setEffectiveTo(terminationDate));
-
-        Optional<Account> account = accountRepository.findByEmployeeId(employeeId);
-        account.ifPresent(a -> {
-            a.setStatus(AccountStatus.DISABLED);
-            a.setUpdatedAt(Instant.now());
+            .ifPresent(assignment -> closeAssignmentAtTermination(assignment, terminationDate));
+        accountRepository.findByEmployeeId(employeeId).ifPresent(account -> {
+            account.setStatus(AccountStatus.DISABLED);
+            account.setUpdatedAt(Instant.now());
+            refreshTokenService.revokeAll(account.getId());
         });
     }
 
     @Override
+    @PreAuthorize("hasAuthority('employee.manage')")
     public void softDelete(Long id, SoftDeleteEmployeeRequest request) {
         Employee employee = findEmployeeOrThrow(id);
-        Account deletedBy = accountRepository.findById(request.deletedByAccountId())
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + request.deletedByAccountId()));
+        employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_MANAGE);
+        ensureEmployeeHasNoBusinessHistory(id);
 
         employee.setDeletedAt(Instant.now());
-        employee.setDeletedByAccount(deletedBy);
+        employee.setUpdatedAt(Instant.now());
+        employee.setDeletedByAccount(findCurrentAccount());
         employee.setDeletionReason(request.deletionReason());
+    }
+
+    private void validateCreateUniqueness(CreateEmployeeRequest request) {
+        if (employeeRepository.existsByEmployeeCode(request.employeeCode())) {
+            throw new ConflictException(
+                ErrorCode.EMPLOYEE_CODE_TAKEN, "Employee code is already taken", "employeeCode"
+            );
+        }
+        if (request.workEmail() != null && employeeRepository.existsByWorkEmail(request.workEmail())) {
+            throw new ConflictException(ErrorCode.CONFLICT, "Work email is already taken", "workEmail");
+        }
+        if (request.nationalId() != null && employeeRepository.existsByNationalId(request.nationalId())) {
+            throw new ConflictException(ErrorCode.CONFLICT, "National ID is already taken", "nationalId");
+        }
+    }
+
+    private WorkShift findActiveShift(Long shiftId) {
+        if (shiftId == null) {
+            return null;
+        }
+        return workShiftRepository.findById(shiftId)
+            .filter(value -> value.getDeletedAt() == null && Boolean.TRUE.equals(value.getIsActive()))
+            .orElseThrow(() -> new ResourceNotFoundException(
+                ErrorCode.RESOURCE_NOT_FOUND, "Active work shift not found: " + shiftId
+            ));
+    }
+
+    private Employee findManager(Long managerEmployeeId) {
+        if (managerEmployeeId == null) {
+            return null;
+        }
+        Employee manager = findEmployeeOrThrow(managerEmployeeId);
+        employeeAccessScopeService.requireEmployeeAccess(managerEmployeeId, EMPLOYEE_MANAGE);
+        if (isEmploymentEnded(manager.getEmploymentStatus())) {
+            throw new ConflictException(ErrorCode.CONFLICT, "Manager is no longer employed");
+        }
+        return manager;
+    }
+
+    private void closeCurrentAssignment(EmployeeAssignment current, LocalDate nextEffectiveFrom) {
+        if (!nextEffectiveFrom.isAfter(current.getEffectiveFrom())) {
+            throw new BusinessException(
+                ErrorCode.VALIDATION_ERROR,
+                "effectiveFrom must be after the current assignment start date",
+                "effectiveFrom"
+            );
+        }
+        current.setEffectiveTo(nextEffectiveFrom.minusDays(1));
+    }
+
+    private void closeAssignmentAtTermination(EmployeeAssignment assignment, LocalDate terminationDate) {
+        if (terminationDate.isBefore(assignment.getEffectiveFrom())) {
+            throw new BusinessException(
+                ErrorCode.VALIDATION_ERROR,
+                "terminationDate must not be before the current assignment start date",
+                "terminationDate"
+            );
+        }
+        assignment.setEffectiveTo(terminationDate);
+    }
+
+    private void ensureEmployeeHasNoBusinessHistory(Long employeeId) {
+        boolean hasHistory = accountRepository.findByEmployeeId(employeeId).isPresent()
+            || employeeAssignmentRepository.existsByEmployeeId(employeeId)
+            || employeeCompensationRepository.existsByEmployeeId(employeeId)
+            || employeeRequestRepository.existsByEmployeeId(employeeId)
+            || attendanceRecordRepository.existsByEmployeeId(employeeId)
+            || payslipRepository.existsByEmployeeId(employeeId);
+        if (hasHistory) {
+            throw new ConflictException(
+                ErrorCode.CONFLICT,
+                "Employee has related business data and cannot be deleted; end employment instead"
+            );
+        }
+    }
+
+    private Account findCurrentAccount() {
+        Long accountId = currentAccountProvider.accountId();
+        return accountRepository.findById(accountId)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + accountId
+            ));
     }
 
     private Employee findEmployeeOrThrow(Long id) {
         return employeeRepository.findById(id)
             .filter(employee -> employee.getDeletedAt() == null)
             .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.EMPLOYEE_NOT_FOUND, "Employee not found: " + id));
+                ErrorCode.EMPLOYEE_NOT_FOUND, "Employee not found: " + id
+            ));
     }
 
-    private EmployeeResponse toResponse(Employee employee) {
-        return new EmployeeResponse(
+    private Optional<EmployeeAssignment> findCurrentAssignment(Long employeeId) {
+        return employeeAssignmentRepository.findCurrentPrimaryCandidates(employeeId, LocalDate.now()).stream()
+            .findFirst();
+    }
+
+    private boolean isEmploymentEnded(EmploymentStatus status) {
+        return status == EmploymentStatus.RESIGNED
+            || status == EmploymentStatus.TERMINATED
+            || status == EmploymentStatus.RETIRED;
+    }
+
+    private EmployeeSummaryResponse toSummaryResponse(Employee employee) {
+        return new EmployeeSummaryResponse(
             employee.getId(),
             employee.getEmployeeCode(),
             employee.getFullName(),
-            employee.getDateOfBirth(),
-            employee.getGender(),
-            employee.getHighestEducationLevel(),
             employee.getWorkEmail(),
             employee.getPhone(),
             employee.getHireDate(),
@@ -318,7 +412,30 @@ public class EmployeeServiceImpl implements EmployeeService {
         );
     }
 
-    private EmployeeAssignmentResponse toResponse(EmployeeAssignment assignment) {
+    private EmployeeDetailResponse toDetailResponse(Employee employee) {
+        EmployeeAssignmentResponse currentAssignment = findCurrentAssignment(employee.getId())
+            .map(this::toAssignmentResponse)
+            .orElse(null);
+        return new EmployeeDetailResponse(
+            employee.getId(),
+            employee.getEmployeeCode(),
+            employee.getFullName(),
+            employee.getDateOfBirth(),
+            employee.getGender(),
+            employee.getHighestEducationLevel(),
+            employee.getMajor(),
+            employee.getInstitution(),
+            employee.getGraduationYear(),
+            employee.getWorkEmail(),
+            employee.getPhone(),
+            employee.getHireDate(),
+            employee.getEmploymentStatus(),
+            employee.getTerminationDate(),
+            currentAssignment
+        );
+    }
+
+    private EmployeeAssignmentResponse toAssignmentResponse(EmployeeAssignment assignment) {
         return new EmployeeAssignmentResponse(
             assignment.getId(),
             assignment.getEmployee().getId(),
@@ -331,19 +448,6 @@ public class EmployeeServiceImpl implements EmployeeService {
             assignment.getEffectiveFrom(),
             assignment.getEffectiveTo(),
             assignment.getIsPrimary()
-        );
-    }
-
-    private EmployeeCompensationResponse toResponse(EmployeeCompensation compensation) {
-        return new EmployeeCompensationResponse(
-            compensation.getId(),
-            compensation.getEmployee().getId(),
-            compensation.getComponentType(),
-            compensation.getComponentCode(),
-            compensation.getComponentName(),
-            compensation.getMonthlyAmount(),
-            compensation.getEffectiveFrom(),
-            compensation.getEffectiveTo()
         );
     }
 }

@@ -326,8 +326,8 @@ erDiagram
 | `TEAM_LEAD` | `ORG_UNIT` | Quyền nhân viên + xem nhân sự, duyệt đơn và tăng ca của nhóm |
 | `WAREHOUSE_SUPERVISOR` | `LOCATION` | Như trưởng nhóm nhưng chỉ trong kho được giao |
 | `BRANCH_MANAGER` | `LOCATION` | Thêm/xóa mềm nhân sự, duyệt đơn và quản lý chấm công trong chi nhánh cùng kho con |
-| `HR_STAFF` | `COMPANY` | Hồ sơ, đơn từ, chấm công và báo cáo toàn công ty |
-| `PAYROLL_ACCOUNTANT` | `COMPANY` | Tính và kiểm tra lương |
+| `HR_STAFF` | `COMPANY` | Hồ sơ thường và dữ liệu nhạy cảm của nhân viên, đơn từ, chấm công và báo cáo toàn công ty |
+| `PAYROLL_ACCOUNTANT` | `COMPANY` | Đọc thành phần thu nhập, tính và kiểm tra lương |
 | `PAYROLL_APPROVER` | `COMPANY` | Duyệt, xác nhận đã trả và khóa kỳ lương |
 | `SYSTEM_ADMIN` | `COMPANY` | Tài khoản, vai trò và quyền; không mặc nhiên xem lương |
 
@@ -337,12 +337,14 @@ Các permission code tối thiểu:
 
 ```text
 profile.self.read             profile.self.update
-employee.read                employee.manage
+employee.read                employee.manage               employee.sensitive.read
+employee.sensitive.manage
 request.self.read            request.self.create           request.self.cancel
 request.read                 request.approve               request.manage
 attendance.self.read         attendance.read               attendance.manage
 attendance.overtime.approve
 payroll.self.read            payroll.self.print
+compensation.read            compensation.manage
 payroll.calculate            payroll.approve               payroll.mark_paid
 payroll.lock                 report.hr.read                report.payroll.read
 rbac.manage

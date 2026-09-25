@@ -8,30 +8,27 @@ import org.springframework.data.domain.Pageable;
 
 import com.htttdn.hrm.dto.request.employee.AssignEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.CreateEmployeeRequest;
-import com.htttdn.hrm.dto.request.employee.SetCompensationRequest;
 import com.htttdn.hrm.dto.request.employee.SoftDeleteEmployeeRequest;
-import com.htttdn.hrm.dto.request.employee.UpdateEmployeeProfileRequest;
+import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
 import com.htttdn.hrm.dto.response.employee.EmployeeAssignmentResponse;
-import com.htttdn.hrm.dto.response.employee.EmployeeCompensationResponse;
-import com.htttdn.hrm.dto.response.employee.EmployeeResponse;
+import com.htttdn.hrm.dto.response.employee.EmployeeDetailResponse;
+import com.htttdn.hrm.dto.response.employee.EmployeeSummaryResponse;
 
 public interface EmployeeService {
 
-    EmployeeResponse create(CreateEmployeeRequest request);
+    EmployeeDetailResponse create(CreateEmployeeRequest request);
 
-    EmployeeResponse getById(Long id);
+    EmployeeDetailResponse getById(Long id);
 
-    Page<EmployeeResponse> list(Pageable pageable);
+    Page<EmployeeSummaryResponse> list(Pageable pageable);
 
-    EmployeeResponse updateProfile(Long id, UpdateEmployeeProfileRequest request);
+    EmployeeDetailResponse update(Long id, UpdateEmployeeRequest request);
 
-    EmployeeAssignmentResponse assignDepartment(Long employeeId, AssignEmployeeRequest request);
+    EmployeeAssignmentResponse assign(Long employeeId, AssignEmployeeRequest request);
 
     EmployeeAssignmentResponse getCurrentAssignment(Long employeeId);
 
-    EmployeeCompensationResponse setCompensation(Long employeeId, SetCompensationRequest request);
-
-    List<EmployeeCompensationResponse> getActiveCompensations(Long employeeId, LocalDate asOfDate);
+    List<EmployeeAssignmentResponse> listAssignments(Long employeeId);
 
     void completeResignation(Long employeeId, LocalDate terminationDate, String terminationReason);
 

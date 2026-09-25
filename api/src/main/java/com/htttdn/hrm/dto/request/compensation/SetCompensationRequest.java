@@ -1,4 +1,4 @@
-package com.htttdn.hrm.dto.request.employee;
+package com.htttdn.hrm.dto.request.compensation;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,9 +25,6 @@ public record SetCompensationRequest(
 
     @NotNull
     LocalDate effectiveFrom,
-
-    @NotNull
-    Long approvedByAccountId,
 
     String note
 ) {
