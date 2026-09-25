@@ -14,7 +14,9 @@ import com.htttdn.hrm.entity.Permission;
 import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.RolePermission;
 import com.htttdn.hrm.entity.RolePermissionId;
+import com.htttdn.hrm.entity.WorkLocation;
 import com.htttdn.hrm.entity.enums.PermissionOverrideEffect;
+import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.repository.AccountPermissionOverrideRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.RolePermissionRepository;
@@ -67,6 +69,41 @@ class AccountAuthorizationServiceTest {
 
         assertEquals(List.of("BRANCH_MANAGER", "EMPLOYEE"), snapshot.roles());
         assertEquals(List.of("employee.manage", "employee.read"), snapshot.permissions());
+    }
+
+    @Test
+    void returnsOnlyScopesWhoseAssignmentEffectivelyGrantsPermission() {
+        Role employeeRole = Role.builder().id(1L).code("EMPLOYEE").build();
+        Role managerRole = Role.builder().id(2L).code("BRANCH_MANAGER").build();
+        AccountRoleAssignment revokedSelfAssignment = AccountRoleAssignment.builder()
+            .id(11L)
+            .role(employeeRole)
+            .scopeType(RoleScopeType.SELF)
+            .build();
+        AccountRoleAssignment branchAssignment = AccountRoleAssignment.builder()
+            .id(12L)
+            .role(managerRole)
+            .scopeType(RoleScopeType.LOCATION)
+            .workLocation(WorkLocation.builder().id(50L).build())
+            .build();
+        Permission read = Permission.builder().id(21L).code("employee.read").build();
+
+        when(assignmentRepository.findActiveWithRoleByAccountId(eq(7L), any()))
+            .thenReturn(List.of(revokedSelfAssignment, branchAssignment));
+        when(rolePermissionRepository.findActiveByRoleIds(List.of(1L, 2L))).thenReturn(List.of(
+            rolePermission(employeeRole, read),
+            rolePermission(managerRole, read)
+        ));
+        when(overrideRepository.findActiveByAssignmentIds(eq(List.of(11L, 12L)), any()))
+            .thenReturn(List.of(
+                permissionOverride(31L, revokedSelfAssignment, read, PermissionOverrideEffect.REVOKE)
+            ));
+
+        var scopes = service().getScopes(7L, "employee.read");
+
+        assertEquals(1, scopes.size());
+        assertEquals(RoleScopeType.LOCATION, scopes.getFirst().scopeType());
+        assertEquals(50L, scopes.getFirst().workLocationId());
     }
 
     private RolePermission rolePermission(Role role, Permission permission) {
