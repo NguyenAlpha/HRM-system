@@ -1,4 +1,4 @@
-package com.htttdn.hrm.dto.response.employee;
+package com.htttdn.hrm.dto.response.compensation;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

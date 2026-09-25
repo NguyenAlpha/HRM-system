@@ -15,4 +15,6 @@ public interface EmployeeRequestRepository extends JpaRepository<EmployeeRequest
     Page<EmployeeRequest> findByStatus(RequestStatus status, Pageable pageable);
 
     Page<EmployeeRequest> findByRequestTypeAndStatus(RequestType requestType, RequestStatus status, Pageable pageable);
+
+    boolean existsByEmployeeId(Long employeeId);
 }

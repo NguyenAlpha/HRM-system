@@ -34,6 +34,8 @@ public class PermissionSeeder implements ApplicationRunner {
         permission("profile.self.update", PermissionModule.EMPLOYEE, "Update allowed fields in own profile"),
         permission("employee.read", PermissionModule.EMPLOYEE, "View employee profiles within assigned scope"),
         permission("employee.manage", PermissionModule.EMPLOYEE, "Create, update, and soft-delete employees"),
+        permission("employee.sensitive.read", PermissionModule.EMPLOYEE, "View sensitive employee data within assigned scope"),
+        permission("employee.sensitive.manage", PermissionModule.EMPLOYEE, "Update sensitive employee data within assigned scope"),
 
         permission("request.self.read", PermissionModule.REQUEST, "View own employee requests"),
         permission("request.self.create", PermissionModule.REQUEST, "Create and submit own employee requests"),
@@ -53,6 +55,8 @@ public class PermissionSeeder implements ApplicationRunner {
 
         permission("payroll.self.read", PermissionModule.PAYROLL, "View own payslips"),
         permission("payroll.self.print", PermissionModule.PAYROLL, "Print or download own payslips"),
+        permission("compensation.read", PermissionModule.PAYROLL, "View employee compensation within assigned scope"),
+        permission("compensation.manage", PermissionModule.PAYROLL, "Manage employee compensation within assigned scope"),
         permission("payroll.calculate", PermissionModule.PAYROLL, "Calculate and review payroll"),
         permission("payroll.approve", PermissionModule.PAYROLL, "Approve payroll periods"),
         permission("payroll.mark_paid", PermissionModule.PAYROLL, "Mark approved payroll as paid"),
