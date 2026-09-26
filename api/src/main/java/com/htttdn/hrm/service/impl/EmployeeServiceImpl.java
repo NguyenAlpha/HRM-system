@@ -15,12 +15,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.request.employee.AssignEmployeeRequest;
+import com.htttdn.hrm.dto.request.employee.CreateEmployeeProfileRequest;
 import com.htttdn.hrm.dto.request.employee.CreateEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.SoftDeleteEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.employee.EmployeeAccountSummaryResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeAssignmentResponse;
+import com.htttdn.hrm.dto.response.employee.EmployeeCreationResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeDetailResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeSummaryResponse;
 import com.htttdn.hrm.entity.Account;
@@ -106,38 +108,45 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    @PreAuthorize("hasAuthority('employee.manage') and hasAuthority('employee.sensitive.manage')")
-    public EmployeeDetailResponse create(CreateEmployeeRequest request) {
-        employeeAccessScopeService.requireCompanyWide(EMPLOYEE_MANAGE);
-        employeeAccessScopeService.requireCompanyWide("employee.sensitive.manage");
-        validateCreateUniqueness(request);
+    @PreAuthorize("hasAuthority('employee.manage')")
+    public EmployeeCreationResponse create(CreateEmployeeRequest request) {
+        CreateEmployeeProfileRequest profile = request.employee();
+        AssignEmployeeRequest assignmentRequest = request.initialAssignment();
+        AssignmentResources assignmentResources = resolveAssignmentResources(assignmentRequest);
+        validateInitialAssignmentDate(profile.hireDate(), assignmentRequest.effectiveFrom());
+
+        String workEmail = normalizeEmail(profile.workEmail());
+        validateCreateUniqueness(profile, workEmail);
 
         Instant now = Instant.now();
         Employee employee = Employee.builder()
-            .employeeCode(request.employeeCode())
-            .fullName(request.fullName())
-            .dateOfBirth(request.dateOfBirth())
-            .gender(request.gender())
-            .highestEducationLevel(request.highestEducationLevel())
-            .major(request.major())
-            .institution(request.institution())
-            .graduationYear(request.graduationYear())
-            .nationalId(request.nationalId())
-            .personalEmail(request.personalEmail())
-            .workEmail(request.workEmail())
-            .phone(request.phone())
-            .address(request.address())
-            .taxCode(request.taxCode())
-            .bankName(request.bankName())
-            .bankAccountNumber(request.bankAccountNumber())
-            .bankAccountHolder(request.bankAccountHolder())
-            .hireDate(request.hireDate())
+            .employeeCode(profile.employeeCode().trim())
+            .fullName(profile.fullName().trim())
+            .dateOfBirth(profile.dateOfBirth())
+            .gender(profile.gender())
+            .highestEducationLevel(profile.highestEducationLevel())
+            .major(profile.major())
+            .institution(profile.institution())
+            .graduationYear(profile.graduationYear())
+            .workEmail(workEmail)
+            .phone(profile.phone())
+            .hireDate(profile.hireDate())
             .employmentStatus(EmploymentStatus.PROBATION)
             .createdAt(now)
             .updatedAt(now)
             .build();
 
-        return toDetailResponse(employeeRepository.save(employee));
+        Employee savedEmployee = employeeRepository.save(employee);
+        EmployeeAssignment initialAssignment = savePrimaryAssignment(
+            savedEmployee,
+            assignmentRequest,
+            assignmentResources,
+            findCurrentAccount()
+        );
+        return new EmployeeCreationResponse(
+            toDetailResponse(savedEmployee),
+            toAssignmentResponse(initialAssignment)
+        );
     }
 
     @Override
@@ -223,9 +232,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     public EmployeeAssignmentResponse assign(Long employeeId, AssignEmployeeRequest request) {
         Employee employee = findEmployeeOrThrow(employeeId);
         employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_MANAGE);
-        employeeAccessScopeService.requireDestinationAccess(
-            request.organizationUnitId(), request.workLocationId(), EMPLOYEE_MANAGE
-        );
 
         if (request.managerEmployeeId() != null && request.managerEmployeeId().equals(employeeId)) {
             throw new BusinessException(
@@ -233,46 +239,17 @@ public class EmployeeServiceImpl implements EmployeeService {
             );
         }
 
-        OrganizationUnit organizationUnit = organizationUnitRepository.findById(request.organizationUnitId())
-            .filter(unit -> unit.getDeletedAt() == null && Boolean.TRUE.equals(unit.getIsActive()))
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ORGANIZATION_UNIT_NOT_FOUND,
-                "Active organization unit not found: " + request.organizationUnitId()
-            ));
-        WorkLocation workLocation = workLocationRepository.findById(request.workLocationId())
-            .filter(location -> location.getDeletedAt() == null && Boolean.TRUE.equals(location.getIsActive()))
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.LOCATION_NOT_FOUND,
-                "Active work location not found: " + request.workLocationId()
-            ));
-        JobPosition position = jobPositionRepository.findById(request.positionId())
-            .filter(value -> value.getDeletedAt() == null && Boolean.TRUE.equals(value.getIsActive()))
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND, "Active job position not found: " + request.positionId()
-            ));
-        WorkShift shift = findActiveShift(request.shiftId());
-        Employee manager = findManager(request.managerEmployeeId());
-        Account createdBy = findCurrentAccount();
+        AssignmentResources assignmentResources = resolveAssignmentResources(request);
 
         employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employeeId)
             .ifPresent(current -> closeCurrentAssignment(current, request.effectiveFrom()));
 
-        EmployeeAssignment assignment = EmployeeAssignment.builder()
-            .employee(employee)
-            .organizationUnit(organizationUnit)
-            .workLocation(workLocation)
-            .position(position)
-            .shift(shift)
-            .managerEmployee(manager)
-            .employmentType(request.employmentType())
-            .effectiveFrom(request.effectiveFrom())
-            .isPrimary(true)
-            .reason(request.reason())
-            .createdByAccount(createdBy)
-            .createdAt(Instant.now())
-            .build();
-
-        return toAssignmentResponse(employeeAssignmentRepository.save(assignment));
+        return toAssignmentResponse(savePrimaryAssignment(
+            employee,
+            request,
+            assignmentResources,
+            findCurrentAccount()
+        ));
     }
 
     @Override
@@ -340,18 +317,79 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setDeletionReason(request.deletionReason());
     }
 
-    private void validateCreateUniqueness(CreateEmployeeRequest request) {
-        if (employeeRepository.existsByEmployeeCode(request.employeeCode())) {
+    private void validateCreateUniqueness(CreateEmployeeProfileRequest request, String workEmail) {
+        if (employeeRepository.existsByEmployeeCodeIgnoreCase(request.employeeCode().trim())) {
             throw new ConflictException(
-                ErrorCode.EMPLOYEE_CODE_TAKEN, "Employee code is already taken", "employeeCode"
+                ErrorCode.EMPLOYEE_CODE_TAKEN, "Employee code is already taken", "employee.employeeCode"
             );
         }
-        if (request.workEmail() != null && employeeRepository.existsByWorkEmail(request.workEmail())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Work email is already taken", "workEmail");
+        if (workEmail != null && (employeeRepository.existsByWorkEmailIgnoreCase(workEmail)
+            || accountRepository.existsByEmailIgnoreCase(workEmail))) {
+            throw new ConflictException(ErrorCode.EMAIL_TAKEN, "Work email is already taken", "employee.workEmail");
         }
-        if (request.nationalId() != null && employeeRepository.existsByNationalId(request.nationalId())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "National ID is already taken", "nationalId");
+    }
+
+    private void validateInitialAssignmentDate(LocalDate hireDate, LocalDate effectiveFrom) {
+        if (effectiveFrom.isBefore(hireDate)) {
+            throw new BusinessException(
+                ErrorCode.VALIDATION_ERROR,
+                "Initial assignment effectiveFrom must not be before employee hireDate",
+                "initialAssignment.effectiveFrom"
+            );
         }
+    }
+
+    private AssignmentResources resolveAssignmentResources(AssignEmployeeRequest request) {
+        employeeAccessScopeService.requireDestinationAccess(
+            request.organizationUnitId(), request.workLocationId(), EMPLOYEE_MANAGE
+        );
+
+        OrganizationUnit organizationUnit = organizationUnitRepository.findById(request.organizationUnitId())
+            .filter(unit -> unit.getDeletedAt() == null && Boolean.TRUE.equals(unit.getIsActive()))
+            .orElseThrow(() -> new ResourceNotFoundException(
+                ErrorCode.ORGANIZATION_UNIT_NOT_FOUND,
+                "Active organization unit not found: " + request.organizationUnitId()
+            ));
+        WorkLocation workLocation = workLocationRepository.findById(request.workLocationId())
+            .filter(location -> location.getDeletedAt() == null && Boolean.TRUE.equals(location.getIsActive()))
+            .orElseThrow(() -> new ResourceNotFoundException(
+                ErrorCode.LOCATION_NOT_FOUND,
+                "Active work location not found: " + request.workLocationId()
+            ));
+        JobPosition position = jobPositionRepository.findById(request.positionId())
+            .filter(value -> value.getDeletedAt() == null && Boolean.TRUE.equals(value.getIsActive()))
+            .orElseThrow(() -> new ResourceNotFoundException(
+                ErrorCode.RESOURCE_NOT_FOUND, "Active job position not found: " + request.positionId()
+            ));
+        return new AssignmentResources(
+            organizationUnit,
+            workLocation,
+            position,
+            findActiveShift(request.shiftId()),
+            findManager(request.managerEmployeeId())
+        );
+    }
+
+    private EmployeeAssignment savePrimaryAssignment(
+        Employee employee,
+        AssignEmployeeRequest request,
+        AssignmentResources resources,
+        Account createdBy
+    ) {
+        return employeeAssignmentRepository.save(EmployeeAssignment.builder()
+            .employee(employee)
+            .organizationUnit(resources.organizationUnit())
+            .workLocation(resources.workLocation())
+            .position(resources.position())
+            .shift(resources.shift())
+            .managerEmployee(resources.manager())
+            .employmentType(request.employmentType())
+            .effectiveFrom(request.effectiveFrom())
+            .isPrimary(true)
+            .reason(request.reason())
+            .createdByAccount(createdBy)
+            .createdAt(Instant.now())
+            .build());
     }
 
     private WorkShift findActiveShift(Long shiftId) {
@@ -520,5 +558,14 @@ public class EmployeeServiceImpl implements EmployeeService {
             assignment.getEffectiveTo(),
             assignment.getIsPrimary()
         );
+    }
+
+    private record AssignmentResources(
+        OrganizationUnit organizationUnit,
+        WorkLocation workLocation,
+        JobPosition position,
+        WorkShift shift,
+        Employee manager
+    ) {
     }
 }

@@ -11,12 +11,13 @@ import com.htttdn.hrm.dto.request.employee.CreateEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.SoftDeleteEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
 import com.htttdn.hrm.dto.response.employee.EmployeeAssignmentResponse;
+import com.htttdn.hrm.dto.response.employee.EmployeeCreationResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeDetailResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeSummaryResponse;
 
 public interface EmployeeService {
 
-    EmployeeDetailResponse create(CreateEmployeeRequest request);
+    EmployeeCreationResponse create(CreateEmployeeRequest request);
 
     EmployeeDetailResponse getById(Long id);
 

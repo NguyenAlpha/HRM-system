@@ -25,13 +25,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
 
     boolean existsByEmployeeCodeIgnoreCase(String employeeCode);
 
-    boolean existsByWorkEmail(String workEmail);
-
     boolean existsByWorkEmailIgnoreCase(String workEmail);
 
     boolean existsByWorkEmailIgnoreCaseAndIdNot(String workEmail, Long id);
-
-    boolean existsByNationalId(String nationalId);
 
     boolean existsByNationalIdAndIdNot(String nationalId, Long id);
 
