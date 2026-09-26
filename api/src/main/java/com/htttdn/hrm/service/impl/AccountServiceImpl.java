@@ -5,31 +5,22 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.request.account.AssignRoleRequest;
-import com.htttdn.hrm.dto.request.account.ChangePasswordRequest;
-import com.htttdn.hrm.dto.request.account.CreateAccountRequest;
-import com.htttdn.hrm.dto.request.account.UpdateAccountStatusRequest;
 import com.htttdn.hrm.dto.response.account.AccountResponse;
 import com.htttdn.hrm.dto.response.account.AccountRoleAssignmentResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
-import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.OrganizationUnit;
 import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.WorkLocation;
-import com.htttdn.hrm.entity.enums.AccountStatus;
-import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.exception.BusinessException;
-import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
-import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.OrganizationUnitRepository;
 import com.htttdn.hrm.repository.RoleRepository;
 import com.htttdn.hrm.repository.WorkLocationRepository;
@@ -40,60 +31,23 @@ import com.htttdn.hrm.service.AccountService;
 public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;
-    private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final OrganizationUnitRepository organizationUnitRepository;
     private final WorkLocationRepository workLocationRepository;
-    private final PasswordEncoder passwordEncoder;
 
     public AccountServiceImpl(
         AccountRepository accountRepository,
-        EmployeeRepository employeeRepository,
         RoleRepository roleRepository,
         AccountRoleAssignmentRepository accountRoleAssignmentRepository,
         OrganizationUnitRepository organizationUnitRepository,
-        WorkLocationRepository workLocationRepository,
-        PasswordEncoder passwordEncoder
+        WorkLocationRepository workLocationRepository
     ) {
         this.accountRepository = accountRepository;
-        this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
         this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
         this.organizationUnitRepository = organizationUnitRepository;
         this.workLocationRepository = workLocationRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
-
-    @Override
-    public AccountResponse create(CreateAccountRequest request) {
-        if (accountRepository.existsByUsername(request.username())) {
-            throw new ConflictException(ErrorCode.USERNAME_TAKEN, "Username is already taken", "username");
-        }
-        if (accountRepository.existsByEmail(request.email())) {
-            throw new ConflictException(ErrorCode.EMAIL_TAKEN, "Email is already taken", "email");
-        }
-
-        Employee employee = null;
-        if (request.employeeId() != null) {
-            employee = employeeRepository.findById(request.employeeId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                    ErrorCode.EMPLOYEE_NOT_FOUND, "Employee not found: " + request.employeeId()));
-        }
-
-        Instant now = Instant.now();
-        Account account = Account.builder()
-            .employee(employee)
-            .username(request.username())
-            .email(request.email())
-            .passwordHash(passwordEncoder.encode(request.password()))
-            .status(AccountStatus.PENDING)
-            .failedLoginCount(0)
-            .createdAt(now)
-            .updatedAt(now)
-            .build();
-
-        return toResponse(accountRepository.save(account));
     }
 
     @Override
@@ -106,21 +60,6 @@ public class AccountServiceImpl implements AccountService {
     @Transactional(readOnly = true)
     public Page<AccountResponse> list(Pageable pageable) {
         return accountRepository.findAll(pageable).map(this::toResponse);
-    }
-
-    @Override
-    public AccountResponse updateStatus(Long id, UpdateAccountStatusRequest request) {
-        Account account = findAccountOrThrow(id);
-        account.setStatus(request.status());
-        account.setUpdatedAt(Instant.now());
-        return toResponse(account);
-    }
-
-    @Override
-    public void changePassword(Long id, ChangePasswordRequest request) {
-        Account account = findAccountOrThrow(id);
-        account.setPasswordHash(passwordEncoder.encode(request.newPassword()));
-        account.setUpdatedAt(Instant.now());
     }
 
     @Override

@@ -34,13 +34,13 @@ Nhân viên nghỉ việc
 
 Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`. Khi đó phải có `deleted_by_account_id` và `deletion_reason` để có thể kiểm tra, khôi phục.
 
-### 1.2. Danh sách 19 bảng
+### 1.2. Danh sách 21 bảng
 
 | Nhóm | Các bảng |
 |---|---|
 | Doanh nghiệp và cơ cấu | `company_profile`, `work_locations`, `organization_units`, `job_positions` |
 | Nhân sự | `employees`, `employee_assignments`, `employee_compensations` |
-| Tài khoản và RBAC | `accounts`, `permissions`, `roles`, `role_permissions`, `account_role_assignments`, `account_permission_overrides` |
+| Tài khoản và RBAC | `accounts`, `account_activation_tokens`, `refresh_tokens`, `permissions`, `roles`, `role_permissions`, `account_role_assignments`, `account_permission_overrides` |
 | Đơn từ | `employee_requests` |
 | Chấm công | `work_shifts`, `attendance_records` |
 | Tính lương | `payroll_periods`, `payslips`, `payslip_items` |
@@ -56,6 +56,8 @@ erDiagram
     ORGANIZATION_UNITS ||--o{ EMPLOYEE_ASSIGNMENTS : unit
     JOB_POSITIONS ||--o{ EMPLOYEE_ASSIGNMENTS : position
     EMPLOYEES ||--o| ACCOUNTS : authenticates_as
+    ACCOUNTS ||--o{ ACCOUNT_ACTIVATION_TOKENS : activates_with
+    ACCOUNTS ||--o{ REFRESH_TOKENS : owns
     ACCOUNTS ||--o{ ACCOUNT_ROLE_ASSIGNMENTS : receives
     ROLES ||--o{ ACCOUNT_ROLE_ASSIGNMENTS : assigned
     ROLES ||--o{ ROLE_PERMISSIONS : contains
@@ -234,7 +236,7 @@ erDiagram
 | `employee_id` | BIGINT | FK → employees, UNIQUE | Hồ sơ liên kết; null chỉ dành cho bootstrap admin |
 | `username` | VARCHAR(50) | NOT NULL, UNIQUE | Tên đăng nhập, không tái sử dụng |
 | `email` | VARCHAR(100) | NOT NULL, UNIQUE | Email đăng nhập |
-| `password_hash` | VARCHAR(255) | NOT NULL | Mật khẩu đã hash |
+| `password_hash` | VARCHAR(255) | nullable khi `PENDING` | Mật khẩu đã hash; chỉ được null trước khi kích hoạt |
 | `status` | VARCHAR(20) | NOT NULL | `PENDING` / `ACTIVE` / `LOCKED` / `DISABLED` |
 | `failed_login_count` | INTEGER | NOT NULL, DEFAULT 0 | Số lần đăng nhập sai liên tiếp |
 | `locked_until` | TIMESTAMPTZ | | Khóa tạm đến thời điểm |
@@ -242,7 +244,35 @@ erDiagram
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-> Người nghỉ việc có tài khoản chuyển `DISABLED`, không xóa tài khoản.
+> Người nghỉ việc có tài khoản chuyển `DISABLED`, không xóa tài khoản. Constraint yêu cầu `password_hash` có giá trị với mọi trạng thái khác `PENDING`.
+
+### `account_activation_tokens` — Token kích hoạt tài khoản
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `account_id` | BIGINT | FK → accounts, NOT NULL | Account đang chờ kích hoạt |
+| `token_hash` | CHAR(64) | NOT NULL, UNIQUE | SHA-256 hash của raw token |
+| `expires_at` | TIMESTAMPTZ | NOT NULL | Thời điểm token hết hạn |
+| `used_at` | TIMESTAMPTZ | | Thời điểm kích hoạt thành công |
+| `revoked_at` | TIMESTAMPTZ | | Thời điểm token bị thu hồi |
+| `created_by_account_id` | BIGINT | FK → accounts, NOT NULL | Quản trị viên phát hành token |
+| `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
+
+> Mỗi account chỉ có một token đồng thời chưa dùng và chưa thu hồi. Phát token mới phải thu hồi token cũ; raw token không được lưu trong database.
+
+### `refresh_tokens` — Phiên đăng nhập có thể làm mới
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `token_hash` | CHAR(64) | NOT NULL, UNIQUE | SHA-256 hash của raw refresh token |
+| `account_id` | BIGINT | FK → accounts, NOT NULL | Chủ sở hữu phiên đăng nhập |
+| `expires_at` | TIMESTAMPTZ | NOT NULL | Thời điểm token hết hạn |
+| `revoked_at` | TIMESTAMPTZ | | Thời điểm token bị thu hồi hoặc đã được rotate |
+| `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
+
+> Refresh token là credential dùng một lần theo cơ chế rotation; raw token không được lưu trong database.
 
 ### `permissions` — Danh mục quyền nguyên tử
 
@@ -250,7 +280,7 @@ erDiagram
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
 | `code` | VARCHAR(100) | NOT NULL, UNIQUE | Mã quyền, ví dụ `leave.approve` |
-| `module` | VARCHAR(30) | NOT NULL | `EMPLOYEE` / `REQUEST` / `ATTENDANCE` / `PAYROLL` / `RBAC` / `REPORT` |
+| `module` | VARCHAR(30) | NOT NULL | `EMPLOYEE` / `ACCOUNT` / `ORGANIZATION` / `REQUEST` / `ATTENDANCE` / `PAYROLL` / `RBAC` / `REPORT` |
 | `description` | TEXT | NOT NULL | Mô tả quyền |
 | `is_active` | BOOLEAN | NOT NULL, DEFAULT true | Trạng thái |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |

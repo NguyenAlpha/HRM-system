@@ -1,6 +1,6 @@
 # API Reference — Auth
 
-Xác thực tài khoản HRM bằng access token JWT và refresh token. HRM không hỗ trợ đăng ký công khai; tài khoản được tạo bởi quản trị viên.
+Xác thực tài khoản HRM bằng access token JWT và refresh token. HRM không hỗ trợ đăng ký công khai; tài khoản được tạo bởi quản trị viên và người nhận tự đặt mật khẩu bằng token kích hoạt dùng một lần.
 
 ---
 
@@ -8,6 +8,7 @@ Xác thực tài khoản HRM bằng access token JWT và refresh token. HRM khô
 
 | Endpoint | Public | Yêu cầu Bearer token |
 |:---------|:------:|:--------------------:|
+| `POST /api/account-activations/{token}/complete` | ✅ | ❌ |
 | `POST /api/auth/login` | ✅ | ❌ |
 | `POST /api/auth/refresh` | ✅ | ❌ |
 | `POST /api/auth/logout` | ❌ | ✅ |
@@ -64,6 +65,61 @@ Thiếu token, token hết hạn hoặc chữ ký không hợp lệ trả về:
 
 ---
 
+## POST `/api/account-activations/{token}/complete`
+
+Đặt mật khẩu lần đầu và kích hoạt account đang ở trạng thái `PENDING`. Endpoint public vì token kích hoạt chính là credential dùng một lần.
+
+Token được quản trị viên phát hành trong luồng tạo tài khoản và chuyển tới đúng người nhận qua kênh thông báo. Mỗi account chỉ có một token chưa dùng/chưa thu hồi; phát token mới sẽ thu hồi token cũ.
+
+### Path parameter
+
+| Parameter | Type | Bắt buộc | Ý nghĩa |
+|:----------|:-----|:--------:|:--------|
+| `token` | string | ✅ | Token URL-safe nhận từ lời mời kích hoạt |
+
+### Request
+
+```json
+{
+  "password": "NewPassword@123",
+  "passwordConfirmation": "NewPassword@123"
+}
+```
+
+| Field | Type | Bắt buộc | Ràng buộc |
+|:------|:-----|:--------:|:----------|
+| `password` | string | ✅ | 8–100 ký tự |
+| `passwordConfirmation` | string | ✅ | Phải trùng `password`, tối đa 100 ký tự |
+
+### Response `200 OK`
+
+```json
+{
+  "success": true,
+  "data": null,
+  "error": null
+}
+```
+
+Sau khi thành công:
+
+- Mật khẩu được hash bằng BCrypt trước khi lưu.
+- Account chuyển từ `PENDING` sang `ACTIVE`.
+- Token được đánh dấu đã dùng và không thể sử dụng lại.
+- Người dùng đăng nhập qua `POST /api/auth/login`; endpoint kích hoạt không tự phát access token.
+
+Database chỉ lưu SHA-256 hash của token. Raw token không được ghi vào database hoặc log ứng dụng.
+
+### Lỗi
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 400 | `VALIDATION_ERROR` | Mật khẩu không hợp lệ hoặc xác nhận mật khẩu không khớp |
+| 401 | `ACTIVATION_TOKEN_INVALID` | Token không tồn tại, đã dùng, đã thu hồi hoặc account không còn chờ kích hoạt |
+| 401 | `ACTIVATION_TOKEN_EXPIRED` | Token đã hết hạn |
+
+---
+
 ## POST `/api/auth/login`
 
 Đăng nhập bằng username hoặc email. Endpoint public, không cần JWT.
@@ -101,7 +157,13 @@ Email được chuẩn hóa về chữ thường. Username giữ nguyên chữ h
       "email": "admin@hrm.local",
       "status": "ACTIVE",
       "roles": ["SYSTEM_ADMIN"],
-      "permissions": ["rbac.manage"]
+      "permissions": [
+        "account.read",
+        "account.manage",
+        "account.activation.manage",
+        "account.role.assign",
+        "rbac.manage"
+      ]
     }
   },
   "error": null
@@ -125,7 +187,13 @@ Email được chuẩn hóa về chữ thường. Username giữ nguyên chữ h
   "sub": "admin",
   "accountId": 1,
   "roles": ["SYSTEM_ADMIN"],
-  "permissions": ["rbac.manage"],
+  "permissions": [
+    "account.read",
+    "account.manage",
+    "account.activation.manage",
+    "account.role.assign",
+    "rbac.manage"
+  ],
   "iat": 178...,
   "exp": 178...
 }
@@ -189,7 +257,13 @@ Cấu trúc response giống login, nhưng cả `accessToken` và `refreshToken`
       "email": "admin@hrm.local",
       "status": "ACTIVE",
       "roles": ["SYSTEM_ADMIN"],
-      "permissions": ["rbac.manage"]
+      "permissions": [
+        "account.read",
+        "account.manage",
+        "account.activation.manage",
+        "account.role.assign",
+        "rbac.manage"
+      ]
     }
   },
   "error": null
@@ -270,7 +344,13 @@ Lấy thông tin account, role và permission hiện hành. Endpoint yêu cầu 
     "email": "admin@hrm.local",
     "status": "ACTIVE",
     "roles": ["SYSTEM_ADMIN"],
-    "permissions": ["rbac.manage"]
+    "permissions": [
+      "account.read",
+      "account.manage",
+      "account.activation.manage",
+      "account.role.assign",
+      "rbac.manage"
+    ]
   },
   "error": null
 }
@@ -339,6 +419,7 @@ Sau khi đổi mật khẩu:
 | `JWT_ISSUER` | `https://hrm.local` | Giá trị claim `iss` và issuer được decoder chấp nhận |
 | `JWT_ACCESS_TOKEN_EXPIRATION_SECONDS` | `900` | Thời hạn access token theo giây |
 | `JWT_REFRESH_TOKEN_EXPIRATION_DAYS` | `30` | Thời hạn refresh token theo ngày |
+| `ACCOUNT_ACTIVATION_TOKEN_EXPIRATION_HOURS` | `24` | Thời hạn token kích hoạt tài khoản theo giờ |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3000` | Danh sách origin frontend, phân tách bằng dấu phẩy |
 
 Tạo secret phát triển bằng OpenSSL:

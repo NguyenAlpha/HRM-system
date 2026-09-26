@@ -26,7 +26,7 @@ public class AccountUserDetailsService implements UserDetailsService {
 
         boolean active = account.getStatus() == AccountStatus.ACTIVE;
         return User.withUsername(account.getUsername())
-            .password(account.getPasswordHash())
+            .password(account.getPasswordHash() == null ? "" : account.getPasswordHash())
             .authorities("ACCOUNT")
             .disabled(!active)
             .accountLocked(account.getStatus() == AccountStatus.LOCKED)
