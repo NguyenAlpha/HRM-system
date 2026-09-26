@@ -213,8 +213,8 @@ public class SystemAdminSeeder implements ApplicationRunner {
                 Instant now = Instant.now();
                 return roleRepository.save(Role.builder()
                     .code(SYSTEM_ADMIN_ROLE_CODE)
-                    .name("System Administrator")
-                    .description("Manages accounts, roles, and permissions")
+                    .name("Quản trị viên hệ thống")
+                    .description("Quản lý tài khoản, vai trò và quyền trong giai đoạn quản trị hệ thống")
                     .isSystem(true)
                     .isActive(true)
                     .createdAt(now)
@@ -239,9 +239,9 @@ public class SystemAdminSeeder implements ApplicationRunner {
             .map(this::validateRbacManagePermission)
             .orElseGet(() -> permissionRepository.save(Permission.builder()
                 .code(RBAC_MANAGE_PERMISSION_CODE)
-                .name("Manage RBAC")
+                .name("Quản lý vai trò và quyền")
                 .module(PermissionModule.RBAC)
-                .description("Manage accounts, roles, and permissions")
+                .description("Quản lý danh mục vai trò, quyền và quan hệ phân quyền")
                 .isActive(true)
                 .createdAt(Instant.now())
                 .build()));

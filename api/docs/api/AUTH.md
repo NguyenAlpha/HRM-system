@@ -159,7 +159,7 @@ Email được chuẩn hóa về chữ thường. Username giữ nguyên chữ h
       "roles": [
         {
           "code": "SYSTEM_ADMIN",
-          "name": "System Administrator",
+          "name": "Quản trị viên hệ thống",
           "scopeType": "COMPANY",
           "organizationUnitId": null,
           "organizationUnitName": null,
@@ -170,12 +170,12 @@ Email được chuẩn hóa về chữ thường. Username giữ nguyên chữ h
       "permissions": [
         {
           "code": "account.read",
-          "name": "View accounts",
+          "name": "Xem tài khoản",
           "module": "ACCOUNT"
         },
         {
           "code": "rbac.manage",
-          "name": "Manage RBAC",
+          "name": "Quản lý vai trò và quyền",
           "module": "RBAC"
         }
       ]
@@ -280,7 +280,7 @@ Cấu trúc response giống login, nhưng cả `accessToken` và `refreshToken`
       "roles": [
         {
           "code": "SYSTEM_ADMIN",
-          "name": "System Administrator",
+          "name": "Quản trị viên hệ thống",
           "scopeType": "COMPANY",
           "organizationUnitId": null,
           "organizationUnitName": null,
@@ -291,12 +291,12 @@ Cấu trúc response giống login, nhưng cả `accessToken` và `refreshToken`
       "permissions": [
         {
           "code": "account.read",
-          "name": "View accounts",
+          "name": "Xem tài khoản",
           "module": "ACCOUNT"
         },
         {
           "code": "rbac.manage",
-          "name": "Manage RBAC",
+          "name": "Quản lý vai trò và quyền",
           "module": "RBAC"
         }
       ]
@@ -386,7 +386,7 @@ Lấy thông tin account, role và permission hiện hành. Endpoint yêu cầu 
     "roles": [
       {
         "code": "EMPLOYEE",
-        "name": "Employee",
+        "name": "Nhân viên",
         "scopeType": "SELF",
         "organizationUnitId": null,
         "organizationUnitName": null,
@@ -395,7 +395,7 @@ Lấy thông tin account, role và permission hiện hành. Endpoint yêu cầu 
       },
       {
         "code": "DIRECTOR",
-        "name": "Director",
+        "name": "Giám đốc",
         "scopeType": "COMPANY",
         "organizationUnitId": null,
         "organizationUnitName": null,
@@ -406,12 +406,12 @@ Lấy thông tin account, role và permission hiện hành. Endpoint yêu cầu 
     "permissions": [
       {
         "code": "employee.lifecycle.approve",
-        "name": "Approve employee lifecycle",
+        "name": "Phê duyệt vòng đời nhân viên",
         "module": "EMPLOYEE"
       },
       {
         "code": "request.final_approve",
-        "name": "Give final request approval",
+        "name": "Phê duyệt cuối đơn từ",
         "module": "REQUEST"
       }
     ]

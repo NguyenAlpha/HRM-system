@@ -60,7 +60,7 @@ Lấy toàn bộ lịch sử role assignment của account, gồm assignment hi�
       "accountId": 208,
       "roleId": 8,
       "roleCode": "DIRECTOR",
-      "roleName": "Director",
+      "roleName": "Giám đốc",
       "scopeType": "COMPANY",
       "organizationUnitId": null,
       "workLocationId": null,
