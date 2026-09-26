@@ -1,8 +1,34 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { RefreshCw } from "lucide-react"
 
 import { Pagination, RbacFeedback } from "@/components/admin/rbac-controls"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import {
   isSessionExpired,
   PERMISSION_MODULES,
@@ -11,6 +37,8 @@ import {
   type Page,
   type Permission,
 } from "@/lib/rbac"
+
+const ALL_MODULES = "ALL"
 
 export function PermissionManager({ onSessionExpired }: { onSessionExpired: () => void }) {
   const [data, setData] = useState<Page<Permission> | null>(null)
@@ -48,44 +76,100 @@ export function PermissionManager({ onSessionExpired }: { onSessionExpired: () =
   }
 
   return (
-    <div className="rbac-stack">
-      <RbacFeedback error={error} message={null} />
-      <section className="dashboard-card" aria-labelledby="permission-list-title" aria-busy={loading}>
-        <div className="card-heading">
-          <div>
-            <h2 id="permission-list-title">Danh mục quyền hệ thống</h2>
-            <p>Permission được định nghĩa trong code; người dùng chỉ có thể xem và chọn quyền được phép ủy quyền.</p>
-          </div>
-          <button type="button" className="secondary-button" onClick={reload} disabled={loading}>Tải lại quyền</button>
+    <Card>
+      <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
+        <div>
+          <CardTitle>Danh mục quyền hệ thống</CardTitle>
+          <CardDescription>
+            Permission được định nghĩa trong code; bạn chỉ có thể xem và chọn quyền để ủy quyền cho vai trò tùy chỉnh.
+          </CardDescription>
         </div>
-        <label className="rbac-filter"><span id="module-filter-label">Lọc theo module</span>
-          <select aria-labelledby="module-filter-label" value={moduleFilter} disabled={loading} onChange={(event) => {
-            setModuleFilter(event.target.value); setPage(0); setLoading(true); setError(null)
-          }}>
-            <option value="">Tất cả module</option>
-            {PERMISSION_MODULES.map((module) => <option key={module} value={module}>{module}</option>)}
-          </select>
-        </label>
-        {loading && <p role="status">Đang tải quyền...</p>}
-        <div className="rbac-table-wrap">
-          <table className="rbac-table">
-            <thead><tr><th scope="col">Mã / ID</th><th scope="col">Tên</th><th scope="col">Module</th><th scope="col">Chính sách gán</th><th scope="col">Mô tả</th><th scope="col">Trạng thái</th></tr></thead>
-            <tbody>
-              {data?.content.map((permission) => <tr key={permission.id}>
-                <td><code>{permission.code}</code><small>#{permission.id}</small></td>
-                <td>{permission.name}</td>
-                <td>{permission.module}</td>
-                <td>{permission.assignmentPolicy === "DELEGABLE" ? "Có thể ủy quyền" : "Chỉ system role"}</td>
-                <td>{permission.description}</td>
-                <td>{permission.isActive ? "Hoạt động" : "Tạm tắt"}</td>
-              </tr>)}
-              {!loading && data?.content.length === 0 && <tr><td colSpan={6}>Chưa có quyền trong danh sách này.</td></tr>}
-            </tbody>
-          </table>
+        <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
+          <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
+        </Button>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        <RbacFeedback error={error} />
+
+        <Select
+          value={moduleFilter || ALL_MODULES}
+          disabled={loading}
+          onValueChange={(value) => {
+            setModuleFilter(!value || value === ALL_MODULES ? "" : value)
+            setPage(0)
+            setLoading(true)
+            setError(null)
+          }}
+        >
+          <SelectTrigger className="w-52">
+            <SelectValue placeholder="Tất cả module" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_MODULES}>Tất cả module</SelectItem>
+            {PERMISSION_MODULES.map((module) => (
+              <SelectItem key={module} value={module}>{module}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <div className="rounded-xl border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Mã / ID</TableHead>
+                <TableHead>Tên</TableHead>
+                <TableHead>Module</TableHead>
+                <TableHead>Chính sách gán</TableHead>
+                <TableHead>Mô tả</TableHead>
+                <TableHead>Trạng thái</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading &&
+                Array.from({ length: 5 }).map((_, index) => (
+                  <TableRow key={index}>
+                    {Array.from({ length: 6 }).map((__, cell) => (
+                      <TableCell key={cell}><Skeleton className="h-4 w-full" /></TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+
+              {!loading && data?.content.map((permission) => (
+                <TableRow key={permission.id}>
+                  <TableCell>
+                    <code className="text-xs">{permission.code}</code>
+                    <span className="block text-xs text-muted-foreground">#{permission.id}</span>
+                  </TableCell>
+                  <TableCell className="font-medium">{permission.name}</TableCell>
+                  <TableCell><Badge variant="secondary">{permission.module}</Badge></TableCell>
+                  <TableCell>
+                    <Badge variant={permission.assignmentPolicy === "DELEGABLE" ? "default" : "outline"}>
+                      {permission.assignmentPolicy === "DELEGABLE" ? "Có thể ủy quyền" : "Chỉ system role"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="max-w-xs text-sm text-muted-foreground text-wrap">{permission.description}</TableCell>
+                  <TableCell>
+                    <Badge variant={permission.isActive ? "default" : "outline"}>
+                      {permission.isActive ? "Hoạt động" : "Tạm tắt"}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+
+              {!loading && data?.content.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    Chưa có quyền trong danh sách này.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
+
         <Pagination page={page} totalPages={data?.totalPages ?? 0} totalElements={data?.totalElements ?? 0} disabled={loading}
           onChange={(next) => { setLoading(true); setError(null); setPage(next) }} />
-      </section>
-    </div>
+      </CardContent>
+    </Card>
   )
 }
