@@ -92,7 +92,21 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "payroll.lock",
             "report.payroll.read"
         )),
-        role("SYSTEM_ADMIN", List.of("rbac.manage"))
+        role("EXECUTIVE_APPROVER", with(
+            EMPLOYEE_PERMISSIONS,
+            "employee.read",
+            "employee.lifecycle.approve",
+            "request.read",
+            "request.final_approve",
+            "organization.change.approve"
+        )),
+        role("SYSTEM_ADMIN", List.of(
+            "account.read",
+            "account.manage",
+            "account.activation.manage",
+            "account.role.assign",
+            "rbac.manage"
+        ))
     );
 
     private final RoleRepository roleRepository;
