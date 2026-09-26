@@ -10,7 +10,7 @@ Khởi tạo người đứng đầu doanh nghiệp khi người này chưa có 
 |:---------|:-----------|
 | `POST /api/admin/organization/director` | `organization.director.provision` |
 
-Endpoint yêu cầu Bearer token. `SYSTEM_ADMIN` được seed permission `organization.director.provision` cùng các permission nội bộ `account.manage` và `account.role.assign` cần để hoàn thành workflow.
+Endpoint yêu cầu Bearer token. `SYSTEM_ADMIN` và `COMPANY_OWNER` được seed permission `organization.director.provision` cùng các permission nội bộ `account.manage` và `account.role.assign` cần để hoàn thành workflow trong giai đoạn chuyển đổi quyền quản trị.
 
 `DIRECTOR` không được cấp permission này nên không thể tự tạo người kế nhiệm.
 

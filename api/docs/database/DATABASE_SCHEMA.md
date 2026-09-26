@@ -365,6 +365,7 @@ erDiagram
 | `PAYROLL_ACCOUNTANT` | `COMPANY` | Đọc thành phần thu nhập, tính và kiểm tra lương |
 | `PAYROLL_APPROVER` | `COMPANY` | Duyệt, xác nhận đã trả và khóa kỳ lương |
 | `DIRECTOR` | `COMPANY` | Xem nhân sự và phê duyệt cuối nghiệp vụ nhân sự, đơn từ, thay đổi cơ cấu toàn công ty |
+| `COMPANY_OWNER` | `COMPANY` | Quản trị tài khoản, quyền truy cập và cấu hình trong phạm vi doanh nghiệp |
 | `SYSTEM_ADMIN` | `COMPANY` | Tài khoản, vai trò và quyền; không mặc nhiên xem lương |
 
 Mọi nhân viên có tài khoản đều nhận `EMPLOYEE` ở scope `SELF`; vai trò nghiệp vụ được gán thêm.
@@ -378,6 +379,7 @@ employee.sensitive.manage    employee.lifecycle.approve
 request.self.read            request.self.create           request.self.cancel
 request.read                 request.approve               request.final_approve
 request.manage              organization.change.approve   organization.director.provision
+organization.hr_staff.bootstrap
 attendance.self.read         attendance.read               attendance.manage
 attendance.overtime.approve
 payroll.self.read            payroll.self.print

@@ -37,6 +37,7 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 public class AccountRoleAssignmentAdminService {
 
     private static final String EMPLOYEE_ROLE = "EMPLOYEE";
+    private static final String COMPANY_OWNER_ROLE = "COMPANY_OWNER";
     private static final String SYSTEM_ADMIN_ROLE = "SYSTEM_ADMIN";
     private static final String DIRECTOR_ROLE = "DIRECTOR";
 
@@ -47,7 +48,8 @@ public class AccountRoleAssignmentAdminService {
         "HR_STAFF", Set.of(RoleScopeType.COMPANY),
         "PAYROLL_ACCOUNTANT", Set.of(RoleScopeType.COMPANY),
         "PAYROLL_APPROVER", Set.of(RoleScopeType.COMPANY),
-        DIRECTOR_ROLE, Set.of(RoleScopeType.COMPANY)
+        DIRECTOR_ROLE, Set.of(RoleScopeType.COMPANY),
+        COMPANY_OWNER_ROLE, Set.of(RoleScopeType.COMPANY)
     );
 
     private final AccountRepository accountRepository;
@@ -180,6 +182,12 @@ public class AccountRoleAssignmentAdminService {
             throw new ConflictException(
                 ErrorCode.ROLE_ASSIGNMENT_NOT_ALLOWED,
                 "The SYSTEM_ADMIN role cannot be managed through business role assignments"
+            );
+        }
+        if (COMPANY_OWNER_ROLE.equals(role.getCode())) {
+            throw new ConflictException(
+                ErrorCode.ROLE_ASSIGNMENT_NOT_ALLOWED,
+                "The COMPANY_OWNER role must be managed through the dedicated ownership workflow"
             );
         }
     }
