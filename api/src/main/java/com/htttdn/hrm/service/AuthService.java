@@ -13,7 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.htttdn.hrm.dto.request.auth.ChangeOwnPasswordRequest;
 import com.htttdn.hrm.dto.request.auth.LoginRequest;
 import com.htttdn.hrm.dto.response.auth.AuthAccountResponse;
+import com.htttdn.hrm.dto.response.auth.AuthEmployeeResponse;
+import com.htttdn.hrm.dto.response.auth.AuthPermissionResponse;
 import com.htttdn.hrm.dto.response.auth.AuthResponse;
+import com.htttdn.hrm.dto.response.auth.AuthRoleResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.enums.AccountStatus;
@@ -145,12 +148,32 @@ public class AuthService {
     private AuthAccountResponse toAccountResponse(Account account, AuthorizationSnapshot authorization) {
         return new AuthAccountResponse(
             account.getId(),
-            account.getEmployee() == null ? null : account.getEmployee().getId(),
             account.getUsername(),
             account.getEmail(),
             account.getStatus(),
-            authorization.roles(),
-            authorization.permissions()
+            account.getEmployee() == null ? null : new AuthEmployeeResponse(
+                account.getEmployee().getId(),
+                account.getEmployee().getEmployeeCode(),
+                account.getEmployee().getFullName()
+            ),
+            authorization.roleDetails().stream()
+                .map(role -> new AuthRoleResponse(
+                    role.code(),
+                    role.name(),
+                    role.scopeType(),
+                    role.organizationUnitId(),
+                    role.organizationUnitName(),
+                    role.workLocationId(),
+                    role.workLocationName()
+                ))
+                .toList(),
+            authorization.permissionDetails().stream()
+                .map(permission -> new AuthPermissionResponse(
+                    permission.code(),
+                    permission.name(),
+                    permission.module()
+                ))
+                .toList()
         );
     }
 

@@ -5,12 +5,12 @@ import java.util.List;
 import com.htttdn.hrm.entity.enums.AccountStatus;
 
 public record AuthAccountResponse(
-    Long id,
-    Long employeeId,
+    Long accountId,
     String username,
     String email,
     AccountStatus status,
-    List<String> roles,
-    List<String> permissions
+    AuthEmployeeResponse employee,
+    List<AuthRoleResponse> roles,
+    List<AuthPermissionResponse> permissions
 ) {
 }

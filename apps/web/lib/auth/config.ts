@@ -1,4 +1,4 @@
-import type { Portal } from "@/lib/auth/types"
+import type { AuthRole, Portal } from "@/lib/auth/types"
 
 interface PortalConfig {
   accessCookie: string
@@ -25,6 +25,6 @@ export const PORTAL_CONFIG: Record<Portal, PortalConfig> = {
   },
 }
 
-export function isSystemAdmin(roles: string[]): boolean {
-  return roles.includes("SYSTEM_ADMIN")
+export function isSystemAdmin(roles: AuthRole[]): boolean {
+  return roles.some((role) => role.code === "SYSTEM_ADMIN")
 }

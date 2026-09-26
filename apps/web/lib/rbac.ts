@@ -3,7 +3,7 @@
 import { authorizedRequest } from "@/lib/auth/client"
 import { AuthApiError } from "@/lib/auth/types"
 
-export const PERMISSION_MODULES = ["EMPLOYEE", "REQUEST", "ATTENDANCE", "PAYROLL", "RBAC", "REPORT"] as const
+export const PERMISSION_MODULES = ["EMPLOYEE", "ACCOUNT", "ORGANIZATION", "REQUEST", "ATTENDANCE", "PAYROLL", "RBAC", "REPORT"] as const
 export type PermissionModule = typeof PERMISSION_MODULES[number]
 
 export interface Role {
@@ -18,6 +18,7 @@ export interface Role {
 export interface Permission {
   id: number
   code: string
+  name: string
   module: PermissionModule
   description: string
   isActive: boolean

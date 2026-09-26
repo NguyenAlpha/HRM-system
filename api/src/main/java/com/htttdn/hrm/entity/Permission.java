@@ -35,6 +35,9 @@ public class Permission {
     @Column(nullable = false, unique = true, length = 100)
     private String code;
 
+    @Column(nullable = false, length = 150)
+    private String name;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private PermissionModule module;

@@ -38,8 +38,8 @@ export function PortalSidebar({ portal, account, active = "overview" }: {
         )}
       </nav>
       <div className="sidebar-account">
-        <span className="avatar">{account.username.slice(0, 1).toUpperCase()}</span>
-        <span><strong>{account.username}</strong><small>{account.email}</small></span>
+        <span className="avatar">{(account.employee?.fullName ?? account.username).slice(0, 1).toUpperCase()}</span>
+        <span><strong>{account.employee?.fullName ?? account.username}</strong><small>{account.email}</small></span>
       </div>
     </aside>
   )

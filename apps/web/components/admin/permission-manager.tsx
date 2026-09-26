@@ -5,7 +5,7 @@ import { type FormEvent, useEffect, useRef, useState } from "react"
 import { Pagination, RbacFeedback } from "@/components/admin/rbac-controls"
 import { isSessionExpired, PERMISSION_MODULES, rbacErrorMessage, rbacMutation, rbacRequest, type Page, type Permission, type PermissionModule } from "@/lib/rbac"
 
-const EMPTY_FORM = { code: "", module: "EMPLOYEE" as PermissionModule, description: "", isActive: true }
+const EMPTY_FORM = { code: "", name: "", module: "EMPLOYEE" as PermissionModule, description: "", isActive: true }
 
 export function PermissionManager({ onSessionExpired }: { onSessionExpired: () => void }) {
   const [data, setData] = useState<Page<Permission> | null>(null)
@@ -55,7 +55,7 @@ export function PermissionManager({ onSessionExpired }: { onSessionExpired: () =
 
   function edit(permission: Permission) {
     setEditing(permission)
-    setForm({ code: permission.code, module: permission.module, description: permission.description, isActive: permission.isActive })
+    setForm({ code: permission.code, name: permission.name, module: permission.module, description: permission.description, isActive: permission.isActive })
     setError(null)
     setMessage(null)
     formRef.current?.scrollIntoView({ block: "start" })
@@ -68,8 +68,8 @@ export function PermissionManager({ onSessionExpired }: { onSessionExpired: () =
     setMessage(null)
     try {
       const saved = editing
-        ? await rbacMutation<Permission>(`/permissions/${editing.id}`, "PUT", { description: form.description.trim(), isActive: form.isActive })
-        : await rbacMutation<Permission>("/permissions", "POST", { code: form.code.trim(), module: form.module, description: form.description.trim() })
+        ? await rbacMutation<Permission>(`/permissions/${editing.id}`, "PUT", { name: form.name.trim(), description: form.description.trim(), isActive: form.isActive })
+        : await rbacMutation<Permission>("/permissions", "POST", { code: form.code.trim(), name: form.name.trim(), module: form.module, description: form.description.trim() })
       setMessage(editing ? `Đã cập nhật quyền ${saved.code}.` : `Đã tạo quyền ${saved.code}.`)
       if (!editing) { setPage(0); setModuleFilter("") }
       resetForm()
@@ -118,6 +118,10 @@ export function PermissionManager({ onSessionExpired }: { onSessionExpired: () =
                   {PERMISSION_MODULES.map((module) => <option key={module} value={module}>{module}</option>)}
                 </select>
               </label>
+              <label className="rbac-full">Tên hiển thị
+                <input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })}
+                  required maxLength={150} placeholder="VD: Xuất danh sách nhân viên" />
+              </label>
               <label className="rbac-full"><span id="permission-description-label">Mô tả quyền</span>
                 <textarea aria-labelledby="permission-description-label" rows={2} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} required />
               </label>
@@ -150,11 +154,11 @@ export function PermissionManager({ onSessionExpired }: { onSessionExpired: () =
         {loading && <p role="status">Đang tải quyền...</p>}
         <div className="rbac-table-wrap">
           <table className="rbac-table">
-            <thead><tr><th scope="col">Mã / ID</th><th scope="col">Module</th><th scope="col">Mô tả</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead>
+            <thead><tr><th scope="col">Mã / ID</th><th scope="col">Tên</th><th scope="col">Module</th><th scope="col">Mô tả</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead>
             <tbody>
               {data?.content.map((permission) => <tr key={permission.id}>
                 <td><code>{permission.code}</code><small>#{permission.id}</small></td>
-                <td>{permission.module}</td><td>{permission.description}</td>
+                <td>{permission.name}</td><td>{permission.module}</td><td>{permission.description}</td>
                 <td>{permission.isActive ? "Hoạt động" : "Tạm tắt"}</td>
                 <td><div className="portal-actions">
                   <button type="button" className="secondary-button" onClick={() => edit(permission)} disabled={disabled}>Sửa</button>
@@ -162,7 +166,7 @@ export function PermissionManager({ onSessionExpired }: { onSessionExpired: () =
                     title={permission.code === "rbac.manage" ? "Không thể xóa quyền quản trị" : `Xóa ${permission.code}`}>Xóa</button>
                 </div></td>
               </tr>)}
-              {!loading && data?.content.length === 0 && <tr><td colSpan={5}>Chưa có quyền trong danh sách này.</td></tr>}
+              {!loading && data?.content.length === 0 && <tr><td colSpan={6}>Chưa có quyền trong danh sách này.</td></tr>}
             </tbody>
           </table>
         </div>

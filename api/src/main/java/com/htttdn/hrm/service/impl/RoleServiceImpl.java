@@ -153,6 +153,7 @@ public class RoleServiceImpl implements RoleService {
             .map(permission -> new PermissionResponse(
                 permission.getId(),
                 permission.getCode(),
+                permission.getName(),
                 permission.getModule(),
                 permission.getDescription(),
                 permission.getIsActive()

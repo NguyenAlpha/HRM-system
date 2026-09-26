@@ -239,6 +239,7 @@ public class SystemAdminSeeder implements ApplicationRunner {
             .map(this::validateRbacManagePermission)
             .orElseGet(() -> permissionRepository.save(Permission.builder()
                 .code(RBAC_MANAGE_PERMISSION_CODE)
+                .name("Manage RBAC")
                 .module(PermissionModule.RBAC)
                 .description("Manage accounts, roles, and permissions")
                 .isActive(true)

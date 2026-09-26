@@ -13,13 +13,35 @@ export interface ApiEnvelope<T> {
 }
 
 export interface AccountSummary {
-  id: number
-  employeeId: number | null
+  accountId: number
   username: string
   email: string
   status: string
-  roles: string[]
-  permissions: string[]
+  employee: AuthEmployee | null
+  roles: AuthRole[]
+  permissions: AuthPermission[]
+}
+
+export interface AuthEmployee {
+  id: number
+  employeeCode: string
+  fullName: string
+}
+
+export interface AuthRole {
+  code: string
+  name: string
+  scopeType: "SELF" | "ORG_UNIT" | "LOCATION" | "COMPANY"
+  organizationUnitId: number | null
+  organizationUnitName: string | null
+  workLocationId: number | null
+  workLocationName: string | null
+}
+
+export interface AuthPermission {
+  code: string
+  name: string
+  module: string
 }
 
 export interface BackendAuthData {

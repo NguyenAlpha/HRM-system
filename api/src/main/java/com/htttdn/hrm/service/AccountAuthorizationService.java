@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -14,8 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.entity.AccountPermissionOverride;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
+import com.htttdn.hrm.entity.Permission;
 import com.htttdn.hrm.entity.RolePermission;
 import com.htttdn.hrm.entity.enums.PermissionOverrideEffect;
+import com.htttdn.hrm.entity.enums.PermissionModule;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.repository.AccountPermissionOverrideRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
@@ -42,7 +45,7 @@ public class AccountAuthorizationService {
     public AuthorizationSnapshot getSnapshot(Long accountId) {
         AuthorizationContext context = loadContext(accountId, LocalDate.now());
         if (context.assignments().isEmpty()) {
-            return new AuthorizationSnapshot(List.of(), List.of());
+            return new AuthorizationSnapshot(List.of(), List.of(), List.of(), List.of());
         }
 
         Set<String> roles = new LinkedHashSet<>();
@@ -52,7 +55,34 @@ public class AccountAuthorizationService {
             permissions.addAll(effectivePermissions(assignment, context));
         }
 
-        return new AuthorizationSnapshot(sorted(roles), sorted(permissions));
+        List<AuthorizationRole> roleDetails = context.assignments().stream()
+            .map(this::toAuthorizationRole)
+            .distinct()
+            .sorted(Comparator.comparing(AuthorizationRole::code)
+                .thenComparing(
+                    AuthorizationRole::scopeType,
+                    Comparator.nullsFirst(Comparator.naturalOrder())
+                )
+                .thenComparing(AuthorizationRole::organizationUnitId, Comparator.nullsFirst(Long::compareTo))
+                .thenComparing(AuthorizationRole::workLocationId, Comparator.nullsFirst(Long::compareTo)))
+            .toList();
+        List<AuthorizationPermission> permissionDetails = permissions.stream()
+            .map(context.permissionsByCode()::get)
+            .filter(Objects::nonNull)
+            .map(permission -> new AuthorizationPermission(
+                permission.getCode(),
+                permission.getName(),
+                permission.getModule()
+            ))
+            .sorted(Comparator.comparing(AuthorizationPermission::code))
+            .toList();
+
+        return new AuthorizationSnapshot(
+            sorted(roles),
+            sorted(permissions),
+            roleDetails,
+            permissionDetails
+        );
     }
 
     @Transactional(readOnly = true)
@@ -73,24 +103,37 @@ public class AccountAuthorizationService {
         List<AccountRoleAssignment> assignments =
             accountRoleAssignmentRepository.findActiveWithRoleByAccountId(accountId, date);
         if (assignments.isEmpty()) {
-            return new AuthorizationContext(List.of(), Map.of(), Map.of());
+            return new AuthorizationContext(List.of(), Map.of(), Map.of(), Map.of());
         }
 
         List<Long> roleIds = assignments.stream()
             .map(assignment -> assignment.getRole().getId())
             .distinct()
             .toList();
-        Map<Long, Set<String>> permissionsByRole = groupPermissionsByRole(
-            rolePermissionRepository.findActiveByRoleIds(roleIds)
-        );
+        List<RolePermission> rolePermissions = rolePermissionRepository.findActiveByRoleIds(roleIds);
+        Map<Long, Set<String>> permissionsByRole = groupPermissionsByRole(rolePermissions);
 
         List<Long> assignmentIds = assignments.stream()
             .map(AccountRoleAssignment::getId)
             .toList();
-        Map<Long, List<AccountPermissionOverride>> overridesByAssignment = groupOverridesByAssignment(
-            accountPermissionOverrideRepository.findActiveByAssignmentIds(assignmentIds, date)
+        List<AccountPermissionOverride> overrides =
+            accountPermissionOverrideRepository.findActiveByAssignmentIds(assignmentIds, date);
+        Map<Long, List<AccountPermissionOverride>> overridesByAssignment = groupOverridesByAssignment(overrides);
+        Map<String, Permission> permissionsByCode = new HashMap<>();
+        rolePermissions.forEach(rolePermission -> permissionsByCode.put(
+            rolePermission.getPermission().getCode(),
+            rolePermission.getPermission()
+        ));
+        overrides.forEach(permissionOverride -> permissionsByCode.put(
+            permissionOverride.getPermission().getCode(),
+            permissionOverride.getPermission()
+        ));
+        return new AuthorizationContext(
+            assignments,
+            permissionsByRole,
+            overridesByAssignment,
+            permissionsByCode
         );
-        return new AuthorizationContext(assignments, permissionsByRole, overridesByAssignment);
     }
 
     private Set<String> effectivePermissions(
@@ -141,7 +184,46 @@ public class AccountAuthorizationService {
         return values.stream().sorted().toList();
     }
 
-    public record AuthorizationSnapshot(List<String> roles, List<String> permissions) {
+    private AuthorizationRole toAuthorizationRole(AccountRoleAssignment assignment) {
+        return new AuthorizationRole(
+            assignment.getRole().getCode(),
+            assignment.getRole().getName(),
+            assignment.getScopeType(),
+            assignment.getOrganizationUnit() == null ? null : assignment.getOrganizationUnit().getId(),
+            assignment.getOrganizationUnit() == null ? null : assignment.getOrganizationUnit().getName(),
+            assignment.getWorkLocation() == null ? null : assignment.getWorkLocation().getId(),
+            assignment.getWorkLocation() == null ? null : assignment.getWorkLocation().getName()
+        );
+    }
+
+    public record AuthorizationSnapshot(
+        List<String> roles,
+        List<String> permissions,
+        List<AuthorizationRole> roleDetails,
+        List<AuthorizationPermission> permissionDetails
+    ) {
+
+        public AuthorizationSnapshot(List<String> roles, List<String> permissions) {
+            this(roles, permissions, List.of(), List.of());
+        }
+    }
+
+    public record AuthorizationRole(
+        String code,
+        String name,
+        RoleScopeType scopeType,
+        Long organizationUnitId,
+        String organizationUnitName,
+        Long workLocationId,
+        String workLocationName
+    ) {
+    }
+
+    public record AuthorizationPermission(
+        String code,
+        String name,
+        PermissionModule module
+    ) {
     }
 
     public record AuthorizationScope(
@@ -154,7 +236,8 @@ public class AccountAuthorizationService {
     private record AuthorizationContext(
         List<AccountRoleAssignment> assignments,
         Map<Long, Set<String>> permissionsByRole,
-        Map<Long, List<AccountPermissionOverride>> overridesByAssignment
+        Map<Long, List<AccountPermissionOverride>> overridesByAssignment,
+        Map<String, Permission> permissionsByCode
     ) {
     }
 }
