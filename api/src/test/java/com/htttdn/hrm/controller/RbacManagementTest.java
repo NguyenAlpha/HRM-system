@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Permission;
 import com.htttdn.hrm.entity.Role;
+import com.htttdn.hrm.entity.RolePermission;
 import com.htttdn.hrm.entity.RolePermissionId;
 import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.entity.enums.PermissionAssignmentPolicy;
@@ -157,6 +158,27 @@ class RbacManagementTest {
             .andExpect(jsonPath("$.data.content[0].module").value("RBAC"));
     }
 
+    @Test
+    void companyOwnerCanListRolesWithTheirPermissionsWithoutPagination() throws Exception {
+        Role roleWithoutPermission = savedRole(false);
+        Role roleWithPermission = savedRole(true);
+        Permission permission = savedPermission(permissionCode());
+        rolePermissionRepository.save(RolePermission.builder()
+            .id(new RolePermissionId(roleWithPermission.getId(), permission.getId()))
+            .role(roleWithPermission)
+            .permission(permission)
+            .createdAt(Instant.now())
+            .build());
+
+        admin(get("/api/roles/with-permissions"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.length()").value(2))
+            .andExpect(jsonPath("$.data[0].id").value(roleWithoutPermission.getId()))
+            .andExpect(jsonPath("$.data[0].permissions").isEmpty())
+            .andExpect(jsonPath("$.data[1].id").value(roleWithPermission.getId()))
+            .andExpect(jsonPath("$.data[1].permissions[0].id").value(permission.getId()));
+    }
+
     @ParameterizedTest
     @MethodSource("permissionWriteEndpoints")
     void permissionCatalogDoesNotExposeWriteEndpoints(String method, String path, String body) throws Exception {
@@ -254,6 +276,7 @@ class RbacManagementTest {
     @WithMockUser(roles = "EMPLOYEE")
     void serviceCallsAreProtectedWithoutGoingThroughControllers() {
         assertThrows(AccessDeniedException.class, () -> roleService.list(Pageable.unpaged()));
+        assertThrows(AccessDeniedException.class, roleService::listWithPermissions);
         assertThrows(AccessDeniedException.class, () -> permissionService.list(Pageable.unpaged()));
     }
 
@@ -310,6 +333,7 @@ class RbacManagementTest {
         return Stream.of(
             Arguments.of("POST", "/api/roles", "{\"code\":\"TEST_ROLE\",\"name\":\"Test role\"}"),
             Arguments.of("GET", "/api/roles", ""),
+            Arguments.of("GET", "/api/roles/with-permissions", ""),
             Arguments.of("GET", "/api/roles/1", ""),
             Arguments.of("PUT", "/api/roles/1", "{\"name\":\"Updated\"}"),
             Arguments.of("DELETE", "/api/roles/1", ""),

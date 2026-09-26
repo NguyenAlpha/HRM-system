@@ -10,6 +10,7 @@ import com.htttdn.hrm.dto.request.role.GrantPermissionRequest;
 import com.htttdn.hrm.dto.request.role.UpdateRoleRequest;
 import com.htttdn.hrm.dto.response.permission.PermissionResponse;
 import com.htttdn.hrm.dto.response.role.RoleResponse;
+import com.htttdn.hrm.dto.response.role.RoleWithPermissionsResponse;
 
 public interface RoleService {
 
@@ -18,6 +19,8 @@ public interface RoleService {
     RoleResponse getById(Long id);
 
     Page<RoleResponse> list(Pageable pageable);
+
+    List<RoleWithPermissionsResponse> listWithPermissions();
 
     RoleResponse update(Long id, UpdateRoleRequest request);
 
