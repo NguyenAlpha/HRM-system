@@ -8,6 +8,8 @@ Role nghiệp vụ bổ sung được quản lý qua [Account Role Assignments](
 
 Nếu Director chưa có employee, sử dụng workflow tổng hợp [Organization Director Administration](./ORGANIZATION_DIRECTOR_ADMIN.md).
 
+Company Owner đầu tiên phải được `SYSTEM_ADMIN` tạo qua workflow [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md), không dùng endpoint account tổng quát.
+
 ---
 
 ## Endpoint access
