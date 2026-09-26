@@ -187,6 +187,8 @@
 
 **Quan hệ**:
 - Một-một tới `Employee` (nullable — null chỉ dành cho bootstrap admin).
+- Một-nhiều tới `AccountActivationToken.account` và `AccountActivationToken.createdByAccount`.
+- Một-nhiều tới `RefreshToken.account`.
 - Một-nhiều tới `AccountRoleAssignment.account`.
 - Được tham chiếu bởi nhiều entity khác qua các cột `*_account_id` (người thực hiện/duyệt).
 
@@ -196,13 +198,45 @@
 | `employee` | `Employee` | `employee_id` | FK, UNIQUE, nullable | Hồ sơ liên kết |
 | `username` | `String` | `username` | NOT NULL, UNIQUE | Tên đăng nhập, không tái sử dụng |
 | `email` | `String` | `email` | NOT NULL, UNIQUE | Email đăng nhập |
-| `passwordHash` | `String` | `password_hash` | NOT NULL | Mật khẩu đã hash |
+| `passwordHash` | `String` | `password_hash` | nullable khi `PENDING` | Mật khẩu đã hash; chỉ được null trước khi kích hoạt |
 | `status` | `AccountStatus` | `status` | NOT NULL | `PENDING` / `ACTIVE` / `LOCKED` / `DISABLED` |
 | `failedLoginCount` | `Integer` | `failed_login_count` | NOT NULL, mặc định 0 | Số lần đăng nhập sai liên tiếp |
 | `lockedUntil` | `Instant` | `locked_until` | | Khóa tạm đến thời điểm |
 | `lastLoginAt` | `Instant` | `last_login_at` | | Lần đăng nhập gần nhất |
 | `createdAt` | `Instant` | `created_at` | NOT NULL | Thời điểm tạo |
 | `updatedAt` | `Instant` | `updated_at` | NOT NULL | Thời điểm cập nhật |
+
+### Entity `AccountActivationToken` (bảng `account_activation_tokens`)
+
+**Mô tả**: Credential dùng một lần để account `PENDING` tự đặt mật khẩu và chuyển sang `ACTIVE`.
+
+**Quan hệ**: Nhiều-một tới `Account` qua `account` và `createdByAccount`.
+
+| Thuộc tính | Kiểu Java | Cột DB | Ràng buộc | Ý nghĩa |
+|---|---|---|---|---|
+| `id` | `Long` | `id` | PK | Khóa chính |
+| `account` | `Account` | `account_id` | FK, NOT NULL | Account được kích hoạt |
+| `tokenHash` | `String` | `token_hash` | NOT NULL, UNIQUE | SHA-256 hash của raw token |
+| `expiresAt` | `Instant` | `expires_at` | NOT NULL | Thời điểm token hết hạn |
+| `usedAt` | `Instant` | `used_at` | nullable | Thời điểm kích hoạt thành công |
+| `revokedAt` | `Instant` | `revoked_at` | nullable | Thời điểm token bị thu hồi |
+| `createdByAccount` | `Account` | `created_by_account_id` | FK, NOT NULL | Quản trị viên phát hành token |
+| `createdAt` | `Instant` | `created_at` | NOT NULL | Thời điểm tạo |
+
+### Entity `RefreshToken` (bảng `refresh_tokens`)
+
+**Mô tả**: Credential dùng để đổi access token theo cơ chế rotation; database chỉ lưu SHA-256 hash.
+
+**Quan hệ**: Nhiều-một tới `Account`.
+
+| Thuộc tính | Kiểu Java | Cột DB | Ràng buộc | Ý nghĩa |
+|---|---|---|---|---|
+| `id` | `Long` | `id` | PK | Khóa chính |
+| `tokenHash` | `String` | `token_hash` | NOT NULL, UNIQUE | SHA-256 hash của raw refresh token |
+| `account` | `Account` | `account_id` | FK, NOT NULL | Chủ sở hữu phiên đăng nhập |
+| `expiresAt` | `Instant` | `expires_at` | NOT NULL | Thời điểm token hết hạn |
+| `revokedAt` | `Instant` | `revoked_at` | nullable | Thời điểm token bị thu hồi hoặc đã được rotate |
+| `createdAt` | `Instant` | `created_at` | NOT NULL | Thời điểm tạo |
 
 ### Entity `Permission` (bảng `permissions`)
 
