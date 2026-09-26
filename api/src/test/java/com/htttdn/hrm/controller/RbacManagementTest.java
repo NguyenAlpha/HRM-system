@@ -66,7 +66,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     "rbac.seed.enabled=false",
     "admin.seed.enabled=false",
     "user.seed.enabled=false",
-    "rbac.management.allowed-roles=SYSTEM_ADMIN"
+    "rbac.management.allowed-roles=COMPANY_OWNER"
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -200,7 +200,7 @@ class RbacManagementTest {
         Role role = savedRole(false);
         Permission permission = savedPermission(permissionCode());
         Account actor = savedAccount();
-        String token = token(actor.getId(), List.of("SYSTEM_ADMIN"), List.of());
+        String token = token(actor.getId(), List.of("COMPANY_OWNER"), List.of());
         String path = "/api/roles/" + role.getId() + "/permissions";
         String body = objectMapper.writeValueAsString(Map.of(
             "permissionId", permission.getId(), "grantedByAccountId", -1
@@ -246,10 +246,11 @@ class RbacManagementTest {
             .andExpect(jsonPath("$.error.code").value("CONFLICT"));
     }
 
-    @Test
-    void bootstrapPermissionCannotBeDeletedOrDeactivated() throws Exception {
-        Permission permission = permissionRepository.findByCode("rbac.manage")
-            .orElseGet(() -> savedPermission("rbac.manage"));
+    @ParameterizedTest
+    @ValueSource(strings = {"rbac.manage", "organization.company_owner.bootstrap"})
+    void requiredPermissionCannotBeDeletedOrDeactivated(String permissionCode) throws Exception {
+        Permission permission = permissionRepository.findByCode(permissionCode)
+            .orElseGet(() -> savedPermission(permissionCode));
         admin(delete("/api/permissions/{id}", permission.getId())).andExpect(status().isConflict());
         admin(put("/api/permissions/{id}", permission.getId()), Map.of(
                 "name", "Manage RBAC",
@@ -305,7 +306,7 @@ class RbacManagementTest {
 
     private ResultActions admin(MockHttpServletRequestBuilder request) throws Exception {
         return mockMvc.perform(request.header(HttpHeaders.AUTHORIZATION,
-            "Bearer " + token(42L, List.of("SYSTEM_ADMIN"), List.of())));
+            "Bearer " + token(42L, List.of("COMPANY_OWNER"), List.of())));
     }
 
     private ResultActions admin(MockHttpServletRequestBuilder request, Object body) throws Exception {

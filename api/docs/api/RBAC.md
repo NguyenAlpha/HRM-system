@@ -8,19 +8,19 @@ Quản lý role, permission và quan hệ permission của role. Việc gán rol
 
 | Endpoint | Yêu cầu Bearer token | Role được phép mặc định |
 |:---------|:--------------------:|:-----------------------:|
-| `POST /api/roles` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
-| `GET /api/roles` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
-| `GET /api/roles/{id}` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
-| `PUT /api/roles/{id}` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
-| `DELETE /api/roles/{id}` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
-| `GET /api/roles/{roleId}/permissions` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
-| `POST /api/roles/{roleId}/permissions` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
-| `DELETE /api/roles/{roleId}/permissions/{permissionId}` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
-| `POST /api/permissions` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
-| `GET /api/permissions` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
-| `GET /api/permissions/{id}` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
-| `PUT /api/permissions/{id}` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
-| `DELETE /api/permissions/{id}` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
+| `POST /api/roles` | ✅ | `COMPANY_OWNER` |
+| `GET /api/roles` | ✅ | `COMPANY_OWNER` |
+| `GET /api/roles/{id}` | ✅ | `COMPANY_OWNER` |
+| `PUT /api/roles/{id}` | ✅ | `COMPANY_OWNER` |
+| `DELETE /api/roles/{id}` | ✅ | `COMPANY_OWNER` |
+| `GET /api/roles/{roleId}/permissions` | ✅ | `COMPANY_OWNER` |
+| `POST /api/roles/{roleId}/permissions` | ✅ | `COMPANY_OWNER` |
+| `DELETE /api/roles/{roleId}/permissions/{permissionId}` | ✅ | `COMPANY_OWNER` |
+| `POST /api/permissions` | ✅ | `COMPANY_OWNER` |
+| `GET /api/permissions` | ✅ | `COMPANY_OWNER` |
+| `GET /api/permissions/{id}` | ✅ | `COMPANY_OWNER` |
+| `PUT /api/permissions/{id}` | ✅ | `COMPANY_OWNER` |
+| `DELETE /api/permissions/{id}` | ✅ | `COMPANY_OWNER` |
 
 Danh sách role được phép gọi các API này có thể thay đổi bằng cấu hình `RBAC_MANAGEMENT_ALLOWED_ROLES`. Permission `rbac.manage` trong JWT không thay thế yêu cầu về role.
 
@@ -167,7 +167,7 @@ Endpoint sử dụng các tham số [phân trang](#phân-trang) chung.
         "id": 1,
         "code": "SYSTEM_ADMIN",
         "name": "Quản trị viên hệ thống",
-        "description": "Quản lý tài khoản, vai trò và quyền trong giai đoạn quản trị hệ thống",
+        "description": "Khởi tạo Chủ sở hữu doanh nghiệp đầu tiên, không tham gia nghiệp vụ nội bộ công ty",
         "isSystem": true,
         "isActive": true
       },
@@ -386,7 +386,7 @@ API lưu quan hệ ngay cả khi role hoặc permission đang inactive. Chỉ ro
 | 404 | `ROLE_NOT_FOUND` | Role không tồn tại hoặc đã bị xóa mềm |
 | 404 | `PERMISSION_NOT_FOUND` | Permission không tồn tại |
 | 404 | `RESOURCE_NOT_FOUND` | Account trong claim `accountId` không còn tồn tại |
-| 409 | `CONFLICT` | Permission đã được gán cho role |
+| 409 | `CONFLICT` | Permission đã được gán cho role hoặc cố thay đổi permission của `SYSTEM_ADMIN` |
 
 ---
 
@@ -413,6 +413,7 @@ Gỡ một permission khỏi role. Endpoint không cần request body.
 | 403 | `FORBIDDEN` | Account không có role được phép quản trị RBAC |
 | 404 | `ROLE_NOT_FOUND` | Role không tồn tại hoặc đã bị xóa mềm |
 | 404 | `PERMISSION_NOT_FOUND` | Role không có mapping với permission này |
+| 409 | `CONFLICT` | Cố thay đổi permission của `SYSTEM_ADMIN` |
 
 ---
 
@@ -572,7 +573,7 @@ Cập nhật tên hiển thị, mô tả và trạng thái của permission. `co
 |:------|:-----|:--------:|:----------|
 | `name` | string | ✅ | Tên ngắn dùng để hiển thị, không rỗng, tối đa 150 ký tự |
 | `description` | string | ✅ | Không rỗng |
-| `isActive` | boolean | ✅ | Permission `rbac.manage` không thể chuyển thành `false` |
+| `isActive` | boolean | ✅ | `rbac.manage` và `organization.company_owner.bootstrap` không thể chuyển thành `false` |
 
 ### Response `200 OK`
 
@@ -601,7 +602,7 @@ Permission inactive vẫn còn trong danh mục và các mapping đã tạo, nh�
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
 | 403 | `FORBIDDEN` | Account không có role được phép quản trị RBAC |
 | 404 | `PERMISSION_NOT_FOUND` | Permission không tồn tại |
-| 409 | `CONFLICT` | Cố vô hiệu hóa permission `rbac.manage` |
+| 409 | `CONFLICT` | Cố vô hiệu hóa `rbac.manage` hoặc `organization.company_owner.bootstrap` |
 
 ---
 
@@ -629,7 +630,7 @@ Permission không thể xóa nếu đang được bất kỳ role hoặc permiss
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
 | 403 | `FORBIDDEN` | Account không có role được phép quản trị RBAC |
 | 404 | `PERMISSION_NOT_FOUND` | Permission không tồn tại |
-| 409 | `CONFLICT` | Permission đang được tham chiếu hoặc là `rbac.manage` |
+| 409 | `CONFLICT` | Permission đang được tham chiếu hoặc là quyền bắt buộc `rbac.manage`/`organization.company_owner.bootstrap` |
 
 ---
 
@@ -647,18 +648,18 @@ Permission không thể xóa nếu đang được bất kỳ role hoặc permiss
 
 | Biến môi trường | Mặc định | Ý nghĩa |
 |:----------------|:---------|:--------|
-| `RBAC_MANAGEMENT_ALLOWED_ROLES` | `SYSTEM_ADMIN,COMPANY_OWNER` | Danh sách role code được phép gọi API RBAC, phân tách bằng dấu phẩy |
+| `RBAC_MANAGEMENT_ALLOWED_ROLES` | `COMPANY_OWNER` | Danh sách role code được phép gọi API RBAC, phân tách bằng dấu phẩy |
 | `RBAC_SEED_ENABLED` | `true` | Seed role, permission và mapping mặc định khi khởi động |
-| `ADMIN_SEED_ENABLED` | `true` | Seed system admin và bảo đảm quyền bootstrap `rbac.manage` |
+| `ADMIN_SEED_ENABLED` | `true` | Seed system admin và bảo đảm quyền `organization.company_owner.bootstrap` |
 
 Ví dụ cho phép thêm role `RBAC_MANAGER` quản trị RBAC:
 
 ```powershell
-$env:RBAC_MANAGEMENT_ALLOWED_ROLES = "SYSTEM_ADMIN,COMPANY_OWNER,RBAC_MANAGER"
+$env:RBAC_MANAGEMENT_ALLOWED_ROLES = "COMPANY_OWNER,RBAC_MANAGER"
 ./mvnw.cmd spring-boot:run
 ```
 
-Dùng role code không có prefix `ROLE_`. Giá trị cấu hình thay thế toàn bộ danh sách mặc định, vì vậy cần giữ `SYSTEM_ADMIN` và `COMPANY_OWNER` nếu cả hai vẫn phải có quyền truy cập trong giai đoạn chuyển đổi. Danh sách rỗng từ chối mọi role.
+Dùng role code không có prefix `ROLE_`. Giá trị cấu hình thay thế toàn bộ danh sách mặc định, vì vậy cần giữ `COMPANY_OWNER` nếu chủ doanh nghiệp vẫn phải có quyền truy cập. Danh sách rỗng từ chối mọi role. Không thêm `SYSTEM_ADMIN` vào cấu hình này vì role đó chỉ dùng để bootstrap Company Owner đầu tiên.
 
 Sau khi tạo `RBAC_MANAGER`, cần thực hiện cả hai việc sau:
 

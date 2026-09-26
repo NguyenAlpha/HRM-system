@@ -60,6 +60,12 @@ public class PermissionSeeder implements ApplicationRunner {
             "Phê duyệt cuối các thay đổi về cơ cấu tổ chức"
         ),
         permission(
+            "organization.company_owner.bootstrap",
+            "Khởi tạo Chủ sở hữu doanh nghiệp",
+            PermissionModule.ORGANIZATION,
+            "Khởi tạo tài khoản Chủ sở hữu doanh nghiệp đầu tiên của công ty"
+        ),
+        permission(
             "organization.director.provision",
             "Khởi tạo Giám đốc",
             PermissionModule.ORGANIZATION,

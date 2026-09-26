@@ -23,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     "rbac.seed.enabled=false",
     "admin.seed.enabled=false",
     "user.seed.enabled=false",
-    "rbac.management.allowed-roles=SYSTEM_ADMIN,COMPANY_OWNER,RBAC_MANAGER"
+    "rbac.management.allowed-roles=COMPANY_OWNER,RBAC_MANAGER"
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -34,8 +34,8 @@ class RbacAdditionalRoleTest {
 
     @ParameterizedTest
     @CsvSource({
-        "SYSTEM_ADMIN, /api/roles, 200",
-        "SYSTEM_ADMIN, /api/permissions, 200",
+        "SYSTEM_ADMIN, /api/roles, 403",
+        "SYSTEM_ADMIN, /api/permissions, 403",
         "COMPANY_OWNER, /api/roles, 200",
         "COMPANY_OWNER, /api/permissions, 200",
         "RBAC_MANAGER, /api/roles, 200",

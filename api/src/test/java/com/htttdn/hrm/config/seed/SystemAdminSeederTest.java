@@ -111,7 +111,7 @@ class SystemAdminSeederTest {
             return role;
         });
 
-        when(permissionRepository.findByCode(SystemAdminSeeder.RBAC_MANAGE_PERMISSION_CODE))
+        when(permissionRepository.findByCode(SystemAdminSeeder.COMPANY_OWNER_BOOTSTRAP_PERMISSION_CODE))
             .thenReturn(Optional.empty());
         when(permissionRepository.save(any(Permission.class))).thenAnswer(invocation -> {
             Permission permission = invocation.getArgument(0);
@@ -138,8 +138,8 @@ class SystemAdminSeederTest {
         ArgumentCaptor<Permission> permissionCaptor = ArgumentCaptor.forClass(Permission.class);
         verify(permissionRepository).save(permissionCaptor.capture());
         Permission permission = permissionCaptor.getValue();
-        assertEquals(SystemAdminSeeder.RBAC_MANAGE_PERMISSION_CODE, permission.getCode());
-        assertEquals(PermissionModule.RBAC, permission.getModule());
+        assertEquals(SystemAdminSeeder.COMPANY_OWNER_BOOTSTRAP_PERMISSION_CODE, permission.getCode());
+        assertEquals(PermissionModule.ORGANIZATION, permission.getModule());
 
         ArgumentCaptor<RolePermission> rolePermissionCaptor = ArgumentCaptor.forClass(RolePermission.class);
         verify(rolePermissionRepository).save(rolePermissionCaptor.capture());
@@ -169,9 +169,9 @@ class SystemAdminSeederTest {
             .build();
         Permission permission = Permission.builder()
             .id(3L)
-            .code(SystemAdminSeeder.RBAC_MANAGE_PERMISSION_CODE)
-            .name("Quản lý vai trò và quyền")
-            .module(PermissionModule.RBAC)
+            .code(SystemAdminSeeder.COMPANY_OWNER_BOOTSTRAP_PERMISSION_CODE)
+            .name("Khởi tạo Chủ sở hữu doanh nghiệp")
+            .module(PermissionModule.ORGANIZATION)
             .isActive(true)
             .build();
 
@@ -179,7 +179,7 @@ class SystemAdminSeederTest {
         when(accountRepository.findByEmail("admin@hrm.local")).thenReturn(Optional.of(account));
         when(roleRepository.findByCodeAndDeletedAtIsNull(SystemAdminSeeder.SYSTEM_ADMIN_ROLE_CODE))
             .thenReturn(Optional.of(role));
-        when(permissionRepository.findByCode(SystemAdminSeeder.RBAC_MANAGE_PERMISSION_CODE))
+        when(permissionRepository.findByCode(SystemAdminSeeder.COMPANY_OWNER_BOOTSTRAP_PERMISSION_CODE))
             .thenReturn(Optional.of(permission));
         when(rolePermissionRepository.existsById(any())).thenReturn(true);
         when(accountRoleAssignmentRepository.existsByAccountIdAndRoleIdAndScopeTypeAndEffectiveToIsNull(

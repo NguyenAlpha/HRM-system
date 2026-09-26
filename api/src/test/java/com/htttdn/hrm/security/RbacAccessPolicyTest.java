@@ -13,7 +13,7 @@ class RbacAccessPolicyTest {
 
     @Test
     void missingAuthenticationAndEmptyRoleConfigurationDenyAccess() {
-        RbacAccessPolicy policy = new RbacAccessPolicy(List.of("SYSTEM_ADMIN"));
+        RbacAccessPolicy policy = new RbacAccessPolicy(List.of("COMPANY_OWNER"));
         assertFalse(policy.canManage(null));
         assertFalse(policy.canManage(UsernamePasswordAuthenticationToken.unauthenticated("admin", "unused")));
         assertFalse(new RbacAccessPolicy(List.of(" ")).canManage(
@@ -24,7 +24,6 @@ class RbacAccessPolicyTest {
     @Test
     void configuredRoleCodesAreTrimmedAndComparedExactly() {
         RbacAccessPolicy policy = new RbacAccessPolicy(List.of(
-            "SYSTEM_ADMIN",
             "COMPANY_OWNER",
             " RBAC_MANAGER "
         ));
@@ -32,6 +31,8 @@ class RbacAccessPolicyTest {
             List.of(new SimpleGrantedAuthority("ROLE_COMPANY_OWNER")))));
         assertTrue(policy.canManage(UsernamePasswordAuthenticationToken.authenticated("manager", "unused",
             List.of(new SimpleGrantedAuthority("ROLE_RBAC_MANAGER")))));
+        assertFalse(policy.canManage(UsernamePasswordAuthenticationToken.authenticated("system-admin", "unused",
+            List.of(new SimpleGrantedAuthority("ROLE_SYSTEM_ADMIN")))));
         assertFalse(policy.canManage(UsernamePasswordAuthenticationToken.authenticated("employee", "unused",
             List.of(new SimpleGrantedAuthority("ROLE_SYSTEM_ADMIN_ASSISTANT")))));
     }

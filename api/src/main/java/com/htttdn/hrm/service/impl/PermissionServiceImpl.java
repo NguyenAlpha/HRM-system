@@ -1,6 +1,7 @@
 package com.htttdn.hrm.service.impl;
 
 import java.time.Instant;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +26,11 @@ import com.htttdn.hrm.service.PermissionService;
 @Transactional
 @CanManageRbac
 public class PermissionServiceImpl implements PermissionService {
+
+    private static final Set<String> REQUIRED_ACTIVE_PERMISSION_CODES = Set.of(
+        "rbac.manage",
+        "organization.company_owner.bootstrap"
+    );
 
     private final PermissionRepository permissionRepository;
     private final RolePermissionRepository rolePermissionRepository;
@@ -79,8 +85,13 @@ public class PermissionServiceImpl implements PermissionService {
     @Override
     public PermissionResponse update(Long id, UpdatePermissionRequest request) {
         Permission permission = findPermissionOrThrow(id);
-        if ("rbac.manage".equals(permission.getCode()) && Boolean.FALSE.equals(request.isActive())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "rbac.manage cannot be deactivated", "isActive");
+        if (REQUIRED_ACTIVE_PERMISSION_CODES.contains(permission.getCode())
+            && Boolean.FALSE.equals(request.isActive())) {
+            throw new ConflictException(
+                ErrorCode.CONFLICT,
+                permission.getCode() + " cannot be deactivated",
+                "isActive"
+            );
         }
         permission.setName(request.name());
         permission.setDescription(request.description());
@@ -91,8 +102,11 @@ public class PermissionServiceImpl implements PermissionService {
     @Override
     public void delete(Long id) {
         Permission permission = findPermissionOrThrow(id);
-        if ("rbac.manage".equals(permission.getCode())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "rbac.manage cannot be deleted");
+        if (REQUIRED_ACTIVE_PERMISSION_CODES.contains(permission.getCode())) {
+            throw new ConflictException(
+                ErrorCode.CONFLICT,
+                permission.getCode() + " cannot be deleted"
+            );
         }
         if (rolePermissionRepository.existsByIdPermissionId(id)
             || accountPermissionOverrideRepository.existsByPermissionId(id)) {

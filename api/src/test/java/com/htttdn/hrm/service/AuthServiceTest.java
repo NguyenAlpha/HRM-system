@@ -63,13 +63,14 @@ class AuthServiceTest {
         when(accountAuthorizationService.getSnapshot(1L)).thenReturn(
             new AuthorizationSnapshot(
                 List.of("SYSTEM_ADMIN"),
-                List.of("rbac.manage"),
+                List.of("organization.company_owner.bootstrap"),
                 List.of(new AuthorizationRole(
                     "SYSTEM_ADMIN", "Quản trị viên hệ thống", RoleScopeType.COMPANY,
                     null, null, null, null
                 )),
                 List.of(new AuthorizationPermission(
-                    "rbac.manage", "Quản lý vai trò và quyền", PermissionModule.RBAC
+                    "organization.company_owner.bootstrap", "Khởi tạo Chủ sở hữu doanh nghiệp",
+                    PermissionModule.ORGANIZATION
                 ))
             )
         );
@@ -84,7 +85,7 @@ class AuthServiceTest {
         assertNotNull(account.getLastLoginAt());
         assertEquals("SYSTEM_ADMIN", response.account().roles().getFirst().code());
         assertEquals("Quản trị viên hệ thống", response.account().roles().getFirst().name());
-        assertEquals("Quản lý vai trò và quyền", response.account().permissions().getFirst().name());
+        assertEquals("Khởi tạo Chủ sở hữu doanh nghiệp", response.account().permissions().getFirst().name());
         verify(authenticationManager).authenticate(any());
     }
 

@@ -15,7 +15,7 @@ public class RbacAccessPolicy {
     private final Set<String> allowedAuthorities;
 
     public RbacAccessPolicy(
-        @Value("${rbac.management.allowed-roles:SYSTEM_ADMIN,COMPANY_OWNER}") List<String> allowedRoles
+        @Value("${rbac.management.allowed-roles:COMPANY_OWNER}") List<String> allowedRoles
     ) {
         this.allowedAuthorities = allowedRoles.stream()
             .map(String::trim)
