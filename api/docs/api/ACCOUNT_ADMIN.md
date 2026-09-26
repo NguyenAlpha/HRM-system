@@ -6,7 +6,7 @@ Account mới phải liên kết với một employee đã tồn tại. Hệ th�
 
 Role nghiệp vụ bổ sung được quản lý qua [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md), không truyền trong request tạo account.
 
-Nếu Director chưa có employee, sử dụng workflow tổng hợp [Organization Director Administration](./ORGANIZATION_DIRECTOR_ADMIN.md).
+Director tiếp theo đi qua quy trình thông thường: HR tạo employee, Company Owner tạo account rồi gán role `DIRECTOR` qua [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md).
 
 Company Owner đầu tiên phải được `SYSTEM_ADMIN` tạo qua workflow [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md), không dùng endpoint account tổng quát.
 

@@ -67,12 +67,6 @@ public class PermissionSeeder implements ApplicationRunner {
             "Khởi tạo tài khoản Chủ sở hữu doanh nghiệp đầu tiên của công ty"
         ),
         permission(
-            "organization.director.provision",
-            "Khởi tạo Giám đốc",
-            PermissionModule.ORGANIZATION,
-            "Khởi tạo hồ sơ nhân viên, tài khoản và vai trò Giám đốc công ty"
-        ),
-        permission(
             "organization.hr_staff.bootstrap",
             "Khởi tạo nhân viên nhân sự đầu tiên",
             PermissionModule.ORGANIZATION,

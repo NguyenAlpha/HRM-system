@@ -387,7 +387,6 @@ employee.sensitive.manage    employee.lifecycle.approve
 request.self.read            request.self.create           request.self.cancel
 request.read                 request.approve               request.final_approve
 request.manage              organization.change.approve   organization.company_owner.bootstrap
-organization.director.provision
 organization.hr_staff.bootstrap
 attendance.self.read         attendance.read               attendance.manage
 attendance.overtime.approve
