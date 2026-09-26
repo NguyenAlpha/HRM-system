@@ -58,6 +58,11 @@ public class RoleSeeder implements ApplicationRunner {
             "Điều hành công ty và phê duyệt cuối các quyết định nghiệp vụ trên toàn công ty"
         ),
         new RoleDefinition(
+            "COMPANY_OWNER",
+            "Chủ sở hữu doanh nghiệp",
+            "Quản trị tài khoản, quyền truy cập và cấu hình trong phạm vi doanh nghiệp"
+        ),
+        new RoleDefinition(
             "SYSTEM_ADMIN",
             "Quản trị viên hệ thống",
             "Quản lý tài khoản, vai trò và quyền trong giai đoạn quản trị hệ thống"

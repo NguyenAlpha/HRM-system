@@ -8,19 +8,19 @@ Quản lý role, permission và quan hệ permission của role. Việc gán rol
 
 | Endpoint | Yêu cầu Bearer token | Role được phép mặc định |
 |:---------|:--------------------:|:-----------------------:|
-| `POST /api/roles` | ✅ | `SYSTEM_ADMIN` |
-| `GET /api/roles` | ✅ | `SYSTEM_ADMIN` |
-| `GET /api/roles/{id}` | ✅ | `SYSTEM_ADMIN` |
-| `PUT /api/roles/{id}` | ✅ | `SYSTEM_ADMIN` |
-| `DELETE /api/roles/{id}` | ✅ | `SYSTEM_ADMIN` |
-| `GET /api/roles/{roleId}/permissions` | ✅ | `SYSTEM_ADMIN` |
-| `POST /api/roles/{roleId}/permissions` | ✅ | `SYSTEM_ADMIN` |
-| `DELETE /api/roles/{roleId}/permissions/{permissionId}` | ✅ | `SYSTEM_ADMIN` |
-| `POST /api/permissions` | ✅ | `SYSTEM_ADMIN` |
-| `GET /api/permissions` | ✅ | `SYSTEM_ADMIN` |
-| `GET /api/permissions/{id}` | ✅ | `SYSTEM_ADMIN` |
-| `PUT /api/permissions/{id}` | ✅ | `SYSTEM_ADMIN` |
-| `DELETE /api/permissions/{id}` | ✅ | `SYSTEM_ADMIN` |
+| `POST /api/roles` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
+| `GET /api/roles` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
+| `GET /api/roles/{id}` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
+| `PUT /api/roles/{id}` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
+| `DELETE /api/roles/{id}` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
+| `GET /api/roles/{roleId}/permissions` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
+| `POST /api/roles/{roleId}/permissions` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
+| `DELETE /api/roles/{roleId}/permissions/{permissionId}` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
+| `POST /api/permissions` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
+| `GET /api/permissions` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
+| `GET /api/permissions/{id}` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
+| `PUT /api/permissions/{id}` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
+| `DELETE /api/permissions/{id}` | ✅ | `SYSTEM_ADMIN`, `COMPANY_OWNER` |
 
 Danh sách role được phép gọi các API này có thể thay đổi bằng cấu hình `RBAC_MANAGEMENT_ALLOWED_ROLES`. Permission `rbac.manage` trong JWT không thay thế yêu cầu về role.
 
@@ -647,22 +647,22 @@ Permission không thể xóa nếu đang được bất kỳ role hoặc permiss
 
 | Biến môi trường | Mặc định | Ý nghĩa |
 |:----------------|:---------|:--------|
-| `RBAC_MANAGEMENT_ALLOWED_ROLES` | `SYSTEM_ADMIN` | Danh sách role code được phép gọi API RBAC, phân tách bằng dấu phẩy |
+| `RBAC_MANAGEMENT_ALLOWED_ROLES` | `SYSTEM_ADMIN,COMPANY_OWNER` | Danh sách role code được phép gọi API RBAC, phân tách bằng dấu phẩy |
 | `RBAC_SEED_ENABLED` | `true` | Seed role, permission và mapping mặc định khi khởi động |
 | `ADMIN_SEED_ENABLED` | `true` | Seed system admin và bảo đảm quyền bootstrap `rbac.manage` |
 
 Ví dụ cho phép thêm role `RBAC_MANAGER` quản trị RBAC:
 
 ```powershell
-$env:RBAC_MANAGEMENT_ALLOWED_ROLES = "SYSTEM_ADMIN,RBAC_MANAGER"
+$env:RBAC_MANAGEMENT_ALLOWED_ROLES = "SYSTEM_ADMIN,COMPANY_OWNER,RBAC_MANAGER"
 ./mvnw.cmd spring-boot:run
 ```
 
-Dùng role code không có prefix `ROLE_`. Giá trị cấu hình thay thế toàn bộ danh sách mặc định, vì vậy cần giữ `SYSTEM_ADMIN` nếu system admin vẫn phải có quyền truy cập. Danh sách rỗng từ chối mọi role.
+Dùng role code không có prefix `ROLE_`. Giá trị cấu hình thay thế toàn bộ danh sách mặc định, vì vậy cần giữ `SYSTEM_ADMIN` và `COMPANY_OWNER` nếu cả hai vẫn phải có quyền truy cập trong giai đoạn chuyển đổi. Danh sách rỗng từ chối mọi role.
 
 Sau khi tạo `RBAC_MANAGER`, cần thực hiện cả hai việc sau:
 
-1. Thêm `RBAC_MANAGER` vào `RBAC_MANAGEMENT_ALLOWED_ROLES` và khởi động lại API.
+1. Thêm `RBAC_MANAGER` vào `RBAC_MANAGEMENT_ALLOWED_ROLES` mà không xóa các role quản trị còn cần thiết, sau đó khởi động lại API.
 2. Gán role cho account qua nghiệp vụ account, sau đó đăng nhập hoặc refresh để nhận JWT mới.
 
 Nếu seeder còn bật, role, permission hoặc mapping mặc định bị thiếu có thể được tạo lại khi API khởi động. Sau giai đoạn bootstrap, đặt `RBAC_SEED_ENABLED=false` và `ADMIN_SEED_ENABLED=false` nếu muốn quản lý lâu dài các mapping mặc định hoàn toàn qua API.

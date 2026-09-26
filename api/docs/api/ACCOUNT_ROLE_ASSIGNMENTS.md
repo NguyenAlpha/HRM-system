@@ -12,7 +12,7 @@ Gán role nghiệp vụ cho account theo phạm vi và thời gian hiệu lực.
 | `POST /api/admin/accounts/{accountId}/role-assignments` | `account.role.assign` |
 | `POST /api/admin/accounts/{accountId}/role-assignments/{assignmentId}/revoke` | `account.role.assign` |
 
-Tất cả endpoint yêu cầu Bearer token. `SYSTEM_ADMIN` được seed sẵn các permission trên. Actor cấp hoặc thu hồi role luôn được lấy từ JWT/Security Context, không nhận từ request.
+Tất cả endpoint yêu cầu Bearer token. `SYSTEM_ADMIN` và `COMPANY_OWNER` được seed sẵn các permission trên trong giai đoạn chuyển đổi quyền quản trị. Actor cấp hoặc thu hồi role luôn được lấy từ JWT/Security Context, không nhận từ request.
 
 ---
 
@@ -28,6 +28,7 @@ Tất cả endpoint yêu cầu Bearer token. `SYSTEM_ADMIN` được seed sẵn 
 | `PAYROLL_ACCOUNTANT` | `COMPANY` | Không truyền ID phạm vi |
 | `PAYROLL_APPROVER` | `COMPANY` | Không truyền ID phạm vi |
 | `DIRECTOR` | `COMPANY` | Chỉ một assignment được phép hiệu lực trong cùng khoảng thời gian trên toàn doanh nghiệp |
+| `COMPANY_OWNER` | `COMPANY` | Không được gán/thu hồi qua API này; phải dùng workflow quản lý quyền sở hữu riêng |
 | `SYSTEM_ADMIN` | — | Không được quản lý qua API role nghiệp vụ này |
 
 Role tùy chỉnh không bị giới hạn bởi bảng policy trên nhưng vẫn phải tuân thủ cấu trúc scope. Account nhận role nghiệp vụ phải liên kết với employee và không được ở trạng thái `DISABLED`.

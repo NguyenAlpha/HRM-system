@@ -23,7 +23,13 @@ class RbacAccessPolicyTest {
 
     @Test
     void configuredRoleCodesAreTrimmedAndComparedExactly() {
-        RbacAccessPolicy policy = new RbacAccessPolicy(List.of("SYSTEM_ADMIN", " RBAC_MANAGER "));
+        RbacAccessPolicy policy = new RbacAccessPolicy(List.of(
+            "SYSTEM_ADMIN",
+            "COMPANY_OWNER",
+            " RBAC_MANAGER "
+        ));
+        assertTrue(policy.canManage(UsernamePasswordAuthenticationToken.authenticated("owner", "unused",
+            List.of(new SimpleGrantedAuthority("ROLE_COMPANY_OWNER")))));
         assertTrue(policy.canManage(UsernamePasswordAuthenticationToken.authenticated("manager", "unused",
             List.of(new SimpleGrantedAuthority("ROLE_RBAC_MANAGER")))));
         assertFalse(policy.canManage(UsernamePasswordAuthenticationToken.authenticated("employee", "unused",

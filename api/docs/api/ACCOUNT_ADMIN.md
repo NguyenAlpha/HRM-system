@@ -22,7 +22,7 @@ Nếu Director chưa có employee, sử dụng workflow tổng hợp [Organizati
 | `POST /api/admin/accounts/{accountId}/suspend` | `account.manage` |
 | `POST /api/admin/accounts/{accountId}/activate` | `account.manage` |
 
-Tất cả endpoint yêu cầu Bearer token. `SYSTEM_ADMIN` được seed sẵn toàn bộ permission trên.
+Tất cả endpoint yêu cầu Bearer token. `SYSTEM_ADMIN` và `COMPANY_OWNER` được seed sẵn toàn bộ permission trên trong giai đoạn chuyển đổi quyền quản trị.
 
 Raw activation token là credential bí mật và chỉ xuất hiện trong response của thao tác tạo, gửi lại lời mời hoặc reset mật khẩu. API không lưu hoặc ghi log raw token. Khi có hạ tầng email, lớp gửi thông báo sẽ tiếp nhận token này và API không cần trả nó cho frontend quản trị.
 
