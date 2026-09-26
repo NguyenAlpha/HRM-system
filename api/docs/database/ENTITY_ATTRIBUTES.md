@@ -107,7 +107,7 @@
 | Thuộc tính | Kiểu Java | Cột DB | Ràng buộc | Ý nghĩa |
 |---|---|---|---|---|
 | `id` | `Long` | `id` | PK | Khóa chính |
-| `employeeCode` | `String` | `employee_code` | NOT NULL, UNIQUE | Mã nhân viên, không tái sử dụng |
+| `employeeCode` | `String` | `employee_code` | NOT NULL, UNIQUE không phân biệt hoa thường | Mã nhân viên, không tái sử dụng |
 | `fullName` | `String` | `full_name` | NOT NULL | Họ tên |
 | `dateOfBirth` | `LocalDate` | `date_of_birth` | | Ngày sinh |
 | `gender` | `Gender` | `gender` | nullable | `MALE` / `FEMALE` / `OTHER` / `UNDISCLOSED` |
@@ -117,7 +117,7 @@
 | `graduationYear` | `Short` | `graduation_year` | | Năm tốt nghiệp |
 | `nationalId` | `String` | `national_id` | UNIQUE | CCCD/hộ chiếu |
 | `personalEmail` | `String` | `personal_email` | | Email cá nhân |
-| `workEmail` | `String` | `work_email` | UNIQUE | Email công việc |
+| `workEmail` | `String` | `work_email` | UNIQUE không phân biệt hoa thường | Email công việc |
 | `phone` | `String` | `phone` | | Số điện thoại |
 | `address` | `String` | `address` | | Địa chỉ liên hệ |
 | `taxCode` | `String` | `tax_code` | | Mã số thuế cá nhân |

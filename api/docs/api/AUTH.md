@@ -162,6 +162,7 @@ Email được chuẩn hóa về chữ thường. Username giữ nguyên chữ h
         "account.manage",
         "account.activation.manage",
         "account.role.assign",
+        "organization.executive.provision",
         "rbac.manage"
       ]
     }
@@ -192,6 +193,7 @@ Email được chuẩn hóa về chữ thường. Username giữ nguyên chữ h
     "account.manage",
     "account.activation.manage",
     "account.role.assign",
+    "organization.executive.provision",
     "rbac.manage"
   ],
   "iat": 178...,
@@ -262,6 +264,7 @@ Cấu trúc response giống login, nhưng cả `accessToken` và `refreshToken`
         "account.manage",
         "account.activation.manage",
         "account.role.assign",
+        "organization.executive.provision",
         "rbac.manage"
       ]
     }
@@ -349,6 +352,7 @@ Lấy thông tin account, role và permission hiện hành. Endpoint yêu cầu 
       "account.manage",
       "account.activation.manage",
       "account.role.assign",
+      "organization.executive.provision",
       "rbac.manage"
     ]
   },
