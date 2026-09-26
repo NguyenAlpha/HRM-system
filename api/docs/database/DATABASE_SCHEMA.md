@@ -725,13 +725,21 @@ ALTER TABLE payslips ADD CONSTRAINT chk_payslip_total
 | Code | Loại | Cha |
 |---|---|---|
 | `HO` | `HEAD_OFFICE` | — |
-| `HO-WH` | `WAREHOUSE` | `HO` |
 | `BRANCH-01` | `BRANCH` | — |
-| `BRANCH-01-WH` | `WAREHOUSE` | `BRANCH-01` |
 | `BRANCH-02` | `BRANCH` | — |
-| `BRANCH-02-WH` | `WAREHOUSE` | `BRANCH-02` |
+| `WAREHOUSE-01` | `WAREHOUSE` | `HO` |
+| `WAREHOUSE-02` | `WAREHOUSE` | `BRANCH-01` |
 
-### 11.2. Tài khoản test
+### 11.2. Đơn vị tổ chức
+
+| Code | Loại | Cha |
+|---|---|---|
+| `BOARD` | `BOARD` | — |
+| `HR` | `DEPARTMENT` | `BOARD` |
+| `ACCOUNTING` | `DEPARTMENT` | `BOARD` |
+| `OPERATIONS` | `DEPARTMENT` | `BOARD` |
+
+### 11.3. Tài khoản test
 
 | Username | Vai trò | Phạm vi |
 |---|---|---|
@@ -745,7 +753,7 @@ ALTER TABLE payslips ADD CONSTRAINT chk_payslip_total
 
 Ít nhất một tài khoản có ngoại lệ quyền có thời hạn để demo bật/tắt quyền.
 
-### 11.3. Giao dịch demo
+### 11.4. Giao dịch demo
 
 - Nhân viên thử việc, đang làm và đã nghỉ việc.
 - Một lần điều chuyển từ trụ sở sang chi nhánh.
