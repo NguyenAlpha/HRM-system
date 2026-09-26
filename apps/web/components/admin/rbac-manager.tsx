@@ -3,10 +3,13 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
+import { ArrowLeft, KeyRound, Users } from "lucide-react"
 
 import { PermissionManager } from "@/components/admin/permission-manager"
 import { RoleManager } from "@/components/admin/role-manager"
 import { PortalSidebar } from "@/components/auth/portal-sidebar"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getCurrentSession } from "@/lib/auth/client"
 import { AuthApiError, type SessionData } from "@/lib/auth/types"
 import { rbacErrorMessage } from "@/lib/rbac"
@@ -47,22 +50,36 @@ export function RbacManager() {
   return (
     <main className="portal-shell admin-shell">
       <PortalSidebar portal="admin" account={session.account} active="rbac" />
-      <section className="portal-content rbac-content">
-        <header className="portal-header">
+      <section className="portal-content">
+        <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="eyebrow">ADMIN CONSOLE</p>
-            <h1>Vai trò & quyền</h1>
-            <p>Quản lý vai trò tùy chỉnh và xem danh mục quyền do hệ thống định nghĩa.</p>
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">Vai trò & quyền</h1>
+            <p className="mt-1.5 max-w-xl text-[var(--muted-ink)]">
+              Quản lý vai trò tùy chỉnh và xem danh mục quyền do hệ thống định nghĩa.
+            </p>
           </div>
-          <Link className="ghost-button" href="/admin">Về tổng quan</Link>
+          <Button variant="outline" render={<Link href="/admin" />}>
+            <ArrowLeft /> Về tổng quan
+          </Button>
         </header>
-        <nav className="rbac-tabs" aria-label="Danh mục phân quyền">
-          <button type="button" aria-pressed={tab === "roles"} onClick={() => setTab("roles")}>Vai trò</button>
-          <button type="button" aria-pressed={tab === "permissions"} onClick={() => setTab("permissions")}>Quyền</button>
-        </nav>
-        {tab === "roles"
-          ? <RoleManager onSessionExpired={onSessionExpired} />
-          : <PermissionManager onSessionExpired={onSessionExpired} />}
+
+        <Tabs
+          className="mt-6"
+          value={tab}
+          onValueChange={(value) => setTab(value as "roles" | "permissions")}
+        >
+          <TabsList>
+            <TabsTrigger value="roles"><Users /> Vai trò</TabsTrigger>
+            <TabsTrigger value="permissions"><KeyRound /> Quyền</TabsTrigger>
+          </TabsList>
+          <TabsContent value="roles" className="mt-4">
+            <RoleManager onSessionExpired={onSessionExpired} />
+          </TabsContent>
+          <TabsContent value="permissions" className="mt-4">
+            <PermissionManager onSessionExpired={onSessionExpired} />
+          </TabsContent>
+        </Tabs>
       </section>
     </main>
   )
