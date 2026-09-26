@@ -3,6 +3,7 @@ package com.htttdn.hrm.config.seed;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +26,9 @@ import com.htttdn.hrm.repository.RoleRepository;
  * Gán bộ permission mặc định cho các system role sau khi role và permission đã được seed.
  *
  * <p>Project không cấu hình role hierarchy trong Spring Security, vì vậy role cấp cao phải
- * chứa tường minh các quyền self-service của {@code EMPLOYEE}. Seeder chỉ thêm mapping còn
- * thiếu, không tự xóa mapping đã được quản trị viên bổ sung trong database.
+ * chứa tường minh các quyền self-service của {@code EMPLOYEE}. System role thuộc sở hữu của
+ * ứng dụng nên seeder đồng bộ chính xác bộ permission chuẩn: thêm mapping còn thiếu và xóa
+ * mapping ngoài định nghĩa. Custom role không nằm trong danh sách này và không bị ảnh hưởng.
  */
 @Component
 @Order(300)
@@ -139,9 +141,18 @@ public class RolePermissionSeeder implements ApplicationRunner {
         }
 
         int createdCount = 0;
+        int removedCount = 0;
         for (RolePermissionDefinition definition : DEFAULT_ASSIGNMENTS) {
             Role role = roleRepository.findByCodeAndDeletedAtIsNull(definition.roleCode())
                 .orElseThrow(() -> new IllegalStateException("Seed role not found: " + definition.roleCode()));
+            Set<String> expectedPermissionCodes = Set.copyOf(definition.permissionCodes());
+            List<RolePermission> unexpectedMappings = rolePermissionRepository.findByIdRoleId(role.getId()).stream()
+                .filter(mapping -> !expectedPermissionCodes.contains(mapping.getPermission().getCode()))
+                .toList();
+            if (!unexpectedMappings.isEmpty()) {
+                rolePermissionRepository.deleteAll(unexpectedMappings);
+                removedCount += unexpectedMappings.size();
+            }
 
             for (String permissionCode : definition.permissionCodes()) {
                 Permission permission = permissionRepository.findByCode(permissionCode)
@@ -162,7 +173,11 @@ public class RolePermissionSeeder implements ApplicationRunner {
             }
         }
 
-        log.info("Role-permission seed completed: {} mappings created", createdCount);
+        log.info(
+            "Role-permission seed completed: {} mappings created, {} unexpected mappings removed",
+            createdCount,
+            removedCount
+        );
     }
 
     private static RolePermissionDefinition role(String roleCode, List<String> permissionCodes) {

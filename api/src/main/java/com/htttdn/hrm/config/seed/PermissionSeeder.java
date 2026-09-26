@@ -107,7 +107,12 @@ public class PermissionSeeder implements ApplicationRunner {
 
         permission("report.hr.read", "Xem báo cáo nhân sự", PermissionModule.REPORT, "Xem các báo cáo về nhân sự"),
         permission("report.payroll.read", "Xem báo cáo tiền lương", PermissionModule.REPORT, "Xem các báo cáo về tiền lương"),
-        permission("rbac.manage", "Quản lý vai trò và quyền", PermissionModule.RBAC, "Quản lý danh mục vai trò, quyền và quan hệ phân quyền")
+        permission(
+            "rbac.manage",
+            "Quản lý phân quyền",
+            PermissionModule.RBAC,
+            "Xem danh mục quyền và quản lý vai trò tùy chỉnh cùng quan hệ phân quyền"
+        )
     );
 
     private final PermissionRepository permissionRepository;

@@ -1,6 +1,6 @@
 # API Reference — RBAC
 
-Quản lý role, permission và quan hệ permission của role. Việc gán role cho account được mô tả riêng tại [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md); API RBAC không trực tiếp thay đổi assignment của account.
+Quản lý role tùy chỉnh và quan hệ permission của role. Danh mục permission và các system role do ứng dụng định nghĩa; API chỉ cho phép đọc các dữ liệu này. Việc gán role cho account được mô tả riêng tại [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md); API RBAC không trực tiếp thay đổi assignment của account.
 
 ---
 
@@ -16,13 +16,17 @@ Quản lý role, permission và quan hệ permission của role. Việc gán rol
 | `GET /api/roles/{roleId}/permissions` | ✅ | `COMPANY_OWNER` |
 | `POST /api/roles/{roleId}/permissions` | ✅ | `COMPANY_OWNER` |
 | `DELETE /api/roles/{roleId}/permissions/{permissionId}` | ✅ | `COMPANY_OWNER` |
-| `POST /api/permissions` | ✅ | `COMPANY_OWNER` |
 | `GET /api/permissions` | ✅ | `COMPANY_OWNER` |
 | `GET /api/permissions/{id}` | ✅ | `COMPANY_OWNER` |
-| `PUT /api/permissions/{id}` | ✅ | `COMPANY_OWNER` |
-| `DELETE /api/permissions/{id}` | ✅ | `COMPANY_OWNER` |
 
 Danh sách role được phép gọi các API này có thể thay đổi bằng cấu hình `RBAC_MANAGEMENT_ALLOWED_ROLES`. Permission `rbac.manage` trong JWT không thay thế yêu cầu về role.
+
+### Ranh giới quản trị
+
+- Permission được định nghĩa trong code và đồng bộ bằng `PermissionSeeder` hoặc database migration; không có API tạo, sửa hoặc xóa permission.
+- System role có `isSystem=true` là khuôn mẫu do ứng dụng sở hữu; API chỉ cho phép xem role và danh sách permission của role.
+- Chỉ custom role có `isSystem=false` mới được cập nhật, xóa mềm hoặc thay đổi permission mapping.
+- `COMPANY_OWNER` chọn permission có sẵn để cấu hình custom role, không tự định nghĩa capability mới cho hệ thống.
 
 ---
 
@@ -102,7 +106,7 @@ Tạo role tùy chỉnh. Role mới luôn có `isSystem=false` và `isActive=tru
 {
   "code": "RBAC_MANAGER",
   "name": "Quản trị phân quyền",
-  "description": "Quản lý vai trò và quyền trong hệ thống"
+  "description": "Quản lý vai trò tùy chỉnh trong doanh nghiệp"
 }
 ```
 
@@ -123,7 +127,7 @@ Tạo role tùy chỉnh. Role mới luôn có `isSystem=false` và `isActive=tru
     "id": 7,
     "code": "RBAC_MANAGER",
     "name": "Quản trị phân quyền",
-    "description": "Quản lý vai trò và quyền trong hệ thống",
+    "description": "Quản lý vai trò tùy chỉnh trong doanh nghiệp",
     "isSystem": false,
     "isActive": true
   },
@@ -175,7 +179,7 @@ Endpoint sử dụng các tham số [phân trang](#phân-trang) chung.
         "id": 7,
         "code": "RBAC_MANAGER",
         "name": "Quản trị phân quyền",
-        "description": "Quản lý vai trò và quyền trong hệ thống",
+        "description": "Quản lý vai trò tùy chỉnh trong doanh nghiệp",
         "isSystem": false,
         "isActive": true
       }
@@ -212,7 +216,7 @@ Lấy chi tiết một role chưa bị xóa mềm.
     "id": 7,
     "code": "RBAC_MANAGER",
     "name": "Quản trị phân quyền",
-    "description": "Quản lý vai trò và quyền trong hệ thống",
+    "description": "Quản lý vai trò tùy chỉnh trong doanh nghiệp",
     "isSystem": false,
     "isActive": true
   },
@@ -233,7 +237,7 @@ Lấy chi tiết một role chưa bị xóa mềm.
 
 ## PUT `/api/roles/{id}`
 
-Cập nhật tên, mô tả và trạng thái của role. `code` và `isSystem` không thể thay đổi qua API này.
+Cập nhật tên, mô tả và trạng thái của custom role. System role không thể thay đổi qua API này.
 
 ### Request
 
@@ -249,7 +253,7 @@ Cập nhật tên, mô tả và trạng thái của role. `code` và `isSystem` 
 |:------|:-----|:--------:|:----------|
 | `name` | string | ✅ | Không rỗng, tối đa 150 ký tự |
 | `description` | string | ❌ | Mô tả mới, có thể là `null` |
-| `isActive` | boolean | ✅ | Role hệ thống không thể chuyển thành `false` |
+| `isActive` | boolean | ✅ | Trạng thái mới của custom role |
 
 ### Response `200 OK`
 
@@ -278,7 +282,7 @@ Vô hiệu hóa role tùy chỉnh làm role đó không còn được đưa vào
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
 | 403 | `FORBIDDEN` | Account không có role được phép quản trị RBAC |
 | 404 | `ROLE_NOT_FOUND` | Role không tồn tại hoặc đã bị xóa mềm |
-| 409 | `CONFLICT` | Cố vô hiệu hóa role hệ thống |
+| 409 | `CONFLICT` | Cố cập nhật system role |
 
 ---
 
@@ -312,7 +316,7 @@ Role đã xóa không còn xuất hiện trong danh sách hoặc endpoint chi ti
 
 ## GET `/api/roles/{roleId}/permissions`
 
-Lấy toàn bộ permission đã gán cho một role. Danh sách không phân trang và có thể chứa permission inactive.
+Lấy toàn bộ permission đã gán cho một role. Danh sách không phân trang và có thể chứa permission inactive. Endpoint đọc được dùng cho cả system role và custom role.
 
 ### Response `200 OK`
 
@@ -323,9 +327,9 @@ Lấy toàn bộ permission đã gán cho một role. Danh sách không phân tr
     {
       "id": 1,
       "code": "rbac.manage",
-      "name": "Quản lý vai trò và quyền",
+      "name": "Quản lý phân quyền",
       "module": "RBAC",
-      "description": "Quản lý danh mục vai trò, quyền và quan hệ phân quyền",
+      "description": "Xem danh mục quyền và quản lý vai trò tùy chỉnh cùng quan hệ phân quyền",
       "isActive": true
     }
   ],
@@ -348,7 +352,7 @@ Role chưa có permission trả `data: []`.
 
 ## POST `/api/roles/{roleId}/permissions`
 
-Gán một permission cho role.
+Gán một permission có sẵn cho custom role. Permission và system role không thể được thay đổi qua endpoint này.
 
 ### Request
 
@@ -374,7 +378,7 @@ Account thực hiện được lấy từ claim `accountId` trong JWT. Client kh
 }
 ```
 
-API lưu quan hệ ngay cả khi role hoặc permission đang inactive. Chỉ role và permission active mới được đưa vào authorization snapshot mới.
+API lưu quan hệ ngay cả khi custom role hoặc permission đang inactive. Chỉ role và permission active mới được đưa vào authorization snapshot mới.
 
 ### Lỗi
 
@@ -386,13 +390,13 @@ API lưu quan hệ ngay cả khi role hoặc permission đang inactive. Chỉ ro
 | 404 | `ROLE_NOT_FOUND` | Role không tồn tại hoặc đã bị xóa mềm |
 | 404 | `PERMISSION_NOT_FOUND` | Permission không tồn tại |
 | 404 | `RESOURCE_NOT_FOUND` | Account trong claim `accountId` không còn tồn tại |
-| 409 | `CONFLICT` | Permission đã được gán cho role hoặc cố thay đổi permission của `SYSTEM_ADMIN` |
+| 409 | `CONFLICT` | Permission đã được gán hoặc role đích là system role |
 
 ---
 
 ## DELETE `/api/roles/{roleId}/permissions/{permissionId}`
 
-Gỡ một permission khỏi role. Endpoint không cần request body.
+Gỡ một permission khỏi custom role. Endpoint không cần request body; system role không thể thay đổi mapping.
 
 ### Response `200 OK`
 
@@ -413,67 +417,13 @@ Gỡ một permission khỏi role. Endpoint không cần request body.
 | 403 | `FORBIDDEN` | Account không có role được phép quản trị RBAC |
 | 404 | `ROLE_NOT_FOUND` | Role không tồn tại hoặc đã bị xóa mềm |
 | 404 | `PERMISSION_NOT_FOUND` | Role không có mapping với permission này |
-| 409 | `CONFLICT` | Cố thay đổi permission của `SYSTEM_ADMIN` |
-
----
-
-## POST `/api/permissions`
-
-Tạo permission trong danh mục quyền. Permission mới luôn có `isActive=true`.
-
-### Request
-
-```json
-{
-  "code": "employee.export",
-  "name": "Xuất danh sách nhân viên",
-  "module": "EMPLOYEE",
-  "description": "Cho phép xuất danh sách nhân viên trong phạm vi được giao"
-}
-```
-
-| Field | Type | Bắt buộc | Ràng buộc |
-|:------|:-----|:--------:|:----------|
-| `code` | string | ✅ | Tối đa 100 ký tự; gồm ít nhất hai phần chữ thường ngăn bởi dấu chấm |
-| `name` | string | ✅ | Tên ngắn dùng để hiển thị, không rỗng, tối đa 150 ký tự |
-| `module` | string | ✅ | Một trong `EMPLOYEE`, `ACCOUNT`, `ORGANIZATION`, `REQUEST`, `ATTENDANCE`, `PAYROLL`, `RBAC`, `REPORT` |
-| `description` | string | ✅ | Mô tả chi tiết, không rỗng |
-
-Mỗi phần của `code` phải bắt đầu bằng `a-z` và chỉ chứa `a-z`, `0-9`, `_`. Ví dụ hợp lệ: `employee.export`, `payroll.mark_paid`.
-
-`code` và `module` không thể thay đổi sau khi tạo. `name` dành cho giao diện người dùng; client vẫn dùng `code` làm định danh kỹ thuật. Tạo permission chỉ thêm quyền vào danh mục; API nghiệp vụ tương ứng vẫn phải kiểm tra permission và scope khi triển khai tính năng.
-
-### Response `201 Created`
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": 12,
-    "code": "employee.export",
-    "name": "Xuất danh sách nhân viên",
-    "module": "EMPLOYEE",
-    "description": "Cho phép xuất danh sách nhân viên trong phạm vi được giao",
-    "isActive": true
-  },
-  "error": null
-}
-```
-
-### Lỗi
-
-| HTTP | `error.code` | Nguyên nhân |
-|:----:|:-------------|:-----------|
-| 400 | `VALIDATION_ERROR` | Body hoặc field không hợp lệ |
-| 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
-| 403 | `FORBIDDEN` | Account không có role được phép quản trị RBAC |
-| 409 | `CONFLICT` | `code` đã tồn tại |
+| 409 | `CONFLICT` | Role đích là system role |
 
 ---
 
 ## GET `/api/permissions`
 
-Lấy danh sách permission, bao gồm cả permission active và inactive. Có thể lọc theo module.
+Lấy danh mục permission do ứng dụng định nghĩa, bao gồm cả permission active và inactive. Có thể lọc theo module. Client chỉ dùng danh mục này để hiển thị và chọn permission cho custom role.
 
 ### Query parameters
 
@@ -498,9 +448,9 @@ GET /api/permissions?module=RBAC&page=0&size=20&sort=code,asc
       {
         "id": 1,
         "code": "rbac.manage",
-        "name": "Quản lý vai trò và quyền",
+        "name": "Quản lý phân quyền",
         "module": "RBAC",
-        "description": "Quản lý danh mục vai trò, quyền và quan hệ phân quyền",
+        "description": "Xem danh mục quyền và quản lý vai trò tùy chỉnh cùng quan hệ phân quyền",
         "isActive": true
       }
     ],
@@ -555,85 +505,6 @@ Lấy chi tiết một permission.
 
 ---
 
-## PUT `/api/permissions/{id}`
-
-Cập nhật tên hiển thị, mô tả và trạng thái của permission. `code` và `module` không thể thay đổi qua API này.
-
-### Request
-
-```json
-{
-  "name": "Xuất báo cáo nhân viên",
-  "description": "Xuất báo cáo danh sách nhân viên",
-  "isActive": true
-}
-```
-
-| Field | Type | Bắt buộc | Ràng buộc |
-|:------|:-----|:--------:|:----------|
-| `name` | string | ✅ | Tên ngắn dùng để hiển thị, không rỗng, tối đa 150 ký tự |
-| `description` | string | ✅ | Không rỗng |
-| `isActive` | boolean | ✅ | `rbac.manage` và `organization.company_owner.bootstrap` không thể chuyển thành `false` |
-
-### Response `200 OK`
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": 12,
-    "code": "employee.export",
-    "name": "Xuất báo cáo nhân viên",
-    "module": "EMPLOYEE",
-    "description": "Xuất báo cáo danh sách nhân viên",
-    "isActive": true
-  },
-  "error": null
-}
-```
-
-Permission inactive vẫn còn trong danh mục và các mapping đã tạo, nhưng không được đưa vào authorization snapshot mới.
-
-### Lỗi
-
-| HTTP | `error.code` | Nguyên nhân |
-|:----:|:-------------|:-----------|
-| 400 | `VALIDATION_ERROR` | Body, `id` hoặc field không hợp lệ |
-| 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
-| 403 | `FORBIDDEN` | Account không có role được phép quản trị RBAC |
-| 404 | `PERMISSION_NOT_FOUND` | Permission không tồn tại |
-| 409 | `CONFLICT` | Cố vô hiệu hóa `rbac.manage` hoặc `organization.company_owner.bootstrap` |
-
----
-
-## DELETE `/api/permissions/{id}`
-
-Xóa vĩnh viễn một permission chưa được sử dụng. Endpoint không cần request body.
-
-### Response `200 OK`
-
-```json
-{
-  "success": true,
-  "data": null,
-  "error": null
-}
-```
-
-Permission không thể xóa nếu đang được bất kỳ role hoặc permission override nào tham chiếu. Override đã hết hiệu lực vẫn được xem là dữ liệu lịch sử tham chiếu permission; trong trường hợp đó nên vô hiệu hóa permission thay vì xóa.
-
-### Lỗi
-
-| HTTP | `error.code` | Nguyên nhân |
-|:----:|:-------------|:-----------|
-| 400 | `VALIDATION_ERROR` | `id` không đúng kiểu số |
-| 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
-| 403 | `FORBIDDEN` | Account không có role được phép quản trị RBAC |
-| 404 | `PERMISSION_NOT_FOUND` | Permission không tồn tại |
-| 409 | `CONFLICT` | Permission đang được tham chiếu hoặc là quyền bắt buộc `rbac.manage`/`organization.company_owner.bootstrap` |
-
----
-
 ## Hiệu lực của thay đổi phân quyền
 
 - JWT lưu role và permission tại thời điểm phát token. Thay đổi role, permission hoặc mapping chỉ xuất hiện trong access token mới sau khi account đăng nhập hoặc refresh token.
@@ -666,4 +537,4 @@ Sau khi tạo `RBAC_MANAGER`, cần thực hiện cả hai việc sau:
 1. Thêm `RBAC_MANAGER` vào `RBAC_MANAGEMENT_ALLOWED_ROLES` mà không xóa các role quản trị còn cần thiết, sau đó khởi động lại API.
 2. Gán role cho account qua nghiệp vụ account, sau đó đăng nhập hoặc refresh để nhận JWT mới.
 
-Nếu seeder còn bật, role, permission hoặc mapping mặc định bị thiếu có thể được tạo lại khi API khởi động. Sau giai đoạn bootstrap, đặt `RBAC_SEED_ENABLED=false` và `ADMIN_SEED_ENABLED=false` nếu muốn quản lý lâu dài các mapping mặc định hoàn toàn qua API.
+Permission catalog, system role và permission mapping của system role thuộc sở hữu của code. Giữ `RBAC_SEED_ENABLED=true` để ứng dụng đồng bộ các định nghĩa này khi khởi động; permission mới phải được bổ sung qua `PermissionSeeder` hoặc database migration, không qua API. Chỉ đặt `RBAC_SEED_ENABLED=false` khi deployment đã có cơ chế migration thay thế đầy đủ. `ADMIN_SEED_ENABLED` có thể tắt sau khi tài khoản bootstrap và mapping tối thiểu đã được bảo đảm bằng quy trình vận hành khác.

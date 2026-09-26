@@ -33,8 +33,6 @@ import com.htttdn.hrm.service.RoleService;
 @CanManageRbac
 public class RoleServiceImpl implements RoleService {
 
-    private static final String SYSTEM_ADMIN_ROLE_CODE = "SYSTEM_ADMIN";
-
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final RolePermissionRepository rolePermissionRepository;
@@ -87,8 +85,8 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public RoleResponse update(Long id, UpdateRoleRequest request) {
         Role role = findRoleOrThrow(id);
-        if (Boolean.TRUE.equals(role.getIsSystem()) && Boolean.FALSE.equals(request.isActive())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "System roles cannot be deactivated", "isActive");
+        if (Boolean.TRUE.equals(role.getIsSystem())) {
+            throw new ConflictException(ErrorCode.CONFLICT, "System roles cannot be modified");
         }
         role.setName(request.name());
         role.setDescription(request.description());
@@ -112,7 +110,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public void grantPermission(Long roleId, GrantPermissionRequest request, Long grantedByAccountId) {
         Role role = findRoleOrThrow(roleId);
-        rejectSystemAdminPermissionChange(role);
+        rejectSystemRolePermissionChange(role);
         Permission permission = permissionRepository.findById(request.permissionId())
             .orElseThrow(() -> new ResourceNotFoundException(
                 ErrorCode.PERMISSION_NOT_FOUND, "Permission not found: " + request.permissionId()));
@@ -140,7 +138,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public void revokePermission(Long roleId, Long permissionId) {
         Role role = findRoleOrThrow(roleId);
-        rejectSystemAdminPermissionChange(role);
+        rejectSystemRolePermissionChange(role);
         RolePermissionId id = new RolePermissionId(roleId, permissionId);
         if (!rolePermissionRepository.existsById(id)) {
             throw new ResourceNotFoundException(ErrorCode.PERMISSION_NOT_FOUND, "Role does not have this permission");
@@ -148,11 +146,11 @@ public class RoleServiceImpl implements RoleService {
         rolePermissionRepository.deleteById(id);
     }
 
-    private void rejectSystemAdminPermissionChange(Role role) {
-        if (SYSTEM_ADMIN_ROLE_CODE.equals(role.getCode())) {
+    private void rejectSystemRolePermissionChange(Role role) {
+        if (Boolean.TRUE.equals(role.getIsSystem())) {
             throw new ConflictException(
                 ErrorCode.CONFLICT,
-                "SYSTEM_ADMIN permissions are fixed by the system bootstrap policy"
+                "System role permissions are defined by the application and cannot be modified"
             );
         }
     }

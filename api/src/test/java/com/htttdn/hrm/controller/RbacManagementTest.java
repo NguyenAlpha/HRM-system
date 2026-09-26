@@ -1,7 +1,6 @@
 package com.htttdn.hrm.controller;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -27,18 +26,12 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.entity.Account;
-import com.htttdn.hrm.entity.AccountPermissionOverride;
-import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.Permission;
 import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.RolePermissionId;
 import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.entity.enums.PermissionModule;
-import com.htttdn.hrm.entity.enums.PermissionOverrideEffect;
-import com.htttdn.hrm.entity.enums.RoleScopeType;
-import com.htttdn.hrm.repository.AccountPermissionOverrideRepository;
 import com.htttdn.hrm.repository.AccountRepository;
-import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.PermissionRepository;
 import com.htttdn.hrm.repository.RolePermissionRepository;
 import com.htttdn.hrm.repository.RoleRepository;
@@ -79,8 +72,6 @@ class RbacManagementTest {
     @Autowired private PermissionRepository permissionRepository;
     @Autowired private RolePermissionRepository rolePermissionRepository;
     @Autowired private AccountRepository accountRepository;
-    @Autowired private AccountRoleAssignmentRepository accountRoleAssignmentRepository;
-    @Autowired private AccountPermissionOverrideRepository accountPermissionOverrideRepository;
     @Autowired private RoleService roleService;
     @Autowired private PermissionService permissionService;
 
@@ -105,7 +96,7 @@ class RbacManagementTest {
     }
 
     @Test
-    void adminCanCreateReadUpdateAndSoftDeleteRole() throws Exception {
+    void companyOwnerCanCreateReadUpdateAndSoftDeleteCustomRole() throws Exception {
         String code = roleCode();
         long id = createdId(admin(post("/api/roles"), Map.of(
             "code", code, "name", "Custom role", "description", "Initial description"
@@ -144,59 +135,43 @@ class RbacManagementTest {
     }
 
     @Test
-    void systemRolesCannotBeDeletedOrDeactivated() throws Exception {
+    void systemRolesCannotBeUpdatedOrDeleted() throws Exception {
         Role role = savedRole(true);
         admin(delete("/api/roles/{id}", role.getId()))
             .andExpect(status().isConflict());
-        admin(put("/api/roles/{id}", role.getId()), Map.of("name", role.getName(), "isActive", false))
-            .andExpect(status().isConflict())
-            .andExpect(jsonPath("$.error.field").value("isActive"));
+        admin(put("/api/roles/{id}", role.getId()), Map.of(
+            "name", "Modified system role",
+            "description", "Modified",
+            "isActive", true
+        )).andExpect(status().isConflict());
     }
 
     @Test
-    void adminCanCreateReadUpdateAndDeleteUnusedPermission() throws Exception {
-        String code = permissionCode();
-        Map<String, Object> body = Map.of(
-            "code", code,
-            "name", "Custom report",
-            "module", "REPORT",
-            "description", "Custom report permission"
-        );
-        long id = createdId(admin(post("/api/permissions"), body)
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.data.isActive").value(true)));
-
-        admin(post("/api/permissions"), body)
-            .andExpect(status().isConflict())
-            .andExpect(jsonPath("$.error.field").value("code"));
-        admin(get("/api/permissions/{id}", id))
+    void companyOwnerCanReadPermissionCatalog() throws Exception {
+        Permission permission = savedPermission(permissionCode());
+        admin(get("/api/permissions/{id}", permission.getId()))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.code").value(code));
+            .andExpect(jsonPath("$.data.code").value(permission.getCode()));
         admin(get("/api/permissions").param("size", "1").param("sort", "id,desc"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.content[0].id").value(id));
-        admin(get("/api/permissions").param("module", "REPORT").param("size", "1").param("sort", "id,desc"))
+            .andExpect(jsonPath("$.data.content[0].id").value(permission.getId()));
+        admin(get("/api/permissions").param("module", "RBAC").param("size", "1").param("sort", "id,desc"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.content[0].id").value(id))
-            .andExpect(jsonPath("$.data.content[0].module").value("REPORT"));
-        admin(put("/api/permissions/{id}", id), Map.of(
-                "name", "Updated report",
-                "description", "Updated report permission",
-                "isActive", false
-            ))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.name").value("Updated report"))
-            .andExpect(jsonPath("$.data.description").value("Updated report permission"))
-            .andExpect(jsonPath("$.data.isActive").value(false));
-        admin(delete("/api/permissions/{id}", id)).andExpect(status().isOk());
-        assertFalse(permissionRepository.existsById(id));
-        admin(get("/api/permissions/{id}", id))
-            .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.error.code").value("PERMISSION_NOT_FOUND"));
+            .andExpect(jsonPath("$.data.content[0].id").value(permission.getId()))
+            .andExpect(jsonPath("$.data.content[0].module").value("RBAC"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("permissionWriteEndpoints")
+    void permissionCatalogDoesNotExposeWriteEndpoints(String method, String path, String body) throws Exception {
+        admin(request(HttpMethod.valueOf(method), path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isMethodNotAllowed());
     }
 
     @Test
-    void adminCanGrantAndRevokePermissionWithActorTakenFromJwt() throws Exception {
+    void companyOwnerCanGrantAndRevokePermissionForCustomRoleWithActorTakenFromJwt() throws Exception {
         Role role = savedRole(false);
         Permission permission = savedPermission(permissionCode());
         Account actor = savedAccount();
@@ -217,46 +192,21 @@ class RbacManagementTest {
         mockMvc.perform(post(path).header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isConflict());
-        admin(delete("/api/permissions/{id}", permission.getId()))
-            .andExpect(status().isConflict())
-            .andExpect(jsonPath("$.error.code").value("CONFLICT"));
-
         admin(delete(path + "/" + permission.getId())).andExpect(status().isOk());
         assertFalse(rolePermissionRepository.existsById(assignmentId));
         admin(get(path)).andExpect(status().isOk()).andExpect(jsonPath("$.data").isEmpty());
         admin(delete(path + "/" + permission.getId())).andExpect(status().isNotFound());
-        admin(delete("/api/permissions/{id}", permission.getId())).andExpect(status().isOk());
     }
 
     @Test
-    void permissionReferencedByHistoricalOverrideCannotBeDeleted() throws Exception {
-        Account actor = savedAccount();
-        Role role = savedRole(false);
+    void systemRolePermissionMappingsCannotBeChanged() throws Exception {
+        Role role = savedRole(true);
         Permission permission = savedPermission(permissionCode());
-        AccountRoleAssignment assignment = accountRoleAssignmentRepository.save(AccountRoleAssignment.builder()
-            .account(actor).role(role).scopeType(RoleScopeType.COMPANY)
-            .effectiveFrom(LocalDate.now().minusDays(2)).grantedByAccount(actor).createdAt(Instant.now()).build());
-        accountPermissionOverrideRepository.save(AccountPermissionOverride.builder()
-            .accountRoleAssignment(assignment).permission(permission).effect(PermissionOverrideEffect.GRANT)
-            .effectiveFrom(LocalDate.now().minusDays(2)).effectiveTo(LocalDate.now().minusDays(1))
-            .reason("Historical permission").grantedByAccount(actor).createdAt(Instant.now()).build());
+        String path = "/api/roles/" + role.getId() + "/permissions";
 
-        admin(delete("/api/permissions/{id}", permission.getId()))
-            .andExpect(status().isConflict())
-            .andExpect(jsonPath("$.error.code").value("CONFLICT"));
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"rbac.manage", "organization.company_owner.bootstrap"})
-    void requiredPermissionCannotBeDeletedOrDeactivated(String permissionCode) throws Exception {
-        Permission permission = permissionRepository.findByCode(permissionCode)
-            .orElseGet(() -> savedPermission(permissionCode));
-        admin(delete("/api/permissions/{id}", permission.getId())).andExpect(status().isConflict());
-        admin(put("/api/permissions/{id}", permission.getId()), Map.of(
-                "name", "Manage RBAC",
-                "description", "RBAC",
-                "isActive", false
-            ))
+        admin(post(path), Map.of("permissionId", permission.getId()))
+            .andExpect(status().isConflict());
+        admin(delete(path + "/" + permission.getId()))
             .andExpect(status().isConflict());
     }
 
@@ -286,13 +236,6 @@ class RbacManagementTest {
         admin(post("/api/roles/-1/permissions"), Map.of("permissionId", 1))
             .andExpect(status().isNotFound());
         admin(get("/api/permissions/-1")).andExpect(status().isNotFound());
-        admin(put("/api/permissions/-1"), Map.of(
-                "name", "Missing",
-                "description", "Missing",
-                "isActive", true
-            ))
-            .andExpect(status().isNotFound());
-        admin(delete("/api/permissions/-1")).andExpect(status().isNotFound());
         admin(post("/api/roles").contentType(MediaType.APPLICATION_JSON).content("{"))
             .andExpect(status().isBadRequest());
     }
@@ -358,11 +301,16 @@ class RbacManagementTest {
             Arguments.of("GET", "/api/roles/1/permissions", ""),
             Arguments.of("POST", "/api/roles/1/permissions", "{\"permissionId\":1}"),
             Arguments.of("DELETE", "/api/roles/1/permissions/1", ""),
-            Arguments.of("POST", "/api/permissions", "{\"code\":\"test.read\",\"name\":\"Test\",\"module\":\"RBAC\",\"description\":\"Test\"}"),
             Arguments.of("GET", "/api/permissions", ""),
             Arguments.of("GET", "/api/permissions?module=RBAC", ""),
-            Arguments.of("GET", "/api/permissions/1", ""),
-            Arguments.of("PUT", "/api/permissions/1", "{\"name\":\"Updated\",\"description\":\"Updated\",\"isActive\":true}"),
+            Arguments.of("GET", "/api/permissions/1", "")
+        );
+    }
+
+    private static Stream<Arguments> permissionWriteEndpoints() {
+        return Stream.of(
+            Arguments.of("POST", "/api/permissions", "{}"),
+            Arguments.of("PUT", "/api/permissions/1", "{}"),
             Arguments.of("DELETE", "/api/permissions/1", "")
         );
     }
@@ -374,12 +322,7 @@ class RbacManagementTest {
             Arguments.of("POST", "/api/roles", "{\"code\":\"" + "A".repeat(51) + "\",\"name\":\"Test\"}", "code"),
             Arguments.of("POST", "/api/roles", "{\"code\":\"TEST\",\"name\":\"" + "A".repeat(151) + "\"}", "name"),
             Arguments.of("PUT", "/api/roles/1", "{\"name\":\"Test\"}", "isActive"),
-            Arguments.of("POST", "/api/roles/1/permissions", "{\"permissionId\":0}", "permissionId"),
-            Arguments.of("POST", "/api/permissions", "{\"code\":\"" + "a".repeat(101)
-                + "\",\"name\":\"Test\",\"module\":\"RBAC\",\"description\":\"Test\"}", "code"),
-            Arguments.of("POST", "/api/permissions", "{\"code\":\"ROLE_SYSTEM_ADMIN\",\"name\":\"Test\",\"module\":\"RBAC\",\"description\":\"Test\"}", "code"),
-            Arguments.of("POST", "/api/permissions", "{\"code\":\"test.read\",\"name\":\"Test\",\"description\":\"Test\"}", "module"),
-            Arguments.of("PUT", "/api/permissions/1", "{\"name\":\"Test\",\"description\":\"Test\"}", "isActive")
+            Arguments.of("POST", "/api/roles/1/permissions", "{\"permissionId\":0}", "permissionId")
         );
     }
 }
