@@ -56,7 +56,7 @@ class EmployeeServiceImplTest {
     void updateRejectsWorkEmailOwnedByAnotherEmployee() {
         Employee employee = employee(1L);
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
-        when(employeeRepository.existsByWorkEmailAndIdNot("duplicate@hrm.local", 1L)).thenReturn(true);
+        when(employeeRepository.existsByWorkEmailIgnoreCaseAndIdNot("duplicate@hrm.local", 1L)).thenReturn(true);
         UpdateEmployeeRequest request = new UpdateEmployeeRequest(
             "Employee One", null, null, null, null, null, null, "duplicate@hrm.local", null
         );

@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -165,10 +166,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     public EmployeeDetailResponse update(Long id, UpdateEmployeeRequest request) {
         Employee employee = findEmployeeOrThrow(id);
         employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_MANAGE);
-        if (request.workEmail() != null
-            && employeeRepository.existsByWorkEmailAndIdNot(request.workEmail(), id)) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Work email is already taken", "workEmail");
-        }
+
+        Instant now = Instant.now();
+        updateWorkEmail(employee, request.workEmail(), now);
 
         employee.setFullName(request.fullName());
         employee.setDateOfBirth(request.dateOfBirth());
@@ -177,10 +177,45 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setMajor(request.major());
         employee.setInstitution(request.institution());
         employee.setGraduationYear(request.graduationYear());
-        employee.setWorkEmail(request.workEmail());
         employee.setPhone(request.phone());
-        employee.setUpdatedAt(Instant.now());
+        employee.setUpdatedAt(now);
         return toDetailResponse(employee);
+    }
+
+    private void updateWorkEmail(Employee employee, String requestedWorkEmail, Instant now) {
+        String workEmail = normalizeEmail(requestedWorkEmail);
+        if (workEmail != null
+            && employeeRepository.existsByWorkEmailIgnoreCaseAndIdNot(workEmail, employee.getId())) {
+            throw new ConflictException(ErrorCode.CONFLICT, "Work email is already taken", "workEmail");
+        }
+
+        Account account = accountRepository.findByEmployeeId(employee.getId()).orElse(null);
+        if (account != null && workEmail == null) {
+            throw new ConflictException(
+                ErrorCode.CONFLICT,
+                "Work email cannot be removed while the employee has an account",
+                "workEmail"
+            );
+        }
+        if (account != null && accountRepository.existsByEmailIgnoreCaseAndIdNot(workEmail, account.getId())) {
+            throw new ConflictException(ErrorCode.EMAIL_TAKEN, "Account email is already taken", "workEmail");
+        }
+        if (account == null && workEmail != null && accountRepository.existsByEmailIgnoreCase(workEmail)) {
+            throw new ConflictException(ErrorCode.EMAIL_TAKEN, "Account email is already taken", "workEmail");
+        }
+
+        employee.setWorkEmail(workEmail);
+        if (account != null) {
+            account.setEmail(workEmail);
+            account.setUpdatedAt(now);
+        }
+    }
+
+    private String normalizeEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 
     @Override
