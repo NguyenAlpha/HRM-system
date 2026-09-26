@@ -127,7 +127,7 @@ Gán thêm một role nghiệp vụ cho account.
 
 | Field | Type | Bắt buộc | Ràng buộc |
 |:------|:-----|:--------:|:----------|
-| `roleCode` | string | ✅ | Tối đa 50 ký tự, định dạng `A-Z`, `0-9`, `_`; role phải active |
+| `roleCode` | string | ✅ | Tối đa 50 ký tự, định dạng `A-Z`, `0-9`, `_`; role phải tồn tại và chưa bị xóa mềm |
 | `scopeType` | enum | ✅ | `SELF`, `COMPANY`, `ORG_UNIT`, `LOCATION` |
 | `organizationUnitId` | long | Theo scope | Chỉ dùng với `ORG_UNIT` |
 | `workLocationId` | long | Theo scope | Chỉ dùng với `LOCATION` |
@@ -153,7 +153,7 @@ Trả một `AccountRoleAssignmentResponse` như cấu trúc trong endpoint danh
 | 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
 | 403 | `FORBIDDEN` | Không có `account.role.assign` |
 | 404 | `ACCOUNT_NOT_FOUND` | Account không tồn tại |
-| 404 | `ROLE_NOT_FOUND` | Role không tồn tại, đã xóa hoặc inactive |
+| 404 | `ROLE_NOT_FOUND` | Role không tồn tại hoặc đã bị xóa mềm |
 | 404 | `ORGANIZATION_UNIT_NOT_FOUND` | Đơn vị không tồn tại hoặc inactive |
 | 404 | `LOCATION_NOT_FOUND` | Địa điểm không tồn tại hoặc inactive |
 | 409 | `ROLE_ASSIGNMENT_EXISTS` | Assignment bị trùng/chồng thời gian |

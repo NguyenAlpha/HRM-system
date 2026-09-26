@@ -5,7 +5,6 @@ public record RoleResponse(
     String code,
     String name,
     String description,
-    Boolean isSystem,
-    Boolean isActive
+    Boolean isSystem
 ) {
 }

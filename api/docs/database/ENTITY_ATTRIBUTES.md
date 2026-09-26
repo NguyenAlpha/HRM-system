@@ -266,7 +266,6 @@
 | `name` | `String` | `name` | NOT NULL | Tên hiển thị |
 | `description` | `String` | `description` | | Mô tả |
 | `isSystem` | `Boolean` | `is_system` | NOT NULL, mặc định false | Vai trò seed, không được xóa |
-| `isActive` | `Boolean` | `is_active` | NOT NULL, mặc định true | Trạng thái |
 | `createdAt` | `Instant` | `created_at` | NOT NULL | Thời điểm tạo |
 | `updatedAt` | `Instant` | `updated_at` | NOT NULL | Thời điểm cập nhật |
 | `deletedAt` | `Instant` | `deleted_at` | nullable | Chỉ áp dụng cho vai trò tùy chỉnh |

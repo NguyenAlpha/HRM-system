@@ -108,9 +108,9 @@ public class SystemAdminSeeder implements ApplicationRunner {
 
     private Role findRequiredSystemAdminRole() {
         Role role = roleRepository.findByCodeAndDeletedAtIsNull(SYSTEM_ADMIN_ROLE_CODE)
-            .orElseThrow(() -> new IllegalStateException("Active SYSTEM_ADMIN seed role not found"));
-        if (!Boolean.TRUE.equals(role.getIsSystem()) || !Boolean.TRUE.equals(role.getIsActive())) {
-            throw new IllegalStateException("SYSTEM_ADMIN role must be an active system role");
+            .orElseThrow(() -> new IllegalStateException("SYSTEM_ADMIN seed role not found"));
+        if (!Boolean.TRUE.equals(role.getIsSystem())) {
+            throw new IllegalStateException("SYSTEM_ADMIN role must be a system role");
         }
         return role;
     }

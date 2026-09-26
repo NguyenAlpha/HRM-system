@@ -99,7 +99,7 @@ Ví dụ response phân trang được rút gọn:
 
 ## POST `/api/roles`
 
-Tạo role tùy chỉnh. Role mới luôn có `isSystem=false` và `isActive=true`.
+Tạo role tùy chỉnh. Role mới luôn có `isSystem=false`.
 
 ### Request
 
@@ -129,8 +129,7 @@ Tạo role tùy chỉnh. Role mới luôn có `isSystem=false` và `isActive=tru
     "code": "RBAC_MANAGER",
     "name": "Quản trị phân quyền",
     "description": "Quản lý vai trò tùy chỉnh trong doanh nghiệp",
-    "isSystem": false,
-    "isActive": true
+    "isSystem": false
   },
   "error": null
 }
@@ -151,7 +150,7 @@ Tạo role không tự gán role đó cho account và không tự thêm role và
 
 ## GET `/api/roles`
 
-Lấy danh sách role chưa bị xóa mềm, bao gồm cả role active và inactive.
+Lấy danh sách role chưa bị xóa mềm.
 
 ### Query parameters
 
@@ -173,16 +172,14 @@ Endpoint sử dụng các tham số [phân trang](#phân-trang) chung.
         "code": "SYSTEM_ADMIN",
         "name": "Quản trị viên hệ thống",
         "description": "Khởi tạo Chủ sở hữu doanh nghiệp đầu tiên, không tham gia nghiệp vụ nội bộ công ty",
-        "isSystem": true,
-        "isActive": true
+        "isSystem": true
       },
       {
         "id": 7,
         "code": "RBAC_MANAGER",
         "name": "Quản trị phân quyền",
         "description": "Quản lý vai trò tùy chỉnh trong doanh nghiệp",
-        "isSystem": false,
-        "isActive": true
+        "isSystem": false
       }
     ],
     "totalElements": 2,
@@ -218,8 +215,7 @@ Lấy chi tiết một role chưa bị xóa mềm.
     "code": "RBAC_MANAGER",
     "name": "Quản trị phân quyền",
     "description": "Quản lý vai trò tùy chỉnh trong doanh nghiệp",
-    "isSystem": false,
-    "isActive": true
+    "isSystem": false
   },
   "error": null
 }
@@ -238,15 +234,14 @@ Lấy chi tiết một role chưa bị xóa mềm.
 
 ## PUT `/api/roles/{id}`
 
-Cập nhật tên, mô tả và trạng thái của custom role. System role không thể thay đổi qua API này.
+Cập nhật tên và mô tả của custom role. System role không thể thay đổi qua API này.
 
 ### Request
 
 ```json
 {
   "name": "Quản trị role và permission",
-  "description": "Mô tả mới",
-  "isActive": true
+  "description": "Mô tả mới"
 }
 ```
 
@@ -254,7 +249,6 @@ Cập nhật tên, mô tả và trạng thái của custom role. System role kh�
 |:------|:-----|:--------:|:----------|
 | `name` | string | ✅ | Không rỗng, tối đa 150 ký tự |
 | `description` | string | ❌ | Mô tả mới, có thể là `null` |
-| `isActive` | boolean | ✅ | Trạng thái mới của custom role |
 
 ### Response `200 OK`
 
@@ -266,14 +260,11 @@ Cập nhật tên, mô tả và trạng thái của custom role. System role kh�
     "code": "RBAC_MANAGER",
     "name": "Quản trị role và permission",
     "description": "Mô tả mới",
-    "isSystem": false,
-    "isActive": true
+    "isSystem": false
   },
   "error": null
 }
 ```
-
-Vô hiệu hóa role tùy chỉnh làm role đó không còn được đưa vào authorization snapshot khi đăng nhập hoặc refresh token.
 
 ### Lỗi
 
@@ -289,7 +280,7 @@ Vô hiệu hóa role tùy chỉnh làm role đó không còn được đưa vào
 
 ## DELETE `/api/roles/{id}`
 
-Xóa mềm một role tùy chỉnh. Hệ thống đặt `deletedAt`, cập nhật `updatedAt` và chuyển `isActive=false`; dữ liệu role và lịch sử phân quyền vẫn được giữ trong database.
+Xóa mềm một role tùy chỉnh. Hệ thống đặt `deletedAt` và cập nhật `updatedAt`; dữ liệu role và lịch sử phân quyền vẫn được giữ trong database.
 
 ### Response `200 OK`
 
@@ -380,7 +371,7 @@ Account thực hiện được lấy từ claim `accountId` trong JWT. Client kh
 }
 ```
 
-API lưu quan hệ ngay cả khi custom role hoặc permission đang inactive. Chỉ role và permission active mới được đưa vào authorization snapshot mới.
+API lưu quan hệ ngay cả khi permission đang inactive. Role chưa bị xóa mềm và permission active mới được đưa vào authorization snapshot mới.
 
 ### Lỗi
 
@@ -525,7 +516,7 @@ Migration và `RolePermissionSeeder` tự thu hồi mapping `SYSTEM_ONLY` từng
 
 - JWT lưu role và permission tại thời điểm phát token. Thay đổi role, permission hoặc mapping chỉ xuất hiện trong access token mới sau khi account đăng nhập hoặc refresh token.
 - Access token đã phát giữ nguyên claims đến khi hết hạn; vô hiệu hóa hoặc gỡ quyền không thu hồi ngay token đó.
-- Chỉ role chưa xóa, đang active và còn hiệu lực gán cho account mới được đưa vào authorization snapshot.
+- Chỉ role chưa bị xóa mềm và còn hiệu lực gán cho account mới được đưa vào authorization snapshot.
 - Chỉ permission active mới được đưa vào authorization snapshot, dù mapping role–permission vẫn tồn tại.
 - Role có scope `SELF`, `ORG_UNIT` hoặc `LOCATION` vẫn cần kiểm tra scope tại authorization/service layer của API nghiệp vụ.
 

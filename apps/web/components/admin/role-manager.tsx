@@ -6,7 +6,7 @@ import { Pagination, RbacFeedback } from "@/components/admin/rbac-controls"
 import { RolePermissions } from "@/components/admin/role-permissions"
 import { isSessionExpired, rbacErrorMessage, rbacMutation, rbacRequest, type Page, type Role } from "@/lib/rbac"
 
-const EMPTY_FORM = { code: "", name: "", description: "", isActive: true }
+const EMPTY_FORM = { code: "", name: "", description: "" }
 
 export function RoleManager({ onSessionExpired }: { onSessionExpired: () => void }) {
   const [data, setData] = useState<Page<Role> | null>(null)
@@ -56,7 +56,7 @@ export function RoleManager({ onSessionExpired }: { onSessionExpired: () => void
 
   function edit(role: Role) {
     setEditing(role)
-    setForm({ code: role.code, name: role.name, description: role.description ?? "", isActive: role.isActive })
+    setForm({ code: role.code, name: role.name, description: role.description ?? "" })
     setError(null)
     setMessage(null)
     formRef.current?.scrollIntoView({ block: "start" })
@@ -70,7 +70,7 @@ export function RoleManager({ onSessionExpired }: { onSessionExpired: () => void
     try {
       const body = { name: form.name.trim(), description: form.description.trim() || null }
       const saved = editing
-        ? await rbacMutation<Role>(`/roles/${editing.id}`, "PUT", { ...body, isActive: form.isActive })
+        ? await rbacMutation<Role>(`/roles/${editing.id}`, "PUT", body)
         : await rbacMutation<Role>("/roles", "POST", { ...body, code: form.code.trim() })
       if (selected?.id === saved.id) setSelected(saved)
       setMessage(editing ? `Đã cập nhật vai trò ${saved.code}.` : `Đã tạo vai trò ${saved.code}.`)
@@ -86,7 +86,7 @@ export function RoleManager({ onSessionExpired }: { onSessionExpired: () => void
   }
 
   async function remove(role: Role) {
-    if (!window.confirm(`Xóa vai trò ${role.code}? Vai trò sẽ ngừng hoạt động; lịch sử được giữ lại.`)) return
+    if (!window.confirm(`Xóa vai trò ${role.code}? Vai trò sẽ bị xóa mềm; lịch sử được giữ lại.`)) return
     setBusy(true)
     setError(null)
     setMessage(null)
@@ -124,13 +124,6 @@ export function RoleManager({ onSessionExpired }: { onSessionExpired: () => void
                 <textarea aria-labelledby="role-description-label" rows={2} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} />
               </label>
             </div>
-            {editing && (
-              <label className="rbac-checkbox">
-                <input type="checkbox" checked={form.isActive} disabled={editing.isSystem}
-                  onChange={(event) => setForm({ ...form, isActive: event.target.checked })} />
-                Đang hoạt động {editing.isSystem && "(vai trò hệ thống luôn hoạt động)"}
-              </label>
-            )}
             <div className="portal-actions">
               <button type="submit" className="rbac-primary">{busy ? "Đang xử lý..." : editing ? "Lưu vai trò" : "Tạo vai trò"}</button>
               {editing && <button type="button" className="secondary-button" onClick={resetForm}>Hủy sửa</button>}
@@ -149,14 +142,13 @@ export function RoleManager({ onSessionExpired }: { onSessionExpired: () => void
         {loading && <p role="status">Đang tải vai trò...</p>}
         <div className="rbac-table-wrap">
           <table className="rbac-table">
-            <thead><tr><th scope="col">Mã / ID</th><th scope="col">Tên / mô tả</th><th scope="col">Loại</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead>
+            <thead><tr><th scope="col">Mã / ID</th><th scope="col">Tên / mô tả</th><th scope="col">Loại</th><th scope="col">Thao tác</th></tr></thead>
             <tbody>
               {data?.content.map((role) => (
                 <tr key={role.id}>
                   <td><code>{role.code}</code><small>#{role.id}</small></td>
                   <td>{role.name}<small>{role.description}</small></td>
                   <td>{role.isSystem ? "Hệ thống" : "Tùy chỉnh"}</td>
-                  <td>{role.isActive ? "Hoạt động" : "Tạm tắt"}</td>
                   <td><div className="portal-actions">
                     <button type="button" className="secondary-button" onClick={() => edit(role)} disabled={disabled || role.isSystem}
                       title={role.isSystem ? "System role do ứng dụng định nghĩa" : `Sửa ${role.code}`}>Sửa</button>
@@ -168,7 +160,7 @@ export function RoleManager({ onSessionExpired }: { onSessionExpired: () => void
                   </div></td>
                 </tr>
               ))}
-              {!loading && data?.content.length === 0 && <tr><td colSpan={5}>Chưa có vai trò.</td></tr>}
+              {!loading && data?.content.length === 0 && <tr><td colSpan={4}>Chưa có vai trò.</td></tr>}
             </tbody>
           </table>
         </div>

@@ -101,8 +101,7 @@ class RbacManagementTest {
         long id = createdId(admin(post("/api/roles"), Map.of(
             "code", code, "name", "Custom role", "description", "Initial description"
         )).andExpect(status().isCreated())
-            .andExpect(jsonPath("$.data.isSystem").value(false))
-            .andExpect(jsonPath("$.data.isActive").value(true)));
+            .andExpect(jsonPath("$.data.isSystem").value(false)));
 
         admin(get("/api/roles/{id}", id))
             .andExpect(status().isOk())
@@ -111,16 +110,14 @@ class RbacManagementTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.content[0].id").value(id));
         admin(put("/api/roles/{id}", id), Map.of(
-            "name", "Updated role", "description", "Updated description", "isActive", false
+            "name", "Updated role", "description", "Updated description"
         )).andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.name").value("Updated role"))
-            .andExpect(jsonPath("$.data.isActive").value(false));
+            .andExpect(jsonPath("$.data.name").value("Updated role"));
         admin(delete("/api/roles/{id}", id)).andExpect(status().isOk());
 
         Role deletedRole = roleRepository.findById(id).orElseThrow();
         assertNotNull(deletedRole.getDeletedAt());
         assertEquals(deletedRole.getDeletedAt(), deletedRole.getUpdatedAt());
-        assertFalse(deletedRole.getIsActive());
         assertFalse(roleRepository.findByDeletedAtIsNull(Pageable.unpaged()).stream()
             .anyMatch(role -> role.getId().equals(id)));
         admin(get("/api/roles/{id}", id))
@@ -141,8 +138,7 @@ class RbacManagementTest {
             .andExpect(status().isConflict());
         admin(put("/api/roles/{id}", role.getId()), Map.of(
             "name", "Modified system role",
-            "description", "Modified",
-            "isActive", true
+            "description", "Modified"
         )).andExpect(status().isConflict());
     }
 
@@ -243,7 +239,7 @@ class RbacManagementTest {
     @Test
     void missingResourcesAndMalformedBodiesReturnExpectedErrors() throws Exception {
         admin(get("/api/roles/-1")).andExpect(status().isNotFound());
-        admin(put("/api/roles/-1"), Map.of("name", "Missing", "isActive", true))
+        admin(put("/api/roles/-1"), Map.of("name", "Missing"))
             .andExpect(status().isNotFound());
         admin(delete("/api/roles/-1")).andExpect(status().isNotFound());
         admin(get("/api/roles/-1/permissions")).andExpect(status().isNotFound());
@@ -281,7 +277,7 @@ class RbacManagementTest {
 
     private Role savedRole(boolean system) {
         return roleRepository.save(Role.builder().code(roleCode()).name("RBAC test role")
-            .isSystem(system).isActive(true).createdAt(Instant.now()).updatedAt(Instant.now()).build());
+            .isSystem(system).createdAt(Instant.now()).updatedAt(Instant.now()).build());
     }
 
     private Permission savedPermission(String code) {
@@ -315,7 +311,7 @@ class RbacManagementTest {
             Arguments.of("POST", "/api/roles", "{\"code\":\"TEST_ROLE\",\"name\":\"Test role\"}"),
             Arguments.of("GET", "/api/roles", ""),
             Arguments.of("GET", "/api/roles/1", ""),
-            Arguments.of("PUT", "/api/roles/1", "{\"name\":\"Updated\",\"isActive\":true}"),
+            Arguments.of("PUT", "/api/roles/1", "{\"name\":\"Updated\"}"),
             Arguments.of("DELETE", "/api/roles/1", ""),
             Arguments.of("GET", "/api/roles/1/permissions", ""),
             Arguments.of("POST", "/api/roles/1/permissions", "{\"permissionId\":1}"),
@@ -340,7 +336,6 @@ class RbacManagementTest {
             Arguments.of("POST", "/api/roles", "{\"code\":\"lowercase\",\"name\":\"Test\"}", "code"),
             Arguments.of("POST", "/api/roles", "{\"code\":\"" + "A".repeat(51) + "\",\"name\":\"Test\"}", "code"),
             Arguments.of("POST", "/api/roles", "{\"code\":\"TEST\",\"name\":\"" + "A".repeat(151) + "\"}", "name"),
-            Arguments.of("PUT", "/api/roles/1", "{\"name\":\"Test\"}", "isActive"),
             Arguments.of("POST", "/api/roles/1/permissions", "{\"permissionId\":0}", "permissionId")
         );
     }
