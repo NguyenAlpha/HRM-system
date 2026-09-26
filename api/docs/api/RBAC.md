@@ -580,10 +580,20 @@ Lấy chi tiết một permission.
 | `DELEGABLE` | Company Owner hoặc người có `rbac.manage` có thể gán permission cho custom role |
 | `SYSTEM_ONLY` | Chỉ seeder được gán permission cho system role; API từ chối gán cho custom role |
 
-Hiện tại `organization.company_owner.bootstrap` là `SYSTEM_ONLY`; các permission còn lại là `DELEGABLE`.
+Hiện tại `organization.company_owner.bootstrap` và `role.assignment.approve` là `SYSTEM_ONLY`; các permission còn lại là `DELEGABLE`.
 Migration và `RolePermissionSeeder` tự thu hồi mapping `SYSTEM_ONLY` từng bị gán cho custom role trước khi chính sách này được áp dụng.
 
-`SYSTEM_ADMIN` sử dụng permission này tại `POST /api/admin/organization/company-owner` để tạo Company Owner đầu tiên. Workflow và giới hạn chống tạo trùng được mô tả trong [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md).
+Ba permission chuẩn bị cho workflow cấp tài khoản và đề xuất role:
+
+| Permission | Role hệ thống được seed | Mục đích |
+|:-----------|:------------------------|:---------|
+| `account.provision` | `HR_STAFF`, `COMPANY_OWNER` | Tạo account cho employee hợp lệ; endpoint sẽ dùng permission này khi workflow provisioning được triển khai |
+| `role.assignment.request` | `HR_STAFF` | Gửi đề xuất cấp role nghiệp vụ |
+| `role.assignment.approve` | `COMPANY_OWNER` | Duyệt hoặc từ chối đề xuất; là `SYSTEM_ONLY` nên không thể gán cho custom role qua API RBAC |
+
+Việc seed permission không tự tạo endpoint và không tự cấp role cho account. Các API tương ứng được triển khai ở các nhóm workflow tiếp theo.
+
+`SYSTEM_ADMIN` sử dụng riêng permission `organization.company_owner.bootstrap` tại `POST /api/admin/organization/company-owner` để tạo Company Owner đầu tiên. Workflow và giới hạn chống tạo trùng được mô tả trong [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md).
 
 ---
 

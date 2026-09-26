@@ -79,7 +79,9 @@ public class RolePermissionSeeder implements ApplicationRunner {
         role("HR_STAFF", with(
             PEOPLE_MANAGER_PERMISSIONS,
             "employee.sensitive.read",
-            "employee.sensitive.manage"
+            "employee.sensitive.manage",
+            "account.provision",
+            "role.assignment.request"
         )),
         role("PAYROLL_ACCOUNTANT", with(
             EMPLOYEE_PERMISSIONS,
@@ -108,8 +110,10 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "employee.manage",
             "account.read",
             "account.manage",
+            "account.provision",
             "account.activation.manage",
             "account.role.assign",
+            "role.assignment.approve",
             "organization.hr_staff.bootstrap",
             "rbac.manage"
         )),
