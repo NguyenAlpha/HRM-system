@@ -10,6 +10,7 @@ Quản lý role tùy chỉnh và quan hệ permission của role. Danh mục per
 |:---------|:--------------------:|:-------------------:|
 | `POST /api/roles` | ✅ | `rbac.manage` |
 | `GET /api/roles` | ✅ | `rbac.manage` |
+| `GET /api/roles/with-permissions` | ✅ | `rbac.manage` |
 | `GET /api/roles/{id}` | ✅ | `rbac.manage` |
 | `PUT /api/roles/{id}` | ✅ | `rbac.manage` |
 | `DELETE /api/roles/{id}` | ✅ | `rbac.manage` |
@@ -94,6 +95,61 @@ Ví dụ response phân trang được rút gọn:
   "error": null
 }
 ```
+
+---
+
+## GET `/api/roles/with-permissions`
+
+Lấy toàn bộ role chưa bị xóa mềm cùng các permission đã gán cho từng role. Endpoint không phân trang, sắp xếp role theo `id` tăng dần và permission trong từng role theo `code` tăng dần.
+
+Danh sách permission phản ánh đầy đủ mapping đã lưu, bao gồm cả permission đang có `isActive=false`. Role chưa được gán permission trả về `permissions: []`.
+
+### Response `200 OK`
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 2,
+      "code": "COMPANY_OWNER",
+      "name": "Chủ sở hữu doanh nghiệp",
+      "description": "Quản trị tài khoản, quyền truy cập và cấu hình trong phạm vi doanh nghiệp",
+      "isSystem": true,
+      "permissions": [
+        {
+          "id": 8,
+          "code": "account.role.assign",
+          "name": "Phân quyền tài khoản",
+          "module": "ACCOUNT",
+          "description": "Gán và thu hồi vai trò của tài khoản",
+          "assignmentPolicy": "DELEGABLE",
+          "isActive": true
+        },
+        {
+          "id": 15,
+          "code": "rbac.manage",
+          "name": "Quản lý phân quyền",
+          "module": "RBAC",
+          "description": "Xem danh mục quyền và quản lý vai trò tùy chỉnh cùng quan hệ phân quyền",
+          "assignmentPolicy": "DELEGABLE",
+          "isActive": true
+        }
+      ]
+    }
+  ],
+  "error": null
+}
+```
+
+Khi không có role, API trả `data: []`.
+
+### Lỗi
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
+| 403 | `FORBIDDEN` | Account không có permission `rbac.manage` |
 
 ---
 

@@ -24,6 +24,7 @@ import com.htttdn.hrm.dto.request.role.UpdateRoleRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.permission.PermissionResponse;
 import com.htttdn.hrm.dto.response.role.RoleResponse;
+import com.htttdn.hrm.dto.response.role.RoleWithPermissionsResponse;
 import com.htttdn.hrm.service.RoleService;
 
 import jakarta.validation.Valid;
@@ -47,6 +48,11 @@ public class RoleController {
     @GetMapping
     public ApiResult<Page<RoleResponse>> list(@PageableDefault(sort = "id", size = 20) Pageable pageable) {
         return ApiResult.ok(roleService.list(pageable));
+    }
+
+    @GetMapping("/with-permissions")
+    public ApiResult<List<RoleWithPermissionsResponse>> listWithPermissions() {
+        return ApiResult.ok(roleService.listWithPermissions());
     }
 
     @GetMapping("/{id}")

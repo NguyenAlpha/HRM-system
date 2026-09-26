@@ -1,7 +1,10 @@
 package com.htttdn.hrm.service.impl;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +17,7 @@ import com.htttdn.hrm.dto.request.role.UpdateRoleRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.permission.PermissionResponse;
 import com.htttdn.hrm.dto.response.role.RoleResponse;
+import com.htttdn.hrm.dto.response.role.RoleWithPermissionsResponse;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Permission;
 import com.htttdn.hrm.entity.Role;
@@ -80,6 +84,34 @@ public class RoleServiceImpl implements RoleService {
     @Transactional(readOnly = true)
     public Page<RoleResponse> list(Pageable pageable) {
         return roleRepository.findByDeletedAtIsNull(pageable).map(this::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RoleWithPermissionsResponse> listWithPermissions() {
+        List<Role> roles = roleRepository.findByDeletedAtIsNullOrderByIdAsc();
+        if (roles.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, List<PermissionResponse>> permissionsByRole = new HashMap<>();
+        List<Long> roleIds = roles.stream().map(Role::getId).toList();
+        rolePermissionRepository.findAllByRoleIds(roleIds).forEach(rolePermission ->
+            permissionsByRole
+                .computeIfAbsent(rolePermission.getId().getRoleId(), ignored -> new ArrayList<>())
+                .add(toPermissionResponse(rolePermission.getPermission()))
+        );
+
+        return roles.stream()
+            .map(role -> new RoleWithPermissionsResponse(
+                role.getId(),
+                role.getCode(),
+                role.getName(),
+                role.getDescription(),
+                role.getIsSystem(),
+                List.copyOf(permissionsByRole.getOrDefault(role.getId(), List.of()))
+            ))
+            .toList();
     }
 
     @Override
@@ -166,16 +198,20 @@ public class RoleServiceImpl implements RoleService {
         findRoleOrThrow(roleId);
         return rolePermissionRepository.findByIdRoleId(roleId).stream()
             .map(RolePermission::getPermission)
-            .map(permission -> new PermissionResponse(
-                permission.getId(),
-                permission.getCode(),
-                permission.getName(),
-                permission.getModule(),
-                permission.getDescription(),
-                permission.getAssignmentPolicy(),
-                permission.getIsActive()
-            ))
+            .map(this::toPermissionResponse)
             .toList();
+    }
+
+    private PermissionResponse toPermissionResponse(Permission permission) {
+        return new PermissionResponse(
+            permission.getId(),
+            permission.getCode(),
+            permission.getName(),
+            permission.getModule(),
+            permission.getDescription(),
+            permission.getAssignmentPolicy(),
+            permission.getIsActive()
+        );
     }
 
     private Role findRoleOrThrow(Long id) {
