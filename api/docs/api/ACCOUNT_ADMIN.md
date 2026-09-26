@@ -4,6 +4,8 @@ Quản trị vòng đời tài khoản đăng nhập. Các endpoint này không 
 
 Account mới phải liên kết với một employee đã tồn tại. Hệ thống lấy email đăng nhập từ `Employee.workEmail`, tự gán role nền `EMPLOYEE` với scope `SELF`, tạo account `PENDING` và phát token để người nhận tự đặt mật khẩu.
 
+Role nghiệp vụ bổ sung được quản lý qua [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md), không truyền trong request tạo account.
+
 ---
 
 ## Endpoint access

@@ -13,6 +13,8 @@ public interface OrganizationUnitRepository extends JpaRepository<OrganizationUn
 
     Optional<OrganizationUnit> findByCodeAndDeletedAtIsNull(String code);
 
+    Optional<OrganizationUnit> findByIdAndDeletedAtIsNull(Long id);
+
     boolean existsByCodeAndDeletedAtIsNull(String code);
 
     List<OrganizationUnit> findByParentUnitIdAndDeletedAtIsNull(Long parentUnitId);

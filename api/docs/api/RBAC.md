@@ -1,6 +1,6 @@
 # API Reference — RBAC
 
-Quản lý role, permission và quan hệ permission của role. Các API RBAC không quản lý việc gán role cho account hoặc permission override của từng account.
+Quản lý role, permission và quan hệ permission của role. Việc gán role cho account được mô tả riêng tại [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md); API RBAC không trực tiếp thay đổi assignment của account.
 
 ---
 
