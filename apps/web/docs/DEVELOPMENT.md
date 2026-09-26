@@ -47,6 +47,8 @@ AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS=2592000
 
 Các tài khoản dưới đây chỉ tồn tại khi seeder tương ứng được bật trong API:
 
+`USER_SEED_ENABLED` mặc định là `false`; đặt thành `true` khi muốn sử dụng ba account demo của portal HRM.
+
 | Portal | Username | Password mặc định | Role | Điều kiện API |
 |:-------|:---------|:------------------|:-----|:--------------|
 | HRM | `employee01` | `Employee@123` | `EMPLOYEE` | `USER_SEED_ENABLED=true` |
