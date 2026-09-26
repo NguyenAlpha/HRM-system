@@ -82,6 +82,8 @@ Toàn bộ thao tác nằm trong một transaction:
 2. Gán role `EMPLOYEE` với scope `SELF`.
 3. Tạo token kích hoạt dùng một lần.
 
+Phần tạo account ở trên được triển khai bởi component provisioning nội bộ dùng chung. Endpoint này chỉ kiểm tra `account.manage` rồi chuyển `employeeId`, `username` và actor lấy từ Security Context vào component đó. Các workflow tổng hợp như khởi tạo Director tái sử dụng cùng component, không gọi vòng qua `AccountAdminController` và không phải có thêm `account.manage` nếu permission của workflow đã cho phép toàn bộ thao tác.
+
 ### Lỗi
 
 | HTTP | `error.code` | Nguyên nhân |
@@ -202,6 +204,7 @@ Các chuyển trạng thái không hợp lệ trả:
 ## Ghi chú bảo mật
 
 - Actor luôn lấy từ JWT/Security Context; request không có `createdByAccountId` hoặc `grantedByAccountId`.
+- Service provisioning nội bộ không phải API công khai và không tự quyết định authorization; controller/workflow gọi nó phải được bảo vệ bằng permission phù hợp và giữ transaction bao trùm.
 - Admin không nhập, xem hoặc lưu mật khẩu của người dùng.
 - Role nền `EMPLOYEE/SELF` do hệ thống tự gán; role nghiệp vụ khác thuộc API role assignment riêng.
 - Access token đã phát là JWT stateless và có thể còn hiệu lực đến `exp`; refresh token bị thu hồi ngay khi suspend/reset.
