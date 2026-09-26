@@ -1,8 +1,6 @@
 package com.htttdn.hrm.config.seed;
 
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,26 +12,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
-import com.htttdn.hrm.entity.Permission;
 import com.htttdn.hrm.entity.Role;
-import com.htttdn.hrm.entity.RolePermission;
 import com.htttdn.hrm.entity.enums.AccountStatus;
-import com.htttdn.hrm.entity.enums.PermissionAssignmentPolicy;
-import com.htttdn.hrm.entity.enums.PermissionModule;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
-import com.htttdn.hrm.repository.PermissionRepository;
-import com.htttdn.hrm.repository.RolePermissionRepository;
 import com.htttdn.hrm.repository.RoleRepository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -46,12 +37,6 @@ class SystemAdminSeederTest {
 
     @Mock
     private RoleRepository roleRepository;
-
-    @Mock
-    private PermissionRepository permissionRepository;
-
-    @Mock
-    private RolePermissionRepository rolePermissionRepository;
 
     @Mock
     private AccountRoleAssignmentRepository accountRoleAssignmentRepository;
@@ -69,8 +54,6 @@ class SystemAdminSeederTest {
         verifyNoInteractions(
             accountRepository,
             roleRepository,
-            permissionRepository,
-            rolePermissionRepository,
             accountRoleAssignmentRepository,
             passwordEncoder
         );
@@ -83,7 +66,7 @@ class SystemAdminSeederTest {
         var exception = assertThrows(IllegalStateException.class, () -> seeder.run(applicationArguments));
 
         assertTrue(exception.getMessage().contains("admin.seed.password"));
-        verifyNoInteractions(accountRepository);
+        verifyNoInteractions(accountRepository, roleRepository);
     }
 
     @Test
@@ -93,11 +76,28 @@ class SystemAdminSeederTest {
         var exception = assertThrows(IllegalStateException.class, () -> seeder.run(applicationArguments));
 
         assertTrue(exception.getMessage().contains("between 8 and 100"));
-        verifyNoInteractions(accountRepository);
+        verifyNoInteractions(accountRepository, roleRepository);
     }
 
     @Test
-    void createsAdminRolePermissionsAndCompanyAssignment() {
+    void rejectsMissingSystemAdminRoleBeforeCreatingAccount() {
+        when(roleRepository.findByCodeAndDeletedAtIsNull(SystemAdminSeeder.SYSTEM_ADMIN_ROLE_CODE))
+            .thenReturn(Optional.empty());
+
+        var exception = assertThrows(
+            IllegalStateException.class,
+            () -> createSeeder(true, "admin", "admin@hrm.local", "secret123").run(applicationArguments)
+        );
+
+        assertTrue(exception.getMessage().contains("SYSTEM_ADMIN seed role not found"));
+        verifyNoInteractions(accountRepository, accountRoleAssignmentRepository, passwordEncoder);
+    }
+
+    @Test
+    void createsAdminAndAssignsExistingSystemRole() {
+        Role role = systemAdminRole();
+        when(roleRepository.findByCodeAndDeletedAtIsNull(SystemAdminSeeder.SYSTEM_ADMIN_ROLE_CODE))
+            .thenReturn(Optional.of(role));
         when(accountRepository.findByUsername("admin")).thenReturn(Optional.empty());
         when(accountRepository.findByEmail("admin@hrm.local")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("secret123")).thenReturn("encoded-secret");
@@ -105,24 +105,6 @@ class SystemAdminSeederTest {
             Account account = invocation.getArgument(0);
             account.setId(1L);
             return account;
-        });
-
-        when(roleRepository.findByCodeAndDeletedAtIsNull(SystemAdminSeeder.SYSTEM_ADMIN_ROLE_CODE))
-            .thenReturn(Optional.empty());
-        when(roleRepository.save(any(Role.class))).thenAnswer(invocation -> {
-            Role role = invocation.getArgument(0);
-            role.setId(2L);
-            return role;
-        });
-
-        when(permissionRepository.findByCode(SystemAdminSeeder.COMPANY_OWNER_BOOTSTRAP_PERMISSION_CODE))
-            .thenReturn(Optional.empty());
-        when(permissionRepository.findByCode(SystemAdminSeeder.RBAC_MANAGE_PERMISSION_CODE))
-            .thenReturn(Optional.empty());
-        when(permissionRepository.save(any(Permission.class))).thenAnswer(invocation -> {
-            Permission permission = invocation.getArgument(0);
-            permission.setId(SystemAdminSeeder.RBAC_MANAGE_PERMISSION_CODE.equals(permission.getCode()) ? 4L : 3L);
-            return permission;
         });
 
         createSeeder(true, " admin ", " ADMIN@HRM.LOCAL ", "secret123").run(applicationArguments);
@@ -135,99 +117,46 @@ class SystemAdminSeederTest {
         assertEquals("encoded-secret", account.getPasswordHash());
         assertEquals(AccountStatus.ACTIVE, account.getStatus());
 
-        ArgumentCaptor<Role> roleCaptor = ArgumentCaptor.forClass(Role.class);
-        verify(roleRepository).save(roleCaptor.capture());
-        Role role = roleCaptor.getValue();
-        assertEquals(SystemAdminSeeder.SYSTEM_ADMIN_ROLE_CODE, role.getCode());
-        assertTrue(role.getIsSystem());
-
-        ArgumentCaptor<Permission> permissionCaptor = ArgumentCaptor.forClass(Permission.class);
-        verify(permissionRepository, times(2)).save(permissionCaptor.capture());
-        assertEquals(
-            Set.of(
-                SystemAdminSeeder.COMPANY_OWNER_BOOTSTRAP_PERMISSION_CODE,
-                SystemAdminSeeder.RBAC_MANAGE_PERMISSION_CODE
-            ),
-            permissionCaptor.getAllValues().stream().map(Permission::getCode).collect(Collectors.toSet())
-        );
-        Permission bootstrapPermission = permissionCaptor.getAllValues().stream()
-            .filter(permission -> SystemAdminSeeder.COMPANY_OWNER_BOOTSTRAP_PERMISSION_CODE.equals(
-                permission.getCode()))
-            .findFirst()
-            .orElseThrow();
-        assertEquals(PermissionModule.ORGANIZATION, bootstrapPermission.getModule());
-        assertEquals(PermissionAssignmentPolicy.SYSTEM_ONLY, bootstrapPermission.getAssignmentPolicy());
-        Permission rbacPermission = permissionCaptor.getAllValues().stream()
-            .filter(permission -> SystemAdminSeeder.RBAC_MANAGE_PERMISSION_CODE.equals(permission.getCode()))
-            .findFirst()
-            .orElseThrow();
-        assertEquals(PermissionModule.RBAC, rbacPermission.getModule());
-        assertEquals(PermissionAssignmentPolicy.DELEGABLE, rbacPermission.getAssignmentPolicy());
-
-        ArgumentCaptor<RolePermission> rolePermissionCaptor = ArgumentCaptor.forClass(RolePermission.class);
-        verify(rolePermissionRepository, times(2)).save(rolePermissionCaptor.capture());
-        assertTrue(rolePermissionCaptor.getAllValues().stream()
-            .allMatch(mapping -> mapping.getCreatedByAccount() == account));
-
         ArgumentCaptor<AccountRoleAssignment> assignmentCaptor =
             ArgumentCaptor.forClass(AccountRoleAssignment.class);
         verify(accountRoleAssignmentRepository).save(assignmentCaptor.capture());
         AccountRoleAssignment assignment = assignmentCaptor.getValue();
         assertSame(account, assignment.getAccount());
         assertSame(account, assignment.getGrantedByAccount());
+        assertSame(role, assignment.getRole());
         assertEquals(RoleScopeType.COMPANY, assignment.getScopeType());
     }
 
     @Test
-    void doesNotDuplicateExistingSeedData() {
+    void doesNotDuplicateExistingAdminOrAssignment() {
         Account account = Account.builder()
             .id(1L)
             .username("admin")
             .email("admin@hrm.local")
             .build();
-        Role role = Role.builder()
-            .id(2L)
-            .code(SystemAdminSeeder.SYSTEM_ADMIN_ROLE_CODE)
-            .isSystem(true)
-            .isActive(true)
-            .build();
-        Permission permission = Permission.builder()
-            .id(3L)
-            .code(SystemAdminSeeder.COMPANY_OWNER_BOOTSTRAP_PERMISSION_CODE)
-            .name("Khởi tạo Chủ sở hữu doanh nghiệp")
-            .module(PermissionModule.ORGANIZATION)
-            .assignmentPolicy(PermissionAssignmentPolicy.SYSTEM_ONLY)
-            .isActive(true)
-            .build();
-        Permission rbacPermission = Permission.builder()
-            .id(4L)
-            .code(SystemAdminSeeder.RBAC_MANAGE_PERMISSION_CODE)
-            .name("Quản lý phân quyền")
-            .module(PermissionModule.RBAC)
-            .assignmentPolicy(PermissionAssignmentPolicy.DELEGABLE)
-            .isActive(true)
-            .build();
+        Role role = systemAdminRole();
 
-        when(accountRepository.findByUsername("admin")).thenReturn(Optional.of(account));
-        when(accountRepository.findByEmail("admin@hrm.local")).thenReturn(Optional.of(account));
         when(roleRepository.findByCodeAndDeletedAtIsNull(SystemAdminSeeder.SYSTEM_ADMIN_ROLE_CODE))
             .thenReturn(Optional.of(role));
-        when(permissionRepository.findByCode(SystemAdminSeeder.COMPANY_OWNER_BOOTSTRAP_PERMISSION_CODE))
-            .thenReturn(Optional.of(permission));
-        when(permissionRepository.findByCode(SystemAdminSeeder.RBAC_MANAGE_PERMISSION_CODE))
-            .thenReturn(Optional.of(rbacPermission));
-        when(rolePermissionRepository.existsById(any())).thenReturn(true);
+        when(accountRepository.findByUsername("admin")).thenReturn(Optional.of(account));
+        when(accountRepository.findByEmail("admin@hrm.local")).thenReturn(Optional.of(account));
         when(accountRoleAssignmentRepository.existsByAccountIdAndRoleIdAndScopeTypeAndEffectiveToIsNull(
             1L, 2L, RoleScopeType.COMPANY)).thenReturn(true);
 
         createSeeder(true, "admin", "admin@hrm.local", "secret123").run(applicationArguments);
 
         verify(accountRepository, never()).save(any());
-        verify(roleRepository, never()).save(any());
-        verify(permissionRepository, never()).save(any());
-        verify(rolePermissionRepository, never()).save(any());
         verify(accountRoleAssignmentRepository, never()).save(any());
         verify(passwordEncoder, never()).encode(any());
+    }
+
+    private Role systemAdminRole() {
+        return Role.builder()
+            .id(2L)
+            .code(SystemAdminSeeder.SYSTEM_ADMIN_ROLE_CODE)
+            .isSystem(true)
+            .isActive(true)
+            .build();
     }
 
     private SystemAdminSeeder createSeeder(
@@ -239,8 +168,6 @@ class SystemAdminSeederTest {
         return new SystemAdminSeeder(
             accountRepository,
             roleRepository,
-            permissionRepository,
-            rolePermissionRepository,
             accountRoleAssignmentRepository,
             passwordEncoder,
             enabled,
