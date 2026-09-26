@@ -99,7 +99,7 @@ phải khai báo thêm biến môi trường.
 | `JWT_ACCESS_TOKEN_EXPIRATION_SECONDS` | `900` | Thời gian sống access token |
 | `JWT_REFRESH_TOKEN_EXPIRATION_DAYS` | `30` | Thời gian sống refresh token |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3000` | Origin được phép gọi API |
-| `COMPANY_SEED_ENABLED` | `true` | Seed company profile |
+| `COMPANY_SEED_ENABLED` | `true` | Seed company profile, work locations và organization units cơ bản |
 | `RBAC_SEED_ENABLED` | `true` | Seed role, permission và mapping |
 | `ADMIN_SEED_ENABLED` | `true` | Seed system admin |
 | `USER_SEED_ENABLED` | `false` | Seed các tài khoản nhân viên mẫu; chỉ bật cho demo/test |
