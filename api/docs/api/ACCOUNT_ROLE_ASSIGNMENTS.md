@@ -37,7 +37,7 @@ Workflow bootstrap được phép gọi đường gán role nội bộ cho `DIRE
 
 Đường nội bộ cũng hỗ trợ `HR_STAFF` cho lần bootstrap đầu tiên và từ chối nếu đã tồn tại assignment HR Staff chưa bị thu hồi. Quy trình được mô tả tại [Organization HR Staff Bootstrap](./ORGANIZATION_HR_STAFF_ADMIN.md).
 
-Để khởi tạo đồng thời employee, account và role `DIRECTOR`, xem [Organization Director Administration](./ORGANIZATION_DIRECTOR_ADMIN.md).
+Company Owner đầu tiên đã mang role `DIRECTOR`. Khi chuyển giao chức vụ, HR tạo employee, Company Owner tạo account rồi gán `DIRECTOR` qua API này sau khi assignment cũ không còn chồng thời gian.
 
 ### Quy tắc scope
 
