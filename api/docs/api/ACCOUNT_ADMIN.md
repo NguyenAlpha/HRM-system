@@ -10,6 +10,8 @@ Nếu Director chưa có employee, sử dụng workflow tổng hợp [Organizati
 
 Company Owner đầu tiên phải được `SYSTEM_ADMIN` tạo qua workflow [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md), không dùng endpoint account tổng quát.
 
+HR Staff đầu tiên được Company Owner tạo qua workflow [Organization HR Staff Bootstrap](./ORGANIZATION_HR_STAFF_ADMIN.md). Các HR Staff tiếp theo đi qua quy trình employee, account và role assignment thông thường.
+
 ---
 
 ## Endpoint access

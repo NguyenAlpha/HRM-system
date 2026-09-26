@@ -537,6 +537,7 @@ Migration và `RolePermissionSeeder` tự thu hồi mapping `SYSTEM_ONLY` từng
 |:----------------|:---------|:--------|
 | `RBAC_SEED_ENABLED` | `true` | Seed role, permission và mapping mặc định khi khởi động |
 | `ADMIN_SEED_ENABLED` | `true` | Seed system admin và bảo đảm quyền `organization.company_owner.bootstrap` |
+| `USER_SEED_ENABLED` | `false` | Seed các account demo, gồm một `HR_STAFF`; chỉ nên bật ở môi trường demo/test |
 
 Để ủy quyền quản trị custom role cho một người khác:
 

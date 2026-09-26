@@ -119,7 +119,7 @@ Role `COMPANY_OWNER` được pessimistic lock trong lúc kiểm tra và gán. H
 }
 ```
 
-Raw activation token chỉ xuất hiện trong response này. System admin phải chuyển token qua kênh an toàn để Company Owner tự đặt mật khẩu bằng [API activation](./AUTH.md). Sau khi đăng nhập, Company Owner có thể dùng workflow [khởi tạo Director](./ORGANIZATION_DIRECTOR_ADMIN.md) và các API quản trị nội bộ đã được cấp permission.
+Raw activation token chỉ xuất hiện trong response này. System admin phải chuyển token qua kênh an toàn để Company Owner tự đặt mật khẩu bằng [API activation](./AUTH.md). Sau khi đăng nhập, Company Owner có thể dùng workflow [khởi tạo Director](./ORGANIZATION_DIRECTOR_ADMIN.md), [khởi tạo HR Staff đầu tiên](./ORGANIZATION_HR_STAFF_ADMIN.md) và các API quản trị nội bộ đã được cấp permission.
 
 ### Lỗi
 

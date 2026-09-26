@@ -24,7 +24,7 @@ Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` được seed sẵn
 | `TEAM_LEAD` | `ORG_UNIT` | Bắt buộc `organizationUnitId` |
 | `WAREHOUSE_SUPERVISOR` | `LOCATION` | Bắt buộc `workLocationId` |
 | `BRANCH_MANAGER` | `LOCATION` | Bắt buộc `workLocationId` |
-| `HR_STAFF` | `COMPANY` | Không truyền ID phạm vi |
+| `HR_STAFF` | `COMPANY` | Bootstrap đầu tiên dùng workflow riêng; API này vẫn được gán thêm HR Staff sau đó |
 | `PAYROLL_ACCOUNTANT` | `COMPANY` | Không truyền ID phạm vi |
 | `PAYROLL_APPROVER` | `COMPANY` | Không truyền ID phạm vi |
 | `DIRECTOR` | `COMPANY` | Chỉ một assignment được phép hiệu lực trong cùng khoảng thời gian trên toàn doanh nghiệp |
@@ -34,6 +34,8 @@ Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` được seed sẵn
 Role tùy chỉnh không bị giới hạn bởi bảng policy trên nhưng vẫn phải tuân thủ cấu trúc scope. Account nhận role nghiệp vụ phải liên kết với employee và không được ở trạng thái `DISABLED`.
 
 Workflow bootstrap được phép gọi đường gán role nội bộ cho `DIRECTOR` hoặc `COMPANY_OWNER` sau khi chính workflow đã kiểm tra permission chuyên biệt. Đường nội bộ này không phải endpoint và không làm cho API role assignment tổng quát được phép gán `COMPANY_OWNER`. Xem [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md).
+
+Đường nội bộ cũng hỗ trợ `HR_STAFF` cho lần bootstrap đầu tiên và từ chối nếu đã tồn tại assignment HR Staff chưa bị thu hồi. Quy trình được mô tả tại [Organization HR Staff Bootstrap](./ORGANIZATION_HR_STAFF_ADMIN.md).
 
 Để khởi tạo đồng thời employee, account và role `DIRECTOR`, xem [Organization Director Administration](./ORGANIZATION_DIRECTOR_ADMIN.md).
 

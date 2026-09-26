@@ -101,9 +101,8 @@ phải khai báo thêm biến môi trường.
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3000` | Origin được phép gọi API |
 | `COMPANY_SEED_ENABLED` | `true` | Seed company profile |
 | `RBAC_SEED_ENABLED` | `true` | Seed role, permission và mapping |
-| `RBAC_MANAGEMENT_ALLOWED_ROLES` | `SYSTEM_ADMIN` | Các role được CRUD role/permission, phân cách bằng dấu phẩy, không có prefix `ROLE_` |
 | `ADMIN_SEED_ENABLED` | `true` | Seed system admin |
-| `USER_SEED_ENABLED` | `true` | Seed các tài khoản nhân viên mẫu |
+| `USER_SEED_ENABLED` | `false` | Seed các tài khoản nhân viên mẫu; chỉ bật cho demo/test |
 
 Thông tin admin có thể được thay bằng:
 
@@ -116,6 +115,10 @@ $env:ADMIN_SEED_PASSWORD = "YourSecurePassword"
 
 Seeder có tính idempotent và không đổi mật khẩu của account đã tồn tại. Vì vậy biến mật khẩu
 mới chỉ có tác dụng khi account admin chưa được tạo.
+
+`USER_SEED_ENABLED` mặc định tắt để database mới có thể đi qua đúng chuỗi bootstrap thực tế:
+System Admin tạo Company Owner, sau đó Company Owner tạo HR Staff đầu tiên. Nếu cần các account
+demo `employee01`, `hr01` và `payroll01`, hãy bật biến này một cách tường minh.
 
 > Các credential, database password và JWT secret mặc định chỉ dành cho local development.
 > Không sử dụng chúng ở staging hoặc production.

@@ -41,12 +41,13 @@ public class AccountRoleAssignmentAdminService {
     private static final String COMPANY_OWNER_ROLE = "COMPANY_OWNER";
     private static final String SYSTEM_ADMIN_ROLE = "SYSTEM_ADMIN";
     private static final String DIRECTOR_ROLE = "DIRECTOR";
+    private static final String HR_STAFF_ROLE = "HR_STAFF";
 
     private static final Map<String, Set<RoleScopeType>> SYSTEM_ROLE_SCOPES = Map.of(
         "TEAM_LEAD", Set.of(RoleScopeType.ORG_UNIT),
         "WAREHOUSE_SUPERVISOR", Set.of(RoleScopeType.LOCATION),
         "BRANCH_MANAGER", Set.of(RoleScopeType.LOCATION),
-        "HR_STAFF", Set.of(RoleScopeType.COMPANY),
+        HR_STAFF_ROLE, Set.of(RoleScopeType.COMPANY),
         "PAYROLL_ACCOUNTANT", Set.of(RoleScopeType.COMPANY),
         "PAYROLL_APPROVER", Set.of(RoleScopeType.COMPANY),
         DIRECTOR_ROLE, Set.of(RoleScopeType.COMPANY),
@@ -105,7 +106,9 @@ public class AccountRoleAssignmentAdminService {
         String reason,
         Long actorAccountId
     ) {
-        if (!DIRECTOR_ROLE.equals(roleCode) && !COMPANY_OWNER_ROLE.equals(roleCode)) {
+        if (!DIRECTOR_ROLE.equals(roleCode)
+            && !COMPANY_OWNER_ROLE.equals(roleCode)
+            && !HR_STAFF_ROLE.equals(roleCode)) {
             throw new IllegalArgumentException("Unsupported provisioned company role: " + roleCode);
         }
         AssignAccountRoleRequest request = new AssignAccountRoleRequest(
@@ -146,6 +149,9 @@ public class AccountRoleAssignmentAdminService {
         }
         if (COMPANY_OWNER_ROLE.equals(role.getCode())) {
             ensureCompanyOwnerDoesNotExist(role);
+        }
+        if (allowProvisionedRole && HR_STAFF_ROLE.equals(role.getCode())) {
+            ensureFirstHrStaffDoesNotExist(role);
         }
 
         Account actor = findAccount(actorAccountId);
@@ -344,6 +350,15 @@ public class AccountRoleAssignmentAdminService {
             throw new ConflictException(
                 ErrorCode.COMPANY_OWNER_ALREADY_EXISTS,
                 "A COMPANY_OWNER assignment already exists"
+            );
+        }
+    }
+
+    private void ensureFirstHrStaffDoesNotExist(Role role) {
+        if (!roleAssignmentRepository.findByRoleIdAndRevokedAtIsNull(role.getId()).isEmpty()) {
+            throw new ConflictException(
+                ErrorCode.HR_STAFF_ALREADY_EXISTS,
+                "An HR_STAFF assignment already exists"
             );
         }
     }
