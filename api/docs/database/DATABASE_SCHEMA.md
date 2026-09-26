@@ -739,7 +739,22 @@ ALTER TABLE payslips ADD CONSTRAINT chk_payslip_total
 | `ACCOUNTING` | `DEPARTMENT` | `BOARD` |
 | `OPERATIONS` | `DEPARTMENT` | `BOARD` |
 
-### 11.3. Tài khoản test
+### 11.3. Vị trí công việc
+
+| Code | Tên hiển thị | Quản lý |
+|---|---|:---:|
+| `DIRECTOR` | Giám đốc | ✅ |
+| `HR_SPECIALIST` | Chuyên viên nhân sự | ❌ |
+| `PAYROLL_ACCOUNTANT` | Kế toán tiền lương | ❌ |
+| `OPERATIONS_MANAGER` | Quản lý vận hành | ✅ |
+| `BRANCH_MANAGER` | Quản lý chi nhánh | ✅ |
+| `WAREHOUSE_SUPERVISOR` | Giám sát kho | ✅ |
+| `TEAM_LEAD` | Trưởng nhóm | ✅ |
+| `GENERAL_STAFF` | Nhân viên | ❌ |
+
+Vị trí công việc dùng cho phân công nhân sự và không tự cấp role hoặc permission cho account.
+
+### 11.4. Tài khoản test
 
 | Username | Vai trò | Phạm vi |
 |---|---|---|
@@ -753,7 +768,7 @@ ALTER TABLE payslips ADD CONSTRAINT chk_payslip_total
 
 Ít nhất một tài khoản có ngoại lệ quyền có thời hạn để demo bật/tắt quyền.
 
-### 11.4. Giao dịch demo
+### 11.5. Giao dịch demo
 
 - Nhân viên thử việc, đang làm và đã nghỉ việc.
 - Một lần điều chuyển từ trụ sở sang chi nhánh.
