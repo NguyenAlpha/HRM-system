@@ -28,12 +28,12 @@ Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` được seed sẵn
 | `PAYROLL_ACCOUNTANT` | `COMPANY` | Không truyền ID phạm vi |
 | `PAYROLL_APPROVER` | `COMPANY` | Không truyền ID phạm vi |
 | `DIRECTOR` | `COMPANY` | Chỉ một assignment được phép hiệu lực trong cùng khoảng thời gian trên toàn doanh nghiệp |
-| `COMPANY_OWNER` | `COMPANY` | Không được gán/thu hồi qua API này; phải dùng workflow quản lý quyền sở hữu riêng |
+| `COMPANY_OWNER` | `COMPANY` | Không được gán/thu hồi qua API này; bootstrap đầu tiên dùng workflow riêng và chỉ được tồn tại một assignment chưa thu hồi |
 | `SYSTEM_ADMIN` | — | Không được quản lý qua API role nghiệp vụ này |
 
 Role tùy chỉnh không bị giới hạn bởi bảng policy trên nhưng vẫn phải tuân thủ cấu trúc scope. Account nhận role nghiệp vụ phải liên kết với employee và không được ở trạng thái `DISABLED`.
 
-Workflow bootstrap được phép gọi đường gán role nội bộ cho `DIRECTOR` hoặc `COMPANY_OWNER` sau khi chính workflow đã kiểm tra permission chuyên biệt. Đường nội bộ này không phải endpoint và không làm cho API role assignment tổng quát được phép gán `COMPANY_OWNER`.
+Workflow bootstrap được phép gọi đường gán role nội bộ cho `DIRECTOR` hoặc `COMPANY_OWNER` sau khi chính workflow đã kiểm tra permission chuyên biệt. Đường nội bộ này không phải endpoint và không làm cho API role assignment tổng quát được phép gán `COMPANY_OWNER`. Xem [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md).
 
 Để khởi tạo đồng thời employee, account và role `DIRECTOR`, xem [Organization Director Administration](./ORGANIZATION_DIRECTOR_ADMIN.md).
 

@@ -26,6 +26,7 @@ public enum ErrorCode {
     // Organization
     ORGANIZATION_UNIT_NOT_FOUND,
     LOCATION_NOT_FOUND,
+    COMPANY_OWNER_ALREADY_EXISTS,
 
     // Request / leave
     REQUEST_NOT_FOUND,

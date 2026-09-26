@@ -517,6 +517,8 @@ Lấy chi tiết một permission.
 Hiện tại `organization.company_owner.bootstrap` là `SYSTEM_ONLY`; các permission còn lại là `DELEGABLE`.
 Migration và `RolePermissionSeeder` tự thu hồi mapping `SYSTEM_ONLY` từng bị gán cho custom role trước khi chính sách này được áp dụng.
 
+`SYSTEM_ADMIN` sử dụng permission này tại `POST /api/admin/organization/company-owner` để tạo Company Owner đầu tiên. Workflow và giới hạn chống tạo trùng được mô tả trong [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md).
+
 ---
 
 ## Hiệu lực của thay đổi phân quyền

@@ -144,6 +144,9 @@ public class AccountRoleAssignmentAdminService {
         if (DIRECTOR_ROLE.equals(role.getCode())) {
             ensureSingleDirector(role, request.effectiveFrom(), request.effectiveTo());
         }
+        if (COMPANY_OWNER_ROLE.equals(role.getCode())) {
+            ensureCompanyOwnerDoesNotExist(role);
+        }
 
         Account actor = findAccount(actorAccountId);
         AccountRoleAssignment assignment = roleAssignmentRepository.save(AccountRoleAssignment.builder()
@@ -332,6 +335,15 @@ public class AccountRoleAssignmentAdminService {
             throw new ConflictException(
                 ErrorCode.ROLE_ASSIGNMENT_EXISTS,
                 "A DIRECTOR assignment already exists for the requested period"
+            );
+        }
+    }
+
+    private void ensureCompanyOwnerDoesNotExist(Role role) {
+        if (!roleAssignmentRepository.findByRoleIdAndRevokedAtIsNull(role.getId()).isEmpty()) {
+            throw new ConflictException(
+                ErrorCode.COMPANY_OWNER_ALREADY_EXISTS,
+                "A COMPANY_OWNER assignment already exists"
             );
         }
     }
