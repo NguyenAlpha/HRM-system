@@ -244,7 +244,7 @@ erDiagram
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-> Người nghỉ việc có tài khoản chuyển `DISABLED`, không xóa tài khoản. Constraint yêu cầu `password_hash` có giá trị với mọi trạng thái khác `PENDING`.
+> Người nghỉ việc có tài khoản chuyển `DISABLED`, không xóa tài khoản. Constraint yêu cầu `password_hash` có giá trị với mọi trạng thái khác `PENDING`. Email được chuẩn hóa về chữ thường và có unique index trên `LOWER(email)`.
 
 ### `account_activation_tokens` — Token kích hoạt tài khoản
 
@@ -259,7 +259,7 @@ erDiagram
 | `created_by_account_id` | BIGINT | FK → accounts, NOT NULL | Quản trị viên phát hành token |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 
-> Mỗi account chỉ có một token đồng thời chưa dùng và chưa thu hồi. Phát token mới phải thu hồi token cũ; raw token không được lưu trong database.
+> Mỗi account chỉ có một token đồng thời chưa dùng và chưa thu hồi. Token được dùng cho lần đặt mật khẩu đầu tiên hoặc reset mật khẩu do quản trị viên khởi tạo. Phát token mới phải thu hồi token cũ; raw token không được lưu trong database.
 
 ### `refresh_tokens` — Phiên đăng nhập có thể làm mới
 

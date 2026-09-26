@@ -89,6 +89,11 @@ public class AccountActivationService {
     }
 
     @Transactional
+    public void revokeAll(Long accountId) {
+        activationTokenRepository.revokeActiveByAccountId(accountId, Instant.now());
+    }
+
+    @Transactional
     public void activate(String rawToken, CompleteAccountActivationRequest request) {
         validateRawToken(rawToken);
         if (!request.password().equals(request.passwordConfirmation())) {
@@ -131,7 +136,7 @@ public class AccountActivationService {
     private Account findAccountForUpdate(Long accountId) {
         return accountRepository.findByIdForUpdate(accountId)
             .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND,
+                ErrorCode.ACCOUNT_NOT_FOUND,
                 "Account not found: " + accountId
             ));
     }

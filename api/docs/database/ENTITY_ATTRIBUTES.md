@@ -208,7 +208,7 @@
 
 ### Entity `AccountActivationToken` (bảng `account_activation_tokens`)
 
-**Mô tả**: Credential dùng một lần để account `PENDING` tự đặt mật khẩu và chuyển sang `ACTIVE`.
+**Mô tả**: Credential dùng một lần để account `PENDING` tự đặt hoặc đặt lại mật khẩu và chuyển sang `ACTIVE`.
 
 **Quan hệ**: Nhiều-một tới `Account` qua `account` và `createdByAccount`.
 

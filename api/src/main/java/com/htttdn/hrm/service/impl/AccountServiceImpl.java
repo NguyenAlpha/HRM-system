@@ -3,13 +3,10 @@ package com.htttdn.hrm.service.impl;
 import java.time.Instant;
 import java.util.List;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.request.account.AssignRoleRequest;
-import com.htttdn.hrm.dto.response.account.AccountResponse;
 import com.htttdn.hrm.dto.response.account.AccountRoleAssignmentResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
@@ -48,18 +45,6 @@ public class AccountServiceImpl implements AccountService {
         this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
         this.organizationUnitRepository = organizationUnitRepository;
         this.workLocationRepository = workLocationRepository;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public AccountResponse getById(Long id) {
-        return toResponse(findAccountOrThrow(id));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<AccountResponse> list(Pageable pageable) {
-        return accountRepository.findAll(pageable).map(this::toResponse);
     }
 
     @Override
@@ -150,21 +135,6 @@ public class AccountServiceImpl implements AccountService {
         return accountRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(
                 ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + id));
-    }
-
-    private AccountResponse toResponse(Account account) {
-        return new AccountResponse(
-            account.getId(),
-            account.getEmployee() != null ? account.getEmployee().getId() : null,
-            account.getUsername(),
-            account.getEmail(),
-            account.getStatus(),
-            account.getFailedLoginCount(),
-            account.getLockedUntil(),
-            account.getLastLoginAt(),
-            account.getCreatedAt(),
-            account.getUpdatedAt()
-        );
     }
 
     private AccountRoleAssignmentResponse toResponse(AccountRoleAssignment assignment) {
