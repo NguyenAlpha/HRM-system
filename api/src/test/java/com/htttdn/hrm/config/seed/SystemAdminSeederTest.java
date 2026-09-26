@@ -1,6 +1,8 @@
 package com.htttdn.hrm.config.seed;
 
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -94,7 +97,7 @@ class SystemAdminSeederTest {
     }
 
     @Test
-    void createsAdminRolePermissionAndCompanyAssignment() {
+    void createsAdminRolePermissionsAndCompanyAssignment() {
         when(accountRepository.findByUsername("admin")).thenReturn(Optional.empty());
         when(accountRepository.findByEmail("admin@hrm.local")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("secret123")).thenReturn("encoded-secret");
@@ -114,9 +117,11 @@ class SystemAdminSeederTest {
 
         when(permissionRepository.findByCode(SystemAdminSeeder.COMPANY_OWNER_BOOTSTRAP_PERMISSION_CODE))
             .thenReturn(Optional.empty());
+        when(permissionRepository.findByCode(SystemAdminSeeder.RBAC_MANAGE_PERMISSION_CODE))
+            .thenReturn(Optional.empty());
         when(permissionRepository.save(any(Permission.class))).thenAnswer(invocation -> {
             Permission permission = invocation.getArgument(0);
-            permission.setId(3L);
+            permission.setId(SystemAdminSeeder.RBAC_MANAGE_PERMISSION_CODE.equals(permission.getCode()) ? 4L : 3L);
             return permission;
         });
 
@@ -137,15 +142,32 @@ class SystemAdminSeederTest {
         assertTrue(role.getIsSystem());
 
         ArgumentCaptor<Permission> permissionCaptor = ArgumentCaptor.forClass(Permission.class);
-        verify(permissionRepository).save(permissionCaptor.capture());
-        Permission permission = permissionCaptor.getValue();
-        assertEquals(SystemAdminSeeder.COMPANY_OWNER_BOOTSTRAP_PERMISSION_CODE, permission.getCode());
-        assertEquals(PermissionModule.ORGANIZATION, permission.getModule());
-        assertEquals(PermissionAssignmentPolicy.SYSTEM_ONLY, permission.getAssignmentPolicy());
+        verify(permissionRepository, times(2)).save(permissionCaptor.capture());
+        assertEquals(
+            Set.of(
+                SystemAdminSeeder.COMPANY_OWNER_BOOTSTRAP_PERMISSION_CODE,
+                SystemAdminSeeder.RBAC_MANAGE_PERMISSION_CODE
+            ),
+            permissionCaptor.getAllValues().stream().map(Permission::getCode).collect(Collectors.toSet())
+        );
+        Permission bootstrapPermission = permissionCaptor.getAllValues().stream()
+            .filter(permission -> SystemAdminSeeder.COMPANY_OWNER_BOOTSTRAP_PERMISSION_CODE.equals(
+                permission.getCode()))
+            .findFirst()
+            .orElseThrow();
+        assertEquals(PermissionModule.ORGANIZATION, bootstrapPermission.getModule());
+        assertEquals(PermissionAssignmentPolicy.SYSTEM_ONLY, bootstrapPermission.getAssignmentPolicy());
+        Permission rbacPermission = permissionCaptor.getAllValues().stream()
+            .filter(permission -> SystemAdminSeeder.RBAC_MANAGE_PERMISSION_CODE.equals(permission.getCode()))
+            .findFirst()
+            .orElseThrow();
+        assertEquals(PermissionModule.RBAC, rbacPermission.getModule());
+        assertEquals(PermissionAssignmentPolicy.DELEGABLE, rbacPermission.getAssignmentPolicy());
 
         ArgumentCaptor<RolePermission> rolePermissionCaptor = ArgumentCaptor.forClass(RolePermission.class);
-        verify(rolePermissionRepository).save(rolePermissionCaptor.capture());
-        assertSame(account, rolePermissionCaptor.getValue().getCreatedByAccount());
+        verify(rolePermissionRepository, times(2)).save(rolePermissionCaptor.capture());
+        assertTrue(rolePermissionCaptor.getAllValues().stream()
+            .allMatch(mapping -> mapping.getCreatedByAccount() == account));
 
         ArgumentCaptor<AccountRoleAssignment> assignmentCaptor =
             ArgumentCaptor.forClass(AccountRoleAssignment.class);
@@ -177,6 +199,14 @@ class SystemAdminSeederTest {
             .assignmentPolicy(PermissionAssignmentPolicy.SYSTEM_ONLY)
             .isActive(true)
             .build();
+        Permission rbacPermission = Permission.builder()
+            .id(4L)
+            .code(SystemAdminSeeder.RBAC_MANAGE_PERMISSION_CODE)
+            .name("Quản lý phân quyền")
+            .module(PermissionModule.RBAC)
+            .assignmentPolicy(PermissionAssignmentPolicy.DELEGABLE)
+            .isActive(true)
+            .build();
 
         when(accountRepository.findByUsername("admin")).thenReturn(Optional.of(account));
         when(accountRepository.findByEmail("admin@hrm.local")).thenReturn(Optional.of(account));
@@ -184,6 +214,8 @@ class SystemAdminSeederTest {
             .thenReturn(Optional.of(role));
         when(permissionRepository.findByCode(SystemAdminSeeder.COMPANY_OWNER_BOOTSTRAP_PERMISSION_CODE))
             .thenReturn(Optional.of(permission));
+        when(permissionRepository.findByCode(SystemAdminSeeder.RBAC_MANAGE_PERMISSION_CODE))
+            .thenReturn(Optional.of(rbacPermission));
         when(rolePermissionRepository.existsById(any())).thenReturn(true);
         when(accountRoleAssignmentRepository.existsByAccountIdAndRoleIdAndScopeTypeAndEffectiveToIsNull(
             1L, 2L, RoleScopeType.COMPANY)).thenReturn(true);

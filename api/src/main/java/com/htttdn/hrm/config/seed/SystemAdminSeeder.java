@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +45,8 @@ import com.htttdn.hrm.repository.RoleRepository;
  *   <li>Tài khoản admin ở trạng thái {@link AccountStatus#ACTIVE}.</li>
  *   <li>System role {@code SYSTEM_ADMIN}.</li>
  *   <li>Permission {@code organization.company_owner.bootstrap} thuộc module
- *       {@link PermissionModule#ORGANIZATION}.</li>
+ *       {@link PermissionModule#ORGANIZATION} và permission {@code rbac.manage}
+ *       thuộc module {@link PermissionModule#RBAC}.</li>
  *   <li>Quan hệ role–permission và role assignment phạm vi {@link RoleScopeType#COMPANY}.</li>
  * </ol>
  *
@@ -59,8 +61,16 @@ public class SystemAdminSeeder implements ApplicationRunner {
     /** Code ổn định dùng để tra cứu system role trong database và JWT. */
     static final String SYSTEM_ADMIN_ROLE_CODE = "SYSTEM_ADMIN";
 
-    /** Quyền duy nhất của system admin: khởi tạo Company Owner đầu tiên. */
+    /** Quyền bootstrap Company Owner đầu tiên. */
     static final String COMPANY_OWNER_BOOTSTRAP_PERMISSION_CODE = "organization.company_owner.bootstrap";
+
+    /** Quyền quản trị RBAC được cấp tạm thời cho system admin. */
+    static final String RBAC_MANAGE_PERMISSION_CODE = "rbac.manage";
+
+    private static final Set<String> SYSTEM_ADMIN_PERMISSION_CODES = Set.of(
+        COMPANY_OWNER_BOOTSTRAP_PERMISSION_CODE,
+        RBAC_MANAGE_PERMISSION_CODE
+    );
 
     private static final Logger log = LoggerFactory.getLogger(SystemAdminSeeder.class);
 
@@ -123,9 +133,11 @@ public class SystemAdminSeeder implements ApplicationRunner {
         Account admin = findOrCreateAdmin(normalizedUsername, normalizedEmail);
         Role systemAdminRole = findOrCreateSystemAdminRole();
         Permission companyOwnerBootstrapPermission = findOrCreateCompanyOwnerBootstrapPermission();
+        Permission rbacManagePermission = findOrCreateRbacManagePermission();
 
-        reconcileSystemAdminPermissions(systemAdminRole, companyOwnerBootstrapPermission);
+        reconcileSystemAdminPermissions(systemAdminRole);
         grantPermissionIfMissing(admin, systemAdminRole, companyOwnerBootstrapPermission);
+        grantPermissionIfMissing(admin, systemAdminRole, rbacManagePermission);
         assignRoleIfMissing(admin, systemAdminRole);
 
         log.info("System admin seed completed for username '{}'", admin.getUsername());
@@ -218,7 +230,7 @@ public class SystemAdminSeeder implements ApplicationRunner {
                 return roleRepository.save(Role.builder()
                     .code(SYSTEM_ADMIN_ROLE_CODE)
                     .name("Quản trị viên hệ thống")
-                    .description("Khởi tạo Chủ sở hữu doanh nghiệp đầu tiên, không tham gia nghiệp vụ nội bộ công ty")
+                    .description("Khởi tạo Chủ sở hữu doanh nghiệp và tạm thời quản lý RBAC hệ thống")
                     .isSystem(true)
                     .isActive(true)
                     .createdAt(now)
@@ -265,15 +277,40 @@ public class SystemAdminSeeder implements ApplicationRunner {
         return permission;
     }
 
+    /** Trả về permission quản trị RBAC hoặc tạo mới nếu catalog RBAC đang tắt. */
+    private Permission findOrCreateRbacManagePermission() {
+        return permissionRepository.findByCode(RBAC_MANAGE_PERMISSION_CODE)
+            .map(this::validateRbacManagePermission)
+            .orElseGet(() -> permissionRepository.save(Permission.builder()
+                .code(RBAC_MANAGE_PERMISSION_CODE)
+                .name("Quản lý phân quyền")
+                .module(PermissionModule.RBAC)
+                .description("Xem danh mục quyền và quản lý vai trò tùy chỉnh cùng quan hệ phân quyền")
+                .assignmentPolicy(PermissionAssignmentPolicy.DELEGABLE)
+                .isActive(true)
+                .createdAt(Instant.now())
+                .build()));
+    }
+
+    private Permission validateRbacManagePermission(Permission permission) {
+        if (permission.getModule() != PermissionModule.RBAC
+            || permission.getAssignmentPolicy() != PermissionAssignmentPolicy.DELEGABLE
+            || !Boolean.TRUE.equals(permission.getIsActive())) {
+            throw new IllegalStateException(
+                "rbac.manage permission must be active, DELEGABLE, and belong to RBAC module"
+            );
+        }
+        return permission;
+    }
+
     /**
      * Xóa các quyền cũ khỏi {@code SYSTEM_ADMIN} để role này không thể đi vào nghiệp vụ
      * quản trị nội bộ công ty, kể cả khi ứng dụng khởi động trên database đã được seed trước đó.
      */
-    private void reconcileSystemAdminPermissions(Role role, Permission retainedPermission) {
+    private void reconcileSystemAdminPermissions(Role role) {
         List<RolePermission> unexpectedPermissions = rolePermissionRepository.findByIdRoleId(role.getId()).stream()
-            .filter(rolePermission -> !retainedPermission.getCode().equals(
-                rolePermission.getPermission().getCode()
-            ))
+            .filter(rolePermission -> !SYSTEM_ADMIN_PERMISSION_CODES.contains(
+                rolePermission.getPermission().getCode()))
             .toList();
         if (!unexpectedPermissions.isEmpty()) {
             rolePermissionRepository.deleteAll(unexpectedPermissions);
@@ -281,7 +318,7 @@ public class SystemAdminSeeder implements ApplicationRunner {
     }
 
     /**
-     * Cấp quyền bootstrap Company Owner cho {@code SYSTEM_ADMIN} nếu cặp role–permission chưa tồn tại.
+     * Cấp permission chuẩn cho {@code SYSTEM_ADMIN} nếu cặp role–permission chưa tồn tại.
      * {@link RolePermissionId} là khóa ghép nên cũng ngăn một permission được gán trùng cho role.
      */
     private void grantPermissionIfMissing(Account admin, Role role, Permission permission) {

@@ -1,6 +1,6 @@
 # API Reference — Organization Company Owner Bootstrap
 
-Khởi tạo Chủ sở hữu doanh nghiệp đầu tiên từ tài khoản quản trị hệ thống. Đây là cầu nối duy nhất từ lớp vận hành nền tảng sang lớp quản trị nội bộ doanh nghiệp; `SYSTEM_ADMIN` không được dùng các API quản trị account, role hoặc nghiệp vụ của công ty.
+Khởi tạo Chủ sở hữu doanh nghiệp đầu tiên từ tài khoản quản trị hệ thống. Đây là cầu nối từ lớp vận hành nền tảng sang lớp quản trị nội bộ doanh nghiệp; `SYSTEM_ADMIN` không được dùng các API quản trị account hoặc nghiệp vụ của công ty. Trong giai đoạn hiện tại, role này được cấp tạm `rbac.manage` để quản lý RBAC.
 
 ---
 
@@ -163,7 +163,7 @@ Raw activation token chỉ xuất hiện trong response này. System admin phả
 
 Workflow này không:
 
-- Cấp cho `SYSTEM_ADMIN` quyền quản trị nội bộ doanh nghiệp.
+- Cấp cho `SYSTEM_ADMIN` quyền quản trị account hoặc nghiệp vụ nội bộ doanh nghiệp; quyền `rbac.manage` tạm thời là ngoại lệ được seed riêng.
 - Cho phép chọn role hoặc permission tùy ý trong request.
 - Đặt mật khẩu thay Company Owner.
 - Tạo một employee/account Director riêng; workflow chỉ gán role `DIRECTOR` cho chính Company Owner vừa tạo.
