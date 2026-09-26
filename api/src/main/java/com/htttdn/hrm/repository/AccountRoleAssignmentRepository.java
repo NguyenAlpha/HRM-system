@@ -49,7 +49,6 @@ public interface AccountRoleAssignmentRepository extends JpaRepository<AccountRo
           AND assignment.revokedAt IS NULL
           AND assignment.effectiveFrom <= :date
           AND (assignment.effectiveTo IS NULL OR assignment.effectiveTo >= :date)
-          AND role.isActive = true
           AND role.deletedAt IS NULL
         """)
     List<AccountRoleAssignment> findActiveWithRoleByAccountId(

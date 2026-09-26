@@ -13,7 +13,6 @@ export interface Role {
   name: string
   description: string | null
   isSystem: boolean
-  isActive: boolean
 }
 
 export interface Permission {

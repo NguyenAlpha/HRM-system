@@ -300,7 +300,6 @@ Role có `is_system=true` và bộ permission tương ứng do code định ngh�
 | `name` | VARCHAR(150) | NOT NULL | Tên hiển thị |
 | `description` | TEXT | | Mô tả |
 | `is_system` | BOOLEAN | NOT NULL, DEFAULT false | Vai trò seed, không được xóa |
-| `is_active` | BOOLEAN | NOT NULL, DEFAULT true | Trạng thái |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 | `deleted_at` | TIMESTAMPTZ | | Chỉ áp dụng cho vai trò tùy chỉnh |

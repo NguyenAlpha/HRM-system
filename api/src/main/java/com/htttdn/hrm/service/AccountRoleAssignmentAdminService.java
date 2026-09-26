@@ -133,10 +133,9 @@ public class AccountRoleAssignmentAdminService {
         validateTargetAccount(account);
 
         Role role = roleRepository.findByCodeForUpdate(request.roleCode())
-            .filter(candidate -> Boolean.TRUE.equals(candidate.getIsActive()))
             .orElseThrow(() -> new ResourceNotFoundException(
                 ErrorCode.ROLE_NOT_FOUND,
-                "Active role not found: " + request.roleCode()
+                "Role not found: " + request.roleCode()
             ));
         validateRoleCanBeManaged(role, allowProvisionedRole);
         validateScopePolicy(role, request.scopeType());

@@ -40,9 +40,6 @@ public class Role {
     @Column(name = "is_system", nullable = false)
     private Boolean isSystem;
 
-    @Column(name = "is_active", nullable = false)
-    private Boolean isActive;
-
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

@@ -109,7 +109,7 @@ public class UserSeeder implements ApplicationRunner {
         String normalizedFullName = definition.fullName().trim();
         String normalizedRoleCode = definition.roleCode().trim().toUpperCase(Locale.ROOT);
 
-        Role role = findActiveRole(normalizedRoleCode);
+        Role role = findRole(normalizedRoleCode);
         Employee employee = findOrCreateEmployee(normalizedEmployeeCode, normalizedEmail, normalizedFullName);
         Account account = findOrCreateAccount(
             normalizedUsername,
@@ -161,11 +161,11 @@ public class UserSeeder implements ApplicationRunner {
         return grantor;
     }
 
-    private Role findActiveRole(String roleCode) {
+    private Role findRole(String roleCode) {
         Role role = roleRepository.findByCodeAndDeletedAtIsNull(roleCode)
             .orElseThrow(() -> new IllegalStateException("Seed role not found: " + roleCode));
-        if (!Boolean.TRUE.equals(role.getIsSystem()) || !Boolean.TRUE.equals(role.getIsActive())) {
-            throw new IllegalStateException(roleCode + " must be an active system role");
+        if (!Boolean.TRUE.equals(role.getIsSystem())) {
+            throw new IllegalStateException(roleCode + " must be a system role");
         }
         return role;
     }

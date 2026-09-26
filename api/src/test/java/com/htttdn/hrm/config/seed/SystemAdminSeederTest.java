@@ -155,7 +155,6 @@ class SystemAdminSeederTest {
             .id(2L)
             .code(SystemAdminSeeder.SYSTEM_ADMIN_ROLE_CODE)
             .isSystem(true)
-            .isActive(true)
             .build();
     }
 

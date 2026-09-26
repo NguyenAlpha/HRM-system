@@ -63,7 +63,6 @@ public class RoleServiceImpl implements RoleService {
             .name(request.name())
             .description(request.description())
             .isSystem(false)
-            .isActive(true)
             .createdAt(now)
             .updatedAt(now)
             .build();
@@ -91,7 +90,6 @@ public class RoleServiceImpl implements RoleService {
         }
         role.setName(request.name());
         role.setDescription(request.description());
-        role.setIsActive(request.isActive());
         role.setUpdatedAt(Instant.now());
         return toResponse(role);
     }
@@ -105,7 +103,6 @@ public class RoleServiceImpl implements RoleService {
         Instant now = Instant.now();
         role.setDeletedAt(now);
         role.setUpdatedAt(now);
-        role.setIsActive(false);
     }
 
     @Override
@@ -193,8 +190,7 @@ public class RoleServiceImpl implements RoleService {
             role.getCode(),
             role.getName(),
             role.getDescription(),
-            role.getIsSystem(),
-            role.getIsActive()
+            role.getIsSystem()
         );
     }
 }

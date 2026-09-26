@@ -17,7 +17,6 @@ CREATE TABLE roles (
     name VARCHAR(150) NOT NULL,
     description TEXT,
     is_system BOOLEAN NOT NULL DEFAULT false,
-    is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     deleted_at TIMESTAMPTZ

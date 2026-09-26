@@ -216,7 +216,6 @@ class UserSeederTest {
                 .id(roleId.incrementAndGet())
                 .code(code)
                 .isSystem(true)
-                .isActive(true)
                 .build());
         }
         return roles;

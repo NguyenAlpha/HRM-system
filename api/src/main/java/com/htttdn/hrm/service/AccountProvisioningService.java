@@ -141,8 +141,7 @@ public class AccountProvisioningService {
 
     private void assignDefaultEmployeeRole(Account account, Account actor, Instant now) {
         Role role = roleRepository.findByCodeAndDeletedAtIsNull(DEFAULT_EMPLOYEE_ROLE)
-            .filter(candidate -> Boolean.TRUE.equals(candidate.getIsActive()))
-            .orElseThrow(() -> new IllegalStateException("Active EMPLOYEE seed role not found"));
+            .orElseThrow(() -> new IllegalStateException("EMPLOYEE seed role not found"));
 
         roleAssignmentRepository.save(AccountRoleAssignment.builder()
             .account(account)

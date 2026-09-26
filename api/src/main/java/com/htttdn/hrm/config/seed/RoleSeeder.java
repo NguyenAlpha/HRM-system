@@ -104,7 +104,6 @@ public class RoleSeeder implements ApplicationRunner {
                 .name(definition.name())
                 .description(definition.description())
                 .isSystem(true)
-                .isActive(true)
                 .createdAt(now)
                 .updatedAt(now)
                 .build());
@@ -114,10 +113,10 @@ public class RoleSeeder implements ApplicationRunner {
         log.info("Role seed completed: {} created, {} ensured", createdCount, DEFAULT_ROLES.size());
     }
 
-    /** System role có code trùng phải tiếp tục là role hệ thống đang hoạt động. */
+    /** System role có code trùng phải tiếp tục là role hệ thống chưa bị xóa mềm. */
     private void validateSystemRole(Role role) {
-        if (!Boolean.TRUE.equals(role.getIsSystem()) || !Boolean.TRUE.equals(role.getIsActive())) {
-            throw new IllegalStateException(role.getCode() + " must be an active system role");
+        if (!Boolean.TRUE.equals(role.getIsSystem())) {
+            throw new IllegalStateException(role.getCode() + " must be a system role");
         }
     }
 
