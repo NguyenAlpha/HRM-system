@@ -282,8 +282,10 @@ Danh mục này thuộc sở hữu của ứng dụng và được đồng bộ 
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
 | `code` | VARCHAR(100) | NOT NULL, UNIQUE | Mã quyền, ví dụ `leave.approve` |
+| `name` | VARCHAR(150) | NOT NULL | Tên hiển thị của quyền |
 | `module` | VARCHAR(30) | NOT NULL | `EMPLOYEE` / `ACCOUNT` / `ORGANIZATION` / `REQUEST` / `ATTENDANCE` / `PAYROLL` / `RBAC` / `REPORT` |
 | `description` | TEXT | NOT NULL | Mô tả quyền |
+| `assignment_policy` | VARCHAR(20) | NOT NULL | `DELEGABLE` / `SYSTEM_ONLY` |
 | `is_active` | BOOLEAN | NOT NULL, DEFAULT true | Trạng thái |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 
@@ -305,7 +307,7 @@ Role có `is_system=true` và bộ permission tương ứng do code định ngh�
 
 ### `role_permissions` — Quyền mặc định của vai trò
 
-Seeder đồng bộ chính xác mapping của system role. API chỉ cho phép thêm hoặc gỡ mapping đối với custom role.
+Seeder đồng bộ chính xác mapping của system role. API chỉ cho phép thêm hoặc gỡ mapping đối với custom role và chỉ chấp nhận permission có `assignment_policy=DELEGABLE` khi thêm mới.
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|

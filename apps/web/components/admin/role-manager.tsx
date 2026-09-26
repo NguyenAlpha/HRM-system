@@ -158,8 +158,11 @@ export function RoleManager({ onSessionExpired }: { onSessionExpired: () => void
                   <td>{role.isSystem ? "Hệ thống" : "Tùy chỉnh"}</td>
                   <td>{role.isActive ? "Hoạt động" : "Tạm tắt"}</td>
                   <td><div className="portal-actions">
-                    <button type="button" className="secondary-button" onClick={() => edit(role)} disabled={disabled}>Sửa</button>
-                    <button type="button" className="secondary-button" onClick={() => setSelected(role)} disabled={disabled}>Phân quyền</button>
+                    <button type="button" className="secondary-button" onClick={() => edit(role)} disabled={disabled || role.isSystem}
+                      title={role.isSystem ? "System role do ứng dụng định nghĩa" : `Sửa ${role.code}`}>Sửa</button>
+                    <button type="button" className="secondary-button" onClick={() => setSelected(role)} disabled={disabled}>
+                      {role.isSystem ? "Xem quyền" : "Phân quyền"}
+                    </button>
                     <button type="button" className="danger-button" onClick={() => remove(role)} disabled={disabled || role.isSystem}
                       title={role.isSystem ? "Không thể xóa vai trò hệ thống" : `Xóa ${role.code}`}>Xóa</button>
                   </div></td>

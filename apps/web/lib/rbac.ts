@@ -5,6 +5,7 @@ import { AuthApiError } from "@/lib/auth/types"
 
 export const PERMISSION_MODULES = ["EMPLOYEE", "ACCOUNT", "ORGANIZATION", "REQUEST", "ATTENDANCE", "PAYROLL", "RBAC", "REPORT"] as const
 export type PermissionModule = typeof PERMISSION_MODULES[number]
+export type PermissionAssignmentPolicy = "DELEGABLE" | "SYSTEM_ONLY"
 
 export interface Role {
   id: number
@@ -21,6 +22,7 @@ export interface Permission {
   name: string
   module: PermissionModule
   description: string
+  assignmentPolicy: PermissionAssignmentPolicy
   isActive: boolean
 }
 
