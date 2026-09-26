@@ -7,14 +7,14 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-public record CreateOrganizationExecutiveRequest(
+public record CreateOrganizationDirectorRequest(
     @NotNull
     @Valid
-    CreateExecutiveEmployeeRequest employee,
+    CreateDirectorEmployeeRequest employee,
 
     @NotNull
     @Valid
-    CreateExecutiveAccountRequest account,
+    CreateDirectorAccountRequest account,
 
     @NotNull
     LocalDate effectiveFrom,

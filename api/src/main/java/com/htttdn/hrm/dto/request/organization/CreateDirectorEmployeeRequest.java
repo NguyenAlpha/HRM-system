@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-public record CreateExecutiveEmployeeRequest(
+public record CreateDirectorEmployeeRequest(
     @NotBlank
     @Size(max = 30)
     @Pattern(regexp = "^[A-Z0-9_-]+$")

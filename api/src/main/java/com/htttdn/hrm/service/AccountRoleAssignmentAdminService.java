@@ -38,7 +38,7 @@ public class AccountRoleAssignmentAdminService {
 
     private static final String EMPLOYEE_ROLE = "EMPLOYEE";
     private static final String SYSTEM_ADMIN_ROLE = "SYSTEM_ADMIN";
-    private static final String EXECUTIVE_APPROVER_ROLE = "EXECUTIVE_APPROVER";
+    private static final String DIRECTOR_ROLE = "DIRECTOR";
 
     private static final Map<String, Set<RoleScopeType>> SYSTEM_ROLE_SCOPES = Map.of(
         "TEAM_LEAD", Set.of(RoleScopeType.ORG_UNIT),
@@ -47,7 +47,7 @@ public class AccountRoleAssignmentAdminService {
         "HR_STAFF", Set.of(RoleScopeType.COMPANY),
         "PAYROLL_ACCOUNTANT", Set.of(RoleScopeType.COMPANY),
         "PAYROLL_APPROVER", Set.of(RoleScopeType.COMPANY),
-        EXECUTIVE_APPROVER_ROLE, Set.of(RoleScopeType.COMPANY)
+        DIRECTOR_ROLE, Set.of(RoleScopeType.COMPANY)
     );
 
     private final AccountRepository accountRepository;
@@ -102,8 +102,8 @@ public class AccountRoleAssignmentAdminService {
 
         ScopeTarget scopeTarget = resolveScopeTarget(request);
         ensureNoDuplicateAssignment(account, role, request, scopeTarget);
-        if (EXECUTIVE_APPROVER_ROLE.equals(role.getCode())) {
-            ensureSingleExecutiveApprover(role, request.effectiveFrom(), request.effectiveTo());
+        if (DIRECTOR_ROLE.equals(role.getCode())) {
+            ensureSingleDirector(role, request.effectiveFrom(), request.effectiveTo());
         }
 
         Account actor = findAccount(currentAccountProvider.accountId());
@@ -275,7 +275,7 @@ public class AccountRoleAssignmentAdminService {
         }
     }
 
-    private void ensureSingleExecutiveApprover(Role role, LocalDate effectiveFrom, LocalDate effectiveTo) {
+    private void ensureSingleDirector(Role role, LocalDate effectiveFrom, LocalDate effectiveTo) {
         boolean conflict = roleAssignmentRepository.findByRoleIdAndRevokedAtIsNull(role.getId()).stream()
             .anyMatch(existing -> periodsOverlap(
                 existing.getEffectiveFrom(),
@@ -286,7 +286,7 @@ public class AccountRoleAssignmentAdminService {
         if (conflict) {
             throw new ConflictException(
                 ErrorCode.ROLE_ASSIGNMENT_EXISTS,
-                "An EXECUTIVE_APPROVER assignment already exists for the requested period"
+                "A DIRECTOR assignment already exists for the requested period"
             );
         }
     }

@@ -1,4 +1,4 @@
-# API Reference — Organization Executive Administration
+# API Reference — Organization Director Administration
 
 Khởi tạo người đứng đầu doanh nghiệp khi người này chưa có hồ sơ employee trong HRM. Đây là workflow thiết lập quyền điều hành, không phải quy trình tuyển dụng hoặc onboarding nhân sự đầy đủ.
 
@@ -8,15 +8,15 @@ Khởi tạo người đứng đầu doanh nghiệp khi người này chưa có 
 
 | Endpoint | Permission |
 |:---------|:-----------|
-| `POST /api/admin/organization/executive` | `organization.executive.provision` |
+| `POST /api/admin/organization/director` | `organization.director.provision` |
 
-Endpoint yêu cầu Bearer token. `SYSTEM_ADMIN` được seed permission `organization.executive.provision` cùng các permission nội bộ `account.manage` và `account.role.assign` cần để hoàn thành workflow.
+Endpoint yêu cầu Bearer token. `SYSTEM_ADMIN` được seed permission `organization.director.provision` cùng các permission nội bộ `account.manage` và `account.role.assign` cần để hoàn thành workflow.
 
-`EXECUTIVE_APPROVER` không được cấp permission này nên không thể tự tạo người kế nhiệm.
+`DIRECTOR` không được cấp permission này nên không thể tự tạo người kế nhiệm.
 
 ---
 
-## POST `/api/admin/organization/executive`
+## POST `/api/admin/organization/director`
 
 Tạo đồng thời employee tối thiểu, account đăng nhập và quyền phê duyệt cấp điều hành.
 
@@ -25,7 +25,7 @@ Tạo đồng thời employee tối thiểu, account đăng nhập và quyền p
 ```json
 {
   "employee": {
-    "employeeCode": "EXEC001",
+    "employeeCode": "DIR001",
     "fullName": "Nguyen Van An",
     "workEmail": "director@company.com",
     "phone": "0901234567",
@@ -35,7 +35,7 @@ Tạo đồng thời employee tối thiểu, account đăng nhập và quyền p
     "username": "director"
   },
   "effectiveFrom": "2026-10-01",
-  "appointmentReason": "Appointed as company executive under decision 01/2026"
+  "appointmentReason": "Appointed as company director under decision 01/2026"
 }
 ```
 
@@ -49,7 +49,7 @@ Tạo đồng thời employee tối thiểu, account đăng nhập và quyền p
 | `employee.phone` | string | ❌ | Tối đa 20 ký tự |
 | `employee.hireDate` | date | ✅ | Ngày bắt đầu làm việc trong hồ sơ HRM |
 | `account.username` | string | ✅ | 3–50 ký tự; chỉ chữ, số, `.`, `_`, `-`; duy nhất |
-| `effectiveFrom` | date | ✅ | Ngày role `EXECUTIVE_APPROVER` bắt đầu hiệu lực; không được trước `employee.hireDate` |
+| `effectiveFrom` | date | ✅ | Ngày role `DIRECTOR` bắt đầu hiệu lực; không được trước `employee.hireDate` |
 | `appointmentReason` | string | ✅ | Không rỗng, tối đa 500 ký tự |
 
 Email được trim và chuẩn hóa về chữ thường. Employee được tạo ở trạng thái `ACTIVE` vì đây là người đang đứng đầu doanh nghiệp, không phải ứng viên hoặc nhân viên thử việc.
@@ -63,12 +63,12 @@ Employee ACTIVE
     → Account PENDING
     → EMPLOYEE / SELF
     → Activation token
-    → EXECUTIVE_APPROVER / COMPANY
+    → DIRECTOR / COMPANY
 ```
 
 Nếu bất kỳ bước nào thất bại, toàn bộ dữ liệu vừa tạo được rollback.
 
-Hệ thống không cho hai assignment `EXECUTIVE_APPROVER` chồng thời gian. Có thể chuẩn bị người kế nhiệm trong tương lai chỉ khi assignment hiện tại đã có `effectiveTo` không chồng với `effectiveFrom` mới.
+Hệ thống không cho hai assignment `DIRECTOR` chồng thời gian. Có thể chuẩn bị người kế nhiệm trong tương lai chỉ khi assignment hiện tại đã có `effectiveTo` không chồng với `effectiveFrom` mới.
 
 ### Response `201 Created`
 
@@ -77,7 +77,7 @@ Hệ thống không cho hai assignment `EXECUTIVE_APPROVER` chồng thời gian.
   "success": true,
   "data": {
     "employeeId": 125,
-    "employeeCode": "EXEC001",
+    "employeeCode": "DIR001",
     "fullName": "Nguyen Van An",
     "accountProvisioning": {
       "account": {
@@ -98,19 +98,19 @@ Hệ thống không cho hai assignment `EXECUTIVE_APPROVER` chồng thời gian.
         "expiresAt": "2026-09-27T09:00:00Z"
       }
     },
-    "executiveRoleAssignment": {
+    "directorRoleAssignment": {
       "id": 31,
       "accountId": 208,
       "roleId": 8,
-      "roleCode": "EXECUTIVE_APPROVER",
-      "roleName": "Executive Approver",
+      "roleCode": "DIRECTOR",
+      "roleName": "Director",
       "scopeType": "COMPANY",
       "organizationUnitId": null,
       "workLocationId": null,
       "effectiveFrom": "2026-10-01",
       "effectiveTo": null,
       "grantedByAccountId": 1,
-      "reason": "Appointed as company executive under decision 01/2026",
+      "reason": "Appointed as company director under decision 01/2026",
       "createdAt": "2026-09-26T09:00:00Z",
       "revokedByAccountId": null,
       "revokedAt": null,
@@ -133,7 +133,7 @@ Raw activation token chỉ xuất hiện một lần trong response để quản
 | 409 | `EMPLOYEE_CODE_TAKEN` | Mã employee đã tồn tại |
 | 409 | `EMAIL_TAKEN` | Work email đã tồn tại ở employee hoặc account |
 | 409 | `USERNAME_TAKEN` | Username đã tồn tại |
-| 409 | `ROLE_ASSIGNMENT_EXISTS` | Đã có `EXECUTIVE_APPROVER` chồng khoảng hiệu lực |
+| 409 | `ROLE_ASSIGNMENT_EXISTS` | Đã có `DIRECTOR` chồng khoảng hiệu lực |
 
 ---
 

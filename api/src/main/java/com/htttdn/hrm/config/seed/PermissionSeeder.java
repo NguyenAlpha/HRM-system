@@ -60,10 +60,10 @@ public class PermissionSeeder implements ApplicationRunner {
             "Give final approval for organization structure changes"
         ),
         permission(
-            "organization.executive.provision",
-            "Provision company executive",
+            "organization.director.provision",
+            "Provision company director",
             PermissionModule.ORGANIZATION,
-            "Provision the company executive employee identity and account"
+            "Provision the company director employee identity and account"
         ),
 
         permission("request.self.read", "View own requests", PermissionModule.REQUEST, "View own employee requests"),

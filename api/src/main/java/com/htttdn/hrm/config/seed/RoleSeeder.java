@@ -37,9 +37,9 @@ public class RoleSeeder implements ApplicationRunner {
         new RoleDefinition("PAYROLL_ACCOUNTANT", "Payroll Accountant", "Calculates and reviews company payroll"),
         new RoleDefinition("PAYROLL_APPROVER", "Payroll Approver", "Approves, pays, and locks payroll periods"),
         new RoleDefinition(
-            "EXECUTIVE_APPROVER",
-            "Executive Approver",
-            "Provides final approval for company-wide business decisions"
+            "DIRECTOR",
+            "Director",
+            "Leads the company and provides final approval for company-wide business decisions"
         ),
         new RoleDefinition("SYSTEM_ADMIN", "System Administrator", "Manages accounts, roles, and permissions")
     );
