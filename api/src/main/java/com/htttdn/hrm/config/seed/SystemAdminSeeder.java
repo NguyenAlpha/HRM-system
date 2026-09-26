@@ -23,6 +23,7 @@ import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.RolePermission;
 import com.htttdn.hrm.entity.RolePermissionId;
 import com.htttdn.hrm.entity.enums.AccountStatus;
+import com.htttdn.hrm.entity.enums.PermissionAssignmentPolicy;
 import com.htttdn.hrm.entity.enums.PermissionModule;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.repository.AccountRepository;
@@ -245,6 +246,7 @@ public class SystemAdminSeeder implements ApplicationRunner {
                 .name("Khởi tạo Chủ sở hữu doanh nghiệp")
                 .module(PermissionModule.ORGANIZATION)
                 .description("Khởi tạo tài khoản Chủ sở hữu doanh nghiệp đầu tiên của công ty")
+                .assignmentPolicy(PermissionAssignmentPolicy.SYSTEM_ONLY)
                 .isActive(true)
                 .createdAt(Instant.now())
                 .build()));
@@ -253,9 +255,11 @@ public class SystemAdminSeeder implements ApplicationRunner {
     /** Bảo vệ invariant: permission bootstrap phải thuộc module ORGANIZATION và đang hoạt động. */
     private Permission validateCompanyOwnerBootstrapPermission(Permission permission) {
         if (permission.getModule() != PermissionModule.ORGANIZATION
+            || permission.getAssignmentPolicy() != PermissionAssignmentPolicy.SYSTEM_ONLY
             || !Boolean.TRUE.equals(permission.getIsActive())) {
             throw new IllegalStateException(
-                "organization.company_owner.bootstrap permission must be active and belong to ORGANIZATION module"
+                "organization.company_owner.bootstrap permission must be active, SYSTEM_ONLY, "
+                    + "and belong to ORGANIZATION module"
             );
         }
         return permission;

@@ -20,7 +20,8 @@ export function RolePermissions({ role, onClose, onSessionExpired }: {
   const [message, setMessage] = useState<string | null>(null)
   const panelRef = useRef<HTMLElement>(null)
   const disabled = busy || loading
-  const available = catalog.filter((permission) => !assigned.some((item) => item.id === permission.id))
+  const available = catalog.filter((permission) => permission.assignmentPolicy === "DELEGABLE"
+    && !assigned.some((item) => item.id === permission.id))
 
   useEffect(() => { panelRef.current?.scrollIntoView({ block: "start" }) }, [role.id])
 
@@ -86,25 +87,27 @@ export function RolePermissions({ role, onClose, onSessionExpired }: {
         </div>
       </div>
       <RbacFeedback error={error} message={message} />
-      <form className="rbac-form" onSubmit={grant}>
-        <fieldset disabled={disabled}>
-          <label><span id="available-permission-label">Quyền chưa được gán</span>
-            <select aria-labelledby="available-permission-label" value={permissionId} onChange={(event) => setPermissionId(event.target.value)} required>
-              <option value="">{available.length ? "Chọn quyền..." : "Không còn quyền để gán"}</option>
-              {available.map((permission) => <option key={permission.id} value={permission.id}>
-                {permission.name} ({permission.code}){permission.isActive ? "" : " (tạm tắt)"}
-              </option>)}
-            </select>
-          </label>
-          <button className="rbac-primary" type="submit" disabled={!permissionId}>Gán quyền</button>
-        </fieldset>
-      </form>
-      <p className="rbac-note">Thay đổi quyền áp dụng trong phiên đăng nhập hoặc lần làm mới token tiếp theo.</p>
+      {!role.isSystem && <form className="rbac-form" onSubmit={grant}>
+          <fieldset disabled={disabled}>
+            <label><span id="available-permission-label">Quyền có thể ủy quyền chưa được gán</span>
+              <select aria-labelledby="available-permission-label" value={permissionId} onChange={(event) => setPermissionId(event.target.value)} required>
+                <option value="">{available.length ? "Chọn quyền..." : "Không còn quyền để gán"}</option>
+                {available.map((permission) => <option key={permission.id} value={permission.id}>
+                  {permission.name} ({permission.code}){permission.isActive ? "" : " (tạm tắt)"}
+                </option>)}
+              </select>
+            </label>
+            <button className="rbac-primary" type="submit" disabled={!permissionId}>Gán quyền</button>
+          </fieldset>
+        </form>}
+      <p className="rbac-note">{role.isSystem
+        ? "System role và bộ quyền do ứng dụng định nghĩa, chỉ được phép xem."
+        : "Chỉ permission DELEGABLE có thể gán; thay đổi có hiệu lực trong phiên đăng nhập hoặc lần làm mới token tiếp theo."}</p>
       {loading && <p role="status">Đang tải quyền...</p>}
       <ul className="rbac-assigned-list">
         {assigned.map((permission) => <li key={permission.id}>
           <div><strong>{permission.name}</strong><small><code>{permission.code}</code> · {permission.description} · {permission.isActive ? "Hoạt động" : "Tạm tắt"}</small></div>
-          <button type="button" className="danger-button" disabled={disabled} onClick={() => changePermission(permission, true)}>Gỡ quyền</button>
+          {!role.isSystem && <button type="button" className="danger-button" disabled={disabled} onClick={() => changePermission(permission, true)}>Gỡ quyền</button>}
         </li>)}
       </ul>
       {!loading && !error && assigned.length === 0 && <p>Vai trò này chưa được gán quyền.</p>}

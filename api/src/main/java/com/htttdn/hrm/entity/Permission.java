@@ -2,6 +2,7 @@ package com.htttdn.hrm.entity;
 
 import java.time.Instant;
 
+import com.htttdn.hrm.entity.enums.PermissionAssignmentPolicy;
 import com.htttdn.hrm.entity.enums.PermissionModule;
 
 import jakarta.persistence.Column;
@@ -44,6 +45,10 @@ public class Permission {
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "assignment_policy", nullable = false, length = 20)
+    private PermissionAssignmentPolicy assignmentPolicy;
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;

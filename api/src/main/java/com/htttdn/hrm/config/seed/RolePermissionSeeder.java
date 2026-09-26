@@ -18,6 +18,7 @@ import com.htttdn.hrm.entity.Permission;
 import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.RolePermission;
 import com.htttdn.hrm.entity.RolePermissionId;
+import com.htttdn.hrm.entity.enums.PermissionAssignmentPolicy;
 import com.htttdn.hrm.repository.PermissionRepository;
 import com.htttdn.hrm.repository.RolePermissionRepository;
 import com.htttdn.hrm.repository.RoleRepository;
@@ -28,7 +29,8 @@ import com.htttdn.hrm.repository.RoleRepository;
  * <p>Project không cấu hình role hierarchy trong Spring Security, vì vậy role cấp cao phải
  * chứa tường minh các quyền self-service của {@code EMPLOYEE}. System role thuộc sở hữu của
  * ứng dụng nên seeder đồng bộ chính xác bộ permission chuẩn: thêm mapping còn thiếu và xóa
- * mapping ngoài định nghĩa. Custom role không nằm trong danh sách này và không bị ảnh hưởng.
+ * mapping ngoài định nghĩa. Mapping hợp lệ của custom role được giữ nguyên; mapping tới
+ * permission {@link PermissionAssignmentPolicy#SYSTEM_ONLY} bị thu hồi.
  */
 @Component
 @Order(300)
@@ -141,7 +143,15 @@ public class RolePermissionSeeder implements ApplicationRunner {
         }
 
         int createdCount = 0;
-        int removedCount = 0;
+        List<RolePermission> invalidCustomMappings = rolePermissionRepository.findAll().stream()
+            .filter(mapping -> !Boolean.TRUE.equals(mapping.getRole().getIsSystem()))
+            .filter(mapping -> mapping.getPermission().getAssignmentPolicy()
+                == PermissionAssignmentPolicy.SYSTEM_ONLY)
+            .toList();
+        if (!invalidCustomMappings.isEmpty()) {
+            rolePermissionRepository.deleteAll(invalidCustomMappings);
+        }
+        int removedCount = invalidCustomMappings.size();
         for (RolePermissionDefinition definition : DEFAULT_ASSIGNMENTS) {
             Role role = roleRepository.findByCodeAndDeletedAtIsNull(definition.roleCode())
                 .orElseThrow(() -> new IllegalStateException("Seed role not found: " + definition.roleCode()));

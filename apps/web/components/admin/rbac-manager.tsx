@@ -52,7 +52,7 @@ export function RbacManager() {
           <div>
             <p className="eyebrow">ADMIN CONSOLE</p>
             <h1>Vai trò & quyền</h1>
-            <p>Quản lý vai trò, danh mục quyền và quyền của từng vai trò.</p>
+            <p>Quản lý vai trò tùy chỉnh và xem danh mục quyền do hệ thống định nghĩa.</p>
           </div>
           <Link className="ghost-button" href="/admin">Về tổng quan</Link>
         </header>

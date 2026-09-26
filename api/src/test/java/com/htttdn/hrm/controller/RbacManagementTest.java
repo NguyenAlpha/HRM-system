@@ -30,6 +30,7 @@ import com.htttdn.hrm.entity.Permission;
 import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.RolePermissionId;
 import com.htttdn.hrm.entity.enums.AccountStatus;
+import com.htttdn.hrm.entity.enums.PermissionAssignmentPolicy;
 import com.htttdn.hrm.entity.enums.PermissionModule;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.PermissionRepository;
@@ -209,6 +210,20 @@ class RbacManagementTest {
             .andExpect(status().isConflict());
     }
 
+    @Test
+    void systemOnlyPermissionCannotBeAssignedToCustomRole() throws Exception {
+        Role role = savedRole(false);
+        Permission permission = savedPermission(
+            "organization.company_owner.bootstrap",
+            PermissionAssignmentPolicy.SYSTEM_ONLY
+        );
+
+        admin(post("/api/roles/{roleId}/permissions", role.getId()), Map.of(
+            "permissionId", permission.getId()
+        )).andExpect(status().isConflict())
+            .andExpect(jsonPath("$.error.field").value("permissionId"));
+    }
+
     @ParameterizedTest
     @MethodSource("invalidBodies")
     void invalidBodiesReturnValidationErrors(String method, String path, String body, String field) throws Exception {
@@ -270,9 +285,14 @@ class RbacManagementTest {
     }
 
     private Permission savedPermission(String code) {
+        return savedPermission(code, PermissionAssignmentPolicy.DELEGABLE);
+    }
+
+    private Permission savedPermission(String code, PermissionAssignmentPolicy assignmentPolicy) {
         return permissionRepository.save(Permission.builder().code(code).name("RBAC test permission")
             .module(PermissionModule.RBAC)
-            .description("RBAC test permission").isActive(true).createdAt(Instant.now()).build());
+            .description("RBAC test permission").assignmentPolicy(assignmentPolicy)
+            .isActive(true).createdAt(Instant.now()).build());
     }
 
     private Account savedAccount() {

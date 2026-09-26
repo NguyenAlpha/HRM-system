@@ -56,6 +56,7 @@ public class PermissionServiceImpl implements PermissionService {
             permission.getName(),
             permission.getModule(),
             permission.getDescription(),
+            permission.getAssignmentPolicy(),
             permission.getIsActive()
         );
     }

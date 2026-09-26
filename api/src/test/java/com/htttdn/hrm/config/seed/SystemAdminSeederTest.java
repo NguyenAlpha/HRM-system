@@ -16,6 +16,7 @@ import com.htttdn.hrm.entity.Permission;
 import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.RolePermission;
 import com.htttdn.hrm.entity.enums.AccountStatus;
+import com.htttdn.hrm.entity.enums.PermissionAssignmentPolicy;
 import com.htttdn.hrm.entity.enums.PermissionModule;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.repository.AccountRepository;
@@ -140,6 +141,7 @@ class SystemAdminSeederTest {
         Permission permission = permissionCaptor.getValue();
         assertEquals(SystemAdminSeeder.COMPANY_OWNER_BOOTSTRAP_PERMISSION_CODE, permission.getCode());
         assertEquals(PermissionModule.ORGANIZATION, permission.getModule());
+        assertEquals(PermissionAssignmentPolicy.SYSTEM_ONLY, permission.getAssignmentPolicy());
 
         ArgumentCaptor<RolePermission> rolePermissionCaptor = ArgumentCaptor.forClass(RolePermission.class);
         verify(rolePermissionRepository).save(rolePermissionCaptor.capture());
@@ -172,6 +174,7 @@ class SystemAdminSeederTest {
             .code(SystemAdminSeeder.COMPANY_OWNER_BOOTSTRAP_PERMISSION_CODE)
             .name("Khởi tạo Chủ sở hữu doanh nghiệp")
             .module(PermissionModule.ORGANIZATION)
+            .assignmentPolicy(PermissionAssignmentPolicy.SYSTEM_ONLY)
             .isActive(true)
             .build();
 

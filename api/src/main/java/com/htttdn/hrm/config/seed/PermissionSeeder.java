@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.entity.Permission;
+import com.htttdn.hrm.entity.enums.PermissionAssignmentPolicy;
 import com.htttdn.hrm.entity.enums.PermissionModule;
 import com.htttdn.hrm.repository.PermissionRepository;
 
@@ -20,8 +21,8 @@ import com.htttdn.hrm.repository.PermissionRepository;
  * Khởi tạo catalog permission chuẩn được API sử dụng để phân quyền.
  *
  * <p>Permission code được lưu nguyên dạng authority, ví dụ {@code employee.read}; không thêm
- * prefix {@code ROLE_}. Seeder tạo permission còn thiếu, đồng bộ tên hiển thị chuẩn và từ chối
- * chạy nếu một code chuẩn đã tồn tại với module sai hoặc đã bị vô hiệu hóa.
+ * prefix {@code ROLE_}. Seeder tạo permission còn thiếu, đồng bộ tên, mô tả và chính sách gán
+ * chuẩn, đồng thời từ chối chạy nếu một code chuẩn đã tồn tại với module sai hoặc đã bị vô hiệu hóa.
  */
 @Component
 @Order(200)
@@ -59,7 +60,7 @@ public class PermissionSeeder implements ApplicationRunner {
             PermissionModule.ORGANIZATION,
             "Phê duyệt cuối các thay đổi về cơ cấu tổ chức"
         ),
-        permission(
+        systemPermission(
             "organization.company_owner.bootstrap",
             "Khởi tạo Chủ sở hữu doanh nghiệp",
             PermissionModule.ORGANIZATION,
@@ -146,6 +147,7 @@ public class PermissionSeeder implements ApplicationRunner {
                 .name(definition.name())
                 .module(definition.module())
                 .description(definition.description())
+                .assignmentPolicy(definition.assignmentPolicy())
                 .isActive(true)
                 .createdAt(Instant.now())
                 .build());
@@ -163,6 +165,7 @@ public class PermissionSeeder implements ApplicationRunner {
         }
         permission.setName(definition.name());
         permission.setDescription(definition.description());
+        permission.setAssignmentPolicy(definition.assignmentPolicy());
     }
 
     private static PermissionDefinition permission(
@@ -171,9 +174,36 @@ public class PermissionSeeder implements ApplicationRunner {
         PermissionModule module,
         String description
     ) {
-        return new PermissionDefinition(code, name, module, description);
+        return new PermissionDefinition(
+            code,
+            name,
+            module,
+            description,
+            PermissionAssignmentPolicy.DELEGABLE
+        );
     }
 
-    private record PermissionDefinition(String code, String name, PermissionModule module, String description) {
+    private static PermissionDefinition systemPermission(
+        String code,
+        String name,
+        PermissionModule module,
+        String description
+    ) {
+        return new PermissionDefinition(
+            code,
+            name,
+            module,
+            description,
+            PermissionAssignmentPolicy.SYSTEM_ONLY
+        );
+    }
+
+    private record PermissionDefinition(
+        String code,
+        String name,
+        PermissionModule module,
+        String description,
+        PermissionAssignmentPolicy assignmentPolicy
+    ) {
     }
 }

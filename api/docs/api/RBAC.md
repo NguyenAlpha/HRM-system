@@ -24,6 +24,7 @@ Quản lý role tùy chỉnh và quan hệ permission của role. Danh mục per
 ### Ranh giới quản trị
 
 - Permission được định nghĩa trong code và đồng bộ bằng `PermissionSeeder` hoặc database migration; không có API tạo, sửa hoặc xóa permission.
+- Permission có `assignmentPolicy=DELEGABLE` mới được gán cho custom role; `SYSTEM_ONLY` chỉ được seeder gán cho system role.
 - System role có `isSystem=true` là khuôn mẫu do ứng dụng sở hữu; API chỉ cho phép xem role và danh sách permission của role.
 - Chỉ custom role có `isSystem=false` mới được cập nhật, xóa mềm hoặc thay đổi permission mapping.
 - `COMPANY_OWNER` chọn permission có sẵn để cấu hình custom role, không tự định nghĩa capability mới cho hệ thống.
@@ -330,6 +331,7 @@ Lấy toàn bộ permission đã gán cho một role. Danh sách không phân tr
       "name": "Quản lý phân quyền",
       "module": "RBAC",
       "description": "Xem danh mục quyền và quản lý vai trò tùy chỉnh cùng quan hệ phân quyền",
+      "assignmentPolicy": "DELEGABLE",
       "isActive": true
     }
   ],
@@ -364,7 +366,7 @@ Gán một permission có sẵn cho custom role. Permission và system role khô
 
 | Field | Type | Bắt buộc | Ràng buộc |
 |:------|:-----|:--------:|:----------|
-| `permissionId` | integer | ✅ | Số nguyên dương, permission phải tồn tại |
+| `permissionId` | integer | ✅ | Số nguyên dương; permission phải tồn tại và có `assignmentPolicy=DELEGABLE` |
 
 Account thực hiện được lấy từ claim `accountId` trong JWT. Client không truyền ID người cấp quyền.
 
@@ -390,7 +392,7 @@ API lưu quan hệ ngay cả khi custom role hoặc permission đang inactive. C
 | 404 | `ROLE_NOT_FOUND` | Role không tồn tại hoặc đã bị xóa mềm |
 | 404 | `PERMISSION_NOT_FOUND` | Permission không tồn tại |
 | 404 | `RESOURCE_NOT_FOUND` | Account trong claim `accountId` không còn tồn tại |
-| 409 | `CONFLICT` | Permission đã được gán hoặc role đích là system role |
+| 409 | `CONFLICT` | Permission đã được gán, permission là `SYSTEM_ONLY` hoặc role đích là system role |
 
 ---
 
@@ -423,7 +425,7 @@ Gỡ một permission khỏi custom role. Endpoint không cần request body; sy
 
 ## GET `/api/permissions`
 
-Lấy danh mục permission do ứng dụng định nghĩa, bao gồm cả permission active và inactive. Có thể lọc theo module. Client chỉ dùng danh mục này để hiển thị và chọn permission cho custom role.
+Lấy danh mục permission do ứng dụng định nghĩa, bao gồm cả permission active và inactive. Có thể lọc theo module. Client chỉ hiển thị permission `DELEGABLE` trong lựa chọn gán cho custom role; permission `SYSTEM_ONLY` vẫn xuất hiện để người quản trị hiểu đầy đủ catalog.
 
 ### Query parameters
 
@@ -451,6 +453,7 @@ GET /api/permissions?module=RBAC&page=0&size=20&sort=code,asc
         "name": "Quản lý phân quyền",
         "module": "RBAC",
         "description": "Xem danh mục quyền và quản lý vai trò tùy chỉnh cùng quan hệ phân quyền",
+        "assignmentPolicy": "DELEGABLE",
         "isActive": true
       }
     ],
@@ -488,6 +491,7 @@ Lấy chi tiết một permission.
     "name": "Xuất danh sách nhân viên",
     "module": "EMPLOYEE",
     "description": "Cho phép xuất danh sách nhân viên trong phạm vi được giao",
+    "assignmentPolicy": "DELEGABLE",
     "isActive": true
   },
   "error": null
@@ -502,6 +506,16 @@ Lấy chi tiết một permission.
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
 | 403 | `FORBIDDEN` | Account không có permission `rbac.manage` |
 | 404 | `PERMISSION_NOT_FOUND` | Permission không tồn tại |
+
+`assignmentPolicy` nhận một trong hai giá trị:
+
+| Giá trị | Ý nghĩa |
+|:--------|:--------|
+| `DELEGABLE` | Company Owner hoặc người có `rbac.manage` có thể gán permission cho custom role |
+| `SYSTEM_ONLY` | Chỉ seeder được gán permission cho system role; API từ chối gán cho custom role |
+
+Hiện tại `organization.company_owner.bootstrap` là `SYSTEM_ONLY`; các permission còn lại là `DELEGABLE`.
+Migration và `RolePermissionSeeder` tự thu hồi mapping `SYSTEM_ONLY` từng bị gán cho custom role trước khi chính sách này được áp dụng.
 
 ---
 

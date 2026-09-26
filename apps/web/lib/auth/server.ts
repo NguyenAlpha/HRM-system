@@ -280,8 +280,10 @@ export async function handleChangePassword(request: Request, portal: Portal): Pr
 export async function handleRbacRequest(request: Request, segments: string[]): Promise<NextResponse> {
   const path = segments.join("/")
   const routes = [
-    { pattern: /^(roles|permissions)$/, methods: ["GET", "POST"] },
-    { pattern: /^(roles|permissions)\/[1-9]\d*$/, methods: ["GET", "PUT", "DELETE"] },
+    { pattern: /^roles$/, methods: ["GET", "POST"] },
+    { pattern: /^roles\/[1-9]\d*$/, methods: ["GET", "PUT", "DELETE"] },
+    { pattern: /^permissions$/, methods: ["GET"] },
+    { pattern: /^permissions\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^roles\/[1-9]\d*\/permissions$/, methods: ["GET", "POST"] },
     { pattern: /^roles\/[1-9]\d*\/permissions\/[1-9]\d*$/, methods: ["DELETE"] },
   ]

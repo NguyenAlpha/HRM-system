@@ -19,6 +19,7 @@ import com.htttdn.hrm.entity.Permission;
 import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.RolePermission;
 import com.htttdn.hrm.entity.RolePermissionId;
+import com.htttdn.hrm.entity.enums.PermissionAssignmentPolicy;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
@@ -114,6 +115,13 @@ public class RoleServiceImpl implements RoleService {
         Permission permission = permissionRepository.findById(request.permissionId())
             .orElseThrow(() -> new ResourceNotFoundException(
                 ErrorCode.PERMISSION_NOT_FOUND, "Permission not found: " + request.permissionId()));
+        if (permission.getAssignmentPolicy() != PermissionAssignmentPolicy.DELEGABLE) {
+            throw new ConflictException(
+                ErrorCode.CONFLICT,
+                "System-only permissions cannot be assigned to custom roles",
+                "permissionId"
+            );
+        }
 
         RolePermissionId id = new RolePermissionId(roleId, request.permissionId());
         if (rolePermissionRepository.existsById(id)) {
@@ -167,6 +175,7 @@ public class RoleServiceImpl implements RoleService {
                 permission.getName(),
                 permission.getModule(),
                 permission.getDescription(),
+                permission.getAssignmentPolicy(),
                 permission.getIsActive()
             ))
             .toList();
