@@ -214,7 +214,7 @@
 |---|---|---|---|---|
 | `id` | `Long` | `id` | PK | Khóa chính |
 | `code` | `String` | `code` | NOT NULL, UNIQUE | Mã quyền, ví dụ `leave.approve` |
-| `module` | `PermissionModule` | `module` | NOT NULL | `EMPLOYEE` / `REQUEST` / `ATTENDANCE` / `PAYROLL` / `RBAC` / `REPORT` |
+| `module` | `PermissionModule` | `module` | NOT NULL | `EMPLOYEE` / `ACCOUNT` / `ORGANIZATION` / `REQUEST` / `ATTENDANCE` / `PAYROLL` / `RBAC` / `REPORT` |
 | `description` | `String` | `description` | NOT NULL | Mô tả quyền |
 | `isActive` | `Boolean` | `is_active` | NOT NULL, mặc định true | Trạng thái |
 | `createdAt` | `Instant` | `created_at` | NOT NULL | Thời điểm tạo |

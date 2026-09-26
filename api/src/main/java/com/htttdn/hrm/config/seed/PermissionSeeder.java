@@ -36,12 +36,33 @@ public class PermissionSeeder implements ApplicationRunner {
         permission("employee.manage", PermissionModule.EMPLOYEE, "Create, update, and soft-delete employees"),
         permission("employee.sensitive.read", PermissionModule.EMPLOYEE, "View sensitive employee data within assigned scope"),
         permission("employee.sensitive.manage", PermissionModule.EMPLOYEE, "Update sensitive employee data within assigned scope"),
+        permission(
+            "employee.lifecycle.approve",
+            PermissionModule.EMPLOYEE,
+            "Give final approval for employee lifecycle actions"
+        ),
+
+        permission("account.read", PermissionModule.ACCOUNT, "View application accounts"),
+        permission("account.manage", PermissionModule.ACCOUNT, "Create and manage application accounts"),
+        permission(
+            "account.activation.manage",
+            PermissionModule.ACCOUNT,
+            "Manage account activation and password recovery"
+        ),
+        permission("account.role.assign", PermissionModule.ACCOUNT, "Assign and revoke account roles"),
+
+        permission(
+            "organization.change.approve",
+            PermissionModule.ORGANIZATION,
+            "Give final approval for organization structure changes"
+        ),
 
         permission("request.self.read", PermissionModule.REQUEST, "View own employee requests"),
         permission("request.self.create", PermissionModule.REQUEST, "Create and submit own employee requests"),
         permission("request.self.cancel", PermissionModule.REQUEST, "Cancel own eligible employee requests"),
         permission("request.read", PermissionModule.REQUEST, "View employee requests within assigned scope"),
         permission("request.approve", PermissionModule.REQUEST, "Approve or reject employee requests"),
+        permission("request.final_approve", PermissionModule.REQUEST, "Give final approval for escalated employee requests"),
         permission("request.manage", PermissionModule.REQUEST, "Manage employee requests within assigned scope"),
 
         permission("attendance.self.read", PermissionModule.ATTENDANCE, "View own attendance records"),
