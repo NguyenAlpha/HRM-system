@@ -21,6 +21,10 @@ public record CreateOrganizationCompanyOwnerRequest(
 
     @NotBlank
     @Size(max = 500)
-    String ownershipReason
+    String ownershipReason,
+
+    @NotBlank
+    @Size(max = 500)
+    String directorAppointmentReason
 ) {
 }

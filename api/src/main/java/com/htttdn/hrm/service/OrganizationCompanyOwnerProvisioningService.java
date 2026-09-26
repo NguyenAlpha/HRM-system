@@ -19,6 +19,7 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 public class OrganizationCompanyOwnerProvisioningService {
 
     private static final String COMPANY_OWNER_ROLE = "COMPANY_OWNER";
+    private static final String DIRECTOR_ROLE = "DIRECTOR";
 
     private final EmployeeProvisioningService employeeProvisioningService;
     private final AccountProvisioningService accountProvisioningService;
@@ -63,13 +64,21 @@ public class OrganizationCompanyOwnerProvisioningService {
             request.ownershipReason(),
             actorAccountId
         );
+        AccountRoleAssignmentResponse directorAssignment = roleAssignmentAdminService.assignProvisionedCompanyRole(
+            accountProvisioning.account().id(),
+            DIRECTOR_ROLE,
+            request.effectiveFrom(),
+            request.directorAppointmentReason(),
+            actorAccountId
+        );
 
         return new OrganizationCompanyOwnerProvisioningResponse(
             employee.getId(),
             employee.getEmployeeCode(),
             employee.getFullName(),
             accountProvisioning,
-            ownerAssignment
+            ownerAssignment,
+            directorAssignment
         );
     }
 
