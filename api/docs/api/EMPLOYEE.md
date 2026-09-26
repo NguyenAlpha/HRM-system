@@ -10,6 +10,7 @@ Tra cứu hồ sơ nhân sự trong phạm vi được phân công. API danh sá
 |:---------|:--------------------:|:-------------------:|
 | `GET /api/employees` | ✅ | `employee.read` |
 | `GET /api/employees/{employeeId}` | ✅ | `employee.read` |
+| `PUT /api/employees/{employeeId}` | ✅ | `employee.manage` |
 
 `HR_STAFF`, `BRANCH_MANAGER`, các vai trò giám sát và một số vai trò nghiệp vụ được seed `employee.read`. Kết quả còn bị giới hạn theo scope của role assignment: `SELF`, `ORG_UNIT`, `LOCATION` hoặc `COMPANY`.
 
@@ -156,3 +157,63 @@ Endpoint không trả CCCD, email cá nhân, địa chỉ, mã số thuế hoặ
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
 | 403 | `FORBIDDEN` | Không có permission `employee.read` hoặc employee nằm ngoài scope được giao |
 | 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
+
+---
+
+## PUT `/api/employees/{employeeId}`
+
+Cập nhật các thông tin hồ sơ thông thường được lưu trực tiếp trong entity `Employee`. Employee phải chưa bị xóa mềm và nằm trong scope `employee.manage` của account đang đăng nhập.
+
+### Request
+
+```json
+{
+  "fullName": "Nguyễn Văn An",
+  "dateOfBirth": "1998-05-20",
+  "gender": "MALE",
+  "highestEducationLevel": "BACHELOR",
+  "major": "Quản trị nhân lực",
+  "institution": "Đại học Kinh tế",
+  "graduationYear": 2020,
+  "workEmail": "an.nguyen@company.com",
+  "phone": "0901234567"
+}
+```
+
+| Field | Cột trong `employees` | Bắt buộc | Ràng buộc |
+|:------|:----------------------|:--------:|:----------|
+| `fullName` | `full_name` | ✅ | Không rỗng, tối đa 200 ký tự |
+| `dateOfBirth` | `date_of_birth` | ❌ | Ngày ISO `YYYY-MM-DD`; `null` để xóa |
+| `gender` | `gender` | ❌ | `MALE`, `FEMALE`, `OTHER`, `UNDISCLOSED`; `null` để xóa |
+| `highestEducationLevel` | `highest_education_level` | ❌ | `HIGH_SCHOOL`, `COLLEGE`, `BACHELOR`, `MASTER`, `DOCTORATE`; `null` để xóa |
+| `major` | `major` | ❌ | Tối đa 200 ký tự; `null` để xóa |
+| `institution` | `institution` | ❌ | Tối đa 200 ký tự; `null` để xóa |
+| `graduationYear` | `graduation_year` | ❌ | Số nguyên 16-bit; `null` để xóa |
+| `workEmail` | `work_email` | ❌ | Email hợp lệ, tối đa 100 ký tự và duy nhất; `null` để xóa nếu employee chưa có account |
+| `phone` | `phone` | ❌ | Tối đa 20 ký tự; `null` để xóa |
+
+Đây là API `PUT`, vì vậy client phải gửi `fullName`; các field tùy chọn không truyền hoặc truyền `null` sẽ được cập nhật thành `null`.
+
+Nếu employee đã có account, thay đổi `workEmail` sẽ đồng thời cập nhật `Account.email`. Không thể xóa `workEmail` khi account còn tồn tại vì email đăng nhập của account là bắt buộc.
+
+### Các field không cập nhật qua endpoint này
+
+- `id`, `employeeCode`, `createdAt`, `updatedAt`, `deletedAt`, `deletedByAccount`, `deletionReason` do hệ thống quản lý.
+- `employmentStatus`, `terminationDate`, `terminationReason` được thay đổi qua workflow vòng đời nhân sự, không sửa trực tiếp.
+- `nationalId`, `personalEmail`, `address`, `taxCode`, `bankName`, `bankAccountNumber`, `bankAccountHolder` là dữ liệu nhạy cảm, yêu cầu `employee.sensitive.manage` và endpoint riêng.
+- `hireDate` không được sửa qua API này để tránh làm sai lịch sử phân công và vòng đời nhân sự.
+
+### Response `200 OK`
+
+Trả `EmployeeDetailResponse` giống [API lấy chi tiết employee](#get-apiemployeesemployeeid), bao gồm `currentAssignment` và account tối thiểu nếu có.
+
+### Lỗi
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 400 | `VALIDATION_ERROR` | `employeeId`, JSON hoặc field không hợp lệ |
+| 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
+| 403 | `FORBIDDEN` | Không có permission `employee.manage` hoặc employee nằm ngoài scope được giao |
+| 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
+| 409 | `CONFLICT` | `workEmail` trùng employee khác hoặc cố xóa email khi employee đã có account |
+| 409 | `EMAIL_TAKEN` | `workEmail` đã được account khác sử dụng |
