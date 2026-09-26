@@ -14,6 +14,8 @@ Tra cứu hồ sơ nhân sự trong phạm vi được phân công. API danh sá
 
 `HR_STAFF`, `BRANCH_MANAGER`, các vai trò giám sát và một số vai trò nghiệp vụ được seed `employee.read`. Kết quả còn bị giới hạn theo scope của role assignment: `SELF`, `ORG_UNIT`, `LOCATION` hoặc `COMPANY`.
 
+`COMPANY_OWNER` được seed `employee.manage` với scope `COMPANY`, nên có thể gọi API cập nhật hồ sơ. Permission này không bao gồm `employee.read`; quyền đọc vẫn phải đến từ một role khác, chẳng hạn `DIRECTOR` trên account Company Owner đầu tiên.
+
 ---
 
 ## GET `/api/employees`

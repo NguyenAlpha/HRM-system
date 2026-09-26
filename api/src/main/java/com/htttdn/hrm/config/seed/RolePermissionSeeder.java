@@ -105,6 +105,7 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "organization.change.approve"
         )),
         role("COMPANY_OWNER", List.of(
+            "employee.manage",
             "account.read",
             "account.manage",
             "account.activation.manage",
