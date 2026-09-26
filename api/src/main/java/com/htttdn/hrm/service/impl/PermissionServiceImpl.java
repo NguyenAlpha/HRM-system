@@ -1,24 +1,16 @@
 package com.htttdn.hrm.service.impl;
 
-import java.time.Instant;
-import java.util.Set;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.htttdn.hrm.dto.request.permission.CreatePermissionRequest;
-import com.htttdn.hrm.dto.request.permission.UpdatePermissionRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.permission.PermissionResponse;
 import com.htttdn.hrm.entity.Permission;
 import com.htttdn.hrm.entity.enums.PermissionModule;
-import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
-import com.htttdn.hrm.repository.AccountPermissionOverrideRepository;
 import com.htttdn.hrm.repository.PermissionRepository;
-import com.htttdn.hrm.repository.RolePermissionRepository;
 import com.htttdn.hrm.security.CanManageRbac;
 import com.htttdn.hrm.service.PermissionService;
 
@@ -27,41 +19,10 @@ import com.htttdn.hrm.service.PermissionService;
 @CanManageRbac
 public class PermissionServiceImpl implements PermissionService {
 
-    private static final Set<String> REQUIRED_ACTIVE_PERMISSION_CODES = Set.of(
-        "rbac.manage",
-        "organization.company_owner.bootstrap"
-    );
-
     private final PermissionRepository permissionRepository;
-    private final RolePermissionRepository rolePermissionRepository;
-    private final AccountPermissionOverrideRepository accountPermissionOverrideRepository;
 
-    public PermissionServiceImpl(
-        PermissionRepository permissionRepository,
-        RolePermissionRepository rolePermissionRepository,
-        AccountPermissionOverrideRepository accountPermissionOverrideRepository
-    ) {
+    public PermissionServiceImpl(PermissionRepository permissionRepository) {
         this.permissionRepository = permissionRepository;
-        this.rolePermissionRepository = rolePermissionRepository;
-        this.accountPermissionOverrideRepository = accountPermissionOverrideRepository;
-    }
-
-    @Override
-    public PermissionResponse create(CreatePermissionRequest request) {
-        if (permissionRepository.existsByCode(request.code())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Permission code is already taken", "code");
-        }
-
-        Permission permission = Permission.builder()
-            .code(request.code())
-            .name(request.name())
-            .module(request.module())
-            .description(request.description())
-            .isActive(true)
-            .createdAt(Instant.now())
-            .build();
-
-        return toResponse(permissionRepository.save(permission));
     }
 
     @Override
@@ -80,42 +41,6 @@ public class PermissionServiceImpl implements PermissionService {
     @Transactional(readOnly = true)
     public Page<PermissionResponse> listByModule(PermissionModule module, Pageable pageable) {
         return permissionRepository.findByModule(module, pageable).map(this::toResponse);
-    }
-
-    @Override
-    public PermissionResponse update(Long id, UpdatePermissionRequest request) {
-        Permission permission = findPermissionOrThrow(id);
-        if (REQUIRED_ACTIVE_PERMISSION_CODES.contains(permission.getCode())
-            && Boolean.FALSE.equals(request.isActive())) {
-            throw new ConflictException(
-                ErrorCode.CONFLICT,
-                permission.getCode() + " cannot be deactivated",
-                "isActive"
-            );
-        }
-        permission.setName(request.name());
-        permission.setDescription(request.description());
-        permission.setIsActive(request.isActive());
-        return toResponse(permission);
-    }
-
-    @Override
-    public void delete(Long id) {
-        Permission permission = findPermissionOrThrow(id);
-        if (REQUIRED_ACTIVE_PERMISSION_CODES.contains(permission.getCode())) {
-            throw new ConflictException(
-                ErrorCode.CONFLICT,
-                permission.getCode() + " cannot be deleted"
-            );
-        }
-        if (rolePermissionRepository.existsByIdPermissionId(id)
-            || accountPermissionOverrideRepository.existsByPermissionId(id)) {
-            throw new ConflictException(
-                ErrorCode.CONFLICT,
-                "Permission is in use; revoke its assignments or deactivate it instead"
-            );
-        }
-        permissionRepository.delete(permission);
     }
 
     private Permission findPermissionOrThrow(Long id) {

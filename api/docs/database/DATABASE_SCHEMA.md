@@ -276,6 +276,8 @@ erDiagram
 
 ### `permissions` — Danh mục quyền nguyên tử
 
+Danh mục này thuộc sở hữu của ứng dụng và được đồng bộ bằng `PermissionSeeder` hoặc database migration. Người dùng doanh nghiệp chỉ đọc và chọn permission có sẵn; hệ thống không cung cấp API tạo, sửa hoặc xóa permission.
+
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
@@ -286,6 +288,8 @@ erDiagram
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 
 ### `roles` — Mẫu vai trò
+
+Role có `is_system=true` và bộ permission tương ứng do code định nghĩa, chỉ đọc qua API. Company Owner chỉ quản lý role tùy chỉnh có `is_system=false`.
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
@@ -300,6 +304,8 @@ erDiagram
 | `deleted_at` | TIMESTAMPTZ | | Chỉ áp dụng cho vai trò tùy chỉnh |
 
 ### `role_permissions` — Quyền mặc định của vai trò
+
+Seeder đồng bộ chính xác mapping của system role. API chỉ cho phép thêm hoặc gỡ mapping đối với custom role.
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
