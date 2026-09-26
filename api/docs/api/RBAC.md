@@ -6,20 +6,20 @@ Quản lý role tùy chỉnh và quan hệ permission của role. Danh mục per
 
 ## Endpoint access
 
-| Endpoint | Yêu cầu Bearer token | Role được phép mặc định |
-|:---------|:--------------------:|:-----------------------:|
-| `POST /api/roles` | ✅ | `COMPANY_OWNER` |
-| `GET /api/roles` | ✅ | `COMPANY_OWNER` |
-| `GET /api/roles/{id}` | ✅ | `COMPANY_OWNER` |
-| `PUT /api/roles/{id}` | ✅ | `COMPANY_OWNER` |
-| `DELETE /api/roles/{id}` | ✅ | `COMPANY_OWNER` |
-| `GET /api/roles/{roleId}/permissions` | ✅ | `COMPANY_OWNER` |
-| `POST /api/roles/{roleId}/permissions` | ✅ | `COMPANY_OWNER` |
-| `DELETE /api/roles/{roleId}/permissions/{permissionId}` | ✅ | `COMPANY_OWNER` |
-| `GET /api/permissions` | ✅ | `COMPANY_OWNER` |
-| `GET /api/permissions/{id}` | ✅ | `COMPANY_OWNER` |
+| Endpoint | Yêu cầu Bearer token | Permission yêu cầu |
+|:---------|:--------------------:|:-------------------:|
+| `POST /api/roles` | ✅ | `rbac.manage` |
+| `GET /api/roles` | ✅ | `rbac.manage` |
+| `GET /api/roles/{id}` | ✅ | `rbac.manage` |
+| `PUT /api/roles/{id}` | ✅ | `rbac.manage` |
+| `DELETE /api/roles/{id}` | ✅ | `rbac.manage` |
+| `GET /api/roles/{roleId}/permissions` | ✅ | `rbac.manage` |
+| `POST /api/roles/{roleId}/permissions` | ✅ | `rbac.manage` |
+| `DELETE /api/roles/{roleId}/permissions/{permissionId}` | ✅ | `rbac.manage` |
+| `GET /api/permissions` | ✅ | `rbac.manage` |
+| `GET /api/permissions/{id}` | ✅ | `rbac.manage` |
 
-Danh sách role được phép gọi các API này có thể thay đổi bằng cấu hình `RBAC_MANAGEMENT_ALLOWED_ROLES`. Permission `rbac.manage` trong JWT không thay thế yêu cầu về role.
+`COMPANY_OWNER` được seed permission `rbac.manage`. Có thể ủy quyền quản trị custom role cho một custom role khác bằng cách gán permission này; backend không hard-code role code khi kiểm tra truy cập RBAC.
 
 ### Ranh giới quản trị
 
@@ -62,9 +62,9 @@ Tất cả endpoint nhận access token qua header:
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
 ```
 
-Thiếu token, token hết hạn hoặc chữ ký không hợp lệ trả `401 UNAUTHORIZED`. Token hợp lệ nhưng không chứa role được phép quản trị RBAC trả `403 FORBIDDEN`.
+Thiếu token, token hết hạn hoặc chữ ký không hợp lệ trả `401 UNAUTHORIZED`. Token hợp lệ nhưng không chứa permission `rbac.manage` trả `403 FORBIDDEN`.
 
-Việc kiểm tra quyền được áp dụng tại service bằng `@CanManageRbac`, vì vậy các lời gọi service từ controller khác cũng tuân theo cùng chính sách.
+Việc kiểm tra permission được áp dụng tại service bằng `@CanManageRbac`, vì vậy các lời gọi service từ controller khác cũng tuân theo cùng chính sách.
 
 ---
 
@@ -143,7 +143,7 @@ Tạo role không tự gán role đó cho account và không tự thêm role và
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Body hoặc field không hợp lệ |
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
-| 403 | `FORBIDDEN` | Account không có role được phép quản trị RBAC |
+| 403 | `FORBIDDEN` | Account không có permission `rbac.manage` |
 | 409 | `CONFLICT` | `code` đã tồn tại, kể cả code của role đã xóa mềm |
 
 ---
@@ -199,7 +199,7 @@ Endpoint sử dụng các tham số [phân trang](#phân-trang) chung.
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Tham số query không hợp lệ |
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
-| 403 | `FORBIDDEN` | Account không có role được phép quản trị RBAC |
+| 403 | `FORBIDDEN` | Account không có permission `rbac.manage` |
 
 ---
 
@@ -230,7 +230,7 @@ Lấy chi tiết một role chưa bị xóa mềm.
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | `id` không đúng kiểu số |
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
-| 403 | `FORBIDDEN` | Account không có role được phép quản trị RBAC |
+| 403 | `FORBIDDEN` | Account không có permission `rbac.manage` |
 | 404 | `ROLE_NOT_FOUND` | Role không tồn tại hoặc đã bị xóa mềm |
 
 ---
@@ -280,7 +280,7 @@ Vô hiệu hóa role tùy chỉnh làm role đó không còn được đưa vào
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Body, `id` hoặc field không hợp lệ |
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
-| 403 | `FORBIDDEN` | Account không có role được phép quản trị RBAC |
+| 403 | `FORBIDDEN` | Account không có permission `rbac.manage` |
 | 404 | `ROLE_NOT_FOUND` | Role không tồn tại hoặc đã bị xóa mềm |
 | 409 | `CONFLICT` | Cố cập nhật system role |
 
@@ -308,7 +308,7 @@ Role đã xóa không còn xuất hiện trong danh sách hoặc endpoint chi ti
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | `id` không đúng kiểu số |
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
-| 403 | `FORBIDDEN` | Account không có role được phép quản trị RBAC |
+| 403 | `FORBIDDEN` | Account không có permission `rbac.manage` |
 | 404 | `ROLE_NOT_FOUND` | Role không tồn tại hoặc đã bị xóa mềm |
 | 409 | `CONFLICT` | Cố xóa role hệ thống |
 
@@ -345,7 +345,7 @@ Role chưa có permission trả `data: []`.
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | `roleId` không đúng kiểu số |
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
-| 403 | `FORBIDDEN` | Account không có role được phép quản trị RBAC |
+| 403 | `FORBIDDEN` | Account không có permission `rbac.manage` |
 | 404 | `ROLE_NOT_FOUND` | Role không tồn tại hoặc đã bị xóa mềm |
 
 ---
@@ -386,7 +386,7 @@ API lưu quan hệ ngay cả khi custom role hoặc permission đang inactive. C
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Body, `roleId` hoặc `permissionId` không hợp lệ |
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
-| 403 | `FORBIDDEN` | Account không có role được phép quản trị RBAC |
+| 403 | `FORBIDDEN` | Account không có permission `rbac.manage` |
 | 404 | `ROLE_NOT_FOUND` | Role không tồn tại hoặc đã bị xóa mềm |
 | 404 | `PERMISSION_NOT_FOUND` | Permission không tồn tại |
 | 404 | `RESOURCE_NOT_FOUND` | Account trong claim `accountId` không còn tồn tại |
@@ -414,7 +414,7 @@ Gỡ một permission khỏi custom role. Endpoint không cần request body; sy
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | `roleId` hoặc `permissionId` không đúng kiểu số |
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
-| 403 | `FORBIDDEN` | Account không có role được phép quản trị RBAC |
+| 403 | `FORBIDDEN` | Account không có permission `rbac.manage` |
 | 404 | `ROLE_NOT_FOUND` | Role không tồn tại hoặc đã bị xóa mềm |
 | 404 | `PERMISSION_NOT_FOUND` | Role không có mapping với permission này |
 | 409 | `CONFLICT` | Role đích là system role |
@@ -469,7 +469,7 @@ GET /api/permissions?module=RBAC&page=0&size=20&sort=code,asc
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | `module` hoặc tham số phân trang không hợp lệ |
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
-| 403 | `FORBIDDEN` | Account không có role được phép quản trị RBAC |
+| 403 | `FORBIDDEN` | Account không có permission `rbac.manage` |
 
 ---
 
@@ -500,7 +500,7 @@ Lấy chi tiết một permission.
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | `id` không đúng kiểu số |
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
-| 403 | `FORBIDDEN` | Account không có role được phép quản trị RBAC |
+| 403 | `FORBIDDEN` | Account không có permission `rbac.manage` |
 | 404 | `PERMISSION_NOT_FOUND` | Permission không tồn tại |
 
 ---
@@ -515,26 +515,20 @@ Lấy chi tiết một permission.
 
 ---
 
-## Cấu hình quản trị RBAC
+## Cấu hình seed và ủy quyền quản trị RBAC
 
 | Biến môi trường | Mặc định | Ý nghĩa |
 |:----------------|:---------|:--------|
-| `RBAC_MANAGEMENT_ALLOWED_ROLES` | `COMPANY_OWNER` | Danh sách role code được phép gọi API RBAC, phân tách bằng dấu phẩy |
 | `RBAC_SEED_ENABLED` | `true` | Seed role, permission và mapping mặc định khi khởi động |
 | `ADMIN_SEED_ENABLED` | `true` | Seed system admin và bảo đảm quyền `organization.company_owner.bootstrap` |
 
-Ví dụ cho phép thêm role `RBAC_MANAGER` quản trị RBAC:
+Để ủy quyền quản trị custom role cho một người khác:
 
-```powershell
-$env:RBAC_MANAGEMENT_ALLOWED_ROLES = "COMPANY_OWNER,RBAC_MANAGER"
-./mvnw.cmd spring-boot:run
-```
+1. Tạo custom role, ví dụ `RBAC_MANAGER`.
+2. Gán permission `rbac.manage` cho custom role đó.
+3. Gán role cho account qua nghiệp vụ account.
+4. Đăng nhập hoặc refresh để nhận JWT mới.
 
-Dùng role code không có prefix `ROLE_`. Giá trị cấu hình thay thế toàn bộ danh sách mặc định, vì vậy cần giữ `COMPANY_OWNER` nếu chủ doanh nghiệp vẫn phải có quyền truy cập. Danh sách rỗng từ chối mọi role. Không thêm `SYSTEM_ADMIN` vào cấu hình này vì role đó chỉ dùng để bootstrap Company Owner đầu tiên.
-
-Sau khi tạo `RBAC_MANAGER`, cần thực hiện cả hai việc sau:
-
-1. Thêm `RBAC_MANAGER` vào `RBAC_MANAGEMENT_ALLOWED_ROLES` mà không xóa các role quản trị còn cần thiết, sau đó khởi động lại API.
-2. Gán role cho account qua nghiệp vụ account, sau đó đăng nhập hoặc refresh để nhận JWT mới.
+Không cần cấu hình allowlist hoặc khởi động lại API. Quyền truy cập được quyết định trực tiếp từ permission trong JWT.
 
 Permission catalog, system role và permission mapping của system role thuộc sở hữu của code. Giữ `RBAC_SEED_ENABLED=true` để ứng dụng đồng bộ các định nghĩa này khi khởi động; permission mới phải được bổ sung qua `PermissionSeeder` hoặc database migration, không qua API. Chỉ đặt `RBAC_SEED_ENABLED=false` khi deployment đã có cơ chế migration thay thế đầy đủ. `ADMIN_SEED_ENABLED` có thể tắt sau khi tài khoản bootstrap và mapping tối thiểu đã được bảo đảm bằng quy trình vận hành khác.

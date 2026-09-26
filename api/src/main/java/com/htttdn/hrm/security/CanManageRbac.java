@@ -7,9 +7,9 @@ import java.lang.annotation.Target;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 
-/** Applies the shared role policy to role and permission management operations. */
+/** Requires the atomic permission used to manage custom roles and their permission mappings. */
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-@PreAuthorize("@rbacAccessPolicy.canManage(authentication)")
+@PreAuthorize("hasAuthority('rbac.manage')")
 public @interface CanManageRbac {
 }

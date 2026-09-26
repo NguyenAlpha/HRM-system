@@ -58,8 +58,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     "company.seed.enabled=false",
     "rbac.seed.enabled=false",
     "admin.seed.enabled=false",
-    "user.seed.enabled=false",
-    "rbac.management.allowed-roles=COMPANY_OWNER"
+    "user.seed.enabled=false"
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -86,8 +85,8 @@ class RbacManagementTest {
 
     @ParameterizedTest
     @MethodSource("endpoints")
-    void otherRolesCannotManageRbacEvenWithRbacPermission(String method, String path, String body) throws Exception {
-        String token = token(42L, List.of("EMPLOYEE", "HR_STAFF"), List.of("rbac.manage"));
+    void accountsWithoutRbacPermissionCannotManageRbac(String method, String path, String body) throws Exception {
+        String token = token(42L, List.of("COMPANY_OWNER"), List.of());
         mockMvc.perform(request(HttpMethod.valueOf(method), path)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON).content(body))
@@ -175,7 +174,7 @@ class RbacManagementTest {
         Role role = savedRole(false);
         Permission permission = savedPermission(permissionCode());
         Account actor = savedAccount();
-        String token = token(actor.getId(), List.of("COMPANY_OWNER"), List.of());
+        String token = token(actor.getId(), List.of("COMPANY_OWNER"), List.of("rbac.manage"));
         String path = "/api/roles/" + role.getId() + "/permissions";
         String body = objectMapper.writeValueAsString(Map.of(
             "permissionId", permission.getId(), "grantedByAccountId", -1
@@ -249,7 +248,7 @@ class RbacManagementTest {
 
     private ResultActions admin(MockHttpServletRequestBuilder request) throws Exception {
         return mockMvc.perform(request.header(HttpHeaders.AUTHORIZATION,
-            "Bearer " + token(42L, List.of("COMPANY_OWNER"), List.of())));
+            "Bearer " + token(42L, List.of("COMPANY_OWNER"), List.of("rbac.manage"))));
     }
 
     private ResultActions admin(MockHttpServletRequestBuilder request, Object body) throws Exception {
