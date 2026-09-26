@@ -69,7 +69,7 @@ BFF giữ cùng response envelope với API:
       "roles": [
         {
           "code": "EMPLOYEE",
-          "name": "Employee",
+          "name": "Nhân viên",
           "scopeType": "SELF",
           "organizationUnitId": null,
           "organizationUnitName": null,
@@ -80,7 +80,7 @@ BFF giữ cùng response envelope với API:
       "permissions": [
         {
           "code": "profile.self.read",
-          "name": "View own profile",
+          "name": "Xem hồ sơ cá nhân",
           "module": "EMPLOYEE"
         }
       ]

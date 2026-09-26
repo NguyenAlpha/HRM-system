@@ -30,72 +30,72 @@ public class PermissionSeeder implements ApplicationRunner {
     private static final Logger log = LoggerFactory.getLogger(PermissionSeeder.class);
 
     private static final List<PermissionDefinition> DEFAULT_PERMISSIONS = List.of(
-        permission("profile.self.read", "View own profile", PermissionModule.EMPLOYEE, "View own employee profile"),
-        permission("profile.self.update", "Update own profile", PermissionModule.EMPLOYEE, "Update allowed fields in own profile"),
-        permission("employee.read", "View employees", PermissionModule.EMPLOYEE, "View employee profiles within assigned scope"),
-        permission("employee.manage", "Manage employees", PermissionModule.EMPLOYEE, "Create, update, and soft-delete employees"),
-        permission("employee.sensitive.read", "View sensitive employee data", PermissionModule.EMPLOYEE, "View sensitive employee data within assigned scope"),
-        permission("employee.sensitive.manage", "Manage sensitive employee data", PermissionModule.EMPLOYEE, "Update sensitive employee data within assigned scope"),
+        permission("profile.self.read", "Xem hồ sơ cá nhân", PermissionModule.EMPLOYEE, "Xem hồ sơ nhân viên của chính mình"),
+        permission("profile.self.update", "Cập nhật hồ sơ cá nhân", PermissionModule.EMPLOYEE, "Cập nhật các trường được phép trong hồ sơ của chính mình"),
+        permission("employee.read", "Xem hồ sơ nhân viên", PermissionModule.EMPLOYEE, "Xem hồ sơ nhân viên trong phạm vi được phân công"),
+        permission("employee.manage", "Quản lý hồ sơ nhân viên", PermissionModule.EMPLOYEE, "Tạo, cập nhật và xóa mềm hồ sơ nhân viên"),
+        permission("employee.sensitive.read", "Xem dữ liệu nhân sự nhạy cảm", PermissionModule.EMPLOYEE, "Xem dữ liệu nhân sự nhạy cảm trong phạm vi được phân công"),
+        permission("employee.sensitive.manage", "Quản lý dữ liệu nhân sự nhạy cảm", PermissionModule.EMPLOYEE, "Cập nhật dữ liệu nhân sự nhạy cảm trong phạm vi được phân công"),
         permission(
             "employee.lifecycle.approve",
-            "Approve employee lifecycle",
+            "Phê duyệt vòng đời nhân viên",
             PermissionModule.EMPLOYEE,
-            "Give final approval for employee lifecycle actions"
+            "Phê duyệt cuối các nghiệp vụ trong vòng đời nhân viên"
         ),
 
-        permission("account.read", "View accounts", PermissionModule.ACCOUNT, "View application accounts"),
-        permission("account.manage", "Manage accounts", PermissionModule.ACCOUNT, "Create and manage application accounts"),
+        permission("account.read", "Xem tài khoản", PermissionModule.ACCOUNT, "Xem các tài khoản đăng nhập trong hệ thống"),
+        permission("account.manage", "Quản lý tài khoản", PermissionModule.ACCOUNT, "Tạo và quản lý tài khoản đăng nhập"),
         permission(
             "account.activation.manage",
-            "Manage account activation",
+            "Quản lý kích hoạt tài khoản",
             PermissionModule.ACCOUNT,
-            "Manage account activation and password recovery"
+            "Quản lý kích hoạt tài khoản và khôi phục mật khẩu"
         ),
-        permission("account.role.assign", "Assign account roles", PermissionModule.ACCOUNT, "Assign and revoke account roles"),
+        permission("account.role.assign", "Phân quyền tài khoản", PermissionModule.ACCOUNT, "Gán và thu hồi vai trò của tài khoản"),
 
         permission(
             "organization.change.approve",
-            "Approve organization changes",
+            "Phê duyệt thay đổi cơ cấu",
             PermissionModule.ORGANIZATION,
-            "Give final approval for organization structure changes"
+            "Phê duyệt cuối các thay đổi về cơ cấu tổ chức"
         ),
         permission(
             "organization.director.provision",
-            "Provision company director",
+            "Khởi tạo Giám đốc",
             PermissionModule.ORGANIZATION,
-            "Provision the company director employee identity and account"
+            "Khởi tạo hồ sơ nhân viên, tài khoản và vai trò Giám đốc công ty"
         ),
 
-        permission("request.self.read", "View own requests", PermissionModule.REQUEST, "View own employee requests"),
-        permission("request.self.create", "Create own requests", PermissionModule.REQUEST, "Create and submit own employee requests"),
-        permission("request.self.cancel", "Cancel own requests", PermissionModule.REQUEST, "Cancel own eligible employee requests"),
-        permission("request.read", "View employee requests", PermissionModule.REQUEST, "View employee requests within assigned scope"),
-        permission("request.approve", "Approve employee requests", PermissionModule.REQUEST, "Approve or reject employee requests"),
-        permission("request.final_approve", "Give final request approval", PermissionModule.REQUEST, "Give final approval for escalated employee requests"),
-        permission("request.manage", "Manage employee requests", PermissionModule.REQUEST, "Manage employee requests within assigned scope"),
+        permission("request.self.read", "Xem đơn cá nhân", PermissionModule.REQUEST, "Xem các đơn từ của chính mình"),
+        permission("request.self.create", "Tạo đơn cá nhân", PermissionModule.REQUEST, "Tạo và gửi đơn từ của chính mình"),
+        permission("request.self.cancel", "Hủy đơn cá nhân", PermissionModule.REQUEST, "Hủy các đơn của chính mình khi còn đủ điều kiện"),
+        permission("request.read", "Xem đơn của nhân viên", PermissionModule.REQUEST, "Xem đơn từ của nhân viên trong phạm vi được phân công"),
+        permission("request.approve", "Duyệt đơn của nhân viên", PermissionModule.REQUEST, "Phê duyệt hoặc từ chối đơn từ của nhân viên"),
+        permission("request.final_approve", "Phê duyệt cuối đơn từ", PermissionModule.REQUEST, "Phê duyệt cuối các đơn từ được trình lên cấp cao hơn"),
+        permission("request.manage", "Quản lý đơn của nhân viên", PermissionModule.REQUEST, "Quản lý đơn từ của nhân viên trong phạm vi được phân công"),
 
-        permission("attendance.self.read", "View own attendance", PermissionModule.ATTENDANCE, "View own attendance records"),
-        permission("attendance.read", "View attendance", PermissionModule.ATTENDANCE, "View attendance within assigned scope"),
-        permission("attendance.manage", "Manage attendance", PermissionModule.ATTENDANCE, "Create and adjust attendance records"),
+        permission("attendance.self.read", "Xem chấm công cá nhân", PermissionModule.ATTENDANCE, "Xem dữ liệu chấm công của chính mình"),
+        permission("attendance.read", "Xem dữ liệu chấm công", PermissionModule.ATTENDANCE, "Xem dữ liệu chấm công trong phạm vi được phân công"),
+        permission("attendance.manage", "Quản lý chấm công", PermissionModule.ATTENDANCE, "Tạo và điều chỉnh dữ liệu chấm công"),
         permission(
             "attendance.overtime.approve",
-            "Approve overtime",
+            "Phê duyệt làm thêm giờ",
             PermissionModule.ATTENDANCE,
-            "Approve or reject overtime within assigned scope"
+            "Phê duyệt hoặc từ chối làm thêm giờ trong phạm vi được phân công"
         ),
 
-        permission("payroll.self.read", "View own payslips", PermissionModule.PAYROLL, "View own payslips"),
-        permission("payroll.self.print", "Download own payslips", PermissionModule.PAYROLL, "Print or download own payslips"),
-        permission("compensation.read", "View compensation", PermissionModule.PAYROLL, "View employee compensation within assigned scope"),
-        permission("compensation.manage", "Manage compensation", PermissionModule.PAYROLL, "Manage employee compensation within assigned scope"),
-        permission("payroll.calculate", "Calculate payroll", PermissionModule.PAYROLL, "Calculate and review payroll"),
-        permission("payroll.approve", "Approve payroll", PermissionModule.PAYROLL, "Approve payroll periods"),
-        permission("payroll.mark_paid", "Mark payroll as paid", PermissionModule.PAYROLL, "Mark approved payroll as paid"),
-        permission("payroll.lock", "Lock payroll", PermissionModule.PAYROLL, "Lock finalized payroll periods"),
+        permission("payroll.self.read", "Xem phiếu lương cá nhân", PermissionModule.PAYROLL, "Xem phiếu lương của chính mình"),
+        permission("payroll.self.print", "Tải phiếu lương cá nhân", PermissionModule.PAYROLL, "In hoặc tải phiếu lương của chính mình"),
+        permission("compensation.read", "Xem chế độ đãi ngộ", PermissionModule.PAYROLL, "Xem lương và chế độ đãi ngộ trong phạm vi được phân công"),
+        permission("compensation.manage", "Quản lý chế độ đãi ngộ", PermissionModule.PAYROLL, "Quản lý lương và chế độ đãi ngộ trong phạm vi được phân công"),
+        permission("payroll.calculate", "Tính bảng lương", PermissionModule.PAYROLL, "Tính toán và kiểm tra bảng lương"),
+        permission("payroll.approve", "Phê duyệt bảng lương", PermissionModule.PAYROLL, "Phê duyệt các kỳ lương"),
+        permission("payroll.mark_paid", "Xác nhận đã trả lương", PermissionModule.PAYROLL, "Đánh dấu bảng lương đã được thanh toán"),
+        permission("payroll.lock", "Khóa kỳ lương", PermissionModule.PAYROLL, "Khóa các kỳ lương đã hoàn tất"),
 
-        permission("report.hr.read", "View HR reports", PermissionModule.REPORT, "View human resources reports"),
-        permission("report.payroll.read", "View payroll reports", PermissionModule.REPORT, "View payroll reports"),
-        permission("rbac.manage", "Manage RBAC", PermissionModule.RBAC, "Manage accounts, roles, and permissions")
+        permission("report.hr.read", "Xem báo cáo nhân sự", PermissionModule.REPORT, "Xem các báo cáo về nhân sự"),
+        permission("report.payroll.read", "Xem báo cáo tiền lương", PermissionModule.REPORT, "Xem các báo cáo về tiền lương"),
+        permission("rbac.manage", "Quản lý vai trò và quyền", PermissionModule.RBAC, "Quản lý danh mục vai trò, quyền và quan hệ phân quyền")
     );
 
     private final PermissionRepository permissionRepository;
@@ -145,6 +145,7 @@ public class PermissionSeeder implements ApplicationRunner {
             );
         }
         permission.setName(definition.name());
+        permission.setDescription(definition.description());
     }
 
     private static PermissionDefinition permission(

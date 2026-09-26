@@ -166,8 +166,8 @@ Endpoint sử dụng các tham số [phân trang](#phân-trang) chung.
       {
         "id": 1,
         "code": "SYSTEM_ADMIN",
-        "name": "System Administrator",
-        "description": "Manages accounts, roles, and permissions",
+        "name": "Quản trị viên hệ thống",
+        "description": "Quản lý tài khoản, vai trò và quyền trong giai đoạn quản trị hệ thống",
         "isSystem": true,
         "isActive": true
       },
@@ -323,9 +323,9 @@ Lấy toàn bộ permission đã gán cho một role. Danh sách không phân tr
     {
       "id": 1,
       "code": "rbac.manage",
-      "name": "Manage RBAC",
+      "name": "Quản lý vai trò và quyền",
       "module": "RBAC",
-      "description": "Manage accounts, roles, and permissions",
+      "description": "Quản lý danh mục vai trò, quyền và quan hệ phân quyền",
       "isActive": true
     }
   ],
@@ -497,9 +497,9 @@ GET /api/permissions?module=RBAC&page=0&size=20&sort=code,asc
       {
         "id": 1,
         "code": "rbac.manage",
-        "name": "Manage RBAC",
+        "name": "Quản lý vai trò và quyền",
         "module": "RBAC",
-        "description": "Manage accounts, roles, and permissions",
+        "description": "Quản lý danh mục vai trò, quyền và quan hệ phân quyền",
         "isActive": true
       }
     ],

@@ -20,7 +20,7 @@ import com.htttdn.hrm.repository.RoleRepository;
  *
  * <p>Role code không chứa prefix {@code ROLE_}; prefix này chỉ được thêm khi JWT claims
  * được chuyển thành Spring Security authorities. Seeder có tính idempotent: role đã tồn tại
- * sẽ được kiểm tra invariant thay vì insert lại.
+ * được kiểm tra invariant và đồng bộ lại tên, mô tả chuẩn thay vì insert lại.
  */
 @Component
 @Order(100)
@@ -29,19 +29,39 @@ public class RoleSeeder implements ApplicationRunner {
     private static final Logger log = LoggerFactory.getLogger(RoleSeeder.class);
 
     private static final List<RoleDefinition> DEFAULT_ROLES = List.of(
-        new RoleDefinition("EMPLOYEE", "Employee", "Base self-service role for every employee"),
-        new RoleDefinition("TEAM_LEAD", "Team Lead", "Manages employees within an organization unit"),
-        new RoleDefinition("WAREHOUSE_SUPERVISOR","Warehouse Supervisor","Supervises employees and attendance within an assigned warehouse"),
-        new RoleDefinition("BRANCH_MANAGER", "Branch Manager", "Manages employees and operations within a branch"),
-        new RoleDefinition("HR_STAFF", "HR Staff", "Manages human resources operations across the company"),
-        new RoleDefinition("PAYROLL_ACCOUNTANT", "Payroll Accountant", "Calculates and reviews company payroll"),
-        new RoleDefinition("PAYROLL_APPROVER", "Payroll Approver", "Approves, pays, and locks payroll periods"),
+        new RoleDefinition("EMPLOYEE", "Nhân viên", "Vai trò tự phục vụ cơ bản dành cho mọi nhân viên"),
+        new RoleDefinition("TEAM_LEAD", "Trưởng nhóm", "Quản lý nhân viên trong đơn vị tổ chức được phân công"),
+        new RoleDefinition(
+            "WAREHOUSE_SUPERVISOR",
+            "Giám sát kho",
+            "Giám sát nhân viên và chấm công tại kho được phân công"
+        ),
+        new RoleDefinition(
+            "BRANCH_MANAGER",
+            "Quản lý chi nhánh",
+            "Quản lý nhân viên và hoạt động trong chi nhánh được phân công"
+        ),
+        new RoleDefinition("HR_STAFF", "Nhân viên nhân sự", "Quản lý nghiệp vụ nhân sự trên toàn công ty"),
+        new RoleDefinition(
+            "PAYROLL_ACCOUNTANT",
+            "Kế toán tiền lương",
+            "Tính toán và kiểm tra bảng lương toàn công ty"
+        ),
+        new RoleDefinition(
+            "PAYROLL_APPROVER",
+            "Người duyệt bảng lương",
+            "Phê duyệt, xác nhận thanh toán và khóa kỳ lương"
+        ),
         new RoleDefinition(
             "DIRECTOR",
-            "Director",
-            "Leads the company and provides final approval for company-wide business decisions"
+            "Giám đốc",
+            "Điều hành công ty và phê duyệt cuối các quyết định nghiệp vụ trên toàn công ty"
         ),
-        new RoleDefinition("SYSTEM_ADMIN", "System Administrator", "Manages accounts, roles, and permissions")
+        new RoleDefinition(
+            "SYSTEM_ADMIN",
+            "Quản trị viên hệ thống",
+            "Quản lý tài khoản, vai trò và quyền trong giai đoạn quản trị hệ thống"
+        )
     );
 
     private final RoleRepository roleRepository;
@@ -67,6 +87,9 @@ public class RoleSeeder implements ApplicationRunner {
             Role existingRole = roleRepository.findByCodeAndDeletedAtIsNull(definition.code()).orElse(null);
             if (existingRole != null) {
                 validateSystemRole(existingRole);
+                existingRole.setName(definition.name());
+                existingRole.setDescription(definition.description());
+                existingRole.setUpdatedAt(Instant.now());
                 continue;
             }
 

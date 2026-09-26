@@ -103,7 +103,7 @@ Hệ thống không cho hai assignment `DIRECTOR` chồng thời gian. Có thể
       "accountId": 208,
       "roleId": 8,
       "roleCode": "DIRECTOR",
-      "roleName": "Director",
+      "roleName": "Giám đốc",
       "scopeType": "COMPANY",
       "organizationUnitId": null,
       "workLocationId": null,

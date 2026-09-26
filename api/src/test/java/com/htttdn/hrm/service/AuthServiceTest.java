@@ -65,10 +65,12 @@ class AuthServiceTest {
                 List.of("SYSTEM_ADMIN"),
                 List.of("rbac.manage"),
                 List.of(new AuthorizationRole(
-                    "SYSTEM_ADMIN", "System Administrator", RoleScopeType.COMPANY,
+                    "SYSTEM_ADMIN", "Quản trị viên hệ thống", RoleScopeType.COMPANY,
                     null, null, null, null
                 )),
-                List.of(new AuthorizationPermission("rbac.manage", "Manage RBAC", PermissionModule.RBAC))
+                List.of(new AuthorizationPermission(
+                    "rbac.manage", "Quản lý vai trò và quyền", PermissionModule.RBAC
+                ))
             )
         );
         when(jwtService.generateAccessToken(any(), any())).thenReturn("access-token");
@@ -81,8 +83,8 @@ class AuthServiceTest {
         assertEquals(0, account.getFailedLoginCount());
         assertNotNull(account.getLastLoginAt());
         assertEquals("SYSTEM_ADMIN", response.account().roles().getFirst().code());
-        assertEquals("System Administrator", response.account().roles().getFirst().name());
-        assertEquals("Manage RBAC", response.account().permissions().getFirst().name());
+        assertEquals("Quản trị viên hệ thống", response.account().roles().getFirst().name());
+        assertEquals("Quản lý vai trò và quyền", response.account().permissions().getFirst().name());
         verify(authenticationManager).authenticate(any());
     }
 
