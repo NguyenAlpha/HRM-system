@@ -29,7 +29,7 @@ class JwtServiceTest {
         Account account = Account.builder().id(42L).username("admin").build();
         AuthorizationSnapshot authorization = new AuthorizationSnapshot(
             List.of("SYSTEM_ADMIN"),
-            List.of("rbac.manage")
+            List.of("organization.company_owner.bootstrap")
         );
 
         var jwt = decoder.decode(jwtService.generateAccessToken(account, authorization));
@@ -38,13 +38,13 @@ class JwtServiceTest {
         assertEquals("admin", jwt.getSubject());
         assertEquals(42L, ((Number) jwt.getClaim("accountId")).longValue());
         assertEquals(List.of("SYSTEM_ADMIN"), jwt.getClaimAsStringList("roles"));
-        assertEquals(List.of("rbac.manage"), jwt.getClaimAsStringList("permissions"));
+        assertEquals(List.of("organization.company_owner.bootstrap"), jwt.getClaimAsStringList("permissions"));
         assertTrue(jwt.getExpiresAt().isAfter(jwt.getIssuedAt()));
 
         var authentication = config.jwtAuthenticationConverter().convert(jwt);
         assertTrue(authentication.getAuthorities().stream()
             .anyMatch(authority -> authority.getAuthority().equals("ROLE_SYSTEM_ADMIN")));
         assertTrue(authentication.getAuthorities().stream()
-            .anyMatch(authority -> authority.getAuthority().equals("rbac.manage")));
+            .anyMatch(authority -> authority.getAuthority().equals("organization.company_owner.bootstrap")));
     }
 }

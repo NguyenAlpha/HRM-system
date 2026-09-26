@@ -33,6 +33,8 @@ import com.htttdn.hrm.service.RoleService;
 @CanManageRbac
 public class RoleServiceImpl implements RoleService {
 
+    private static final String SYSTEM_ADMIN_ROLE_CODE = "SYSTEM_ADMIN";
+
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final RolePermissionRepository rolePermissionRepository;
@@ -110,6 +112,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public void grantPermission(Long roleId, GrantPermissionRequest request, Long grantedByAccountId) {
         Role role = findRoleOrThrow(roleId);
+        rejectSystemAdminPermissionChange(role);
         Permission permission = permissionRepository.findById(request.permissionId())
             .orElseThrow(() -> new ResourceNotFoundException(
                 ErrorCode.PERMISSION_NOT_FOUND, "Permission not found: " + request.permissionId()));
@@ -136,12 +139,22 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public void revokePermission(Long roleId, Long permissionId) {
-        findRoleOrThrow(roleId);
+        Role role = findRoleOrThrow(roleId);
+        rejectSystemAdminPermissionChange(role);
         RolePermissionId id = new RolePermissionId(roleId, permissionId);
         if (!rolePermissionRepository.existsById(id)) {
             throw new ResourceNotFoundException(ErrorCode.PERMISSION_NOT_FOUND, "Role does not have this permission");
         }
         rolePermissionRepository.deleteById(id);
+    }
+
+    private void rejectSystemAdminPermissionChange(Role role) {
+        if (SYSTEM_ADMIN_ROLE_CODE.equals(role.getCode())) {
+            throw new ConflictException(
+                ErrorCode.CONFLICT,
+                "SYSTEM_ADMIN permissions are fixed by the system bootstrap policy"
+            );
+        }
     }
 
     @Override

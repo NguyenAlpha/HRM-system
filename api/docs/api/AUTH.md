@@ -169,14 +169,9 @@ Email được chuẩn hóa về chữ thường. Username giữ nguyên chữ h
       ],
       "permissions": [
         {
-          "code": "account.read",
-          "name": "Xem tài khoản",
-          "module": "ACCOUNT"
-        },
-        {
-          "code": "rbac.manage",
-          "name": "Quản lý vai trò và quyền",
-          "module": "RBAC"
+          "code": "organization.company_owner.bootstrap",
+          "name": "Khởi tạo Chủ sở hữu doanh nghiệp",
+          "module": "ORGANIZATION"
         }
       ]
     }
@@ -195,7 +190,7 @@ Email được chuẩn hóa về chữ thường. Username giữ nguyên chữ h
 | `account.roles` | Các role đang có hiệu lực, gồm code kỹ thuật, tên hiển thị và phạm vi áp dụng |
 | `account.permissions` | Hợp quyền đang có hiệu lực, gồm code kỹ thuật, tên hiển thị và module |
 
-Danh sách permission trong ví dụ được rút gọn. Với scope `ORG_UNIT` hoặc `LOCATION`, response trả cả ID và tên đối tượng phạm vi tương ứng để client có thể hiển thị trực tiếp.
+`SYSTEM_ADMIN` chỉ có permission `organization.company_owner.bootstrap`; role này không quản trị account, RBAC hoặc nghiệp vụ nội bộ doanh nghiệp. Với scope `ORG_UNIT` hoặc `LOCATION`, response trả cả ID và tên đối tượng phạm vi tương ứng để client có thể hiển thị trực tiếp.
 
 ### JWT payload
 
@@ -206,12 +201,7 @@ Danh sách permission trong ví dụ được rút gọn. Với scope `ORG_UNIT`
   "accountId": 1,
   "roles": ["SYSTEM_ADMIN"],
   "permissions": [
-    "account.read",
-    "account.manage",
-    "account.activation.manage",
-    "account.role.assign",
-    "organization.director.provision",
-    "rbac.manage"
+    "organization.company_owner.bootstrap"
   ],
   "iat": 178...,
   "exp": 178...
@@ -220,7 +210,7 @@ Danh sách permission trong ví dụ được rút gọn. Với scope `ORG_UNIT`
 
 JWT cố ý chỉ lưu danh sách code để token gọn và giữ claims ổn định. Tên hiển thị và thông tin scope đầy đủ nằm trong object `account` của response đăng nhập/refresh hoặc được đọc lại qua `/api/auth/me`.
 
-Spring Security chuyển role code thành authority có prefix `ROLE_`; ví dụ `SYSTEM_ADMIN` thành `ROLE_SYSTEM_ADMIN`. Permission code giữ nguyên, ví dụ `rbac.manage`.
+Spring Security chuyển role code thành authority có prefix `ROLE_`; ví dụ `SYSTEM_ADMIN` thành `ROLE_SYSTEM_ADMIN`. Permission code giữ nguyên, ví dụ `organization.company_owner.bootstrap`.
 
 > Role có scope `SELF`, `ORG_UNIT` hoặc `LOCATION` vẫn cần được kiểm tra scope tại authorization/service layer. Việc có permission trong JWT không tự động cho phép truy cập dữ liệu ngoài scope được gán.
 
@@ -290,14 +280,9 @@ Cấu trúc response giống login, nhưng cả `accessToken` và `refreshToken`
       ],
       "permissions": [
         {
-          "code": "account.read",
-          "name": "Xem tài khoản",
-          "module": "ACCOUNT"
-        },
-        {
-          "code": "rbac.manage",
-          "name": "Quản lý vai trò và quyền",
-          "module": "RBAC"
+          "code": "organization.company_owner.bootstrap",
+          "name": "Khởi tạo Chủ sở hữu doanh nghiệp",
+          "module": "ORGANIZATION"
         }
       ]
     }

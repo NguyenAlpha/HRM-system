@@ -65,7 +65,7 @@ public class RoleSeeder implements ApplicationRunner {
         new RoleDefinition(
             "SYSTEM_ADMIN",
             "Quản trị viên hệ thống",
-            "Quản lý tài khoản, vai trò và quyền trong giai đoạn quản trị hệ thống"
+            "Khởi tạo Chủ sở hữu doanh nghiệp đầu tiên, không tham gia nghiệp vụ nội bộ công ty"
         )
     );
 
