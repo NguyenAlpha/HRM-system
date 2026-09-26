@@ -374,7 +374,7 @@ Seeder đồng bộ chính xác mapping của system role. API chỉ cho phép t
 | `PAYROLL_APPROVER` | `COMPANY` | Duyệt, xác nhận đã trả và khóa kỳ lương |
 | `DIRECTOR` | `COMPANY` | Xem nhân sự và phê duyệt cuối nghiệp vụ nhân sự, đơn từ, thay đổi cơ cấu toàn công ty |
 | `COMPANY_OWNER` | `COMPANY` | Quản trị tài khoản, quyền truy cập và cấu hình trong phạm vi doanh nghiệp |
-| `SYSTEM_ADMIN` | `COMPANY` | Chỉ khởi tạo Company Owner đầu tiên; không tham gia quản trị hoặc nghiệp vụ nội bộ công ty |
+| `SYSTEM_ADMIN` | `COMPANY` | Khởi tạo Company Owner đầu tiên và tạm thời quản lý RBAC; không tham gia quản trị account hoặc nghiệp vụ nội bộ công ty |
 
 Mọi nhân viên có tài khoản đều nhận `EMPLOYEE` ở scope `SELF`; vai trò nghiệp vụ được gán thêm.
 

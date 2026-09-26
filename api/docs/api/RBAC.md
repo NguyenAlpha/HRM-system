@@ -19,7 +19,7 @@ Quản lý role tùy chỉnh và quan hệ permission của role. Danh mục per
 | `GET /api/permissions` | ✅ | `rbac.manage` |
 | `GET /api/permissions/{id}` | ✅ | `rbac.manage` |
 
-`COMPANY_OWNER` được seed permission `rbac.manage`. Có thể ủy quyền quản trị custom role cho một custom role khác bằng cách gán permission này; backend không hard-code role code khi kiểm tra truy cập RBAC.
+`COMPANY_OWNER` và, tạm thời, `SYSTEM_ADMIN` được seed permission `rbac.manage`. Có thể ủy quyền quản trị custom role cho một custom role khác bằng cách gán permission này; backend không hard-code role code khi kiểm tra truy cập RBAC.
 
 ### Ranh giới quản trị
 
@@ -536,7 +536,7 @@ Migration và `RolePermissionSeeder` tự thu hồi mapping `SYSTEM_ONLY` từng
 | Biến môi trường | Mặc định | Ý nghĩa |
 |:----------------|:---------|:--------|
 | `RBAC_SEED_ENABLED` | `true` | Seed role, permission và mapping mặc định khi khởi động |
-| `ADMIN_SEED_ENABLED` | `true` | Seed system admin và bảo đảm quyền `organization.company_owner.bootstrap` |
+| `ADMIN_SEED_ENABLED` | `true` | Seed system admin và bảo đảm `organization.company_owner.bootstrap` cùng `rbac.manage` |
 | `USER_SEED_ENABLED` | `false` | Seed các account demo, gồm một `HR_STAFF`; chỉ nên bật ở môi trường demo/test |
 
 Để ủy quyền quản trị custom role cho một người khác:

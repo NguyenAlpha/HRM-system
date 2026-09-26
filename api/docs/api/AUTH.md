@@ -172,6 +172,11 @@ Email được chuẩn hóa về chữ thường. Username giữ nguyên chữ h
           "code": "organization.company_owner.bootstrap",
           "name": "Khởi tạo Chủ sở hữu doanh nghiệp",
           "module": "ORGANIZATION"
+        },
+        {
+          "code": "rbac.manage",
+          "name": "Quản lý phân quyền",
+          "module": "RBAC"
         }
       ]
     }
@@ -190,7 +195,7 @@ Email được chuẩn hóa về chữ thường. Username giữ nguyên chữ h
 | `account.roles` | Các role đang có hiệu lực, gồm code kỹ thuật, tên hiển thị và phạm vi áp dụng |
 | `account.permissions` | Hợp quyền đang có hiệu lực, gồm code kỹ thuật, tên hiển thị và module |
 
-`SYSTEM_ADMIN` chỉ có permission `organization.company_owner.bootstrap`; role này không quản trị account, RBAC hoặc nghiệp vụ nội bộ doanh nghiệp. Với scope `ORG_UNIT` hoặc `LOCATION`, response trả cả ID và tên đối tượng phạm vi tương ứng để client có thể hiển thị trực tiếp.
+`SYSTEM_ADMIN` có `organization.company_owner.bootstrap` và tạm thời có thêm `rbac.manage`. Role này vẫn không quản trị account hoặc nghiệp vụ nội bộ doanh nghiệp. Với scope `ORG_UNIT` hoặc `LOCATION`, response trả cả ID và tên đối tượng phạm vi tương ứng để client có thể hiển thị trực tiếp.
 
 ### JWT payload
 
@@ -201,7 +206,8 @@ Email được chuẩn hóa về chữ thường. Username giữ nguyên chữ h
   "accountId": 1,
   "roles": ["SYSTEM_ADMIN"],
   "permissions": [
-    "organization.company_owner.bootstrap"
+    "organization.company_owner.bootstrap",
+    "rbac.manage"
   ],
   "iat": 178...,
   "exp": 178...
@@ -283,6 +289,11 @@ Cấu trúc response giống login, nhưng cả `accessToken` và `refreshToken`
           "code": "organization.company_owner.bootstrap",
           "name": "Khởi tạo Chủ sở hữu doanh nghiệp",
           "module": "ORGANIZATION"
+        },
+        {
+          "code": "rbac.manage",
+          "name": "Quản lý phân quyền",
+          "module": "RBAC"
         }
       ]
     }
