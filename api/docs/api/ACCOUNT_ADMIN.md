@@ -6,6 +6,8 @@ Account mới phải liên kết với một employee đã tồn tại. Hệ th�
 
 Role nghiệp vụ bổ sung được quản lý qua [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md), không truyền trong request tạo account.
 
+Nếu người đứng đầu doanh nghiệp chưa có employee, sử dụng workflow tổng hợp [Organization Executive Administration](./ORGANIZATION_EXECUTIVE_ADMIN.md).
+
 ---
 
 ## Endpoint access

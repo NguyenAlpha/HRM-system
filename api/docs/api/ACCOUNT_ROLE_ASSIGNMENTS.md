@@ -32,6 +32,8 @@ Tất cả endpoint yêu cầu Bearer token. `SYSTEM_ADMIN` được seed sẵn 
 
 Role tùy chỉnh không bị giới hạn bởi bảng policy trên nhưng vẫn phải tuân thủ cấu trúc scope. Account nhận role nghiệp vụ phải liên kết với employee và không được ở trạng thái `DISABLED`.
 
+Để khởi tạo đồng thời employee, account và role `EXECUTIVE_APPROVER`, xem [Organization Executive Administration](./ORGANIZATION_EXECUTIVE_ADMIN.md).
+
 ### Quy tắc scope
 
 | Scope | `organizationUnitId` | `workLocationId` |

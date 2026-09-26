@@ -156,7 +156,7 @@ erDiagram
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
-| `employee_code` | VARCHAR(30) | NOT NULL, UNIQUE | Mã nhân viên, không tái sử dụng |
+| `employee_code` | VARCHAR(30) | NOT NULL, UNIQUE không phân biệt hoa thường | Mã nhân viên, không tái sử dụng |
 | `full_name` | VARCHAR(200) | NOT NULL | Họ tên |
 | `date_of_birth` | DATE | | Ngày sinh |
 | `gender` | VARCHAR(20) | | `MALE` / `FEMALE` / `OTHER` / `UNDISCLOSED` |
@@ -166,7 +166,7 @@ erDiagram
 | `graduation_year` | SMALLINT | | Năm tốt nghiệp |
 | `national_id` | VARCHAR(30) | UNIQUE | CCCD/hộ chiếu |
 | `personal_email` | VARCHAR(100) | | Email cá nhân |
-| `work_email` | VARCHAR(100) | UNIQUE | Email công việc |
+| `work_email` | VARCHAR(100) | UNIQUE không phân biệt hoa thường | Email công việc |
 | `phone` | VARCHAR(20) | | Số điện thoại |
 | `address` | TEXT | | Địa chỉ liên hệ |
 | `tax_code` | VARCHAR(30) | | Mã số thuế cá nhân |

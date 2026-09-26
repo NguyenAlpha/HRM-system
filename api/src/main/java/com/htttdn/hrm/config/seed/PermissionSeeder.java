@@ -56,6 +56,11 @@ public class PermissionSeeder implements ApplicationRunner {
             PermissionModule.ORGANIZATION,
             "Give final approval for organization structure changes"
         ),
+        permission(
+            "organization.executive.provision",
+            PermissionModule.ORGANIZATION,
+            "Provision the company executive employee identity and account"
+        ),
 
         permission("request.self.read", PermissionModule.REQUEST, "View own employee requests"),
         permission("request.self.create", PermissionModule.REQUEST, "Create and submit own employee requests"),
