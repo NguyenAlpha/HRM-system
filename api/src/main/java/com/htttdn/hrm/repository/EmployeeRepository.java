@@ -17,6 +17,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
 
     Optional<Employee> findByEmployeeCode(String employeeCode);
 
+    Optional<Employee> findByIdAndDeletedAtIsNull(Long id);
+
     Optional<Employee> findByWorkEmail(String workEmail);
 
     boolean existsByEmployeeCode(String employeeCode);

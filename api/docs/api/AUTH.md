@@ -67,9 +67,9 @@ Thiếu token, token hết hạn hoặc chữ ký không hợp lệ trả về:
 
 ## POST `/api/account-activations/{token}/complete`
 
-Đặt mật khẩu lần đầu và kích hoạt account đang ở trạng thái `PENDING`. Endpoint public vì token kích hoạt chính là credential dùng một lần.
+Đặt hoặc đặt lại mật khẩu cho account đang ở trạng thái `PENDING`, sau đó kích hoạt account. Endpoint public vì token kích hoạt chính là credential dùng một lần.
 
-Token được quản trị viên phát hành trong luồng tạo tài khoản và chuyển tới đúng người nhận qua kênh thông báo. Mỗi account chỉ có một token chưa dùng/chưa thu hồi; phát token mới sẽ thu hồi token cũ.
+Token được quản trị viên phát hành trong [luồng quản trị account](./ACCOUNT_ADMIN.md) và chuyển tới đúng người nhận qua kênh an toàn. Mỗi account chỉ có một token chưa dùng/chưa thu hồi; phát token mới sẽ thu hồi token cũ.
 
 ### Path parameter
 

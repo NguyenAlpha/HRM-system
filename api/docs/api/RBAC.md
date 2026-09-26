@@ -432,7 +432,7 @@ Tạo permission trong danh mục quyền. Permission mới luôn có `isActive=
 | Field | Type | Bắt buộc | Ràng buộc |
 |:------|:-----|:--------:|:----------|
 | `code` | string | ✅ | Tối đa 100 ký tự; gồm ít nhất hai phần chữ thường ngăn bởi dấu chấm |
-| `module` | string | ✅ | Một trong `EMPLOYEE`, `REQUEST`, `ATTENDANCE`, `PAYROLL`, `RBAC`, `REPORT` |
+| `module` | string | ✅ | Một trong `EMPLOYEE`, `ACCOUNT`, `ORGANIZATION`, `REQUEST`, `ATTENDANCE`, `PAYROLL`, `RBAC`, `REPORT` |
 | `description` | string | ✅ | Không rỗng |
 
 Mỗi phần của `code` phải bắt đầu bằng `a-z` và chỉ chứa `a-z`, `0-9`, `_`. Ví dụ hợp lệ: `employee.export`, `payroll.mark_paid`.
@@ -478,7 +478,7 @@ GET /api/permissions?module=RBAC&page=0&size=20&sort=code,asc
 
 | Parameter | Type | Bắt buộc | Ý nghĩa |
 |:----------|:-----|:--------:|:--------|
-| `module` | string | ❌ | Một trong `EMPLOYEE`, `REQUEST`, `ATTENDANCE`, `PAYROLL`, `RBAC`, `REPORT` |
+| `module` | string | ❌ | Một trong `EMPLOYEE`, `ACCOUNT`, `ORGANIZATION`, `REQUEST`, `ATTENDANCE`, `PAYROLL`, `RBAC`, `REPORT` |
 | `page` | integer | ❌ | Số trang, mặc định `0` |
 | `size` | integer | ❌ | Số phần tử mỗi trang, mặc định `20` |
 | `sort` | string | ❌ | Sắp xếp, mặc định `id,asc` |
