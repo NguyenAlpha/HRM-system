@@ -429,12 +429,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             employee.getHireDate(),
             employee.getEmploymentStatus(),
             employee.getTerminationDate(),
-            account == null ? null : new EmployeeAccountSummaryResponse(
-                account.getId(),
-                account.getUsername(),
-                account.getEmail(),
-                account.getStatus()
-            )
+            toAccountSummaryResponse(account)
         );
     }
 
@@ -457,7 +452,22 @@ public class EmployeeServiceImpl implements EmployeeService {
             employee.getHireDate(),
             employee.getEmploymentStatus(),
             employee.getTerminationDate(),
-            currentAssignment
+            currentAssignment,
+            accountRepository.findByEmployeeId(employee.getId())
+                .map(this::toAccountSummaryResponse)
+                .orElse(null)
+        );
+    }
+
+    private EmployeeAccountSummaryResponse toAccountSummaryResponse(Account account) {
+        if (account == null) {
+            return null;
+        }
+        return new EmployeeAccountSummaryResponse(
+            account.getId(),
+            account.getUsername(),
+            account.getEmail(),
+            account.getStatus()
         );
     }
 

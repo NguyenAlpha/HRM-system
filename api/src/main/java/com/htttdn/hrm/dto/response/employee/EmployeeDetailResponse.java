@@ -21,6 +21,7 @@ public record EmployeeDetailResponse(
     LocalDate hireDate,
     EmploymentStatus employmentStatus,
     LocalDate terminationDate,
-    EmployeeAssignmentResponse currentAssignment
+    EmployeeAssignmentResponse currentAssignment,
+    EmployeeAccountSummaryResponse account
 ) {
 }
