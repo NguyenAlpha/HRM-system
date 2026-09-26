@@ -27,7 +27,7 @@ Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` được seed sẵn
 | `HR_STAFF` | `COMPANY` | Bootstrap đầu tiên dùng workflow riêng; API này vẫn được gán thêm HR Staff sau đó |
 | `PAYROLL_ACCOUNTANT` | `COMPANY` | Không truyền ID phạm vi |
 | `PAYROLL_APPROVER` | `COMPANY` | Không truyền ID phạm vi |
-| `DIRECTOR` | `COMPANY` | Chỉ một assignment được phép hiệu lực trong cùng khoảng thời gian trên toàn doanh nghiệp |
+| `DIRECTOR` | `COMPANY` | Company Owner đầu tiên được gán tự động; chỉ một assignment được phép hiệu lực trong cùng khoảng thời gian trên toàn doanh nghiệp |
 | `COMPANY_OWNER` | `COMPANY` | Không được gán/thu hồi qua API này; bootstrap đầu tiên dùng workflow riêng và chỉ được tồn tại một assignment chưa thu hồi |
 | `SYSTEM_ADMIN` | — | Không được quản lý qua API role nghiệp vụ này |
 

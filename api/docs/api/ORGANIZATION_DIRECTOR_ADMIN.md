@@ -2,6 +2,8 @@
 
 Khởi tạo người đứng đầu doanh nghiệp khi người này chưa có hồ sơ employee trong HRM. Đây là workflow thiết lập quyền điều hành, không phải quy trình tuyển dụng hoặc onboarding nhân sự đầy đủ.
 
+Company Owner đầu tiên đã được gán đồng thời role `DIRECTOR` trong workflow bootstrap Company Owner. Endpoint này dùng khi doanh nghiệp bổ nhiệm một Director bằng account riêng; assignment Director cũ phải kết thúc hoặc bị thu hồi trước để không chồng thời gian.
+
 ---
 
 ## Endpoint access

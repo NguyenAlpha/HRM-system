@@ -8,6 +8,7 @@ public record OrganizationCompanyOwnerProvisioningResponse(
     String employeeCode,
     String fullName,
     AccountProvisioningResponse accountProvisioning,
-    AccountRoleAssignmentResponse companyOwnerRoleAssignment
+    AccountRoleAssignmentResponse companyOwnerRoleAssignment,
+    AccountRoleAssignmentResponse directorRoleAssignment
 ) {
 }
