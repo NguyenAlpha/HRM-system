@@ -1,5 +1,6 @@
 package com.htttdn.hrm.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,6 +26,14 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Optional<Account> findByLogin(@Param("login") String login);
 
     Optional<Account> findByEmployeeId(Long employeeId);
+
+    @Query("""
+        SELECT account
+        FROM Account account
+        JOIN FETCH account.employee employee
+        WHERE employee.id IN :employeeIds
+        """)
+    List<Account> findAllByEmployeeIds(@Param("employeeIds") List<Long> employeeIds);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT account FROM Account account WHERE account.id = :id")

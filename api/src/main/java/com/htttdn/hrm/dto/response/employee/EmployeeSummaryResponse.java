@@ -12,6 +12,7 @@ public record EmployeeSummaryResponse(
     String phone,
     LocalDate hireDate,
     EmploymentStatus employmentStatus,
-    LocalDate terminationDate
+    LocalDate terminationDate,
+    EmployeeAccountSummaryResponse account
 ) {
 }

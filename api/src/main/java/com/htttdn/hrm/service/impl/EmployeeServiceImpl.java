@@ -2,7 +2,9 @@ package com.htttdn.hrm.service.impl;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -16,6 +18,7 @@ import com.htttdn.hrm.dto.request.employee.CreateEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.SoftDeleteEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
+import com.htttdn.hrm.dto.response.employee.EmployeeAccountSummaryResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeAssignmentResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeDetailResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeSummaryResponse;
@@ -149,8 +152,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('employee.read')")
     public Page<EmployeeSummaryResponse> list(Pageable pageable) {
-        return employeeRepository.findAll(employeeAccessScopeService.accessibleEmployees(EMPLOYEE_READ), pageable)
-            .map(this::toSummaryResponse);
+        Page<Employee> employees = employeeRepository.findAll(
+            employeeAccessScopeService.accessibleEmployees(EMPLOYEE_READ),
+            pageable
+        );
+        Map<Long, Account> accountsByEmployeeId = findAccountsByEmployeeId(employees.getContent());
+        return employees.map(employee -> toSummaryResponse(employee, accountsByEmployeeId.get(employee.getId())));
     }
 
     @Override
@@ -399,7 +406,20 @@ public class EmployeeServiceImpl implements EmployeeService {
             || status == EmploymentStatus.RETIRED;
     }
 
-    private EmployeeSummaryResponse toSummaryResponse(Employee employee) {
+    private Map<Long, Account> findAccountsByEmployeeId(List<Employee> employees) {
+        if (employees.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Long> employeeIds = employees.stream().map(Employee::getId).toList();
+        Map<Long, Account> accountsByEmployeeId = new HashMap<>();
+        accountRepository.findAllByEmployeeIds(employeeIds).forEach(account ->
+            accountsByEmployeeId.put(account.getEmployee().getId(), account)
+        );
+        return accountsByEmployeeId;
+    }
+
+    private EmployeeSummaryResponse toSummaryResponse(Employee employee, Account account) {
         return new EmployeeSummaryResponse(
             employee.getId(),
             employee.getEmployeeCode(),
@@ -408,7 +428,13 @@ public class EmployeeServiceImpl implements EmployeeService {
             employee.getPhone(),
             employee.getHireDate(),
             employee.getEmploymentStatus(),
-            employee.getTerminationDate()
+            employee.getTerminationDate(),
+            account == null ? null : new EmployeeAccountSummaryResponse(
+                account.getId(),
+                account.getUsername(),
+                account.getEmail(),
+                account.getStatus()
+            )
         );
     }
 
