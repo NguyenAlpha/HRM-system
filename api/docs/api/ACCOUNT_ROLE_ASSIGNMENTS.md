@@ -27,12 +27,12 @@ Tất cả endpoint yêu cầu Bearer token. `SYSTEM_ADMIN` được seed sẵn 
 | `HR_STAFF` | `COMPANY` | Không truyền ID phạm vi |
 | `PAYROLL_ACCOUNTANT` | `COMPANY` | Không truyền ID phạm vi |
 | `PAYROLL_APPROVER` | `COMPANY` | Không truyền ID phạm vi |
-| `EXECUTIVE_APPROVER` | `COMPANY` | Chỉ một assignment được phép hiệu lực trong cùng khoảng thời gian trên toàn doanh nghiệp |
+| `DIRECTOR` | `COMPANY` | Chỉ một assignment được phép hiệu lực trong cùng khoảng thời gian trên toàn doanh nghiệp |
 | `SYSTEM_ADMIN` | — | Không được quản lý qua API role nghiệp vụ này |
 
 Role tùy chỉnh không bị giới hạn bởi bảng policy trên nhưng vẫn phải tuân thủ cấu trúc scope. Account nhận role nghiệp vụ phải liên kết với employee và không được ở trạng thái `DISABLED`.
 
-Để khởi tạo đồng thời employee, account và role `EXECUTIVE_APPROVER`, xem [Organization Executive Administration](./ORGANIZATION_EXECUTIVE_ADMIN.md).
+Để khởi tạo đồng thời employee, account và role `DIRECTOR`, xem [Organization Director Administration](./ORGANIZATION_DIRECTOR_ADMIN.md).
 
 ### Quy tắc scope
 
@@ -59,15 +59,15 @@ Lấy toàn bộ lịch sử role assignment của account, gồm assignment hi�
       "id": 31,
       "accountId": 208,
       "roleId": 8,
-      "roleCode": "EXECUTIVE_APPROVER",
-      "roleName": "Executive Approver",
+      "roleCode": "DIRECTOR",
+      "roleName": "Director",
       "scopeType": "COMPANY",
       "organizationUnitId": null,
       "workLocationId": null,
       "effectiveFrom": "2026-10-01",
       "effectiveTo": null,
       "grantedByAccountId": 1,
-      "reason": "Appointed as company executive approver",
+      "reason": "Appointed as company director",
       "createdAt": "2026-09-26T09:00:00Z",
       "revokedByAccountId": null,
       "revokedAt": null,
@@ -92,17 +92,17 @@ Lấy toàn bộ lịch sử role assignment của account, gồm assignment hi�
 
 Gán thêm một role nghiệp vụ cho account.
 
-### Ví dụ gán `EXECUTIVE_APPROVER`
+### Ví dụ gán `DIRECTOR`
 
 ```json
 {
-  "roleCode": "EXECUTIVE_APPROVER",
+  "roleCode": "DIRECTOR",
   "scopeType": "COMPANY",
   "organizationUnitId": null,
   "workLocationId": null,
   "effectiveFrom": "2026-10-01",
   "effectiveTo": null,
-  "reason": "Appointed as company executive approver"
+  "reason": "Appointed as company director"
 }
 ```
 
@@ -137,7 +137,7 @@ Trả một `AccountRoleAssignmentResponse` như cấu trúc trong endpoint danh
 ### Ràng buộc chống trùng
 
 - Cùng account, role, scope và đối tượng phạm vi không được có khoảng hiệu lực chồng nhau.
-- `EXECUTIVE_APPROVER/COMPANY` không được chồng thời gian với assignment `EXECUTIVE_APPROVER` của bất kỳ account nào khác.
+- `DIRECTOR/COMPANY` không được chồng thời gian với assignment `DIRECTOR` của bất kỳ account nào khác.
 - Kiểm tra được tuần tự hóa bằng pessimistic lock trên account và role để tránh hai request đồng thời cùng vượt qua validation.
 
 ### Lỗi

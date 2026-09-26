@@ -92,7 +92,7 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "payroll.lock",
             "report.payroll.read"
         )),
-        role("EXECUTIVE_APPROVER", with(
+        role("DIRECTOR", with(
             EMPLOYEE_PERMISSIONS,
             "employee.read",
             "employee.lifecycle.approve",
@@ -105,7 +105,7 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "account.manage",
             "account.activation.manage",
             "account.role.assign",
-            "organization.executive.provision",
+            "organization.director.provision",
             "rbac.manage"
         ))
     );

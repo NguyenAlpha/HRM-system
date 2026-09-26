@@ -210,7 +210,7 @@ Danh sách permission trong ví dụ được rút gọn. Với scope `ORG_UNIT`
     "account.manage",
     "account.activation.manage",
     "account.role.assign",
-    "organization.executive.provision",
+    "organization.director.provision",
     "rbac.manage"
   ],
   "iat": 178...,
@@ -380,7 +380,7 @@ Lấy thông tin account, role và permission hiện hành. Endpoint yêu cầu 
     "status": "ACTIVE",
     "employee": {
       "id": 25,
-      "employeeCode": "EXEC001",
+      "employeeCode": "DIR001",
       "fullName": "Nguyen Van An"
     },
     "roles": [
@@ -394,8 +394,8 @@ Lấy thông tin account, role và permission hiện hành. Endpoint yêu cầu 
         "workLocationName": null
       },
       {
-        "code": "EXECUTIVE_APPROVER",
-        "name": "Executive Approver",
+        "code": "DIRECTOR",
+        "name": "Director",
         "scopeType": "COMPANY",
         "organizationUnitId": null,
         "organizationUnitName": null,
