@@ -43,6 +43,8 @@ public interface AccountRoleAssignmentRepository extends JpaRepository<AccountRo
         SELECT assignment
         FROM AccountRoleAssignment assignment
         JOIN FETCH assignment.role role
+        LEFT JOIN FETCH assignment.organizationUnit
+        LEFT JOIN FETCH assignment.workLocation
         WHERE assignment.account.id = :accountId
           AND assignment.revokedAt IS NULL
           AND assignment.effectiveFrom <= :date

@@ -40,18 +40,22 @@ class AccountAuthorizationServiceTest {
 
     @Test
     void appliesOverridesPerAssignmentBeforeCombiningPermissions() {
-        Role employeeRole = Role.builder().id(1L).code("EMPLOYEE").build();
-        Role managerRole = Role.builder().id(2L).code("BRANCH_MANAGER").build();
+        Role employeeRole = Role.builder().id(1L).code("EMPLOYEE").name("Employee").build();
+        Role managerRole = Role.builder().id(2L).code("BRANCH_MANAGER").name("Branch Manager").build();
         AccountRoleAssignment employeeAssignment = AccountRoleAssignment.builder()
             .id(11L)
             .role(employeeRole)
+            .scopeType(RoleScopeType.SELF)
             .build();
         AccountRoleAssignment managerAssignment = AccountRoleAssignment.builder()
             .id(12L)
             .role(managerRole)
+            .scopeType(RoleScopeType.COMPANY)
             .build();
-        Permission read = Permission.builder().id(21L).code("employee.read").build();
-        Permission manage = Permission.builder().id(22L).code("employee.manage").build();
+        Permission read = Permission.builder().id(21L).code("employee.read")
+            .name("View employees").module(com.htttdn.hrm.entity.enums.PermissionModule.EMPLOYEE).build();
+        Permission manage = Permission.builder().id(22L).code("employee.manage")
+            .name("Manage employees").module(com.htttdn.hrm.entity.enums.PermissionModule.EMPLOYEE).build();
 
         when(assignmentRepository.findActiveWithRoleByAccountId(eq(7L), any()))
             .thenReturn(List.of(employeeAssignment, managerAssignment));
@@ -69,12 +73,14 @@ class AccountAuthorizationServiceTest {
 
         assertEquals(List.of("BRANCH_MANAGER", "EMPLOYEE"), snapshot.roles());
         assertEquals(List.of("employee.manage", "employee.read"), snapshot.permissions());
+        assertEquals("Branch Manager", snapshot.roleDetails().getFirst().name());
+        assertEquals("Manage employees", snapshot.permissionDetails().getFirst().name());
     }
 
     @Test
     void returnsOnlyScopesWhoseAssignmentEffectivelyGrantsPermission() {
-        Role employeeRole = Role.builder().id(1L).code("EMPLOYEE").build();
-        Role managerRole = Role.builder().id(2L).code("BRANCH_MANAGER").build();
+        Role employeeRole = Role.builder().id(1L).code("EMPLOYEE").name("Employee").build();
+        Role managerRole = Role.builder().id(2L).code("BRANCH_MANAGER").name("Branch Manager").build();
         AccountRoleAssignment revokedSelfAssignment = AccountRoleAssignment.builder()
             .id(11L)
             .role(employeeRole)
@@ -84,9 +90,10 @@ class AccountAuthorizationServiceTest {
             .id(12L)
             .role(managerRole)
             .scopeType(RoleScopeType.LOCATION)
-            .workLocation(WorkLocation.builder().id(50L).build())
+            .workLocation(WorkLocation.builder().id(50L).name("Head Office").build())
             .build();
-        Permission read = Permission.builder().id(21L).code("employee.read").build();
+        Permission read = Permission.builder().id(21L).code("employee.read")
+            .name("View employees").module(com.htttdn.hrm.entity.enums.PermissionModule.EMPLOYEE).build();
 
         when(assignmentRepository.findActiveWithRoleByAccountId(eq(7L), any()))
             .thenReturn(List.of(revokedSelfAssignment, branchAssignment));

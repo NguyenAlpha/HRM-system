@@ -48,6 +48,7 @@ public class PermissionServiceImpl implements PermissionService {
 
         Permission permission = Permission.builder()
             .code(request.code())
+            .name(request.name())
             .module(request.module())
             .description(request.description())
             .isActive(true)
@@ -81,6 +82,7 @@ public class PermissionServiceImpl implements PermissionService {
         if ("rbac.manage".equals(permission.getCode()) && Boolean.FALSE.equals(request.isActive())) {
             throw new ConflictException(ErrorCode.CONFLICT, "rbac.manage cannot be deactivated", "isActive");
         }
+        permission.setName(request.name());
         permission.setDescription(request.description());
         permission.setIsActive(request.isActive());
         return toResponse(permission);
@@ -112,6 +114,7 @@ public class PermissionServiceImpl implements PermissionService {
         return new PermissionResponse(
             permission.getId(),
             permission.getCode(),
+            permission.getName(),
             permission.getModule(),
             permission.getDescription(),
             permission.getIsActive()

@@ -13,6 +13,10 @@ public record CreatePermissionRequest(
     @Pattern(regexp = "[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+", message = "Use lowercase permission codes separated by dots")
     String code,
 
+    @NotBlank
+    @Size(max = 150)
+    String name,
+
     @NotNull
     PermissionModule module,
 

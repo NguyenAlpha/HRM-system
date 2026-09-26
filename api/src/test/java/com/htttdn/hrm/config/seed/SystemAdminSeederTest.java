@@ -170,6 +170,7 @@ class SystemAdminSeederTest {
         Permission permission = Permission.builder()
             .id(3L)
             .code(SystemAdminSeeder.RBAC_MANAGE_PERMISSION_CODE)
+            .name("Manage RBAC")
             .module(PermissionModule.RBAC)
             .isActive(true)
             .build();

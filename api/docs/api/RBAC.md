@@ -323,6 +323,7 @@ Lấy toàn bộ permission đã gán cho một role. Danh sách không phân tr
     {
       "id": 1,
       "code": "rbac.manage",
+      "name": "Manage RBAC",
       "module": "RBAC",
       "description": "Manage accounts, roles, and permissions",
       "isActive": true
@@ -424,20 +425,22 @@ Tạo permission trong danh mục quyền. Permission mới luôn có `isActive=
 ```json
 {
   "code": "employee.export",
+  "name": "Xuất danh sách nhân viên",
   "module": "EMPLOYEE",
-  "description": "Xuất danh sách nhân viên"
+  "description": "Cho phép xuất danh sách nhân viên trong phạm vi được giao"
 }
 ```
 
 | Field | Type | Bắt buộc | Ràng buộc |
 |:------|:-----|:--------:|:----------|
 | `code` | string | ✅ | Tối đa 100 ký tự; gồm ít nhất hai phần chữ thường ngăn bởi dấu chấm |
+| `name` | string | ✅ | Tên ngắn dùng để hiển thị, không rỗng, tối đa 150 ký tự |
 | `module` | string | ✅ | Một trong `EMPLOYEE`, `ACCOUNT`, `ORGANIZATION`, `REQUEST`, `ATTENDANCE`, `PAYROLL`, `RBAC`, `REPORT` |
-| `description` | string | ✅ | Không rỗng |
+| `description` | string | ✅ | Mô tả chi tiết, không rỗng |
 
 Mỗi phần của `code` phải bắt đầu bằng `a-z` và chỉ chứa `a-z`, `0-9`, `_`. Ví dụ hợp lệ: `employee.export`, `payroll.mark_paid`.
 
-`code` và `module` không thể thay đổi sau khi tạo. Tạo permission chỉ thêm quyền vào danh mục; API nghiệp vụ tương ứng vẫn phải kiểm tra permission và scope khi triển khai tính năng.
+`code` và `module` không thể thay đổi sau khi tạo. `name` dành cho giao diện người dùng; client vẫn dùng `code` làm định danh kỹ thuật. Tạo permission chỉ thêm quyền vào danh mục; API nghiệp vụ tương ứng vẫn phải kiểm tra permission và scope khi triển khai tính năng.
 
 ### Response `201 Created`
 
@@ -447,8 +450,9 @@ Mỗi phần của `code` phải bắt đầu bằng `a-z` và chỉ chứa `a-z
   "data": {
     "id": 12,
     "code": "employee.export",
+    "name": "Xuất danh sách nhân viên",
     "module": "EMPLOYEE",
-    "description": "Xuất danh sách nhân viên",
+    "description": "Cho phép xuất danh sách nhân viên trong phạm vi được giao",
     "isActive": true
   },
   "error": null
@@ -493,6 +497,7 @@ GET /api/permissions?module=RBAC&page=0&size=20&sort=code,asc
       {
         "id": 1,
         "code": "rbac.manage",
+        "name": "Manage RBAC",
         "module": "RBAC",
         "description": "Manage accounts, roles, and permissions",
         "isActive": true
@@ -529,8 +534,9 @@ Lấy chi tiết một permission.
   "data": {
     "id": 12,
     "code": "employee.export",
+    "name": "Xuất danh sách nhân viên",
     "module": "EMPLOYEE",
-    "description": "Xuất danh sách nhân viên",
+    "description": "Cho phép xuất danh sách nhân viên trong phạm vi được giao",
     "isActive": true
   },
   "error": null
@@ -550,12 +556,13 @@ Lấy chi tiết một permission.
 
 ## PUT `/api/permissions/{id}`
 
-Cập nhật mô tả và trạng thái của permission. `code` và `module` không thể thay đổi qua API này.
+Cập nhật tên hiển thị, mô tả và trạng thái của permission. `code` và `module` không thể thay đổi qua API này.
 
 ### Request
 
 ```json
 {
+  "name": "Xuất báo cáo nhân viên",
   "description": "Xuất báo cáo danh sách nhân viên",
   "isActive": true
 }
@@ -563,6 +570,7 @@ Cập nhật mô tả và trạng thái của permission. `code` và `module` kh
 
 | Field | Type | Bắt buộc | Ràng buộc |
 |:------|:-----|:--------:|:----------|
+| `name` | string | ✅ | Tên ngắn dùng để hiển thị, không rỗng, tối đa 150 ký tự |
 | `description` | string | ✅ | Không rỗng |
 | `isActive` | boolean | ✅ | Permission `rbac.manage` không thể chuyển thành `false` |
 
@@ -574,6 +582,7 @@ Cập nhật mô tả và trạng thái của permission. `code` và `module` kh
   "data": {
     "id": 12,
     "code": "employee.export",
+    "name": "Xuất báo cáo nhân viên",
     "module": "EMPLOYEE",
     "description": "Xuất báo cáo danh sách nhân viên",
     "isActive": true

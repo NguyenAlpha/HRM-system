@@ -29,6 +29,13 @@ function formatExpiry(value: string): string {
   }).format(new Date(value))
 }
 
+function roleScope(role: SessionData["account"]["roles"][number]): string {
+  if (role.scopeType === "ORG_UNIT") return role.organizationUnitName ?? `Đơn vị #${role.organizationUnitId}`
+  if (role.scopeType === "LOCATION") return role.workLocationName ?? `Địa điểm #${role.workLocationId}`
+  if (role.scopeType === "SELF") return "Bản thân"
+  return "Toàn công ty"
+}
+
 export function PortalDashboard({ portal }: PortalDashboardProps) {
   const router = useRouter()
   const config = PORTAL_CONFIG[portal]
@@ -139,7 +146,7 @@ export function PortalDashboard({ portal }: PortalDashboardProps) {
         <header className="portal-header">
           <div>
             <p className="eyebrow">{admin ? "SYSTEM ADMINISTRATION" : "HRM WORKSPACE"}</p>
-            <h1>{admin ? "Tổng quan quản trị" : `Xin chào, ${account.username}`}</h1>
+            <h1>{admin ? "Tổng quan quản trị" : `Xin chào, ${account.employee?.fullName ?? account.username}`}</h1>
             <p>{admin ? "Kiểm tra phiên quản trị và quyền RBAC hiện tại." : "Phiên đăng nhập HRM của bạn đang hoạt động."}</p>
           </div>
           <div className="portal-actions">
@@ -181,12 +188,12 @@ export function PortalDashboard({ portal }: PortalDashboardProps) {
                 <span className="card-kicker">Account</span>
                 <h2>Thông tin đăng nhập</h2>
               </div>
-              <span className="account-id">ID #{account.id}</span>
+              <span className="account-id">ID #{account.accountId}</span>
             </div>
             <dl className="account-details">
               <div><dt>Username</dt><dd>{account.username}</dd></div>
               <div><dt>Email</dt><dd>{account.email}</dd></div>
-              <div><dt>Employee ID</dt><dd>{account.employeeId ?? "Chưa liên kết"}</dd></div>
+              <div><dt>Nhân viên</dt><dd>{account.employee ? `${account.employee.fullName} (${account.employee.employeeCode})` : "Chưa liên kết"}</dd></div>
               <div><dt>Access token hết hạn</dt><dd>{formatExpiry(session.expiresAt)}</dd></div>
             </dl>
             <button className="secondary-button" type="button" onClick={handleRefresh} disabled={working}>
@@ -204,14 +211,23 @@ export function PortalDashboard({ portal }: PortalDashboardProps) {
             <div className="tag-section">
               <span>Roles</span>
               <div className="tag-list">
-                {account.roles.map((role) => <strong className="role-tag" key={role}>{role}</strong>)}
+                {account.roles.map((role) => (
+                  <strong className="role-tag" key={`${role.code}:${role.scopeType}:${role.organizationUnitId ?? role.workLocationId ?? "company"}`}
+                    title={`${role.code} · ${role.scopeType}`}>
+                    {role.name} · {roleScope(role)}
+                  </strong>
+                ))}
               </div>
             </div>
             <div className="tag-section">
               <span>Permissions</span>
               <div className="tag-list">
                 {account.permissions.length > 0
-                  ? account.permissions.map((permission) => <code className="permission-tag" key={permission}>{permission}</code>)
+                  ? account.permissions.map((permission) => (
+                    <span className="permission-tag" key={permission.code} title={`${permission.code} · ${permission.module}`}>
+                      {permission.name}
+                    </span>
+                  ))
                   : <em>Không có permission trực tiếp.</em>}
               </div>
             </div>

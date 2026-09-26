@@ -92,7 +92,7 @@ export function RolePermissions({ role, onClose, onSessionExpired }: {
             <select aria-labelledby="available-permission-label" value={permissionId} onChange={(event) => setPermissionId(event.target.value)} required>
               <option value="">{available.length ? "Chọn quyền..." : "Không còn quyền để gán"}</option>
               {available.map((permission) => <option key={permission.id} value={permission.id}>
-                {permission.code} — {permission.description}{permission.isActive ? "" : " (tạm tắt)"}
+                {permission.name} ({permission.code}){permission.isActive ? "" : " (tạm tắt)"}
               </option>)}
             </select>
           </label>
@@ -103,7 +103,7 @@ export function RolePermissions({ role, onClose, onSessionExpired }: {
       {loading && <p role="status">Đang tải quyền...</p>}
       <ul className="rbac-assigned-list">
         {assigned.map((permission) => <li key={permission.id}>
-          <div><code>{permission.code}</code><small>{permission.description} · {permission.isActive ? "Hoạt động" : "Tạm tắt"}</small></div>
+          <div><strong>{permission.name}</strong><small><code>{permission.code}</code> · {permission.description} · {permission.isActive ? "Hoạt động" : "Tạm tắt"}</small></div>
           <button type="button" className="danger-button" disabled={disabled} onClick={() => changePermission(permission, true)}>Gỡ quyền</button>
         </li>)}
       </ul>

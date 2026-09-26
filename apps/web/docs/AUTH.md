@@ -57,13 +57,33 @@ BFF giữ cùng response envelope với API:
   "success": true,
   "data": {
     "account": {
-      "id": 2,
-      "employeeId": 1,
+      "accountId": 2,
       "username": "employee01",
       "email": "employee01@hrm.local",
       "status": "ACTIVE",
-      "roles": ["EMPLOYEE"],
-      "permissions": ["profile.self.read"]
+      "employee": {
+        "id": 1,
+        "employeeCode": "EMP001",
+        "fullName": "Nguyen Van An"
+      },
+      "roles": [
+        {
+          "code": "EMPLOYEE",
+          "name": "Employee",
+          "scopeType": "SELF",
+          "organizationUnitId": null,
+          "organizationUnitName": null,
+          "workLocationId": null,
+          "workLocationName": null
+        }
+      ],
+      "permissions": [
+        {
+          "code": "profile.self.read",
+          "name": "View own profile",
+          "module": "EMPLOYEE"
+        }
+      ]
     },
     "expiresAt": "2026-09-24T03:15:00.000Z"
   },
@@ -86,6 +106,7 @@ Response lỗi:
 ```
 
 `accessToken` và `refreshToken` từ Spring Boot không xuất hiện trong body BFF trả về browser.
+Giao diện hiển thị `name`; các kiểm tra điều hướng hoặc phân quyền phía client vẫn dùng `code`.
 
 ### Login
 

@@ -151,19 +151,33 @@ Email được chuẩn hóa về chữ thường. Username giữ nguyên chữ h
     "tokenType": "Bearer",
     "expiresIn": 900,
     "account": {
-      "id": 1,
-      "employeeId": null,
+      "accountId": 1,
       "username": "admin",
       "email": "admin@hrm.local",
       "status": "ACTIVE",
-      "roles": ["SYSTEM_ADMIN"],
+      "employee": null,
+      "roles": [
+        {
+          "code": "SYSTEM_ADMIN",
+          "name": "System Administrator",
+          "scopeType": "COMPANY",
+          "organizationUnitId": null,
+          "organizationUnitName": null,
+          "workLocationId": null,
+          "workLocationName": null
+        }
+      ],
       "permissions": [
-        "account.read",
-        "account.manage",
-        "account.activation.manage",
-        "account.role.assign",
-        "organization.executive.provision",
-        "rbac.manage"
+        {
+          "code": "account.read",
+          "name": "View accounts",
+          "module": "ACCOUNT"
+        },
+        {
+          "code": "rbac.manage",
+          "name": "Manage RBAC",
+          "module": "RBAC"
+        }
       ]
     }
   },
@@ -177,8 +191,11 @@ Email được chuẩn hóa về chữ thường. Username giữ nguyên chữ h
 | `refreshToken` | Token opaque dùng một lần để lấy token mới; mặc định hết hạn sau 30 ngày |
 | `tokenType` | Luôn là `Bearer` |
 | `expiresIn` | Thời hạn access token tính bằng giây |
-| `account.roles` | Các role đang có hiệu lực tại thời điểm phát JWT |
-| `account.permissions` | Hợp quyền role và permission override đang có hiệu lực |
+| `account.employee` | Thông tin định danh nhân viên (`id`, `employeeCode`, `fullName`); `null` với account hệ thống không gắn employee |
+| `account.roles` | Các role đang có hiệu lực, gồm code kỹ thuật, tên hiển thị và phạm vi áp dụng |
+| `account.permissions` | Hợp quyền đang có hiệu lực, gồm code kỹ thuật, tên hiển thị và module |
+
+Danh sách permission trong ví dụ được rút gọn. Với scope `ORG_UNIT` hoặc `LOCATION`, response trả cả ID và tên đối tượng phạm vi tương ứng để client có thể hiển thị trực tiếp.
 
 ### JWT payload
 
@@ -201,7 +218,9 @@ Email được chuẩn hóa về chữ thường. Username giữ nguyên chữ h
 }
 ```
 
-Spring Security chuyển role thành authority có prefix `ROLE_`; ví dụ `SYSTEM_ADMIN` thành `ROLE_SYSTEM_ADMIN`. Permission giữ nguyên, ví dụ `rbac.manage`.
+JWT cố ý chỉ lưu danh sách code để token gọn và giữ claims ổn định. Tên hiển thị và thông tin scope đầy đủ nằm trong object `account` của response đăng nhập/refresh hoặc được đọc lại qua `/api/auth/me`.
+
+Spring Security chuyển role code thành authority có prefix `ROLE_`; ví dụ `SYSTEM_ADMIN` thành `ROLE_SYSTEM_ADMIN`. Permission code giữ nguyên, ví dụ `rbac.manage`.
 
 > Role có scope `SELF`, `ORG_UNIT` hoặc `LOCATION` vẫn cần được kiểm tra scope tại authorization/service layer. Việc có permission trong JWT không tự động cho phép truy cập dữ liệu ngoài scope được gán.
 
@@ -253,19 +272,33 @@ Cấu trúc response giống login, nhưng cả `accessToken` và `refreshToken`
     "tokenType": "Bearer",
     "expiresIn": 900,
     "account": {
-      "id": 1,
-      "employeeId": null,
+      "accountId": 1,
       "username": "admin",
       "email": "admin@hrm.local",
       "status": "ACTIVE",
-      "roles": ["SYSTEM_ADMIN"],
+      "employee": null,
+      "roles": [
+        {
+          "code": "SYSTEM_ADMIN",
+          "name": "System Administrator",
+          "scopeType": "COMPANY",
+          "organizationUnitId": null,
+          "organizationUnitName": null,
+          "workLocationId": null,
+          "workLocationName": null
+        }
+      ],
       "permissions": [
-        "account.read",
-        "account.manage",
-        "account.activation.manage",
-        "account.role.assign",
-        "organization.executive.provision",
-        "rbac.manage"
+        {
+          "code": "account.read",
+          "name": "View accounts",
+          "module": "ACCOUNT"
+        },
+        {
+          "code": "rbac.manage",
+          "name": "Manage RBAC",
+          "module": "RBAC"
+        }
       ]
     }
   },
@@ -341,26 +374,53 @@ Lấy thông tin account, role và permission hiện hành. Endpoint yêu cầu 
 {
   "success": true,
   "data": {
-    "id": 1,
-    "employeeId": null,
-    "username": "admin",
-    "email": "admin@hrm.local",
+    "accountId": 8,
+    "username": "director",
+    "email": "director@company.com",
     "status": "ACTIVE",
-    "roles": ["SYSTEM_ADMIN"],
+    "employee": {
+      "id": 25,
+      "employeeCode": "EXEC001",
+      "fullName": "Nguyen Van An"
+    },
+    "roles": [
+      {
+        "code": "EMPLOYEE",
+        "name": "Employee",
+        "scopeType": "SELF",
+        "organizationUnitId": null,
+        "organizationUnitName": null,
+        "workLocationId": null,
+        "workLocationName": null
+      },
+      {
+        "code": "EXECUTIVE_APPROVER",
+        "name": "Executive Approver",
+        "scopeType": "COMPANY",
+        "organizationUnitId": null,
+        "organizationUnitName": null,
+        "workLocationId": null,
+        "workLocationName": null
+      }
+    ],
     "permissions": [
-      "account.read",
-      "account.manage",
-      "account.activation.manage",
-      "account.role.assign",
-      "organization.executive.provision",
-      "rbac.manage"
+      {
+        "code": "employee.lifecycle.approve",
+        "name": "Approve employee lifecycle",
+        "module": "EMPLOYEE"
+      },
+      {
+        "code": "request.final_approve",
+        "name": "Give final request approval",
+        "module": "REQUEST"
+      }
     ]
   },
   "error": null
 }
 ```
 
-`roles` và `permissions` được đọc lại từ database nên phản ánh phân quyền hiện tại, có thể mới hơn claims trong access token.
+Danh sách trong ví dụ được rút gọn. `roles` và `permissions` được đọc lại từ database nên phản ánh phân quyền hiện tại, có thể mới hơn claims trong access token. Client dùng `name` để hiển thị và dùng `code` cho kiểm tra kỹ thuật; không dùng tên hiển thị làm định danh phân quyền.
 
 ### Lỗi
 

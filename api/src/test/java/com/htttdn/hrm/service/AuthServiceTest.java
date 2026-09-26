@@ -16,11 +16,15 @@ import com.htttdn.hrm.dto.request.auth.LoginRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.enums.AccountStatus;
+import com.htttdn.hrm.entity.enums.PermissionModule;
+import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.exception.InvalidTokenException;
 import com.htttdn.hrm.exception.UnauthorizedException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.security.JwtService;
 import com.htttdn.hrm.service.AccountAuthorizationService.AuthorizationSnapshot;
+import com.htttdn.hrm.service.AccountAuthorizationService.AuthorizationPermission;
+import com.htttdn.hrm.service.AccountAuthorizationService.AuthorizationRole;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -57,7 +61,15 @@ class AuthServiceTest {
         when(accountRepository.findByLogin("admin")).thenReturn(Optional.of(account));
         when(refreshTokenService.create(account)).thenReturn("refresh-token");
         when(accountAuthorizationService.getSnapshot(1L)).thenReturn(
-            new AuthorizationSnapshot(List.of("SYSTEM_ADMIN"), List.of("rbac.manage"))
+            new AuthorizationSnapshot(
+                List.of("SYSTEM_ADMIN"),
+                List.of("rbac.manage"),
+                List.of(new AuthorizationRole(
+                    "SYSTEM_ADMIN", "System Administrator", RoleScopeType.COMPANY,
+                    null, null, null, null
+                )),
+                List.of(new AuthorizationPermission("rbac.manage", "Manage RBAC", PermissionModule.RBAC))
+            )
         );
         when(jwtService.generateAccessToken(any(), any())).thenReturn("access-token");
         when(jwtService.getAccessTokenExpirationSeconds()).thenReturn(900L);
@@ -68,7 +80,9 @@ class AuthServiceTest {
         assertEquals("refresh-token", response.refreshToken());
         assertEquals(0, account.getFailedLoginCount());
         assertNotNull(account.getLastLoginAt());
-        assertEquals(List.of("SYSTEM_ADMIN"), response.account().roles());
+        assertEquals("SYSTEM_ADMIN", response.account().roles().getFirst().code());
+        assertEquals("System Administrator", response.account().roles().getFirst().name());
+        assertEquals("Manage RBAC", response.account().permissions().getFirst().name());
         verify(authenticationManager).authenticate(any());
     }
 

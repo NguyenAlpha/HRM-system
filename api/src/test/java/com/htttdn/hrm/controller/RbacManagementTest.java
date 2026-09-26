@@ -156,7 +156,12 @@ class RbacManagementTest {
     @Test
     void adminCanCreateReadUpdateAndDeleteUnusedPermission() throws Exception {
         String code = permissionCode();
-        Map<String, Object> body = Map.of("code", code, "module", "REPORT", "description", "Custom report");
+        Map<String, Object> body = Map.of(
+            "code", code,
+            "name", "Custom report",
+            "module", "REPORT",
+            "description", "Custom report permission"
+        );
         long id = createdId(admin(post("/api/permissions"), body)
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.data.isActive").value(true)));
@@ -174,9 +179,14 @@ class RbacManagementTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.content[0].id").value(id))
             .andExpect(jsonPath("$.data.content[0].module").value("REPORT"));
-        admin(put("/api/permissions/{id}", id), Map.of("description", "Updated report", "isActive", false))
+        admin(put("/api/permissions/{id}", id), Map.of(
+                "name", "Updated report",
+                "description", "Updated report permission",
+                "isActive", false
+            ))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.description").value("Updated report"))
+            .andExpect(jsonPath("$.data.name").value("Updated report"))
+            .andExpect(jsonPath("$.data.description").value("Updated report permission"))
             .andExpect(jsonPath("$.data.isActive").value(false));
         admin(delete("/api/permissions/{id}", id)).andExpect(status().isOk());
         assertFalse(permissionRepository.existsById(id));
@@ -241,7 +251,11 @@ class RbacManagementTest {
         Permission permission = permissionRepository.findByCode("rbac.manage")
             .orElseGet(() -> savedPermission("rbac.manage"));
         admin(delete("/api/permissions/{id}", permission.getId())).andExpect(status().isConflict());
-        admin(put("/api/permissions/{id}", permission.getId()), Map.of("description", "RBAC", "isActive", false))
+        admin(put("/api/permissions/{id}", permission.getId()), Map.of(
+                "name", "Manage RBAC",
+                "description", "RBAC",
+                "isActive", false
+            ))
             .andExpect(status().isConflict());
     }
 
@@ -271,7 +285,11 @@ class RbacManagementTest {
         admin(post("/api/roles/-1/permissions"), Map.of("permissionId", 1))
             .andExpect(status().isNotFound());
         admin(get("/api/permissions/-1")).andExpect(status().isNotFound());
-        admin(put("/api/permissions/-1"), Map.of("description", "Missing", "isActive", true))
+        admin(put("/api/permissions/-1"), Map.of(
+                "name", "Missing",
+                "description", "Missing",
+                "isActive", true
+            ))
             .andExpect(status().isNotFound());
         admin(delete("/api/permissions/-1")).andExpect(status().isNotFound());
         admin(post("/api/roles").contentType(MediaType.APPLICATION_JSON).content("{"))
@@ -309,7 +327,8 @@ class RbacManagementTest {
     }
 
     private Permission savedPermission(String code) {
-        return permissionRepository.save(Permission.builder().code(code).module(PermissionModule.RBAC)
+        return permissionRepository.save(Permission.builder().code(code).name("RBAC test permission")
+            .module(PermissionModule.RBAC)
             .description("RBAC test permission").isActive(true).createdAt(Instant.now()).build());
     }
 
@@ -338,11 +357,11 @@ class RbacManagementTest {
             Arguments.of("GET", "/api/roles/1/permissions", ""),
             Arguments.of("POST", "/api/roles/1/permissions", "{\"permissionId\":1}"),
             Arguments.of("DELETE", "/api/roles/1/permissions/1", ""),
-            Arguments.of("POST", "/api/permissions", "{\"code\":\"test.read\",\"module\":\"RBAC\",\"description\":\"Test\"}"),
+            Arguments.of("POST", "/api/permissions", "{\"code\":\"test.read\",\"name\":\"Test\",\"module\":\"RBAC\",\"description\":\"Test\"}"),
             Arguments.of("GET", "/api/permissions", ""),
             Arguments.of("GET", "/api/permissions?module=RBAC", ""),
             Arguments.of("GET", "/api/permissions/1", ""),
-            Arguments.of("PUT", "/api/permissions/1", "{\"description\":\"Updated\",\"isActive\":true}"),
+            Arguments.of("PUT", "/api/permissions/1", "{\"name\":\"Updated\",\"description\":\"Updated\",\"isActive\":true}"),
             Arguments.of("DELETE", "/api/permissions/1", "")
         );
     }
@@ -356,10 +375,10 @@ class RbacManagementTest {
             Arguments.of("PUT", "/api/roles/1", "{\"name\":\"Test\"}", "isActive"),
             Arguments.of("POST", "/api/roles/1/permissions", "{\"permissionId\":0}", "permissionId"),
             Arguments.of("POST", "/api/permissions", "{\"code\":\"" + "a".repeat(101)
-                + "\",\"module\":\"RBAC\",\"description\":\"Test\"}", "code"),
-            Arguments.of("POST", "/api/permissions", "{\"code\":\"ROLE_SYSTEM_ADMIN\",\"module\":\"RBAC\",\"description\":\"Test\"}", "code"),
-            Arguments.of("POST", "/api/permissions", "{\"code\":\"test.read\",\"description\":\"Test\"}", "module"),
-            Arguments.of("PUT", "/api/permissions/1", "{\"description\":\"Test\"}", "isActive")
+                + "\",\"name\":\"Test\",\"module\":\"RBAC\",\"description\":\"Test\"}", "code"),
+            Arguments.of("POST", "/api/permissions", "{\"code\":\"ROLE_SYSTEM_ADMIN\",\"name\":\"Test\",\"module\":\"RBAC\",\"description\":\"Test\"}", "code"),
+            Arguments.of("POST", "/api/permissions", "{\"code\":\"test.read\",\"name\":\"Test\",\"description\":\"Test\"}", "module"),
+            Arguments.of("PUT", "/api/permissions/1", "{\"name\":\"Test\",\"description\":\"Test\"}", "isActive")
         );
     }
 }
