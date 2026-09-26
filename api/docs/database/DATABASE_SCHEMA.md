@@ -300,6 +300,7 @@ Role có `is_system=true` và bộ permission tương ứng do code định ngh�
 | `name` | VARCHAR(150) | NOT NULL | Tên hiển thị |
 | `description` | TEXT | | Mô tả |
 | `is_system` | BOOLEAN | NOT NULL, DEFAULT false | Vai trò seed, không được xóa |
+| `grant_policy` | VARCHAR(30) | NOT NULL | `AUTO` / `HR_ASSIGNABLE` / `OWNER_APPROVAL` / `SYSTEM_ONLY` |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 | `deleted_at` | TIMESTAMPTZ | | Chỉ áp dụng cho vai trò tùy chỉnh |
@@ -368,11 +369,11 @@ Seeder đồng bộ chính xác mapping của system role. API chỉ cho phép t
 | `TEAM_LEAD` | `ORG_UNIT` | Quyền nhân viên + xem nhân sự, duyệt đơn và tăng ca của nhóm |
 | `WAREHOUSE_SUPERVISOR` | `LOCATION` | Như trưởng nhóm nhưng chỉ trong kho được giao |
 | `BRANCH_MANAGER` | `LOCATION` | Thêm/xóa mềm nhân sự, duyệt đơn và quản lý chấm công trong chi nhánh cùng kho con |
-| `HR_STAFF` | `COMPANY` | Hồ sơ thường và dữ liệu nhạy cảm của nhân viên, đơn từ, chấm công và báo cáo toàn công ty |
+| `HR_STAFF` | `COMPANY` | Hồ sơ thường và dữ liệu nhạy cảm của nhân viên; cấp account; đề xuất role; quản lý đơn từ, chấm công và báo cáo toàn công ty |
 | `PAYROLL_ACCOUNTANT` | `COMPANY` | Đọc thành phần thu nhập, tính và kiểm tra lương |
 | `PAYROLL_APPROVER` | `COMPANY` | Duyệt, xác nhận đã trả và khóa kỳ lương |
 | `DIRECTOR` | `COMPANY` | Xem nhân sự và phê duyệt cuối nghiệp vụ nhân sự, đơn từ, thay đổi cơ cấu toàn công ty |
-| `COMPANY_OWNER` | `COMPANY` | Cập nhật hồ sơ nhân sự; quản trị tài khoản, quyền truy cập và cấu hình trong phạm vi doanh nghiệp |
+| `COMPANY_OWNER` | `COMPANY` | Cập nhật hồ sơ nhân sự; cấp và quản trị account; phê duyệt đề xuất role; quản trị quyền truy cập và cấu hình doanh nghiệp |
 | `SYSTEM_ADMIN` | `COMPANY` | Khởi tạo Company Owner đầu tiên và tạm thời quản lý RBAC; không tham gia quản trị account hoặc nghiệp vụ nội bộ công ty |
 
 Mọi nhân viên có tài khoản đều nhận `EMPLOYEE` ở scope `SELF`; vai trò nghiệp vụ được gán thêm.
@@ -383,6 +384,9 @@ Các permission code tối thiểu:
 profile.self.read             profile.self.update
 employee.read                employee.manage               employee.sensitive.read
 employee.sensitive.manage    employee.lifecycle.approve
+account.read                 account.manage                account.provision
+account.activation.manage   account.role.assign
+role.assignment.request     role.assignment.approve
 request.self.read            request.self.create           request.self.cancel
 request.read                 request.approve               request.final_approve
 request.manage              organization.change.approve   organization.company_owner.bootstrap
