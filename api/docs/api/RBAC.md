@@ -536,7 +536,7 @@ Migration và `RolePermissionSeeder` tự thu hồi mapping `SYSTEM_ONLY` từng
 | Biến môi trường | Mặc định | Ý nghĩa |
 |:----------------|:---------|:--------|
 | `RBAC_SEED_ENABLED` | `true` | Seed role, permission và mapping mặc định khi khởi động |
-| `ADMIN_SEED_ENABLED` | `true` | Seed system admin và bảo đảm `organization.company_owner.bootstrap` cùng `rbac.manage` |
+| `ADMIN_SEED_ENABLED` | `true` | Seed account admin và gán role `SYSTEM_ADMIN` đã được RBAC seed tạo trước |
 | `USER_SEED_ENABLED` | `false` | Seed các account demo, gồm một `HR_STAFF`; chỉ nên bật ở môi trường demo/test |
 
 Để ủy quyền quản trị custom role cho một người khác:
@@ -548,4 +548,4 @@ Migration và `RolePermissionSeeder` tự thu hồi mapping `SYSTEM_ONLY` từng
 
 Không cần cấu hình allowlist hoặc khởi động lại API. Quyền truy cập được quyết định trực tiếp từ permission trong JWT.
 
-Permission catalog, system role và permission mapping của system role thuộc sở hữu của code. Giữ `RBAC_SEED_ENABLED=true` để ứng dụng đồng bộ các định nghĩa này khi khởi động; permission mới phải được bổ sung qua `PermissionSeeder` hoặc database migration, không qua API. Chỉ đặt `RBAC_SEED_ENABLED=false` khi deployment đã có cơ chế migration thay thế đầy đủ. `ADMIN_SEED_ENABLED` có thể tắt sau khi tài khoản bootstrap và mapping tối thiểu đã được bảo đảm bằng quy trình vận hành khác.
+Permission catalog, system role và permission mapping của system role thuộc sở hữu của code. `RoleSeeder`, `PermissionSeeder` và `RolePermissionSeeder` chạy trước `SystemAdminSeeder`; seeder admin chỉ tạo account và gán role đã tồn tại, không tự tạo hoặc sửa RBAC. Giữ `RBAC_SEED_ENABLED=true` để ứng dụng đồng bộ các định nghĩa này khi khởi động; nếu tắt RBAC seed thì database phải có sẵn role `SYSTEM_ADMIN` hợp lệ, nếu không admin seed sẽ fail-fast. Permission mới phải được bổ sung qua `PermissionSeeder` hoặc database migration, không qua API. `ADMIN_SEED_ENABLED` có thể tắt sau khi tài khoản bootstrap đã được bảo đảm bằng quy trình vận hành khác.
