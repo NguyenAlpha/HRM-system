@@ -266,6 +266,7 @@
 | `name` | `String` | `name` | NOT NULL | Tên hiển thị |
 | `description` | `String` | `description` | | Mô tả |
 | `isSystem` | `Boolean` | `is_system` | NOT NULL, mặc định false | Vai trò seed, không được xóa |
+| `grantPolicy` | `RoleGrantPolicy` | `grant_policy` | NOT NULL | Chính sách cấp role: `AUTO`, `HR_ASSIGNABLE`, `OWNER_APPROVAL`, `SYSTEM_ONLY` |
 | `createdAt` | `Instant` | `created_at` | NOT NULL | Thời điểm tạo |
 | `updatedAt` | `Instant` | `updated_at` | NOT NULL | Thời điểm cập nhật |
 | `deletedAt` | `Instant` | `deleted_at` | nullable | Chỉ áp dụng cho vai trò tùy chỉnh |

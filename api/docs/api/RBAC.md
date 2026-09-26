@@ -28,7 +28,18 @@ Quản lý role tùy chỉnh và quan hệ permission của role. Danh mục per
 - Permission có `assignmentPolicy=DELEGABLE` mới được gán cho custom role; `SYSTEM_ONLY` chỉ được seeder gán cho system role.
 - System role có `isSystem=true` là khuôn mẫu do ứng dụng sở hữu; API chỉ cho phép xem role và danh sách permission của role.
 - Chỉ custom role có `isSystem=false` mới được cập nhật, xóa mềm hoặc thay đổi permission mapping.
+- Mỗi role có `grantPolicy` xác định workflow được phép dùng để cấp role cho account; đây không phải cấp bậc và không tạo role hierarchy.
+- Custom role mới luôn có `grantPolicy=OWNER_APPROVAL`; client không được tự hạ chính sách này qua API RBAC.
 - `COMPANY_OWNER` chọn permission có sẵn để cấu hình custom role, không tự định nghĩa capability mới cho hệ thống.
+
+### Chính sách cấp role
+
+| `grantPolicy` | Ý nghĩa |
+|:--------------|:--------|
+| `AUTO` | Hệ thống tự gán qua workflow chuyên biệt; không nhận yêu cầu cấp role thủ công |
+| `HR_ASSIGNABLE` | HR được đề xuất và hệ thống có thể cấp ngay nếu dữ liệu hợp lệ |
+| `OWNER_APPROVAL` | Yêu cầu của HR phải được Company Owner phê duyệt trước khi có hiệu lực |
+| `SYSTEM_ONLY` | Chỉ workflow nội bộ dành riêng cho hệ thống được phép cấp role |
 
 ---
 
@@ -116,6 +127,7 @@ Danh sách permission phản ánh đầy đủ mapping đã lưu, bao gồm cả
       "name": "Chủ sở hữu doanh nghiệp",
       "description": "Quản trị tài khoản, quyền truy cập và cấu hình trong phạm vi doanh nghiệp",
       "isSystem": true,
+      "grantPolicy": "SYSTEM_ONLY",
       "permissions": [
         {
           "id": 8,
@@ -175,6 +187,8 @@ Tạo role tùy chỉnh. Role mới luôn có `isSystem=false`.
 
 `code` là duy nhất và không thể thay đổi sau khi tạo. Client dùng code không có prefix `ROLE_`; Spring Security tự chuyển role trong JWT thành authority có prefix này.
 
+Role mới luôn có `grantPolicy=OWNER_APPROVAL`; request không nhận field này.
+
 ### Response `201 Created`
 
 ```json
@@ -185,7 +199,8 @@ Tạo role tùy chỉnh. Role mới luôn có `isSystem=false`.
     "code": "RBAC_MANAGER",
     "name": "Quản trị phân quyền",
     "description": "Quản lý vai trò tùy chỉnh trong doanh nghiệp",
-    "isSystem": false
+    "isSystem": false,
+    "grantPolicy": "OWNER_APPROVAL"
   },
   "error": null
 }
@@ -228,14 +243,16 @@ Endpoint sử dụng các tham số [phân trang](#phân-trang) chung.
         "code": "SYSTEM_ADMIN",
         "name": "Quản trị viên hệ thống",
         "description": "Khởi tạo Chủ sở hữu doanh nghiệp đầu tiên, không tham gia nghiệp vụ nội bộ công ty",
-        "isSystem": true
+        "isSystem": true,
+        "grantPolicy": "SYSTEM_ONLY"
       },
       {
         "id": 7,
         "code": "RBAC_MANAGER",
         "name": "Quản trị phân quyền",
         "description": "Quản lý vai trò tùy chỉnh trong doanh nghiệp",
-        "isSystem": false
+        "isSystem": false,
+        "grantPolicy": "OWNER_APPROVAL"
       }
     ],
     "totalElements": 2,
@@ -271,7 +288,8 @@ Lấy chi tiết một role chưa bị xóa mềm.
     "code": "RBAC_MANAGER",
     "name": "Quản trị phân quyền",
     "description": "Quản lý vai trò tùy chỉnh trong doanh nghiệp",
-    "isSystem": false
+    "isSystem": false,
+    "grantPolicy": "OWNER_APPROVAL"
   },
   "error": null
 }
@@ -316,7 +334,8 @@ Cập nhật tên và mô tả của custom role. System role không thể thay 
     "code": "RBAC_MANAGER",
     "name": "Quản trị role và permission",
     "description": "Mô tả mới",
-    "isSystem": false
+    "isSystem": false,
+    "grantPolicy": "OWNER_APPROVAL"
   },
   "error": null
 }

@@ -2,8 +2,12 @@ package com.htttdn.hrm.entity;
 
 import java.time.Instant;
 
+import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -39,6 +43,10 @@ public class Role {
 
     @Column(name = "is_system", nullable = false)
     private Boolean isSystem;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "grant_policy", nullable = false, length = 30)
+    private RoleGrantPolicy grantPolicy;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;

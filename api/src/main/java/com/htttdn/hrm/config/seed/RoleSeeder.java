@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.entity.Role;
+import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.repository.RoleRepository;
 
 /**
@@ -29,43 +30,65 @@ public class RoleSeeder implements ApplicationRunner {
     private static final Logger log = LoggerFactory.getLogger(RoleSeeder.class);
 
     private static final List<RoleDefinition> DEFAULT_ROLES = List.of(
-        new RoleDefinition("EMPLOYEE", "Nhân viên", "Vai trò tự phục vụ cơ bản dành cho mọi nhân viên"),
-        new RoleDefinition("TEAM_LEAD", "Trưởng nhóm", "Quản lý nhân viên trong đơn vị tổ chức được phân công"),
+        new RoleDefinition(
+            "EMPLOYEE",
+            "Nhân viên",
+            "Vai trò tự phục vụ cơ bản dành cho mọi nhân viên",
+            RoleGrantPolicy.AUTO
+        ),
+        new RoleDefinition(
+            "TEAM_LEAD",
+            "Trưởng nhóm",
+            "Quản lý nhân viên trong đơn vị tổ chức được phân công",
+            RoleGrantPolicy.HR_ASSIGNABLE
+        ),
         new RoleDefinition(
             "WAREHOUSE_SUPERVISOR",
             "Giám sát kho",
-            "Giám sát nhân viên và chấm công tại kho được phân công"
+            "Giám sát nhân viên và chấm công tại kho được phân công",
+            RoleGrantPolicy.HR_ASSIGNABLE
         ),
         new RoleDefinition(
             "BRANCH_MANAGER",
             "Quản lý chi nhánh",
-            "Quản lý nhân viên và hoạt động trong chi nhánh được phân công"
+            "Quản lý nhân viên và hoạt động trong chi nhánh được phân công",
+            RoleGrantPolicy.OWNER_APPROVAL
         ),
-        new RoleDefinition("HR_STAFF", "Nhân viên nhân sự", "Quản lý nghiệp vụ nhân sự trên toàn công ty"),
+        new RoleDefinition(
+            "HR_STAFF",
+            "Nhân viên nhân sự",
+            "Quản lý nghiệp vụ nhân sự trên toàn công ty",
+            RoleGrantPolicy.OWNER_APPROVAL
+        ),
         new RoleDefinition(
             "PAYROLL_ACCOUNTANT",
             "Kế toán tiền lương",
-            "Tính toán và kiểm tra bảng lương toàn công ty"
+            "Tính toán và kiểm tra bảng lương toàn công ty",
+            RoleGrantPolicy.OWNER_APPROVAL
         ),
         new RoleDefinition(
             "PAYROLL_APPROVER",
             "Người duyệt bảng lương",
-            "Phê duyệt, xác nhận thanh toán và khóa kỳ lương"
+            "Phê duyệt, xác nhận thanh toán và khóa kỳ lương",
+            RoleGrantPolicy.OWNER_APPROVAL
         ),
         new RoleDefinition(
             "DIRECTOR",
             "Giám đốc",
-            "Điều hành công ty và phê duyệt cuối các quyết định nghiệp vụ trên toàn công ty"
+            "Điều hành công ty và phê duyệt cuối các quyết định nghiệp vụ trên toàn công ty",
+            RoleGrantPolicy.OWNER_APPROVAL
         ),
         new RoleDefinition(
             "COMPANY_OWNER",
             "Chủ sở hữu doanh nghiệp",
-            "Quản trị tài khoản, quyền truy cập và cấu hình trong phạm vi doanh nghiệp"
+            "Quản trị tài khoản, quyền truy cập và cấu hình trong phạm vi doanh nghiệp",
+            RoleGrantPolicy.SYSTEM_ONLY
         ),
         new RoleDefinition(
             "SYSTEM_ADMIN",
             "Quản trị viên hệ thống",
-            "Khởi tạo Chủ sở hữu doanh nghiệp và tạm thời quản lý RBAC hệ thống"
+            "Khởi tạo Chủ sở hữu doanh nghiệp và tạm thời quản lý RBAC hệ thống",
+            RoleGrantPolicy.SYSTEM_ONLY
         )
     );
 
@@ -94,6 +117,7 @@ public class RoleSeeder implements ApplicationRunner {
                 validateSystemRole(existingRole);
                 existingRole.setName(definition.name());
                 existingRole.setDescription(definition.description());
+                existingRole.setGrantPolicy(definition.grantPolicy());
                 existingRole.setUpdatedAt(Instant.now());
                 continue;
             }
@@ -104,6 +128,7 @@ public class RoleSeeder implements ApplicationRunner {
                 .name(definition.name())
                 .description(definition.description())
                 .isSystem(true)
+                .grantPolicy(definition.grantPolicy())
                 .createdAt(now)
                 .updatedAt(now)
                 .build());
@@ -120,6 +145,11 @@ public class RoleSeeder implements ApplicationRunner {
         }
     }
 
-    private record RoleDefinition(String code, String name, String description) {
+    private record RoleDefinition(
+        String code,
+        String name,
+        String description,
+        RoleGrantPolicy grantPolicy
+    ) {
     }
 }
