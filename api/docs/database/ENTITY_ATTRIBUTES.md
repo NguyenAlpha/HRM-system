@@ -288,7 +288,7 @@
 
 **Mô tả**: Gán vai trò cho tài khoản kèm phạm vi hiệu lực.
 
-**Quan hệ**: Nhiều-một tới `Account` (`account`, `grantedByAccount`), `Role`, `OrganizationUnit` (nullable), `WorkLocation` (nullable). Một-nhiều tới `AccountPermissionOverride`.
+**Quan hệ**: Nhiều-một tới `Account` (`account`, `grantedByAccount`, `revokedByAccount`), `Role`, `OrganizationUnit` (nullable), `WorkLocation` (nullable). Một-nhiều tới `AccountPermissionOverride`.
 
 | Thuộc tính | Kiểu Java | Cột DB | Ràng buộc | Ý nghĩa |
 |---|---|---|---|---|
@@ -303,6 +303,9 @@
 | `grantedByAccount` | `Account` | `granted_by_account_id` | FK, NOT NULL | Người cấp |
 | `reason` | `String` | `reason` | | Lý do cấp quyền |
 | `createdAt` | `Instant` | `created_at` | NOT NULL | Thời điểm tạo |
+| `revokedByAccount` | `Account` | `revoked_by_account_id` | FK, nullable | Người thu hồi role |
+| `revokedAt` | `Instant` | `revoked_at` | nullable | Thời điểm thu hồi |
+| `revocationReason` | `String` | `revocation_reason` | nullable | Lý do thu hồi |
 
 ### Entity `AccountPermissionOverride` (bảng `account_permission_overrides`)
 

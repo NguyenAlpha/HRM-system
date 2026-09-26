@@ -323,6 +323,9 @@ erDiagram
 | `granted_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người cấp |
 | `reason` | TEXT | | Lý do cấp quyền |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
+| `revoked_by_account_id` | BIGINT | FK → accounts | Người thu hồi role |
+| `revoked_at` | TIMESTAMPTZ | | Thời điểm thu hồi; assignment mất hiệu lực ngay |
+| `revocation_reason` | TEXT | | Lý do thu hồi |
 
 > Quy tắc scope:
 >
@@ -331,6 +334,8 @@ erDiagram
 > - `LOCATION`: chỉ `work_location_id` có giá trị.
 > - `ORG_UNIT` và `LOCATION` bao gồm nút được gán cùng toàn bộ nút con.
 > - Một tài khoản có thể có nhiều vai trò; các quyền được cộng dồn.
+> - Thu hồi role không xóa assignment. Ba field `revoked_by_account_id`, `revoked_at`, `revocation_reason` phải cùng null hoặc cùng có giá trị.
+> - `effective_to` không được trước `effective_from`.
 
 ### `account_permission_overrides` — Ngoại lệ quyền của từng nhân viên
 
