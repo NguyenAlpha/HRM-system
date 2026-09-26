@@ -33,6 +33,8 @@ Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` được seed sẵn
 
 Role tùy chỉnh không bị giới hạn bởi bảng policy trên nhưng vẫn phải tuân thủ cấu trúc scope. Account nhận role nghiệp vụ phải liên kết với employee và không được ở trạng thái `DISABLED`.
 
+Workflow bootstrap được phép gọi đường gán role nội bộ cho `DIRECTOR` hoặc `COMPANY_OWNER` sau khi chính workflow đã kiểm tra permission chuyên biệt. Đường nội bộ này không phải endpoint và không làm cho API role assignment tổng quát được phép gán `COMPANY_OWNER`.
+
 Để khởi tạo đồng thời employee, account và role `DIRECTOR`, xem [Organization Director Administration](./ORGANIZATION_DIRECTOR_ADMIN.md).
 
 ### Quy tắc scope

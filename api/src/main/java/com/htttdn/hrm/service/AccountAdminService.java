@@ -1,9 +1,6 @@
 package com.htttdn.hrm.service;
 
 import java.time.Instant;
-import java.time.LocalDate;
-import java.util.Locale;
-import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,52 +14,31 @@ import com.htttdn.hrm.dto.response.account.AccountProvisioningResponse;
 import com.htttdn.hrm.dto.response.account.AccountResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
-import com.htttdn.hrm.entity.AccountRoleAssignment;
-import com.htttdn.hrm.entity.Employee;
-import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.enums.AccountStatus;
-import com.htttdn.hrm.entity.enums.EmploymentStatus;
-import com.htttdn.hrm.entity.enums.RoleScopeType;
-import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
-import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
-import com.htttdn.hrm.repository.EmployeeRepository;
-import com.htttdn.hrm.repository.RoleRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
 @Service
 @Transactional
 public class AccountAdminService {
 
-    private static final String DEFAULT_EMPLOYEE_ROLE = "EMPLOYEE";
-    private static final Set<EmploymentStatus> ACCOUNT_ELIGIBLE_STATUSES = Set.of(
-        EmploymentStatus.PROBATION,
-        EmploymentStatus.ACTIVE
-    );
-
     private final AccountRepository accountRepository;
-    private final EmployeeRepository employeeRepository;
-    private final RoleRepository roleRepository;
-    private final AccountRoleAssignmentRepository roleAssignmentRepository;
+    private final AccountProvisioningService accountProvisioningService;
     private final AccountActivationService accountActivationService;
     private final RefreshTokenService refreshTokenService;
     private final CurrentAccountProvider currentAccountProvider;
 
     public AccountAdminService(
         AccountRepository accountRepository,
-        EmployeeRepository employeeRepository,
-        RoleRepository roleRepository,
-        AccountRoleAssignmentRepository roleAssignmentRepository,
+        AccountProvisioningService accountProvisioningService,
         AccountActivationService accountActivationService,
         RefreshTokenService refreshTokenService,
         CurrentAccountProvider currentAccountProvider
     ) {
         this.accountRepository = accountRepository;
-        this.employeeRepository = employeeRepository;
-        this.roleRepository = roleRepository;
-        this.roleAssignmentRepository = roleAssignmentRepository;
+        this.accountProvisioningService = accountProvisioningService;
         this.accountActivationService = accountActivationService;
         this.refreshTokenService = refreshTokenService;
         this.currentAccountProvider = currentAccountProvider;
@@ -70,43 +46,11 @@ public class AccountAdminService {
 
     @PreAuthorize("hasAuthority('account.manage')")
     public AccountProvisioningResponse create(CreateAccountRequest request) {
-        Long actorAccountId = currentAccountProvider.accountId();
-        Account actor = findAccount(actorAccountId);
-        Employee employee = findEligibleEmployee(request.employeeId());
-
-        if (accountRepository.findByEmployeeId(employee.getId()).isPresent()) {
-            throw new ConflictException(
-                ErrorCode.EMPLOYEE_ACCOUNT_EXISTS,
-                "Employee already has an account",
-                "employeeId"
-            );
-        }
-
-        String username = request.username().trim();
-        if (accountRepository.existsByUsername(username)) {
-            throw new ConflictException(ErrorCode.USERNAME_TAKEN, "Username is already taken", "username");
-        }
-
-        String email = requireWorkEmail(employee);
-        if (accountRepository.existsByEmailIgnoreCase(email)) {
-            throw new ConflictException(ErrorCode.EMAIL_TAKEN, "Email is already taken", "employeeId");
-        }
-
-        Instant now = Instant.now();
-        Account account = accountRepository.save(Account.builder()
-            .employee(employee)
-            .username(username)
-            .email(email)
-            .passwordHash(null)
-            .status(AccountStatus.PENDING)
-            .failedLoginCount(0)
-            .createdAt(now)
-            .updatedAt(now)
-            .build());
-
-        assignDefaultEmployeeRole(account, actor, now);
-        AccountInvitationResponse invitation = issueInvitation(account.getId(), actorAccountId);
-        return new AccountProvisioningResponse(toResponse(account), invitation);
+        return accountProvisioningService.provisionPendingAccount(
+            request.employeeId(),
+            request.username(),
+            currentAccountProvider.accountId()
+        );
     }
 
     @Transactional(readOnly = true)
@@ -185,49 +129,6 @@ public class AccountAdminService {
         account.setLockedUntil(null);
         account.setUpdatedAt(Instant.now());
         return toResponse(account);
-    }
-
-    private Employee findEligibleEmployee(Long employeeId) {
-        Employee employee = employeeRepository.findByIdAndDeletedAtIsNull(employeeId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.EMPLOYEE_NOT_FOUND,
-                "Employee not found: " + employeeId
-            ));
-        if (!ACCOUNT_ELIGIBLE_STATUSES.contains(employee.getEmploymentStatus())) {
-            throw new ConflictException(
-                ErrorCode.ACCOUNT_PROVISIONING_NOT_ALLOWED,
-                "Only active or probationary employees can receive an account",
-                "employeeId"
-            );
-        }
-        return employee;
-    }
-
-    private String requireWorkEmail(Employee employee) {
-        if (employee.getWorkEmail() == null || employee.getWorkEmail().isBlank()) {
-            throw new BusinessException(
-                ErrorCode.VALIDATION_ERROR,
-                "Employee must have a work email before account creation",
-                "employeeId"
-            );
-        }
-        return employee.getWorkEmail().trim().toLowerCase(Locale.ROOT);
-    }
-
-    private void assignDefaultEmployeeRole(Account account, Account actor, Instant now) {
-        Role role = roleRepository.findByCodeAndDeletedAtIsNull(DEFAULT_EMPLOYEE_ROLE)
-            .filter(candidate -> Boolean.TRUE.equals(candidate.getIsActive()))
-            .orElseThrow(() -> new IllegalStateException("Active EMPLOYEE seed role not found"));
-
-        roleAssignmentRepository.save(AccountRoleAssignment.builder()
-            .account(account)
-            .role(role)
-            .scopeType(RoleScopeType.SELF)
-            .effectiveFrom(LocalDate.now())
-            .grantedByAccount(actor)
-            .reason("Default employee access assigned during account provisioning")
-            .createdAt(now)
-            .build());
     }
 
     private AccountInvitationResponse issueInvitation(Long accountId, Long actorAccountId) {

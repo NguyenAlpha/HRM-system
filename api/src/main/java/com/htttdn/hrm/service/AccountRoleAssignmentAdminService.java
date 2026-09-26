@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.request.account.AssignAccountRoleRequest;
@@ -89,6 +90,42 @@ public class AccountRoleAssignmentAdminService {
 
     @PreAuthorize("hasAuthority('account.role.assign')")
     public AccountRoleAssignmentResponse assign(Long accountId, AssignAccountRoleRequest request) {
+        return assignInternal(accountId, request, currentAccountProvider.accountId(), false);
+    }
+
+    /**
+     * Internal entry point for an authorized bootstrap workflow. It deliberately
+     * supports only company-wide roles that have a dedicated provisioning flow.
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public AccountRoleAssignmentResponse assignProvisionedCompanyRole(
+        Long accountId,
+        String roleCode,
+        LocalDate effectiveFrom,
+        String reason,
+        Long actorAccountId
+    ) {
+        if (!DIRECTOR_ROLE.equals(roleCode) && !COMPANY_OWNER_ROLE.equals(roleCode)) {
+            throw new IllegalArgumentException("Unsupported provisioned company role: " + roleCode);
+        }
+        AssignAccountRoleRequest request = new AssignAccountRoleRequest(
+            roleCode,
+            RoleScopeType.COMPANY,
+            null,
+            null,
+            effectiveFrom,
+            null,
+            reason
+        );
+        return assignInternal(accountId, request, actorAccountId, true);
+    }
+
+    private AccountRoleAssignmentResponse assignInternal(
+        Long accountId,
+        AssignAccountRoleRequest request,
+        Long actorAccountId,
+        boolean allowProvisionedRole
+    ) {
         Account account = findAccountForUpdate(accountId);
         validateTargetAccount(account);
 
@@ -98,7 +135,7 @@ public class AccountRoleAssignmentAdminService {
                 ErrorCode.ROLE_NOT_FOUND,
                 "Active role not found: " + request.roleCode()
             ));
-        validateRoleCanBeManaged(role);
+        validateRoleCanBeManaged(role, allowProvisionedRole);
         validateScopePolicy(role, request.scopeType());
         validatePeriod(request.effectiveFrom(), request.effectiveTo());
 
@@ -108,7 +145,7 @@ public class AccountRoleAssignmentAdminService {
             ensureSingleDirector(role, request.effectiveFrom(), request.effectiveTo());
         }
 
-        Account actor = findAccount(currentAccountProvider.accountId());
+        Account actor = findAccount(actorAccountId);
         AccountRoleAssignment assignment = roleAssignmentRepository.save(AccountRoleAssignment.builder()
             .account(account)
             .role(role)
@@ -136,7 +173,7 @@ public class AccountRoleAssignmentAdminService {
                 ErrorCode.ROLE_ASSIGNMENT_NOT_FOUND,
                 "Role assignment not found: " + assignmentId
             ));
-        validateRoleCanBeManaged(assignment.getRole());
+        validateRoleCanBeManaged(assignment.getRole(), false);
         if (assignment.getRevokedAt() != null) {
             return toResponse(assignment);
         }
@@ -171,7 +208,7 @@ public class AccountRoleAssignmentAdminService {
         }
     }
 
-    private void validateRoleCanBeManaged(Role role) {
+    private void validateRoleCanBeManaged(Role role, boolean allowProvisionedRole) {
         if (EMPLOYEE_ROLE.equals(role.getCode())) {
             throw new ConflictException(
                 ErrorCode.ROLE_ASSIGNMENT_NOT_ALLOWED,
@@ -184,7 +221,7 @@ public class AccountRoleAssignmentAdminService {
                 "The SYSTEM_ADMIN role cannot be managed through business role assignments"
             );
         }
-        if (COMPANY_OWNER_ROLE.equals(role.getCode())) {
+        if (COMPANY_OWNER_ROLE.equals(role.getCode()) && !allowProvisionedRole) {
             throw new ConflictException(
                 ErrorCode.ROLE_ASSIGNMENT_NOT_ALLOWED,
                 "The COMPANY_OWNER role must be managed through the dedicated ownership workflow"

@@ -10,7 +10,7 @@ Khởi tạo người đứng đầu doanh nghiệp khi người này chưa có 
 |:---------|:-----------|
 | `POST /api/admin/organization/director` | `organization.director.provision` |
 
-Endpoint yêu cầu Bearer token. `COMPANY_OWNER` được seed permission `organization.director.provision` cùng các permission nội bộ `account.manage` và `account.role.assign` cần để hoàn thành workflow. `SYSTEM_ADMIN` không được khởi tạo Director.
+Endpoint yêu cầu Bearer token. `COMPANY_OWNER` được seed permission `organization.director.provision`. Đây là permission duy nhất cần cho toàn bộ workflow; các bước tạo account và gán role dùng component nội bộ, không gọi vòng qua endpoint quản trị nên không yêu cầu thêm `account.manage` hoặc `account.role.assign`. `SYSTEM_ADMIN` không được khởi tạo Director.
 
 `DIRECTOR` không được cấp permission này nên không thể tự tạo người kế nhiệm.
 
@@ -67,6 +67,8 @@ Employee ACTIVE
 ```
 
 Nếu bất kỳ bước nào thất bại, toàn bộ dữ liệu vừa tạo được rollback.
+
+Workflow điều phối các component nội bộ dùng chung theo đúng thứ tự trên. Các entry point nội bộ này không có endpoint riêng và không tự kiểm tra permission; authorization nằm tại `OrganizationDirectorAdminController` và `OrganizationDirectorProvisioningService`, còn transaction nằm tại workflow. Các component yêu cầu transaction đã tồn tại (`MANDATORY`) để không thể vô tình commit từng phần. Cấu trúc này cũng là nền tảng cho workflow khởi tạo Company Owner mà không sao chép logic tạo employee, account, lời mời và role nền.
 
 Hệ thống không cho hai assignment `DIRECTOR` chồng thời gian. Có thể chuẩn bị người kế nhiệm trong tương lai chỉ khi assignment hiện tại đã có `effectiveTo` không chồng với `effectiveFrom` mới.
 
@@ -129,7 +131,7 @@ Raw activation token chỉ xuất hiện một lần trong response để quản
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Request không hợp lệ |
 | 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
-| 403 | `FORBIDDEN` | Không có đủ permission provisioning/account/role assignment |
+| 403 | `FORBIDDEN` | Không có `organization.director.provision` |
 | 409 | `EMPLOYEE_CODE_TAKEN` | Mã employee đã tồn tại |
 | 409 | `EMAIL_TAKEN` | Work email đã tồn tại ở employee hoặc account |
 | 409 | `USERNAME_TAKEN` | Username đã tồn tại |
