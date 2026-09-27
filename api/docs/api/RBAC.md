@@ -587,11 +587,11 @@ Ba permission chuẩn bị cho workflow cấp tài khoản và đề xuất role
 
 | Permission | Role hệ thống được seed | Mục đích |
 |:-----------|:------------------------|:---------|
-| `account.provision` | `HR_STAFF`, `COMPANY_OWNER` | Tạo account cho employee hợp lệ; endpoint sẽ dùng permission này khi workflow provisioning được triển khai |
+| `account.provision` | `HR_STAFF`, `COMPANY_OWNER` | Tạo account cho employee hợp lệ qua `POST /api/admin/accounts` trong scope được giao |
 | `role.assignment.request` | `HR_STAFF` | Gửi đề xuất cấp role nghiệp vụ |
 | `role.assignment.approve` | `COMPANY_OWNER` | Duyệt hoặc từ chối đề xuất; là `SYSTEM_ONLY` nên không thể gán cho custom role qua API RBAC |
 
-Việc seed permission không tự tạo endpoint và không tự cấp role cho account. Các API tương ứng được triển khai ở các nhóm workflow tiếp theo.
+Permission đề xuất và phê duyệt role chưa tự cấp role cho account; các API tương ứng được triển khai ở các nhóm workflow tiếp theo.
 
 `SYSTEM_ADMIN` sử dụng riêng permission `organization.company_owner.bootstrap` tại `POST /api/admin/organization/company-owner` để tạo Company Owner đầu tiên. Workflow và giới hạn chống tạo trùng được mô tả trong [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md).
 

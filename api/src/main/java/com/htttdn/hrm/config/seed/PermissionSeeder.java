@@ -45,7 +45,12 @@ public class PermissionSeeder implements ApplicationRunner {
         ),
 
         permission("account.read", "Xem tài khoản", PermissionModule.ACCOUNT, "Xem các tài khoản đăng nhập trong hệ thống"),
-        permission("account.manage", "Quản lý tài khoản", PermissionModule.ACCOUNT, "Tạo và quản lý tài khoản đăng nhập"),
+        permission(
+            "account.manage",
+            "Quản lý tài khoản",
+            PermissionModule.ACCOUNT,
+            "Khóa, mở lại và quản lý trạng thái tài khoản đăng nhập"
+        ),
         permission(
             "account.provision",
             "Cấp tài khoản nhân viên",

@@ -12,7 +12,7 @@ Khởi tạo HR Staff đầu tiên khi doanh nghiệp chưa có người làm ng
 
 Endpoint yêu cầu Bearer token. `COMPANY_OWNER` được seed permission này; `SYSTEM_ADMIN`, `DIRECTOR` và `HR_STAFF` không có quyền bootstrap HR Staff.
 
-Đây là permission duy nhất cần cho workflow. Các bước tạo employee, account và role assignment gọi component nội bộ nên không yêu cầu đồng thời `employee.manage`, `account.manage` hoặc `account.role.assign`.
+Đây là permission duy nhất cần cho workflow. Các bước tạo employee, account và role assignment gọi component nội bộ nên không yêu cầu đồng thời `employee.manage`, `account.provision`, `account.manage` hoặc `account.role.assign`.
 
 ---
 
@@ -67,7 +67,7 @@ Toàn bộ workflow chạy trong một transaction. Nếu một bước thất b
 Role `HR_STAFF` được pessimistic lock khi kiểm tra. Endpoint từ chối nếu đã có bất kỳ assignment `HR_STAFF` chưa bị thu hồi, kể cả assignment bắt đầu trong tương lai. Điều này chỉ giới hạn workflow bootstrap đầu tiên; sau đó doanh nghiệp vẫn có thể bổ nhiệm nhiều HR Staff qua quy trình thông thường:
 
 1. HR Staff hiện tại tạo hồ sơ employee.
-2. Company Owner tạo account cho employee.
+2. HR hoặc Company Owner có `account.provision` cấp account cho employee.
 3. Company Owner gán thêm role `HR_STAFF/COMPANY` qua API role assignment.
 
 ### Response `201 Created`

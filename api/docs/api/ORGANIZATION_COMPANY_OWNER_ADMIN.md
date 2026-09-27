@@ -12,7 +12,7 @@ Khởi tạo Chủ sở hữu doanh nghiệp đầu tiên từ tài khoản qu�
 
 Endpoint yêu cầu Bearer token. Permission này có `assignmentPolicy = SYSTEM_ONLY` và chỉ được seed cho system role `SYSTEM_ADMIN`; Company Owner, Director và custom role không thể tự nhận permission này qua API RBAC.
 
-Đây là permission duy nhất cần cho toàn bộ workflow. Các bước tạo employee, account, activation token và role assignment dùng component nội bộ nên `SYSTEM_ADMIN` không cần `account.manage` hoặc `account.role.assign`.
+Đây là permission duy nhất cần cho toàn bộ workflow. Các bước tạo employee, account, activation token và role assignment dùng component nội bộ nên `SYSTEM_ADMIN` không cần `account.provision`, `account.manage` hoặc `account.role.assign`.
 
 ---
 

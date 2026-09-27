@@ -24,28 +24,34 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 @Transactional
 public class AccountAdminService {
 
+    private static final String ACCOUNT_PROVISION = "account.provision";
+
     private final AccountRepository accountRepository;
     private final AccountProvisioningService accountProvisioningService;
     private final AccountActivationService accountActivationService;
     private final RefreshTokenService refreshTokenService;
     private final CurrentAccountProvider currentAccountProvider;
+    private final EmployeeAccessScopeService employeeAccessScopeService;
 
     public AccountAdminService(
         AccountRepository accountRepository,
         AccountProvisioningService accountProvisioningService,
         AccountActivationService accountActivationService,
         RefreshTokenService refreshTokenService,
-        CurrentAccountProvider currentAccountProvider
+        CurrentAccountProvider currentAccountProvider,
+        EmployeeAccessScopeService employeeAccessScopeService
     ) {
         this.accountRepository = accountRepository;
         this.accountProvisioningService = accountProvisioningService;
         this.accountActivationService = accountActivationService;
         this.refreshTokenService = refreshTokenService;
         this.currentAccountProvider = currentAccountProvider;
+        this.employeeAccessScopeService = employeeAccessScopeService;
     }
 
-    @PreAuthorize("hasAuthority('account.manage')")
+    @PreAuthorize("hasAuthority('account.provision')")
     public AccountProvisioningResponse create(CreateAccountRequest request) {
+        employeeAccessScopeService.requireEmployeeAccess(request.employeeId(), ACCOUNT_PROVISION);
         return accountProvisioningService.provisionPendingAccount(
             request.employeeId(),
             request.username(),
