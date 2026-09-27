@@ -2,7 +2,6 @@ package com.htttdn.hrm.service;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -50,35 +49,27 @@ public class AccountRoleAssignmentCommandService {
         HR_STAFF_ROLE
     );
 
-    private static final Map<String, Set<RoleScopeType>> SYSTEM_ROLE_SCOPES = Map.of(
-        "TEAM_LEAD", Set.of(RoleScopeType.ORG_UNIT),
-        "WAREHOUSE_SUPERVISOR", Set.of(RoleScopeType.LOCATION),
-        "BRANCH_MANAGER", Set.of(RoleScopeType.LOCATION),
-        HR_STAFF_ROLE, Set.of(RoleScopeType.COMPANY),
-        "PAYROLL_ACCOUNTANT", Set.of(RoleScopeType.COMPANY),
-        "PAYROLL_APPROVER", Set.of(RoleScopeType.COMPANY),
-        DIRECTOR_ROLE, Set.of(RoleScopeType.COMPANY),
-        COMPANY_OWNER_ROLE, Set.of(RoleScopeType.COMPANY)
-    );
-
     private final AccountRepository accountRepository;
     private final RoleRepository roleRepository;
     private final AccountRoleAssignmentRepository roleAssignmentRepository;
     private final OrganizationUnitRepository organizationUnitRepository;
     private final WorkLocationRepository workLocationRepository;
+    private final RoleAssignmentPolicy roleAssignmentPolicy;
 
     public AccountRoleAssignmentCommandService(
         AccountRepository accountRepository,
         RoleRepository roleRepository,
         AccountRoleAssignmentRepository roleAssignmentRepository,
         OrganizationUnitRepository organizationUnitRepository,
-        WorkLocationRepository workLocationRepository
+        WorkLocationRepository workLocationRepository,
+        RoleAssignmentPolicy roleAssignmentPolicy
     ) {
         this.accountRepository = accountRepository;
         this.roleRepository = roleRepository;
         this.roleAssignmentRepository = roleAssignmentRepository;
         this.organizationUnitRepository = organizationUnitRepository;
         this.workLocationRepository = workLocationRepository;
+        this.roleAssignmentPolicy = roleAssignmentPolicy;
     }
 
     public AccountRoleAssignment assignDirect(
@@ -200,7 +191,7 @@ public class AccountRoleAssignmentCommandService {
                 "Role not found: " + request.roleCode()
             ));
         validateGrantPolicy(role, flow);
-        validateScopePolicy(role, request.scopeType());
+        roleAssignmentPolicy.validateScope(role, request.scopeType());
         validatePeriod(request.effectiveFrom(), request.effectiveTo());
 
         ScopeTarget scopeTarget = resolveScopeTarget(request);
@@ -247,17 +238,6 @@ public class AccountRoleAssignmentCommandService {
             throw new ConflictException(
                 ErrorCode.ROLE_ASSIGNMENT_NOT_ALLOWED,
                 "Role " + role.getCode() + " cannot be assigned through " + flow
-            );
-        }
-    }
-
-    private void validateScopePolicy(Role role, RoleScopeType scopeType) {
-        Set<RoleScopeType> allowedScopes = SYSTEM_ROLE_SCOPES.get(role.getCode());
-        if (allowedScopes != null && !allowedScopes.contains(scopeType)) {
-            throw new BusinessException(
-                ErrorCode.VALIDATION_ERROR,
-                role.getCode() + " only supports scope " + allowedScopes,
-                "scopeType"
             );
         }
     }
