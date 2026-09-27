@@ -1,5 +1,7 @@
 package com.htttdn.hrm.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -20,8 +22,10 @@ import com.htttdn.hrm.dto.request.roleassignment.CancelRoleAssignmentRequest;
 import com.htttdn.hrm.dto.request.roleassignment.CreateRoleAssignmentRequest;
 import com.htttdn.hrm.dto.request.roleassignment.RejectRoleAssignmentRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
+import com.htttdn.hrm.dto.response.roleassignment.RoleAssignmentOptionResponse;
 import com.htttdn.hrm.dto.response.roleassignment.RoleAssignmentRequestResponse;
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
+import com.htttdn.hrm.service.RoleAssignmentOptionService;
 import com.htttdn.hrm.service.RoleAssignmentRequestService;
 
 import jakarta.validation.Valid;
@@ -31,9 +35,20 @@ import jakarta.validation.Valid;
 public class RoleAssignmentRequestController {
 
     private final RoleAssignmentRequestService requestService;
+    private final RoleAssignmentOptionService optionService;
 
-    public RoleAssignmentRequestController(RoleAssignmentRequestService requestService) {
+    public RoleAssignmentRequestController(
+        RoleAssignmentRequestService requestService,
+        RoleAssignmentOptionService optionService
+    ) {
         this.requestService = requestService;
+        this.optionService = optionService;
+    }
+
+    @GetMapping("/available-roles")
+    @PreAuthorize("hasAuthority('role.assignment.request')")
+    public ApiResult<List<RoleAssignmentOptionResponse>> listAvailableRoles() {
+        return ApiResult.ok(optionService.listAvailableRoles());
     }
 
     @PostMapping

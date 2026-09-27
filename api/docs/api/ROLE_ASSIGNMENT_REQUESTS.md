@@ -8,6 +8,7 @@ Workflow đề xuất và phê duyệt cấp role nghiệp vụ cho account. Req
 
 | Endpoint | Permission |
 |:---------|:-----------|
+| `GET /api/role-assignment-requests/available-roles` | `role.assignment.request` |
 | `POST /api/role-assignment-requests` | `role.assignment.request` |
 | `GET /api/role-assignment-requests` | `role.assignment.request` hoặc `role.assignment.approve` |
 | `GET /api/role-assignment-requests/{requestId}` | `role.assignment.request` hoặc `role.assignment.approve` |
@@ -21,6 +22,56 @@ Tất cả endpoint yêu cầu Bearer token. `HR_STAFF` được seed `role.assi
 - Người có quyền phê duyệt xem được toàn bộ request.
 - Chỉ người tạo mới được hủy request và chỉ Company Owner mới được duyệt hoặc từ chối.
 - Mọi thao tác xử lý chỉ áp dụng với request đang `PENDING`.
+
+---
+
+## GET `/api/role-assignment-requests/available-roles`
+
+Trả danh sách không phân trang để HR chọn role khi lập đề xuất. Endpoint chỉ trả role chưa bị xóa mềm có `grantPolicy=HR_ASSIGNABLE` hoặc `OWNER_APPROVAL`; các role `AUTO` và `SYSTEM_ONLY` không xuất hiện vì workflow đề xuất không thể cấp chúng.
+
+Kết quả sắp xếp theo tên role, sau đó theo code. Đây là danh mục nghiệp vụ chỉ đọc, không yêu cầu `rbac.manage` và không cho phép HR sửa role hoặc permission.
+
+### Response `200 OK`
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "roleId": 8,
+      "roleCode": "DIRECTOR",
+      "roleName": "Giám đốc",
+      "roleDescription": "Điều hành công ty và phê duyệt cuối các quyết định nghiệp vụ trên toàn công ty",
+      "grantPolicy": "OWNER_APPROVAL",
+      "requiresApproval": true,
+      "allowedScopeTypes": ["COMPANY"]
+    },
+    {
+      "roleId": 2,
+      "roleCode": "TEAM_LEAD",
+      "roleName": "Trưởng nhóm",
+      "roleDescription": "Quản lý nhân viên trong đơn vị tổ chức được phân công",
+      "grantPolicy": "HR_ASSIGNABLE",
+      "requiresApproval": false,
+      "allowedScopeTypes": ["ORG_UNIT"]
+    }
+  ],
+  "error": null
+}
+```
+
+`allowedScopeTypes` được lấy từ cùng policy mà backend dùng để validate request:
+
+- System role trả đúng scope cố định của role đó.
+- Custom role đang hỗ trợ `SELF`, `COMPANY`, `ORG_UNIT` và `LOCATION`.
+- `requiresApproval=true` tương ứng với `OWNER_APPROVAL`.
+
+### Lỗi
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
+| 403 | `FORBIDDEN` | Không có `role.assignment.request` |
 
 ---
 

@@ -593,6 +593,8 @@ Ba permission chuẩn bị cho workflow cấp tài khoản và đề xuất role
 
 Hai permission này được sử dụng bởi [Role Assignment Requests](./ROLE_ASSIGNMENT_REQUESTS.md). Role `HR_ASSIGNABLE` được tạo assignment ngay và lưu request `APPROVED` để audit; role `OWNER_APPROVAL` giữ `PENDING` cho tới khi Company Owner duyệt. Request bị từ chối hoặc hủy không cấp quyền cho account.
 
+HR Staff lấy danh sách role có thể đề xuất qua `GET /api/role-assignment-requests/available-roles`. Endpoint nghiệp vụ này chỉ đọc role `HR_ASSIGNABLE` và `OWNER_APPROVAL`, không mở các API quản trị RBAC và không yêu cầu `rbac.manage`.
+
 `SYSTEM_ADMIN` sử dụng riêng permission `organization.company_owner.bootstrap` tại `POST /api/admin/organization/company-owner` để tạo Company Owner đầu tiên. Workflow và giới hạn chống tạo trùng được mô tả trong [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md).
 
 ---
