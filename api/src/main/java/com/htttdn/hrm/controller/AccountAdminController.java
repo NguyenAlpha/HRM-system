@@ -34,7 +34,7 @@ public class AccountAdminController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('account.manage')")
+    @PreAuthorize("hasAuthority('account.provision')")
     public ApiResult<AccountProvisioningResponse> create(@Valid @RequestBody CreateAccountRequest request) {
         return ApiResult.ok(accountAdminService.create(request));
     }

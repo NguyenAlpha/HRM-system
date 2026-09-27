@@ -6,7 +6,9 @@ Account mới phải liên kết với một employee đã tồn tại. Hệ th�
 
 Role nghiệp vụ bổ sung được quản lý qua [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md), không truyền trong request tạo account.
 
-Director tiếp theo đi qua quy trình thông thường: HR tạo employee, Company Owner tạo account rồi gán role `DIRECTOR` qua [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md).
+`HR_STAFF` và `COMPANY_OWNER` được seed `account.provision`, nên có thể cấp account cho employee trong scope được giao. Permission này không cho phép xem danh sách account, reset mật khẩu, khóa hoặc mở lại account.
+
+Director tiếp theo đi qua quy trình thông thường: HR tạo employee và cấp account, sau đó Company Owner gán role `DIRECTOR` qua [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md).
 
 Company Owner đầu tiên phải được `SYSTEM_ADMIN` tạo qua workflow [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md), không dùng endpoint account tổng quát.
 
@@ -18,7 +20,7 @@ HR Staff đầu tiên được Company Owner tạo qua workflow [Organization HR
 
 | Endpoint | Permission |
 |:---------|:-----------|
-| `POST /api/admin/accounts` | `account.manage` |
+| `POST /api/admin/accounts` | `account.provision` |
 | `GET /api/admin/accounts` | `account.read` |
 | `GET /api/admin/accounts/{accountId}` | `account.read` |
 | `POST /api/admin/accounts/{accountId}/invitations/resend` | `account.activation.manage` |
@@ -26,7 +28,7 @@ HR Staff đầu tiên được Company Owner tạo qua workflow [Organization HR
 | `POST /api/admin/accounts/{accountId}/suspend` | `account.manage` |
 | `POST /api/admin/accounts/{accountId}/activate` | `account.manage` |
 
-Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` được seed sẵn toàn bộ permission trên. `SYSTEM_ADMIN` không được quản trị tài khoản nội bộ doanh nghiệp.
+Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` được seed sẵn toàn bộ permission trên. `HR_STAFF` chỉ được seed `account.provision` trong nhóm API này; các thao tác quản trị vòng đời account vẫn thuộc Company Owner. `SYSTEM_ADMIN` không được quản trị tài khoản nội bộ doanh nghiệp.
 
 Raw activation token là credential bí mật và chỉ xuất hiện trong response của thao tác tạo, gửi lại lời mời hoặc reset mật khẩu. API không lưu hoặc ghi log raw token. Khi có hạ tầng email, lớp gửi thông báo sẽ tiếp nhận token này và API không cần trả nó cho frontend quản trị.
 
@@ -51,6 +53,8 @@ Tạo account cho employee đã tồn tại. Đây là provisioning tài khoản
 | `username` | string | ✅ | 3–50 ký tự; chỉ gồm chữ, số, `.`, `_`, `-`; duy nhất |
 
 Email của account được lấy từ `Employee.workEmail`, trim và chuyển về chữ thường. Request không được tự truyền email hoặc role.
+
+Employee phải nằm trong scope `account.provision` của account đang đăng nhập. Với `HR_STAFF` và `COMPANY_OWNER` mặc định, scope này là `COMPANY`; nếu permission được ủy quyền cho custom role có scope hẹp hơn, backend tiếp tục giới hạn theo phân công hiện hành của employee.
 
 ### Response `201 Created`
 
@@ -86,7 +90,7 @@ Toàn bộ thao tác nằm trong một transaction:
 2. Gán role `EMPLOYEE` với scope `SELF`.
 3. Tạo token kích hoạt dùng một lần.
 
-Phần tạo account ở trên được triển khai bởi component provisioning nội bộ dùng chung. Endpoint này chỉ kiểm tra `account.manage` rồi chuyển `employeeId`, `username` và actor lấy từ Security Context vào component đó. Các workflow tổng hợp như khởi tạo Director tái sử dụng cùng component, không gọi vòng qua `AccountAdminController` và không phải có thêm `account.manage` nếu permission của workflow đã cho phép toàn bộ thao tác.
+Phần tạo account ở trên được triển khai bởi component provisioning nội bộ dùng chung. Endpoint này kiểm tra `account.provision` cùng scope của employee rồi chuyển `employeeId`, `username` và actor lấy từ Security Context vào component đó. Các workflow tổng hợp tái sử dụng cùng component, không gọi vòng qua `AccountAdminController` và không phải có thêm `account.provision` nếu permission chuyên biệt của workflow đã cho phép toàn bộ thao tác.
 
 ### Lỗi
 
@@ -94,7 +98,7 @@ Phần tạo account ở trên được triển khai bởi component provisionin
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Request sai hoặc employee chưa có work email |
 | 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
-| 403 | `FORBIDDEN` | Không có `account.manage` |
+| 403 | `FORBIDDEN` | Không có `account.provision`, employee nằm ngoài scope được giao hoặc không tồn tại trong scope có thể truy cập |
 | 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
 | 409 | `EMPLOYEE_ACCOUNT_EXISTS` | Employee đã có account |
 | 409 | `ACCOUNT_PROVISIONING_NOT_ALLOWED` | Employee đã nghỉ việc/chấm dứt/nghỉ hưu |
