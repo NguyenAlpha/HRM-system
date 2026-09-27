@@ -22,18 +22,21 @@ public class OrganizationHrStaffProvisioningService {
 
     private final EmployeeProvisioningService employeeProvisioningService;
     private final AccountProvisioningService accountProvisioningService;
-    private final AccountRoleAssignmentAdminService roleAssignmentAdminService;
+    private final AccountRoleAssignmentCommandService roleAssignmentCommandService;
+    private final AccountRoleAssignmentMapper roleAssignmentMapper;
     private final CurrentAccountProvider currentAccountProvider;
 
     public OrganizationHrStaffProvisioningService(
         EmployeeProvisioningService employeeProvisioningService,
         AccountProvisioningService accountProvisioningService,
-        AccountRoleAssignmentAdminService roleAssignmentAdminService,
+        AccountRoleAssignmentCommandService roleAssignmentCommandService,
+        AccountRoleAssignmentMapper roleAssignmentMapper,
         CurrentAccountProvider currentAccountProvider
     ) {
         this.employeeProvisioningService = employeeProvisioningService;
         this.accountProvisioningService = accountProvisioningService;
-        this.roleAssignmentAdminService = roleAssignmentAdminService;
+        this.roleAssignmentCommandService = roleAssignmentCommandService;
+        this.roleAssignmentMapper = roleAssignmentMapper;
         this.currentAccountProvider = currentAccountProvider;
     }
 
@@ -54,12 +57,14 @@ public class OrganizationHrStaffProvisioningService {
             request.account().username(),
             actorAccountId
         );
-        AccountRoleAssignmentResponse hrStaffAssignment = roleAssignmentAdminService.assignProvisionedCompanyRole(
-            accountProvisioning.account().id(),
-            HR_STAFF_ROLE,
-            request.effectiveFrom(),
-            request.appointmentReason(),
-            actorAccountId
+        AccountRoleAssignmentResponse hrStaffAssignment = roleAssignmentMapper.toResponse(
+            roleAssignmentCommandService.assignProvisionedCompanyRole(
+                accountProvisioning.account().id(),
+                HR_STAFF_ROLE,
+                request.effectiveFrom(),
+                request.appointmentReason(),
+                actorAccountId
+            )
         );
 
         return new OrganizationHrStaffProvisioningResponse(
