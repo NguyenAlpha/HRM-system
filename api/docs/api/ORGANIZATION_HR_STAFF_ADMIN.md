@@ -68,7 +68,8 @@ Role `HR_STAFF` được pessimistic lock khi kiểm tra. Endpoint từ chối n
 
 1. HR Staff hiện tại tạo hồ sơ employee.
 2. HR hoặc Company Owner có `account.provision` cấp account cho employee.
-3. Company Owner gán thêm role `HR_STAFF/COMPANY` qua API role assignment.
+3. HR gửi đề xuất `HR_STAFF/COMPANY` qua [Role Assignment Requests](./ROLE_ASSIGNMENT_REQUESTS.md).
+4. Company Owner phê duyệt đề xuất; lúc đó assignment mới được tạo.
 
 ### Response `201 Created`
 

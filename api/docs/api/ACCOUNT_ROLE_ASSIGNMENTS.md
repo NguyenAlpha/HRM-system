@@ -43,11 +43,11 @@ Mọi đường tạo assignment dùng chung `AccountRoleAssignmentCommandServic
 
 - Company Owner gán trực tiếp dùng entry point `assignDirect`.
 - Workflow bootstrap dùng `assignProvisionedCompanyRole` với whitelist `COMPANY_OWNER`, `DIRECTOR`, `HR_STAFF`.
-- Workflow đề xuất role ở bước tiếp theo sẽ dùng `assignHrAssignableRequest` hoặc `assignOwnerApprovedRequest` theo đúng `grantPolicy`.
+- [Workflow đề xuất role](./ROLE_ASSIGNMENT_REQUESTS.md) dùng `assignHrAssignableRequest` hoặc `assignOwnerApprovedRequest` theo đúng `grantPolicy`.
 
 Component command không phải API công khai và không tự thay thế authorization ở workflow gọi nó. Nó chịu trách nhiệm khóa account/role, kiểm tra account đích, chính sách cấp role, scope, thời gian, assignment chồng lấn, invariant Director/Company Owner và ghi nhận actor. Nhờ đó controller và workflow không tự viết lại logic tạo `AccountRoleAssignment`.
 
-Company Owner đầu tiên đã mang role `DIRECTOR`. Khi chuyển giao chức vụ, HR tạo employee và cấp account, sau đó Company Owner gán `DIRECTOR` qua API này khi assignment cũ không còn chồng thời gian.
+Company Owner đầu tiên đã mang role `DIRECTOR`. Khi chuyển giao chức vụ, HR tạo employee, cấp account và gửi đề xuất `DIRECTOR`; Company Owner phê duyệt khi assignment cũ không còn chồng thời gian. Company Owner vẫn có thể dùng API quản trị này để gán trực tiếp khi cần xử lý đặc biệt.
 
 ### Quy tắc scope
 

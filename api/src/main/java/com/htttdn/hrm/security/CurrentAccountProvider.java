@@ -12,11 +12,7 @@ import com.htttdn.hrm.exception.UnauthorizedException;
 public class CurrentAccountProvider {
 
     public Long accountId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw unauthorized();
-        }
-
+        Authentication authentication = authentication();
         Object principal = authentication.getPrincipal();
         if (principal instanceof Jwt jwt) {
             Object accountId = jwt.getClaim("accountId");
@@ -26,6 +22,19 @@ public class CurrentAccountProvider {
         }
 
         throw unauthorized();
+    }
+
+    public boolean hasAuthority(String authority) {
+        return authentication().getAuthorities().stream()
+            .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(authority));
+    }
+
+    private Authentication authentication() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw unauthorized();
+        }
+        return authentication;
     }
 
     private UnauthorizedException unauthorized() {
