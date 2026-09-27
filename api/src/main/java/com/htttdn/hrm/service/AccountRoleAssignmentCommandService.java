@@ -89,6 +89,20 @@ public class AccountRoleAssignmentCommandService {
         return assignInternal(accountId, request, actorAccountId, AssignmentFlow.DIRECT);
     }
 
+    public RequestCandidate prepareRequest(Long accountId, AssignAccountRoleRequest request) {
+        AssignmentCandidate candidate = validateCandidate(
+            accountId,
+            request,
+            AssignmentFlow.REQUEST_SUBMISSION
+        );
+        return new RequestCandidate(
+            candidate.account(),
+            candidate.role(),
+            candidate.scopeTarget().organizationUnit(),
+            candidate.scopeTarget().workLocation()
+        );
+    }
+
     public AccountRoleAssignment assignProvisionedCompanyRole(
         Long accountId,
         String roleCode,
@@ -155,6 +169,28 @@ public class AccountRoleAssignmentCommandService {
         Long actorAccountId,
         AssignmentFlow flow
     ) {
+        AssignmentCandidate candidate = validateCandidate(accountId, request, flow);
+
+        Account actor = findAccount(actorAccountId);
+        return roleAssignmentRepository.save(AccountRoleAssignment.builder()
+            .account(candidate.account())
+            .role(candidate.role())
+            .scopeType(request.scopeType())
+            .organizationUnit(candidate.scopeTarget().organizationUnit())
+            .workLocation(candidate.scopeTarget().workLocation())
+            .effectiveFrom(request.effectiveFrom())
+            .effectiveTo(request.effectiveTo())
+            .grantedByAccount(actor)
+            .reason(request.reason().trim())
+            .createdAt(Instant.now())
+            .build());
+    }
+
+    private AssignmentCandidate validateCandidate(
+        Long accountId,
+        AssignAccountRoleRequest request,
+        AssignmentFlow flow
+    ) {
         Account account = findAccountForUpdate(accountId);
         validateTargetAccount(account);
 
@@ -178,20 +214,7 @@ public class AccountRoleAssignmentCommandService {
         if (flow == AssignmentFlow.BOOTSTRAP && HR_STAFF_ROLE.equals(role.getCode())) {
             ensureFirstHrStaffDoesNotExist(role);
         }
-
-        Account actor = findAccount(actorAccountId);
-        return roleAssignmentRepository.save(AccountRoleAssignment.builder()
-            .account(account)
-            .role(role)
-            .scopeType(request.scopeType())
-            .organizationUnit(scopeTarget.organizationUnit())
-            .workLocation(scopeTarget.workLocation())
-            .effectiveFrom(request.effectiveFrom())
-            .effectiveTo(request.effectiveTo())
-            .grantedByAccount(actor)
-            .reason(request.reason().trim())
-            .createdAt(Instant.now())
-            .build());
+        return new AssignmentCandidate(account, role, scopeTarget);
     }
 
     private void validateTargetAccount(Account account) {
@@ -215,6 +238,8 @@ public class AccountRoleAssignmentCommandService {
             case DIRECT -> policy == RoleGrantPolicy.HR_ASSIGNABLE
                 || policy == RoleGrantPolicy.OWNER_APPROVAL;
             case BOOTSTRAP -> PROVISIONED_COMPANY_ROLES.contains(role.getCode());
+            case REQUEST_SUBMISSION -> policy == RoleGrantPolicy.HR_ASSIGNABLE
+                || policy == RoleGrantPolicy.OWNER_APPROVAL;
             case HR_ASSIGNABLE_REQUEST -> policy == RoleGrantPolicy.HR_ASSIGNABLE;
             case OWNER_APPROVED_REQUEST -> policy == RoleGrantPolicy.OWNER_APPROVAL;
         };
@@ -397,8 +422,20 @@ public class AccountRoleAssignmentCommandService {
     private enum AssignmentFlow {
         DIRECT,
         BOOTSTRAP,
+        REQUEST_SUBMISSION,
         HR_ASSIGNABLE_REQUEST,
         OWNER_APPROVED_REQUEST
+    }
+
+    public record RequestCandidate(
+        Account account,
+        Role role,
+        OrganizationUnit organizationUnit,
+        WorkLocation workLocation
+    ) {
+    }
+
+    private record AssignmentCandidate(Account account, Role role, ScopeTarget scopeTarget) {
     }
 
     private record ScopeTarget(OrganizationUnit organizationUnit, WorkLocation workLocation) {
