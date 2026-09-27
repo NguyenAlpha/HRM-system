@@ -23,18 +23,21 @@ public class OrganizationCompanyOwnerProvisioningService {
 
     private final EmployeeProvisioningService employeeProvisioningService;
     private final AccountProvisioningService accountProvisioningService;
-    private final AccountRoleAssignmentAdminService roleAssignmentAdminService;
+    private final AccountRoleAssignmentCommandService roleAssignmentCommandService;
+    private final AccountRoleAssignmentMapper roleAssignmentMapper;
     private final CurrentAccountProvider currentAccountProvider;
 
     public OrganizationCompanyOwnerProvisioningService(
         EmployeeProvisioningService employeeProvisioningService,
         AccountProvisioningService accountProvisioningService,
-        AccountRoleAssignmentAdminService roleAssignmentAdminService,
+        AccountRoleAssignmentCommandService roleAssignmentCommandService,
+        AccountRoleAssignmentMapper roleAssignmentMapper,
         CurrentAccountProvider currentAccountProvider
     ) {
         this.employeeProvisioningService = employeeProvisioningService;
         this.accountProvisioningService = accountProvisioningService;
-        this.roleAssignmentAdminService = roleAssignmentAdminService;
+        this.roleAssignmentCommandService = roleAssignmentCommandService;
+        this.roleAssignmentMapper = roleAssignmentMapper;
         this.currentAccountProvider = currentAccountProvider;
     }
 
@@ -57,19 +60,23 @@ public class OrganizationCompanyOwnerProvisioningService {
             request.account().username(),
             actorAccountId
         );
-        AccountRoleAssignmentResponse ownerAssignment = roleAssignmentAdminService.assignProvisionedCompanyRole(
-            accountProvisioning.account().id(),
-            COMPANY_OWNER_ROLE,
-            request.effectiveFrom(),
-            request.ownershipReason(),
-            actorAccountId
+        AccountRoleAssignmentResponse ownerAssignment = roleAssignmentMapper.toResponse(
+            roleAssignmentCommandService.assignProvisionedCompanyRole(
+                accountProvisioning.account().id(),
+                COMPANY_OWNER_ROLE,
+                request.effectiveFrom(),
+                request.ownershipReason(),
+                actorAccountId
+            )
         );
-        AccountRoleAssignmentResponse directorAssignment = roleAssignmentAdminService.assignProvisionedCompanyRole(
-            accountProvisioning.account().id(),
-            DIRECTOR_ROLE,
-            request.effectiveFrom(),
-            request.directorAppointmentReason(),
-            actorAccountId
+        AccountRoleAssignmentResponse directorAssignment = roleAssignmentMapper.toResponse(
+            roleAssignmentCommandService.assignProvisionedCompanyRole(
+                accountProvisioning.account().id(),
+                DIRECTOR_ROLE,
+                request.effectiveFrom(),
+                request.directorAppointmentReason(),
+                actorAccountId
+            )
         );
 
         return new OrganizationCompanyOwnerProvisioningResponse(
