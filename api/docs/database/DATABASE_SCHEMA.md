@@ -34,13 +34,13 @@ Nhân viên nghỉ việc
 
 Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`. Khi đó phải có `deleted_by_account_id` và `deletion_reason` để có thể kiểm tra, khôi phục.
 
-### 1.2. Danh sách 21 bảng
+### 1.2. Danh sách 22 bảng
 
 | Nhóm | Các bảng |
 |---|---|
 | Doanh nghiệp và cơ cấu | `company_profile`, `work_locations`, `organization_units`, `job_positions` |
 | Nhân sự | `employees`, `employee_assignments`, `employee_compensations` |
-| Tài khoản và RBAC | `accounts`, `account_activation_tokens`, `refresh_tokens`, `permissions`, `roles`, `role_permissions`, `account_role_assignments`, `account_permission_overrides` |
+| Tài khoản và RBAC | `accounts`, `account_activation_tokens`, `refresh_tokens`, `permissions`, `roles`, `role_permissions`, `role_assignment_requests`, `account_role_assignments`, `account_permission_overrides` |
 | Đơn từ | `employee_requests` |
 | Chấm công | `work_shifts`, `attendance_records` |
 | Tính lương | `payroll_periods`, `payslips`, `payslip_items` |
@@ -60,6 +60,9 @@ erDiagram
     ACCOUNTS ||--o{ REFRESH_TOKENS : owns
     ACCOUNTS ||--o{ ACCOUNT_ROLE_ASSIGNMENTS : receives
     ROLES ||--o{ ACCOUNT_ROLE_ASSIGNMENTS : assigned
+    ACCOUNTS ||--o{ ROLE_ASSIGNMENT_REQUESTS : receives
+    ROLES ||--o{ ROLE_ASSIGNMENT_REQUESTS : requested
+    ROLE_ASSIGNMENT_REQUESTS o|--o| ACCOUNT_ROLE_ASSIGNMENTS : produces
     ROLES ||--o{ ROLE_PERMISSIONS : contains
     PERMISSIONS ||--o{ ROLE_PERMISSIONS : grouped_into
     ACCOUNT_ROLE_ASSIGNMENTS ||--o{ ACCOUNT_PERMISSION_OVERRIDES : customizes
@@ -345,6 +348,43 @@ Seeder đồng bộ chính xác mapping của system role. API chỉ cho phép t
 > - Thu hồi role không xóa assignment. Ba field `revoked_by_account_id`, `revoked_at`, `revocation_reason` phải cùng null hoặc cùng có giá trị.
 > - `effective_to` không được trước `effective_from`.
 
+### `role_assignment_requests` — Đề xuất cấp vai trò
+
+Bảng này lưu workflow đề xuất trước khi role có hiệu lực. Request `PENDING`, `REJECTED` hoặc `CANCELLED` không tham gia tính authorization. Chỉ request `APPROVED` mới liên kết tới một bản ghi thật trong `account_role_assignments`.
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `account_id` | BIGINT | FK → accounts, NOT NULL | Account được đề xuất cấp role |
+| `role_id` | BIGINT | FK → roles, NOT NULL | Role được đề xuất |
+| `scope_type` | VARCHAR(20) | NOT NULL | `SELF` / `COMPANY` / `ORG_UNIT` / `LOCATION` |
+| `organization_unit_id` | BIGINT | FK → organization_units | Chỉ dùng với `ORG_UNIT` |
+| `work_location_id` | BIGINT | FK → work_locations | Chỉ dùng với `LOCATION` |
+| `effective_from` | DATE | NOT NULL | Ngày role dự kiến bắt đầu hiệu lực |
+| `effective_to` | DATE | | Ngày dự kiến kết thúc hiệu lực |
+| `reason` | TEXT | NOT NULL, không rỗng | Lý do đề xuất |
+| `status` | VARCHAR(20) | NOT NULL | `PENDING` / `APPROVED` / `REJECTED` / `CANCELLED` |
+| `requested_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người gửi đề xuất |
+| `requested_at` | TIMESTAMPTZ | NOT NULL | Thời điểm gửi đề xuất |
+| `reviewed_by_account_id` | BIGINT | FK → accounts | Người duyệt hoặc từ chối |
+| `reviewed_at` | TIMESTAMPTZ | | Thời điểm duyệt hoặc từ chối |
+| `review_note` | TEXT | | Ghi chú xử lý; bắt buộc khi từ chối |
+| `cancelled_by_account_id` | BIGINT | FK → accounts | Người hủy request |
+| `cancelled_at` | TIMESTAMPTZ | | Thời điểm hủy |
+| `cancellation_reason` | TEXT | | Lý do hủy, bắt buộc khi `CANCELLED` |
+| `account_role_assignment_id` | BIGINT | UNIQUE, FK → account_role_assignments | Assignment được tạo khi `APPROVED` |
+| `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật cuối |
+
+Ràng buộc persistence:
+
+- Cấu trúc scope giống `account_role_assignments`.
+- `effective_to` không được trước `effective_from`.
+- Không cho hai request `PENDING` cùng account, role và scope có khoảng hiệu lực chồng lấn.
+- `PENDING` chưa được chứa dữ liệu xử lý hoặc assignment.
+- `APPROVED` bắt buộc có người duyệt, thời điểm duyệt và assignment kết quả.
+- `REJECTED` bắt buộc có người xử lý và ghi chú từ chối.
+- `CANCELLED` bắt buộc có người hủy, thời điểm và lý do hủy.
+
 ### `account_permission_overrides` — Ngoại lệ quyền của từng nhân viên
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
@@ -592,7 +632,7 @@ Không cần bảng báo cáo riêng. Báo cáo được tổng hợp từ dữ 
 | Tổng lương theo tháng/đơn vị/địa điểm | `payroll_periods`, `payslips` |
 | Phiếu lương tháng của nhân viên | `payslips`, `payslip_items` |
 | Bảng lương năm của nhân viên | Tổng hợp 12 tháng từ `payslips` |
-| Lịch sử phân quyền | `account_role_assignments`, `account_permission_overrides` |
+| Lịch sử phân quyền | `role_assignment_requests`, `account_role_assignments`, `account_permission_overrides` |
 
 ---
 

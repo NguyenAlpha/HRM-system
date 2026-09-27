@@ -33,6 +33,7 @@
 - Tự tham chiếu `parentLocation` (trụ sở/chi nhánh cha của kho).
 - Một-nhiều tới `EmployeeAssignment.workLocation`.
 - Một-nhiều tới `AccountRoleAssignment.workLocation` (khi `scopeType = LOCATION`).
+- Một-nhiều tới `RoleAssignmentRequest.workLocation` (khi `scopeType = LOCATION`).
 
 | Thuộc tính | Kiểu Java | Cột DB | Ràng buộc | Ý nghĩa |
 |---|---|---|---|---|
@@ -56,6 +57,7 @@
 - Tự tham chiếu `parentUnit`.
 - Một-nhiều tới `EmployeeAssignment.organizationUnit`.
 - Một-nhiều tới `AccountRoleAssignment.organizationUnit` (khi `scopeType = ORG_UNIT`).
+- Một-nhiều tới `RoleAssignmentRequest.organizationUnit` (khi `scopeType = ORG_UNIT`).
 
 | Thuộc tính | Kiểu Java | Cột DB | Ràng buộc | Ý nghĩa |
 |---|---|---|---|---|
@@ -190,6 +192,7 @@
 - Một-nhiều tới `AccountActivationToken.account` và `AccountActivationToken.createdByAccount`.
 - Một-nhiều tới `RefreshToken.account`.
 - Một-nhiều tới `AccountRoleAssignment.account`.
+- Một-nhiều tới `RoleAssignmentRequest.account`; đồng thời được tham chiếu tại các cột người đề xuất, xử lý và hủy request.
 - Được tham chiếu bởi nhiều entity khác qua các cột `*_account_id` (người thực hiện/duyệt).
 
 | Thuộc tính | Kiểu Java | Cột DB | Ràng buộc | Ý nghĩa |
@@ -257,7 +260,7 @@
 
 **Mô tả**: Mẫu vai trò.
 
-**Quan hệ**: Một-nhiều tới `RolePermission.role`, `AccountRoleAssignment.role`.
+**Quan hệ**: Một-nhiều tới `RolePermission.role`, `RoleAssignmentRequest.role`, `AccountRoleAssignment.role`.
 
 | Thuộc tính | Kiểu Java | Cột DB | Ràng buộc | Ý nghĩa |
 |---|---|---|---|---|
@@ -288,7 +291,7 @@
 
 **Mô tả**: Gán vai trò cho tài khoản kèm phạm vi hiệu lực.
 
-**Quan hệ**: Nhiều-một tới `Account` (`account`, `grantedByAccount`, `revokedByAccount`), `Role`, `OrganizationUnit` (nullable), `WorkLocation` (nullable). Một-nhiều tới `AccountPermissionOverride`.
+**Quan hệ**: Nhiều-một tới `Account` (`account`, `grantedByAccount`, `revokedByAccount`), `Role`, `OrganizationUnit` (nullable), `WorkLocation` (nullable). Một-nhiều tới `AccountPermissionOverride`; có thể là kết quả một-một của `RoleAssignmentRequest`.
 
 | Thuộc tính | Kiểu Java | Cột DB | Ràng buộc | Ý nghĩa |
 |---|---|---|---|---|
@@ -306,6 +309,35 @@
 | `revokedByAccount` | `Account` | `revoked_by_account_id` | FK, nullable | Người thu hồi role |
 | `revokedAt` | `Instant` | `revoked_at` | nullable | Thời điểm thu hồi |
 | `revocationReason` | `String` | `revocation_reason` | nullable | Lý do thu hồi |
+
+### Entity `RoleAssignmentRequest` (bảng `role_assignment_requests`)
+
+**Mô tả**: Đề xuất cấp role chưa có hiệu lực. Request chỉ tạo `AccountRoleAssignment` sau khi được phê duyệt.
+
+**Quan hệ**: Nhiều-một tới `Account` (`account`, `requestedByAccount`, `reviewedByAccount`, `cancelledByAccount`), `Role`, `OrganizationUnit` và `WorkLocation`; một-một tùy chọn tới `AccountRoleAssignment` kết quả.
+
+| Thuộc tính | Kiểu Java | Cột DB | Ràng buộc | Ý nghĩa |
+|---|---|---|---|---|
+| `id` | `Long` | `id` | PK | Khóa chính |
+| `account` | `Account` | `account_id` | FK, NOT NULL | Account được đề xuất cấp role |
+| `role` | `Role` | `role_id` | FK, NOT NULL | Role được đề xuất |
+| `scopeType` | `RoleScopeType` | `scope_type` | NOT NULL | Phạm vi role dự kiến |
+| `organizationUnit` | `OrganizationUnit` | `organization_unit_id` | FK, nullable | Đích scope `ORG_UNIT` |
+| `workLocation` | `WorkLocation` | `work_location_id` | FK, nullable | Đích scope `LOCATION` |
+| `effectiveFrom` | `LocalDate` | `effective_from` | NOT NULL | Ngày dự kiến bắt đầu |
+| `effectiveTo` | `LocalDate` | `effective_to` | nullable | Ngày dự kiến kết thúc |
+| `reason` | `String` | `reason` | NOT NULL, không rỗng | Lý do đề xuất |
+| `status` | `RoleAssignmentRequestStatus` | `status` | NOT NULL | `PENDING` / `APPROVED` / `REJECTED` / `CANCELLED` |
+| `requestedByAccount` | `Account` | `requested_by_account_id` | FK, NOT NULL | Người đề xuất |
+| `requestedAt` | `Instant` | `requested_at` | NOT NULL | Thời điểm đề xuất |
+| `reviewedByAccount` | `Account` | `reviewed_by_account_id` | FK, nullable | Người duyệt hoặc từ chối |
+| `reviewedAt` | `Instant` | `reviewed_at` | nullable | Thời điểm duyệt hoặc từ chối |
+| `reviewNote` | `String` | `review_note` | nullable | Ghi chú xử lý, bắt buộc khi từ chối |
+| `cancelledByAccount` | `Account` | `cancelled_by_account_id` | FK, nullable | Người hủy request |
+| `cancelledAt` | `Instant` | `cancelled_at` | nullable | Thời điểm hủy |
+| `cancellationReason` | `String` | `cancellation_reason` | nullable | Lý do hủy, bắt buộc khi đã hủy |
+| `accountRoleAssignment` | `AccountRoleAssignment` | `account_role_assignment_id` | UNIQUE, FK, nullable | Assignment được tạo sau khi duyệt |
+| `updatedAt` | `Instant` | `updated_at` | NOT NULL | Thời điểm cập nhật cuối |
 
 ### Entity `AccountPermissionOverride` (bảng `account_permission_overrides`)
 
