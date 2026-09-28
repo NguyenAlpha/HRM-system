@@ -6,14 +6,14 @@ Xác thực tài khoản HRM bằng access token JWT và refresh token. HRM khô
 
 ## Endpoint access
 
-| Endpoint | Public | Yêu cầu Bearer token |
-|:---------|:------:|:--------------------:|
-| `POST /api/account-activations/{token}/complete` | ✅ | ❌ |
-| `POST /api/auth/login` | ✅ | ❌ |
-| `POST /api/auth/refresh` | ✅ | ❌ |
-| `POST /api/auth/logout` | ❌ | ✅ |
-| `GET /api/auth/me` | ❌ | ✅ |
-| `POST /api/auth/change-password` | ❌ | ✅ |
+| Endpoint | Public | Yêu cầu Bearer token | Mô tả |
+|:---------|:------:|:--------------------:|:------|
+| `POST /api/account-activations/{token}/complete` | ✅ | ❌ | Dùng token một lần để đặt mật khẩu và kích hoạt account `PENDING` |
+| `POST /api/auth/login` | ✅ | ❌ | Đăng nhập bằng username hoặc email để nhận access token và refresh token |
+| `POST /api/auth/refresh` | ✅ | ❌ | Đổi refresh token hợp lệ lấy cặp token mới và thu hồi refresh token cũ |
+| `POST /api/auth/logout` | ❌ | ✅ | Thu hồi refresh token được gửi trong request để kết thúc phiên đăng nhập |
+| `GET /api/auth/me` | ❌ | ✅ | Lấy thông tin account, employee, role và permission của người đang đăng nhập |
+| `POST /api/auth/change-password` | ❌ | ✅ | Đổi mật khẩu của chính người dùng và thu hồi các refresh token hiện có |
 
 ---
 
