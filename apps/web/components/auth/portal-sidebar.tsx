@@ -6,9 +6,13 @@ import type { AccountSummary, Portal } from "@/lib/auth/types"
 export function PortalSidebar({ portal, account, active = "overview" }: {
   portal: Portal
   account: AccountSummary
-  active?: "overview" | "rbac"
+  active?: "overview" | "rbac" | "employees" | "role-requests"
 }) {
   const admin = portal === "admin"
+  const canReadEmployees = account.permissions.some((permission) => permission.code === "employee.read")
+  const canUseRoleRequests = account.permissions.some(
+    (permission) => permission.code === "role.assignment.request" || permission.code === "role.assignment.approve",
+  )
 
   return (
     <aside className="portal-sidebar">
@@ -31,6 +35,16 @@ export function PortalSidebar({ portal, account, active = "overview" }: {
         ) : (
           <>
             <span className="nav-item disabled"><span>◎</span> Hồ sơ</span>
+            {canReadEmployees && (
+              <Link className={`nav-item ${active === "employees" ? "active" : ""}`} href="/employees">
+                <span>▤</span> Nhân sự
+              </Link>
+            )}
+            {canUseRoleRequests && (
+              <Link className={`nav-item ${active === "role-requests" ? "active" : ""}`} href="/role-requests">
+                <span>◧</span> Đề xuất role
+              </Link>
+            )}
             <span className="nav-item disabled"><span>◷</span> Chấm công</span>
             <span className="nav-item disabled"><span>▱</span> Đơn từ</span>
             <span className="nav-item disabled"><span>◈</span> Phiếu lương</span>

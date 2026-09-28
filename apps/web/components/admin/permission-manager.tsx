@@ -93,6 +93,7 @@ export function PermissionManager({ onSessionExpired }: { onSessionExpired: () =
 
         <Select
           value={moduleFilter || ALL_MODULES}
+          items={{ [ALL_MODULES]: "Tất cả module", ...Object.fromEntries(PERMISSION_MODULES.map((module) => [module, module])) }}
           disabled={loading}
           onValueChange={(value) => {
             setModuleFilter(!value || value === ALL_MODULES ? "" : value)
