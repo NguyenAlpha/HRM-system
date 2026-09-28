@@ -8,7 +8,7 @@ import { KeyRound, Loader2, Plus, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 
 import { EmployeeCreateDialog } from "@/components/employee/employee-create-dialog"
-import { EmployeeDetailSheet } from "@/components/employee/employee-detail-sheet"
+import { EmployeeDetailDialog } from "@/components/employee/employee-detail-dialog"
 import { EmployeeProvisionDialog } from "@/components/employee/employee-provision-dialog"
 import { Pagination, RbacFeedback } from "@/components/admin/rbac-controls"
 import { Badge } from "@/components/ui/badge"
@@ -296,7 +296,7 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
       </Card>
 
       {selectedId !== null && (
-        <EmployeeDetailSheet
+        <EmployeeDetailDialog
           key={`${selectedId}-${sheetRevision}`}
           employeeId={selectedId}
           canManage={canManage}
