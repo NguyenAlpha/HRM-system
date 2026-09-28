@@ -73,7 +73,8 @@ public class AttendanceServiceImpl implements AttendanceService {
         }
 
         EmployeeAssignment assignment = employeeAssignmentRepository
-            .findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employee.getId())
+            .findCurrentPrimaryCandidates(employee.getId(), workDate).stream()
+            .findFirst()
             .orElseThrow(() -> new BusinessException(
                 ErrorCode.VALIDATION_ERROR, "Employee has no active assignment", "employeeId"));
 

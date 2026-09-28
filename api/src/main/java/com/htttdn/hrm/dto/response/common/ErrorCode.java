@@ -21,6 +21,7 @@ public enum ErrorCode {
 
     // Employee
     EMPLOYEE_NOT_FOUND,
+    EMPLOYEE_ASSIGNMENT_NOT_FOUND,
     EMPLOYEE_CODE_TAKEN,
 
     // Organization

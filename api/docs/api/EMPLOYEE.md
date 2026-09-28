@@ -12,6 +12,9 @@ Tạo và tra cứu hồ sơ nhân sự trong phạm vi được phân công. AP
 | `GET /api/employees` | ✅ | `employee.read` | Lấy danh sách nhân sự có phân trang trong scope được giao |
 | `GET /api/employees/{employeeId}` | ✅ | `employee.read` | Lấy chi tiết hồ sơ, phân công hiện tại và thông tin account nếu đã có |
 | `PUT /api/employees/{employeeId}` | ✅ | `employee.manage` | Cập nhật các thông tin hồ sơ được phép thay đổi trong entity employee |
+| `GET /api/employees/{employeeId}/assignments` | ✅ | `employee.read` | Lấy toàn bộ lịch sử phân công của nhân sự |
+| `GET /api/employees/{employeeId}/assignments/current` | ✅ | `employee.read` | Lấy phân công đang hiệu lực tại ngày gọi API |
+| `POST /api/employees/{employeeId}/assignments` | ✅ | `employee.manage` | Điều chuyển, bổ nhiệm hoặc thay đổi phân công của nhân sự |
 
 `HR_STAFF`, `BRANCH_MANAGER`, các vai trò giám sát và một số vai trò nghiệp vụ được seed `employee.read`. Kết quả còn bị giới hạn theo scope của role assignment: `SELF`, `ORG_UNIT`, `LOCATION` hoặc `COMPANY`.
 
@@ -148,7 +151,8 @@ Client lấy `organizationUnitId`, `workLocationId` và `positionId` từ [Organ
 | 404 | `ORGANIZATION_UNIT_NOT_FOUND` | Không tìm thấy đơn vị tổ chức đang hoạt động |
 | 404 | `LOCATION_NOT_FOUND` | Không tìm thấy địa điểm làm việc đang hoạt động |
 | 404 | `EMPLOYEE_NOT_FOUND` | Không tìm thấy employee được chọn làm manager |
-| 404 | `RESOURCE_NOT_FOUND` | Không tìm thấy vị trí, ca làm việc hoặc account của người thao tác |
+| 404 | `JOB_POSITION_NOT_FOUND` | Không tìm thấy chức danh đang hoạt động |
+| 404 | `RESOURCE_NOT_FOUND` | Không tìm thấy ca làm việc hoặc account của người thao tác |
 | 409 | `EMPLOYEE_CODE_TAKEN` | Mã nhân viên đã tồn tại, không phân biệt hoa thường |
 | 409 | `EMAIL_TAKEN` | Work email đã được employee hoặc account khác sử dụng |
 
@@ -355,3 +359,108 @@ Trả `EmployeeDetailResponse` giống [API lấy chi tiết employee](#get-apie
 | 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
 | 409 | `CONFLICT` | `workEmail` trùng employee khác hoặc cố xóa email khi employee đã có account |
 | 409 | `EMAIL_TAKEN` | `workEmail` đã được account khác sử dụng |
+
+---
+
+## GET `/api/employees/{employeeId}/assignments`
+
+Lấy toàn bộ lịch sử phân công của employee, gồm phân công đã kết thúc, đang hiệu lực và đã lên lịch trong tương lai. Kết quả không phân trang và được sắp xếp theo `effectiveFrom` giảm dần.
+
+Endpoint chỉ trả employee nằm trong scope `employee.read` của người gọi. Mỗi phần tử có cấu trúc `EmployeeAssignmentResponse`:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 415,
+      "employeeId": 125,
+      "organizationUnitId": 8,
+      "workLocationId": 2,
+      "positionId": 4,
+      "shiftId": 1,
+      "managerEmployeeId": 40,
+      "employmentType": "FULL_TIME",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": null,
+      "isPrimary": true
+    },
+    {
+      "id": 310,
+      "employeeId": 125,
+      "organizationUnitId": 2,
+      "workLocationId": 1,
+      "positionId": 2,
+      "shiftId": 1,
+      "managerEmployeeId": 35,
+      "employmentType": "FULL_TIME",
+      "effectiveFrom": "2026-09-01",
+      "effectiveTo": "2026-09-30",
+      "isPrimary": true
+    }
+  ],
+  "error": null
+}
+```
+
+---
+
+## GET `/api/employees/{employeeId}/assignments/current`
+
+Lấy phân công chính đang hiệu lực tại ngày gọi API, dựa trên khoảng `effectiveFrom`–`effectiveTo`. Phân công được lên lịch trong tương lai không được xem là phân công hiện tại.
+
+Response `200 OK` trả một `EmployeeAssignmentResponse`. Nếu employee tồn tại nhưng chưa có phân công hiệu lực, API trả `404 EMPLOYEE_ASSIGNMENT_NOT_FOUND`.
+
+---
+
+## POST `/api/employees/{employeeId}/assignments`
+
+Tạo một lần phân công chính mới để điều chuyển phòng ban, địa điểm, chức danh, ca làm việc, quản lý trực tiếp hoặc loại hình làm việc.
+
+```json
+{
+  "organizationUnitId": 8,
+  "workLocationId": 2,
+  "positionId": 4,
+  "shiftId": 1,
+  "managerEmployeeId": 40,
+  "employmentType": "FULL_TIME",
+  "effectiveFrom": "2026-10-01",
+  "reason": "Điều chuyển sang bộ phận vận hành"
+}
+```
+
+| Field | Bắt buộc | Ràng buộc |
+|:------|:--------:|:----------|
+| `organizationUnitId` | ✅ | Đơn vị đang active và thuộc scope quản lý của người gọi |
+| `workLocationId` | ✅ | Địa điểm đang active và thuộc scope quản lý của người gọi |
+| `positionId` | ✅ | Chức danh đang active |
+| `shiftId` | ❌ | Ca làm việc đang active nếu được truyền |
+| `managerEmployeeId` | ❌ | Quản lý còn làm việc, thuộc scope của người gọi và không phải chính employee |
+| `employmentType` | ✅ | `FULL_TIME`, `PART_TIME`, `TEMPORARY` |
+| `effectiveFrom` | ✅ | Không trước ngày tuyển dụng và phải sau ngày bắt đầu của phân công mở hiện tại |
+| `reason` | ❌ | Lý do điều chuyển, bổ nhiệm hoặc thay đổi phân công |
+
+Trong cùng transaction, hệ thống:
+
+1. Khóa hồ sơ employee để tuần tự hóa các yêu cầu điều chuyển đồng thời.
+2. Đóng phân công chính đang mở bằng `effectiveTo = effectiveFrom mới - 1 ngày`.
+3. Tạo phân công mới với `isPrimary=true`, `effectiveTo=null` và ghi nhận account thao tác.
+
+Database không cho phép hai phân công chính của cùng employee có khoảng hiệu lực chồng lấn. Response `201 Created` trả phân công vừa tạo.
+
+API này chỉ cập nhật lịch sử công việc trong `employee_assignments`. Nó không cấp, thu hồi hoặc thay đổi role trong `account_role_assignments`; role nghiệp vụ được quản lý bằng API role assignment riêng.
+
+### Lỗi
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 400 | `VALIDATION_ERROR` | Ngày hiệu lực không hợp lệ, manager là chính employee hoặc body sai |
+| 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
+| 403 | `FORBIDDEN` | Thiếu permission, employee nguồn hoặc địa điểm đích nằm ngoài scope quản lý |
+| 404 | `EMPLOYEE_NOT_FOUND` | Employee hoặc manager không tồn tại |
+| 404 | `ORGANIZATION_UNIT_NOT_FOUND` | Đơn vị không tồn tại hoặc không active |
+| 404 | `LOCATION_NOT_FOUND` | Địa điểm không tồn tại hoặc không active |
+| 404 | `JOB_POSITION_NOT_FOUND` | Chức danh không tồn tại hoặc không active |
+| 404 | `RESOURCE_NOT_FOUND` | Ca làm việc hoặc account thao tác không tồn tại |
+| 409 | `CONFLICT` | Employee đã kết thúc làm việc hoặc dữ liệu phân công hiện tại không nhất quán |

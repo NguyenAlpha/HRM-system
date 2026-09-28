@@ -208,7 +208,7 @@ erDiagram
 | `created_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người ghi nhận |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 
-> Khi điều chuyển hoặc đổi ca, đóng phân công hiện tại bằng `effective_to`, sau đó tạo bản ghi mới. Một nhân viên chỉ có một phân công chính hiệu lực tại một thời điểm.
+> Khi điều chuyển hoặc đổi ca, đóng phân công hiện tại bằng `effective_to`, sau đó tạo bản ghi mới. `chk_employee_assignments_period` bảo đảm ngày kết thúc không trước ngày bắt đầu; exclusion constraint `excl_employee_primary_assignment_overlap` bảo đảm một nhân viên chỉ có một phân công chính hiệu lực tại một thời điểm.
 
 ### `employee_compensations` — Lương cơ bản và phụ cấp
 

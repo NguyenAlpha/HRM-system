@@ -7,9 +7,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
+
+import jakarta.persistence.LockModeType;
 
 public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSpecificationExecutor<Employee> {
 
@@ -18,6 +23,10 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
     Optional<Employee> findByEmployeeCode(String employeeCode);
 
     Optional<Employee> findByIdAndDeletedAtIsNull(Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT employee FROM Employee employee WHERE employee.id = :id AND employee.deletedAt IS NULL")
+    Optional<Employee> findByIdForUpdate(@Param("id") Long id);
 
     Optional<Employee> findByWorkEmail(String workEmail);
 

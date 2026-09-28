@@ -5,14 +5,28 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.htttdn.hrm.entity.EmployeeAssignment;
 
+import jakarta.persistence.LockModeType;
+
 public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssignment, Long> {
 
     Optional<EmployeeAssignment> findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(Long employeeId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT assignment
+        FROM EmployeeAssignment assignment
+        WHERE assignment.employee.id = :employeeId
+          AND assignment.isPrimary = true
+          AND assignment.effectiveTo IS NULL
+        ORDER BY assignment.effectiveFrom DESC
+        """)
+    List<EmployeeAssignment> findOpenPrimaryForUpdate(@Param("employeeId") Long employeeId);
 
     @Query("""
         SELECT assignment
