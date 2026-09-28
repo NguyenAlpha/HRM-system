@@ -69,14 +69,14 @@ public class OrganizationStructureSeeder implements ApplicationRunner {
             "Chi nhánh Hà Nội",
             LocationType.BRANCH,
             "Thành phố Hà Nội",
-            null
+            headOffice
         );
         findOrCreateLocation(
             "BRANCH-02",
             "Chi nhánh Đà Nẵng",
             LocationType.BRANCH,
             "Thành phố Đà Nẵng",
-            null
+            headOffice
         );
         findOrCreateLocation(
             "WAREHOUSE-01",

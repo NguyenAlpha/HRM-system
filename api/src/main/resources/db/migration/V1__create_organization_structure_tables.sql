@@ -30,8 +30,6 @@ CREATE TABLE work_locations (
 );
 
 CREATE UNIQUE INDEX uq_work_locations_code ON work_locations (code) WHERE deleted_at IS NULL;
-CREATE UNIQUE INDEX uq_work_locations_warehouse_parent ON work_locations (parent_location_id)
-    WHERE location_type = 'WAREHOUSE' AND deleted_at IS NULL;
 CREATE INDEX idx_locations_parent ON work_locations (parent_location_id) WHERE deleted_at IS NULL;
 
 CREATE TABLE organization_units (

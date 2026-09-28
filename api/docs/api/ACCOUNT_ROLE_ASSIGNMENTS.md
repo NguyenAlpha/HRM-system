@@ -49,7 +49,7 @@ Company Owner đầu tiên đã mang role `DIRECTOR`. Khi chuyển giao chức v
 
 ### Quy tắc scope
 
-Với scope `ORG_UNIT`, client lấy đơn vị hợp lệ từ [Organization API](./ORGANIZATION.md). API role assignment chỉ lưu phạm vi phân quyền và không thay đổi phân công công việc của employee.
+Với scope `ORG_UNIT` hoặc `LOCATION`, client lấy đơn vị hoặc địa điểm hợp lệ từ [Organization API](./ORGANIZATION.md). API role assignment chỉ lưu phạm vi phân quyền và không thay đổi phân công công việc của employee.
 
 | Scope | `organizationUnitId` | `workLocationId` |
 |:------|:---------------------|:-----------------|

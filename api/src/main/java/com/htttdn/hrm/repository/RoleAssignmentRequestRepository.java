@@ -22,6 +22,11 @@ public interface RoleAssignmentRequestRepository extends JpaRepository<RoleAssig
         RoleAssignmentRequestStatus status
     );
 
+    boolean existsByWorkLocationIdAndStatus(
+        Long workLocationId,
+        RoleAssignmentRequestStatus status
+    );
+
     @Override
     @EntityGraph(attributePaths = {
         "account.employee", "role", "organizationUnit", "workLocation",
