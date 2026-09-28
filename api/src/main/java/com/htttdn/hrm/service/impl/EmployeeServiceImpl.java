@@ -359,7 +359,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         JobPosition position = jobPositionRepository.findById(request.positionId())
             .filter(value -> value.getDeletedAt() == null && Boolean.TRUE.equals(value.getIsActive()))
             .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND, "Active job position not found: " + request.positionId()
+                ErrorCode.JOB_POSITION_NOT_FOUND,
+                "Active job position not found: " + request.positionId()
             ));
         return new AssignmentResources(
             organizationUnit,
