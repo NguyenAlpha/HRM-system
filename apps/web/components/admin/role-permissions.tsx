@@ -1,6 +1,6 @@
 "use client"
 
-import { type FormEvent, useEffect, useState } from "react"
+import { type FormEvent, useEffect, useMemo, useState } from "react"
 import { Loader2, ShieldOff, X } from "lucide-react"
 import { toast } from "sonner"
 
@@ -48,6 +48,13 @@ export function RolePermissions({ role, onClose, onSessionExpired }: {
   const disabled = busy || loading
   const available = catalog.filter((permission) => permission.assignmentPolicy === "DELEGABLE"
     && !assigned.some((item) => item.id === permission.id))
+  const permissionItems = useMemo(
+    () => Object.fromEntries(available.map((permission) => [
+      String(permission.id),
+      `${permission.name} (${permission.code})${permission.isActive ? "" : " · tạm tắt"}`,
+    ])),
+    [available],
+  )
 
   useEffect(() => {
     let active = true
@@ -118,7 +125,7 @@ export function RolePermissions({ role, onClose, onSessionExpired }: {
           ) : (
             <form className="mt-3 flex items-end gap-2" onSubmit={grant}>
               <div className="grid flex-1 gap-1.5">
-                <Select value={permissionId} onValueChange={(value) => setPermissionId(value ?? "")} disabled={disabled || available.length === 0}>
+                <Select value={permissionId} items={permissionItems} onValueChange={(value) => setPermissionId(value ?? "")} disabled={disabled || available.length === 0}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder={available.length ? "Chọn quyền để gán..." : "Không còn quyền để gán"} />
                   </SelectTrigger>

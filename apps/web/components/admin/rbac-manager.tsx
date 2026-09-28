@@ -59,7 +59,7 @@ export function RbacManager() {
               Quản lý vai trò tùy chỉnh và xem danh mục quyền do hệ thống định nghĩa.
             </p>
           </div>
-          <Button variant="outline" render={<Link href="/admin" />}>
+          <Button variant="outline" nativeButton={false} render={<Link href="/admin" />}>
             <ArrowLeft /> Về tổng quan
           </Button>
         </header>
