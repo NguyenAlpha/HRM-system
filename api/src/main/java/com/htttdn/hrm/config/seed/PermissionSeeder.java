@@ -81,13 +81,13 @@ public class PermissionSeeder implements ApplicationRunner {
             "organization.read",
             "Xem danh mục tổ chức",
             PermissionModule.ORGANIZATION,
-            "Xem cơ cấu tổ chức, địa điểm làm việc và chức danh"
+            "Xem cơ cấu tổ chức, địa điểm làm việc, chức danh và ca làm việc"
         ),
         permission(
             "organization.manage",
             "Quản lý danh mục tổ chức",
             PermissionModule.ORGANIZATION,
-            "Tạo, cập nhật, ngừng sử dụng và xóa mềm danh mục tổ chức"
+            "Tạo, cập nhật, ngừng sử dụng và xóa mềm danh mục tổ chức và ca làm việc"
         ),
         permission(
             "organization.change.approve",

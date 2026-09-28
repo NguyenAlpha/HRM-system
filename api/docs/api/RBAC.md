@@ -599,8 +599,8 @@ Permission dành cho danh mục tổ chức:
 
 | Permission | Role hệ thống được seed | Mục đích |
 |:-----------|:------------------------|:---------|
-| `organization.read` | `HR_STAFF`, `DIRECTOR`, `COMPANY_OWNER` | Xem cơ cấu tổ chức, địa điểm làm việc và chức danh |
-| `organization.manage` | `COMPANY_OWNER` | Tạo, cập nhật, ngừng sử dụng và xóa mềm các danh mục tổ chức |
+| `organization.read` | `HR_STAFF`, `DIRECTOR`, `COMPANY_OWNER` | Xem cơ cấu tổ chức, địa điểm, chức danh và ca làm việc |
+| `organization.manage` | `COMPANY_OWNER` | Tạo, cập nhật, ngừng sử dụng và xóa mềm các danh mục tổ chức và ca làm việc |
 
 `organization.change.approve` tiếp tục là quyền phê duyệt nghiệp vụ dành cho `DIRECTOR`, không được dùng thay cho quyền CRUD danh mục.
 

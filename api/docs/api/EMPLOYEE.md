@@ -91,7 +91,7 @@ Client lấy `organizationUnitId`, `workLocationId` và `positionId` từ [Organ
 | `organizationUnitId` | ✅ | Đơn vị tổ chức đang hoạt động và nằm trong scope quản lý của người gọi |
 | `workLocationId` | ✅ | Địa điểm làm việc đang hoạt động và nằm trong scope quản lý của người gọi |
 | `positionId` | ✅ | Vị trí công việc đang hoạt động |
-| `shiftId` | ❌ | Ca làm việc đang hoạt động nếu được truyền |
+| `shiftId` | ❌ | Ca làm việc đang hoạt động từ [Work Shift API](./WORK_SHIFT.md) nếu được truyền |
 | `managerEmployeeId` | ❌ | Employee quản lý đang làm việc và nằm trong scope của người gọi |
 | `employmentType` | ✅ | `FULL_TIME`, `PART_TIME`, `TEMPORARY` |
 | `effectiveFrom` | ✅ | Không được trước `employee.hireDate` |
@@ -152,7 +152,8 @@ Client lấy `organizationUnitId`, `workLocationId` và `positionId` từ [Organ
 | 404 | `LOCATION_NOT_FOUND` | Không tìm thấy địa điểm làm việc đang hoạt động |
 | 404 | `EMPLOYEE_NOT_FOUND` | Không tìm thấy employee được chọn làm manager |
 | 404 | `JOB_POSITION_NOT_FOUND` | Không tìm thấy chức danh đang hoạt động |
-| 404 | `RESOURCE_NOT_FOUND` | Không tìm thấy ca làm việc hoặc account của người thao tác |
+| 404 | `WORK_SHIFT_NOT_FOUND` | Không tìm thấy ca làm việc đang hoạt động |
+| 404 | `RESOURCE_NOT_FOUND` | Không tìm thấy account của người thao tác |
 | 409 | `EMPLOYEE_CODE_TAKEN` | Mã nhân viên đã tồn tại, không phân biệt hoa thường |
 | 409 | `EMAIL_TAKEN` | Work email đã được employee hoặc account khác sử dụng |
 
@@ -435,7 +436,7 @@ Tạo một lần phân công chính mới để điều chuyển phòng ban, đ
 | `organizationUnitId` | ✅ | Đơn vị đang active và thuộc scope quản lý của người gọi |
 | `workLocationId` | ✅ | Địa điểm đang active và thuộc scope quản lý của người gọi |
 | `positionId` | ✅ | Chức danh đang active |
-| `shiftId` | ❌ | Ca làm việc đang active nếu được truyền |
+| `shiftId` | ❌ | Ca làm việc đang active từ [Work Shift API](./WORK_SHIFT.md) nếu được truyền |
 | `managerEmployeeId` | ❌ | Quản lý còn làm việc, thuộc scope của người gọi và không phải chính employee |
 | `employmentType` | ✅ | `FULL_TIME`, `PART_TIME`, `TEMPORARY` |
 | `effectiveFrom` | ✅ | Không trước ngày tuyển dụng và phải sau ngày bắt đầu của phân công mở hiện tại |
@@ -462,5 +463,6 @@ API này chỉ cập nhật lịch sử công việc trong `employee_assignments
 | 404 | `ORGANIZATION_UNIT_NOT_FOUND` | Đơn vị không tồn tại hoặc không active |
 | 404 | `LOCATION_NOT_FOUND` | Địa điểm không tồn tại hoặc không active |
 | 404 | `JOB_POSITION_NOT_FOUND` | Chức danh không tồn tại hoặc không active |
-| 404 | `RESOURCE_NOT_FOUND` | Ca làm việc hoặc account thao tác không tồn tại |
+| 404 | `WORK_SHIFT_NOT_FOUND` | Ca làm việc không tồn tại hoặc không active |
+| 404 | `RESOURCE_NOT_FOUND` | Account thao tác không tồn tại |
 | 409 | `CONFLICT` | Employee đã kết thúc làm việc hoặc dữ liệu phân công hiện tại không nhất quán |

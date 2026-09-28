@@ -499,6 +499,8 @@ rbac.manage
 | `deleted_at` | TIMESTAMPTZ | | Xóa mềm |
 
 > `UNIQUE(code) WHERE deleted_at IS NULL`.
+>
+> Sau khi ca đã phát sinh dữ liệu chấm công, không cập nhật các thông số lịch làm việc trên cùng bản ghi. Tạo mã ca mới để dữ liệu chấm công và tính lương lịch sử không bị thay đổi theo cấu hình mới.
 
 ### `attendance_records` — Chấm công hằng ngày
 

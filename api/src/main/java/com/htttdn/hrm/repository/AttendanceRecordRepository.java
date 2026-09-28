@@ -20,4 +20,6 @@ public interface AttendanceRecordRepository extends JpaRepository<AttendanceReco
     List<AttendanceRecord> findByEmployeeIdAndWorkDateBetween(Long employeeId, LocalDate from, LocalDate to);
 
     boolean existsByEmployeeId(Long employeeId);
+
+    boolean existsByShiftId(Long shiftId);
 }

@@ -428,7 +428,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         return workShiftRepository.findById(shiftId)
             .filter(value -> value.getDeletedAt() == null && Boolean.TRUE.equals(value.getIsActive()))
             .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND, "Active work shift not found: " + shiftId
+                ErrorCode.WORK_SHIFT_NOT_FOUND, "Active work shift not found: " + shiftId
             ));
     }
 
