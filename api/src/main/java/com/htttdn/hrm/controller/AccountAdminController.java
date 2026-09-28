@@ -23,7 +23,7 @@ import com.htttdn.hrm.service.AccountAdminService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/admin/accounts")
+@RequestMapping("/api/accounts")
 public class AccountAdminController {
 
     private final AccountAdminService accountAdminService;

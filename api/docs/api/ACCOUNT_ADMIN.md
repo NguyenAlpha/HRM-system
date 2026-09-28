@@ -12,7 +12,7 @@ Director tiếp theo đi qua quy trình thông thường: HR tạo employee, c�
 
 Company Owner đầu tiên phải được `SYSTEM_ADMIN` tạo qua workflow [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md), không dùng endpoint account tổng quát.
 
-Company Owner tạo HR Staff đầu tiên và các HR Staff tiếp theo bằng quy trình thông thường: tạo hồ sơ qua `POST /api/employees`, cấp account qua `POST /api/admin/accounts`, sau đó gán trực tiếp `HR_STAFF/COMPANY` qua [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md).
+Company Owner tạo HR Staff đầu tiên và các HR Staff tiếp theo bằng quy trình thông thường: tạo hồ sơ qua `POST /api/employees`, cấp account qua `POST /api/accounts`, sau đó gán trực tiếp `HR_STAFF/COMPANY` qua [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md).
 
 ---
 
@@ -20,13 +20,13 @@ Company Owner tạo HR Staff đầu tiên và các HR Staff tiếp theo bằng q
 
 | Endpoint | Permission | Mô tả |
 |:---------|:-----------|:------|
-| `POST /api/admin/accounts` | `account.provision` | Tạo account `PENDING` cho employee đã có hồ sơ, tự gán role nền `EMPLOYEE/SELF` và phát token kích hoạt |
-| `GET /api/admin/accounts` | `account.read` | Lấy danh sách account có phân trang |
-| `GET /api/admin/accounts/{accountId}` | `account.read` | Lấy thông tin chi tiết của một account |
-| `POST /api/admin/accounts/{accountId}/invitations/resend` | `account.activation.manage` | Thu hồi lời mời cũ và phát lại token kích hoạt cho account `PENDING` |
-| `POST /api/admin/accounts/{accountId}/password-reset` | `account.activation.manage` | Đưa account `ACTIVE` hoặc `LOCKED` về `PENDING` và phát token để người dùng tự đặt lại mật khẩu |
-| `POST /api/admin/accounts/{accountId}/suspend` | `account.manage` | Vô hiệu hóa account và thu hồi toàn bộ refresh token |
-| `POST /api/admin/accounts/{accountId}/activate` | `account.manage` | Kích hoạt lại account `DISABLED` hoặc mở khóa account `LOCKED` đã có mật khẩu |
+| `POST /api/accounts` | `account.provision` | Tạo account `PENDING` cho employee đã có hồ sơ, tự gán role nền `EMPLOYEE/SELF` và phát token kích hoạt |
+| `GET /api/accounts` | `account.read` | Lấy danh sách account có phân trang |
+| `GET /api/accounts/{accountId}` | `account.read` | Lấy thông tin chi tiết của một account |
+| `POST /api/accounts/{accountId}/invitations/resend` | `account.activation.manage` | Thu hồi lời mời cũ và phát lại token kích hoạt cho account `PENDING` |
+| `POST /api/accounts/{accountId}/password-reset` | `account.activation.manage` | Đưa account `ACTIVE` hoặc `LOCKED` về `PENDING` và phát token để người dùng tự đặt lại mật khẩu |
+| `POST /api/accounts/{accountId}/suspend` | `account.manage` | Vô hiệu hóa account và thu hồi toàn bộ refresh token |
+| `POST /api/accounts/{accountId}/activate` | `account.manage` | Kích hoạt lại account `DISABLED` hoặc mở khóa account `LOCKED` đã có mật khẩu |
 
 Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` được seed sẵn toàn bộ permission trên. `HR_STAFF` chỉ được seed `account.provision` trong nhóm API này; các thao tác quản trị vòng đời account vẫn thuộc Company Owner. `SYSTEM_ADMIN` không được quản trị tài khoản nội bộ doanh nghiệp.
 
@@ -34,7 +34,7 @@ Raw activation token là credential bí mật và chỉ xuất hiện trong resp
 
 ---
 
-## POST `/api/admin/accounts`
+## POST `/api/accounts`
 
 Tạo account cho employee đã tồn tại. Đây là provisioning tài khoản, không phải tuyển nhân sự.
 
@@ -107,19 +107,19 @@ Phần tạo account ở trên được triển khai bởi component provisionin
 
 ---
 
-## GET `/api/admin/accounts`
+## GET `/api/accounts`
 
 Lấy danh sách account có phân trang.
 
 ```http
-GET /api/admin/accounts?page=0&size=20&sort=id,asc
+GET /api/accounts?page=0&size=20&sort=id,asc
 ```
 
 Response `200 OK` dùng cấu trúc `Page<AccountResponse>` của Spring với các field `content`, `totalElements`, `totalPages`, `number` và `size`.
 
 ---
 
-## GET `/api/admin/accounts/{accountId}`
+## GET `/api/accounts/{accountId}`
 
 Lấy chi tiết một account.
 
@@ -133,7 +133,7 @@ Lấy chi tiết một account.
 
 ---
 
-## POST `/api/admin/accounts/{accountId}/invitations/resend`
+## POST `/api/accounts/{accountId}/invitations/resend`
 
 Phát token mới cho account `PENDING`. Token cũ chưa dùng sẽ bị thu hồi.
 
@@ -155,7 +155,7 @@ Trả `409 ACCOUNT_ACTIVATION_NOT_ALLOWED` nếu account không còn ở trạng
 
 ---
 
-## POST `/api/admin/accounts/{accountId}/password-reset`
+## POST `/api/accounts/{accountId}/password-reset`
 
 Khởi tạo reset mật khẩu cho account `ACTIVE` hoặc `LOCKED`:
 
@@ -169,7 +169,7 @@ Response giống endpoint gửi lại lời mời. Account `PENDING` phải dùn
 
 ---
 
-## POST `/api/admin/accounts/{accountId}/suspend`
+## POST `/api/accounts/{accountId}/suspend`
 
 Chuyển account `ACTIVE` hoặc `LOCKED` sang `DISABLED` và thu hồi toàn bộ refresh token. Thao tác có tính idempotent nếu account đã `DISABLED`.
 
@@ -181,7 +181,7 @@ Trả `AccountResponse` với `status = DISABLED`.
 
 ---
 
-## POST `/api/admin/accounts/{accountId}/activate`
+## POST `/api/accounts/{accountId}/activate`
 
 Kích hoạt lại account `DISABLED` hoặc `LOCKED` đã có mật khẩu, đồng thời xóa trạng thái khóa và bộ đếm đăng nhập sai. Nếu account đã `ACTIVE`, endpoint trả thành công mà không thay đổi dữ liệu.
 

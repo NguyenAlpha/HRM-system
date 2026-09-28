@@ -16,7 +16,7 @@ import com.htttdn.hrm.service.OrganizationCompanyOwnerProvisioningService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/admin/organization/company-owner")
+@RequestMapping("/api/system/organization/company-owner")
 public class OrganizationCompanyOwnerAdminController {
 
     private final OrganizationCompanyOwnerProvisioningService companyOwnerProvisioningService;

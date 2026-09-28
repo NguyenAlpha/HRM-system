@@ -587,7 +587,7 @@ Ba permission chuẩn bị cho workflow cấp tài khoản và đề xuất role
 
 | Permission | Role hệ thống được seed | Mục đích |
 |:-----------|:------------------------|:---------|
-| `account.provision` | `HR_STAFF`, `COMPANY_OWNER` | Tạo account cho employee hợp lệ qua `POST /api/admin/accounts` trong scope được giao |
+| `account.provision` | `HR_STAFF`, `COMPANY_OWNER` | Tạo account cho employee hợp lệ qua `POST /api/accounts` trong scope được giao |
 | `role.assignment.request` | `HR_STAFF` | Gửi đề xuất cấp role nghiệp vụ |
 | `role.assignment.approve` | `COMPANY_OWNER` | Duyệt hoặc từ chối đề xuất; là `SYSTEM_ONLY` nên không thể gán cho custom role qua API RBAC |
 
@@ -595,7 +595,7 @@ Hai permission này được sử dụng bởi [Role Assignment Requests](./ROLE
 
 HR Staff lấy danh sách role có thể đề xuất qua `GET /api/role-assignment-requests/available-roles`. Endpoint nghiệp vụ này chỉ đọc role `HR_ASSIGNABLE` và `OWNER_APPROVAL`, không mở các API quản trị RBAC và không yêu cầu `rbac.manage`.
 
-`SYSTEM_ADMIN` sử dụng riêng permission `organization.company_owner.bootstrap` tại `POST /api/admin/organization/company-owner` để tạo Company Owner đầu tiên. Workflow và giới hạn chống tạo trùng được mô tả trong [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md).
+`SYSTEM_ADMIN` sử dụng riêng permission `organization.company_owner.bootstrap` tại `POST /api/system/organization/company-owner` để tạo Company Owner đầu tiên. Workflow và giới hạn chống tạo trùng được mô tả trong [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md).
 
 ---
 

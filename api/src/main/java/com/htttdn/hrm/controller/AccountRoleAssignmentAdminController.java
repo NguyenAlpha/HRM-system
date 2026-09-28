@@ -21,7 +21,7 @@ import com.htttdn.hrm.service.AccountRoleAssignmentAdminService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/admin/accounts/{accountId}/role-assignments")
+@RequestMapping("/api/accounts/{accountId}/role-assignments")
 public class AccountRoleAssignmentAdminController {
 
     private final AccountRoleAssignmentAdminService roleAssignmentAdminService;
