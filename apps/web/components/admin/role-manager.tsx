@@ -212,7 +212,11 @@ export function RoleManager({ onSessionExpired }: { onSessionExpired: () => void
                   ))}
 
                 {!loading && data?.content.map((role) => (
-                  <TableRow key={role.id}>
+                  <TableRow
+                    key={role.id}
+                    className="cursor-pointer"
+                    onClick={() => setSelected(role)}
+                  >
                     <TableCell>
                       <code className="text-xs">{role.code}</code>
                       <span className="block text-xs text-muted-foreground">#{role.id}</span>
@@ -229,26 +233,25 @@ export function RoleManager({ onSessionExpired }: { onSessionExpired: () => void
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex justify-end gap-1">
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                disabled={role.isSystem}
-                                onClick={() => openEdit(role)}
-                                aria-label={`Sửa ${role.code}`}
-                              />
-                            }
-                          >
-                            <Pencil />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {role.isSystem ? "System role do ứng dụng định nghĩa" : "Sửa vai trò"}
-                          </TooltipContent>
-                        </Tooltip>
+                      <div className="flex justify-end gap-1" onClick={(event) => event.stopPropagation()}>
+                        {!role.isSystem && (
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={() => openEdit(role)}
+                                  aria-label={`Sửa ${role.code}`}
+                                />
+                              }
+                            >
+                              <Pencil />
+                            </TooltipTrigger>
+                            <TooltipContent>Sửa vai trò</TooltipContent>
+                          </Tooltip>
+                        )}
 
                         <Tooltip>
                           <TooltipTrigger
@@ -267,26 +270,25 @@ export function RoleManager({ onSessionExpired }: { onSessionExpired: () => void
                           <TooltipContent>{role.isSystem ? "Xem quyền" : "Phân quyền"}</TooltipContent>
                         </Tooltip>
 
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                disabled={role.isSystem}
-                                className="text-muted-foreground hover:text-destructive"
-                                onClick={() => setRoleToDelete(role)}
-                                aria-label={`Xóa ${role.code}`}
-                              />
-                            }
-                          >
-                            <Trash2 />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {role.isSystem ? "Không thể xóa vai trò hệ thống" : "Xóa vai trò"}
-                          </TooltipContent>
-                        </Tooltip>
+                        {!role.isSystem && (
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  className="text-muted-foreground hover:text-destructive"
+                                  onClick={() => setRoleToDelete(role)}
+                                  aria-label={`Xóa ${role.code}`}
+                                />
+                              }
+                            >
+                              <Trash2 />
+                            </TooltipTrigger>
+                            <TooltipContent>Xóa vai trò</TooltipContent>
+                          </Tooltip>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
