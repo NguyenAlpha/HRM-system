@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.htttdn.hrm.dto.request.employee.AssignEmployeeRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.employee.EmployeeAssignmentResponse;
-import com.htttdn.hrm.service.EmployeeService;
+import com.htttdn.hrm.service.EmployeeAssignmentService;
 
 import jakarta.validation.Valid;
 
@@ -23,22 +23,22 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/employees/{employeeId}/assignments")
 public class EmployeeAssignmentController {
 
-    private final EmployeeService employeeService;
+    private final EmployeeAssignmentService employeeAssignmentService;
 
-    public EmployeeAssignmentController(EmployeeService employeeService) {
-        this.employeeService = employeeService;
+    public EmployeeAssignmentController(EmployeeAssignmentService employeeAssignmentService) {
+        this.employeeAssignmentService = employeeAssignmentService;
     }
 
     @GetMapping
     @PreAuthorize("hasAuthority('employee.read')")
     public ApiResult<List<EmployeeAssignmentResponse>> list(@PathVariable Long employeeId) {
-        return ApiResult.ok(employeeService.listAssignments(employeeId));
+        return ApiResult.ok(employeeAssignmentService.list(employeeId));
     }
 
     @GetMapping("/current")
     @PreAuthorize("hasAuthority('employee.read')")
     public ApiResult<EmployeeAssignmentResponse> getCurrent(@PathVariable Long employeeId) {
-        return ApiResult.ok(employeeService.getCurrentAssignment(employeeId));
+        return ApiResult.ok(employeeAssignmentService.getCurrent(employeeId));
     }
 
     @PostMapping
@@ -48,6 +48,6 @@ public class EmployeeAssignmentController {
         @PathVariable Long employeeId,
         @Valid @RequestBody AssignEmployeeRequest request
     ) {
-        return ApiResult.ok(employeeService.assign(employeeId, request));
+        return ApiResult.ok(employeeAssignmentService.assign(employeeId, request));
     }
 }

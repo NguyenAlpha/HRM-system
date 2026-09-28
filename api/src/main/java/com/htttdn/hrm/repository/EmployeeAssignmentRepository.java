@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -37,11 +38,17 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
           AND (assignment.effectiveTo IS NULL OR assignment.effectiveTo >= :date)
         ORDER BY assignment.effectiveFrom DESC
         """)
+    @EntityGraph(attributePaths = {
+        "organizationUnit", "workLocation", "position", "shift", "managerEmployee"
+    })
     List<EmployeeAssignment> findCurrentPrimaryCandidates(
         @Param("employeeId") Long employeeId,
         @Param("date") LocalDate date
     );
 
+    @EntityGraph(attributePaths = {
+        "organizationUnit", "workLocation", "position", "shift", "managerEmployee"
+    })
     List<EmployeeAssignment> findByEmployeeIdOrderByEffectiveFromDesc(Long employeeId);
 
     boolean existsByEmployeeId(Long employeeId);
