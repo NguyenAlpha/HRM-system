@@ -6,11 +6,11 @@ Gán role nghiệp vụ cho account theo phạm vi và thời gian hiệu lực.
 
 ## Endpoint access
 
-| Endpoint | Permission |
-|:---------|:-----------|
-| `GET /api/admin/accounts/{accountId}/role-assignments` | `account.read` |
-| `POST /api/admin/accounts/{accountId}/role-assignments` | `account.role.assign` |
-| `POST /api/admin/accounts/{accountId}/role-assignments/{assignmentId}/revoke` | `account.role.assign` |
+| Endpoint | Permission | Mô tả |
+|:---------|:-----------|:------|
+| `GET /api/admin/accounts/{accountId}/role-assignments` | `account.read` | Lấy toàn bộ lịch sử role assignment của một account |
+| `POST /api/admin/accounts/{accountId}/role-assignments` | `account.role.assign` | Company Owner gán trực tiếp một role nghiệp vụ cho account theo scope và thời gian hiệu lực |
+| `POST /api/admin/accounts/{accountId}/role-assignments/{assignmentId}/revoke` | `account.role.assign` | Thu hồi một role assignment, giữ lại đầy đủ lịch sử và thông tin audit |
 
 Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` được seed sẵn các permission trên. `SYSTEM_ADMIN` không được gán hoặc thu hồi role nghiệp vụ. Actor cấp hoặc thu hồi role luôn được lấy từ JWT/Security Context, không nhận từ request.
 

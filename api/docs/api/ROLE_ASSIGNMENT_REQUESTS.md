@@ -6,15 +6,15 @@ Workflow đề xuất và phê duyệt cấp role nghiệp vụ cho account. Req
 
 ## Endpoint access
 
-| Endpoint | Permission |
-|:---------|:-----------|
-| `GET /api/role-assignment-requests/available-roles` | `role.assignment.request` |
-| `POST /api/role-assignment-requests` | `role.assignment.request` |
-| `GET /api/role-assignment-requests` | `role.assignment.request` hoặc `role.assignment.approve` |
-| `GET /api/role-assignment-requests/{requestId}` | `role.assignment.request` hoặc `role.assignment.approve` |
-| `POST /api/role-assignment-requests/{requestId}/approve` | `role.assignment.approve` |
-| `POST /api/role-assignment-requests/{requestId}/reject` | `role.assignment.approve` |
-| `POST /api/role-assignment-requests/{requestId}/cancel` | `role.assignment.request` |
+| Endpoint | Permission | Mô tả |
+|:---------|:-----------|:------|
+| `GET /api/role-assignment-requests/available-roles` | `role.assignment.request` | Lấy danh sách role HR được phép đề xuất cùng chính sách duyệt và scope hợp lệ |
+| `POST /api/role-assignment-requests` | `role.assignment.request` | Gửi đề xuất cấp role; tự duyệt role `HR_ASSIGNABLE` hoặc tạo `PENDING` với `OWNER_APPROVAL` |
+| `GET /api/role-assignment-requests` | `role.assignment.request` hoặc `role.assignment.approve` | Lấy danh sách đề xuất có phân trang và có thể lọc theo trạng thái |
+| `GET /api/role-assignment-requests/{requestId}` | `role.assignment.request` hoặc `role.assignment.approve` | Lấy chi tiết một đề xuất cấp role trong phạm vi được phép xem |
+| `POST /api/role-assignment-requests/{requestId}/approve` | `role.assignment.approve` | Phê duyệt đề xuất `PENDING` và tạo role assignment có hiệu lực theo yêu cầu |
+| `POST /api/role-assignment-requests/{requestId}/reject` | `role.assignment.approve` | Từ chối đề xuất `PENDING` kèm ghi chú bắt buộc |
+| `POST /api/role-assignment-requests/{requestId}/cancel` | `role.assignment.request` | Người gửi hủy đề xuất của chính mình khi đề xuất còn `PENDING` |
 
 Tất cả endpoint yêu cầu Bearer token. `HR_STAFF` được seed `role.assignment.request`; `COMPANY_OWNER` được seed `role.assignment.approve`.
 

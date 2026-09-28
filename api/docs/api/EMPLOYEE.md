@@ -6,12 +6,12 @@ Tạo và tra cứu hồ sơ nhân sự trong phạm vi được phân công. AP
 
 ## Endpoint access
 
-| Endpoint | Yêu cầu Bearer token | Permission yêu cầu |
-|:---------|:--------------------:|:-------------------:|
-| `POST /api/employees` | ✅ | `employee.manage` |
-| `GET /api/employees` | ✅ | `employee.read` |
-| `GET /api/employees/{employeeId}` | ✅ | `employee.read` |
-| `PUT /api/employees/{employeeId}` | ✅ | `employee.manage` |
+| Endpoint | Yêu cầu Bearer token | Permission yêu cầu | Mô tả |
+|:---------|:--------------------:|:-------------------:|:------|
+| `POST /api/employees` | ✅ | `employee.manage` | Tạo hồ sơ nhân sự và phân công chính ban đầu, chưa tạo account đăng nhập |
+| `GET /api/employees` | ✅ | `employee.read` | Lấy danh sách nhân sự có phân trang trong scope được giao |
+| `GET /api/employees/{employeeId}` | ✅ | `employee.read` | Lấy chi tiết hồ sơ, phân công hiện tại và thông tin account nếu đã có |
+| `PUT /api/employees/{employeeId}` | ✅ | `employee.manage` | Cập nhật các thông tin hồ sơ được phép thay đổi trong entity employee |
 
 `HR_STAFF`, `BRANCH_MANAGER`, các vai trò giám sát và một số vai trò nghiệp vụ được seed `employee.read`. Kết quả còn bị giới hạn theo scope của role assignment: `SELF`, `ORG_UNIT`, `LOCATION` hoặc `COMPANY`.
 

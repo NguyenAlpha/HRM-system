@@ -6,19 +6,19 @@ Quản lý role tùy chỉnh và quan hệ permission của role. Danh mục per
 
 ## Endpoint access
 
-| Endpoint | Yêu cầu Bearer token | Permission yêu cầu |
-|:---------|:--------------------:|:-------------------:|
-| `POST /api/roles` | ✅ | `rbac.manage` |
-| `GET /api/roles` | ✅ | `rbac.manage` |
-| `GET /api/roles/with-permissions` | ✅ | `rbac.manage` |
-| `GET /api/roles/{id}` | ✅ | `rbac.manage` |
-| `PUT /api/roles/{id}` | ✅ | `rbac.manage` |
-| `DELETE /api/roles/{id}` | ✅ | `rbac.manage` |
-| `GET /api/roles/{roleId}/permissions` | ✅ | `rbac.manage` |
-| `POST /api/roles/{roleId}/permissions` | ✅ | `rbac.manage` |
-| `DELETE /api/roles/{roleId}/permissions/{permissionId}` | ✅ | `rbac.manage` |
-| `GET /api/permissions` | ✅ | `rbac.manage` |
-| `GET /api/permissions/{id}` | ✅ | `rbac.manage` |
+| Endpoint | Yêu cầu Bearer token | Permission yêu cầu | Mô tả |
+|:---------|:--------------------:|:-------------------:|:------|
+| `POST /api/roles` | ✅ | `rbac.manage` | Tạo custom role mới với chính sách cấp mặc định `OWNER_APPROVAL` |
+| `GET /api/roles` | ✅ | `rbac.manage` | Lấy danh sách role chưa bị xóa mềm có phân trang |
+| `GET /api/roles/with-permissions` | ✅ | `rbac.manage` | Lấy toàn bộ role không phân trang kèm danh sách permission của từng role |
+| `GET /api/roles/{id}` | ✅ | `rbac.manage` | Lấy thông tin chi tiết của một role |
+| `PUT /api/roles/{id}` | ✅ | `rbac.manage` | Cập nhật tên và mô tả của custom role |
+| `DELETE /api/roles/{id}` | ✅ | `rbac.manage` | Xóa mềm một custom role |
+| `GET /api/roles/{roleId}/permissions` | ✅ | `rbac.manage` | Lấy danh sách permission đang được gán cho role |
+| `POST /api/roles/{roleId}/permissions` | ✅ | `rbac.manage` | Gán một permission `DELEGABLE` có sẵn cho custom role |
+| `DELETE /api/roles/{roleId}/permissions/{permissionId}` | ✅ | `rbac.manage` | Thu hồi một permission khỏi custom role |
+| `GET /api/permissions` | ✅ | `rbac.manage` | Tra cứu danh mục permission có phân trang và có thể lọc theo module |
+| `GET /api/permissions/{id}` | ✅ | `rbac.manage` | Lấy thông tin chi tiết của một permission |
 
 `COMPANY_OWNER` và, tạm thời, `SYSTEM_ADMIN` được seed permission `rbac.manage`. Có thể ủy quyền quản trị custom role cho một custom role khác bằng cách gán permission này; backend không hard-code role code khi kiểm tra truy cập RBAC.
 
