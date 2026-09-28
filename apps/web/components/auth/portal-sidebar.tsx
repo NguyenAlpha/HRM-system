@@ -6,9 +6,12 @@ import type { AccountSummary, Portal } from "@/lib/auth/types"
 export function PortalSidebar({ portal, account, active = "overview" }: {
   portal: Portal
   account: AccountSummary
-  active?: "overview" | "rbac" | "employees" | "role-requests"
+  active?: "overview" | "rbac" | "employees" | "role-requests" | "company-owner"
 }) {
   const admin = portal === "admin"
+  const canBootstrapCompanyOwner = account.permissions.some(
+    (permission) => permission.code === "organization.company_owner.bootstrap",
+  )
   const canReadEmployees = account.permissions.some((permission) => permission.code === "employee.read")
   const canUseRoleRequests = account.permissions.some(
     (permission) => permission.code === "role.assignment.request" || permission.code === "role.assignment.approve",
@@ -31,6 +34,11 @@ export function PortalSidebar({ portal, account, active = "overview" }: {
             <Link className={`nav-item ${active === "rbac" ? "active" : ""}`} href="/admin/rbac">
               <span>◇</span> Vai trò & quyền
             </Link>
+            {canBootstrapCompanyOwner && (
+              <Link className={`nav-item ${active === "company-owner" ? "active" : ""}`} href="/admin/company-owner">
+                <span>◆</span> Company Owner
+              </Link>
+            )}
           </>
         ) : (
           <>

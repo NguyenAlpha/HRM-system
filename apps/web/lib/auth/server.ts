@@ -453,6 +453,43 @@ export async function handleAccountProvisionRequest(request: Request, portal: Po
   })
 }
 
+// Only expose the one-time first Company Owner bootstrap endpoint, restricted to the admin portal.
+export async function handleCompanyOwnerBootstrapRequest(request: Request): Promise<NextResponse> {
+  if (request.method !== "POST") {
+    return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
+  }
+
+  const origin = request.headers.get("origin")
+  if (origin && origin !== new URL(request.url).origin) {
+    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
+  }
+
+  const cookieStore = await cookies()
+  const accessToken = cookieStore.get(PORTAL_CONFIG.admin.accessCookie)?.value
+  if (!accessToken) {
+    return NextResponse.json(failure("UNAUTHORIZED", "Phiên quản trị đã hết hạn"), { status: 401 })
+  }
+
+  let body: string
+  try {
+    body = JSON.stringify(await request.json())
+  } catch {
+    return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
+  }
+
+  const result = await callApi<unknown>("/api/system/organization/company-owner", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body,
+  })
+  if (!result) return gatewayFailure()
+
+  return NextResponse.json(result.payload, {
+    status: result.response.status,
+    headers: { "Cache-Control": "no-store" },
+  })
+}
+
 // Only expose the role assignment request/approval workflow endpoints.
 export async function handleRoleAssignmentRequest(request: Request, segments: string[], portal: Portal): Promise<NextResponse> {
   const path = segments.join("/")
