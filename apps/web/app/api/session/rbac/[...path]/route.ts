@@ -4,7 +4,7 @@ type Context = { params: Promise<{ path: string[] }> }
 
 async function handle(request: Request, context: Context) {
   const { path } = await context.params
-  return handleRbacRequest(request, path, "admin")
+  return handleRbacRequest(request, path, "hrm")
 }
 
 export { handle as GET, handle as POST, handle as PUT, handle as DELETE }

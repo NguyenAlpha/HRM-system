@@ -216,9 +216,9 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
 
     Promise.all([
       getAvailableRoles(),
-      employeeRequest<EmployeePage<EmployeeSummary>>("?page=0&size=100"),
-      getOrganizationUnitOptions(),
-      getWorkLocationOptions(),
+      employeeRequest<EmployeePage<EmployeeSummary>>("hrm", "?page=0&size=100"),
+      getOrganizationUnitOptions("hrm"),
+      getWorkLocationOptions("hrm"),
     ])
       .then(([roles, employees, units, locations]) => {
         setRoleOptions(roles)

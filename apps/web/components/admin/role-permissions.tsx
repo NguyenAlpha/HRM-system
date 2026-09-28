@@ -8,21 +8,23 @@ import { RbacFeedback } from "@/components/admin/rbac-controls"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
+import type { Portal } from "@/lib/auth/types"
 import {
   getPermissionOptions,
   isSessionExpired,
@@ -33,7 +35,8 @@ import {
   type Role,
 } from "@/lib/rbac"
 
-export function RolePermissions({ role, onClose, onSessionExpired }: {
+export function RolePermissions({ portal, role, onClose, onSessionExpired }: {
+  portal: Portal
   role: Role
   onClose: () => void
   onSessionExpired: () => void
@@ -58,7 +61,7 @@ export function RolePermissions({ role, onClose, onSessionExpired }: {
 
   useEffect(() => {
     let active = true
-    Promise.all([getPermissionOptions(), rbacRequest<Permission[]>(`/roles/${role.id}/permissions`)])
+    Promise.all([getPermissionOptions(portal), rbacRequest<Permission[]>(portal, `/roles/${role.id}/permissions`)])
       .then(([permissions, rolePermissions]) => {
         if (!active) return
         setCatalog(permissions)
@@ -72,7 +75,7 @@ export function RolePermissions({ role, onClose, onSessionExpired }: {
         setLoading(false)
       })
     return () => { active = false }
-  }, [role.id, revision, onSessionExpired])
+  }, [portal, role.id, revision, onSessionExpired])
 
   function reload() {
     setLoading(true)
@@ -86,9 +89,9 @@ export function RolePermissions({ role, onClose, onSessionExpired }: {
     setError(null)
     try {
       if (remove) {
-        await rbacMutation(`/roles/${role.id}/permissions/${permission.id}`, "DELETE")
+        await rbacMutation(portal, `/roles/${role.id}/permissions/${permission.id}`, "DELETE")
       } else {
-        await rbacMutation(`/roles/${role.id}/permissions`, "POST", { permissionId: permission.id })
+        await rbacMutation(portal, `/roles/${role.id}/permissions`, "POST", { permissionId: permission.id })
       }
       toast.success(`${remove ? "Đã gỡ" : "Đã gán"} quyền ${permission.code}`)
       reload()
@@ -107,14 +110,14 @@ export function RolePermissions({ role, onClose, onSessionExpired }: {
   }
 
   return (
-    <Sheet open onOpenChange={(open) => { if (!open) onClose() }}>
-      <SheetContent className="flex flex-col gap-0 p-0 sm:max-w-md">
-        <SheetHeader className="border-b">
-          <SheetTitle>Quyền của {role.code}</SheetTitle>
-          <SheetDescription>{role.name}</SheetDescription>
-        </SheetHeader>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Quyền của {role.code}</DialogTitle>
+          <DialogDescription>{role.name}</DialogDescription>
+        </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="max-h-[65vh] overflow-y-auto py-1">
           <RbacFeedback error={error} />
 
           {role.isSystem ? (
@@ -192,12 +195,13 @@ export function RolePermissions({ role, onClose, onSessionExpired }: {
           </ul>
         </div>
 
-        <SheetFooter className="border-t">
+        <DialogFooter>
+          <DialogClose render={<Button type="button" variant="outline" />}>Đóng</DialogClose>
           <Button type="button" variant="outline" onClick={reload} disabled={disabled}>
             Tải lại
           </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

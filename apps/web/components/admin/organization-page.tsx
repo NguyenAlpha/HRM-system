@@ -3,22 +3,19 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
-import { ArrowLeft, KeyRound, Users } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 
-import { PermissionManager } from "@/components/admin/permission-manager"
-import { RoleManager } from "@/components/admin/role-manager"
+import { OrganizationReferenceManager } from "@/components/organization/organization-reference-manager"
 import { PortalSidebar } from "@/components/auth/portal-sidebar"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getCurrentSession } from "@/lib/auth/client"
 import { AuthApiError, type SessionData } from "@/lib/auth/types"
 import { rbacErrorMessage } from "@/lib/rbac"
 
-export function RbacManager() {
+export function AdminOrganizationPage() {
   const router = useRouter()
   const [session, setSession] = useState<SessionData | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [tab, setTab] = useState<"roles" | "permissions">("roles")
   const onSessionExpired = useCallback(() => {
     router.replace("/admin/login")
     router.refresh()
@@ -49,14 +46,14 @@ export function RbacManager() {
 
   return (
     <main className="portal-shell admin-shell">
-      <PortalSidebar portal="admin" account={session.account} active="rbac" />
+      <PortalSidebar portal="admin" account={session.account} active="organization" />
       <section className="portal-content">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="eyebrow">ADMIN CONSOLE</p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">Vai trò & quyền</h1>
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">Danh mục tổ chức</h1>
             <p className="mt-1.5 max-w-xl text-[var(--muted-ink)]">
-              Quản lý vai trò tùy chỉnh và xem danh mục quyền do hệ thống định nghĩa.
+              Đơn vị tổ chức, địa điểm làm việc, vị trí công việc và hình thức làm việc trong doanh nghiệp.
             </p>
           </div>
           <Button variant="outline" nativeButton={false} render={<Link href="/admin" />}>
@@ -64,22 +61,9 @@ export function RbacManager() {
           </Button>
         </header>
 
-        <Tabs
-          className="mt-6"
-          value={tab}
-          onValueChange={(value) => setTab(value as "roles" | "permissions")}
-        >
-          <TabsList>
-            <TabsTrigger value="roles"><Users /> Vai trò</TabsTrigger>
-            <TabsTrigger value="permissions"><KeyRound /> Quyền</TabsTrigger>
-          </TabsList>
-          <TabsContent value="roles" className="mt-4">
-            <RoleManager portal="admin" onSessionExpired={onSessionExpired} />
-          </TabsContent>
-          <TabsContent value="permissions" className="mt-4">
-            <PermissionManager portal="admin" onSessionExpired={onSessionExpired} />
-          </TabsContent>
-        </Tabs>
+        <div className="mt-6">
+          <OrganizationReferenceManager portal="admin" onSessionExpired={onSessionExpired} />
+        </div>
       </section>
     </main>
   )

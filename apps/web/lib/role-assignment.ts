@@ -1,6 +1,7 @@
 "use client"
 
 import { authorizedRequest } from "@/lib/auth/client"
+import type { Portal } from "@/lib/auth/types"
 
 export const ROLE_SCOPE_TYPES = ["SELF", "COMPANY", "ORG_UNIT", "LOCATION"] as const
 export type RoleScopeType = typeof ROLE_SCOPE_TYPES[number]
@@ -138,4 +139,30 @@ export function rejectRoleAssignmentRequest(id: number, note: string): Promise<R
 
 export function cancelRoleAssignmentRequest(id: number, reason: string): Promise<RoleAssignmentRequest> {
   return roleAssignmentMutation<RoleAssignmentRequest>(`/${id}/cancel`, { reason })
+}
+
+export interface DirectRoleAssignmentInput {
+  roleCode: string
+  scopeType: RoleScopeType
+  organizationUnitId: number | null
+  workLocationId: number | null
+  effectiveFrom: string
+  effectiveTo: string | null
+  reason: string
+}
+
+function accountRoleAssignmentApi<T>(portal: Portal, accountId: number, path: string, init?: RequestInit): Promise<T> {
+  return authorizedRequest<T>(portal, `/accounts/${accountId}/role-assignments${path}`, { ...init, cache: "no-store" })
+}
+
+export function listAccountRoleAssignments(portal: Portal, accountId: number): Promise<AccountRoleAssignment[]> {
+  return accountRoleAssignmentApi<AccountRoleAssignment[]>(portal, accountId, "")
+}
+
+export function assignAccountRoleDirect(portal: Portal, accountId: number, input: DirectRoleAssignmentInput): Promise<AccountRoleAssignment> {
+  return accountRoleAssignmentApi<AccountRoleAssignment>(portal, accountId, "", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  })
 }

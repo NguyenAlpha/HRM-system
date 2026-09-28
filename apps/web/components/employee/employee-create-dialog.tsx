@@ -167,10 +167,10 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
     let active = true
 
     Promise.all([
-      getOrganizationUnitOptions(),
-      getWorkLocationOptions(),
-      getJobPositionOptions(),
-      employeeRequest<Page<EmployeeSummary>>("?page=0&size=100"),
+      getOrganizationUnitOptions("hrm"),
+      getWorkLocationOptions("hrm"),
+      getJobPositionOptions("hrm"),
+      employeeRequest<Page<EmployeeSummary>>("hrm", "?page=0&size=100"),
     ])
       .then(([units, locations, jobPositions, employeePage]) => {
         if (!active) return
