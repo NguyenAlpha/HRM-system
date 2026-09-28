@@ -1,4 +1,4 @@
-# API Reference — Account Administration
+# API Reference — Account
 
 Quản trị vòng đời tài khoản đăng nhập. Các endpoint này không tạo hồ sơ nhân viên và không cho admin đặt mật khẩu thay người dùng.
 
