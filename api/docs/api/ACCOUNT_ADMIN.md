@@ -18,15 +18,15 @@ HR Staff đầu tiên được Company Owner tạo qua workflow [Organization HR
 
 ## Endpoint access
 
-| Endpoint | Permission |
-|:---------|:-----------|
-| `POST /api/admin/accounts` | `account.provision` |
-| `GET /api/admin/accounts` | `account.read` |
-| `GET /api/admin/accounts/{accountId}` | `account.read` |
-| `POST /api/admin/accounts/{accountId}/invitations/resend` | `account.activation.manage` |
-| `POST /api/admin/accounts/{accountId}/password-reset` | `account.activation.manage` |
-| `POST /api/admin/accounts/{accountId}/suspend` | `account.manage` |
-| `POST /api/admin/accounts/{accountId}/activate` | `account.manage` |
+| Endpoint | Permission | Mô tả |
+|:---------|:-----------|:------|
+| `POST /api/admin/accounts` | `account.provision` | Tạo account `PENDING` cho employee đã có hồ sơ, tự gán role nền `EMPLOYEE/SELF` và phát token kích hoạt |
+| `GET /api/admin/accounts` | `account.read` | Lấy danh sách account có phân trang |
+| `GET /api/admin/accounts/{accountId}` | `account.read` | Lấy thông tin chi tiết của một account |
+| `POST /api/admin/accounts/{accountId}/invitations/resend` | `account.activation.manage` | Thu hồi lời mời cũ và phát lại token kích hoạt cho account `PENDING` |
+| `POST /api/admin/accounts/{accountId}/password-reset` | `account.activation.manage` | Đưa account `ACTIVE` hoặc `LOCKED` về `PENDING` và phát token để người dùng tự đặt lại mật khẩu |
+| `POST /api/admin/accounts/{accountId}/suspend` | `account.manage` | Vô hiệu hóa account và thu hồi toàn bộ refresh token |
+| `POST /api/admin/accounts/{accountId}/activate` | `account.manage` | Kích hoạt lại account `DISABLED` hoặc mở khóa account `LOCKED` đã có mật khẩu |
 
 Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` được seed sẵn toàn bộ permission trên. `HR_STAFF` chỉ được seed `account.provision` trong nhóm API này; các thao tác quản trị vòng đời account vẫn thuộc Company Owner. `SYSTEM_ADMIN` không được quản trị tài khoản nội bộ doanh nghiệp.
 
