@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Check, Copy, KeyRound, Loader2 } from "lucide-react"
+import { Check, Copy, KeyRound, Link2, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { RbacFeedback } from "@/components/admin/rbac-controls"
@@ -43,6 +43,7 @@ export function EmployeeProvisionDialog({ employeeId, employeeName, onClose, onP
   const [dialogError, setDialogError] = useState<string | null>(null)
   const [result, setResult] = useState<AccountProvisioningResponse | null>(null)
   const [copied, setCopied] = useState(false)
+  const [copiedLink, setCopiedLink] = useState(false)
 
   const {
     register,
@@ -69,6 +70,18 @@ export function EmployeeProvisionDialog({ employeeId, employeeName, onClose, onP
       setCopied(true)
       toast.success("Đã sao chép mã kích hoạt")
       setTimeout(() => setCopied(false), 1500)
+    } catch {
+      toast.error("Không thể sao chép, hãy tự copy thủ công")
+    }
+  }
+
+  async function copyLink() {
+    if (!result) return
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/activate/${result.invitation.activationToken}`)
+      setCopiedLink(true)
+      toast.success("Đã sao chép link kích hoạt")
+      setTimeout(() => setCopiedLink(false), 1500)
     } catch {
       toast.error("Không thể sao chép, hãy tự copy thủ công")
     }
@@ -113,6 +126,16 @@ export function EmployeeProvisionDialog({ employeeId, employeeName, onClose, onP
             </DialogHeader>
 
             <div className="mt-4 grid gap-3">
+              <div className="flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm">
+                <Link2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-muted-foreground">Link kích hoạt — gửi trực tiếp cho nhân sự</p>
+                  <code className="mt-0.5 block truncate font-semibold">/activate/{result.invitation.activationToken}</code>
+                </div>
+                <Button type="button" variant="ghost" size="icon-sm" onClick={copyLink} aria-label="Sao chép link kích hoạt">
+                  {copiedLink ? <Check /> : <Copy />}
+                </Button>
+              </div>
               <div className="flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm">
                 <KeyRound className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                 <div className="min-w-0 flex-1">

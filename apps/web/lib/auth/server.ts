@@ -545,3 +545,38 @@ export async function handleRoleAssignmentRequest(request: Request, segments: st
     headers: { "Cache-Control": "no-store" },
   })
 }
+
+// Public, unauthenticated: a brand-new account has no password yet, so it cannot carry a
+// session cookie. Only forwards to the single activation-completion endpoint.
+export async function handleAccountActivationRequest(request: Request, token: string): Promise<NextResponse> {
+  if (request.method !== "POST") {
+    return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
+  }
+  if (!token) {
+    return NextResponse.json(failure("VALIDATION_ERROR", "Thiếu mã kích hoạt"), { status: 400 })
+  }
+
+  const origin = request.headers.get("origin")
+  if (origin && origin !== new URL(request.url).origin) {
+    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
+  }
+
+  let body: string
+  try {
+    body = JSON.stringify(await request.json())
+  } catch {
+    return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
+  }
+
+  const result = await callApi<unknown>(`/api/account-activations/${encodeURIComponent(token)}/complete`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+  })
+  if (!result) return gatewayFailure()
+
+  return NextResponse.json(result.payload, {
+    status: result.response.status,
+    headers: { "Cache-Control": "no-store" },
+  })
+}
