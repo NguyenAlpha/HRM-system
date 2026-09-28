@@ -38,7 +38,7 @@
 | Thuộc tính | Kiểu Java | Cột DB | Ràng buộc | Ý nghĩa |
 |---|---|---|---|---|
 | `id` | `Long` | `id` | PK | Khóa chính |
-| `parentLocation` | `WorkLocation` | `parent_location_id` | FK → work_locations, nullable | Trụ sở/chi nhánh cha của kho |
+| `parentLocation` | `WorkLocation` | `parent_location_id` | FK → work_locations, nullable | Địa điểm cha trong cây địa điểm |
 | `code` | `String` | `code` | NOT NULL, UNIQUE (khi chưa xóa) | Mã địa điểm |
 | `name` | `String` | `name` | NOT NULL | Tên địa điểm |
 | `locationType` | `LocationType` | `location_type` | NOT NULL | `HEAD_OFFICE` / `BRANCH` / `WAREHOUSE` |

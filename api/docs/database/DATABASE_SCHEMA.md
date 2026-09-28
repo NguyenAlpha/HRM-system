@@ -2,7 +2,7 @@
 
 > Đây là bản thiết kế database để duyệt nghiệp vụ, chưa phải Flyway migration.
 >
-> Hệ thống phục vụ **một doanh nghiệp duy nhất**. Doanh nghiệp có một trụ sở chính, hai chi nhánh; trụ sở và mỗi chi nhánh có một kho. Kho chỉ là địa điểm làm việc/phạm vi quản lý nhân sự, không quản lý hàng hóa hay tồn kho.
+> Hệ thống phục vụ **một doanh nghiệp duy nhất**. Dữ liệu seed gồm một trụ sở chính, hai chi nhánh và hai kho. Kho chỉ là địa điểm làm việc/phạm vi quản lý nhân sự, không quản lý hàng hóa hay tồn kho.
 >
 > Phạm vi payroll: lương cơ bản, phụ cấp và tăng ca. Không tính hoa hồng, thưởng, bảo hiểm hoặc thuế.
 
@@ -99,7 +99,7 @@ erDiagram
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
-| `parent_location_id` | BIGINT | FK → work_locations | Trụ sở/chi nhánh cha của kho |
+| `parent_location_id` | BIGINT | FK → work_locations | Địa điểm cha trong cây địa điểm |
 | `code` | VARCHAR(30) | NOT NULL | Mã địa điểm |
 | `name` | VARCHAR(150) | NOT NULL | Tên địa điểm |
 | `location_type` | VARCHAR(20) | NOT NULL | `HEAD_OFFICE` / `BRANCH` / `WAREHOUSE` |
@@ -114,9 +114,10 @@ erDiagram
 >
 > Quy tắc:
 >
-> - `HEAD_OFFICE`, `BRANCH`: `parent_location_id IS NULL`.
+> - `HEAD_OFFICE`: `parent_location_id IS NULL`.
+> - `BRANCH`: phải có cha là `HEAD_OFFICE`.
 > - `WAREHOUSE`: phải có cha là `HEAD_OFFICE` hoặc `BRANCH`.
-> - Một trụ sở/chi nhánh chỉ có tối đa một kho chưa xóa: `UNIQUE(parent_location_id) WHERE location_type = 'WAREHOUSE' AND deleted_at IS NULL`.
+> - Một trụ sở/chi nhánh có thể có nhiều kho; database không giới hạn số kho theo địa điểm cha.
 
 ### `organization_units` — Phòng ban và nhóm
 
@@ -769,8 +770,8 @@ ALTER TABLE payslips ADD CONSTRAINT chk_payslip_total
 | Code | Loại | Cha |
 |---|---|---|
 | `HO` | `HEAD_OFFICE` | — |
-| `BRANCH-01` | `BRANCH` | — |
-| `BRANCH-02` | `BRANCH` | — |
+| `BRANCH-01` | `BRANCH` | `HO` |
+| `BRANCH-02` | `BRANCH` | `HO` |
 | `WAREHOUSE-01` | `WAREHOUSE` | `HO` |
 | `WAREHOUSE-02` | `WAREHOUSE` | `BRANCH-01` |
 

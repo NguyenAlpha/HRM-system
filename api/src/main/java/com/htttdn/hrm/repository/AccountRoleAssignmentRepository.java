@@ -45,6 +45,18 @@ public interface AccountRoleAssignmentRepository extends JpaRepository<AccountRo
         @Param("date") LocalDate date
     );
 
+    @Query("""
+        SELECT CASE WHEN COUNT(assignment) > 0 THEN true ELSE false END
+        FROM AccountRoleAssignment assignment
+        WHERE assignment.workLocation.id = :workLocationId
+          AND assignment.revokedAt IS NULL
+          AND (assignment.effectiveTo IS NULL OR assignment.effectiveTo >= :date)
+        """)
+    boolean existsCurrentOrFutureByWorkLocationId(
+        @Param("workLocationId") Long workLocationId,
+        @Param("date") LocalDate date
+    );
+
     boolean existsByAccountIdAndRoleIdAndScopeTypeAndEffectiveToIsNull(
         Long accountId,
         Long roleId,

@@ -42,4 +42,15 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
         @Param("organizationUnitId") Long organizationUnitId,
         @Param("date") LocalDate date
     );
+
+    @Query("""
+        SELECT CASE WHEN COUNT(assignment) > 0 THEN true ELSE false END
+        FROM EmployeeAssignment assignment
+        WHERE assignment.workLocation.id = :workLocationId
+          AND (assignment.effectiveTo IS NULL OR assignment.effectiveTo >= :date)
+        """)
+    boolean existsCurrentOrFutureByWorkLocationId(
+        @Param("workLocationId") Long workLocationId,
+        @Param("date") LocalDate date
+    );
 }
