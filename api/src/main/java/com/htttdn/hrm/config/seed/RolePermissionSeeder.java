@@ -114,7 +114,6 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "account.activation.manage",
             "account.role.assign",
             "role.assignment.approve",
-            "organization.hr_staff.bootstrap",
             "rbac.manage"
         )),
         role("SYSTEM_ADMIN", List.of(

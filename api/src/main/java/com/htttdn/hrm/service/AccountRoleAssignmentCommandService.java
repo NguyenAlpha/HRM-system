@@ -41,12 +41,10 @@ public class AccountRoleAssignmentCommandService {
 
     private static final String COMPANY_OWNER_ROLE = "COMPANY_OWNER";
     private static final String DIRECTOR_ROLE = "DIRECTOR";
-    private static final String HR_STAFF_ROLE = "HR_STAFF";
 
     private static final Set<String> PROVISIONED_COMPANY_ROLES = Set.of(
         COMPANY_OWNER_ROLE,
-        DIRECTOR_ROLE,
-        HR_STAFF_ROLE
+        DIRECTOR_ROLE
     );
 
     private final AccountRepository accountRepository;
@@ -202,9 +200,6 @@ public class AccountRoleAssignmentCommandService {
         if (COMPANY_OWNER_ROLE.equals(role.getCode())) {
             ensureCompanyOwnerDoesNotExist(role);
         }
-        if (flow == AssignmentFlow.BOOTSTRAP && HR_STAFF_ROLE.equals(role.getCode())) {
-            ensureFirstHrStaffDoesNotExist(role);
-        }
         return new AssignmentCandidate(account, role, scopeTarget);
     }
 
@@ -343,15 +338,6 @@ public class AccountRoleAssignmentCommandService {
             throw new ConflictException(
                 ErrorCode.COMPANY_OWNER_ALREADY_EXISTS,
                 "A COMPANY_OWNER assignment already exists"
-            );
-        }
-    }
-
-    private void ensureFirstHrStaffDoesNotExist(Role role) {
-        if (!roleAssignmentRepository.findByRoleIdAndRevokedAtIsNull(role.getId()).isEmpty()) {
-            throw new ConflictException(
-                ErrorCode.HR_STAFF_ALREADY_EXISTS,
-                "An HR_STAFF assignment already exists"
             );
         }
     }
