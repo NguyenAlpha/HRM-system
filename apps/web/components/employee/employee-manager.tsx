@@ -132,7 +132,7 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
 
   useEffect(() => {
     let active = true
-    employeeRequest<Page<EmployeeSummary>>(`?page=${page}&size=10`)
+    employeeRequest<Page<EmployeeSummary>>("hrm", `?page=${page}&size=10`)
       .then((result) => {
         if (!active) return
         if (page > 0 && page >= result.totalPages) {
@@ -179,7 +179,7 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
         workEmail: values.workEmail?.trim() || null,
         phone: values.phone?.trim() || null,
       }
-      const saved = await employeeMutation<EmployeeDetail>(`/${editing.id}`, "PUT", body)
+      const saved = await employeeMutation<EmployeeDetail>("hrm", `/${editing.id}`, "PUT", body)
       toast.success(`Đã cập nhật hồ sơ ${saved.fullName}`)
       setDialogOpen(false)
       setSheetRevision((value) => value + 1)

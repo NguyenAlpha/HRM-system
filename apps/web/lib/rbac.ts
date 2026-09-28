@@ -1,7 +1,8 @@
 "use client"
 
 import { authorizedRequest } from "@/lib/auth/client"
-import { AuthApiError } from "@/lib/auth/types"
+import { AuthApiError, type Portal } from "@/lib/auth/types"
+import type { RoleGrantPolicy } from "@/lib/role-assignment"
 
 export const PERMISSION_MODULES = ["EMPLOYEE", "ACCOUNT", "ORGANIZATION", "REQUEST", "ATTENDANCE", "PAYROLL", "RBAC", "REPORT"] as const
 export type PermissionModule = typeof PERMISSION_MODULES[number]
@@ -13,6 +14,7 @@ export interface Role {
   name: string
   description: string | null
   isSystem: boolean
+  grantPolicy: RoleGrantPolicy
 }
 
 export interface Permission {
@@ -32,24 +34,24 @@ export interface Page<T> {
   totalPages: number
 }
 
-export function rbacRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  return authorizedRequest<T>("admin", `/rbac${path}`, { ...init, cache: "no-store" })
+export function rbacRequest<T>(portal: Portal, path: string, init?: RequestInit): Promise<T> {
+  return authorizedRequest<T>(portal, `/rbac${path}`, { ...init, cache: "no-store" })
 }
 
-export function rbacMutation<T = null>(path: string, method: "POST" | "PUT" | "DELETE", body?: unknown): Promise<T> {
-  return rbacRequest<T>(path, {
+export function rbacMutation<T = null>(portal: Portal, path: string, method: "POST" | "PUT" | "DELETE", body?: unknown): Promise<T> {
+  return rbacRequest<T>(portal, path, {
     method,
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   })
 }
 
-export async function getPermissionOptions(): Promise<Permission[]> {
+export async function getPermissionOptions(portal: Portal): Promise<Permission[]> {
   const permissions: Permission[] = []
   let page = 0
   let totalPages = 1
   while (page < totalPages) {
-    const result = await rbacRequest<Page<Permission>>(`/permissions?page=${page}&size=100&sort=code,asc`)
+    const result = await rbacRequest<Page<Permission>>(portal, `/permissions?page=${page}&size=100&sort=code,asc`)
     permissions.push(...result.content)
     totalPages = result.totalPages
     page++
@@ -65,5 +67,6 @@ export function rbacErrorMessage(error: unknown): string {
 }
 
 export function isSessionExpired(error: unknown): boolean {
-  return error instanceof AuthApiError && (error.status === 401 || error.code === "ADMIN_ACCESS_REQUIRED")
+  return error instanceof AuthApiError
+    && (error.status === 401 || error.code === "ADMIN_ACCESS_REQUIRED" || error.code === "ADMIN_PORTAL_REQUIRED")
 }

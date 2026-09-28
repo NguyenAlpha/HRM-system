@@ -54,7 +54,7 @@ export function EmployeeProvisionDialog({ employeeId, employeeName, onClose, onP
   async function onSubmit(values: ProvisionValues) {
     setDialogError(null)
     try {
-      const response = await provisionAccount(employeeId, values.username.trim())
+      const response = await provisionAccount("hrm", employeeId, values.username.trim())
       setResult(response)
       onProvisioned()
     } catch (caught) {

@@ -123,7 +123,13 @@ public class RolePermissionSeeder implements ApplicationRunner {
         )),
         role("SYSTEM_ADMIN", List.of(
             "organization.company_owner.bootstrap",
-            "rbac.manage"
+            "rbac.manage",
+            "organization.read",
+            "organization.manage",
+            "employee.read",
+            "account.read",
+            "account.provision",
+            "account.role.assign"
         ))
     );
 

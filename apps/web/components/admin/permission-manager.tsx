@@ -29,6 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import type { Portal } from "@/lib/auth/types"
 import {
   isSessionExpired,
   PERMISSION_MODULES,
@@ -40,7 +41,7 @@ import {
 
 const ALL_MODULES = "ALL"
 
-export function PermissionManager({ onSessionExpired }: { onSessionExpired: () => void }) {
+export function PermissionManager({ portal, onSessionExpired }: { portal: Portal; onSessionExpired: () => void }) {
   const [data, setData] = useState<Page<Permission> | null>(null)
   const [page, setPage] = useState(0)
   const [moduleFilter, setModuleFilter] = useState("")
@@ -50,7 +51,7 @@ export function PermissionManager({ onSessionExpired }: { onSessionExpired: () =
 
   useEffect(() => {
     let active = true
-    rbacRequest<Page<Permission>>(`/permissions?page=${page}&size=10&sort=id,desc${moduleFilter ? `&module=${moduleFilter}` : ""}`)
+    rbacRequest<Page<Permission>>(portal, `/permissions?page=${page}&size=10&sort=id,desc${moduleFilter ? `&module=${moduleFilter}` : ""}`)
       .then((result) => {
         if (!active) return
         if (page > 0 && page >= result.totalPages) {
@@ -67,7 +68,7 @@ export function PermissionManager({ onSessionExpired }: { onSessionExpired: () =
         setLoading(false)
       })
     return () => { active = false }
-  }, [page, moduleFilter, revision, onSessionExpired])
+  }, [portal, page, moduleFilter, revision, onSessionExpired])
 
   function reload() {
     setLoading(true)

@@ -277,7 +277,7 @@ export async function handleChangePassword(request: Request, portal: Portal): Pr
 }
 
 // Only expose the role/permission endpoints, never an arbitrary upstream URL.
-export async function handleRbacRequest(request: Request, segments: string[]): Promise<NextResponse> {
+export async function handleRbacRequest(request: Request, segments: string[], portal: Portal): Promise<NextResponse> {
   const path = segments.join("/")
   const routes = [
     { pattern: /^roles$/, methods: ["GET", "POST"] },
@@ -301,9 +301,9 @@ export async function handleRbacRequest(request: Request, segments: string[]): P
   }
 
   const cookieStore = await cookies()
-  const accessToken = cookieStore.get(PORTAL_CONFIG.admin.accessCookie)?.value
+  const accessToken = cookieStore.get(PORTAL_CONFIG[portal].accessCookie)?.value
   if (!accessToken) {
-    return NextResponse.json(failure("UNAUTHORIZED", "Phiên quản trị đã hết hạn"), { status: 401 })
+    return NextResponse.json(failure("UNAUTHORIZED", "Phiên đăng nhập đã hết hạn"), { status: 401 })
   }
 
   let body: string | undefined
@@ -386,10 +386,25 @@ export async function handleEmployeeRequest(request: Request, segments: string[]
 
 const REFERENCE_RESOURCES = ["organization-units", "work-locations", "job-positions"] as const
 
-// Only expose the read-only lookup catalogs used to populate employee creation forms.
-export async function handleReferenceRequest(request: Request, resource: string, portal: Portal): Promise<NextResponse> {
-  if (!REFERENCE_RESOURCES.includes(resource as typeof REFERENCE_RESOURCES[number]) || request.method !== "GET") {
+// Only expose the lookup catalogs (organization units, work locations, job positions):
+// list/create on the collection, update/delete on one entry. Nothing else on these resources.
+export async function handleReferenceRequest(request: Request, segments: string[], portal: Portal): Promise<NextResponse> {
+  const [resource, id, ...rest] = segments
+  if (!REFERENCE_RESOURCES.includes(resource as typeof REFERENCE_RESOURCES[number]) || rest.length > 0) {
     return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
+  }
+  if (id !== undefined && !/^[1-9]\d*$/.test(id)) {
+    return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
+  }
+
+  const methods = id === undefined ? ["GET", "POST"] : ["PUT", "DELETE"]
+  if (!methods.includes(request.method)) {
+    return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
+  }
+
+  const origin = request.headers.get("origin")
+  if (request.method !== "GET" && origin && origin !== new URL(request.url).origin) {
+    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
   }
 
   const cookieStore = await cookies()
@@ -398,15 +413,31 @@ export async function handleReferenceRequest(request: Request, resource: string,
     return NextResponse.json(failure("UNAUTHORIZED", "Phiên đăng nhập đã hết hạn"), { status: 401 })
   }
 
-  const query = new URLSearchParams()
-  new URL(request.url).searchParams.forEach((value, key) => {
-    if (["active", "unitType", "locationType", "managerial", "parentUnitId", "parentLocationId"].includes(key)) {
-      query.append(key, value)
+  let body: string | undefined
+  if (request.method === "POST" || request.method === "PUT") {
+    try {
+      body = JSON.stringify(await request.json())
+    } catch {
+      return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
     }
-  })
+  }
 
-  const result = await callApi<unknown>(`/api/${resource}?${query}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+  let path = `/api/${resource}`
+  if (id !== undefined) path += `/${id}`
+  if (request.method === "GET") {
+    const query = new URLSearchParams()
+    new URL(request.url).searchParams.forEach((value, key) => {
+      if (["active", "unitType", "locationType", "managerial", "parentUnitId", "parentLocationId"].includes(key)) {
+        query.append(key, value)
+      }
+    })
+    path += `?${query}`
+  }
+
+  const result = await callApi<unknown>(path, {
+    method: request.method,
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body,
   })
   if (!result) return gatewayFailure()
 
@@ -442,6 +473,48 @@ export async function handleAccountProvisionRequest(request: Request, portal: Po
 
   const result = await callApi<unknown>("/api/accounts", {
     method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body,
+  })
+  if (!result) return gatewayFailure()
+
+  return NextResponse.json(result.payload, {
+    status: result.response.status,
+    headers: { "Cache-Control": "no-store" },
+  })
+}
+
+// Only expose direct role assignment (list/create) for one account, never revoke or other account admin actions.
+export async function handleAccountRoleAssignmentRequest(request: Request, accountId: string, portal: Portal): Promise<NextResponse> {
+  if (!/^[1-9]\d*$/.test(accountId)) {
+    return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
+  }
+  if (request.method !== "GET" && request.method !== "POST") {
+    return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
+  }
+
+  const origin = request.headers.get("origin")
+  if (request.method !== "GET" && origin && origin !== new URL(request.url).origin) {
+    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
+  }
+
+  const cookieStore = await cookies()
+  const accessToken = cookieStore.get(PORTAL_CONFIG[portal].accessCookie)?.value
+  if (!accessToken) {
+    return NextResponse.json(failure("UNAUTHORIZED", "Phiên đăng nhập đã hết hạn"), { status: 401 })
+  }
+
+  let body: string | undefined
+  if (request.method === "POST") {
+    try {
+      body = JSON.stringify(await request.json())
+    } catch {
+      return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
+    }
+  }
+
+  const result = await callApi<unknown>(`/api/accounts/${accountId}/role-assignments`, {
+    method: request.method,
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
     body,
   })

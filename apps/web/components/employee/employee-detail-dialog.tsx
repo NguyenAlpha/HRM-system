@@ -50,7 +50,7 @@ export function EmployeeDetailDialog({ employeeId, canManage, onClose, onEdit, o
 
   useEffect(() => {
     let active = true
-    employeeRequest<EmployeeDetail>(`/${employeeId}`)
+    employeeRequest<EmployeeDetail>("hrm", `/${employeeId}`)
       .then((result) => {
         if (active) setDetail(result)
       })

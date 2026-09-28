@@ -74,10 +74,10 @@ export function RbacManager() {
             <TabsTrigger value="permissions"><KeyRound /> Quyền</TabsTrigger>
           </TabsList>
           <TabsContent value="roles" className="mt-4">
-            <RoleManager onSessionExpired={onSessionExpired} />
+            <RoleManager portal="admin" onSessionExpired={onSessionExpired} />
           </TabsContent>
           <TabsContent value="permissions" className="mt-4">
-            <PermissionManager onSessionExpired={onSessionExpired} />
+            <PermissionManager portal="admin" onSessionExpired={onSessionExpired} />
           </TabsContent>
         </Tabs>
       </section>

@@ -1,7 +1,7 @@
 "use client"
 
 import { authorizedRequest } from "@/lib/auth/client"
-import { AuthApiError } from "@/lib/auth/types"
+import { AuthApiError, type Portal } from "@/lib/auth/types"
 
 export const EMPLOYMENT_STATUSES = ["PROBATION", "ACTIVE", "RESIGNED", "TERMINATED", "RETIRED"] as const
 export type EmploymentStatus = typeof EMPLOYMENT_STATUSES[number]
@@ -125,12 +125,12 @@ export interface Page<T> {
   totalPages: number
 }
 
-export function employeeRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  return authorizedRequest<T>("hrm", `/employees${path}`, { ...init, cache: "no-store" })
+export function employeeRequest<T>(portal: Portal, path: string, init?: RequestInit): Promise<T> {
+  return authorizedRequest<T>(portal, `/employees${path}`, { ...init, cache: "no-store" })
 }
 
-export function employeeMutation<T>(path: string, method: "POST" | "PUT", body?: unknown): Promise<T> {
-  return employeeRequest<T>(path, {
+export function employeeMutation<T>(portal: Portal, path: string, method: "POST" | "PUT", body?: unknown): Promise<T> {
+  return employeeRequest<T>(portal, path, {
     method,
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -138,7 +138,7 @@ export function employeeMutation<T>(path: string, method: "POST" | "PUT", body?:
 }
 
 export function createEmployee(input: CreateEmployeeInput): Promise<EmployeeCreationResponse> {
-  return employeeMutation<EmployeeCreationResponse>("", "POST", input)
+  return employeeMutation<EmployeeCreationResponse>("hrm", "", "POST", input)
 }
 
 export function employeeErrorMessage(error: unknown): string {

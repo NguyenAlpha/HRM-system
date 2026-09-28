@@ -53,6 +53,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import type { Portal } from "@/lib/auth/types"
 import { isSessionExpired, rbacErrorMessage, rbacMutation, rbacRequest, type Page, type Role } from "@/lib/rbac"
 
 const CODE_PATTERN = /^(?!ROLE_)[A-Z][A-Z0-9_]*$/
@@ -72,7 +73,7 @@ type RoleValues = z.infer<typeof roleSchema>
 
 const EMPTY_FORM: RoleValues = { code: "", name: "", description: "" }
 
-export function RoleManager({ onSessionExpired }: { onSessionExpired: () => void }) {
+export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSessionExpired: () => void }) {
   const [data, setData] = useState<Page<Role> | null>(null)
   const [page, setPage] = useState(0)
   const [revision, setRevision] = useState(0)
@@ -97,7 +98,7 @@ export function RoleManager({ onSessionExpired }: { onSessionExpired: () => void
 
   useEffect(() => {
     let active = true
-    rbacRequest<Page<Role>>(`/roles?page=${page}&size=10&sort=id,desc`)
+    rbacRequest<Page<Role>>(portal, `/roles?page=${page}&size=10&sort=id,desc`)
       .then((result) => {
         if (!active) return
         if (page > 0 && page >= result.totalPages) {
@@ -114,7 +115,7 @@ export function RoleManager({ onSessionExpired }: { onSessionExpired: () => void
         setLoading(false)
       })
     return () => { active = false }
-  }, [page, revision, onSessionExpired])
+  }, [portal, page, revision, onSessionExpired])
 
   function reload() {
     setLoading(true)
@@ -141,8 +142,8 @@ export function RoleManager({ onSessionExpired }: { onSessionExpired: () => void
     try {
       const body = { name: values.name.trim(), description: values.description?.trim() || null }
       const saved = editing
-        ? await rbacMutation<Role>(`/roles/${editing.id}`, "PUT", body)
-        : await rbacMutation<Role>("/roles", "POST", { ...body, code: values.code.trim() })
+        ? await rbacMutation<Role>(portal, `/roles/${editing.id}`, "PUT", body)
+        : await rbacMutation<Role>(portal, "/roles", "POST", { ...body, code: values.code.trim() })
       if (selected?.id === saved.id) setSelected(saved)
       toast.success(editing ? `Đã cập nhật vai trò ${saved.code}` : `Đã tạo vai trò ${saved.code}`)
       if (!editing) setPage(0)
@@ -158,7 +159,7 @@ export function RoleManager({ onSessionExpired }: { onSessionExpired: () => void
     if (!roleToDelete) return
     setDeleting(true)
     try {
-      await rbacMutation(`/roles/${roleToDelete.id}`, "DELETE")
+      await rbacMutation(portal, `/roles/${roleToDelete.id}`, "DELETE")
       if (selected?.id === roleToDelete.id) setSelected(null)
       toast.success(`Đã xóa vai trò ${roleToDelete.code}`)
       setRoleToDelete(null)
@@ -383,6 +384,7 @@ export function RoleManager({ onSessionExpired }: { onSessionExpired: () => void
       {selected && (
         <RolePermissions
           key={selected.id}
+          portal={portal}
           role={selected}
           onClose={() => setSelected(null)}
           onSessionExpired={onSessionExpired}
