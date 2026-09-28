@@ -15,7 +15,7 @@ Tạo và tra cứu hồ sơ nhân sự trong phạm vi được phân công. AP
 
 `HR_STAFF`, `BRANCH_MANAGER`, các vai trò giám sát và một số vai trò nghiệp vụ được seed `employee.read`. Kết quả còn bị giới hạn theo scope của role assignment: `SELF`, `ORG_UNIT`, `LOCATION` hoặc `COMPANY`.
 
-`COMPANY_OWNER` được seed `employee.manage` với scope `COMPANY`, nên có thể gọi API cập nhật hồ sơ. Permission này không bao gồm `employee.read`; quyền đọc vẫn phải đến từ một role khác, chẳng hạn `DIRECTOR` trên account Company Owner đầu tiên.
+`COMPANY_OWNER` được seed cả `employee.read` và `employee.manage` với scope `COMPANY`, nên có thể xem danh sách, xem chi tiết, tạo và cập nhật hồ sơ nhân sự mà không phụ thuộc vào role `DIRECTOR`.
 
 ---
 

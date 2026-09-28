@@ -413,7 +413,7 @@ Ràng buộc persistence:
 | `PAYROLL_ACCOUNTANT` | `COMPANY` | Đọc thành phần thu nhập, tính và kiểm tra lương |
 | `PAYROLL_APPROVER` | `COMPANY` | Duyệt, xác nhận đã trả và khóa kỳ lương |
 | `DIRECTOR` | `COMPANY` | Xem nhân sự và phê duyệt cuối nghiệp vụ nhân sự, đơn từ, thay đổi cơ cấu toàn công ty |
-| `COMPANY_OWNER` | `COMPANY` | Cập nhật hồ sơ nhân sự; cấp và quản trị account; phê duyệt đề xuất role; quản trị quyền truy cập và cấu hình doanh nghiệp |
+| `COMPANY_OWNER` | `COMPANY` | Xem và quản lý hồ sơ nhân sự; cấp và quản trị account; phê duyệt đề xuất role; quản trị quyền truy cập và cấu hình doanh nghiệp |
 | `SYSTEM_ADMIN` | `COMPANY` | Khởi tạo Company Owner đầu tiên và tạm thời quản lý RBAC; không tham gia quản trị account hoặc nghiệp vụ nội bộ công ty |
 
 Mọi nhân viên có tài khoản đều nhận `EMPLOYEE` ở scope `SELF`; vai trò nghiệp vụ được gán thêm.
