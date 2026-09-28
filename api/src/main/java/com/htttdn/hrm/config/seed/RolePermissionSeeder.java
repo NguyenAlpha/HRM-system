@@ -76,7 +76,7 @@ public class RolePermissionSeeder implements ApplicationRunner {
         role("TEAM_LEAD", SUPERVISOR_PERMISSIONS),
         role("WAREHOUSE_SUPERVISOR", SUPERVISOR_PERMISSIONS),
         role("BRANCH_MANAGER", PEOPLE_MANAGER_PERMISSIONS),
-        role("HR_STAFF", with(
+        role("HR_MANAGER", with(
             PEOPLE_MANAGER_PERMISSIONS,
             "employee.sensitive.read",
             "employee.sensitive.manage",

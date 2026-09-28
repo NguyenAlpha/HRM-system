@@ -26,7 +26,7 @@ Quản lý danh mục cơ cấu tổ chức, địa điểm làm việc và ch�
 | `PUT /api/job-positions/{positionId}` | `organization.manage` | Cập nhật nội dung và trạng thái chức danh |
 | `DELETE /api/job-positions/{positionId}` | `organization.manage` | Xóa mềm chức danh không còn được sử dụng |
 
-Tất cả endpoint yêu cầu Bearer token. `HR_STAFF`, `DIRECTOR` và `COMPANY_OWNER` được seed `organization.read`; chỉ `COMPANY_OWNER` được seed `organization.manage`. `SYSTEM_ADMIN` không quản lý danh mục nội bộ doanh nghiệp.
+Tất cả endpoint yêu cầu Bearer token. `HR_MANAGER`, `DIRECTOR` và `COMPANY_OWNER` được seed `organization.read`; chỉ `COMPANY_OWNER` được seed `organization.manage`. `SYSTEM_ADMIN` không quản lý danh mục nội bộ doanh nghiệp.
 
 ---
 

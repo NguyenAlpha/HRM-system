@@ -410,7 +410,7 @@ Ràng buộc persistence:
 | `TEAM_LEAD` | `ORG_UNIT` | Quyền nhân viên + xem nhân sự, duyệt đơn và tăng ca của nhóm |
 | `WAREHOUSE_SUPERVISOR` | `LOCATION` | Như trưởng nhóm nhưng chỉ trong kho được giao |
 | `BRANCH_MANAGER` | `LOCATION` | Thêm/xóa mềm nhân sự, duyệt đơn và quản lý chấm công trong chi nhánh cùng kho con |
-| `HR_STAFF` | `COMPANY` | Hồ sơ thường và dữ liệu nhạy cảm của nhân viên; cấp account; đề xuất role; quản lý đơn từ, chấm công và báo cáo toàn công ty |
+| `HR_MANAGER` | `COMPANY` | Hồ sơ thường và dữ liệu nhạy cảm của nhân viên; cấp account; đề xuất role; quản lý đơn từ, chấm công và báo cáo toàn công ty |
 | `PAYROLL_ACCOUNTANT` | `COMPANY` | Đọc thành phần thu nhập, tính và kiểm tra lương |
 | `PAYROLL_APPROVER` | `COMPANY` | Duyệt, xác nhận đã trả và khóa kỳ lương |
 | `DIRECTOR` | `COMPANY` | Xem nhân sự và phê duyệt cuối nghiệp vụ nhân sự, đơn từ, thay đổi cơ cấu toàn công ty |
@@ -806,7 +806,7 @@ Vị trí công việc dùng cho phân công nhân sự và không tự cấp ro
 | Username | Vai trò | Phạm vi |
 |---|---|---|
 | `admin` | `SYSTEM_ADMIN` | Công ty |
-| `hr01` | `HR_STAFF` | Công ty |
+| `hr01` | `HR_MANAGER` | Công ty |
 | `payroll01` | `PAYROLL_ACCOUNTANT` | Công ty |
 | `payroll_approver` | `PAYROLL_APPROVER` | Công ty |
 | `branch01_manager` | `BRANCH_MANAGER` | Chi nhánh 1 và kho con |

@@ -6,13 +6,13 @@ Account mới phải liên kết với một employee đã tồn tại. Hệ th�
 
 Role nghiệp vụ bổ sung được quản lý qua [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md), không truyền trong request tạo account.
 
-`HR_STAFF` và `COMPANY_OWNER` được seed `account.provision`, nên có thể cấp account cho employee trong scope được giao. Permission này không cho phép xem danh sách account, reset mật khẩu, khóa hoặc mở lại account.
+`HR_MANAGER` và `COMPANY_OWNER` được seed `account.provision`, nên có thể cấp account cho employee trong scope được giao. Permission này không cho phép xem danh sách account, reset mật khẩu, khóa hoặc mở lại account.
 
 Director tiếp theo đi qua quy trình thông thường: HR tạo employee, cấp account và gửi đề xuất `DIRECTOR`; Company Owner duyệt qua [Role Assignment Requests](./ROLE_ASSIGNMENT_REQUESTS.md).
 
 Company Owner đầu tiên phải được `SYSTEM_ADMIN` tạo qua workflow [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md), không dùng endpoint account tổng quát.
 
-Company Owner tạo HR Staff đầu tiên và các HR Staff tiếp theo bằng quy trình thông thường: tạo hồ sơ qua `POST /api/employees`, cấp account qua `POST /api/accounts`, sau đó gán trực tiếp `HR_STAFF/COMPANY` qua [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md).
+Company Owner tạo HR Manager đầu tiên và các HR Manager tiếp theo bằng quy trình thông thường: tạo hồ sơ qua `POST /api/employees`, cấp account qua `POST /api/accounts`, sau đó gán trực tiếp `HR_MANAGER/COMPANY` qua [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md).
 
 ---
 
@@ -28,7 +28,7 @@ Company Owner tạo HR Staff đầu tiên và các HR Staff tiếp theo bằng q
 | `POST /api/accounts/{accountId}/suspend` | `account.manage` | Vô hiệu hóa account và thu hồi toàn bộ refresh token |
 | `POST /api/accounts/{accountId}/activate` | `account.manage` | Kích hoạt lại account `DISABLED` hoặc mở khóa account `LOCKED` đã có mật khẩu |
 
-Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` được seed sẵn toàn bộ permission trên. `HR_STAFF` chỉ được seed `account.provision` trong nhóm API này; các thao tác quản trị vòng đời account vẫn thuộc Company Owner. `SYSTEM_ADMIN` không được quản trị tài khoản nội bộ doanh nghiệp.
+Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` được seed sẵn toàn bộ permission trên. `HR_MANAGER` chỉ được seed `account.provision` trong nhóm API này; các thao tác quản trị vòng đời account vẫn thuộc Company Owner. `SYSTEM_ADMIN` không được quản trị tài khoản nội bộ doanh nghiệp.
 
 Raw activation token là credential bí mật và chỉ xuất hiện trong response của thao tác tạo, gửi lại lời mời hoặc reset mật khẩu. API không lưu hoặc ghi log raw token. Khi có hạ tầng email, lớp gửi thông báo sẽ tiếp nhận token này và API không cần trả nó cho frontend quản trị.
 
@@ -54,7 +54,7 @@ Tạo account cho employee đã tồn tại. Đây là provisioning tài khoản
 
 Email của account được lấy từ `Employee.workEmail`, trim và chuyển về chữ thường. Request không được tự truyền email hoặc role.
 
-Employee phải nằm trong scope `account.provision` của account đang đăng nhập. Với `HR_STAFF` và `COMPANY_OWNER` mặc định, scope này là `COMPANY`; nếu permission được ủy quyền cho custom role có scope hẹp hơn, backend tiếp tục giới hạn theo phân công hiện hành của employee.
+Employee phải nằm trong scope `account.provision` của account đang đăng nhập. Với `HR_MANAGER` và `COMPANY_OWNER` mặc định, scope này là `COMPANY`; nếu permission được ủy quyền cho custom role có scope hẹp hơn, backend tiếp tục giới hạn theo phân công hiện hành của employee.
 
 ### Response `201 Created`
 

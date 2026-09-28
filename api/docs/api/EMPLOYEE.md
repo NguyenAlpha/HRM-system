@@ -16,7 +16,7 @@ Tạo và tra cứu hồ sơ nhân sự trong phạm vi được phân công. AP
 | `GET /api/employees/{employeeId}/assignments/current` | ✅ | `employee.read` | Lấy phân công đang hiệu lực tại ngày gọi API |
 | `POST /api/employees/{employeeId}/assignments` | ✅ | `employee.manage` | Điều chuyển, bổ nhiệm hoặc thay đổi phân công của nhân sự |
 
-`HR_STAFF`, `BRANCH_MANAGER`, các vai trò giám sát và một số vai trò nghiệp vụ được seed `employee.read`. Kết quả còn bị giới hạn theo scope của role assignment: `SELF`, `ORG_UNIT`, `LOCATION` hoặc `COMPANY`.
+`HR_MANAGER`, `BRANCH_MANAGER`, các vai trò giám sát và một số vai trò nghiệp vụ được seed `employee.read`. Kết quả còn bị giới hạn theo scope của role assignment: `SELF`, `ORG_UNIT`, `LOCATION` hoặc `COMPANY`.
 
 `COMPANY_OWNER` được seed cả `employee.read` và `employee.manage` với scope `COMPANY`, nên có thể xem danh sách, xem chi tiết, tạo và cập nhật hồ sơ nhân sự mà không phụ thuộc vào role `DIRECTOR`.
 

@@ -14,7 +14,7 @@ Quản lý danh mục ca làm việc dùng trong phân công nhân sự, chấm 
 | `PUT /api/work-shifts/{shiftId}` | `organization.manage` | Cập nhật nội dung và trạng thái ca làm việc |
 | `DELETE /api/work-shifts/{shiftId}` | `organization.manage` | Xóa mềm ca không còn được dùng bởi phân công hiện tại hoặc tương lai |
 
-Tất cả endpoint yêu cầu Bearer token. `HR_STAFF`, `DIRECTOR` và `COMPANY_OWNER` được seed `organization.read`; chỉ `COMPANY_OWNER` được seed `organization.manage`.
+Tất cả endpoint yêu cầu Bearer token. `HR_MANAGER`, `DIRECTOR` và `COMPANY_OWNER` được seed `organization.read`; chỉ `COMPANY_OWNER` được seed `organization.manage`.
 
 ---
 

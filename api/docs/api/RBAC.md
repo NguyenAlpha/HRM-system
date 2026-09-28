@@ -587,19 +587,19 @@ Ba permission chuẩn bị cho workflow cấp tài khoản và đề xuất role
 
 | Permission | Role hệ thống được seed | Mục đích |
 |:-----------|:------------------------|:---------|
-| `account.provision` | `HR_STAFF`, `COMPANY_OWNER` | Tạo account cho employee hợp lệ qua `POST /api/accounts` trong scope được giao |
-| `role.assignment.request` | `HR_STAFF` | Gửi đề xuất cấp role nghiệp vụ |
+| `account.provision` | `HR_MANAGER`, `COMPANY_OWNER` | Tạo account cho employee hợp lệ qua `POST /api/accounts` trong scope được giao |
+| `role.assignment.request` | `HR_MANAGER` | Gửi đề xuất cấp role nghiệp vụ |
 | `role.assignment.approve` | `COMPANY_OWNER` | Duyệt hoặc từ chối đề xuất; là `SYSTEM_ONLY` nên không thể gán cho custom role qua API RBAC |
 
 Hai permission này được sử dụng bởi [Role Assignment Requests](./ROLE_ASSIGNMENT_REQUESTS.md). Role `HR_ASSIGNABLE` được tạo assignment ngay và lưu request `APPROVED` để audit; role `OWNER_APPROVAL` giữ `PENDING` cho tới khi Company Owner duyệt. Request bị từ chối hoặc hủy không cấp quyền cho account.
 
-HR Staff lấy danh sách role có thể đề xuất qua `GET /api/role-assignment-requests/available-roles`. Endpoint nghiệp vụ này chỉ đọc role `HR_ASSIGNABLE` và `OWNER_APPROVAL`, không mở các API quản trị RBAC và không yêu cầu `rbac.manage`.
+HR Manager lấy danh sách role có thể đề xuất qua `GET /api/role-assignment-requests/available-roles`. Endpoint nghiệp vụ này chỉ đọc role `HR_ASSIGNABLE` và `OWNER_APPROVAL`, không mở các API quản trị RBAC và không yêu cầu `rbac.manage`.
 
 Permission dành cho danh mục tổ chức:
 
 | Permission | Role hệ thống được seed | Mục đích |
 |:-----------|:------------------------|:---------|
-| `organization.read` | `HR_STAFF`, `DIRECTOR`, `COMPANY_OWNER` | Xem cơ cấu tổ chức, địa điểm, chức danh và ca làm việc |
+| `organization.read` | `HR_MANAGER`, `DIRECTOR`, `COMPANY_OWNER` | Xem cơ cấu tổ chức, địa điểm, chức danh và ca làm việc |
 | `organization.manage` | `COMPANY_OWNER` | Tạo, cập nhật, ngừng sử dụng và xóa mềm các danh mục tổ chức và ca làm việc |
 
 `organization.change.approve` tiếp tục là quyền phê duyệt nghiệp vụ dành cho `DIRECTOR`, không được dùng thay cho quyền CRUD danh mục.
@@ -624,7 +624,7 @@ Permission dành cho danh mục tổ chức:
 |:----------------|:---------|:--------|
 | `RBAC_SEED_ENABLED` | `true` | Seed role, permission và mapping mặc định khi khởi động |
 | `ADMIN_SEED_ENABLED` | `true` | Seed account admin và gán role `SYSTEM_ADMIN` đã được RBAC seed tạo trước |
-| `USER_SEED_ENABLED` | `false` | Seed các account demo, gồm một `HR_STAFF`; chỉ nên bật ở môi trường demo/test |
+| `USER_SEED_ENABLED` | `false` | Seed các account demo, gồm một `HR_MANAGER`; chỉ nên bật ở môi trường demo/test |
 
 Để ủy quyền quản trị custom role cho một người khác:
 

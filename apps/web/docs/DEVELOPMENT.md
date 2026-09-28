@@ -52,7 +52,7 @@ Các tài khoản dưới đây chỉ tồn tại khi seeder tương ứng đư�
 | Portal | Username | Password mặc định | Role | Điều kiện API |
 |:-------|:---------|:------------------|:-----|:--------------|
 | HRM | `employee01` | `Employee@123` | `EMPLOYEE` | `USER_SEED_ENABLED=true` |
-| HRM | `hr01` | `HrStaff@123` | `HR_STAFF` | `USER_SEED_ENABLED=true` |
+| HRM | `hr01` | `HrStaff@123` | `HR_MANAGER` | `USER_SEED_ENABLED=true` |
 | HRM | `payroll01` | `Payroll@123` | `PAYROLL_ACCOUNTANT` | `USER_SEED_ENABLED=true` |
 | Admin | `admin` | `Admin@123` | `SYSTEM_ADMIN` | `ADMIN_SEED_ENABLED=true` |
 
