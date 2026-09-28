@@ -136,7 +136,8 @@ public class PayrollServiceImpl implements PayrollService {
         }
 
         EmployeeAssignment assignment = employeeAssignmentRepository
-            .findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employee.getId())
+            .findCurrentPrimaryCandidates(employee.getId(), period.getPeriodEnd()).stream()
+            .findFirst()
             .orElse(null);
         if (assignment == null) {
             return;

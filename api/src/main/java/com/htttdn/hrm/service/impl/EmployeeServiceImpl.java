@@ -232,6 +232,24 @@ public class EmployeeServiceImpl implements EmployeeService {
     public EmployeeAssignmentResponse assign(Long employeeId, AssignEmployeeRequest request) {
         Employee employee = findEmployeeOrThrow(employeeId);
         employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_MANAGE);
+        employee = employeeRepository.findByIdForUpdate(employeeId)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                ErrorCode.EMPLOYEE_NOT_FOUND, "Employee not found: " + employeeId
+            ));
+
+        if (isEmploymentEnded(employee.getEmploymentStatus())) {
+            throw new ConflictException(
+                ErrorCode.CONFLICT,
+                "Cannot assign an employee whose employment has ended"
+            );
+        }
+        if (request.effectiveFrom().isBefore(employee.getHireDate())) {
+            throw new BusinessException(
+                ErrorCode.VALIDATION_ERROR,
+                "effectiveFrom must not be before employee hireDate",
+                "effectiveFrom"
+            );
+        }
 
         if (request.managerEmployeeId() != null && request.managerEmployeeId().equals(employeeId)) {
             throw new BusinessException(
@@ -241,8 +259,17 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         AssignmentResources assignmentResources = resolveAssignmentResources(request);
 
-        employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employeeId)
+        List<EmployeeAssignment> openAssignments = employeeAssignmentRepository
+            .findOpenPrimaryForUpdate(employeeId);
+        if (openAssignments.size() > 1) {
+            throw new ConflictException(
+                ErrorCode.CONFLICT,
+                "Employee has multiple open primary assignments"
+            );
+        }
+        openAssignments.stream().findFirst()
             .ifPresent(current -> closeCurrentAssignment(current, request.effectiveFrom()));
+        employeeAssignmentRepository.flush();
 
         return toAssignmentResponse(savePrimaryAssignment(
             employee,
@@ -261,7 +288,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         return findCurrentAssignment(employeeId)
             .map(this::toAssignmentResponse)
             .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND, "No active assignment for employee: " + employeeId
+                ErrorCode.EMPLOYEE_ASSIGNMENT_NOT_FOUND,
+                "No active assignment for employee: " + employeeId
             ));
     }
 
