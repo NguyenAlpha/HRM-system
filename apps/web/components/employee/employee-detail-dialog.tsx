@@ -6,15 +6,16 @@ import { KeyRound, Pencil } from "lucide-react"
 import { RbacFeedback } from "@/components/admin/rbac-controls"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   EDUCATION_LEVEL_LABELS,
@@ -35,7 +36,7 @@ function Field({ label, value }: { label: string; value: string | null | undefin
   )
 }
 
-export function EmployeeDetailSheet({ employeeId, canManage, onClose, onEdit, onProvision, onSessionExpired }: {
+export function EmployeeDetailDialog({ employeeId, canManage, onClose, onEdit, onProvision, onSessionExpired }: {
   employeeId: number
   canManage: boolean
   onClose: () => void
@@ -65,16 +66,19 @@ export function EmployeeDetailSheet({ employeeId, canManage, onClose, onEdit, on
   }, [employeeId, onSessionExpired])
 
   return (
-    <Sheet open onOpenChange={(open) => { if (!open) onClose() }}>
-      <SheetContent className="flex flex-col gap-0 overflow-y-auto p-0 sm:max-w-md">
-        <SheetHeader className="border-b">
-          <SheetTitle>{detail?.fullName ?? "Hồ sơ nhân sự"}</SheetTitle>
-          <SheetDescription>
-            {detail ? `${detail.employeeCode} · ${EMPLOYMENT_STATUS_LABELS[detail.employmentStatus]}` : "Đang tải..."}
-          </SheetDescription>
-        </SheetHeader>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader className="flex-row items-center gap-3 space-y-0 pr-6">
+          <span className="avatar shrink-0">{(detail?.fullName ?? "?").slice(0, 1).toUpperCase()}</span>
+          <div className="min-w-0">
+            <DialogTitle className="truncate">{detail?.fullName ?? "Hồ sơ nhân sự"}</DialogTitle>
+            <DialogDescription>
+              {detail ? `${detail.employeeCode} · ${EMPLOYMENT_STATUS_LABELS[detail.employmentStatus]}` : "Đang tải..."}
+            </DialogDescription>
+          </div>
+        </DialogHeader>
 
-        <div className="flex-1 space-y-5 p-4">
+        <div className="max-h-[65vh] space-y-5 overflow-y-auto py-1">
           <RbacFeedback error={error} />
 
           {loading && (
@@ -159,19 +163,22 @@ export function EmployeeDetailSheet({ employeeId, canManage, onClose, onEdit, on
           )}
         </div>
 
-        {canManage && detail && (
-          <SheetFooter className="flex-row border-t">
-            <Button type="button" variant="outline" onClick={() => onEdit(detail)}>
-              <Pencil /> Sửa hồ sơ
-            </Button>
-            {!detail.account && (
-              <Button type="button" onClick={() => onProvision(detail)}>
-                <KeyRound /> Cấp tài khoản
+        <DialogFooter>
+          <DialogClose render={<Button type="button" variant="outline" />}>Đóng</DialogClose>
+          {canManage && detail && (
+            <>
+              <Button type="button" variant="outline" onClick={() => onEdit(detail)}>
+                <Pencil /> Sửa hồ sơ
               </Button>
-            )}
-          </SheetFooter>
-        )}
-      </SheetContent>
-    </Sheet>
+              {!detail.account && (
+                <Button type="button" onClick={() => onProvision(detail)}>
+                  <KeyRound /> Cấp tài khoản
+                </Button>
+              )}
+            </>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
