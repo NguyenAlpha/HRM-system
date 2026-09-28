@@ -55,8 +55,8 @@ public class RoleSeeder implements ApplicationRunner {
             RoleGrantPolicy.OWNER_APPROVAL
         ),
         new RoleDefinition(
-            "HR_STAFF",
-            "Nhân viên nhân sự",
+            "HR_MANAGER",
+            "Quản lý nhân sự",
             "Quản lý nghiệp vụ nhân sự trên toàn công ty",
             RoleGrantPolicy.OWNER_APPROVAL
         ),

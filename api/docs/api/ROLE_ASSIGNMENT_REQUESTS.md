@@ -16,7 +16,7 @@ Workflow đề xuất và phê duyệt cấp role nghiệp vụ cho account. Req
 | `POST /api/role-assignment-requests/{requestId}/reject` | `role.assignment.approve` | Từ chối đề xuất `PENDING` kèm ghi chú bắt buộc |
 | `POST /api/role-assignment-requests/{requestId}/cancel` | `role.assignment.request` | Người gửi hủy đề xuất của chính mình khi đề xuất còn `PENDING` |
 
-Tất cả endpoint yêu cầu Bearer token. `HR_STAFF` được seed `role.assignment.request`; `COMPANY_OWNER` được seed `role.assignment.approve`.
+Tất cả endpoint yêu cầu Bearer token. `HR_MANAGER` được seed `role.assignment.request`; `COMPANY_OWNER` được seed `role.assignment.approve`.
 
 - Người có quyền đề xuất chỉ xem và hủy request do chính account của mình tạo.
 - Người có quyền phê duyệt xem được toàn bộ request.
@@ -185,7 +185,7 @@ Với role `HR_ASSIGNABLE`, cùng response sẽ có `status=APPROVED`, thông ti
 
 ## GET `/api/role-assignment-requests`
 
-Lấy danh sách request có phân trang. Company Owner thấy toàn bộ; HR Staff chỉ thấy request do chính mình tạo.
+Lấy danh sách request có phân trang. Company Owner thấy toàn bộ; HR Manager chỉ thấy request do chính mình tạo.
 
 ### Query params
 

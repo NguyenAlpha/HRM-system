@@ -30,7 +30,7 @@ public class RoleAssignmentPolicy {
         "TEAM_LEAD", Set.of(RoleScopeType.ORG_UNIT),
         "WAREHOUSE_SUPERVISOR", Set.of(RoleScopeType.LOCATION),
         "BRANCH_MANAGER", Set.of(RoleScopeType.LOCATION),
-        "HR_STAFF", Set.of(RoleScopeType.COMPANY),
+        "HR_MANAGER", Set.of(RoleScopeType.COMPANY),
         "PAYROLL_ACCOUNTANT", Set.of(RoleScopeType.COMPANY),
         "PAYROLL_APPROVER", Set.of(RoleScopeType.COMPANY),
         "DIRECTOR", Set.of(RoleScopeType.COMPANY),

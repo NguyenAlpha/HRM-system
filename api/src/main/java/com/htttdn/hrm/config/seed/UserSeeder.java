@@ -50,8 +50,8 @@ public class UserSeeder implements ApplicationRunner {
             "Employee@123", "EMPLOYEE", RoleScopeType.SELF
         ),
         new UserDefinition(
-            "EMP002", "Demo HR Staff", "hr01", "hr01@hrm.local",
-            "HrStaff@123", "HR_STAFF", RoleScopeType.COMPANY
+            "EMP002", "Demo HR Manager", "hr01", "hr01@hrm.local",
+            "HrStaff@123", "HR_MANAGER", RoleScopeType.COMPANY
         ),
         new UserDefinition(
             "EMP003", "Demo Payroll Accountant", "payroll01", "payroll01@hrm.local",

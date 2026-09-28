@@ -117,7 +117,7 @@ Seeder có tính idempotent và không đổi mật khẩu của account đã t�
 mới chỉ có tác dụng khi account admin chưa được tạo.
 
 `USER_SEED_ENABLED` mặc định tắt để database mới có thể đi qua đúng chuỗi bootstrap thực tế:
-System Admin tạo Company Owner, sau đó Company Owner tạo HR Staff đầu tiên. Nếu cần các account
+System Admin tạo Company Owner, sau đó Company Owner tạo HR Manager đầu tiên. Nếu cần các account
 demo `employee01`, `hr01` và `payroll01`, hãy bật biến này một cách tường minh.
 
 > Các credential, database password và JWT secret mặc định chỉ dành cho local development.
@@ -174,7 +174,7 @@ Các tài khoản sau được tạo khi seeder tương ứng được bật:
 |:-------|:---------|:---------|:-----|
 | Admin | `admin` | `Admin@123` | `SYSTEM_ADMIN` |
 | HRM | `employee01` | `Employee@123` | `EMPLOYEE` |
-| HRM | `hr01` | `HrStaff@123` | `HR_STAFF` |
+| HRM | `hr01` | `HrStaff@123` | `HR_MANAGER` |
 | HRM | `payroll01` | `Payroll@123` | `PAYROLL_ACCOUNTANT` |
 
 Tài khoản `SYSTEM_ADMIN` phải đăng nhập tại `/admin/login`. Các tài khoản còn lại đăng nhập

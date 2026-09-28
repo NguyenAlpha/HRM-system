@@ -142,7 +142,7 @@ Hai role được lưu thành hai assignment riêng. Sau này doanh nghiệp có
 }
 ```
 
-Raw activation token chỉ xuất hiện trong response này. System admin phải chuyển token qua kênh an toàn để Company Owner tự đặt mật khẩu bằng [API activation](./AUTH.md). Sau khi đăng nhập, account có tổng quyền từ `EMPLOYEE`, `COMPANY_OWNER` và `DIRECTOR`, đồng thời có thể tạo hồ sơ HR Staff qua [Employee API](./EMPLOYEE.md), cấp account qua [Account](./ACCOUNT.md) và gán role `HR_STAFF/COMPANY` qua [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md).
+Raw activation token chỉ xuất hiện trong response này. System admin phải chuyển token qua kênh an toàn để Company Owner tự đặt mật khẩu bằng [API activation](./AUTH.md). Sau khi đăng nhập, account có tổng quyền từ `EMPLOYEE`, `COMPANY_OWNER` và `DIRECTOR`, đồng thời có thể tạo hồ sơ HR Manager qua [Employee API](./EMPLOYEE.md), cấp account qua [Account](./ACCOUNT.md) và gán role `HR_MANAGER/COMPANY` qua [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md).
 
 ### Lỗi
 
@@ -167,5 +167,5 @@ Workflow này không:
 - Cho phép chọn role hoặc permission tùy ý trong request.
 - Đặt mật khẩu thay Company Owner.
 - Tạo một employee/account Director riêng; workflow chỉ gán role `DIRECTOR` cho chính Company Owner vừa tạo.
-- Tạo HR Staff hoặc các nhân sự cấp dưới.
+- Tạo HR Manager hoặc các nhân sự cấp dưới.
 - Thực hiện chuyển giao hay thu hồi quyền sở hữu; các thao tác đó cần workflow riêng có audit và quy tắc chống mất owner.

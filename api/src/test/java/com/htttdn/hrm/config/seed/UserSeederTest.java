@@ -127,7 +127,7 @@ class UserSeederTest {
         Map<String, AccountRoleAssignment> assignments = assignmentCaptor.getAllValues().stream()
             .collect(Collectors.toMap(assignment -> assignment.getAccount().getUsername(), Function.identity()));
         assertAssignment(assignments.get("employee01"), "EMPLOYEE", RoleScopeType.SELF, admin);
-        assertAssignment(assignments.get("hr01"), "HR_STAFF", RoleScopeType.COMPANY, admin);
+        assertAssignment(assignments.get("hr01"), "HR_MANAGER", RoleScopeType.COMPANY, admin);
         assertAssignment(assignments.get("payroll01"), "PAYROLL_ACCOUNTANT", RoleScopeType.COMPANY, admin);
     }
 
