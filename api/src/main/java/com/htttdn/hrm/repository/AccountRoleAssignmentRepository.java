@@ -33,6 +33,18 @@ public interface AccountRoleAssignmentRepository extends JpaRepository<AccountRo
 
     List<AccountRoleAssignment> findByRoleIdAndRevokedAtIsNull(Long roleId);
 
+    @Query("""
+        SELECT CASE WHEN COUNT(assignment) > 0 THEN true ELSE false END
+        FROM AccountRoleAssignment assignment
+        WHERE assignment.organizationUnit.id = :organizationUnitId
+          AND assignment.revokedAt IS NULL
+          AND (assignment.effectiveTo IS NULL OR assignment.effectiveTo >= :date)
+        """)
+    boolean existsCurrentOrFutureByOrganizationUnitId(
+        @Param("organizationUnitId") Long organizationUnitId,
+        @Param("date") LocalDate date
+    );
+
     boolean existsByAccountIdAndRoleIdAndScopeTypeAndEffectiveToIsNull(
         Long accountId,
         Long roleId,

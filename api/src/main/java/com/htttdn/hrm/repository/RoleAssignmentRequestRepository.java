@@ -17,6 +17,11 @@ import jakarta.persistence.LockModeType;
 
 public interface RoleAssignmentRequestRepository extends JpaRepository<RoleAssignmentRequest, Long> {
 
+    boolean existsByOrganizationUnitIdAndStatus(
+        Long organizationUnitId,
+        RoleAssignmentRequestStatus status
+    );
+
     @Override
     @EntityGraph(attributePaths = {
         "account.employee", "role", "organizationUnit", "workLocation",
