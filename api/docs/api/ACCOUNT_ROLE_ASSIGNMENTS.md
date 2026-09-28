@@ -26,7 +26,7 @@ API gán trực tiếp chỉ chấp nhận role có `grantPolicy=HR_ASSIGNABLE` 
 | `TEAM_LEAD` | `ORG_UNIT` | Bắt buộc `organizationUnitId` |
 | `WAREHOUSE_SUPERVISOR` | `LOCATION` | Bắt buộc `workLocationId` |
 | `BRANCH_MANAGER` | `LOCATION` | Bắt buộc `workLocationId` |
-| `HR_STAFF` | `COMPANY` | Bootstrap đầu tiên dùng workflow riêng; API này vẫn được gán thêm HR Staff sau đó |
+| `HR_STAFF` | `COMPANY` | Company Owner gán sau khi hồ sơ nhân sự và account đã được tạo |
 | `PAYROLL_ACCOUNTANT` | `COMPANY` | Không truyền ID phạm vi |
 | `PAYROLL_APPROVER` | `COMPANY` | Không truyền ID phạm vi |
 | `DIRECTOR` | `COMPANY` | Company Owner đầu tiên được gán tự động; chỉ một assignment được phép hiệu lực trong cùng khoảng thời gian trên toàn doanh nghiệp |
@@ -37,12 +37,10 @@ Role tùy chỉnh không bị giới hạn bởi bảng policy trên nhưng vẫ
 
 Workflow bootstrap được phép gọi đường gán role nội bộ cho `DIRECTOR` hoặc `COMPANY_OWNER` sau khi chính workflow đã kiểm tra permission chuyên biệt. Đường nội bộ này không phải endpoint và không làm cho API role assignment tổng quát được phép gán `COMPANY_OWNER`. Xem [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md).
 
-Đường nội bộ cũng hỗ trợ `HR_STAFF` cho lần bootstrap đầu tiên và từ chối nếu đã tồn tại assignment HR Staff chưa bị thu hồi. Quy trình được mô tả tại [Organization HR Staff Bootstrap](./ORGANIZATION_HR_STAFF_ADMIN.md).
-
 Mọi đường tạo assignment dùng chung `AccountRoleAssignmentCommandService`:
 
 - Company Owner gán trực tiếp dùng entry point `assignDirect`.
-- Workflow bootstrap dùng `assignProvisionedCompanyRole` với whitelist `COMPANY_OWNER`, `DIRECTOR`, `HR_STAFF`.
+- Workflow bootstrap Company Owner dùng `assignProvisionedCompanyRole` với whitelist `COMPANY_OWNER`, `DIRECTOR`.
 - [Workflow đề xuất role](./ROLE_ASSIGNMENT_REQUESTS.md) dùng `assignHrAssignableRequest` hoặc `assignOwnerApprovedRequest` theo đúng `grantPolicy`.
 
 Component command không phải API công khai và không tự thay thế authorization ở workflow gọi nó. Nó chịu trách nhiệm khóa account/role, kiểm tra account đích, chính sách cấp role, scope, thời gian, assignment chồng lấn, invariant Director/Company Owner và ghi nhận actor. Nhờ đó controller và workflow không tự viết lại logic tạo `AccountRoleAssignment`.

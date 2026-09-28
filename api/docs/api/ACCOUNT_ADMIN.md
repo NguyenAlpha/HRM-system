@@ -12,7 +12,7 @@ Director tiếp theo đi qua quy trình thông thường: HR tạo employee, c�
 
 Company Owner đầu tiên phải được `SYSTEM_ADMIN` tạo qua workflow [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md), không dùng endpoint account tổng quát.
 
-HR Staff đầu tiên được Company Owner tạo qua workflow [Organization HR Staff Bootstrap](./ORGANIZATION_HR_STAFF_ADMIN.md). Các HR Staff tiếp theo đi qua quy trình employee, account và đề xuất role thông thường.
+Company Owner tạo HR Staff đầu tiên và các HR Staff tiếp theo bằng quy trình thông thường: tạo hồ sơ qua `POST /api/employees`, cấp account qua `POST /api/admin/accounts`, sau đó gán trực tiếp `HR_STAFF/COMPANY` qua [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md).
 
 ---
 

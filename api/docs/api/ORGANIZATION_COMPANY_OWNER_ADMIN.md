@@ -142,7 +142,7 @@ Hai role được lưu thành hai assignment riêng. Sau này doanh nghiệp có
 }
 ```
 
-Raw activation token chỉ xuất hiện trong response này. System admin phải chuyển token qua kênh an toàn để Company Owner tự đặt mật khẩu bằng [API activation](./AUTH.md). Sau khi đăng nhập, account có tổng quyền từ `EMPLOYEE`, `COMPANY_OWNER` và `DIRECTOR`, đồng thời có thể dùng workflow [khởi tạo HR Staff đầu tiên](./ORGANIZATION_HR_STAFF_ADMIN.md) và các API quản trị nội bộ đã được cấp permission.
+Raw activation token chỉ xuất hiện trong response này. System admin phải chuyển token qua kênh an toàn để Company Owner tự đặt mật khẩu bằng [API activation](./AUTH.md). Sau khi đăng nhập, account có tổng quyền từ `EMPLOYEE`, `COMPANY_OWNER` và `DIRECTOR`, đồng thời có thể tạo hồ sơ HR Staff qua [Employee API](./EMPLOYEE.md), cấp account qua [Account Administration](./ACCOUNT_ADMIN.md) và gán role `HR_STAFF/COMPANY` qua [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md).
 
 ### Lỗi
 
