@@ -429,7 +429,8 @@ account.activation.manage   account.role.assign
 role.assignment.request     role.assignment.approve
 request.self.read            request.self.create           request.self.cancel
 request.read                 request.approve               request.final_approve
-request.manage              organization.change.approve   organization.company_owner.bootstrap
+request.manage              organization.read             organization.manage
+organization.change.approve organization.company_owner.bootstrap
 attendance.self.read         attendance.read               attendance.manage
 attendance.overtime.approve
 payroll.self.read            payroll.self.print

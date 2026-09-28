@@ -78,6 +78,18 @@ public class PermissionSeeder implements ApplicationRunner {
         ),
 
         permission(
+            "organization.read",
+            "Xem danh mục tổ chức",
+            PermissionModule.ORGANIZATION,
+            "Xem cơ cấu tổ chức, địa điểm làm việc và chức danh"
+        ),
+        permission(
+            "organization.manage",
+            "Quản lý danh mục tổ chức",
+            PermissionModule.ORGANIZATION,
+            "Tạo, cập nhật, ngừng sử dụng và xóa mềm danh mục tổ chức"
+        ),
+        permission(
             "organization.change.approve",
             "Phê duyệt thay đổi cơ cấu",
             PermissionModule.ORGANIZATION,

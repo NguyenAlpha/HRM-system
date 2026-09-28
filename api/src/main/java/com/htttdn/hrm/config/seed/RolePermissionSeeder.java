@@ -80,6 +80,7 @@ public class RolePermissionSeeder implements ApplicationRunner {
             PEOPLE_MANAGER_PERMISSIONS,
             "employee.sensitive.read",
             "employee.sensitive.manage",
+            "organization.read",
             "account.provision",
             "role.assignment.request"
         )),
@@ -104,11 +105,14 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "employee.lifecycle.approve",
             "request.read",
             "request.final_approve",
+            "organization.read",
             "organization.change.approve"
         )),
         role("COMPANY_OWNER", List.of(
             "employee.read",
             "employee.manage",
+            "organization.read",
+            "organization.manage",
             "account.read",
             "account.manage",
             "account.provision",

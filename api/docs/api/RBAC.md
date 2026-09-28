@@ -595,6 +595,15 @@ Hai permission này được sử dụng bởi [Role Assignment Requests](./ROLE
 
 HR Staff lấy danh sách role có thể đề xuất qua `GET /api/role-assignment-requests/available-roles`. Endpoint nghiệp vụ này chỉ đọc role `HR_ASSIGNABLE` và `OWNER_APPROVAL`, không mở các API quản trị RBAC và không yêu cầu `rbac.manage`.
 
+Permission dành cho danh mục tổ chức:
+
+| Permission | Role hệ thống được seed | Mục đích |
+|:-----------|:------------------------|:---------|
+| `organization.read` | `HR_STAFF`, `DIRECTOR`, `COMPANY_OWNER` | Xem cơ cấu tổ chức, địa điểm làm việc và chức danh |
+| `organization.manage` | `COMPANY_OWNER` | Tạo, cập nhật, ngừng sử dụng và xóa mềm các danh mục tổ chức |
+
+`organization.change.approve` tiếp tục là quyền phê duyệt nghiệp vụ dành cho `DIRECTOR`, không được dùng thay cho quyền CRUD danh mục.
+
 `SYSTEM_ADMIN` sử dụng riêng permission `organization.company_owner.bootstrap` tại `POST /api/system/organization/company-owner` để tạo Company Owner đầu tiên. Workflow và giới hạn chống tạo trùng được mô tả trong [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md).
 
 ---
