@@ -8,9 +8,9 @@ Gán role nghiệp vụ cho account theo phạm vi và thời gian hiệu lực.
 
 | Endpoint | Permission | Mô tả |
 |:---------|:-----------|:------|
-| `GET /api/admin/accounts/{accountId}/role-assignments` | `account.read` | Lấy toàn bộ lịch sử role assignment của một account |
-| `POST /api/admin/accounts/{accountId}/role-assignments` | `account.role.assign` | Company Owner gán trực tiếp một role nghiệp vụ cho account theo scope và thời gian hiệu lực |
-| `POST /api/admin/accounts/{accountId}/role-assignments/{assignmentId}/revoke` | `account.role.assign` | Thu hồi một role assignment, giữ lại đầy đủ lịch sử và thông tin audit |
+| `GET /api/accounts/{accountId}/role-assignments` | `account.read` | Lấy toàn bộ lịch sử role assignment của một account |
+| `POST /api/accounts/{accountId}/role-assignments` | `account.role.assign` | Company Owner gán trực tiếp một role nghiệp vụ cho account theo scope và thời gian hiệu lực |
+| `POST /api/accounts/{accountId}/role-assignments/{assignmentId}/revoke` | `account.role.assign` | Thu hồi một role assignment, giữ lại đầy đủ lịch sử và thông tin audit |
 
 Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` được seed sẵn các permission trên. `SYSTEM_ADMIN` không được gán hoặc thu hồi role nghiệp vụ. Actor cấp hoặc thu hồi role luôn được lấy từ JWT/Security Context, không nhận từ request.
 
@@ -58,7 +58,7 @@ Company Owner đầu tiên đã mang role `DIRECTOR`. Khi chuyển giao chức v
 
 ---
 
-## GET `/api/admin/accounts/{accountId}/role-assignments`
+## GET `/api/accounts/{accountId}/role-assignments`
 
 Lấy toàn bộ lịch sử role assignment của account, gồm assignment hiện hành, tương lai, hết hạn và đã bị thu hồi. Kết quả sắp xếp theo thời điểm tạo giảm dần.
 
@@ -101,7 +101,7 @@ Lấy toàn bộ lịch sử role assignment của account, gồm assignment hi�
 
 ---
 
-## POST `/api/admin/accounts/{accountId}/role-assignments`
+## POST `/api/accounts/{accountId}/role-assignments`
 
 Gán thêm một role nghiệp vụ cho account.
 
@@ -169,7 +169,7 @@ Trả một `AccountRoleAssignmentResponse` như cấu trúc trong endpoint danh
 
 ---
 
-## POST `/api/admin/accounts/{accountId}/role-assignments/{assignmentId}/revoke`
+## POST `/api/accounts/{accountId}/role-assignments/{assignmentId}/revoke`
 
 Thu hồi role mà không xóa lịch sử assignment.
 

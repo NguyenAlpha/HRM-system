@@ -8,7 +8,7 @@ Khởi tạo Chủ sở hữu doanh nghiệp đầu tiên từ tài khoản qu�
 
 | Endpoint | Permission |
 |:---------|:-----------|
-| `POST /api/admin/organization/company-owner` | `organization.company_owner.bootstrap` |
+| `POST /api/system/organization/company-owner` | `organization.company_owner.bootstrap` |
 
 Endpoint yêu cầu Bearer token. Permission này có `assignmentPolicy = SYSTEM_ONLY` và chỉ được seed cho system role `SYSTEM_ADMIN`; Company Owner, Director và custom role không thể tự nhận permission này qua API RBAC.
 
@@ -16,7 +16,7 @@ Endpoint yêu cầu Bearer token. Permission này có `assignmentPolicy = SYSTEM
 
 ---
 
-## POST `/api/admin/organization/company-owner`
+## POST `/api/system/organization/company-owner`
 
 Tạo đồng thời hồ sơ employee tối thiểu, account đăng nhập và hai assignment độc lập `COMPANY_OWNER/COMPANY` cùng `DIRECTOR/COMPANY`. Company Owner đầu tiên vì vậy vừa có quyền sở hữu hệ thống nội bộ, vừa có quyền nghiệp vụ điều hành doanh nghiệp.
 
