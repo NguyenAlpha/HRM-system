@@ -31,4 +31,15 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
     List<EmployeeAssignment> findByEmployeeIdOrderByEffectiveFromDesc(Long employeeId);
 
     boolean existsByEmployeeId(Long employeeId);
+
+    @Query("""
+        SELECT CASE WHEN COUNT(assignment) > 0 THEN true ELSE false END
+        FROM EmployeeAssignment assignment
+        WHERE assignment.organizationUnit.id = :organizationUnitId
+          AND (assignment.effectiveTo IS NULL OR assignment.effectiveTo >= :date)
+        """)
+    boolean existsCurrentOrFutureByOrganizationUnitId(
+        @Param("organizationUnitId") Long organizationUnitId,
+        @Param("date") LocalDate date
+    );
 }
