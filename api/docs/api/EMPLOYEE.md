@@ -81,7 +81,7 @@ Các dữ liệu nhạy cảm như CCCD, email cá nhân, địa chỉ, mã số
 
 #### Phân công ban đầu
 
-Client lấy `organizationUnitId` và `workLocationId` từ [Organization API](./ORGANIZATION.md); API employee không nhận tên phòng ban hoặc địa điểm thay cho ID danh mục.
+Client lấy `organizationUnitId`, `workLocationId` và `positionId` từ [Organization API](./ORGANIZATION.md); API employee không nhận tên phòng ban, địa điểm hoặc chức danh thay cho ID danh mục.
 
 | Field | Bắt buộc | Ràng buộc |
 |:------|:--------:|:----------|

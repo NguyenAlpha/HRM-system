@@ -1,6 +1,6 @@
 # API Reference — Organization
 
-Quản lý danh mục cơ cấu tổ chức và địa điểm làm việc dùng bởi hồ sơ nhân sự và phạm vi phân quyền. API chức danh sẽ được bổ sung trong cùng module ở giai đoạn tiếp theo.
+Quản lý danh mục cơ cấu tổ chức, địa điểm làm việc và chức danh dùng bởi hồ sơ nhân sự và phạm vi phân quyền.
 
 ---
 
@@ -20,6 +20,11 @@ Quản lý danh mục cơ cấu tổ chức và địa điểm làm việc dùng
 | `POST /api/work-locations` | `organization.manage` | Tạo một địa điểm làm việc mới |
 | `PUT /api/work-locations/{locationId}` | `organization.manage` | Đổi parent, thông tin liên hệ hoặc trạng thái active của địa điểm |
 | `DELETE /api/work-locations/{locationId}` | `organization.manage` | Xóa mềm địa điểm không còn được sử dụng |
+| `GET /api/job-positions` | `organization.read` | Lấy danh sách chức danh không phân trang và lọc theo trạng thái hoặc loại quản lý |
+| `GET /api/job-positions/{positionId}` | `organization.read` | Lấy chi tiết một chức danh |
+| `POST /api/job-positions` | `organization.manage` | Tạo một chức danh mới |
+| `PUT /api/job-positions/{positionId}` | `organization.manage` | Cập nhật nội dung và trạng thái chức danh |
+| `DELETE /api/job-positions/{positionId}` | `organization.manage` | Xóa mềm chức danh không còn được sử dụng |
 
 Tất cả endpoint yêu cầu Bearer token. `HR_STAFF`, `DIRECTOR` và `COMPANY_OWNER` được seed `organization.read`; chỉ `COMPANY_OWNER` được seed `organization.manage`. `SYSTEM_ADMIN` không quản lý danh mục nội bộ doanh nghiệp.
 
@@ -295,6 +300,101 @@ Dữ liệu lịch sử đã hết hiệu lực không bị xóa và vẫn giữ
 
 ---
 
+## Quy tắc chức danh
+
+- Chức danh mô tả công việc của nhân sự, không phải role hoặc permission trong RBAC.
+- `code` là định danh kỹ thuật, viết hoa, tối đa 30 ký tự và duy nhất trong các bản ghi chưa bị xóa mềm.
+- `code` không thay đổi sau khi tạo; `PUT` chỉ thay tiêu đề, mô tả, cờ vị trí quản lý và `isActive`.
+- Chức danh inactive không thể được dùng cho phân công nhân sự mới nhưng các phân công đã tồn tại vẫn được giữ.
+- Danh sách không trả chức danh đã bị xóa mềm.
+
+---
+
+## GET `/api/job-positions`
+
+Trả danh sách không phân trang, sắp xếp theo tiêu đề chức danh.
+
+### Query params
+
+| Param | Bắt buộc | Mô tả |
+|:------|:--------:|:------|
+| `active` | ❌ | `true` hoặc `false`; bỏ trống để lấy cả hai trạng thái |
+| `managerial` | ❌ | `true` để lấy vị trí quản lý, `false` để lấy vị trí không quản lý |
+
+### Response `200 OK`
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 2,
+      "code": "HR_SPECIALIST",
+      "title": "Chuyên viên nhân sự",
+      "description": "Thực hiện các nghiệp vụ nhân sự",
+      "isManagerial": false,
+      "isActive": true,
+      "createdAt": "2026-09-28T03:00:00Z",
+      "updatedAt": "2026-09-28T03:00:00Z"
+    }
+  ],
+  "error": null
+}
+```
+
+---
+
+## GET `/api/job-positions/{positionId}`
+
+Trả cùng cấu trúc `JobPositionResponse` của endpoint danh sách. ID đã bị xóa mềm được xem như không tồn tại.
+
+---
+
+## POST `/api/job-positions`
+
+```json
+{
+  "code": "SALES_SPECIALIST",
+  "title": "Chuyên viên kinh doanh",
+  "description": "Phụ trách hoạt động kinh doanh và chăm sóc khách hàng",
+  "isManagerial": false
+}
+```
+
+| Field | Bắt buộc | Ràng buộc |
+|:------|:--------:|:----------|
+| `code` | ✅ | Tối đa 30 ký tự; bắt đầu bằng chữ cái và chỉ chứa `A-Z`, `0-9`, `_`, `-` |
+| `title` | ✅ | Không rỗng, tối đa 150 ký tự |
+| `description` | ❌ | Chuỗi rỗng được chuẩn hóa thành null |
+| `isManagerial` | ✅ | Có phải vị trí quản lý hay không |
+
+Response `201 Created` trả `JobPositionResponse`. Chức danh mới luôn có `isActive=true`.
+
+---
+
+## PUT `/api/job-positions/{positionId}`
+
+Request là trạng thái đầy đủ của các field được phép cập nhật:
+
+```json
+{
+  "title": "Chuyên viên kinh doanh cao cấp",
+  "description": "Phụ trách khách hàng doanh nghiệp",
+  "isManagerial": false,
+  "isActive": true
+}
+```
+
+Không nhận `code`; mã kỹ thuật của chức danh không thay đổi sau khi tạo.
+
+---
+
+## DELETE `/api/job-positions/{positionId}`
+
+Thực hiện soft delete: đặt `isActive=false` và ghi `deletedAt`. Endpoint từ chối xóa nếu chức danh đang được dùng bởi phân công nhân sự hiện tại hoặc tương lai. Phân công lịch sử đã hết hiệu lực vẫn được giữ khóa ngoại tới chức danh.
+
+---
+
 ## Lỗi chung
 
 | HTTP | `error.code` | Nguyên nhân |
@@ -305,8 +405,10 @@ Dữ liệu lịch sử đã hết hiệu lực không bị xóa và vẫn giữ
 | 403 | `FORBIDDEN` | Không có permission tương ứng |
 | 404 | `ORGANIZATION_UNIT_NOT_FOUND` | Đơn vị không tồn tại hoặc đã bị xóa mềm |
 | 404 | `LOCATION_NOT_FOUND` | Địa điểm không tồn tại hoặc đã bị xóa mềm |
+| 404 | `JOB_POSITION_NOT_FOUND` | Chức danh không tồn tại hoặc đã bị xóa mềm |
 | 409 | `ORGANIZATION_UNIT_CODE_TAKEN` | Code đang được đơn vị chưa bị xóa mềm sử dụng |
 | 409 | `WORK_LOCATION_CODE_TAKEN` | Code đang được địa điểm chưa bị xóa mềm sử dụng |
+| 409 | `JOB_POSITION_CODE_TAKEN` | Code đang được chức danh chưa bị xóa mềm sử dụng |
 | 409 | `ORGANIZATION_RESOURCE_IN_USE` | Không thể deactivate khi còn child active hoặc không thể xóa vì còn child/dữ liệu đang sử dụng |
 
 ---
@@ -315,6 +417,7 @@ Dữ liệu lịch sử đã hết hiệu lực không bị xóa và vẫn giữ
 
 - `employee_assignments.organization_unit_id` mô tả nơi employee đang làm việc trong cơ cấu.
 - `employee_assignments.work_location_id` mô tả địa điểm employee được phân công làm việc.
+- `employee_assignments.position_id` mô tả chức danh công việc của employee trong lần phân công.
 - `account_role_assignments.organization_unit_id` mô tả phạm vi dữ liệu mà một role được phép thao tác.
 - `account_role_assignments.work_location_id` mô tả phạm vi địa điểm mà một role được phép thao tác.
 - API danh mục Organization không tự tạo, thay đổi hoặc thu hồi các assignment trên.
