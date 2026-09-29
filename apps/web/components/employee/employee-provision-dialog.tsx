@@ -125,8 +125,8 @@ export function EmployeeProvisionDialog({ employeeId, employeeName, onClose, onP
               </DialogDescription>
             </DialogHeader>
 
-            <div className="mt-4 grid gap-3">
-              <div className="flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm">
+            <div className="mt-4 grid min-w-0 gap-3">
+              <div className="flex min-w-0 items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm">
                 <Link2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-muted-foreground">Link kích hoạt — gửi trực tiếp cho nhân sự</p>
@@ -136,7 +136,7 @@ export function EmployeeProvisionDialog({ employeeId, employeeName, onClose, onP
                   {copiedLink ? <Check /> : <Copy />}
                 </Button>
               </div>
-              <div className="flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm">
+              <div className="flex min-w-0 items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm">
                 <KeyRound className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-muted-foreground">Mã kích hoạt (dùng một lần)</p>
