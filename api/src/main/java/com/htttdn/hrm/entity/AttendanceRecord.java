@@ -48,11 +48,18 @@ public class AttendanceRecord {
     @JoinColumn(name = "shift_id", nullable = false)
     private WorkShift shift;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "leave_request_id")
+    private LeaveRequest leaveRequest;
+
     @Column(name = "scheduled_start_at", nullable = false)
     private Instant scheduledStartAt;
 
     @Column(name = "scheduled_end_at", nullable = false)
     private Instant scheduledEndAt;
+
+    @Column(name = "scheduled_minutes", nullable = false)
+    private Integer scheduledMinutes;
 
     @Column(name = "check_in_at")
     private Instant checkInAt;
@@ -86,7 +93,7 @@ public class AttendanceRecord {
     private Instant overtimeApprovedAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 30)
     private AttendanceStatus status;
 
     @Column(columnDefinition = "TEXT")

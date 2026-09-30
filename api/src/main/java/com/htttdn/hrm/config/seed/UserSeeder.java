@@ -184,6 +184,7 @@ public class UserSeeder implements ApplicationRunner {
             .fullName(normalizedFullName)
             .workEmail(workEmail)
             .hireDate(LocalDate.now())
+            .seniorityStartDate(LocalDate.now())
             .employmentStatus(EmploymentStatus.ACTIVE)
             .createdAt(now)
             .updatedAt(now)

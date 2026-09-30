@@ -46,14 +46,17 @@ public class Payslip {
     @Column(name = "employee_name_snapshot", nullable = false, length = 200)
     private String employeeNameSnapshot;
 
+    @Column(name = "position_snapshot", nullable = false, length = 150)
+    private String positionSnapshot;
+
     @Column(name = "work_location_snapshot", nullable = false, length = 150)
     private String workLocationSnapshot;
 
     @Column(name = "organization_unit_snapshot", nullable = false, length = 150)
     private String organizationUnitSnapshot;
 
-    @Column(name = "contractual_basic_salary", nullable = false, precision = 15, scale = 2)
-    private BigDecimal contractualBasicSalary;
+    @Column(name = "contractual_base_salary", nullable = false, precision = 15, scale = 2)
+    private BigDecimal contractualBaseSalary;
 
     @Column(name = "scheduled_work_minutes", nullable = false)
     private Integer scheduledWorkMinutes;
@@ -64,8 +67,14 @@ public class Payslip {
     @Column(name = "approved_overtime_minutes", nullable = false)
     private Integer approvedOvertimeMinutes;
 
-    @Column(name = "basic_salary_pay", nullable = false, precision = 15, scale = 2)
-    private BigDecimal basicSalaryPay;
+    @Column(name = "base_salary_pay", nullable = false, precision = 15, scale = 2)
+    private BigDecimal baseSalaryPay;
+
+    @Column(name = "position_allowance_pay", nullable = false, precision = 15, scale = 2)
+    private BigDecimal positionAllowancePay;
+
+    @Column(name = "seniority_allowance_pay", nullable = false, precision = 15, scale = 2)
+    private BigDecimal seniorityAllowancePay;
 
     @Column(name = "allowance_pay", nullable = false, precision = 15, scale = 2)
     private BigDecimal allowancePay;

@@ -41,8 +41,11 @@ public class PayslipItem {
     private Payslip payslip;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "component_type", nullable = false, length = 20)
+    @Column(name = "component_type", nullable = false, length = 30)
     private PayslipItemType componentType;
+
+    @Column(name = "component_code", nullable = false, length = 50)
+    private String componentCode;
 
     @Column(nullable = false, length = 250)
     private String description;
