@@ -77,5 +77,6 @@ Web app chạy tại `http://localhost:3000`. Mặc định `NEXT_PUBLIC_API_URL
 |:---|:---|
 | [`README.md`](../README.md) | Hướng dẫn khởi động nhanh cho toàn project |
 | `docs/OVERVIEW.md` | File này — tổng quan cấu trúc và tech stack hiện có |
+| [`docs/ORGANIZATION_STRUCTURE.md`](./ORGANIZATION_STRUCTURE.md) | Minh họa cơ cấu doanh nghiệp, cấp bậc, chức danh và phạm vi phân quyền |
 | [`apps/web/README.md`](../apps/web/README.md) | Cách chạy và scripts của frontend |
 | [`api/docs/api/RBAC.md`](../api/docs/api/RBAC.md) | API CRUD role/permission, phân quyền và cách cho phép thêm role quản trị |
