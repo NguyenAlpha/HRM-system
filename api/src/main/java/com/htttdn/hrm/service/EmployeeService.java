@@ -22,6 +22,8 @@ public interface EmployeeService {
 
     EmployeeDetailResponse update(Long id, UpdateEmployeeRequest request);
 
+    EmployeeDetailResponse confirmEmployment(Long id);
+
     void completeResignation(Long employeeId, LocalDate terminationDate, String terminationReason);
 
     void softDelete(Long id, SoftDeleteEmployeeRequest request);

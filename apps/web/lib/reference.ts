@@ -21,6 +21,12 @@ export interface JobPositionOption {
   title: string
 }
 
+export interface WorkShiftOption {
+  id: number
+  code: string
+  name: string
+}
+
 export const ORGANIZATION_UNIT_TYPES = ["BOARD", "DEPARTMENT", "TEAM"] as const
 export type OrganizationUnitType = typeof ORGANIZATION_UNIT_TYPES[number]
 
@@ -136,6 +142,10 @@ export function getWorkLocationOptions(portal: Portal): Promise<WorkLocationOpti
 
 export function getJobPositionOptions(portal: Portal): Promise<JobPositionOption[]> {
   return referenceRequest<JobPositionOption[]>(portal, "job-positions?active=true")
+}
+
+export function getWorkShiftOptions(portal: Portal): Promise<WorkShiftOption[]> {
+  return referenceRequest<WorkShiftOption[]>(portal, "work-shifts?active=true")
 }
 
 export function listOrganizationUnits(portal: Portal): Promise<OrganizationUnit[]> {

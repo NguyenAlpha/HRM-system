@@ -2,7 +2,6 @@ package com.htttdn.hrm.controller;
 
 import java.util.List;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -22,6 +21,7 @@ import com.htttdn.hrm.dto.request.role.CreateRoleRequest;
 import com.htttdn.hrm.dto.request.role.GrantPermissionRequest;
 import com.htttdn.hrm.dto.request.role.UpdateRoleRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
+import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.dto.response.permission.PermissionResponse;
 import com.htttdn.hrm.dto.response.role.RoleResponse;
 import com.htttdn.hrm.dto.response.role.RoleWithPermissionsResponse;
@@ -46,8 +46,10 @@ public class RoleController {
     }
 
     @GetMapping
-    public ApiResult<Page<RoleResponse>> list(@PageableDefault(sort = "id", size = 20) Pageable pageable) {
-        return ApiResult.ok(roleService.list(pageable));
+    public ApiResult<PagedResult<RoleResponse>> list(
+        @PageableDefault(sort = "id", size = 20) Pageable pageable
+    ) {
+        return ApiResult.ok(PagedResult.of(roleService.list(pageable)));
     }
 
     @GetMapping("/with-permissions")

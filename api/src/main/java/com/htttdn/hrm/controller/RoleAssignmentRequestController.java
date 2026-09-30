@@ -2,7 +2,6 @@ package com.htttdn.hrm.controller;
 
 import java.util.List;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -22,6 +21,7 @@ import com.htttdn.hrm.dto.request.roleassignment.CancelRoleAssignmentRequest;
 import com.htttdn.hrm.dto.request.roleassignment.CreateRoleAssignmentRequest;
 import com.htttdn.hrm.dto.request.roleassignment.RejectRoleAssignmentRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
+import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.dto.response.roleassignment.RoleAssignmentOptionResponse;
 import com.htttdn.hrm.dto.response.roleassignment.RoleAssignmentRequestResponse;
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
@@ -62,7 +62,7 @@ public class RoleAssignmentRequestController {
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('role.assignment.request', 'role.assignment.approve')")
-    public ApiResult<Page<RoleAssignmentRequestResponse>> list(
+    public ApiResult<PagedResult<RoleAssignmentRequestResponse>> list(
         @RequestParam(required = false) RoleAssignmentRequestStatus status,
         @PageableDefault(
             sort = "requestedAt",
@@ -70,7 +70,7 @@ public class RoleAssignmentRequestController {
             size = 20
         ) Pageable pageable
     ) {
-        return ApiResult.ok(requestService.list(status, pageable));
+        return ApiResult.ok(PagedResult.of(requestService.list(status, pageable)));
     }
 
     @GetMapping("/{requestId}")

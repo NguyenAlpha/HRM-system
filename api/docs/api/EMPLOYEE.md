@@ -12,6 +12,7 @@ Tạo và tra cứu hồ sơ nhân sự trong phạm vi được phân công. AP
 | `GET /api/employees` | ✅ | `employee.read` | Lấy danh sách nhân sự có phân trang trong scope được giao |
 | `GET /api/employees/{employeeId}` | ✅ | `employee.read` | Lấy chi tiết hồ sơ, phân công hiện tại và thông tin account nếu đã có |
 | `PUT /api/employees/{employeeId}` | ✅ | `employee.manage` | Cập nhật các thông tin hồ sơ được phép thay đổi trong entity employee |
+| `POST /api/employees/{employeeId}/confirm` | ✅ | `employee.manage` | Xác nhận nhân sự thử việc trở thành nhân sự chính thức |
 | `GET /api/employees/{employeeId}/assignments` | ✅ | `employee.read` | Lấy toàn bộ lịch sử phân công của nhân sự |
 | `GET /api/employees/{employeeId}/assignments/current` | ✅ | `employee.read` | Lấy phân công đang hiệu lực tại ngày gọi API |
 | `POST /api/employees/{employeeId}/assignments` | ✅ | `employee.manage` | Điều chuyển, bổ nhiệm hoặc thay đổi phân công của nhân sự |
@@ -370,6 +371,24 @@ Trả `EmployeeDetailResponse` giống [API lấy chi tiết employee](#get-apie
 | 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
 | 409 | `CONFLICT` | `workEmail` trùng employee khác hoặc cố xóa email khi employee đã có account |
 | 409 | `EMAIL_TAKEN` | `workEmail` đã được account khác sử dụng |
+
+---
+
+## POST `/api/employees/{employeeId}/confirm`
+
+Xác nhận nhân sự đã hoàn thành thử việc bằng cách chuyển `employmentStatus` từ `PROBATION` sang `ACTIVE`. Endpoint không nhận request body và không thay đổi phân công hoặc trạng thái account.
+
+Response `200 OK` trả `EmployeeDetailResponse` sau khi cập nhật.
+
+### Lỗi
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 400 | `VALIDATION_ERROR` | `employeeId` không đúng kiểu số |
+| 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
+| 403 | `FORBIDDEN` | Thiếu `employee.manage` hoặc employee nằm ngoài scope được giao |
+| 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
+| 409 | `EMPLOYMENT_STATUS_TRANSITION_NOT_ALLOWED` | Employee không còn ở trạng thái `PROBATION` |
 
 ---
 

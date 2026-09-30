@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.htttdn.hrm.dto.request.employee.SoftDeleteEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
@@ -21,17 +22,14 @@ import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeCompensationRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeRequestRepository;
-import com.htttdn.hrm.repository.JobPositionRepository;
-import com.htttdn.hrm.repository.OrganizationUnitRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
-import com.htttdn.hrm.repository.WorkLocationRepository;
-import com.htttdn.hrm.repository.WorkShiftRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 import com.htttdn.hrm.service.impl.EmployeeServiceImpl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,14 +41,11 @@ class EmployeeServiceImplTest {
     @Mock private EmployeeRequestRepository employeeRequestRepository;
     @Mock private AttendanceRecordRepository attendanceRecordRepository;
     @Mock private PayslipRepository payslipRepository;
-    @Mock private OrganizationUnitRepository organizationUnitRepository;
-    @Mock private WorkLocationRepository workLocationRepository;
-    @Mock private JobPositionRepository jobPositionRepository;
-    @Mock private WorkShiftRepository workShiftRepository;
     @Mock private AccountRepository accountRepository;
     @Mock private RefreshTokenService refreshTokenService;
     @Mock private CurrentAccountProvider currentAccountProvider;
     @Mock private EmployeeAccessScopeService employeeAccessScopeService;
+    @Mock private EmployeeAssignmentService employeeAssignmentService;
 
     @Test
     void updateRejectsWorkEmailOwnedByAnotherEmployee() {
@@ -93,6 +88,32 @@ class EmployeeServiceImplTest {
         assertNotNull(employee.getDeletedAt());
     }
 
+    @Test
+    void confirmEmploymentActivatesProbationaryEmployee() {
+        Employee employee = employee(1L);
+        employee.setEmploymentStatus(EmploymentStatus.PROBATION);
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+
+        var result = service().confirmEmployment(1L);
+
+        assertEquals(EmploymentStatus.ACTIVE, employee.getEmploymentStatus());
+        assertEquals(EmploymentStatus.ACTIVE, result.employmentStatus());
+        verify(employeeAccessScopeService).requireEmployeeAccess(1L, "employee.manage");
+    }
+
+    @Test
+    void confirmEmploymentRejectsEmployeeOutsideProbation() {
+        Employee employee = employee(1L);
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+
+        ConflictException exception = assertThrows(
+            ConflictException.class,
+            () -> service().confirmEmployment(1L)
+        );
+
+        assertEquals(ErrorCode.EMPLOYMENT_STATUS_TRANSITION_NOT_ALLOWED, exception.getErrorCode());
+    }
+
     private Employee employee(Long id) {
         return Employee.builder()
             .id(id)
@@ -113,14 +134,11 @@ class EmployeeServiceImplTest {
             employeeRequestRepository,
             attendanceRecordRepository,
             payslipRepository,
-            organizationUnitRepository,
-            workLocationRepository,
-            jobPositionRepository,
-            workShiftRepository,
             accountRepository,
             refreshTokenService,
             currentAccountProvider,
-            employeeAccessScopeService
+            employeeAccessScopeService,
+            employeeAssignmentService
         );
     }
 }

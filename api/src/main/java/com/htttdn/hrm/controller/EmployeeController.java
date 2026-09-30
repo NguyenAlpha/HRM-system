@@ -1,6 +1,5 @@
 package com.htttdn.hrm.controller;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -16,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.htttdn.hrm.dto.request.employee.CreateEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
+import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.dto.response.employee.EmployeeCreationResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeDetailResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeSummaryResponse;
@@ -42,10 +42,10 @@ public class EmployeeController {
     }
 
     @GetMapping
-    public ApiResult<Page<EmployeeSummaryResponse>> list(
+    public ApiResult<PagedResult<EmployeeSummaryResponse>> list(
         @PageableDefault(sort = "id", size = 20) Pageable pageable
     ) {
-        return ApiResult.ok(employeeService.list(pageable));
+        return ApiResult.ok(PagedResult.of(employeeService.list(pageable)));
     }
 
     @GetMapping("/{employeeId}")
@@ -59,5 +59,10 @@ public class EmployeeController {
         @Valid @RequestBody UpdateEmployeeRequest request
     ) {
         return ApiResult.ok(employeeService.update(employeeId, request));
+    }
+
+    @PostMapping("/{employeeId}/confirm")
+    public ApiResult<EmployeeDetailResponse> confirmEmployment(@PathVariable Long employeeId) {
+        return ApiResult.ok(employeeService.confirmEmployment(employeeId));
     }
 }

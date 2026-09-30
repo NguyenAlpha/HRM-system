@@ -129,9 +129,9 @@ export function EmployeeDetailDialog({ employeeId, canManage, onClose, onEdit, o
                 </dl>
                 {detail.currentAssignment ? (
                   <dl className="mt-3 grid grid-cols-2 gap-3">
-                    <Field label="Đơn vị tổ chức" value={`#${detail.currentAssignment.organizationUnitId}`} />
-                    <Field label="Địa điểm làm việc" value={`#${detail.currentAssignment.workLocationId}`} />
-                    <Field label="Vị trí công việc" value={`#${detail.currentAssignment.positionId}`} />
+                    <Field label="Đơn vị tổ chức" value={detail.currentAssignment.organizationUnitName} />
+                    <Field label="Địa điểm làm việc" value={detail.currentAssignment.workLocationName} />
+                    <Field label="Vị trí công việc" value={detail.currentAssignment.positionTitle} />
                     <Field label="Hiệu lực từ" value={detail.currentAssignment.effectiveFrom} />
                   </dl>
                 ) : (

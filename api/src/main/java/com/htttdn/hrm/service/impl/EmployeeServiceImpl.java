@@ -171,6 +171,23 @@ public class EmployeeServiceImpl implements EmployeeService {
         return toDetailResponse(employee);
     }
 
+    @Override
+    @PreAuthorize("hasAuthority('employee.manage')")
+    public EmployeeDetailResponse confirmEmployment(Long id) {
+        Employee employee = findEmployeeOrThrow(id);
+        employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_MANAGE);
+        if (employee.getEmploymentStatus() != EmploymentStatus.PROBATION) {
+            throw new ConflictException(
+                ErrorCode.EMPLOYMENT_STATUS_TRANSITION_NOT_ALLOWED,
+                "Only employees in PROBATION status can be confirmed"
+            );
+        }
+
+        employee.setEmploymentStatus(EmploymentStatus.ACTIVE);
+        employee.setUpdatedAt(Instant.now());
+        return toDetailResponse(employee);
+    }
+
     private void updateWorkEmail(Employee employee, String requestedWorkEmail, Instant now) {
         String workEmail = normalizeEmail(requestedWorkEmail);
         if (workEmail != null
