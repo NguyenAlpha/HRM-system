@@ -49,6 +49,63 @@ export interface AccountRoleAssignment {
   grantedByAccountId: number
   reason: string
   createdAt: string
+  revokedByAccountId: number | null
+  revokedAt: string | null
+  revocationReason: string | null
+}
+
+export type PermissionOverrideEffect = "GRANT" | "REVOKE"
+export type PermissionOverrideStatus = "SCHEDULED" | "ACTIVE" | "EXPIRED" | "REVOKED"
+
+export const PERMISSION_OVERRIDE_EFFECT_LABELS: Record<PermissionOverrideEffect, string> = {
+  GRANT: "Cấp thêm",
+  REVOKE: "Thu hồi",
+}
+
+export const PERMISSION_OVERRIDE_STATUS_LABELS: Record<PermissionOverrideStatus, string> = {
+  SCHEDULED: "Đã lên lịch",
+  ACTIVE: "Đang hiệu lực",
+  EXPIRED: "Đã hết hạn",
+  REVOKED: "Đã thu hồi",
+}
+
+export interface PermissionOverrideOption {
+  permissionId: number
+  permissionCode: string
+  permissionName: string
+  module: string
+  description: string
+  effect: PermissionOverrideEffect
+}
+
+export interface AccountPermissionOverride {
+  id: number
+  accountRoleAssignmentId: number
+  accountId: number
+  permissionId: number
+  permissionCode: string
+  permissionName: string
+  module: string
+  effect: PermissionOverrideEffect
+  effectiveFrom: string
+  effectiveTo: string | null
+  reason: string
+  grantedByAccountId: number
+  grantedByUsername: string
+  createdAt: string
+  revokedByAccountId: number | null
+  revokedByUsername: string | null
+  revokedAt: string | null
+  revocationReason: string | null
+  status: PermissionOverrideStatus
+}
+
+export interface CreatePermissionOverrideInput {
+  permissionId: number
+  effect: PermissionOverrideEffect
+  effectiveFrom: string
+  effectiveTo: string | null
+  reason: string
 }
 
 export interface RoleAssignmentRequest {
@@ -165,4 +222,65 @@ export function assignAccountRoleDirect(portal: Portal, accountId: number, input
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   })
+}
+
+export function listPermissionOverrides(
+  portal: Portal,
+  accountId: number,
+  assignmentId: number,
+): Promise<AccountPermissionOverride[]> {
+  return accountRoleAssignmentApi<AccountPermissionOverride[]>(
+    portal,
+    accountId,
+    `/${assignmentId}/permission-overrides`,
+  )
+}
+
+export function listPermissionOverrideOptions(
+  portal: Portal,
+  accountId: number,
+  assignmentId: number,
+): Promise<PermissionOverrideOption[]> {
+  return accountRoleAssignmentApi<PermissionOverrideOption[]>(
+    portal,
+    accountId,
+    `/${assignmentId}/permission-overrides/available-permissions`,
+  )
+}
+
+export function createPermissionOverride(
+  portal: Portal,
+  accountId: number,
+  assignmentId: number,
+  input: CreatePermissionOverrideInput,
+): Promise<AccountPermissionOverride> {
+  return accountRoleAssignmentApi<AccountPermissionOverride>(
+    portal,
+    accountId,
+    `/${assignmentId}/permission-overrides`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+  )
+}
+
+export function revokePermissionOverride(
+  portal: Portal,
+  accountId: number,
+  assignmentId: number,
+  overrideId: number,
+  reason: string,
+): Promise<AccountPermissionOverride> {
+  return accountRoleAssignmentApi<AccountPermissionOverride>(
+    portal,
+    accountId,
+    `/${assignmentId}/permission-overrides/${overrideId}/revoke`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason }),
+    },
+  )
 }

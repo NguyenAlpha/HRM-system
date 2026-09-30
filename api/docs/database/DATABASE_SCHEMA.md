@@ -399,8 +399,16 @@ Ràng buộc persistence:
 | `reason` | TEXT | NOT NULL | Lý do bắt buộc |
 | `granted_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người thiết lập |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
+| `revoked_by_account_id` | BIGINT | FK → accounts | Người thu hồi ngoại lệ |
+| `revoked_at` | TIMESTAMPTZ | | Thời điểm thu hồi; ngoại lệ mất hiệu lực ngay |
+| `revocation_reason` | TEXT | | Lý do thu hồi |
 
 > Ngoại lệ chỉ áp dụng cho một lần gán vai trò. Nếu vai trò khác vẫn cấp cùng quyền, tài khoản vẫn có quyền đó.
+>
+> - Chỉ permission active có `assignment_policy=DELEGABLE` được phép tạo ngoại lệ.
+> - Khoảng hiệu lực phải nằm trong khoảng hiệu lực của role assignment.
+> - Không cho hai ngoại lệ chưa thu hồi của cùng assignment và permission có khoảng hiệu lực chồng lấn.
+> - Ba field thu hồi phải cùng null hoặc cùng có giá trị; bản ghi được giữ lại để audit.
 
 ### 4.1. Vai trò và quyền mặc định
 
@@ -660,6 +668,9 @@ CREATE INDEX idx_role_assignments_account_period
   ON account_role_assignments (account_id, effective_from, effective_to);
 CREATE INDEX idx_permission_overrides_assignment
   ON account_permission_overrides (account_role_assignment_id, effective_from, effective_to);
+CREATE INDEX idx_permission_overrides_permission
+  ON account_permission_overrides (permission_id, effective_from, effective_to)
+  WHERE revoked_at IS NULL;
 CREATE INDEX idx_requests_employee_status
   ON employee_requests (employee_id, status, submitted_at DESC);
 CREATE INDEX idx_requests_type_status

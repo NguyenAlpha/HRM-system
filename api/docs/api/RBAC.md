@@ -584,7 +584,7 @@ Lấy chi tiết một permission.
 | `DELEGABLE` | Company Owner hoặc người có `rbac.manage` có thể gán permission cho custom role |
 | `SYSTEM_ONLY` | Chỉ seeder được gán permission cho system role; API từ chối gán cho custom role |
 
-Hiện tại `organization.company_owner.bootstrap` và `role.assignment.approve` là `SYSTEM_ONLY`; các permission còn lại là `DELEGABLE`.
+Hiện tại `organization.company_owner.bootstrap`, `role.assignment.approve` và `account.permission.override.manage` là `SYSTEM_ONLY`; các permission còn lại là `DELEGABLE`.
 Migration và `RolePermissionSeeder` tự thu hồi mapping `SYSTEM_ONLY` từng bị gán cho custom role trước khi chính sách này được áp dụng.
 
 Ba permission chuẩn bị cho workflow cấp tài khoản và đề xuất role:

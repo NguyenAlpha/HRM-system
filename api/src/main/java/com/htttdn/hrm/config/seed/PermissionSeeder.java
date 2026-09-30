@@ -71,6 +71,12 @@ public class PermissionSeeder implements ApplicationRunner {
             "Tạo yêu cầu cấp vai trò nghiệp vụ cho tài khoản nhân viên"
         ),
         systemPermission(
+            "account.permission.override.manage",
+            "Quản lý ngoại lệ quyền tài khoản",
+            PermissionModule.ACCOUNT,
+            "Cấp và thu hồi ngoại lệ quyền trên từng lần gán vai trò"
+        ),
+        systemPermission(
             "role.assignment.approve",
             "Phê duyệt cấp vai trò",
             PermissionModule.ACCOUNT,
