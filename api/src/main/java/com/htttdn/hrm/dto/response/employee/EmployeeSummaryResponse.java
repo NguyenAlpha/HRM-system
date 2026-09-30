@@ -13,6 +13,7 @@ public record EmployeeSummaryResponse(
     LocalDate hireDate,
     EmploymentStatus employmentStatus,
     LocalDate terminationDate,
+    EmployeeAssignmentResponse currentAssignment,
     EmployeeAccountSummaryResponse account
 ) {
 }
