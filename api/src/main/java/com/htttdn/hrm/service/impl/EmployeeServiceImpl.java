@@ -148,7 +148,14 @@ public class EmployeeServiceImpl implements EmployeeService {
             pageable
         );
         Map<Long, Account> accountsByEmployeeId = findAccountsByEmployeeId(employees.getContent());
-        return employees.map(employee -> toSummaryResponse(employee, accountsByEmployeeId.get(employee.getId())));
+        Map<Long, EmployeeAssignment> assignmentsByEmployeeId = findCurrentAssignmentsByEmployeeId(
+            employees.getContent()
+        );
+        return employees.map(employee -> toSummaryResponse(
+            employee,
+            assignmentsByEmployeeId.get(employee.getId()),
+            accountsByEmployeeId.get(employee.getId())
+        ));
     }
 
     @Override
@@ -344,7 +351,23 @@ public class EmployeeServiceImpl implements EmployeeService {
         return accountsByEmployeeId;
     }
 
-    private EmployeeSummaryResponse toSummaryResponse(Employee employee, Account account) {
+    private Map<Long, EmployeeAssignment> findCurrentAssignmentsByEmployeeId(List<Employee> employees) {
+        if (employees.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Long> employeeIds = employees.stream().map(Employee::getId).toList();
+        Map<Long, EmployeeAssignment> assignmentsByEmployeeId = new HashMap<>();
+        employeeAssignmentRepository.findCurrentPrimaryByEmployeeIds(employeeIds, LocalDate.now())
+            .forEach(assignment -> assignmentsByEmployeeId.put(assignment.getEmployee().getId(), assignment));
+        return assignmentsByEmployeeId;
+    }
+
+    private EmployeeSummaryResponse toSummaryResponse(
+        Employee employee,
+        EmployeeAssignment currentAssignment,
+        Account account
+    ) {
         return new EmployeeSummaryResponse(
             employee.getId(),
             employee.getEmployeeCode(),
@@ -354,6 +377,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             employee.getHireDate(),
             employee.getEmploymentStatus(),
             employee.getTerminationDate(),
+            currentAssignment == null ? null : toAssignmentResponse(currentAssignment),
             toAccountSummaryResponse(account)
         );
     }

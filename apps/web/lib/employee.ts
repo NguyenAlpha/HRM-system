@@ -51,6 +51,7 @@ export interface EmployeeSummary {
   hireDate: string
   employmentStatus: EmploymentStatus
   terminationDate: string | null
+  currentAssignment: EmployeeAssignment | null
   account: EmployeeAccountSummary | null
 }
 
@@ -80,7 +81,6 @@ export interface EmployeeDetail extends EmployeeSummary {
   major: string | null
   institution: string | null
   graduationYear: number | null
-  currentAssignment: EmployeeAssignment | null
 }
 
 export const EMPLOYMENT_TYPES = ["FULL_TIME", "PART_TIME", "TEMPORARY"] as const

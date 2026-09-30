@@ -260,9 +260,9 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nhân sự</TableHead>
-                  <TableHead>Liên hệ</TableHead>
-                  <TableHead>Ngày vào làm</TableHead>
-                  <TableHead>Trạng thái</TableHead>
+                  <TableHead>Đơn vị</TableHead>
+                  <TableHead>Địa điểm</TableHead>
+                  <TableHead>Vị trí công việc</TableHead>
                   <TableHead>Tài khoản</TableHead>
                   <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
@@ -285,21 +285,28 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
                   >
                     <TableCell>
                       <span className="font-medium">{employee.fullName}</span>
-                      <span className="block text-xs text-muted-foreground"><code>{employee.employeeCode}</code></span>
+                      <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <code>{employee.employeeCode}</code>
+                        <Badge variant={employee.employmentStatus === "ACTIVE" ? "default" : "outline"}>
+                          {EMPLOYMENT_STATUS_LABELS[employee.employmentStatus]}
+                        </Badge>
+                      </span>
                     </TableCell>
-                    <TableCell>
-                      <span className="block text-sm">{employee.workEmail || "—"}</span>
-                      <span className="block text-xs text-muted-foreground">{employee.phone || "—"}</span>
+                    <TableCell className="text-sm">
+                      {employee.currentAssignment?.organizationUnitName ?? "—"}
                     </TableCell>
-                    <TableCell className="text-sm">{employee.hireDate}</TableCell>
-                    <TableCell>
-                      <Badge variant={employee.employmentStatus === "ACTIVE" ? "default" : "outline"}>
-                        {EMPLOYMENT_STATUS_LABELS[employee.employmentStatus]}
-                      </Badge>
+                    <TableCell className="text-sm">
+                      {employee.currentAssignment?.workLocationName ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {employee.currentAssignment?.positionTitle ?? "—"}
                     </TableCell>
                     <TableCell onClick={(event) => event.stopPropagation()}>
                       {employee.account ? (
-                        <span className="text-sm">{employee.account.username}</span>
+                        <div>
+                          <span className="text-sm font-medium">{employee.account.username}</span>
+                          <span className="block text-xs text-muted-foreground">{employee.account.status}</span>
+                        </div>
                       ) : canManage ? (
                         <Tooltip>
                           <TooltipTrigger

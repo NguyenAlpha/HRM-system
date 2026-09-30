@@ -197,6 +197,24 @@ GET /api/employees?page=0&size=20&sort=id,asc
         "hireDate": "2026-09-01",
         "employmentStatus": "ACTIVE",
         "terminationDate": null,
+        "currentAssignment": {
+          "id": 310,
+          "employeeId": 125,
+          "organizationUnitId": 2,
+          "organizationUnitName": "Phòng Nhân sự",
+          "workLocationId": 1,
+          "workLocationName": "Trụ sở chính",
+          "positionId": 5,
+          "positionTitle": "Chuyên viên nhân sự",
+          "shiftId": 1,
+          "shiftName": "Ca hành chính",
+          "managerEmployeeId": 50,
+          "managerEmployeeName": "Trần Văn Bình",
+          "employmentType": "FULL_TIME",
+          "effectiveFrom": "2026-09-01",
+          "effectiveTo": null,
+          "isPrimary": true
+        },
         "account": {
           "id": 208,
           "username": "an.nguyen",
@@ -213,6 +231,7 @@ GET /api/employees?page=0&size=20&sort=id,asc
         "hireDate": "2026-09-15",
         "employmentStatus": "PROBATION",
         "terminationDate": null,
+        "currentAssignment": null,
         "account": null
       }
     ],
@@ -225,7 +244,7 @@ GET /api/employees?page=0&size=20&sort=id,asc
 }
 ```
 
-`account=null` nghĩa là employee đã có hồ sơ nhân sự nhưng chưa được cấp tài khoản đăng nhập. Object account chỉ chứa thông tin nhận diện và trạng thái cần cho nghiệp vụ nhân sự; các dữ liệu quản trị bảo mật như `failedLoginCount`, `lockedUntil` và lịch sử kích hoạt không được trả về từ endpoint này.
+`currentAssignment` là phân công chính đang hiệu lực tại ngày gọi API và có thể là `null` nếu nhân sự chưa có phân công hiện tại. `account=null` nghĩa là employee đã có hồ sơ nhân sự nhưng chưa được cấp tài khoản đăng nhập. Object account chỉ chứa thông tin nhận diện và trạng thái cần cho nghiệp vụ nhân sự; các dữ liệu quản trị bảo mật như `failedLoginCount`, `lockedUntil` và lịch sử kích hoạt không được trả về từ endpoint này.
 
 ### Giá trị trạng thái
 

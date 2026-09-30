@@ -46,6 +46,22 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
         @Param("date") LocalDate date
     );
 
+    @Query("""
+        SELECT assignment
+        FROM EmployeeAssignment assignment
+        WHERE assignment.employee.id IN :employeeIds
+          AND assignment.isPrimary = true
+          AND assignment.effectiveFrom <= :date
+          AND (assignment.effectiveTo IS NULL OR assignment.effectiveTo >= :date)
+        """)
+    @EntityGraph(attributePaths = {
+        "organizationUnit", "workLocation", "position", "shift", "managerEmployee"
+    })
+    List<EmployeeAssignment> findCurrentPrimaryByEmployeeIds(
+        @Param("employeeIds") List<Long> employeeIds,
+        @Param("date") LocalDate date
+    );
+
     @EntityGraph(attributePaths = {
         "organizationUnit", "workLocation", "position", "shift", "managerEmployee"
     })
