@@ -1,6 +1,5 @@
 package com.htttdn.hrm.controller;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -18,6 +17,7 @@ import com.htttdn.hrm.dto.response.account.AccountInvitationResponse;
 import com.htttdn.hrm.dto.response.account.AccountProvisioningResponse;
 import com.htttdn.hrm.dto.response.account.AccountResponse;
 import com.htttdn.hrm.dto.response.common.ApiResult;
+import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.service.AccountAdminService;
 
 import jakarta.validation.Valid;
@@ -41,10 +41,10 @@ public class AccountAdminController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('account.read')")
-    public ApiResult<Page<AccountResponse>> list(
+    public ApiResult<PagedResult<AccountResponse>> list(
         @PageableDefault(sort = "id", size = 20) Pageable pageable
     ) {
-        return ApiResult.ok(accountAdminService.list(pageable));
+        return ApiResult.ok(PagedResult.of(accountAdminService.list(pageable)));
     }
 
     @GetMapping("/{accountId}")

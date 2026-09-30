@@ -58,10 +58,15 @@ export interface EmployeeAssignment {
   id: number
   employeeId: number
   organizationUnitId: number
+  organizationUnitName: string
   workLocationId: number
+  workLocationName: string
   positionId: number
+  positionTitle: string
   shiftId: number | null
+  shiftName: string | null
   managerEmployeeId: number | null
+  managerEmployeeName: string | null
   employmentType: "FULL_TIME" | "PART_TIME" | "TEMPORARY"
   effectiveFrom: string
   effectiveTo: string | null

@@ -338,6 +338,8 @@ export async function handleEmployeeRequest(request: Request, segments: string[]
   const routes = [
     { pattern: /^$/, methods: ["GET", "POST"] },
     { pattern: /^[1-9]\d*$/, methods: ["GET", "PUT"] },
+    { pattern: /^[1-9]\d*\/assignments$/, methods: ["GET", "POST"] },
+    { pattern: /^[1-9]\d*\/confirm$/, methods: ["POST"] },
   ]
   const route = routes.find((candidate) => candidate.pattern.test(path))
   if (!route) {
@@ -359,7 +361,9 @@ export async function handleEmployeeRequest(request: Request, segments: string[]
   }
 
   let body: string | undefined
-  if (request.method === "POST" || request.method === "PUT") {
+  const requiresBody = request.method === "PUT"
+    || (request.method === "POST" && !/^[1-9]\d*\/confirm$/.test(path))
+  if (requiresBody) {
     try {
       body = JSON.stringify(await request.json())
     } catch {
@@ -384,7 +388,7 @@ export async function handleEmployeeRequest(request: Request, segments: string[]
   })
 }
 
-const REFERENCE_RESOURCES = ["organization-units", "work-locations", "job-positions"] as const
+const REFERENCE_RESOURCES = ["organization-units", "work-locations", "job-positions", "work-shifts"] as const
 
 // Only expose the lookup catalogs (organization units, work locations, job positions):
 // list/create on the collection, update/delete on one entry. Nothing else on these resources.
@@ -427,7 +431,7 @@ export async function handleReferenceRequest(request: Request, segments: string[
   if (request.method === "GET") {
     const query = new URLSearchParams()
     new URL(request.url).searchParams.forEach((value, key) => {
-      if (["active", "unitType", "locationType", "managerial", "parentUnitId", "parentLocationId"].includes(key)) {
+      if (["active", "unitType", "locationType", "managerial", "parentUnitId", "parentLocationId", "crossesMidnight"].includes(key)) {
         query.append(key, value)
       }
     })

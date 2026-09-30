@@ -1,16 +1,29 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Menu } from "@base-ui/react/menu"
 import { z } from "zod"
-import { KeyRound, Loader2, Plus, RefreshCw } from "lucide-react"
+import { BadgeCheck, BriefcaseBusiness, Ellipsis, Eye, KeyRound, Loader2, Pencil, Plus, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 
+import { EmployeeAssignmentDialog } from "@/components/employee/employee-assignment-dialog"
 import { EmployeeCreateDialog } from "@/components/employee/employee-create-dialog"
 import { EmployeeDetailDialog } from "@/components/employee/employee-detail-dialog"
 import { EmployeeProvisionDialog } from "@/components/employee/employee-provision-dialog"
 import { Pagination, RbacFeedback } from "@/components/admin/rbac-controls"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -121,6 +134,9 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
   const [dialogError, setDialogError] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [provisioning, setProvisioning] = useState<EmployeeSummary | null>(null)
+  const [assigning, setAssigning] = useState<EmployeeSummary | null>(null)
+  const [confirming, setConfirming] = useState<EmployeeSummary | null>(null)
+  const [confirmingEmployment, setConfirmingEmployment] = useState(false)
 
   const {
     register,
@@ -164,6 +180,16 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
     setDialogOpen(true)
   }
 
+  async function openEditFromList(employeeId: number) {
+    try {
+      const detail = await employeeRequest<EmployeeDetail>("hrm", `/${employeeId}`)
+      openEdit(detail)
+    } catch (caught) {
+      if (isSessionExpired(caught)) onSessionExpired()
+      toast.error("Không thể tải hồ sơ nhân sự", { description: employeeErrorMessage(caught) })
+    }
+  }
+
   async function onSubmit(values: EmployeeEditValues) {
     if (!editing) return
     setDialogError(null)
@@ -187,6 +213,23 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
     } catch (caught) {
       if (isSessionExpired(caught)) onSessionExpired()
       setDialogError(employeeErrorMessage(caught))
+    }
+  }
+
+  async function confirmEmployeeEmployment() {
+    if (!confirming) return
+    setConfirmingEmployment(true)
+    try {
+      const saved = await employeeMutation<EmployeeDetail>("hrm", `/${confirming.id}/confirm`, "POST")
+      toast.success(`Đã xác nhận ${saved.fullName} là nhân sự chính thức`)
+      setConfirming(null)
+      setSheetRevision((value) => value + 1)
+      reload()
+    } catch (caught) {
+      if (isSessionExpired(caught)) onSessionExpired()
+      toast.error("Không thể xác nhận nhân sự", { description: employeeErrorMessage(caught) })
+    } finally {
+      setConfirmingEmployment(false)
     }
   }
 
@@ -221,13 +264,14 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
                   <TableHead>Ngày vào làm</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead>Tài khoản</TableHead>
+                  <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading &&
                   Array.from({ length: 6 }).map((_, index) => (
                     <TableRow key={index}>
-                      {Array.from({ length: 5 }).map((__, cell) => (
+                      {Array.from({ length: 6 }).map((__, cell) => (
                         <TableCell key={cell}><Skeleton className="h-4 w-full" /></TableCell>
                       ))}
                     </TableRow>
@@ -276,12 +320,60 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
                         <span className="text-sm text-muted-foreground">Chưa có tài khoản</span>
                       )}
                     </TableCell>
+                    <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
+                      <Menu.Root>
+                        <Menu.Trigger
+                          aria-label={`Mở menu thao tác cho ${employee.fullName}`}
+                          title="Thao tác"
+                          render={<Button type="button" variant="ghost" size="icon-sm" />}
+                        >
+                          <Ellipsis />
+                        </Menu.Trigger>
+                        <Menu.Portal>
+                          <Menu.Positioner side="bottom" align="end" sideOffset={4} className="isolate z-50">
+                            <Menu.Popup className="min-w-44 origin-(--transform-origin) rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95">
+                              <Menu.LinkItem
+                                closeOnClick
+                                render={<Link href={`/employees/${employee.id}`} />}
+                                className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
+                              >
+                                <Eye className="size-4" /> Xem chi tiết
+                              </Menu.LinkItem>
+                              {canManage && (
+                                <Menu.Item
+                                  onClick={() => { void openEditFromList(employee.id) }}
+                                  className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
+                                >
+                                  <Pencil className="size-4" /> Sửa hồ sơ
+                                </Menu.Item>
+                              )}
+                              {canManage && (employee.employmentStatus === "ACTIVE" || employee.employmentStatus === "PROBATION") && (
+                                <Menu.Item
+                                  onClick={() => setAssigning(employee)}
+                                  className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
+                                >
+                                  <BriefcaseBusiness className="size-4" /> Thay đổi phân công
+                                </Menu.Item>
+                              )}
+                              {canManage && employee.employmentStatus === "PROBATION" && (
+                                <Menu.Item
+                                  onClick={() => setConfirming(employee)}
+                                  className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
+                                >
+                                  <BadgeCheck className="size-4" /> Xác nhận chính thức
+                                </Menu.Item>
+                              )}
+                            </Menu.Popup>
+                          </Menu.Positioner>
+                        </Menu.Portal>
+                      </Menu.Root>
+                    </TableCell>
                   </TableRow>
                 ))}
 
                 {!loading && data?.content.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                       Chưa có nhân sự nào trong phạm vi của bạn.
                     </TableCell>
                   </TableRow>
@@ -427,6 +519,39 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
           onSessionExpired={onSessionExpired}
         />
       )}
+
+      {assigning && (
+        <EmployeeAssignmentDialog
+          employee={assigning}
+          onClose={() => setAssigning(null)}
+          onAssigned={() => { setSheetRevision((value) => value + 1); reload() }}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
+
+      <AlertDialog
+        open={confirming !== null}
+        onOpenChange={(open) => { if (!open && !confirmingEmployment) setConfirming(null) }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận nhân sự chính thức?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Chuyển {confirming?.fullName} ({confirming?.employeeCode}) từ “Thử việc” sang “Đang làm việc”.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={confirmingEmployment}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={confirmingEmployment}
+              onClick={(event) => { event.preventDefault(); void confirmEmployeeEmployment() }}
+            >
+              {confirmingEmployment && <Loader2 className="animate-spin" />}
+              Xác nhận chính thức
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

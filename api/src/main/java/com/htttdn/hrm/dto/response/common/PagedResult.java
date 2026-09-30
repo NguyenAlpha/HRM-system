@@ -6,18 +6,18 @@ import java.util.List;
 
 public record PagedResult<T>(
     List<T> content,
-    int page,
-    int size,
+    int number,
     long totalElements,
-    int totalPages
+    int totalPages,
+    int size
 ) {
     public static <T> PagedResult<T> of(Page<T> page) {
         return new PagedResult<>(
             page.getContent(),
             page.getNumber(),
-            page.getSize(),
             page.getTotalElements(),
-            page.getTotalPages()
+            page.getTotalPages(),
+            page.getSize()
         );
     }
 }
