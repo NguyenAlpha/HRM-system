@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 
 import { DirectRoleGrantManager } from "@/components/role-assignment/direct-role-grant-manager"
+import { PermissionOverrideManager } from "@/components/role-assignment/permission-override-manager"
 import { PortalSidebar } from "@/components/auth/portal-sidebar"
 import { apiErrorMessage } from "@/lib/api-helpers"
 import { getCurrentSession } from "@/lib/auth/client"
@@ -42,6 +43,10 @@ export function DirectRoleGrantPage() {
     )
   }
 
+  const canManageOverrides = session.account.permissions.some(
+    (permission) => permission.code === "account.permission.override.manage",
+  )
+
   return (
     <main className="portal-shell hrm-shell">
       <PortalSidebar portal="hrm" account={session.account} active="role-grant" />
@@ -56,8 +61,11 @@ export function DirectRoleGrantPage() {
           </div>
         </header>
 
-        <div className="mt-6">
+        <div className="mt-6 grid gap-6">
           <DirectRoleGrantManager portal="hrm" onSessionExpired={onSessionExpired} />
+          {canManageOverrides && (
+            <PermissionOverrideManager portal="hrm" onSessionExpired={onSessionExpired} />
+          )}
         </div>
       </section>
     </main>

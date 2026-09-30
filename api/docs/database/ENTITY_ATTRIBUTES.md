@@ -343,7 +343,7 @@
 
 **Mô tả**: Ngoại lệ quyền (grant/revoke) cho một lần gán vai trò cụ thể.
 
-**Quan hệ**: Nhiều-một tới `AccountRoleAssignment`, `Permission`, `Account` (`grantedByAccount`).
+**Quan hệ**: Nhiều-một tới `AccountRoleAssignment`, `Permission`, `Account` (`grantedByAccount`, `revokedByAccount`).
 
 | Thuộc tính | Kiểu Java | Cột DB | Ràng buộc | Ý nghĩa |
 |---|---|---|---|---|
@@ -356,6 +356,9 @@
 | `reason` | `String` | `reason` | NOT NULL | Lý do bắt buộc |
 | `grantedByAccount` | `Account` | `granted_by_account_id` | FK, NOT NULL | Người thiết lập |
 | `createdAt` | `Instant` | `created_at` | NOT NULL | Thời điểm tạo |
+| `revokedByAccount` | `Account` | `revoked_by_account_id` | FK, nullable | Người thu hồi ngoại lệ |
+| `revokedAt` | `Instant` | `revoked_at` | nullable | Thời điểm thu hồi |
+| `revocationReason` | `String` | `revocation_reason` | nullable | Lý do thu hồi |
 
 ---
 

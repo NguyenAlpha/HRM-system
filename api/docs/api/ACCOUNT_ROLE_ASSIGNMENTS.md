@@ -11,6 +11,10 @@ Gán role nghiệp vụ cho account theo phạm vi và thời gian hiệu lực.
 | `GET /api/accounts/{accountId}/role-assignments` | `account.read` | Lấy toàn bộ lịch sử role assignment của một account |
 | `POST /api/accounts/{accountId}/role-assignments` | `account.role.assign` | Company Owner gán trực tiếp một role nghiệp vụ cho account theo scope và thời gian hiệu lực |
 | `POST /api/accounts/{accountId}/role-assignments/{assignmentId}/revoke` | `account.role.assign` | Thu hồi một role assignment, giữ lại đầy đủ lịch sử và thông tin audit |
+| `GET /api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides` | `account.permission.override.manage` | Lấy lịch sử ngoại lệ quyền của assignment |
+| `GET /api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides/available-permissions` | `account.permission.override.manage` | Lấy permission có thể tạo ngoại lệ và hiệu ứng hợp lệ |
+| `POST /api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides` | `account.permission.override.manage` | Tạo ngoại lệ cấp thêm hoặc thu hồi permission |
+| `POST /api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides/{overrideId}/revoke` | `account.permission.override.manage` | Thu hồi ngoại lệ và giữ audit |
 
 Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` được seed sẵn các permission trên. `SYSTEM_ADMIN` không được gán hoặc thu hồi role nghiệp vụ. Actor cấp hoặc thu hồi role luôn được lấy từ JWT/Security Context, không nhận từ request.
 
@@ -210,3 +214,5 @@ Role `EMPLOYEE` và `SYSTEM_ADMIN` không được thu hồi qua API này.
 ## Hiệu lực JWT
 
 JWT access token đã phát là stateless nên quyền cũ có thể còn trong claims đến thời điểm `exp`. Khi thu hồi role, hệ thống revoke toàn bộ refresh token; sau khi access token hết hạn, người dùng phải đăng nhập lại và nhận authorization snapshot mới.
+
+Quản lý ngoại lệ permission được mô tả chi tiết tại [Account Permission Overrides](./ACCOUNT_PERMISSION_OVERRIDES.md).

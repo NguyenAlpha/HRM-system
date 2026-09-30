@@ -18,6 +18,8 @@ public interface AccountRoleAssignmentRepository extends JpaRepository<AccountRo
 
     List<AccountRoleAssignment> findByAccountIdOrderByCreatedAtDesc(Long accountId);
 
+    Optional<AccountRoleAssignment> findByIdAndAccountId(Long id, Long accountId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         SELECT assignment

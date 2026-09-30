@@ -488,12 +488,28 @@ export async function handleAccountProvisionRequest(request: Request, portal: Po
   })
 }
 
-// Only expose direct role assignment (list/create) for one account, never revoke or other account admin actions.
-export async function handleAccountRoleAssignmentRequest(request: Request, accountId: string, portal: Portal): Promise<NextResponse> {
+// Only expose role assignment and its permission-override workflow for one account.
+export async function handleAccountRoleAssignmentRequest(
+  request: Request,
+  accountId: string,
+  portal: Portal,
+  segments: string[] = [],
+): Promise<NextResponse> {
   if (!/^[1-9]\d*$/.test(accountId)) {
     return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
   }
-  if (request.method !== "GET" && request.method !== "POST") {
+  const path = segments.join("/")
+  const routes = [
+    { pattern: /^$/, methods: ["GET", "POST"] },
+    { pattern: /^[1-9]\d*\/permission-overrides$/, methods: ["GET", "POST"] },
+    { pattern: /^[1-9]\d*\/permission-overrides\/available-permissions$/, methods: ["GET"] },
+    { pattern: /^[1-9]\d*\/permission-overrides\/[1-9]\d*\/revoke$/, methods: ["POST"] },
+  ]
+  const route = routes.find((candidate) => candidate.pattern.test(path))
+  if (!route) {
+    return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
+  }
+  if (!route.methods.includes(request.method)) {
     return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
   }
 
@@ -517,7 +533,8 @@ export async function handleAccountRoleAssignmentRequest(request: Request, accou
     }
   }
 
-  const result = await callApi<unknown>(`/api/accounts/${accountId}/role-assignments`, {
+  const upstreamPath = `/api/accounts/${accountId}/role-assignments${path ? `/${path}` : ""}`
+  const result = await callApi<unknown>(upstreamPath, {
     method: request.method,
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
     body,

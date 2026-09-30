@@ -63,4 +63,14 @@ public class AccountPermissionOverride {
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "revoked_by_account_id")
+    private Account revokedByAccount;
+
+    @Column(name = "revoked_at")
+    private Instant revokedAt;
+
+    @Column(name = "revocation_reason", columnDefinition = "TEXT")
+    private String revocationReason;
 }
