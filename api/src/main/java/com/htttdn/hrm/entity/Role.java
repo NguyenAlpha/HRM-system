@@ -44,6 +44,10 @@ public class Role {
     @Column(name = "is_system", nullable = false)
     private Boolean isSystem;
 
+    @Builder.Default
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "grant_policy", nullable = false, length = 30)
     private RoleGrantPolicy grantPolicy;

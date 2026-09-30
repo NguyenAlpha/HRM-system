@@ -1,7 +1,8 @@
 package com.htttdn.hrm.entity.enums;
 
 public enum PayslipItemType {
-    BASIC_SALARY,
-    ALLOWANCE,
+    BASE_SALARY,
+    POSITION_ALLOWANCE,
+    SENIORITY_ALLOWANCE,
     OVERTIME
 }

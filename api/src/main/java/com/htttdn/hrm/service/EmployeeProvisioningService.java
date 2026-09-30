@@ -54,6 +54,7 @@ public class EmployeeProvisioningService {
             .workEmail(workEmail)
             .phone(normalizeNullable(command.phone()))
             .hireDate(command.hireDate())
+            .seniorityStartDate(command.hireDate())
             .employmentStatus(EmploymentStatus.ACTIVE)
             .createdAt(now)
             .updatedAt(now)

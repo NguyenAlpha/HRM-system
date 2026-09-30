@@ -94,6 +94,9 @@ public class Employee {
     @Column(name = "hire_date", nullable = false)
     private LocalDate hireDate;
 
+    @Column(name = "seniority_start_date", nullable = false)
+    private LocalDate seniorityStartDate;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "employment_status", nullable = false, length = 20)
     private EmploymentStatus employmentStatus;

@@ -113,6 +113,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             .workEmail(workEmail)
             .phone(profile.phone())
             .hireDate(profile.hireDate())
+            .seniorityStartDate(profile.hireDate())
             .employmentStatus(EmploymentStatus.PROBATION)
             .createdAt(now)
             .updatedAt(now)

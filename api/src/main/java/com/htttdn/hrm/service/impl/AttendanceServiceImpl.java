@@ -95,6 +95,7 @@ public class AttendanceServiceImpl implements AttendanceService {
             .shift(shift)
             .scheduledStartAt(scheduledStartAt)
             .scheduledEndAt(scheduledEndAt)
+            .scheduledMinutes(shift.getStandardWorkMinutes())
             .checkInAt(now)
             .workedMinutes(0)
             .payableMinutes(0)

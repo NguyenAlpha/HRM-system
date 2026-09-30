@@ -169,7 +169,8 @@ public class PayrollServiceImpl implements PayrollService {
 
         List<PayslipItem> items = new ArrayList<>();
         items.add(PayslipItem.builder()
-            .componentType(PayslipItemType.BASIC_SALARY)
+            .componentType(PayslipItemType.BASE_SALARY)
+            .componentCode("BASE_SALARY")
             .description("Lương cơ bản")
             .quantity(BigDecimal.valueOf(payableWorkMinutes).divide(BigDecimal.valueOf(60), 4, RoundingMode.HALF_UP))
             .unitRate(hourlyRate)
@@ -188,6 +189,7 @@ public class PayrollServiceImpl implements PayrollService {
             overtimePay = overtimePay.add(amount);
             items.add(PayslipItem.builder()
                 .componentType(PayslipItemType.OVERTIME)
+                .componentCode("OVERTIME_" + record.getWorkDate())
                 .description("Tăng ca ngày " + record.getWorkDate())
                 .quantity(hours)
                 .unitRate(hourlyRate)
@@ -204,7 +206,8 @@ public class PayrollServiceImpl implements PayrollService {
             }
             allowancePay = allowancePay.add(allowance.getMonthlyAmount());
             items.add(PayslipItem.builder()
-                .componentType(PayslipItemType.ALLOWANCE)
+                .componentType(PayslipItemType.POSITION_ALLOWANCE)
+                .componentCode(allowance.getComponentCode())
                 .description(allowance.getComponentName())
                 .quantity(BigDecimal.ONE)
                 .unitRate(allowance.getMonthlyAmount())
@@ -227,13 +230,16 @@ public class PayrollServiceImpl implements PayrollService {
             .employee(employee)
             .employeeCodeSnapshot(employee.getEmployeeCode())
             .employeeNameSnapshot(employee.getFullName())
+            .positionSnapshot(assignment.getPosition().getTitle())
             .workLocationSnapshot(assignment.getWorkLocation().getName())
             .organizationUnitSnapshot(assignment.getOrganizationUnit().getName())
-            .contractualBasicSalary(basicSalary)
+            .contractualBaseSalary(basicSalary)
             .scheduledWorkMinutes((int) scheduledWorkMinutes)
             .payableWorkMinutes((int) payableWorkMinutes)
             .approvedOvertimeMinutes((int) approvedOvertimeMinutes)
-            .basicSalaryPay(basicSalaryPay)
+            .baseSalaryPay(basicSalaryPay)
+            .positionAllowancePay(allowancePay)
+            .seniorityAllowancePay(BigDecimal.ZERO)
             .allowancePay(allowancePay)
             .overtimePay(overtimePay)
             .grossPay(grossPay)
@@ -389,11 +395,11 @@ public class PayrollServiceImpl implements PayrollService {
             payslip.getEmployeeNameSnapshot(),
             payslip.getWorkLocationSnapshot(),
             payslip.getOrganizationUnitSnapshot(),
-            payslip.getContractualBasicSalary(),
+            payslip.getContractualBaseSalary(),
             payslip.getScheduledWorkMinutes(),
             payslip.getPayableWorkMinutes(),
             payslip.getApprovedOvertimeMinutes(),
-            payslip.getBasicSalaryPay(),
+            payslip.getBaseSalaryPay(),
             payslip.getAllowancePay(),
             payslip.getOvertimePay(),
             payslip.getGrossPay(),
