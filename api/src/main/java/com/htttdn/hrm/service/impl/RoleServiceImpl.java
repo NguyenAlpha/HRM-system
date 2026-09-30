@@ -24,7 +24,6 @@ import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.RolePermission;
 import com.htttdn.hrm.entity.RolePermissionId;
 import com.htttdn.hrm.entity.enums.PermissionAssignmentPolicy;
-import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
@@ -68,7 +67,7 @@ public class RoleServiceImpl implements RoleService {
             .name(request.name())
             .description(request.description())
             .isSystem(false)
-            .grantPolicy(RoleGrantPolicy.OWNER_APPROVAL)
+            .grantPolicy(request.grantPolicy())
             .createdAt(now)
             .updatedAt(now)
             .build();
@@ -125,6 +124,7 @@ public class RoleServiceImpl implements RoleService {
         }
         role.setName(request.name());
         role.setDescription(request.description());
+        role.setGrantPolicy(request.grantPolicy());
         role.setUpdatedAt(Instant.now());
         return toResponse(role);
     }

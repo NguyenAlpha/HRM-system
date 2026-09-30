@@ -1,6 +1,9 @@
 package com.htttdn.hrm.dto.request.role;
 
+import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
+
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -14,6 +17,9 @@ public record CreateRoleRequest(
     @Size(max = 150)
     String name,
 
-    String description
+    String description,
+
+    @NotNull
+    RoleGrantPolicy grantPolicy
 ) {
 }

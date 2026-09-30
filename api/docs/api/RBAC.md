@@ -8,11 +8,11 @@ Quản lý role tùy chỉnh và quan hệ permission của role. Danh mục per
 
 | Endpoint | Yêu cầu Bearer token | Permission yêu cầu | Mô tả |
 |:---------|:--------------------:|:-------------------:|:------|
-| `POST /api/roles` | ✅ | `rbac.manage` | Tạo custom role mới với chính sách cấp mặc định `OWNER_APPROVAL` |
+| `POST /api/roles` | ✅ | `rbac.manage` | Tạo custom role mới với chính sách cấp do client chọn |
 | `GET /api/roles` | ✅ | `rbac.manage` | Lấy danh sách role chưa bị xóa mềm có phân trang |
 | `GET /api/roles/with-permissions` | ✅ | `rbac.manage` | Lấy toàn bộ role không phân trang kèm danh sách permission của từng role |
 | `GET /api/roles/{id}` | ✅ | `rbac.manage` | Lấy thông tin chi tiết của một role |
-| `PUT /api/roles/{id}` | ✅ | `rbac.manage` | Cập nhật tên và mô tả của custom role |
+| `PUT /api/roles/{id}` | ✅ | `rbac.manage` | Cập nhật tên, mô tả và chính sách cấp của custom role |
 | `DELETE /api/roles/{id}` | ✅ | `rbac.manage` | Xóa mềm một custom role |
 | `GET /api/roles/{roleId}/permissions` | ✅ | `rbac.manage` | Lấy danh sách permission đang được gán cho role |
 | `POST /api/roles/{roleId}/permissions` | ✅ | `rbac.manage` | Gán một permission `DELEGABLE` có sẵn cho custom role |
@@ -29,7 +29,7 @@ Quản lý role tùy chỉnh và quan hệ permission của role. Danh mục per
 - System role có `isSystem=true` là khuôn mẫu do ứng dụng sở hữu; API chỉ cho phép xem role và danh sách permission của role.
 - Chỉ custom role có `isSystem=false` mới được cập nhật, xóa mềm hoặc thay đổi permission mapping.
 - Mỗi role có `grantPolicy` xác định workflow được phép dùng để cấp role cho account; đây không phải cấp bậc và không tạo role hierarchy.
-- Custom role mới luôn có `grantPolicy=OWNER_APPROVAL`; client không được tự hạ chính sách này qua API RBAC.
+- Custom role mới phải khai báo `grantPolicy`; policy quyết định workflow nào được phép cấp role đó cho account.
 - `COMPANY_OWNER` chọn permission có sẵn để cấu hình custom role, không tự định nghĩa capability mới cho hệ thống.
 
 ### Chính sách cấp role
@@ -175,7 +175,8 @@ Tạo role tùy chỉnh. Role mới luôn có `isSystem=false`.
 {
   "code": "RBAC_MANAGER",
   "name": "Quản trị phân quyền",
-  "description": "Quản lý vai trò tùy chỉnh trong doanh nghiệp"
+  "description": "Quản lý vai trò tùy chỉnh trong doanh nghiệp",
+  "grantPolicy": "OWNER_APPROVAL"
 }
 ```
 
@@ -184,10 +185,11 @@ Tạo role tùy chỉnh. Role mới luôn có `isSystem=false`.
 | `code` | string | ✅ | Tối đa 50 ký tự; bắt đầu bằng `A-Z`; chỉ gồm `A-Z`, `0-9`, `_`; không bắt đầu bằng `ROLE_` |
 | `name` | string | ✅ | Không rỗng, tối đa 150 ký tự |
 | `description` | string | ❌ | Mô tả role, có thể bỏ qua hoặc để `null` |
+| `grantPolicy` | string | ✅ | `AUTO`, `HR_ASSIGNABLE`, `OWNER_APPROVAL` hoặc `SYSTEM_ONLY` |
 
 `code` là duy nhất và không thể thay đổi sau khi tạo. Client dùng code không có prefix `ROLE_`; Spring Security tự chuyển role trong JWT thành authority có prefix này.
 
-Role mới luôn có `grantPolicy=OWNER_APPROVAL`; request không nhận field này.
+`grantPolicy` quyết định workflow cấp role: đề xuất của HR được tự động chấp thuận với `HR_ASSIGNABLE`, phải chờ Company Owner duyệt với `OWNER_APPROVAL`, hoặc không thể cấp qua API đề xuất/gán trực tiếp hiện hành với `AUTO` và `SYSTEM_ONLY`.
 
 ### Response `201 Created`
 
@@ -308,14 +310,15 @@ Lấy chi tiết một role chưa bị xóa mềm.
 
 ## PUT `/api/roles/{id}`
 
-Cập nhật tên và mô tả của custom role. System role không thể thay đổi qua API này.
+Cập nhật tên, mô tả và chính sách cấp của custom role. System role không thể thay đổi qua API này.
 
 ### Request
 
 ```json
 {
   "name": "Quản trị role và permission",
-  "description": "Mô tả mới"
+  "description": "Mô tả mới",
+  "grantPolicy": "HR_ASSIGNABLE"
 }
 ```
 
@@ -323,6 +326,7 @@ Cập nhật tên và mô tả của custom role. System role không thể thay 
 |:------|:-----|:--------:|:----------|
 | `name` | string | ✅ | Không rỗng, tối đa 150 ký tự |
 | `description` | string | ❌ | Mô tả mới, có thể là `null` |
+| `grantPolicy` | string | ✅ | `AUTO`, `HR_ASSIGNABLE`, `OWNER_APPROVAL` hoặc `SYSTEM_ONLY` |
 
 ### Response `200 OK`
 
@@ -335,7 +339,7 @@ Cập nhật tên và mô tả của custom role. System role không thể thay 
     "name": "Quản trị role và permission",
     "description": "Mô tả mới",
     "isSystem": false,
-    "grantPolicy": "OWNER_APPROVAL"
+    "grantPolicy": "HR_ASSIGNABLE"
   },
   "error": null
 }

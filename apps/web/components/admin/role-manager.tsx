@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Loader2, Pencil, Plus, RefreshCw, ShieldCheck, Trash2 } from "lucide-react"
@@ -38,6 +38,13 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -57,6 +64,13 @@ import type { Portal } from "@/lib/auth/types"
 import { isSessionExpired, rbacErrorMessage, rbacMutation, rbacRequest, type Page, type Role } from "@/lib/rbac"
 
 const CODE_PATTERN = /^(?!ROLE_)[A-Z][A-Z0-9_]*$/
+const ROLE_GRANT_POLICIES = ["AUTO", "HR_ASSIGNABLE", "OWNER_APPROVAL", "SYSTEM_ONLY"] as const
+const ROLE_GRANT_POLICY_LABELS: Record<(typeof ROLE_GRANT_POLICIES)[number], string> = {
+  AUTO: "Tự động qua workflow hệ thống",
+  HR_ASSIGNABLE: "HR có thể cấp ngay",
+  OWNER_APPROVAL: "Cần Company Owner phê duyệt",
+  SYSTEM_ONLY: "Chỉ workflow nội bộ",
+}
 
 const roleSchema = z.object({
   code: z
@@ -67,11 +81,17 @@ const roleSchema = z.object({
     .regex(CODE_PATTERN, "Chữ hoa, số, gạch dưới; bắt đầu bằng chữ cái; không bắt đầu bằng ROLE_"),
   name: z.string().trim().min(1, "Bắt buộc").max(150, "Tối đa 150 ký tự"),
   description: z.string().max(1000, "Tối đa 1000 ký tự").optional(),
+  grantPolicy: z.enum(ROLE_GRANT_POLICIES),
 })
 
 type RoleValues = z.infer<typeof roleSchema>
 
-const EMPTY_FORM: RoleValues = { code: "", name: "", description: "" }
+const EMPTY_FORM: RoleValues = {
+  code: "",
+  name: "",
+  description: "",
+  grantPolicy: "OWNER_APPROVAL",
+}
 
 export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSessionExpired: () => void }) {
   const [data, setData] = useState<Page<Role> | null>(null)
@@ -87,6 +107,7 @@ export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSe
   const [selected, setSelected] = useState<Role | null>(null)
 
   const {
+    control,
     register,
     handleSubmit,
     reset,
@@ -133,17 +154,29 @@ export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSe
   function openEdit(role: Role) {
     setEditing(role)
     setDialogError(null)
-    reset({ code: role.code, name: role.name, description: role.description ?? "" })
+    reset({
+      code: role.code,
+      name: role.name,
+      description: role.description ?? "",
+      grantPolicy: role.grantPolicy,
+    })
     setDialogOpen(true)
   }
 
   async function onSubmit(values: RoleValues) {
     setDialogError(null)
     try {
-      const body = { name: values.name.trim(), description: values.description?.trim() || null }
+      const body = {
+        name: values.name.trim(),
+        description: values.description?.trim() || null,
+        grantPolicy: values.grantPolicy,
+      }
       const saved = editing
         ? await rbacMutation<Role>(portal, `/roles/${editing.id}`, "PUT", body)
-        : await rbacMutation<Role>(portal, "/roles", "POST", { ...body, code: values.code.trim() })
+        : await rbacMutation<Role>(portal, "/roles", "POST", {
+          ...body,
+          code: values.code.trim(),
+        })
       if (selected?.id === saved.id) setSelected(saved)
       toast.success(editing ? `Đã cập nhật vai trò ${saved.code}` : `Đã tạo vai trò ${saved.code}`)
       if (!editing) setPage(0)
@@ -232,6 +265,9 @@ export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSe
                       <Badge variant={role.isSystem ? "secondary" : "default"}>
                         {role.isSystem ? "Hệ thống" : "Tùy chỉnh"}
                       </Badge>
+                      <span className="mt-1 block text-xs text-muted-foreground">
+                        {ROLE_GRANT_POLICY_LABELS[role.grantPolicy]}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-1" onClick={(event) => event.stopPropagation()}>
@@ -317,7 +353,9 @@ export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSe
             <DialogHeader>
               <DialogTitle>{editing ? `Sửa vai trò ${editing.code}` : "Thêm vai trò"}</DialogTitle>
               <DialogDescription>
-                {editing ? "Cập nhật tên và mô tả của vai trò." : "Tạo vai trò tùy chỉnh mới cho doanh nghiệp."}
+                {editing
+                  ? "Cập nhật tên, mô tả và chính sách cấp của vai trò."
+                  : "Tạo vai trò tùy chỉnh mới cho doanh nghiệp."}
               </DialogDescription>
             </DialogHeader>
 
@@ -346,6 +384,36 @@ export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSe
                 <Label htmlFor="role-description">Mô tả</Label>
                 <Textarea id="role-description" rows={3} {...register("description")} />
                 {errors.description && <p className="text-xs font-medium text-destructive">{errors.description.message}</p>}
+              </div>
+
+              <div className="grid gap-1.5">
+                <Label htmlFor="role-grant-policy">Chính sách cấp vai trò</Label>
+                <Controller
+                  control={control}
+                  name="grantPolicy"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      items={ROLE_GRANT_POLICY_LABELS}
+                      onValueChange={(value) => field.onChange(value ?? "OWNER_APPROVAL")}
+                    >
+                      <SelectTrigger id="role-grant-policy" className="w-full" aria-invalid={!!errors.grantPolicy}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ROLE_GRANT_POLICIES.map((policy) => (
+                          <SelectItem key={policy} value={policy}>
+                            {ROLE_GRANT_POLICY_LABELS[policy]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <p className="text-xs text-muted-foreground">
+                  AUTO và SYSTEM_ONLY không thể cấp qua API đề xuất hoặc gán trực tiếp hiện tại.
+                </p>
+                {errors.grantPolicy && <p className="text-xs font-medium text-destructive">{errors.grantPolicy.message}</p>}
               </div>
             </div>
 

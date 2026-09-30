@@ -33,6 +33,7 @@ import com.htttdn.hrm.entity.RolePermissionId;
 import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.entity.enums.PermissionAssignmentPolicy;
 import com.htttdn.hrm.entity.enums.PermissionModule;
+import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.PermissionRepository;
 import com.htttdn.hrm.repository.RolePermissionRepository;
@@ -100,9 +101,13 @@ class RbacManagementTest {
     void companyOwnerCanCreateReadUpdateAndSoftDeleteCustomRole() throws Exception {
         String code = roleCode();
         long id = createdId(admin(post("/api/roles"), Map.of(
-            "code", code, "name", "Custom role", "description", "Initial description"
+            "code", code,
+            "name", "Custom role",
+            "description", "Initial description",
+            "grantPolicy", "HR_ASSIGNABLE"
         )).andExpect(status().isCreated())
-            .andExpect(jsonPath("$.data.isSystem").value(false)));
+            .andExpect(jsonPath("$.data.isSystem").value(false))
+            .andExpect(jsonPath("$.data.grantPolicy").value("HR_ASSIGNABLE")));
 
         admin(get("/api/roles/{id}", id))
             .andExpect(status().isOk())
@@ -111,9 +116,12 @@ class RbacManagementTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.content[0].id").value(id));
         admin(put("/api/roles/{id}", id), Map.of(
-            "name", "Updated role", "description", "Updated description"
+            "name", "Updated role",
+            "description", "Updated description",
+            "grantPolicy", "SYSTEM_ONLY"
         )).andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.name").value("Updated role"));
+            .andExpect(jsonPath("$.data.name").value("Updated role"))
+            .andExpect(jsonPath("$.data.grantPolicy").value("SYSTEM_ONLY"));
         admin(delete("/api/roles/{id}", id)).andExpect(status().isOk());
 
         Role deletedRole = roleRepository.findById(id).orElseThrow();
@@ -124,7 +132,11 @@ class RbacManagementTest {
         admin(get("/api/roles/{id}", id))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.error.code").value("ROLE_NOT_FOUND"));
-        admin(post("/api/roles"), Map.of("code", code, "name", "Duplicate deleted role"))
+        admin(post("/api/roles"), Map.of(
+            "code", code,
+            "name", "Duplicate deleted role",
+            "grantPolicy", "OWNER_APPROVAL"
+        ))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.error.field").value("code"));
         admin(delete("/api/roles/{id}/permissions/1", id))
@@ -139,7 +151,8 @@ class RbacManagementTest {
             .andExpect(status().isConflict());
         admin(put("/api/roles/{id}", role.getId()), Map.of(
             "name", "Modified system role",
-            "description", "Modified"
+            "description", "Modified",
+            "grantPolicy", "AUTO"
         )).andExpect(status().isConflict());
     }
 
@@ -261,7 +274,10 @@ class RbacManagementTest {
     @Test
     void missingResourcesAndMalformedBodiesReturnExpectedErrors() throws Exception {
         admin(get("/api/roles/-1")).andExpect(status().isNotFound());
-        admin(put("/api/roles/-1"), Map.of("name", "Missing"))
+        admin(put("/api/roles/-1"), Map.of(
+            "name", "Missing",
+            "grantPolicy", "OWNER_APPROVAL"
+        ))
             .andExpect(status().isNotFound());
         admin(delete("/api/roles/-1")).andExpect(status().isNotFound());
         admin(get("/api/roles/-1/permissions")).andExpect(status().isNotFound());
@@ -300,7 +316,8 @@ class RbacManagementTest {
 
     private Role savedRole(boolean system) {
         return roleRepository.save(Role.builder().code(roleCode()).name("RBAC test role")
-            .isSystem(system).createdAt(Instant.now()).updatedAt(Instant.now()).build());
+            .isSystem(system).grantPolicy(RoleGrantPolicy.OWNER_APPROVAL)
+            .createdAt(Instant.now()).updatedAt(Instant.now()).build());
     }
 
     private Permission savedPermission(String code) {
@@ -331,11 +348,15 @@ class RbacManagementTest {
 
     private static Stream<Arguments> endpoints() {
         return Stream.of(
-            Arguments.of("POST", "/api/roles", "{\"code\":\"TEST_ROLE\",\"name\":\"Test role\"}"),
+            Arguments.of(
+                "POST",
+                "/api/roles",
+                "{\"code\":\"TEST_ROLE\",\"name\":\"Test role\",\"grantPolicy\":\"OWNER_APPROVAL\"}"
+            ),
             Arguments.of("GET", "/api/roles", ""),
             Arguments.of("GET", "/api/roles/with-permissions", ""),
             Arguments.of("GET", "/api/roles/1", ""),
-            Arguments.of("PUT", "/api/roles/1", "{\"name\":\"Updated\"}"),
+            Arguments.of("PUT", "/api/roles/1", "{\"name\":\"Updated\",\"grantPolicy\":\"OWNER_APPROVAL\"}"),
             Arguments.of("DELETE", "/api/roles/1", ""),
             Arguments.of("GET", "/api/roles/1/permissions", ""),
             Arguments.of("POST", "/api/roles/1/permissions", "{\"permissionId\":1}"),
@@ -356,10 +377,12 @@ class RbacManagementTest {
 
     private static Stream<Arguments> invalidBodies() {
         return Stream.of(
-            Arguments.of("POST", "/api/roles", "{\"code\":\"ROLE_SYSTEM_ADMIN\",\"name\":\"Test\"}", "code"),
-            Arguments.of("POST", "/api/roles", "{\"code\":\"lowercase\",\"name\":\"Test\"}", "code"),
-            Arguments.of("POST", "/api/roles", "{\"code\":\"" + "A".repeat(51) + "\",\"name\":\"Test\"}", "code"),
-            Arguments.of("POST", "/api/roles", "{\"code\":\"TEST\",\"name\":\"" + "A".repeat(151) + "\"}", "name"),
+            Arguments.of("POST", "/api/roles", "{\"code\":\"ROLE_SYSTEM_ADMIN\",\"name\":\"Test\",\"grantPolicy\":\"OWNER_APPROVAL\"}", "code"),
+            Arguments.of("POST", "/api/roles", "{\"code\":\"lowercase\",\"name\":\"Test\",\"grantPolicy\":\"OWNER_APPROVAL\"}", "code"),
+            Arguments.of("POST", "/api/roles", "{\"code\":\"" + "A".repeat(51) + "\",\"name\":\"Test\",\"grantPolicy\":\"OWNER_APPROVAL\"}", "code"),
+            Arguments.of("POST", "/api/roles", "{\"code\":\"TEST\",\"name\":\"" + "A".repeat(151) + "\",\"grantPolicy\":\"OWNER_APPROVAL\"}", "name"),
+            Arguments.of("POST", "/api/roles", "{\"code\":\"TEST\",\"name\":\"Test\"}", "grantPolicy"),
+            Arguments.of("PUT", "/api/roles/1", "{\"name\":\"Test\"}", "grantPolicy"),
             Arguments.of("POST", "/api/roles/1/permissions", "{\"permissionId\":0}", "permissionId")
         );
     }
