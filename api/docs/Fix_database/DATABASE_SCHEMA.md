@@ -1,10 +1,11 @@
 # Database Schema — Hệ thống quản lý nhân sự HRM
 
-> Đây là bản thiết kế cơ sở dữ liệu dùng để duyệt nghiệp vụ, chưa phải Flyway migration.
+> Đây là tài liệu thiết kế cơ sở dữ liệu đã được triển khai tăng dần bởi Flyway migration
+> `V20__align_core_schema_with_approved_design.sql`.
 >
 > Hệ thống phục vụ một doanh nghiệp bán lẻ/phân phối có trụ sở, chi nhánh và kho. Kho được xem là địa điểm làm việc, không quản lý hàng hóa hoặc tồn kho.
 >
-> Phạm vi tính lương của đồ án gồm: lương cơ bản, phụ cấp chức vụ, phụ cấp thâm niên, phụ cấp dự án và tiền tăng ca. Bảo hiểm, thuế, thưởng và hoa hồng nằm ngoài phạm vi MVP.
+> Phạm vi tính lương của đồ án gồm: lương cơ bản, phụ cấp chức vụ, phụ cấp thâm niên và tiền tăng ca. Bảo hiểm, thuế, thưởng và hoa hồng nằm ngoài phạm vi MVP.
 
 ---
 
@@ -29,20 +30,19 @@ Nhân viên nghỉ việc
   → employees.employment_status = RESIGNED hoặc TERMINATED
   → employees.termination_date được cập nhật
   → kết thúc employee_assignments hiện tại
-  → kết thúc employee_projects đang tham gia
   → accounts.status = DISABLED
   → giữ nguyên chấm công và phiếu lương lịch sử
 ```
 
 Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 
-### 1.2. Danh sách 25 bảng
+### 1.2. Danh sách 23 bảng
 
 | Nhóm | Các bảng |
 |---|---|
 | Doanh nghiệp và cơ cấu | `company_profile`, `work_locations`, `organization_units`, `job_positions` |
 | Nhân sự và lương thỏa thuận | `employees`, `employee_assignments`, `employee_salary_history` |
-| Phụ cấp và dự án | `position_allowance_rules`, `seniority_allowance_rules`, `projects`, `employee_projects` |
+| Chính sách phụ cấp | `position_allowance_rules`, `seniority_allowance_rules` |
 | Tài khoản và RBAC | `accounts`, `account_activation_tokens`, `refresh_tokens`, `permissions`, `roles`, `role_permissions`, `account_role_assignments`, `account_permission_overrides` |
 | Nghỉ phép | `leave_requests` |
 | Chấm công | `work_shifts`, `attendance_records` |
@@ -50,37 +50,256 @@ Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 
 ### 1.3. Sơ đồ quan hệ tổng quát
 
+Sơ đồ có đủ 23 bảng và các thuộc tính nghiệp vụ chính. Các cột kỹ thuật, người tạo/người duyệt và quan hệ kiểm toán được trình bày trong phần định nghĩa bảng bên dưới để sơ đồ dễ đọc. Chính sách thâm niên được áp dụng bằng thuật toán theo số năm và thời gian hiệu lực, không có khóa ngoại trực tiếp từ nhân viên.
+
 ```mermaid
 erDiagram
-    WORK_LOCATIONS ||--o{ WORK_LOCATIONS : contains
-    ORGANIZATION_UNITS ||--o{ ORGANIZATION_UNITS : contains
+    direction TB
 
-    EMPLOYEES ||--o{ EMPLOYEE_ASSIGNMENTS : has
-    WORK_LOCATIONS ||--o{ EMPLOYEE_ASSIGNMENTS : workplace
-    ORGANIZATION_UNITS ||--o{ EMPLOYEE_ASSIGNMENTS : unit
-    JOB_POSITIONS ||--o{ EMPLOYEE_ASSIGNMENTS : position
+    COMPANY_PROFILE {
+        smallint id PK
+        varchar code UK
+        varchar name
+        varchar tax_code UK
+    }
 
-    EMPLOYEES ||--o{ EMPLOYEE_SALARY_HISTORY : receives
-    JOB_POSITIONS ||--o{ POSITION_ALLOWANCE_RULES : defines
-    EMPLOYEES ||--o{ EMPLOYEE_PROJECTS : participates
-    PROJECTS ||--o{ EMPLOYEE_PROJECTS : includes
+    WORK_LOCATIONS {
+        bigint id PK
+        bigint parent_location_id FK
+        varchar code
+        varchar name
+        varchar location_type
+    }
 
-    EMPLOYEES ||--o| ACCOUNTS : authenticates_as
-    ACCOUNTS ||--o{ ACCOUNT_ACTIVATION_TOKENS : activates_with
-    ACCOUNTS ||--o{ REFRESH_TOKENS : owns
-    ACCOUNTS ||--o{ ACCOUNT_ROLE_ASSIGNMENTS : receives
-    ROLES ||--o{ ACCOUNT_ROLE_ASSIGNMENTS : assigned
-    ROLES ||--o{ ROLE_PERMISSIONS : contains
-    PERMISSIONS ||--o{ ROLE_PERMISSIONS : grouped_into
-    ACCOUNT_ROLE_ASSIGNMENTS ||--o{ ACCOUNT_PERMISSION_OVERRIDES : customizes
+    ORGANIZATION_UNITS {
+        bigint id PK
+        bigint parent_unit_id FK
+        varchar code
+        varchar name
+        varchar unit_type
+    }
 
-    EMPLOYEES ||--o{ LEAVE_REQUESTS : submits
-    EMPLOYEES ||--o{ ATTENDANCE_RECORDS : has
-    WORK_SHIFTS ||--o{ ATTENDANCE_RECORDS : schedules
+    JOB_POSITIONS {
+        bigint id PK
+        varchar code
+        varchar title
+    }
 
-    PAYROLL_PERIODS ||--o{ PAYSLIPS : produces
-    EMPLOYEES ||--o{ PAYSLIPS : receives
-    PAYSLIPS ||--o{ PAYSLIP_ITEMS : details
+    EMPLOYEES {
+        bigint id PK
+        varchar employee_code UK
+        varchar full_name
+        date hire_date
+        date seniority_start_date
+        varchar employment_status
+        date termination_date
+    }
+
+    EMPLOYEE_ASSIGNMENTS {
+        bigint id PK
+        bigint employee_id FK
+        bigint organization_unit_id FK
+        bigint work_location_id FK
+        bigint position_id FK
+        bigint shift_id FK
+        bigint manager_employee_id FK
+        date effective_from
+        date effective_to
+        boolean is_primary
+    }
+
+    EMPLOYEE_SALARY_HISTORY {
+        bigint id PK
+        bigint employee_id FK
+        numeric base_salary
+        date effective_from
+        date effective_to
+    }
+
+    POSITION_ALLOWANCE_RULES {
+        bigint id PK
+        bigint job_position_id FK
+        numeric monthly_amount
+        date effective_from
+        date effective_to
+    }
+
+    SENIORITY_ALLOWANCE_RULES {
+        bigint id PK
+        integer min_years
+        integer max_years
+        numeric percentage
+        date effective_from
+        date effective_to
+    }
+
+    ACCOUNTS {
+        bigint id PK
+        bigint employee_id FK,UK
+        varchar username UK
+        varchar email UK
+        varchar password_hash
+        varchar status
+    }
+
+    ACCOUNT_ACTIVATION_TOKENS {
+        bigint id PK
+        bigint account_id FK
+        char token_hash UK
+        timestamptz expires_at
+        timestamptz used_at
+        timestamptz revoked_at
+    }
+
+    REFRESH_TOKENS {
+        bigint id PK
+        char token_hash UK
+        bigint account_id FK
+        timestamptz expires_at
+        timestamptz revoked_at
+    }
+
+    PERMISSIONS {
+        bigint id PK
+        varchar code UK
+        varchar name
+        varchar module
+    }
+
+    ROLES {
+        bigint id PK
+        varchar code UK
+        varchar name
+    }
+
+    ROLE_PERMISSIONS {
+        bigint role_id PK,FK
+        bigint permission_id PK,FK
+    }
+
+    ACCOUNT_ROLE_ASSIGNMENTS {
+        bigint id PK
+        bigint account_id FK
+        bigint role_id FK
+        varchar scope_type
+        bigint organization_unit_id FK
+        bigint work_location_id FK
+        date effective_from
+        date effective_to
+    }
+
+    ACCOUNT_PERMISSION_OVERRIDES {
+        bigint id PK
+        bigint account_role_assignment_id FK
+        bigint permission_id FK
+        varchar effect
+        date effective_from
+        date effective_to
+    }
+
+    LEAVE_REQUESTS {
+        bigint id PK
+        bigint employee_id FK
+        varchar leave_type
+        varchar salary_treatment
+        timestamptz start_at
+        timestamptz end_at
+        integer requested_minutes
+        varchar status
+    }
+
+    WORK_SHIFTS {
+        bigint id PK
+        varchar code
+        varchar name
+        time start_time
+        time end_time
+        integer break_minutes
+        integer standard_work_minutes
+    }
+
+    ATTENDANCE_RECORDS {
+        bigint id PK
+        bigint employee_id FK
+        date work_date
+        bigint shift_id FK
+        bigint leave_request_id FK
+        integer scheduled_minutes
+        timestamptz check_in_at
+        timestamptz check_out_at
+        integer payable_minutes
+        integer late_minutes
+        integer early_leave_minutes
+        integer overtime_minutes
+        numeric overtime_multiplier
+        varchar status
+    }
+
+    PAYROLL_PERIODS {
+        bigint id PK
+        smallint year
+        smallint month
+        date period_start
+        date period_end
+        varchar status
+    }
+
+    PAYSLIPS {
+        bigint id PK
+        bigint payroll_period_id FK
+        bigint employee_id FK
+        numeric contractual_base_salary
+        integer scheduled_work_minutes
+        integer payable_work_minutes
+        numeric base_salary_pay
+        numeric position_allowance_pay
+        numeric seniority_allowance_pay
+        numeric allowance_pay
+        numeric overtime_pay
+        numeric gross_pay
+        numeric net_pay
+    }
+
+    PAYSLIP_ITEMS {
+        bigint id PK
+        bigint payslip_id FK
+        varchar component_type
+        varchar component_code
+        varchar description
+        numeric quantity
+        numeric unit_rate
+        numeric multiplier
+        numeric amount
+    }
+
+    WORK_LOCATIONS |o--o{ WORK_LOCATIONS : parent_location_id
+    ORGANIZATION_UNITS |o--o{ ORGANIZATION_UNITS : parent_unit_id
+    EMPLOYEES ||--o{ EMPLOYEE_ASSIGNMENTS : employee_id
+    ORGANIZATION_UNITS ||--o{ EMPLOYEE_ASSIGNMENTS : organization_unit_id
+    WORK_LOCATIONS ||--o{ EMPLOYEE_ASSIGNMENTS : work_location_id
+    JOB_POSITIONS ||--o{ EMPLOYEE_ASSIGNMENTS : position_id
+    WORK_SHIFTS |o--o{ EMPLOYEE_ASSIGNMENTS : shift_id
+    EMPLOYEES |o--o{ EMPLOYEE_ASSIGNMENTS : manager_employee_id
+    EMPLOYEES ||--o{ EMPLOYEE_SALARY_HISTORY : employee_id
+    JOB_POSITIONS ||--o{ POSITION_ALLOWANCE_RULES : job_position_id
+    EMPLOYEES |o--o| ACCOUNTS : employee_id
+    ACCOUNTS ||--o{ ACCOUNT_ACTIVATION_TOKENS : account_id
+    ACCOUNTS ||--o{ REFRESH_TOKENS : account_id
+    ROLES ||--o{ ROLE_PERMISSIONS : role_id
+    PERMISSIONS ||--o{ ROLE_PERMISSIONS : permission_id
+    ACCOUNTS ||--o{ ACCOUNT_ROLE_ASSIGNMENTS : account_id
+    ROLES ||--o{ ACCOUNT_ROLE_ASSIGNMENTS : role_id
+    ORGANIZATION_UNITS |o--o{ ACCOUNT_ROLE_ASSIGNMENTS : organization_unit_id
+    WORK_LOCATIONS |o--o{ ACCOUNT_ROLE_ASSIGNMENTS : work_location_id
+    ACCOUNT_ROLE_ASSIGNMENTS ||--o{ ACCOUNT_PERMISSION_OVERRIDES : account_role_assignment_id
+    PERMISSIONS ||--o{ ACCOUNT_PERMISSION_OVERRIDES : permission_id
+    EMPLOYEES ||--o{ LEAVE_REQUESTS : employee_id
+    EMPLOYEES ||--o{ ATTENDANCE_RECORDS : employee_id
+    WORK_SHIFTS ||--o{ ATTENDANCE_RECORDS : shift_id
+    LEAVE_REQUESTS |o--o{ ATTENDANCE_RECORDS : leave_request_id
+    PAYROLL_PERIODS ||--o{ PAYSLIPS : payroll_period_id
+    EMPLOYEES ||--o{ PAYSLIPS : employee_id
+    PAYSLIPS ||--o{ PAYSLIP_ITEMS : payslip_id
 ```
 
 ---
@@ -230,7 +449,7 @@ erDiagram
 
 ---
 
-## 4. Chính sách phụ cấp và dự án
+## 4. Chính sách phụ cấp
 
 ### `position_allowance_rules` — Phụ cấp theo chức vụ
 
@@ -280,44 +499,6 @@ Ví dụ dữ liệu:
 | 10 | Không giới hạn | 15% |
 
 > Số năm thâm niên được tính tại ngày cuối kỳ lương từ `employees.seniority_start_date`. Các khoảng năm đang hiệu lực không được chồng lấn.
-
-### `projects` — Dự án
-
-| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
-|---|---|---|---|
-| `id` | BIGSERIAL | PK | Khóa chính |
-| `code` | VARCHAR(30) | NOT NULL | Mã dự án |
-| `name` | VARCHAR(200) | NOT NULL | Tên dự án |
-| `description` | TEXT | | Mô tả |
-| `start_date` | DATE | NOT NULL | Ngày bắt đầu |
-| `end_date` | DATE | | Ngày kết thúc dự kiến/thực tế |
-| `status` | VARCHAR(20) | NOT NULL | `PLANNED` / `ACTIVE` / `COMPLETED` / `CANCELLED` |
-| `manager_employee_id` | BIGINT | FK → employees | Người quản lý dự án |
-| `created_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người tạo |
-| `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
-| `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
-| `deleted_at` | TIMESTAMPTZ | | Xóa mềm khi tạo nhầm và chưa phát sinh phân công |
-
-> `UNIQUE(code) WHERE deleted_at IS NULL`.
-
-### `employee_projects` — Nhân viên tham gia dự án
-
-| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
-|---|---|---|---|
-| `id` | BIGSERIAL | PK | Khóa chính |
-| `employee_id` | BIGINT | FK → employees, NOT NULL | Nhân viên tham gia |
-| `project_id` | BIGINT | FK → projects, NOT NULL | Dự án |
-| `project_role` | VARCHAR(100) | NOT NULL | Vai trò trong dự án |
-| `start_date` | DATE | NOT NULL | Ngày bắt đầu tham gia |
-| `end_date` | DATE | | Ngày kết thúc tham gia |
-| `monthly_allowance_amount` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Phụ cấp dự án của nhân viên mỗi tháng |
-| `status` | VARCHAR(20) | NOT NULL | `PLANNED` / `ACTIVE` / `COMPLETED` / `CANCELLED` |
-| `approved_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người duyệt phân công và phụ cấp |
-| `note` | TEXT | | Ghi chú |
-| `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
-| `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
-
-> Đây là bảng trung gian cho quan hệ nhiều–nhiều: một dự án có nhiều nhân viên và một nhân viên có thể tham gia nhiều dự án. Phụ cấp đặt tại bảng này vì mỗi người có thể nhận mức khác nhau trong cùng dự án. Không được có hai lần tham gia cùng một dự án bị chồng khoảng thời gian.
 
 ---
 
@@ -449,7 +630,6 @@ attendance.manage                 attendance.overtime.approve
 
 salary.read                       salary.manage
 allowance.read                    allowance.manage
-project.read                      project.manage
 
 payroll.self.read                 payroll.self.print
 payroll.calculate                 payroll.approve
@@ -571,7 +751,6 @@ MISSING_PUNCH
 | Phụ cấp chức vụ | `position_allowance_rules` |
 | Số năm thâm niên | `employees.seniority_start_date` |
 | Tỷ lệ phụ cấp thâm niên | `seniority_allowance_rules` |
-| Dự án và phụ cấp dự án | `employee_projects` |
 | Phút công, nghỉ và tăng ca | `attendance_records` |
 
 ### 8.2. Công thức
@@ -589,9 +768,6 @@ Phụ cấp chức vụ
 Phụ cấp thâm niên
   = Lương cơ bản tháng × Tỷ lệ thâm niên / 100
 
-Phụ cấp dự án
-  = Tổng phụ cấp của các employee_projects hiệu lực trong kỳ
-
 Tiền tăng ca
   = Σ (Phút tăng ca được duyệt × Đơn giá phút × Hệ số tăng ca)
 
@@ -599,7 +775,6 @@ Tổng thu nhập
   = Lương cơ bản thực nhận
   + Phụ cấp chức vụ
   + Phụ cấp thâm niên
-  + Phụ cấp dự án
   + Tiền tăng ca
 ```
 
@@ -608,7 +783,6 @@ Quy tắc:
 - `PAID_LEAVE` và `HOLIDAY` được tính vào `payable_minutes`.
 - `UNPAID_LEAVE`, `UNAUTHORIZED_ABSENCE` và `MATERNITY_LEAVE` không tính vào `payable_minutes` của doanh nghiệp.
 - Thai sản không bị xem là nghỉ không phép; khoản BHXH thai sản nằm ngoài payroll MVP.
-- Nếu nhân viên tham gia hoặc rời dự án giữa tháng, phụ cấp dự án được phân bổ theo số ngày tham gia trong kỳ.
 - Phụ cấp chức vụ và thâm niên được lấy theo chính sách có hiệu lực tại kỳ lương; thay đổi giữa kỳ được phân bổ theo thời gian hiệu lực.
 - Trước khi duyệt có thể tính lại phiếu nháp; từ `APPROVED` trở đi dữ liệu bất biến.
 
@@ -654,8 +828,7 @@ Quy tắc:
 | `base_salary_pay` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Lương cơ bản thực nhận |
 | `position_allowance_pay` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Phụ cấp chức vụ |
 | `seniority_allowance_pay` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Phụ cấp thâm niên |
-| `project_allowance_pay` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Tổng phụ cấp dự án |
-| `allowance_pay` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Tổng ba loại phụ cấp |
+| `allowance_pay` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Tổng phụ cấp chức vụ và thâm niên |
 | `overtime_pay` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Tiền tăng ca |
 | `gross_pay` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Tổng thu nhập |
 | `net_pay` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Thực nhận; trong MVP bằng gross |
@@ -685,11 +858,10 @@ Giá trị `component_type`:
 BASE_SALARY
 POSITION_ALLOWANCE
 SENIORITY_ALLOWANCE
-PROJECT_ALLOWANCE
 OVERTIME
 ```
 
-> Với phụ cấp dự án, mỗi dự án tạo một dòng `PROJECT_ALLOWANCE` riêng để giải thích tổng tiền. `payslip_items` không giữ khóa ngoại về dữ liệu nguồn vì đây là snapshot lịch sử.
+> Mỗi khoản lương cơ bản, phụ cấp chức vụ, phụ cấp thâm niên và tăng ca được lưu thành các dòng chi tiết. `payslip_items` không giữ khóa ngoại về dữ liệu nguồn vì đây là snapshot lịch sử.
 
 ---
 
@@ -700,8 +872,6 @@ Nhân viên A có:
 - Lương cơ bản: 10.000.000 đồng.
 - Chức vụ trưởng phòng: 1.500.000 đồng/tháng.
 - Thâm niên 3 năm: 5% lương cơ bản = 500.000 đồng.
-- Dự án HRM: 1.000.000 đồng/tháng.
-- Dự án Mobile: 500.000 đồng/tháng.
 - Không có thời gian nghỉ không lương và chưa tính tăng ca.
 
 ```text
@@ -709,9 +879,7 @@ Tổng thu nhập
   = 10.000.000
   + 1.500.000
   +   500.000
-  + 1.000.000
-  +   500.000
-  = 13.500.000 đồng
+  = 12.000.000 đồng
 ```
 
 Nếu tháng có 26 ngày × 8 giờ = 12.480 phút công chuẩn và nhân viên nghỉ không phép 480 phút:
@@ -738,7 +906,6 @@ Nghỉ phép năm có lương 480 phút vẫn được cộng vào `payable_minu
 | Thâm niên | `employees.seniority_start_date` |
 | Lịch sử lương cơ bản | `employee_salary_history` |
 | Danh sách phụ cấp theo chức vụ | `position_allowance_rules`, `job_positions` |
-| Nhân viên theo dự án | `projects`, `employee_projects`, `employees` |
 | Chấm công, đi trễ, về sớm, vắng mặt | `attendance_records` |
 | Tổng lương theo tháng/đơn vị/địa điểm | `payroll_periods`, `payslips` |
 | Chi tiết thành phần lương | `payslips`, `payslip_items` |
@@ -772,15 +939,6 @@ CREATE INDEX idx_position_allowance_period
 
 CREATE INDEX idx_seniority_rules_period
   ON seniority_allowance_rules (effective_from, effective_to, min_years, max_years);
-
-CREATE INDEX idx_projects_status
-  ON projects (status) WHERE deleted_at IS NULL;
-
-CREATE INDEX idx_employee_projects_employee_period
-  ON employee_projects (employee_id, start_date, end_date);
-
-CREATE INDEX idx_employee_projects_project_status
-  ON employee_projects (project_id, status);
 
 CREATE INDEX idx_role_assignments_account_period
   ON account_role_assignments (account_id, effective_from, effective_to);
@@ -836,18 +994,6 @@ ALTER TABLE seniority_allowance_rules ADD CONSTRAINT chk_seniority_range
     AND percentage >= 0
   );
 
-ALTER TABLE projects ADD CONSTRAINT chk_project_status
-  CHECK (status IN ('PLANNED', 'ACTIVE', 'COMPLETED', 'CANCELLED'));
-
-ALTER TABLE projects ADD CONSTRAINT chk_project_period
-  CHECK (end_date IS NULL OR end_date >= start_date);
-
-ALTER TABLE employee_projects ADD CONSTRAINT chk_employee_project_status
-  CHECK (status IN ('PLANNED', 'ACTIVE', 'COMPLETED', 'CANCELLED'));
-
-ALTER TABLE employee_projects ADD CONSTRAINT chk_employee_project_period
-  CHECK (end_date IS NULL OR end_date >= start_date);
-
 ALTER TABLE leave_requests ADD CONSTRAINT chk_leave_type
   CHECK (leave_type IN ('ANNUAL', 'SICK', 'MATERNITY', 'UNPAID', 'OTHER'));
 
@@ -896,7 +1042,6 @@ ALTER TABLE payslips ADD CONSTRAINT chk_payslip_allowance_total
   CHECK (
     allowance_pay = position_allowance_pay
                   + seniority_allowance_pay
-                  + project_allowance_pay
   );
 
 ALTER TABLE payslips ADD CONSTRAINT chk_payslip_total
@@ -908,7 +1053,7 @@ ALTER TABLE payslips ADD CONSTRAINT chk_payslip_total
 ALTER TABLE payslip_items ADD CONSTRAINT chk_payslip_item_type
   CHECK (component_type IN (
     'BASE_SALARY', 'POSITION_ALLOWANCE', 'SENIORITY_ALLOWANCE',
-    'PROJECT_ALLOWANCE', 'OVERTIME'
+    'OVERTIME'
   ));
 ```
 
@@ -920,11 +1065,9 @@ ALTER TABLE payslip_items ADD CONSTRAINT chk_payslip_item_type
 - Lịch sử lương cơ bản của cùng nhân viên không được chồng khoảng hiệu lực.
 - Quy tắc phụ cấp của cùng chức vụ không được chồng khoảng hiệu lực.
 - Các khoảng thâm niên trong cùng giai đoạn chính sách không được chồng lấn.
-- Một nhân viên không có hai lần tham gia cùng dự án bị chồng thời gian.
-- Khoảng tham gia dự án phải nằm trong khoảng hoạt động của dự án.
 - Đơn nghỉ đã duyệt không được chồng với đơn nghỉ đã duyệt khác của cùng nhân viên.
 - `PAID_LEAVE`, `UNPAID_LEAVE`, `MATERNITY_LEAVE`, `SICK_LEAVE` phải tham chiếu đơn nghỉ đã duyệt phù hợp.
-- Khi nhân viên nghỉ việc, phải kết thúc phân công, dự án đang tham gia và vô hiệu hóa tài khoản trong cùng transaction.
+- Khi nhân viên nghỉ việc, phải kết thúc phân công và vô hiệu hóa tài khoản trong cùng transaction.
 - Bản ghi chấm công đã dùng trong kỳ lương từ `APPROVED` trở lên không được sửa.
 - Chỉ tăng ca đã được duyệt mới được đưa vào lương.
 - Khi tính lương phải snapshot từng nguồn vào `payslip_items`.
@@ -951,11 +1094,10 @@ ALTER TABLE payslip_items ADD CONSTRAINT chk_payslip_item_type
 
 - Nhân viên có hai lần thay đổi lương cơ bản.
 - Một lần điều chuyển và một lần bổ nhiệm chức vụ.
-- Hai dự án, trong đó một nhân viên tham gia đồng thời cả hai.
 - Các trường hợp nghỉ phép có lương, nghỉ không lương, nghỉ thai sản và nghỉ không phép.
 - Chấm công đi trễ, về sớm và tăng ca được duyệt.
 - Một kỳ lương `LOCKED` và một kỳ `DRAFT`.
-- Phiếu lương có đủ lương cơ bản, phụ cấp chức vụ, thâm niên, hai phụ cấp dự án và tăng ca.
+- Phiếu lương có đủ lương cơ bản, phụ cấp chức vụ, phụ cấp thâm niên và tăng ca.
 
 ---
 
@@ -972,71 +1114,3 @@ ALTER TABLE payslip_items ADD CONSTRAINT chk_payslip_item_type
 - Multi-tenant, subscription và quản lý nhiều doanh nghiệp.
 
 Các chức năng ngoài phạm vi không được thêm bảng dự phòng vào migration hiện tại.
-
----
-
-## 15. So sánh với database cũ và khuyến nghị phát triển
-
-### 15.1. Phạm vi đối chiếu
-
-Phần này đối chiếu thiết kế 25 bảng trong tài liệu hiện tại với database cũ gồm 22 bảng, được mô tả tại `api/docs/database/DATABASE_SCHEMA.md` và đã được triển khai qua Flyway migration `V1` đến `V19`.
-
-Hai phiên bản có 19 bảng lõi tương ứng về cơ cấu tổ chức, hồ sơ nhân viên, tài khoản, RBAC, chấm công và bảng lương. Khác biệt chính nằm ở ba nhóm sau:
-
-| Database cũ | Thiết kế mới | Ý nghĩa thay đổi |
-|---|---|---|
-| `employee_compensations` | `employee_salary_history`, `position_allowance_rules`, `seniority_allowance_rules`, `projects`, `employee_projects` | Tách lương cơ bản khỏi chính sách phụ cấp và bổ sung phụ cấp dự án |
-| `employee_requests` | `leave_requests` | Chuyên biệt hóa đơn nghỉ phép, dùng phút nghỉ và cách xử lý lương rõ ràng hơn |
-| `role_assignment_requests` | Không có bảng tương ứng | Thiết kế mới đơn giản hơn nhưng mất workflow đề xuất và duyệt cấp vai trò |
-
-### 15.2. So sánh theo tiêu chí
-
-| Tiêu chí | Database cũ | Thiết kế mới | Đánh giá |
-|---|---|---|---|
-| Mức độ sẵn sàng | Đã có migration, entity, repository và service đang sử dụng | Mới là thiết kế để duyệt, chưa phải migration | Database cũ tốt hơn để vận hành ngay |
-| Lương cơ bản | Lưu chung với phụ cấp trong `employee_compensations` | Có `employee_salary_history` riêng và lịch sử hiệu lực rõ ràng | Thiết kế mới rõ nghĩa và dễ kiểm soát hơn |
-| Phụ cấp | Linh hoạt nhờ `component_code`, nhưng quy tắc phụ cấp nằm rải theo từng nhân viên | Tách phụ cấp chức vụ, thâm niên và dự án theo đúng nguồn phát sinh | Thiết kế mới phù hợp phạm vi đồ án và giảm nhập lặp |
-| Dự án | Chưa có mô hình dự án và phân công dự án | Có quan hệ nhiều–nhiều, vai trò, thời gian tham gia và mức phụ cấp từng người | Thiết kế mới đầy đủ hơn |
-| Nghỉ phép | Gộp nghỉ phép và nghỉ việc, dùng ngày và `is_paid_leave` | Chỉ quản lý nghỉ phép, dùng `TIMESTAMPTZ`, số phút và `salary_treatment` | Thiết kế mới chính xác hơn cho chấm công và lương |
-| Nghỉ việc | Có đơn xin nghỉ việc và trạng thái duyệt trong `employee_requests` | HR cập nhật trực tiếp vòng đời nhân viên | Database cũ tốt hơn nếu đề bài cần nhân viên gửi và duyệt đơn nghỉ việc |
-| Giải thích phiếu lương | Có snapshot tổng quát | Có snapshot chức vụ, mã thành phần và tách từng loại phụ cấp | Thiết kế mới dễ đối soát và làm báo cáo hơn |
-| RBAC | Có `roles.grant_policy`, `role_assignment_requests`, audit thu hồi và chính sách cấp quyền | Giữ scope và override nhưng bỏ workflow đề xuất cấp vai trò | Database cũ chặt chẽ hơn về quản trị quyền |
-| Toàn vẹn dữ liệu | Một số bảo vệ quan trọng đã có trong migration, gồm unique không phân biệt hoa thường và exclusion constraint chống chồng phân công | Mô tả nhiều invariant mới nhưng một phần đang giao cho service layer | Cần kế thừa ràng buộc cũ và bổ sung ràng buộc mới ở database khi phù hợp |
-| Rủi ro chuyển đổi | Không có chi phí chuyển đổi | Phải đổi schema, entity, truy vấn, service và dữ liệu lương hiện có | Nên chuyển đổi tăng dần, không thay toàn bộ một lần |
-
-### 15.3. Ưu điểm của thiết kế mới
-
-- **Mô hình đúng nguồn nghiệp vụ hơn:** lương cơ bản, phụ cấp chức vụ, phụ cấp thâm niên và phụ cấp dự án không còn bị gom vào một bảng thành phần thu nhập chung.
-- **Giảm dữ liệu lặp:** mức phụ cấp chức vụ và thâm niên được cấu hình thành chính sách, thay vì tạo lại khoản phụ cấp cho từng nhân viên.
-- **Theo dõi lịch sử tốt hơn:** lương và các chính sách đều có khoảng hiệu lực, phù hợp với việc tính lại dữ liệu quá khứ và giải thích thay đổi.
-- **Hỗ trợ dự án đầy đủ:** quản lý được nhiều nhân viên trong một dự án, một nhân viên ở nhiều dự án và mức phụ cấp khác nhau theo từng lần tham gia.
-- **Nghỉ phép chính xác đến thời gian:** `start_at`, `end_at` và `requested_minutes` xử lý tốt hơn nghỉ nửa ngày hoặc theo giờ so với `start_date`, `end_date`, `total_days`.
-- **Phân biệt nguồn chi trả:** `salary_treatment` tách nghỉ do doanh nghiệp trả lương, nghỉ do bảo hiểm xã hội chi trả và nghỉ không lương; rõ hơn một cờ boolean.
-- **Bảng lương minh bạch:** các cột tổng phụ cấp theo loại và từng dòng `payslip_items` giúp kiểm tra công thức, in phiếu và làm báo cáo dễ hơn.
-- **Phù hợp phạm vi hiện tại:** thiết kế tập trung đúng vào lương cơ bản, ba loại phụ cấp và tăng ca, không mở rộng sang thuế, bảo hiểm hoặc hoa hồng khi chưa có yêu cầu.
-
-### 15.4. Điểm mạnh của database cũ cần giữ lại
-
-- Giữ unique index không phân biệt hoa thường cho mã nhân viên và email đăng nhập/email công việc.
-- Giữ CHECK về thứ tự ngày và exclusion constraint chống chồng khoảng phân công chính; áp dụng cùng cách bảo vệ cho lịch sử lương, chính sách phụ cấp và phân công dự án.
-- Giữ `roles.grant_policy` và `role_assignment_requests` nếu việc cấp vai trò cần bước đề xuất–phê duyệt. Không nên cấp trực tiếp mọi vai trò chỉ vì thiết kế mới chưa mô tả bảng này.
-- Giữ audit thu hồi vai trò gồm người thu hồi, thời điểm và lý do; không xóa vật lý lịch sử phân quyền.
-- Giữ cơ chế token chỉ lưu hash, rotation refresh token và quy tắc mật khẩu bắt buộc sau khi tài khoản được kích hoạt.
-- Nếu hệ thống vẫn cho nhân viên nộp đơn xin nghỉ việc, giữ phần `RESIGNATION` của database cũ hoặc tách thành `resignation_requests`; không nên làm mất lịch sử duyệt bằng cách chỉ sửa `employees`.
-- Nếu tương lai có phụ cấp ngoài ba loại đã chốt, cần bổ sung danh mục/quy tắc mới hoặc giữ một cơ chế thành phần mở rộng có kiểm soát; không nhét mọi khoản mới vào một cột ghi chú.
-
-### 15.5. Kết luận
-
-**Nên chọn thiết kế mới làm kiến trúc đích**, vì nó bám sát yêu cầu tính lương, phụ cấp chức vụ, thâm niên, dự án và nghỉ phép hơn; dữ liệu dễ giải thích, kiểm thử và báo cáo hơn database cũ.
-
-Tuy nhiên, **không nên bỏ database cũ để tạo lại từ đầu**. Database cũ là nền triển khai hiện hành và đang có các bảo vệ RBAC, identity, audit và chống chồng thời gian mà thiết kế mới chưa mô tả đầy đủ. Phương án phù hợp là phát triển thiết kế mới trên nền database cũ, giữ 19 bảng lõi và các ràng buộc tốt, sau đó thay đổi từng nhóm nghiệp vụ.
-
-Thứ tự triển khai đề xuất:
-
-1. Giữ nguyên các bảng lõi và toàn bộ cải tiến bảo mật/toàn vẹn dữ liệu từ `V10` đến `V19`.
-2. Tạo `employee_salary_history`, các bảng chính sách phụ cấp, `projects` và `employee_projects`; chuyển và đối soát dữ liệu từ `employee_compensations`.
-3. Tạo `leave_requests`, chuyển dữ liệu nghỉ phép từ `employee_requests`; quyết định rõ việc giữ hay tách workflow xin nghỉ việc trước khi bỏ bảng cũ.
-4. Nâng cấp logic tính lương và snapshot, chạy đối chiếu kết quả giữa công thức cũ và mới trên ít nhất một kỳ lương mẫu.
-5. Chỉ ngừng đọc các bảng cũ sau khi dữ liệu đã backfill, API đã chuyển sang schema mới và integration test PostgreSQL xác nhận các invariant quan trọng.
-
-Vì vậy, hướng phát triển được khuyến nghị là **“schema mới cho nghiệp vụ, nền bảo vệ cũ cho vận hành”**, triển khai bằng migration tăng dần thay vì thay thế toàn bộ database trong một lần.
