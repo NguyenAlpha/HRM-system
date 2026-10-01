@@ -19,7 +19,7 @@ export function proxy(request: NextRequest) {
   if (pathname === "/admin/login" && hasSession(request, "admin")) {
     return NextResponse.redirect(new URL("/admin", request.url))
   }
-  if (pathname.startsWith("/dashboard") && !hasSession(request, "hrm")) {
+  if ((pathname.startsWith("/dashboard") || pathname.startsWith("/reports")) && !hasSession(request, "hrm")) {
     return NextResponse.redirect(new URL("/login", request.url))
   }
   if (pathname.startsWith("/admin") && pathname !== "/admin/login" && !hasSession(request, "admin")) {
@@ -30,5 +30,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login", "/dashboard/:path*", "/admin/:path*"],
+  matcher: ["/login", "/dashboard/:path*", "/reports/:path*", "/admin/:path*"],
 }

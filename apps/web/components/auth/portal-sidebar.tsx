@@ -6,7 +6,7 @@ import type { AccountSummary, Portal } from "@/lib/auth/types"
 export function PortalSidebar({ portal, account, active = "overview" }: {
   portal: Portal
   account: AccountSummary
-  active?: "overview" | "rbac" | "employees" | "role-requests" | "company-owner" | "role-grant" | "organization"
+  active?: "overview" | "rbac" | "employees" | "role-requests" | "company-owner" | "role-grant" | "organization" | "reports"
 }) {
   const admin = portal === "admin"
   const canBootstrapCompanyOwner = account.permissions.some(
@@ -19,6 +19,9 @@ export function PortalSidebar({ portal, account, active = "overview" }: {
   const canManageRbac = account.permissions.some((permission) => permission.code === "rbac.manage")
   const canAssignRoleDirect = account.permissions.some((permission) => permission.code === "account.role.assign")
   const canReadOrganization = account.permissions.some((permission) => permission.code === "organization.read")
+  const canReadReports = account.permissions.some(
+    (permission) => permission.code === "report.hr.read" || permission.code === "report.payroll.read",
+  )
 
   return (
     <aside className="portal-sidebar">
@@ -79,6 +82,11 @@ export function PortalSidebar({ portal, account, active = "overview" }: {
             {canReadOrganization && (
               <Link className={`nav-item ${active === "organization" ? "active" : ""}`} href="/organization">
                 <span>▧</span> Danh mục tổ chức
+              </Link>
+            )}
+            {canReadReports && (
+              <Link className={`nav-item ${active === "reports" ? "active" : ""}`} href="/reports/workforce">
+                <span>▥</span> Báo cáo nhân sự
               </Link>
             )}
             <span className="nav-item disabled"><span>◷</span> Chấm công</span>
