@@ -1,5 +1,11 @@
 # Entity & Attributes — HRM
 
+> [!WARNING]
+> Tài liệu này mô tả mô hình entity lịch sử trước V20. `EmployeeCompensation` và
+> `EmployeeRequest` đã được thay thế, gỡ khỏi source tại V27. Hãy dùng
+> [schema hiện hành](../Fix_database/DATABASE_SCHEMA.md) và các entity trong
+> `src/main/java/com/htttdn/hrm/entity` làm nguồn chuẩn.
+
 > Tài liệu mô tả từng entity (ánh xạ 1-1 với bảng trong [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md)) và thuộc tính ở mức Java, dùng làm cơ sở để viết JPA entity. Kiểu dữ liệu, ràng buộc và ý nghĩa nghiệp vụ giữ nguyên theo schema đã duyệt.
 >
 > Quy ước kiểu Java: `BIGSERIAL`→`Long`, `SMALLINT`→`Short`, `VARCHAR/TEXT`→`String`, `BOOLEAN`→`Boolean`, `DATE`→`LocalDate`, `TIME`→`LocalTime`, `TIMESTAMPTZ`→`Instant`, `NUMERIC`→`BigDecimal`, `INTEGER`→`Integer`. Cột giá trị tĩnh dùng enum tại `com.htttdn.hrm.entity.enums`. Thuộc tính tham chiếu khóa ngoại được viết dưới dạng quan hệ tới entity khác (không phải kiểu `Long` thô) vì đây là mức thiết kế entity, không phải cột DB.
