@@ -27,9 +27,6 @@ API gán trực tiếp chỉ chấp nhận role có `grantPolicy=HR_ASSIGNABLE` 
 | Role | Scope được phép | Ghi chú |
 |:-----|:----------------|:--------|
 | `EMPLOYEE` | `SELF` | Hệ thống tự gán khi tạo account; API này không được gán/thu hồi |
-| `TEAM_LEAD` | `ORG_UNIT` | Bắt buộc `organizationUnitId` |
-| `WAREHOUSE_SUPERVISOR` | `LOCATION` | Bắt buộc `workLocationId` |
-| `BRANCH_MANAGER` | `LOCATION` | Bắt buộc `workLocationId` |
 | `HR_MANAGER` | `COMPANY` | Company Owner gán sau khi hồ sơ nhân sự và account đã được tạo |
 | `PAYROLL_ACCOUNTANT` | `COMPANY` | Không truyền ID phạm vi |
 | `PAYROLL_APPROVER` | `COMPANY` | Không truyền ID phạm vi |
@@ -122,20 +119,6 @@ Gán thêm một role nghiệp vụ cho account.
   "effectiveFrom": "2026-10-01",
   "effectiveTo": null,
   "reason": "Appointed as company director"
-}
-```
-
-### Ví dụ gán `TEAM_LEAD`
-
-```json
-{
-  "roleCode": "TEAM_LEAD",
-  "scopeType": "ORG_UNIT",
-  "organizationUnitId": 12,
-  "workLocationId": null,
-  "effectiveFrom": "2026-10-01",
-  "effectiveTo": null,
-  "reason": "Team lead appointment decision 15/2026"
 }
 ```
 

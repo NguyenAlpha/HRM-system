@@ -37,24 +37,6 @@ public class RoleSeeder implements ApplicationRunner {
             RoleGrantPolicy.AUTO
         ),
         new RoleDefinition(
-            "TEAM_LEAD",
-            "Trưởng nhóm",
-            "Quản lý nhân viên trong đơn vị tổ chức được phân công",
-            RoleGrantPolicy.HR_ASSIGNABLE
-        ),
-        new RoleDefinition(
-            "WAREHOUSE_SUPERVISOR",
-            "Giám sát kho",
-            "Giám sát nhân viên và chấm công tại kho được phân công",
-            RoleGrantPolicy.HR_ASSIGNABLE
-        ),
-        new RoleDefinition(
-            "BRANCH_MANAGER",
-            "Quản lý chi nhánh",
-            "Quản lý nhân viên và hoạt động trong chi nhánh được phân công",
-            RoleGrantPolicy.OWNER_APPROVAL
-        ),
-        new RoleDefinition(
             "HR_MANAGER",
             "Quản lý nhân sự",
             "Quản lý nghiệp vụ nhân sự trên toàn công ty",

@@ -138,10 +138,7 @@ EMPLOYEE @ SELF
 | Role | Scope | Mục đích |
 |---|---|---|
 | `EMPLOYEE` | `SELF` | Tự xem hồ sơ, đơn từ, chấm công và phiếu lương |
-| `TEAM_LEAD` | `ORG_UNIT` | Xem nhân viên, duyệt đơn và tăng ca trong một nhóm |
 | `DEPARTMENT_MANAGER` | `ORG_UNIT` | Quản lý nhân viên, đơn từ và chấm công của cả phòng ban |
-| `WAREHOUSE_SUPERVISOR` | `LOCATION` | Giám sát nhân sự tại một kho |
-| `BRANCH_MANAGER` | `LOCATION` | Quản lý nhân sự tại chi nhánh và địa điểm con |
 | `HR_MANAGER` | `COMPANY` | Quản trị nghiệp vụ nhân sự trên toàn công ty |
 | `PAYROLL_ACCOUNTANT` | `COMPANY` | Tính và kiểm tra bảng lương |
 | `PAYROLL_APPROVER` | `COMPANY` | Duyệt, xác nhận thanh toán và khóa kỳ lương |

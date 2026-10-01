@@ -47,13 +47,13 @@ Kết quả sắp xếp theo tên role, sau đó theo code. Đây là danh mục
       "allowedScopeTypes": ["COMPANY"]
     },
     {
-      "roleId": 2,
-      "roleCode": "TEAM_LEAD",
-      "roleName": "Trưởng nhóm",
-      "roleDescription": "Quản lý nhân viên trong đơn vị tổ chức được phân công",
-      "grantPolicy": "HR_ASSIGNABLE",
-      "requiresApproval": false,
-      "allowedScopeTypes": ["ORG_UNIT"]
+      "roleId": 6,
+      "roleCode": "PAYROLL_ACCOUNTANT",
+      "roleName": "Kế toán tiền lương",
+      "roleDescription": "Tính toán và kiểm tra bảng lương toàn công ty",
+      "grantPolicy": "OWNER_APPROVAL",
+      "requiresApproval": true,
+      "allowedScopeTypes": ["COMPANY"]
     }
   ],
   "error": null

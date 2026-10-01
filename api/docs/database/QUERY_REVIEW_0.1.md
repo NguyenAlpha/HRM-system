@@ -323,7 +323,7 @@ Không cần thêm materialized view ở giai đoạn này. Tài liệu nghiệp
 | Ưu tiên | Việc cần làm | Kết quả cần chứng minh |
 |---|---|---|
 | Cao | Q-01: Lọc nhân viên/phân công theo kỳ | Điều chuyển tương lai không tác động hiện tại; người nghỉ giữa tháng vẫn được tính; kỳ cũ dùng đúng đơn vị |
-| Cao | Q-03: Thực thi scope và actor | Quản lý chi nhánh chỉ xử lý đúng chi nhánh/kho con; nhân viên chỉ đọc phiếu của mình |
+| Cao | Q-03: Thực thi scope và actor | Role có scope địa điểm chỉ xử lý đúng địa điểm/các nút con; nhân viên chỉ đọc phiếu của mình |
 | Cao | Q-05: Tính lại phiếu nháp | Chạy tính hai lần vẫn thành công, không trùng phiếu, không giữ phiếu cũ sai tập nhân viên |
 | Cao | Q-06: Khóa/điều kiện ghi và kiểm tra kỳ | Duyệt đồng thời sửa công không tạo dữ liệu mâu thuẫn; mọi đường ghi từ chối sửa nguồn của kỳ đã duyệt |
 | Nên làm | Q-02: Đọc theo tập, loại N+1 items | Số SELECT lấy items không tăng theo số phiếu trong page; compensation không bị đọc hai lần/người |
