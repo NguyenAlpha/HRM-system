@@ -44,7 +44,7 @@ api/
 │   │   │       └── impl/           # Các implementation của service
 │   │   └── resources/
 │   │       ├── application.properties # Cấu hình runtime
-│   │       └── db/migration/          # Flyway migrations V1 đến V21
+│   │       └── db/migration/          # Flyway migrations V1 đến V25
 │   └── test/java/                  # Unit, integration và context tests
 ├── docs/                           # Tài liệu API và database của backend
 └── target/                         # Output Maven sinh tự động, không phải source
@@ -80,6 +80,8 @@ Các migration nằm trong `api/src/main/resources/db/migration/` và được F
 | `V9` – `V19` | Bổ sung activation token, permission, audit, identity key và bảo vệ khoảng thời gian. |
 | `V20__align_core_schema_with_approved_design.sql` | Đồng bộ schema lõi với thiết kế HRM đã duyệt. |
 | `V21__harden_account_permission_overrides.sql` | Bổ sung audit thu hồi và ràng buộc cho permission override. |
+| `V22` – `V24` | Loại bỏ các vai trò Team Lead, Warehouse Supervisor và Branch Manager đã ngừng sử dụng. |
+| `V25__separate_employee_self_service_permissions.sql` | Tách permission tự phục vụ dành cho nhân viên. |
 
 ### Tài liệu backend
 
