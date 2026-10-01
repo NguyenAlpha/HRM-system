@@ -1,7 +1,8 @@
 # Database Schema — Hệ thống quản lý nhân sự HRM
 
 > Đây là tài liệu thiết kế cơ sở dữ liệu đã được triển khai tăng dần bởi Flyway migration
-> `V20__align_core_schema_with_approved_design.sql`.
+> `V20__align_core_schema_with_approved_design.sql` và hoàn tất dọn mô hình cũ tại
+> `V27__archive_and_remove_legacy_compensation_requests.sql`.
 >
 > Hệ thống phục vụ một doanh nghiệp bán lẻ/phân phối có trụ sở, chi nhánh và kho. Kho được xem là địa điểm làm việc, không quản lý hàng hóa hoặc tồn kho.
 >
@@ -36,21 +37,25 @@ Nhân viên nghỉ việc
 
 Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 
-### 1.2. Danh sách 23 bảng
+### 1.2. Danh sách 24 bảng nghiệp vụ
 
 | Nhóm | Các bảng |
 |---|---|
 | Doanh nghiệp và cơ cấu | `company_profile`, `work_locations`, `organization_units`, `job_positions` |
 | Nhân sự và lương thỏa thuận | `employees`, `employee_assignments`, `employee_salary_history` |
 | Chính sách phụ cấp | `position_allowance_rules`, `seniority_allowance_rules` |
-| Tài khoản và RBAC | `accounts`, `account_activation_tokens`, `refresh_tokens`, `permissions`, `roles`, `role_permissions`, `account_role_assignments`, `account_permission_overrides` |
+| Tài khoản và RBAC | `accounts`, `account_activation_tokens`, `refresh_tokens`, `permissions`, `roles`, `role_permissions`, `role_assignment_requests`, `account_role_assignments`, `account_permission_overrides` |
 | Nghỉ phép | `leave_requests` |
 | Chấm công | `work_shifts`, `attendance_records` |
 | Tính lương | `payroll_periods`, `payslips`, `payslip_items` |
 
+Hai bảng `legacy_employee_compensation_archive` và `legacy_employee_request_archive`
+chỉ là snapshot kiểm toán được tạo tại V27. Chúng không thuộc mô hình nghiệp vụ đang hoạt động,
+không có JPA entity/repository và không được ghi thêm sau migration.
+
 ### 1.3. Sơ đồ quan hệ tổng quát
 
-Sơ đồ có đủ 23 bảng và các thuộc tính nghiệp vụ chính. Các cột kỹ thuật, người tạo/người duyệt và quan hệ kiểm toán được trình bày trong phần định nghĩa bảng bên dưới để sơ đồ dễ đọc. Chính sách thâm niên được áp dụng bằng thuật toán theo số năm và thời gian hiệu lực, không có khóa ngoại trực tiếp từ nhân viên.
+Sơ đồ có đủ 24 bảng nghiệp vụ và các thuộc tính nghiệp vụ chính. Hai bảng archive V27 không tham gia quan hệ runtime nên được mô tả riêng. Các cột kỹ thuật, người tạo/người duyệt và quan hệ kiểm toán được trình bày trong phần định nghĩa bảng bên dưới để sơ đồ dễ đọc. Chính sách thâm niên được áp dụng bằng thuật toán theo số năm và thời gian hiệu lực, không có khóa ngoại trực tiếp từ nhân viên.
 
 ```mermaid
 erDiagram
@@ -177,6 +182,17 @@ erDiagram
         bigint permission_id PK,FK
     }
 
+    ROLE_ASSIGNMENT_REQUESTS {
+        bigint id PK
+        bigint account_id FK
+        bigint role_id FK
+        varchar scope_type
+        date effective_from
+        date effective_to
+        varchar status
+        bigint account_role_assignment_id FK
+    }
+
     ACCOUNT_ROLE_ASSIGNMENTS {
         bigint id PK
         bigint account_id FK
@@ -287,6 +303,9 @@ erDiagram
     ACCOUNTS ||--o{ REFRESH_TOKENS : account_id
     ROLES ||--o{ ROLE_PERMISSIONS : role_id
     PERMISSIONS ||--o{ ROLE_PERMISSIONS : permission_id
+    ACCOUNTS ||--o{ ROLE_ASSIGNMENT_REQUESTS : account_id
+    ROLES ||--o{ ROLE_ASSIGNMENT_REQUESTS : role_id
+    ACCOUNT_ROLE_ASSIGNMENTS |o--o| ROLE_ASSIGNMENT_REQUESTS : account_role_assignment_id
     ACCOUNTS ||--o{ ACCOUNT_ROLE_ASSIGNMENTS : account_id
     ROLES ||--o{ ACCOUNT_ROLE_ASSIGNMENTS : role_id
     ORGANIZATION_UNITS |o--o{ ACCOUNT_ROLE_ASSIGNMENTS : organization_unit_id
@@ -445,7 +464,7 @@ erDiagram
 | `note` | TEXT | | Ghi chú |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 
-> Bảng này thay cho `employee_compensations`. Nó chỉ lưu lương cơ bản và lịch sử thay đổi lương, không chứa các khoản phụ cấp. Một nhân viên chỉ có một mức lương cơ bản hiệu lực tại một thời điểm.
+> Bảng này thay cho `employee_compensations`. Nó chỉ lưu lương cơ bản và lịch sử thay đổi lương, không chứa các khoản phụ cấp. Một nhân viên chỉ có một mức lương cơ bản hiệu lực tại một thời điểm. V27 backfill lần cuối các mức lương hợp lệ rồi xóa bảng cũ; toàn bộ dữ liệu nguồn được giữ tại `legacy_employee_compensation_archive`.
 
 ---
 
@@ -580,6 +599,33 @@ Ví dụ dữ liệu:
 | `created_by_account_id` | BIGINT | FK → accounts | Người cấu hình; null với seed |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cấp |
 
+### `role_assignment_requests` — Đề xuất cấp vai trò
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `account_id` | BIGINT | FK → accounts, NOT NULL | Tài khoản được đề xuất cấp vai trò |
+| `role_id` | BIGINT | FK → roles, NOT NULL | Vai trò được đề xuất |
+| `scope_type` | VARCHAR(20) | NOT NULL | `SELF` / `COMPANY` / `ORG_UNIT` / `LOCATION` |
+| `organization_unit_id` | BIGINT | FK → organization_units | Phạm vi phòng ban |
+| `work_location_id` | BIGINT | FK → work_locations | Phạm vi địa điểm |
+| `effective_from` | DATE | NOT NULL | Ngày bắt đầu đề xuất |
+| `effective_to` | DATE | | Ngày kết thúc đề xuất |
+| `reason` | TEXT | NOT NULL | Lý do đề xuất |
+| `status` | VARCHAR(20) | NOT NULL | `PENDING` / `APPROVED` / `REJECTED` / `CANCELLED` |
+| `requested_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người gửi đề xuất |
+| `requested_at` | TIMESTAMPTZ | NOT NULL | Thời điểm gửi |
+| `reviewed_by_account_id` | BIGINT | FK → accounts | Người duyệt hoặc từ chối |
+| `reviewed_at` | TIMESTAMPTZ | | Thời điểm xử lý |
+| `review_note` | TEXT | | Nhận xét xử lý |
+| `cancelled_by_account_id` | BIGINT | FK → accounts | Người hủy đề xuất |
+| `cancelled_at` | TIMESTAMPTZ | | Thời điểm hủy |
+| `cancellation_reason` | TEXT | | Lý do hủy |
+| `account_role_assignment_id` | BIGINT | UNIQUE, FK → account_role_assignments | Assignment sinh ra khi duyệt |
+| `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật cuối |
+
+> Không cho phép hai request `PENDING` cùng tài khoản, vai trò, phạm vi và khoảng hiệu lực chồng lấn.
+
 ### `account_role_assignments` — Gán vai trò và phạm vi
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
@@ -668,7 +714,7 @@ rbac.manage
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-> Bảng này thay `employee_requests` chung chung. Nghỉ việc được HR cập nhật trực tiếp vào vòng đời nhân viên; bảng này chỉ quản lý nghỉ phép.
+> Bảng này thay `employee_requests` chung chung. Nghỉ việc được HR cập nhật trực tiếp vào vòng đời nhân viên; bảng này chỉ quản lý nghỉ phép. V27 backfill lần cuối đơn nghỉ phép rồi xóa bảng cũ; toàn bộ dữ liệu nguồn, bao gồm lịch sử đơn nghỉ việc, được giữ tại `legacy_employee_request_archive`.
 >
 > Quy tắc mặc định:
 >
@@ -676,6 +722,15 @@ rbac.manage
 > - `UNPAID` → `UNPAID`: không tính vào phút hưởng lương.
 > - `MATERNITY` → `SOCIAL_INSURANCE`: không tính lương doanh nghiệp theo phút; chế độ BHXH nằm ngoài bảng lương MVP.
 > - Nghỉ không phép không tạo `leave_requests` được duyệt; ngày công được đánh dấu `UNAUTHORIZED_ABSENCE`.
+
+### 6.1. Snapshot legacy chỉ đọc
+
+| Bảng | Dữ liệu lưu | Trạng thái migration |
+|---|---|---|
+| `legacy_employee_compensation_archive` | Snapshot toàn bộ lương/phụ cấp từ `employee_compensations`; có liên kết tới `employee_salary_history` nếu backfill thành công | `MIGRATED`, `ARCHIVED_ALLOWANCE`, `ARCHIVED_INVALID_AMOUNT`, `ARCHIVED_CONFLICT` |
+| `legacy_employee_request_archive` | Snapshot toàn bộ đơn phép/nghỉ việc từ `employee_requests`; có liên kết tới `leave_requests` nếu backfill thành công | `MIGRATED`, `ARCHIVED_RESIGNATION`, `ARCHIVED_CONFLICT` |
+
+Các bảng archive không có khóa ngoại để dữ liệu kiểm toán không bị ảnh hưởng bởi vòng đời của bản ghi nghiệp vụ. Không controller, service hoặc repository nào được phép ghi vào chúng.
 
 ---
 
