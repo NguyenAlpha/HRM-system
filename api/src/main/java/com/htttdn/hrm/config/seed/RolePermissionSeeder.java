@@ -1,7 +1,6 @@
 package com.htttdn.hrm.config.seed;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -26,11 +25,11 @@ import com.htttdn.hrm.repository.RoleRepository;
 /**
  * Gán bộ permission mặc định cho các system role sau khi role và permission đã được seed.
  *
- * <p>Project không cấu hình role hierarchy trong Spring Security, vì vậy role cấp cao phải
- * chứa tường minh các quyền self-service của {@code EMPLOYEE}. System role thuộc sở hữu của
- * ứng dụng nên seeder đồng bộ chính xác bộ permission chuẩn: thêm mapping còn thiếu và xóa
- * mapping ngoài định nghĩa. Mapping hợp lệ của custom role được giữ nguyên; mapping tới
- * permission {@link PermissionAssignmentPolicy#SYSTEM_ONLY} bị thu hồi.
+ * <p>Quyền self-service chỉ thuộc role {@code EMPLOYEE}; các role nghiệp vụ được gán thêm
+ * và không lặp lại bộ quyền này. System role thuộc sở hữu của ứng dụng nên seeder đồng bộ
+ * chính xác bộ permission chuẩn: thêm mapping còn thiếu và xóa mapping ngoài định nghĩa.
+ * Mapping hợp lệ của custom role được giữ nguyên; mapping tới permission
+ * {@link PermissionAssignmentPolicy#SYSTEM_ONLY} bị thu hồi.
  */
 @Component
 @Order(300)
@@ -38,70 +37,49 @@ public class RolePermissionSeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(RolePermissionSeeder.class);
 
-    private static final List<String> EMPLOYEE_PERMISSIONS = List.of(
-        "profile.self.read",
-        "profile.self.update",
-        "request.self.read",
-        "request.self.create",
-        "request.self.cancel",
-        "attendance.self.read",
-        "payroll.self.read",
-        "payroll.self.print"
-    );
-
-    private static final List<String> SUPERVISOR_PERMISSIONS = with(
-        EMPLOYEE_PERMISSIONS,
-        "employee.read",
-        "request.read",
-        "request.approve",
-        "attendance.read",
-        "attendance.overtime.approve"
-    );
-
-    private static final List<String> PEOPLE_MANAGER_PERMISSIONS = with(
-        EMPLOYEE_PERMISSIONS,
-        "employee.read",
-        "employee.manage",
-        "request.read",
-        "request.approve",
-        "request.manage",
-        "attendance.read",
-        "attendance.manage",
-        "attendance.overtime.approve",
-        "report.hr.read"
-    );
-
     private static final List<RolePermissionDefinition> DEFAULT_ASSIGNMENTS = List.of(
-        role("EMPLOYEE", EMPLOYEE_PERMISSIONS),
-        role("TEAM_LEAD", SUPERVISOR_PERMISSIONS),
-        role("WAREHOUSE_SUPERVISOR", SUPERVISOR_PERMISSIONS),
-        role("BRANCH_MANAGER", PEOPLE_MANAGER_PERMISSIONS),
-        role("HR_MANAGER", with(
-            PEOPLE_MANAGER_PERMISSIONS,
+        role("EMPLOYEE", List.of(
+            "profile.self.read",
+            "profile.self.update",
+            "request.self.read",
+            "request.self.create",
+            "request.self.cancel",
+            "attendance.self.read",
+            "payroll.self.read",
+            "payroll.self.print"
+        )),
+        role("HR_MANAGER", List.of(
+            "employee.read",
+            "employee.manage",
+            "request.read",
+            "request.approve",
+            "request.manage",
+            "attendance.read",
+            "attendance.manage",
+            "attendance.overtime.approve",
+            "report.hr.read",
             "employee.sensitive.read",
             "employee.sensitive.manage",
             "organization.read",
             "account.provision",
             "role.assignment.request"
         )),
-        role("PAYROLL_ACCOUNTANT", with(
-            EMPLOYEE_PERMISSIONS,
+        role("PAYROLL_ACCOUNTANT", List.of(
             "employee.read",
             "compensation.read",
             "payroll.calculate",
             "report.payroll.read"
         )),
-        role("PAYROLL_APPROVER", with(
-            EMPLOYEE_PERMISSIONS,
+        role("PAYROLL_APPROVER", List.of(
             "employee.read",
             "payroll.approve",
             "payroll.mark_paid",
             "payroll.lock",
             "report.payroll.read"
         )),
-        role("DIRECTOR", with(
-            EMPLOYEE_PERMISSIONS,
+        role("DIRECTOR", List.of(
             "employee.read",
+            "employee.manage",
             "employee.lifecycle.approve",
             "request.read",
             "request.final_approve",
@@ -208,13 +186,6 @@ public class RolePermissionSeeder implements ApplicationRunner {
 
     private static RolePermissionDefinition role(String roleCode, List<String> permissionCodes) {
         return new RolePermissionDefinition(roleCode, permissionCodes);
-    }
-
-    /** Tạo danh sách quyền cộng dồn, giữ thứ tự ổn định và không sửa danh sách gốc. */
-    private static List<String> with(List<String> basePermissions, String... additionalPermissions) {
-        List<String> permissions = new ArrayList<>(basePermissions);
-        permissions.addAll(List.of(additionalPermissions));
-        return List.copyOf(permissions);
     }
 
     private record RolePermissionDefinition(String roleCode, List<String> permissionCodes) {

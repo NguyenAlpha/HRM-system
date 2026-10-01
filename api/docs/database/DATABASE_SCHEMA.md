@@ -415,15 +415,14 @@ Ràng buộc persistence:
 | Vai trò | Phạm vi thường dùng | Quyền mặc định chính |
 |---|---|---|
 | `EMPLOYEE` | `SELF` | Xem/sửa hồ sơ cho phép; gửi đơn; xem chấm công và phiếu lương |
-| `TEAM_LEAD` | `ORG_UNIT` | Quyền nhân viên + xem nhân sự, duyệt đơn và tăng ca của nhóm |
-| `WAREHOUSE_SUPERVISOR` | `LOCATION` | Như trưởng nhóm nhưng chỉ trong kho được giao |
-| `BRANCH_MANAGER` | `LOCATION` | Thêm/xóa mềm nhân sự, duyệt đơn và quản lý chấm công trong chi nhánh cùng kho con |
 | `HR_MANAGER` | `COMPANY` | Hồ sơ thường và dữ liệu nhạy cảm của nhân viên; cấp account; đề xuất role; quản lý đơn từ, chấm công và báo cáo toàn công ty |
 | `PAYROLL_ACCOUNTANT` | `COMPANY` | Đọc thành phần thu nhập, tính và kiểm tra lương |
 | `PAYROLL_APPROVER` | `COMPANY` | Duyệt, xác nhận đã trả và khóa kỳ lương |
 | `DIRECTOR` | `COMPANY` | Xem nhân sự và phê duyệt cuối nghiệp vụ nhân sự, đơn từ, thay đổi cơ cấu toàn công ty |
 | `COMPANY_OWNER` | `COMPANY` | Xem và quản lý hồ sơ nhân sự; cấp và quản trị account; phê duyệt đề xuất role; quản trị quyền truy cập và cấu hình doanh nghiệp |
 | `SYSTEM_ADMIN` | `COMPANY` | Khởi tạo Company Owner đầu tiên và tạm thời quản lý RBAC; không tham gia quản trị account hoặc nghiệp vụ nội bộ công ty |
+
+Các quyền tự phục vụ chỉ thuộc role `EMPLOYEE / SELF`. Account có role nghiệp vụ như `HR_MANAGER`, `PAYROLL_ACCOUNTANT`, `PAYROLL_APPROVER` hoặc `DIRECTOR` vẫn giữ một assignment `EMPLOYEE / SELF` riêng thay vì lặp permission cá nhân trong role nghiệp vụ.
 
 Mọi nhân viên có tài khoản đều nhận `EMPLOYEE` ở scope `SELF`; vai trò nghiệp vụ được gán thêm.
 
@@ -810,7 +809,7 @@ ALTER TABLE payslips ADD CONSTRAINT chk_payslip_total
 | `TEAM_LEAD` | Trưởng nhóm | ✅ |
 | `GENERAL_STAFF` | Nhân viên | ❌ |
 
-Vị trí công việc dùng cho phân công nhân sự và không tự cấp role hoặc permission cho account.
+Vị trí công việc dùng cho phân công nhân sự và không tự cấp role hoặc permission cho account. `TEAM_LEAD`, `WAREHOUSE_SUPERVISOR` và `BRANCH_MANAGER` trong bảng này chỉ là chức danh; các system role cùng tên đã được tạm ngừng sử dụng lần lượt từ migration `V22`, `V23` và `V24`.
 
 ### 11.4. Tài khoản test
 
@@ -820,8 +819,6 @@ Vị trí công việc dùng cho phân công nhân sự và không tự cấp ro
 | `hr01` | `HR_MANAGER` | Công ty |
 | `payroll01` | `PAYROLL_ACCOUNTANT` | Công ty |
 | `payroll_approver` | `PAYROLL_APPROVER` | Công ty |
-| `branch01_manager` | `BRANCH_MANAGER` | Chi nhánh 1 và kho con |
-| `warehouse01_manager` | `WAREHOUSE_SUPERVISOR` | Kho chi nhánh 1 |
 | `employee01` | `EMPLOYEE` | Bản thân |
 
 Ít nhất một tài khoản có ngoại lệ quyền có thời hạn để demo bật/tắt quyền.

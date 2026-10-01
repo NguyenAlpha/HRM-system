@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -72,7 +71,7 @@ class UserSeederTest {
     }
 
     @Test
-    void createsEveryDefaultUserWithConfiguredRoleAndScope() {
+    void createsEveryDefaultUserWithEmployeeAndConfiguredBusinessRole() {
         Account admin = activeAdmin();
         Map<String, Role> roles = defaultRoles();
         AtomicLong employeeId = new AtomicLong(100);
@@ -121,14 +120,45 @@ class UserSeederTest {
 
         ArgumentCaptor<AccountRoleAssignment> assignmentCaptor =
             ArgumentCaptor.forClass(AccountRoleAssignment.class);
-        verify(accountRoleAssignmentRepository, times(UserSeeder.DEFAULT_USERS.size()))
+        int expectedAssignmentCount = UserSeeder.DEFAULT_USERS.size()
+            + (int) UserSeeder.DEFAULT_USERS.stream()
+                .filter(definition -> !"EMPLOYEE".equals(definition.roleCode()))
+                .count();
+        verify(accountRoleAssignmentRepository, times(expectedAssignmentCount))
             .save(assignmentCaptor.capture());
 
-        Map<String, AccountRoleAssignment> assignments = assignmentCaptor.getAllValues().stream()
-            .collect(Collectors.toMap(assignment -> assignment.getAccount().getUsername(), Function.identity()));
-        assertAssignment(assignments.get("employee01"), "EMPLOYEE", RoleScopeType.SELF, admin);
-        assertAssignment(assignments.get("hr01"), "HR_MANAGER", RoleScopeType.COMPANY, admin);
-        assertAssignment(assignments.get("payroll01"), "PAYROLL_ACCOUNTANT", RoleScopeType.COMPANY, admin);
+        Map<String, List<AccountRoleAssignment>> assignments = assignmentCaptor.getAllValues().stream()
+            .collect(Collectors.groupingBy(assignment -> assignment.getAccount().getUsername()));
+        assertAssignment(
+            findAssignment(assignments, "employee01", "EMPLOYEE"),
+            "EMPLOYEE",
+            RoleScopeType.SELF,
+            admin
+        );
+        assertAssignment(
+            findAssignment(assignments, "hr01", "EMPLOYEE"),
+            "EMPLOYEE",
+            RoleScopeType.SELF,
+            admin
+        );
+        assertAssignment(
+            findAssignment(assignments, "hr01", "HR_MANAGER"),
+            "HR_MANAGER",
+            RoleScopeType.COMPANY,
+            admin
+        );
+        assertAssignment(
+            findAssignment(assignments, "payroll01", "EMPLOYEE"),
+            "EMPLOYEE",
+            RoleScopeType.SELF,
+            admin
+        );
+        assertAssignment(
+            findAssignment(assignments, "payroll01", "PAYROLL_ACCOUNTANT"),
+            "PAYROLL_ACCOUNTANT",
+            RoleScopeType.COMPANY,
+            admin
+        );
     }
 
     @Test
@@ -230,5 +260,16 @@ class UserSeederTest {
         assertEquals(roleCode, assignment.getRole().getCode());
         assertEquals(scopeType, assignment.getScopeType());
         assertSame(grantor, assignment.getGrantedByAccount());
+    }
+
+    private AccountRoleAssignment findAssignment(
+        Map<String, List<AccountRoleAssignment>> assignments,
+        String username,
+        String roleCode
+    ) {
+        return assignments.get(username).stream()
+            .filter(assignment -> roleCode.equals(assignment.getRole().getCode()))
+            .findFirst()
+            .orElseThrow();
     }
 }

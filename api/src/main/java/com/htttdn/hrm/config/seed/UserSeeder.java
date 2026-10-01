@@ -43,6 +43,7 @@ import com.htttdn.hrm.repository.RoleRepository;
 public class UserSeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(UserSeeder.class);
+    private static final String DEFAULT_EMPLOYEE_ROLE = "EMPLOYEE";
 
     static final List<UserDefinition> DEFAULT_USERS = List.of(
         new UserDefinition(
@@ -109,7 +110,10 @@ public class UserSeeder implements ApplicationRunner {
         String normalizedFullName = definition.fullName().trim();
         String normalizedRoleCode = definition.roleCode().trim().toUpperCase(Locale.ROOT);
 
-        Role role = findRole(normalizedRoleCode);
+        Role employeeRole = findRole(DEFAULT_EMPLOYEE_ROLE);
+        Role role = DEFAULT_EMPLOYEE_ROLE.equals(normalizedRoleCode)
+            ? employeeRole
+            : findRole(normalizedRoleCode);
         Employee employee = findOrCreateEmployee(normalizedEmployeeCode, normalizedEmail, normalizedFullName);
         Account account = findOrCreateAccount(
             normalizedUsername,
@@ -117,7 +121,10 @@ public class UserSeeder implements ApplicationRunner {
             definition.password(),
             employee
         );
-        assignRoleIfMissing(account, role, definition.scopeType(), grantor);
+        assignRoleIfMissing(account, employeeRole, RoleScopeType.SELF, grantor);
+        if (!DEFAULT_EMPLOYEE_ROLE.equals(normalizedRoleCode)) {
+            assignRoleIfMissing(account, role, definition.scopeType(), grantor);
+        }
     }
 
     private void validateDefinitions() {
