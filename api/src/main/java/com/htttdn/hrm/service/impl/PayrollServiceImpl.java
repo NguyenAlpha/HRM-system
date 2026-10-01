@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,11 +24,12 @@ import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AttendanceRecord;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeAssignment;
-import com.htttdn.hrm.entity.EmployeeCompensation;
+import com.htttdn.hrm.entity.EmployeeSalaryHistory;
 import com.htttdn.hrm.entity.PayrollPeriod;
 import com.htttdn.hrm.entity.Payslip;
 import com.htttdn.hrm.entity.PayslipItem;
-import com.htttdn.hrm.entity.enums.CompensationType;
+import com.htttdn.hrm.entity.PositionAllowanceRule;
+import com.htttdn.hrm.entity.SeniorityAllowanceRule;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.entity.enums.PayslipItemType;
@@ -37,11 +39,13 @@ import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
-import com.htttdn.hrm.repository.EmployeeCompensationRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
+import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.repository.PayslipItemRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
+import com.htttdn.hrm.repository.PositionAllowanceRuleRepository;
+import com.htttdn.hrm.repository.SeniorityAllowanceRuleRepository;
 import com.htttdn.hrm.service.PayrollService;
 
 @Service
@@ -53,7 +57,9 @@ public class PayrollServiceImpl implements PayrollService {
     private final PayslipItemRepository payslipItemRepository;
     private final EmployeeRepository employeeRepository;
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
-    private final EmployeeCompensationRepository employeeCompensationRepository;
+    private final EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository;
+    private final PositionAllowanceRuleRepository positionAllowanceRuleRepository;
+    private final SeniorityAllowanceRuleRepository seniorityAllowanceRuleRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final AccountRepository accountRepository;
 
@@ -63,7 +69,9 @@ public class PayrollServiceImpl implements PayrollService {
         PayslipItemRepository payslipItemRepository,
         EmployeeRepository employeeRepository,
         EmployeeAssignmentRepository employeeAssignmentRepository,
-        EmployeeCompensationRepository employeeCompensationRepository,
+        EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository,
+        PositionAllowanceRuleRepository positionAllowanceRuleRepository,
+        SeniorityAllowanceRuleRepository seniorityAllowanceRuleRepository,
         AttendanceRecordRepository attendanceRecordRepository,
         AccountRepository accountRepository
     ) {
@@ -72,7 +80,9 @@ public class PayrollServiceImpl implements PayrollService {
         this.payslipItemRepository = payslipItemRepository;
         this.employeeRepository = employeeRepository;
         this.employeeAssignmentRepository = employeeAssignmentRepository;
-        this.employeeCompensationRepository = employeeCompensationRepository;
+        this.employeeSalaryHistoryRepository = employeeSalaryHistoryRepository;
+        this.positionAllowanceRuleRepository = positionAllowanceRuleRepository;
+        this.seniorityAllowanceRuleRepository = seniorityAllowanceRuleRepository;
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.accountRepository = accountRepository;
     }
@@ -127,11 +137,9 @@ public class PayrollServiceImpl implements PayrollService {
     }
 
     private void calculateForEmployee(PayrollPeriod period, Employee employee) {
-        Optional<EmployeeCompensation> basicSalaryOpt = activeCompensations(employee.getId(), period.getPeriodStart())
-            .stream()
-            .filter(c -> c.getComponentType() == CompensationType.BASIC_SALARY)
-            .findFirst();
-        if (basicSalaryOpt.isEmpty()) {
+        Optional<EmployeeSalaryHistory> salaryHistory = employeeSalaryHistoryRepository
+            .findEffective(employee.getId(), period.getPeriodEnd());
+        if (salaryHistory.isEmpty()) {
             return;
         }
 
@@ -150,15 +158,18 @@ public class PayrollServiceImpl implements PayrollService {
         }
 
         long scheduledWorkMinutes = attendanceRecords.stream()
-            .mapToLong(r -> r.getShift().getStandardWorkMinutes())
+            .mapToLong(AttendanceRecord::getScheduledMinutes)
             .sum();
         if (scheduledWorkMinutes <= 0) {
             return;
         }
         long payableWorkMinutes = attendanceRecords.stream().mapToLong(AttendanceRecord::getPayableMinutes).sum();
-        long approvedOvertimeMinutes = attendanceRecords.stream().mapToLong(AttendanceRecord::getOvertimeMinutes).sum();
+        long approvedOvertimeMinutes = attendanceRecords.stream()
+            .filter(this::hasApprovedOvertime)
+            .mapToLong(AttendanceRecord::getOvertimeMinutes)
+            .sum();
 
-        BigDecimal basicSalary = basicSalaryOpt.get().getMonthlyAmount();
+        BigDecimal basicSalary = salaryHistory.get().getBaseSalary();
         BigDecimal hourlyRate = basicSalary
             .divide(BigDecimal.valueOf(scheduledWorkMinutes), 6, RoundingMode.HALF_UP)
             .multiply(BigDecimal.valueOf(60));
@@ -181,7 +192,7 @@ public class PayrollServiceImpl implements PayrollService {
 
         BigDecimal overtimePay = BigDecimal.ZERO;
         for (AttendanceRecord record : attendanceRecords) {
-            if (record.getOvertimeMinutes() == null || record.getOvertimeMinutes() <= 0) {
+            if (!hasApprovedOvertime(record)) {
                 continue;
             }
             BigDecimal hours = BigDecimal.valueOf(record.getOvertimeMinutes()).divide(BigDecimal.valueOf(60), 4, RoundingMode.HALF_UP);
@@ -199,24 +210,45 @@ public class PayrollServiceImpl implements PayrollService {
                 .build());
         }
 
-        BigDecimal allowancePay = BigDecimal.ZERO;
-        for (EmployeeCompensation allowance : activeCompensations(employee.getId(), period.getPeriodStart())) {
-            if (allowance.getComponentType() != CompensationType.ALLOWANCE) {
-                continue;
-            }
-            allowancePay = allowancePay.add(allowance.getMonthlyAmount());
+        BigDecimal positionAllowancePay = positionAllowanceRuleRepository
+            .findEffective(assignment.getPosition().getId(), period.getPeriodEnd())
+            .map(PositionAllowanceRule::getMonthlyAmount)
+            .orElse(BigDecimal.ZERO);
+        if (positionAllowancePay.signum() > 0) {
             items.add(PayslipItem.builder()
                 .componentType(PayslipItemType.POSITION_ALLOWANCE)
-                .componentCode(allowance.getComponentCode())
-                .description(allowance.getComponentName())
+                .componentCode("POSITION_ALLOWANCE_" + assignment.getPosition().getCode())
+                .description("Phụ cấp chức vụ " + assignment.getPosition().getTitle())
                 .quantity(BigDecimal.ONE)
-                .unitRate(allowance.getMonthlyAmount())
+                .unitRate(positionAllowancePay)
                 .multiplier(BigDecimal.ONE)
-                .amount(allowance.getMonthlyAmount())
+                .amount(positionAllowancePay)
                 .createdAt(Instant.now())
                 .build());
         }
 
+        int seniorityYears = seniorityYears(employee, period.getPeriodEnd());
+        BigDecimal seniorityPercentage = seniorityAllowanceRuleRepository
+            .findEffective(seniorityYears, period.getPeriodEnd())
+            .map(SeniorityAllowanceRule::getPercentage)
+            .orElse(BigDecimal.ZERO);
+        BigDecimal seniorityAllowancePay = basicSalary
+            .multiply(seniorityPercentage)
+            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        if (seniorityAllowancePay.signum() > 0) {
+            items.add(PayslipItem.builder()
+                .componentType(PayslipItemType.SENIORITY_ALLOWANCE)
+                .componentCode("SENIORITY_ALLOWANCE_" + seniorityYears + "Y")
+                .description("Phụ cấp thâm niên " + seniorityYears + " năm")
+                .quantity(BigDecimal.ONE)
+                .unitRate(basicSalary)
+                .multiplier(seniorityPercentage.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP))
+                .amount(seniorityAllowancePay)
+                .createdAt(Instant.now())
+                .build());
+        }
+
+        BigDecimal allowancePay = positionAllowancePay.add(seniorityAllowancePay);
         BigDecimal grossPay = basicSalaryPay.add(allowancePay).add(overtimePay);
 
         payslipRepository.findByPayrollPeriodIdAndEmployeeId(period.getId(), employee.getId())
@@ -238,8 +270,8 @@ public class PayrollServiceImpl implements PayrollService {
             .payableWorkMinutes((int) payableWorkMinutes)
             .approvedOvertimeMinutes((int) approvedOvertimeMinutes)
             .baseSalaryPay(basicSalaryPay)
-            .positionAllowancePay(allowancePay)
-            .seniorityAllowancePay(BigDecimal.ZERO)
+            .positionAllowancePay(positionAllowancePay)
+            .seniorityAllowancePay(seniorityAllowancePay)
             .allowancePay(allowancePay)
             .overtimePay(overtimePay)
             .grossPay(grossPay)
@@ -255,11 +287,18 @@ public class PayrollServiceImpl implements PayrollService {
         payslipItemRepository.saveAll(items);
     }
 
-    private List<EmployeeCompensation> activeCompensations(Long employeeId, LocalDate asOfDate) {
-        return employeeCompensationRepository.findByEmployeeId(employeeId).stream()
-            .filter(c -> !c.getEffectiveFrom().isAfter(asOfDate))
-            .filter(c -> c.getEffectiveTo() == null || !c.getEffectiveTo().isBefore(asOfDate))
-            .toList();
+    private boolean hasApprovedOvertime(AttendanceRecord record) {
+        return record.getOvertimeMinutes() != null
+            && record.getOvertimeMinutes() > 0
+            && record.getOvertimeApprovedByAccount() != null
+            && record.getOvertimeApprovedAt() != null;
+    }
+
+    private int seniorityYears(Employee employee, LocalDate asOfDate) {
+        return (int) Math.max(
+            0,
+            ChronoUnit.YEARS.between(employee.getSeniorityStartDate(), asOfDate)
+        );
     }
 
     @Override
