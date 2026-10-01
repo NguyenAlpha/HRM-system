@@ -4,6 +4,8 @@ ALTER TABLE account_permission_overrides
     ADD COLUMN revocation_reason TEXT;
 
 ALTER TABLE account_permission_overrides
+    ADD CONSTRAINT chk_permission_override_period
+        CHECK (effective_to IS NULL OR effective_to >= effective_from),
     ADD CONSTRAINT chk_permission_override_reason
         CHECK (btrim(reason) <> ''),
     ADD CONSTRAINT chk_permission_override_revocation_audit
