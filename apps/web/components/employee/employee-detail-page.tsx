@@ -149,9 +149,14 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
     if (!session || !hasValidEmployeeId) return
 
     let active = true
+    const canReadAssignments = session.account.permissions.some(
+      (permission) => permission.code === "employee.assignment.read",
+    )
     Promise.all([
       employeeRequest<EmployeeDetail>("hrm", `/${numericEmployeeId}`),
-      employeeRequest<EmployeeAssignment[]>("hrm", `/${numericEmployeeId}/assignments`),
+      canReadAssignments
+        ? employeeRequest<EmployeeAssignment[]>("hrm", `/${numericEmployeeId}/assignments`)
+        : Promise.resolve([]),
     ])
       .then(([employeeDetail, assignmentHistory]) => {
         if (!active) return
@@ -188,6 +193,12 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
   }
 
   const currentAssignment = detail?.currentAssignment ?? null
+  const canReadAssignments = session.account.permissions.some(
+    (permission) => permission.code === "employee.assignment.read",
+  )
+  const canReadEmployeeList = session.account.permissions.some(
+    (permission) => permission.code === "employee.list.read",
+  )
   const displayedError = hasValidEmployeeId ? error : "Mã nhân sự trên đường dẫn không hợp lệ."
   const displayedLoading = hasValidEmployeeId && loading
 
@@ -224,8 +235,12 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
             >
               <RefreshCw className={displayedLoading ? "animate-spin" : ""} /> Tải lại
             </Button>
-            <Button variant="outline" nativeButton={false} render={<Link href="/employees" />}>
-              <ArrowLeft /> Về danh sách
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={<Link href={canReadEmployeeList ? "/employees" : "/dashboard"} />}
+            >
+              <ArrowLeft /> {canReadEmployeeList ? "Về danh sách" : "Về tổng quan"}
             </Button>
           </div>
         </header>
@@ -338,7 +353,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
                 </Card>
               </div>
 
-              <Card className="lg:col-span-3">
+              {canReadAssignments && <Card className="lg:col-span-3">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2"><Clock3 /> Lịch sử phân công</CardTitle>
                   <CardDescription>
@@ -419,7 +434,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
                     </Table>
                   </div>
                 </CardContent>
-              </Card>
+              </Card>}
             </div>
           )}
         </div>

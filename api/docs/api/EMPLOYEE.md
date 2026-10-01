@@ -8,18 +8,30 @@ Tạo và tra cứu hồ sơ nhân sự trong phạm vi được phân công. AP
 
 | Endpoint | Yêu cầu Bearer token | Permission yêu cầu | Mô tả |
 |:---------|:--------------------:|:-------------------:|:------|
-| `POST /api/employees` | ✅ | `employee.manage` | Tạo hồ sơ nhân sự và phân công chính ban đầu, chưa tạo account đăng nhập |
-| `GET /api/employees` | ✅ | `employee.read` | Lấy danh sách nhân sự có phân trang trong scope được giao |
+| `POST /api/employees` | ✅ | `employee.create` | Tạo hồ sơ nhân sự và phân công chính ban đầu, chưa tạo account đăng nhập |
+| `GET /api/employees` | ✅ | `employee.list.read` | Lấy danh sách nhân sự có phân trang trong scope được giao |
 | `GET /api/employees/{employeeId}` | ✅ | `employee.read` | Lấy chi tiết hồ sơ, phân công hiện tại và thông tin account nếu đã có |
-| `PUT /api/employees/{employeeId}` | ✅ | `employee.manage` | Cập nhật các thông tin hồ sơ được phép thay đổi trong entity employee |
-| `POST /api/employees/{employeeId}/confirm` | ✅ | `employee.manage` | Xác nhận nhân sự thử việc trở thành nhân sự chính thức |
-| `GET /api/employees/{employeeId}/assignments` | ✅ | `employee.read` | Lấy toàn bộ lịch sử phân công của nhân sự |
-| `GET /api/employees/{employeeId}/assignments/current` | ✅ | `employee.read` | Lấy phân công đang hiệu lực tại ngày gọi API |
-| `POST /api/employees/{employeeId}/assignments` | ✅ | `employee.manage` | Điều chuyển, bổ nhiệm hoặc thay đổi phân công của nhân sự |
+| `PUT /api/employees/{employeeId}` | ✅ | `employee.update` | Cập nhật các thông tin hồ sơ được phép thay đổi trong entity employee |
+| `POST /api/employees/{employeeId}/confirm` | ✅ | `employee.probation.confirm` | Xác nhận nhân sự thử việc trở thành nhân sự chính thức |
+| `GET /api/employees/{employeeId}/assignments` | ✅ | `employee.assignment.read` | Lấy toàn bộ lịch sử phân công của nhân sự |
+| `GET /api/employees/{employeeId}/assignments/current` | ✅ | `employee.assignment.read` | Lấy phân công đang hiệu lực tại ngày gọi API |
+| `POST /api/employees/{employeeId}/assignments` | ✅ | `employee.assignment.manage` | Điều chuyển, bổ nhiệm hoặc thay đổi phân công của nhân sự |
 
-`HR_MANAGER` và một số vai trò nghiệp vụ được seed `employee.read`. Kết quả còn bị giới hạn theo scope của role assignment: `SELF`, `ORG_UNIT`, `LOCATION` hoặc `COMPANY`.
+Permission chỉ quyết định account được thực hiện hành động nào; scope của role assignment (`SELF`, `ORG_UNIT`, `LOCATION`, `COMPANY`) tiếp tục quyết định hành động đó được áp dụng lên những employee nào. Ví dụ, account có `employee.update` ở scope `ORG_UNIT` chỉ sửa được hồ sơ thuộc đơn vị được giao.
 
-`COMPANY_OWNER` được seed cả `employee.read` và `employee.manage` với scope `COMPANY`, nên có thể xem danh sách, xem chi tiết, tạo và cập nhật hồ sơ nhân sự mà không phụ thuộc vào role `DIRECTOR`.
+`employee.read` chỉ còn dùng để xem chi tiết một employee. Quyền tổng quát `employee.manage` đã ngừng sử dụng và được thay bằng các quyền nguyên tử. Các nghiệp vụ nội bộ chưa có endpoint trực tiếp còn dùng `employee.lifecycle.manage` cho thực thi thay đổi vòng đời và `employee.delete` cho xóa mềm hồ sơ.
+
+Phân quyền mặc định của các system role:
+
+| Role | Permission Employee mặc định |
+|:-----|:-----------------------------|
+| `HR_MANAGER` | Toàn bộ quyền đọc, tạo, sửa, xác nhận thử việc, phân công, thực thi vòng đời và xóa mềm; thêm quyền dữ liệu nhạy cảm |
+| `PAYROLL_ACCOUNTANT`, `PAYROLL_APPROVER` | `employee.list.read`, `employee.read`, `employee.assignment.read` |
+| `DIRECTOR` | Toàn bộ quyền Employee thông thường và `employee.lifecycle.approve` |
+| `COMPANY_OWNER` | Toàn bộ quyền Employee thông thường; không mặc định quyền dữ liệu nhạy cảm hoặc phê duyệt vòng đời |
+| `SYSTEM_ADMIN` | `employee.list.read`, `employee.read`, `employee.assignment.read` |
+
+`employee.lifecycle.manage` là quyền thực thi thay đổi đã hợp lệ (ví dụ hoàn tất nghỉ việc), còn `employee.lifecycle.approve` là quyền phê duyệt cuối. Hai quyền này không thay thế nhau.
 
 ---
 
@@ -153,7 +165,7 @@ Client lấy `organizationUnitId`, `workLocationId` và `positionId` từ [Organ
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Body hoặc field không hợp lệ; ngày hiệu lực phân công trước ngày tuyển dụng |
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
-| 403 | `FORBIDDEN` | Không có `employee.manage`, hoặc đơn vị, địa điểm hay manager nằm ngoài scope quản lý |
+| 403 | `FORBIDDEN` | Không có `employee.create`, hoặc đơn vị, địa điểm hay manager nằm ngoài scope quản lý |
 | 404 | `ORGANIZATION_UNIT_NOT_FOUND` | Không tìm thấy đơn vị tổ chức đang hoạt động |
 | 404 | `LOCATION_NOT_FOUND` | Không tìm thấy địa điểm làm việc đang hoạt động |
 | 404 | `EMPLOYEE_NOT_FOUND` | Không tìm thấy employee được chọn làm manager |
@@ -257,7 +269,7 @@ GET /api/employees?page=0&size=20&sort=id,asc
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Tham số phân trang hoặc sắp xếp không hợp lệ |
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
-| 403 | `FORBIDDEN` | Account không có permission `employee.read` hoặc không có scope hợp lệ |
+| 403 | `FORBIDDEN` | Account không có permission `employee.list.read` hoặc không có scope hợp lệ |
 
 ---
 
@@ -335,7 +347,7 @@ Endpoint không trả CCCD, email cá nhân, địa chỉ, mã số thuế hoặ
 
 ## PUT `/api/employees/{employeeId}`
 
-Cập nhật các thông tin hồ sơ thông thường được lưu trực tiếp trong entity `Employee`. Employee phải chưa bị xóa mềm và nằm trong scope `employee.manage` của account đang đăng nhập.
+Cập nhật các thông tin hồ sơ thông thường được lưu trực tiếp trong entity `Employee`. Employee phải chưa bị xóa mềm và nằm trong scope `employee.update` của account đang đăng nhập.
 
 ### Request
 
@@ -386,7 +398,7 @@ Trả `EmployeeDetailResponse` giống [API lấy chi tiết employee](#get-apie
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | `employeeId`, JSON hoặc field không hợp lệ |
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
-| 403 | `FORBIDDEN` | Không có permission `employee.manage` hoặc employee nằm ngoài scope được giao |
+| 403 | `FORBIDDEN` | Không có permission `employee.update` hoặc employee nằm ngoài scope được giao |
 | 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
 | 409 | `CONFLICT` | `workEmail` trùng employee khác hoặc cố xóa email khi employee đã có account |
 | 409 | `EMAIL_TAKEN` | `workEmail` đã được account khác sử dụng |
@@ -405,7 +417,7 @@ Response `200 OK` trả `EmployeeDetailResponse` sau khi cập nhật.
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | `employeeId` không đúng kiểu số |
 | 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
-| 403 | `FORBIDDEN` | Thiếu `employee.manage` hoặc employee nằm ngoài scope được giao |
+| 403 | `FORBIDDEN` | Thiếu `employee.probation.confirm` hoặc employee nằm ngoài scope được giao |
 | 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
 | 409 | `EMPLOYMENT_STATUS_TRANSITION_NOT_ALLOWED` | Employee không còn ở trạng thái `PROBATION` |
 
@@ -415,7 +427,7 @@ Response `200 OK` trả `EmployeeDetailResponse` sau khi cập nhật.
 
 Lấy toàn bộ lịch sử phân công của employee, gồm phân công đã kết thúc, đang hiệu lực và đã lên lịch trong tương lai. Kết quả không phân trang và được sắp xếp theo `effectiveFrom` giảm dần.
 
-Endpoint chỉ trả employee nằm trong scope `employee.read` của người gọi. Mỗi phần tử có cấu trúc `EmployeeAssignmentResponse`:
+Endpoint chỉ trả employee nằm trong scope `employee.assignment.read` của người gọi. Mỗi phần tử có cấu trúc `EmployeeAssignmentResponse`:
 
 ```json
 {
@@ -518,7 +530,7 @@ API này chỉ cập nhật lịch sử công việc trong `employee_assignments
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Ngày hiệu lực không hợp lệ, manager là chính employee hoặc body sai |
 | 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
-| 403 | `FORBIDDEN` | Thiếu permission, employee nguồn hoặc địa điểm đích nằm ngoài scope quản lý |
+| 403 | `FORBIDDEN` | Thiếu `employee.assignment.manage`, employee nguồn hoặc địa điểm đích nằm ngoài scope quản lý |
 | 404 | `EMPLOYEE_NOT_FOUND` | Employee hoặc manager không tồn tại |
 | 404 | `ORGANIZATION_UNIT_NOT_FOUND` | Đơn vị không tồn tại hoặc không active |
 | 404 | `LOCATION_NOT_FOUND` | Địa điểm không tồn tại hoặc không active |

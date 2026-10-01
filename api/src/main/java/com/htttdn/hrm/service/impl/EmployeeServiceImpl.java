@@ -51,7 +51,11 @@ import com.htttdn.hrm.service.RefreshTokenService;
 public class EmployeeServiceImpl implements EmployeeService {
 
     private static final String EMPLOYEE_READ = "employee.read";
-    private static final String EMPLOYEE_MANAGE = "employee.manage";
+    private static final String EMPLOYEE_LIST_READ = "employee.list.read";
+    private static final String EMPLOYEE_UPDATE = "employee.update";
+    private static final String EMPLOYEE_PROBATION_CONFIRM = "employee.probation.confirm";
+    private static final String EMPLOYEE_LIFECYCLE_MANAGE = "employee.lifecycle.manage";
+    private static final String EMPLOYEE_DELETE = "employee.delete";
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
@@ -92,7 +96,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    @PreAuthorize("hasAuthority('employee.manage')")
+    @PreAuthorize("hasAuthority('employee.create')")
     public EmployeeCreationResponse create(CreateEmployeeRequest request) {
         CreateEmployeeProfileRequest profile = request.employee();
         AssignEmployeeRequest assignmentRequest = request.initialAssignment();
@@ -141,10 +145,10 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAuthority('employee.read')")
+    @PreAuthorize("hasAuthority('employee.list.read')")
     public Page<EmployeeSummaryResponse> list(Pageable pageable) {
         Page<Employee> employees = employeeRepository.findAll(
-            employeeAccessScopeService.accessibleEmployees(EMPLOYEE_READ),
+            employeeAccessScopeService.accessibleEmployees(EMPLOYEE_LIST_READ),
             pageable
         );
         Map<Long, Account> accountsByEmployeeId = findAccountsByEmployeeId(employees.getContent());
@@ -159,10 +163,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    @PreAuthorize("hasAuthority('employee.manage')")
+    @PreAuthorize("hasAuthority('employee.update')")
     public EmployeeDetailResponse update(Long id, UpdateEmployeeRequest request) {
         Employee employee = findEmployeeOrThrow(id);
-        employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_MANAGE);
+        employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_UPDATE);
 
         Instant now = Instant.now();
         updateWorkEmail(employee, request.workEmail(), now);
@@ -180,10 +184,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    @PreAuthorize("hasAuthority('employee.manage')")
+    @PreAuthorize("hasAuthority('employee.probation.confirm')")
     public EmployeeDetailResponse confirmEmployment(Long id) {
         Employee employee = findEmployeeOrThrow(id);
-        employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_MANAGE);
+        employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_PROBATION_CONFIRM);
         if (employee.getEmploymentStatus() != EmploymentStatus.PROBATION) {
             throw new ConflictException(
                 ErrorCode.EMPLOYMENT_STATUS_TRANSITION_NOT_ALLOWED,
@@ -233,10 +237,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    @PreAuthorize("hasAuthority('employee.manage')")
+    @PreAuthorize("hasAuthority('employee.lifecycle.manage')")
     public void completeResignation(Long employeeId, LocalDate terminationDate, String terminationReason) {
         Employee employee = findEmployeeOrThrow(employeeId);
-        employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_MANAGE);
+        employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_LIFECYCLE_MANAGE);
         if (terminationDate.isBefore(employee.getHireDate())) {
             throw new BusinessException(
                 ErrorCode.VALIDATION_ERROR, "terminationDate must not be before hireDate", "terminationDate"
@@ -261,10 +265,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    @PreAuthorize("hasAuthority('employee.manage')")
+    @PreAuthorize("hasAuthority('employee.delete')")
     public void softDelete(Long id, SoftDeleteEmployeeRequest request) {
         Employee employee = findEmployeeOrThrow(id);
-        employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_MANAGE);
+        employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_DELETE);
         ensureEmployeeHasNoBusinessHistory(id);
 
         employee.setDeletedAt(Instant.now());

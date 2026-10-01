@@ -54,8 +54,8 @@ class AccountAuthorizationServiceTest {
             .build();
         Permission read = Permission.builder().id(21L).code("employee.read")
             .name("View employees").module(com.htttdn.hrm.entity.enums.PermissionModule.EMPLOYEE).build();
-        Permission manage = Permission.builder().id(22L).code("employee.manage")
-            .name("Manage employees").module(com.htttdn.hrm.entity.enums.PermissionModule.EMPLOYEE).build();
+        Permission manage = Permission.builder().id(22L).code("employee.update")
+            .name("Update employees").module(com.htttdn.hrm.entity.enums.PermissionModule.EMPLOYEE).build();
 
         when(assignmentRepository.findActiveWithRoleByAccountId(eq(7L), any()))
             .thenReturn(List.of(employeeAssignment, managerAssignment));
@@ -72,9 +72,9 @@ class AccountAuthorizationServiceTest {
         var snapshot = service().getSnapshot(7L);
 
         assertEquals(List.of("BRANCH_MANAGER", "EMPLOYEE"), snapshot.roles());
-        assertEquals(List.of("employee.manage", "employee.read"), snapshot.permissions());
+        assertEquals(List.of("employee.read", "employee.update"), snapshot.permissions());
         assertEquals("Branch Manager", snapshot.roleDetails().getFirst().name());
-        assertEquals("Manage employees", snapshot.permissionDetails().getFirst().name());
+        assertEquals("View employees", snapshot.permissionDetails().getFirst().name());
     }
 
     @Test

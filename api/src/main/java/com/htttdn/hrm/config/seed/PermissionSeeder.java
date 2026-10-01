@@ -33,8 +33,15 @@ public class PermissionSeeder implements ApplicationRunner {
     private static final List<PermissionDefinition> DEFAULT_PERMISSIONS = List.of(
         permission("profile.self.read", "Xem hồ sơ cá nhân", PermissionModule.EMPLOYEE, "Xem hồ sơ nhân viên của chính mình"),
         permission("profile.self.update", "Cập nhật hồ sơ cá nhân", PermissionModule.EMPLOYEE, "Cập nhật các trường được phép trong hồ sơ của chính mình"),
-        permission("employee.read", "Xem hồ sơ nhân viên", PermissionModule.EMPLOYEE, "Xem hồ sơ nhân viên trong phạm vi được phân công"),
-        permission("employee.manage", "Quản lý hồ sơ nhân viên", PermissionModule.EMPLOYEE, "Tạo, cập nhật và xóa mềm hồ sơ nhân viên"),
+        permission("employee.list.read", "Xem danh sách nhân viên", PermissionModule.EMPLOYEE, "Xem danh sách nhân viên trong phạm vi được phân công"),
+        permission("employee.read", "Xem chi tiết nhân viên", PermissionModule.EMPLOYEE, "Xem chi tiết hồ sơ nhân viên trong phạm vi được phân công"),
+        permission("employee.create", "Tạo hồ sơ nhân viên", PermissionModule.EMPLOYEE, "Tạo hồ sơ nhân viên và phân công ban đầu"),
+        permission("employee.update", "Cập nhật hồ sơ nhân viên", PermissionModule.EMPLOYEE, "Cập nhật thông tin hồ sơ nhân viên trong phạm vi được phân công"),
+        permission("employee.probation.confirm", "Xác nhận hoàn thành thử việc", PermissionModule.EMPLOYEE, "Xác nhận nhân viên thử việc trở thành nhân viên chính thức"),
+        permission("employee.assignment.read", "Xem phân công nhân viên", PermissionModule.EMPLOYEE, "Xem phân công hiện tại và lịch sử phân công của nhân viên"),
+        permission("employee.assignment.manage", "Quản lý phân công nhân viên", PermissionModule.EMPLOYEE, "Điều chuyển, bổ nhiệm và thay đổi phân công của nhân viên"),
+        permission("employee.lifecycle.manage", "Quản lý vòng đời nhân viên", PermissionModule.EMPLOYEE, "Thực hiện nghiệp vụ vòng đời nhân viên đã được phê duyệt"),
+        permission("employee.delete", "Xóa hồ sơ nhân viên", PermissionModule.EMPLOYEE, "Xóa mềm hồ sơ nhân viên chưa phát sinh dữ liệu nghiệp vụ"),
         permission("employee.sensitive.read", "Xem dữ liệu nhân sự nhạy cảm", PermissionModule.EMPLOYEE, "Xem dữ liệu nhân sự nhạy cảm trong phạm vi được phân công"),
         permission("employee.sensitive.manage", "Quản lý dữ liệu nhân sự nhạy cảm", PermissionModule.EMPLOYEE, "Cập nhật dữ liệu nhân sự nhạy cảm trong phạm vi được phân công"),
         permission(
