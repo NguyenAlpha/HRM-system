@@ -20,6 +20,18 @@ public interface EmployeeSalaryHistoryRepository extends JpaRepository<EmployeeS
     @Query("""
         SELECT salary
         FROM EmployeeSalaryHistory salary
+        WHERE salary.employee.id IN :employeeIds
+          AND salary.effectiveFrom <= :date
+          AND (salary.effectiveTo IS NULL OR salary.effectiveTo >= :date)
+        """)
+    List<EmployeeSalaryHistory> findEffectiveForEmployees(
+        @Param("employeeIds") List<Long> employeeIds,
+        @Param("date") LocalDate date
+    );
+
+    @Query("""
+        SELECT salary
+        FROM EmployeeSalaryHistory salary
         WHERE salary.employee.id = :employeeId
           AND salary.effectiveFrom <= :date
           AND (salary.effectiveTo IS NULL OR salary.effectiveTo >= :date)

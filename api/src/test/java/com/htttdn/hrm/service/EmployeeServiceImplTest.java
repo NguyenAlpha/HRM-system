@@ -19,9 +19,9 @@ import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
-import com.htttdn.hrm.repository.EmployeeCompensationRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
-import com.htttdn.hrm.repository.EmployeeRequestRepository;
+import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
+import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 import com.htttdn.hrm.service.impl.EmployeeServiceImpl;
@@ -37,8 +37,8 @@ class EmployeeServiceImplTest {
 
     @Mock private EmployeeRepository employeeRepository;
     @Mock private EmployeeAssignmentRepository employeeAssignmentRepository;
-    @Mock private EmployeeCompensationRepository employeeCompensationRepository;
-    @Mock private EmployeeRequestRepository employeeRequestRepository;
+    @Mock private EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository;
+    @Mock private LeaveRequestRepository leaveRequestRepository;
     @Mock private AttendanceRecordRepository attendanceRecordRepository;
     @Mock private PayslipRepository payslipRepository;
     @Mock private AccountRepository accountRepository;
@@ -130,8 +130,8 @@ class EmployeeServiceImplTest {
         return new EmployeeServiceImpl(
             employeeRepository,
             employeeAssignmentRepository,
-            employeeCompensationRepository,
-            employeeRequestRepository,
+            employeeSalaryHistoryRepository,
+            leaveRequestRepository,
             attendanceRecordRepository,
             payslipRepository,
             accountRepository,

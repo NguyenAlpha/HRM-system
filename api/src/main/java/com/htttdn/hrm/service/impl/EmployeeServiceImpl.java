@@ -36,9 +36,9 @@ import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
-import com.htttdn.hrm.repository.EmployeeCompensationRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
-import com.htttdn.hrm.repository.EmployeeRequestRepository;
+import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
+import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 import com.htttdn.hrm.service.EmployeeAccessScopeService;
@@ -55,8 +55,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
-    private final EmployeeCompensationRepository employeeCompensationRepository;
-    private final EmployeeRequestRepository employeeRequestRepository;
+    private final EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository;
+    private final LeaveRequestRepository leaveRequestRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final PayslipRepository payslipRepository;
     private final AccountRepository accountRepository;
@@ -68,8 +68,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     public EmployeeServiceImpl(
         EmployeeRepository employeeRepository,
         EmployeeAssignmentRepository employeeAssignmentRepository,
-        EmployeeCompensationRepository employeeCompensationRepository,
-        EmployeeRequestRepository employeeRequestRepository,
+        EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository,
+        LeaveRequestRepository leaveRequestRepository,
         AttendanceRecordRepository attendanceRecordRepository,
         PayslipRepository payslipRepository,
         AccountRepository accountRepository,
@@ -80,8 +80,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     ) {
         this.employeeRepository = employeeRepository;
         this.employeeAssignmentRepository = employeeAssignmentRepository;
-        this.employeeCompensationRepository = employeeCompensationRepository;
-        this.employeeRequestRepository = employeeRequestRepository;
+        this.employeeSalaryHistoryRepository = employeeSalaryHistoryRepository;
+        this.leaveRequestRepository = leaveRequestRepository;
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.payslipRepository = payslipRepository;
         this.accountRepository = accountRepository;
@@ -299,8 +299,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     private void ensureEmployeeHasNoBusinessHistory(Long employeeId) {
         boolean hasHistory = accountRepository.findByEmployeeId(employeeId).isPresent()
             || employeeAssignmentRepository.existsByEmployeeId(employeeId)
-            || employeeCompensationRepository.existsByEmployeeId(employeeId)
-            || employeeRequestRepository.existsByEmployeeId(employeeId)
+            || employeeSalaryHistoryRepository.existsByEmployeeId(employeeId)
+            || leaveRequestRepository.existsByEmployeeId(employeeId)
             || attendanceRecordRepository.existsByEmployeeId(employeeId)
             || payslipRepository.existsByEmployeeId(employeeId);
         if (hasHistory) {
