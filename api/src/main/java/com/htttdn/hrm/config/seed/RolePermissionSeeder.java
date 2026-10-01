@@ -49,8 +49,15 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "payroll.self.print"
         )),
         role("HR_MANAGER", List.of(
+            "employee.list.read",
             "employee.read",
-            "employee.manage",
+            "employee.create",
+            "employee.update",
+            "employee.probation.confirm",
+            "employee.assignment.read",
+            "employee.assignment.manage",
+            "employee.lifecycle.manage",
+            "employee.delete",
             "request.read",
             "request.approve",
             "request.manage",
@@ -65,21 +72,32 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "role.assignment.request"
         )),
         role("PAYROLL_ACCOUNTANT", List.of(
+            "employee.list.read",
             "employee.read",
+            "employee.assignment.read",
             "compensation.read",
             "payroll.calculate",
             "report.payroll.read"
         )),
         role("PAYROLL_APPROVER", List.of(
+            "employee.list.read",
             "employee.read",
+            "employee.assignment.read",
             "payroll.approve",
             "payroll.mark_paid",
             "payroll.lock",
             "report.payroll.read"
         )),
         role("DIRECTOR", List.of(
+            "employee.list.read",
             "employee.read",
-            "employee.manage",
+            "employee.create",
+            "employee.update",
+            "employee.probation.confirm",
+            "employee.assignment.read",
+            "employee.assignment.manage",
+            "employee.lifecycle.manage",
+            "employee.delete",
             "employee.lifecycle.approve",
             "request.read",
             "request.final_approve",
@@ -87,8 +105,15 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "organization.change.approve"
         )),
         role("COMPANY_OWNER", List.of(
+            "employee.list.read",
             "employee.read",
-            "employee.manage",
+            "employee.create",
+            "employee.update",
+            "employee.probation.confirm",
+            "employee.assignment.read",
+            "employee.assignment.manage",
+            "employee.lifecycle.manage",
+            "employee.delete",
             "organization.read",
             "organization.manage",
             "account.read",
@@ -105,7 +130,9 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "rbac.manage",
             "organization.read",
             "organization.manage",
+            "employee.list.read",
             "employee.read",
+            "employee.assignment.read",
             "account.read",
             "account.provision",
             "account.role.assign"

@@ -36,9 +36,10 @@ function Field({ label, value }: { label: string; value: string | null | undefin
   )
 }
 
-export function EmployeeDetailDialog({ employeeId, canManage, onClose, onEdit, onProvision, onSessionExpired }: {
+export function EmployeeDetailDialog({ employeeId, canUpdate, canProvisionAccount, onClose, onEdit, onProvision, onSessionExpired }: {
   employeeId: number
-  canManage: boolean
+  canUpdate: boolean
+  canProvisionAccount: boolean
   onClose: () => void
   onEdit: (detail: EmployeeDetail) => void
   onProvision: (detail: EmployeeDetail) => void
@@ -165,12 +166,14 @@ export function EmployeeDetailDialog({ employeeId, canManage, onClose, onEdit, o
 
         <DialogFooter>
           <DialogClose render={<Button type="button" variant="outline" />}>Đóng</DialogClose>
-          {canManage && detail && (
+          {detail && (
             <>
-              <Button type="button" variant="outline" onClick={() => onEdit(detail)}>
-                <Pencil /> Sửa hồ sơ
-              </Button>
-              {!detail.account && (
+              {canUpdate && (
+                <Button type="button" variant="outline" onClick={() => onEdit(detail)}>
+                  <Pencil /> Sửa hồ sơ
+                </Button>
+              )}
+              {canProvisionAccount && !detail.account && (
                 <Button type="button" onClick={() => onProvision(detail)}>
                   <KeyRound /> Cấp tài khoản
                 </Button>

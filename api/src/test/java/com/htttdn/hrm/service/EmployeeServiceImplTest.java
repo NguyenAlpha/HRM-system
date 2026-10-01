@@ -98,7 +98,7 @@ class EmployeeServiceImplTest {
 
         assertEquals(EmploymentStatus.ACTIVE, employee.getEmploymentStatus());
         assertEquals(EmploymentStatus.ACTIVE, result.employmentStatus());
-        verify(employeeAccessScopeService).requireEmployeeAccess(1L, "employee.manage");
+        verify(employeeAccessScopeService).requireEmployeeAccess(1L, "employee.probation.confirm");
     }
 
     @Test

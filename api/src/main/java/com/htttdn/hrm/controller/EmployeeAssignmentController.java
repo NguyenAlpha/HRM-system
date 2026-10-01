@@ -30,20 +30,20 @@ public class EmployeeAssignmentController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('employee.read')")
+    @PreAuthorize("hasAuthority('employee.assignment.read')")
     public ApiResult<List<EmployeeAssignmentResponse>> list(@PathVariable Long employeeId) {
         return ApiResult.ok(employeeAssignmentService.list(employeeId));
     }
 
     @GetMapping("/current")
-    @PreAuthorize("hasAuthority('employee.read')")
+    @PreAuthorize("hasAuthority('employee.assignment.read')")
     public ApiResult<EmployeeAssignmentResponse> getCurrent(@PathVariable Long employeeId) {
         return ApiResult.ok(employeeAssignmentService.getCurrent(employeeId));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('employee.manage')")
+    @PreAuthorize("hasAuthority('employee.assignment.manage')")
     public ApiResult<EmployeeAssignmentResponse> assign(
         @PathVariable Long employeeId,
         @Valid @RequestBody AssignEmployeeRequest request

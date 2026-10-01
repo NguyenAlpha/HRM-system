@@ -418,7 +418,7 @@ Ràng buộc persistence:
 | `HR_MANAGER` | `COMPANY` | Hồ sơ thường và dữ liệu nhạy cảm của nhân viên; cấp account; đề xuất role; quản lý đơn từ, chấm công và báo cáo toàn công ty |
 | `PAYROLL_ACCOUNTANT` | `COMPANY` | Đọc thành phần thu nhập, tính và kiểm tra lương |
 | `PAYROLL_APPROVER` | `COMPANY` | Duyệt, xác nhận đã trả và khóa kỳ lương |
-| `DIRECTOR` | `COMPANY` | Xem nhân sự và phê duyệt cuối nghiệp vụ nhân sự, đơn từ, thay đổi cơ cấu toàn công ty |
+| `DIRECTOR` | `COMPANY` | Xem và quản lý hồ sơ nhân sự; phê duyệt cuối nghiệp vụ nhân sự, đơn từ và thay đổi cơ cấu toàn công ty |
 | `COMPANY_OWNER` | `COMPANY` | Xem và quản lý hồ sơ nhân sự; cấp và quản trị account; phê duyệt đề xuất role; quản trị quyền truy cập và cấu hình doanh nghiệp |
 | `SYSTEM_ADMIN` | `COMPANY` | Khởi tạo Company Owner đầu tiên và tạm thời quản lý RBAC; không tham gia quản trị account hoặc nghiệp vụ nội bộ công ty |
 
@@ -430,8 +430,10 @@ Các permission code tối thiểu:
 
 ```text
 profile.self.read             profile.self.update
-employee.read                employee.manage               employee.sensitive.read
-employee.sensitive.manage    employee.lifecycle.approve
+employee.list.read           employee.read                 employee.create
+employee.update              employee.probation.confirm    employee.assignment.read
+employee.assignment.manage  employee.lifecycle.manage     employee.delete
+employee.sensitive.read      employee.sensitive.manage     employee.lifecycle.approve
 account.read                 account.manage                account.provision
 account.activation.manage   account.role.assign
 role.assignment.request     role.assignment.approve

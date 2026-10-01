@@ -35,8 +35,9 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 @Transactional
 public class EmployeeAssignmentService {
 
-    private static final String EMPLOYEE_READ = "employee.read";
-    private static final String EMPLOYEE_MANAGE = "employee.manage";
+    private static final String EMPLOYEE_CREATE = "employee.create";
+    private static final String EMPLOYEE_ASSIGNMENT_READ = "employee.assignment.read";
+    private static final String EMPLOYEE_ASSIGNMENT_MANAGE = "employee.assignment.manage";
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
@@ -70,21 +71,21 @@ public class EmployeeAssignmentService {
         this.employeeAccessScopeService = employeeAccessScopeService;
     }
 
-    @PreAuthorize("hasAuthority('employee.manage')")
+    @PreAuthorize("hasAuthority('employee.create')")
     public EmployeeAssignmentResponse createInitial(
         Employee employee,
         AssignEmployeeRequest request
     ) {
         validateEffectiveFrom(employee, request.effectiveFrom(), "initialAssignment.effectiveFrom");
         validateManagerIsNotSelf(employee.getId(), request.managerEmployeeId());
-        AssignmentResources resources = resolveResources(request);
+        AssignmentResources resources = resolveResources(request, EMPLOYEE_CREATE);
         return toResponse(savePrimaryAssignment(employee, request, resources, findCurrentAccount()));
     }
 
-    @PreAuthorize("hasAuthority('employee.manage')")
+    @PreAuthorize("hasAuthority('employee.assignment.manage')")
     public EmployeeAssignmentResponse assign(Long employeeId, AssignEmployeeRequest request) {
         findEmployee(employeeId);
-        employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_MANAGE);
+        employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_ASSIGNMENT_MANAGE);
         Employee employee = employeeRepository.findByIdForUpdate(employeeId)
             .orElseThrow(() -> employeeNotFound(employeeId));
 
@@ -96,7 +97,7 @@ public class EmployeeAssignmentService {
         }
         validateEffectiveFrom(employee, request.effectiveFrom(), "effectiveFrom");
         validateManagerIsNotSelf(employeeId, request.managerEmployeeId());
-        AssignmentResources resources = resolveResources(request);
+        AssignmentResources resources = resolveResources(request, EMPLOYEE_ASSIGNMENT_MANAGE);
 
         List<EmployeeAssignment> openAssignments = employeeAssignmentRepository
             .findOpenPrimaryForUpdate(employeeId);
@@ -113,11 +114,11 @@ public class EmployeeAssignmentService {
         return toResponse(savePrimaryAssignment(employee, request, resources, findCurrentAccount()));
     }
 
-    @PreAuthorize("hasAuthority('employee.read')")
+    @PreAuthorize("hasAuthority('employee.assignment.read')")
     @Transactional(readOnly = true)
     public EmployeeAssignmentResponse getCurrent(Long employeeId) {
         findEmployee(employeeId);
-        employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_READ);
+        employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_ASSIGNMENT_READ);
         return employeeAssignmentRepository
             .findCurrentPrimaryCandidates(employeeId, LocalDate.now()).stream()
             .findFirst()
@@ -128,19 +129,19 @@ public class EmployeeAssignmentService {
             ));
     }
 
-    @PreAuthorize("hasAuthority('employee.read')")
+    @PreAuthorize("hasAuthority('employee.assignment.read')")
     @Transactional(readOnly = true)
     public List<EmployeeAssignmentResponse> list(Long employeeId) {
         findEmployee(employeeId);
-        employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_READ);
+        employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_ASSIGNMENT_READ);
         return employeeAssignmentRepository.findByEmployeeIdOrderByEffectiveFromDesc(employeeId).stream()
             .map(this::toResponse)
             .toList();
     }
 
-    private AssignmentResources resolveResources(AssignEmployeeRequest request) {
+    private AssignmentResources resolveResources(AssignEmployeeRequest request, String permissionCode) {
         employeeAccessScopeService.requireDestinationAccess(
-            request.organizationUnitId(), request.workLocationId(), EMPLOYEE_MANAGE
+            request.organizationUnitId(), request.workLocationId(), permissionCode
         );
 
         OrganizationUnit organizationUnit = organizationUnitRepository.findById(request.organizationUnitId())
@@ -166,7 +167,7 @@ public class EmployeeAssignmentService {
             workLocation,
             position,
             findActiveShift(request.shiftId()),
-            findManager(request.managerEmployeeId())
+            findManager(request.managerEmployeeId(), permissionCode)
         );
     }
 
@@ -204,12 +205,12 @@ public class EmployeeAssignmentService {
             ));
     }
 
-    private Employee findManager(Long managerEmployeeId) {
+    private Employee findManager(Long managerEmployeeId, String permissionCode) {
         if (managerEmployeeId == null) {
             return null;
         }
         Employee manager = findEmployee(managerEmployeeId);
-        employeeAccessScopeService.requireEmployeeAccess(managerEmployeeId, EMPLOYEE_MANAGE);
+        employeeAccessScopeService.requireEmployeeAccess(managerEmployeeId, permissionCode);
         if (isEmploymentEnded(manager.getEmploymentStatus())) {
             throw new ConflictException(ErrorCode.CONFLICT, "Manager is no longer employed");
         }

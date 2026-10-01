@@ -617,7 +617,11 @@ Ví dụ dữ liệu:
 
 ```text
 profile.self.read                 profile.self.update
-employee.read                     employee.manage
+employee.list.read                employee.read
+employee.create                   employee.update
+employee.probation.confirm        employee.assignment.read
+employee.assignment.manage       employee.lifecycle.manage
+employee.delete
 employee.sensitive.read           employee.sensitive.manage
 employee.lifecycle.approve        organization.manage
 

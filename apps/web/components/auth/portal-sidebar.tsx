@@ -12,7 +12,7 @@ export function PortalSidebar({ portal, account, active = "overview" }: {
   const canBootstrapCompanyOwner = account.permissions.some(
     (permission) => permission.code === "organization.company_owner.bootstrap",
   )
-  const canReadEmployees = account.permissions.some((permission) => permission.code === "employee.read")
+  const canReadEmployees = account.permissions.some((permission) => permission.code === "employee.list.read")
   const canUseRoleRequests = account.permissions.some(
     (permission) => permission.code === "role.assignment.request" || permission.code === "role.assignment.approve",
   )

@@ -44,7 +44,15 @@ export function EmployeePage() {
     )
   }
 
-  const canManage = session.account.permissions.some((permission) => permission.code === "employee.manage")
+  const permissionCodes = new Set(session.account.permissions.map((permission) => permission.code))
+  const capabilities = {
+    canReadDetail: permissionCodes.has("employee.read"),
+    canCreate: permissionCodes.has("employee.create"),
+    canUpdate: permissionCodes.has("employee.update"),
+    canAssign: permissionCodes.has("employee.assignment.manage"),
+    canConfirmProbation: permissionCodes.has("employee.probation.confirm"),
+    canProvisionAccount: permissionCodes.has("account.provision"),
+  }
 
   return (
     <main className="portal-shell hrm-shell">
@@ -64,7 +72,7 @@ export function EmployeePage() {
         </header>
 
         <div className="mt-6">
-          <EmployeeManager canManage={canManage} onSessionExpired={onSessionExpired} />
+          <EmployeeManager capabilities={capabilities} onSessionExpired={onSessionExpired} />
         </div>
       </section>
     </main>

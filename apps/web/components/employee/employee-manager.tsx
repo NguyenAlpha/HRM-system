@@ -118,10 +118,28 @@ function toFormValues(detail: EmployeeDetail): EmployeeEditValues {
   }
 }
 
-export function EmployeeManager({ canManage, onSessionExpired }: {
-  canManage: boolean
+type EmployeeCapabilities = {
+  canReadDetail: boolean
+  canCreate: boolean
+  canUpdate: boolean
+  canAssign: boolean
+  canConfirmProbation: boolean
+  canProvisionAccount: boolean
+}
+
+export function EmployeeManager({ capabilities, onSessionExpired }: {
+  capabilities: EmployeeCapabilities
   onSessionExpired: () => void
 }) {
+  const {
+    canReadDetail,
+    canCreate,
+    canUpdate,
+    canAssign,
+    canConfirmProbation,
+    canProvisionAccount,
+  } = capabilities
+  const canEdit = canReadDetail && canUpdate
   const [data, setData] = useState<Page<EmployeeSummary> | null>(null)
   const [page, setPage] = useState(0)
   const [revision, setRevision] = useState(0)
@@ -233,6 +251,12 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
     }
   }
 
+  function hasRowActions(employee: EmployeeSummary) {
+    return canReadDetail
+      || (canAssign && (employee.employmentStatus === "ACTIVE" || employee.employmentStatus === "PROBATION"))
+      || (canConfirmProbation && employee.employmentStatus === "PROBATION")
+  }
+
   return (
     <>
       <Card>
@@ -245,7 +269,7 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
             <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
               <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
             </Button>
-            {canManage && (
+            {canCreate && (
               <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
                 <Plus /> Thêm nhân sự
               </Button>
@@ -280,8 +304,8 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
                 {!loading && data?.content.map((employee) => (
                   <TableRow
                     key={employee.id}
-                    className="cursor-pointer"
-                    onClick={() => setSelectedId(employee.id)}
+                    className={canReadDetail ? "cursor-pointer" : undefined}
+                    onClick={() => { if (canReadDetail) setSelectedId(employee.id) }}
                   >
                     <TableCell>
                       <span className="font-medium">{employee.fullName}</span>
@@ -307,7 +331,7 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
                           <span className="text-sm font-medium">{employee.account.username}</span>
                           <span className="block text-xs text-muted-foreground">{employee.account.status}</span>
                         </div>
-                      ) : canManage ? (
+                      ) : canProvisionAccount ? (
                         <Tooltip>
                           <TooltipTrigger
                             render={
@@ -328,7 +352,7 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
                       )}
                     </TableCell>
                     <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
-                      <Menu.Root>
+                      {hasRowActions(employee) ? <Menu.Root>
                         <Menu.Trigger
                           aria-label={`Mở menu thao tác cho ${employee.fullName}`}
                           title="Thao tác"
@@ -339,14 +363,16 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
                         <Menu.Portal>
                           <Menu.Positioner side="bottom" align="end" sideOffset={4} className="isolate z-50">
                             <Menu.Popup className="min-w-44 origin-(--transform-origin) rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95">
-                              <Menu.LinkItem
-                                closeOnClick
-                                render={<Link href={`/employees/${employee.id}`} />}
-                                className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
-                              >
-                                <Eye className="size-4" /> Xem chi tiết
-                              </Menu.LinkItem>
-                              {canManage && (
+                              {canReadDetail && (
+                                <Menu.LinkItem
+                                  closeOnClick
+                                  render={<Link href={`/employees/${employee.id}`} />}
+                                  className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
+                                >
+                                  <Eye className="size-4" /> Xem chi tiết
+                                </Menu.LinkItem>
+                              )}
+                              {canEdit && (
                                 <Menu.Item
                                   onClick={() => { void openEditFromList(employee.id) }}
                                   className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
@@ -354,7 +380,7 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
                                   <Pencil className="size-4" /> Sửa hồ sơ
                                 </Menu.Item>
                               )}
-                              {canManage && (employee.employmentStatus === "ACTIVE" || employee.employmentStatus === "PROBATION") && (
+                              {canAssign && (employee.employmentStatus === "ACTIVE" || employee.employmentStatus === "PROBATION") && (
                                 <Menu.Item
                                   onClick={() => setAssigning(employee)}
                                   className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
@@ -362,7 +388,7 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
                                   <BriefcaseBusiness className="size-4" /> Thay đổi phân công
                                 </Menu.Item>
                               )}
-                              {canManage && employee.employmentStatus === "PROBATION" && (
+                              {canConfirmProbation && employee.employmentStatus === "PROBATION" && (
                                 <Menu.Item
                                   onClick={() => setConfirming(employee)}
                                   className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
@@ -373,7 +399,7 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
                             </Menu.Popup>
                           </Menu.Positioner>
                         </Menu.Portal>
-                      </Menu.Root>
+                      </Menu.Root> : <span className="text-muted-foreground">—</span>}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -398,7 +424,8 @@ export function EmployeeManager({ canManage, onSessionExpired }: {
         <EmployeeDetailDialog
           key={`${selectedId}-${sheetRevision}`}
           employeeId={selectedId}
-          canManage={canManage}
+          canUpdate={canUpdate}
+          canProvisionAccount={canProvisionAccount}
           onClose={() => setSelectedId(null)}
           onEdit={openEdit}
           onProvision={setProvisioning}
