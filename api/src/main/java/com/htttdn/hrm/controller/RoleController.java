@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.htttdn.hrm.dto.request.role.CreateRoleRequest;
 import com.htttdn.hrm.dto.request.role.GrantPermissionRequest;
+import com.htttdn.hrm.dto.request.role.ReplaceRolePermissionsRequest;
 import com.htttdn.hrm.dto.request.role.UpdateRoleRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
@@ -86,6 +87,15 @@ public class RoleController {
     ) {
         roleService.grantPermission(roleId, request, accountId(jwt));
         return ApiResult.ok();
+    }
+
+    @PutMapping("/{roleId}/permissions")
+    public ApiResult<List<PermissionResponse>> replacePermissions(
+        @PathVariable Long roleId,
+        @Valid @RequestBody ReplaceRolePermissionsRequest request,
+        @AuthenticationPrincipal Jwt jwt
+    ) {
+        return ApiResult.ok(roleService.replacePermissions(roleId, request, accountId(jwt)));
     }
 
     @DeleteMapping("/{roleId}/permissions/{permissionId}")

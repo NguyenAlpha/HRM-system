@@ -16,6 +16,7 @@ Quản lý role tùy chỉnh và quan hệ permission của role. Danh mục per
 | `DELETE /api/roles/{id}` | ✅ | `rbac.manage` | Xóa mềm một custom role |
 | `GET /api/roles/{roleId}/permissions` | ✅ | `rbac.manage` | Lấy danh sách permission đang được gán cho role |
 | `POST /api/roles/{roleId}/permissions` | ✅ | `rbac.manage` | Gán một permission `DELEGABLE` có sẵn cho custom role |
+| `PUT /api/roles/{roleId}/permissions` | ✅ | `rbac.manage` | Đồng bộ toàn bộ permission của custom role trong một transaction |
 | `DELETE /api/roles/{roleId}/permissions/{permissionId}` | ✅ | `rbac.manage` | Thu hồi một permission khỏi custom role |
 | `GET /api/permissions` | ✅ | `rbac.manage` | Tra cứu danh mục permission có phân trang và có thể lọc theo module |
 | `GET /api/permissions/{id}` | ✅ | `rbac.manage` | Lấy thông tin chi tiết của một permission |
@@ -463,6 +464,63 @@ API lưu quan hệ ngay cả khi permission đang inactive. Role chưa bị xóa
 | 404 | `PERMISSION_NOT_FOUND` | Permission không tồn tại |
 | 404 | `RESOURCE_NOT_FOUND` | Account trong claim `accountId` không còn tồn tại |
 | 409 | `CONFLICT` | Permission đã được gán, permission là `SYSTEM_ONLY` hoặc role đích là system role |
+
+---
+
+## PUT `/api/roles/{roleId}/permissions`
+
+Đồng bộ toàn bộ permission của một custom role trong một transaction. API so sánh danh sách gửi lên với mapping hiện tại, thêm mapping còn thiếu và gỡ mapping không còn được chọn. Endpoint phù hợp cho giao diện chọn nhiều quyền theo module và tránh phải gửi một request cho từng permission.
+
+### Request
+
+```json
+{
+  "permissionIds": [12, 13, 18, 21]
+}
+```
+
+| Field | Type | Bắt buộc | Ràng buộc |
+|:------|:-----|:--------:|:----------|
+| `permissionIds` | array of integer | ✅ | Tối đa 500 phần tử; mỗi ID là số nguyên dương, tồn tại và có `assignmentPolicy=DELEGABLE` |
+
+- ID trùng lặp được chuẩn hóa thành một permission.
+- Gửi `permissionIds: []` để gỡ toàn bộ permission của custom role.
+- Account thao tác được lấy từ claim `accountId`; các mapping mới lưu account này làm người cấp.
+- System role không thể được thay đổi bằng endpoint này.
+
+### Response `200 OK`
+
+`data` là danh sách permission sau khi đồng bộ, được sắp xếp theo `code`:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 12,
+      "code": "employee.read",
+      "name": "Xem chi tiết nhân viên",
+      "module": "EMPLOYEE",
+      "description": "Xem chi tiết hồ sơ nhân viên trong phạm vi được phân công",
+      "assignmentPolicy": "DELEGABLE",
+      "isActive": true
+    }
+  ],
+  "error": null
+}
+```
+
+### Lỗi
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 400 | `VALIDATION_ERROR` | Thiếu `permissionIds`, danh sách vượt giới hạn hoặc có ID không phải số nguyên dương |
+| 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
+| 403 | `FORBIDDEN` | Account không có permission `rbac.manage` |
+| 404 | `ROLE_NOT_FOUND` | Role không tồn tại hoặc đã bị xóa mềm |
+| 404 | `PERMISSION_NOT_FOUND` | Có permission ID không tồn tại |
+| 404 | `RESOURCE_NOT_FOUND` | Account trong claim `accountId` không còn tồn tại |
+| 409 | `CONFLICT` | Role đích là system role hoặc danh sách chứa permission `SYSTEM_ONLY` |
 
 ---
 

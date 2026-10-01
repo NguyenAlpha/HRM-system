@@ -230,12 +230,56 @@ class RbacManagementTest {
     }
 
     @Test
+    void companyOwnerCanReplaceAllCustomRolePermissionsInOneRequest() throws Exception {
+        Role role = savedRole(false);
+        Permission removed = savedPermission(permissionCode());
+        Permission retained = savedPermission(permissionCode());
+        Permission added = savedPermission(permissionCode());
+        Account actor = savedAccount();
+        rolePermissionRepository.saveAll(List.of(
+            RolePermission.builder()
+                .id(new RolePermissionId(role.getId(), removed.getId()))
+                .role(role)
+                .permission(removed)
+                .createdByAccount(actor)
+                .createdAt(Instant.now())
+                .build(),
+            RolePermission.builder()
+                .id(new RolePermissionId(role.getId(), retained.getId()))
+                .role(role)
+                .permission(retained)
+                .createdByAccount(actor)
+                .createdAt(Instant.now())
+                .build()
+        ));
+        String path = "/api/roles/" + role.getId() + "/permissions";
+        String token = token(actor.getId(), List.of("COMPANY_OWNER"), List.of("rbac.manage"));
+
+        mockMvc.perform(put(path).header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of(
+                    "permissionIds", List.of(retained.getId(), added.getId())
+                ))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.length()").value(2));
+
+        assertFalse(rolePermissionRepository.existsById(
+            new RolePermissionId(role.getId(), removed.getId())
+        ));
+        assertEquals(actor.getId(), rolePermissionRepository.findById(
+            new RolePermissionId(role.getId(), added.getId())
+        ).orElseThrow().getCreatedByAccount().getId());
+    }
+
+    @Test
     void systemRolePermissionMappingsCannotBeChanged() throws Exception {
         Role role = savedRole(true);
         Permission permission = savedPermission(permissionCode());
         String path = "/api/roles/" + role.getId() + "/permissions";
 
         admin(post(path), Map.of("permissionId", permission.getId()))
+            .andExpect(status().isConflict());
+        admin(put(path), Map.of("permissionIds", List.of(permission.getId())))
             .andExpect(status().isConflict());
         admin(delete(path + "/" + permission.getId()))
             .andExpect(status().isConflict());
@@ -360,6 +404,7 @@ class RbacManagementTest {
             Arguments.of("DELETE", "/api/roles/1", ""),
             Arguments.of("GET", "/api/roles/1/permissions", ""),
             Arguments.of("POST", "/api/roles/1/permissions", "{\"permissionId\":1}"),
+            Arguments.of("PUT", "/api/roles/1/permissions", "{\"permissionIds\":[1]}"),
             Arguments.of("DELETE", "/api/roles/1/permissions/1", ""),
             Arguments.of("GET", "/api/permissions", ""),
             Arguments.of("GET", "/api/permissions?module=RBAC", ""),
@@ -383,7 +428,8 @@ class RbacManagementTest {
             Arguments.of("POST", "/api/roles", "{\"code\":\"TEST\",\"name\":\"" + "A".repeat(151) + "\",\"grantPolicy\":\"OWNER_APPROVAL\"}", "name"),
             Arguments.of("POST", "/api/roles", "{\"code\":\"TEST\",\"name\":\"Test\"}", "grantPolicy"),
             Arguments.of("PUT", "/api/roles/1", "{\"name\":\"Test\"}", "grantPolicy"),
-            Arguments.of("POST", "/api/roles/1/permissions", "{\"permissionId\":0}", "permissionId")
+            Arguments.of("POST", "/api/roles/1/permissions", "{\"permissionId\":0}", "permissionId"),
+            Arguments.of("PUT", "/api/roles/1/permissions", "{}", "permissionIds")
         );
     }
 }
