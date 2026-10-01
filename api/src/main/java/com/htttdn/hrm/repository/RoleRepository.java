@@ -22,6 +22,10 @@ public interface RoleRepository extends JpaRepository<Role, Long> {
     @Query("SELECT role FROM Role role WHERE role.code = :code AND role.deletedAt IS NULL")
     Optional<Role> findByCodeForUpdate(@Param("code") String code);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT role FROM Role role WHERE role.id = :id AND role.deletedAt IS NULL")
+    Optional<Role> findByIdForUpdate(@Param("id") Long id);
+
     boolean existsByCodeAndDeletedAtIsNull(String code);
 
     boolean existsByCode(String code);

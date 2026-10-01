@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 
 import com.htttdn.hrm.dto.request.role.CreateRoleRequest;
 import com.htttdn.hrm.dto.request.role.GrantPermissionRequest;
+import com.htttdn.hrm.dto.request.role.ReplaceRolePermissionsRequest;
 import com.htttdn.hrm.dto.request.role.UpdateRoleRequest;
 import com.htttdn.hrm.dto.response.permission.PermissionResponse;
 import com.htttdn.hrm.dto.response.role.RoleResponse;
@@ -27,6 +28,12 @@ public interface RoleService {
     void softDelete(Long id);
 
     void grantPermission(Long roleId, GrantPermissionRequest request, Long grantedByAccountId);
+
+    List<PermissionResponse> replacePermissions(
+        Long roleId,
+        ReplaceRolePermissionsRequest request,
+        Long grantedByAccountId
+    );
 
     void revokePermission(Long roleId, Long permissionId);
 

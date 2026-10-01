@@ -2,9 +2,14 @@ package com.htttdn.hrm.service.impl;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.request.role.CreateRoleRequest;
 import com.htttdn.hrm.dto.request.role.GrantPermissionRequest;
+import com.htttdn.hrm.dto.request.role.ReplaceRolePermissionsRequest;
 import com.htttdn.hrm.dto.request.role.UpdateRoleRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.permission.PermissionResponse;
@@ -147,13 +153,7 @@ public class RoleServiceImpl implements RoleService {
         Permission permission = permissionRepository.findById(request.permissionId())
             .orElseThrow(() -> new ResourceNotFoundException(
                 ErrorCode.PERMISSION_NOT_FOUND, "Permission not found: " + request.permissionId()));
-        if (permission.getAssignmentPolicy() != PermissionAssignmentPolicy.DELEGABLE) {
-            throw new ConflictException(
-                ErrorCode.CONFLICT,
-                "System-only permissions cannot be assigned to custom roles",
-                "permissionId"
-            );
-        }
+        rejectNonDelegablePermission(permission, "permissionId");
 
         RolePermissionId id = new RolePermissionId(roleId, request.permissionId());
         if (rolePermissionRepository.existsById(id)) {
@@ -176,6 +176,68 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    public List<PermissionResponse> replacePermissions(
+        Long roleId,
+        ReplaceRolePermissionsRequest request,
+        Long grantedByAccountId
+    ) {
+        Role role = findRoleForUpdateOrThrow(roleId);
+        rejectSystemRolePermissionChange(role);
+
+        Set<Long> requestedIds = new LinkedHashSet<>(request.permissionIds());
+        List<Permission> requestedPermissions = requestedIds.isEmpty()
+            ? List.of()
+            : permissionRepository.findAllById(requestedIds);
+        Map<Long, Permission> requestedById = requestedPermissions.stream()
+            .collect(Collectors.toMap(Permission::getId, Function.identity()));
+
+        for (Long permissionId : requestedIds) {
+            Permission permission = requestedById.get(permissionId);
+            if (permission == null) {
+                throw new ResourceNotFoundException(
+                    ErrorCode.PERMISSION_NOT_FOUND,
+                    "Permission not found: " + permissionId
+                );
+            }
+            rejectNonDelegablePermission(permission, "permissionIds");
+        }
+
+        Account grantedBy = accountRepository.findById(grantedByAccountId)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + grantedByAccountId));
+        List<RolePermission> existingMappings = rolePermissionRepository.findByIdRoleId(roleId);
+        Map<Long, RolePermission> existingByPermissionId = existingMappings.stream()
+            .collect(Collectors.toMap(mapping -> mapping.getPermission().getId(), Function.identity()));
+
+        List<RolePermission> removedMappings = existingMappings.stream()
+            .filter(mapping -> !requestedIds.contains(mapping.getPermission().getId()))
+            .toList();
+        if (!removedMappings.isEmpty()) {
+            rolePermissionRepository.deleteAll(removedMappings);
+        }
+
+        Instant now = Instant.now();
+        List<RolePermission> addedMappings = requestedIds.stream()
+            .filter(permissionId -> !existingByPermissionId.containsKey(permissionId))
+            .map(permissionId -> RolePermission.builder()
+                .id(new RolePermissionId(roleId, permissionId))
+                .role(role)
+                .permission(requestedById.get(permissionId))
+                .createdByAccount(grantedBy)
+                .createdAt(now)
+                .build())
+            .toList();
+        if (!addedMappings.isEmpty()) {
+            rolePermissionRepository.saveAll(addedMappings);
+        }
+
+        return requestedPermissions.stream()
+            .sorted(Comparator.comparing(Permission::getCode))
+            .map(this::toPermissionResponse)
+            .toList();
+    }
+
+    @Override
     public void revokePermission(Long roleId, Long permissionId) {
         Role role = findRoleOrThrow(roleId);
         rejectSystemRolePermissionChange(role);
@@ -191,6 +253,16 @@ public class RoleServiceImpl implements RoleService {
             throw new ConflictException(
                 ErrorCode.CONFLICT,
                 "System role permissions are defined by the application and cannot be modified"
+            );
+        }
+    }
+
+    private void rejectNonDelegablePermission(Permission permission, String field) {
+        if (permission.getAssignmentPolicy() != PermissionAssignmentPolicy.DELEGABLE) {
+            throw new ConflictException(
+                ErrorCode.CONFLICT,
+                "System-only permissions cannot be assigned to custom roles",
+                field
             );
         }
     }
@@ -220,6 +292,11 @@ public class RoleServiceImpl implements RoleService {
     private Role findRoleOrThrow(Long id) {
         return roleRepository.findById(id)
             .filter(role -> role.getDeletedAt() == null)
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ROLE_NOT_FOUND, "Role not found: " + id));
+    }
+
+    private Role findRoleForUpdateOrThrow(Long id) {
+        return roleRepository.findByIdForUpdate(id)
             .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ROLE_NOT_FOUND, "Role not found: " + id));
     }
 

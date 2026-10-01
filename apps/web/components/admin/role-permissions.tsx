@@ -1,7 +1,7 @@
 "use client"
 
-import { type FormEvent, useEffect, useMemo, useState } from "react"
-import { Loader2, ShieldOff, X } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { Loader2, Search, ShieldOff } from "lucide-react"
 import { toast } from "sonner"
 
 import { RbacFeedback } from "@/components/admin/rbac-controls"
@@ -16,24 +16,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Portal } from "@/lib/auth/types"
 import {
   getPermissionOptions,
   isSessionExpired,
+  PERMISSION_MODULES,
   rbacErrorMessage,
   rbacMutation,
   rbacRequest,
   type Permission,
+  type PermissionModule,
   type Role,
 } from "@/lib/rbac"
+
+function equalIds(left: Set<number>, right: Set<number>) {
+  return left.size === right.size && Array.from(left).every((id) => right.has(id))
+}
 
 export function RolePermissions({ portal, role, onClose, onSessionExpired }: {
   portal: Portal
@@ -43,29 +43,55 @@ export function RolePermissions({ portal, role, onClose, onSessionExpired }: {
 }) {
   const [catalog, setCatalog] = useState<Permission[]>([])
   const [assigned, setAssigned] = useState<Permission[]>([])
-  const [permissionId, setPermissionId] = useState("")
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [savedIds, setSavedIds] = useState<Set<number>>(new Set())
+  const [query, setQuery] = useState("")
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [revision, setRevision] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const disabled = busy || loading
-  const available = catalog.filter((permission) => permission.assignmentPolicy === "DELEGABLE"
-    && !assigned.some((item) => item.id === permission.id))
-  const permissionItems = useMemo(
-    () => Object.fromEntries(available.map((permission) => [
-      String(permission.id),
-      `${permission.name} (${permission.code})${permission.isActive ? "" : " · tạm tắt"}`,
-    ])),
-    [available],
+  const dirty = !equalIds(selectedIds, savedIds)
+
+  const selectablePermissions = useMemo(
+    () => catalog.filter((permission) => permission.assignmentPolicy === "DELEGABLE"),
+    [catalog],
+  )
+  const displayedPermissions = useMemo(() => {
+    const source = role.isSystem ? assigned : selectablePermissions
+    const normalizedQuery = query.trim().toLowerCase()
+    if (!normalizedQuery) return source
+    return source.filter((permission) =>
+      permission.code.toLowerCase().includes(normalizedQuery)
+      || permission.name.toLowerCase().includes(normalizedQuery)
+      || permission.description.toLowerCase().includes(normalizedQuery),
+    )
+  }, [assigned, query, role.isSystem, selectablePermissions])
+  const groups = useMemo(
+    () => PERMISSION_MODULES
+      .map((module) => ({
+        module,
+        permissions: displayedPermissions.filter((permission) => permission.module === module),
+      }))
+      .filter((group) => group.permissions.length > 0),
+    [displayedPermissions],
   )
 
   useEffect(() => {
     let active = true
-    Promise.all([getPermissionOptions(portal), rbacRequest<Permission[]>(portal, `/roles/${role.id}/permissions`)])
+    Promise.all([
+      role.isSystem ? Promise.resolve([]) : getPermissionOptions(portal),
+      rbacRequest<Permission[]>(portal, `/roles/${role.id}/permissions`),
+    ])
       .then(([permissions, rolePermissions]) => {
         if (!active) return
+        const editableIds = rolePermissions
+          .filter((permission) => permission.assignmentPolicy === "DELEGABLE")
+          .map((permission) => permission.id)
         setCatalog(permissions)
         setAssigned(rolePermissions)
+        setSelectedIds(new Set(editableIds))
+        setSavedIds(new Set(editableIds))
         setLoading(false)
       })
       .catch((caught: unknown) => {
@@ -75,26 +101,58 @@ export function RolePermissions({ portal, role, onClose, onSessionExpired }: {
         setLoading(false)
       })
     return () => { active = false }
-  }, [portal, role.id, revision, onSessionExpired])
+  }, [portal, role.id, role.isSystem, revision, onSessionExpired])
 
   function reload() {
     setLoading(true)
     setError(null)
-    setPermissionId("")
     setRevision((value) => value + 1)
   }
 
-  async function changePermission(permission: Permission, remove: boolean) {
+  function togglePermission(permissionId: number) {
+    setSelectedIds((current) => {
+      const next = new Set(current)
+      if (next.has(permissionId)) next.delete(permissionId)
+      else next.add(permissionId)
+      return next
+    })
+  }
+
+  function toggleModule(module: PermissionModule) {
+    const modulePermissions = selectablePermissions.filter((permission) => permission.module === module)
+    const allSelected = modulePermissions.every((permission) => selectedIds.has(permission.id))
+    setSelectedIds((current) => {
+      const next = new Set(current)
+      modulePermissions.forEach((permission) => {
+        if (allSelected) next.delete(permission.id)
+        else next.add(permission.id)
+      })
+      return next
+    })
+  }
+
+  function toggleAll() {
+    const allSelected = selectablePermissions.every((permission) => selectedIds.has(permission.id))
+    setSelectedIds(allSelected
+      ? new Set()
+      : new Set(selectablePermissions.map((permission) => permission.id)))
+  }
+
+  async function save() {
     setBusy(true)
     setError(null)
     try {
-      if (remove) {
-        await rbacMutation(portal, `/roles/${role.id}/permissions/${permission.id}`, "DELETE")
-      } else {
-        await rbacMutation(portal, `/roles/${role.id}/permissions`, "POST", { permissionId: permission.id })
-      }
-      toast.success(`${remove ? "Đã gỡ" : "Đã gán"} quyền ${permission.code}`)
-      reload()
+      const updated = await rbacMutation<Permission[]>(
+        portal,
+        `/roles/${role.id}/permissions`,
+        "PUT",
+        { permissionIds: Array.from(selectedIds).sort((left, right) => left - right) },
+      )
+      const updatedIds = new Set(updated.map((permission) => permission.id))
+      setAssigned(updated)
+      setSelectedIds(updatedIds)
+      setSavedIds(new Set(updatedIds))
+      toast.success(`Đã cập nhật ${updated.length} quyền cho ${role.code}`)
     } catch (caught) {
       if (isSessionExpired(caught)) onSessionExpired()
       setError(rbacErrorMessage(caught))
@@ -103,103 +161,138 @@ export function RolePermissions({ portal, role, onClose, onSessionExpired }: {
     }
   }
 
-  function grant(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const permission = available.find((item) => item.id === Number(permissionId))
-    if (permission) void changePermission(permission, false)
-  }
-
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>Quyền của {role.code}</DialogTitle>
-          <DialogDescription>{role.name}</DialogDescription>
+          <DialogDescription>
+            {role.name} · {role.isSystem ? `${assigned.length} quyền hệ thống` : `${selectedIds.size} quyền đã chọn`}
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[65vh] overflow-y-auto py-1">
+        <div className="max-h-[70vh] overflow-y-auto py-1">
           <RbacFeedback error={error} />
 
-          {role.isSystem ? (
+          {role.isSystem && (
             <p className="mt-3 flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm text-muted-foreground">
               <ShieldOff className="mt-0.5 size-4 shrink-0" />
               System role và bộ quyền do ứng dụng định nghĩa, chỉ được phép xem.
             </p>
-          ) : (
-            <form className="mt-3 flex items-end gap-2" onSubmit={grant}>
-              <div className="grid flex-1 gap-1.5">
-                <Select value={permissionId} items={permissionItems} onValueChange={(value) => setPermissionId(value ?? "")} disabled={disabled || available.length === 0}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={available.length ? "Chọn quyền để gán..." : "Không còn quyền để gán"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {available.map((permission) => (
-                      <SelectItem key={permission.id} value={String(permission.id)}>
-                        {permission.name} ({permission.code}){permission.isActive ? "" : " · tạm tắt"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button type="submit" disabled={disabled || !permissionId}>
-                {busy ? <Loader2 className="animate-spin" /> : "Gán"}
-              </Button>
-            </form>
           )}
 
-          <p className="mt-4 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            Đã gán · {assigned.length}
-          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="relative min-w-56 flex-1">
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                className="pl-9"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Tìm theo tên, mã hoặc mô tả..."
+                disabled={loading}
+              />
+            </div>
+            {!role.isSystem && (
+              <>
+                <Button type="button" variant="outline" onClick={toggleAll} disabled={disabled}>
+                  {selectablePermissions.length > 0
+                    && selectablePermissions.every((permission) => selectedIds.has(permission.id))
+                    ? "Bỏ chọn tất cả"
+                    : "Chọn tất cả"}
+                </Button>
+                <Badge variant="secondary">{selectedIds.size}/{selectablePermissions.length} quyền</Badge>
+              </>
+            )}
+          </div>
 
-          <ul className="mt-2 grid gap-2">
-            {loading &&
-              Array.from({ length: 3 }).map((_, index) => (
-                <li key={index}><Skeleton className="h-14 w-full" /></li>
-              ))}
-
-            {!loading && assigned.map((permission) => (
-              <li
-                key={permission.id}
-                className="flex items-start justify-between gap-3 rounded-lg border px-3 py-2.5"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{permission.name}</p>
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    <code>{permission.code}</code>
-                    {!permission.isActive && (
-                      <Badge variant="outline" className="ml-1.5 align-middle">tạm tắt</Badge>
-                    )}
-                  </p>
-                </div>
-                {!role.isSystem && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    className="shrink-0 text-muted-foreground hover:text-destructive"
-                    disabled={disabled}
-                    onClick={() => void changePermission(permission, true)}
-                    aria-label={`Gỡ quyền ${permission.code}`}
-                  >
-                    <X />
-                  </Button>
-                )}
-              </li>
+          <div className="mt-4 grid gap-4">
+            {loading && Array.from({ length: 3 }).map((_, index) => (
+              <Skeleton key={index} className="h-32 w-full" />
             ))}
 
-            {!loading && !error && assigned.length === 0 && (
-              <li className="rounded-lg border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
-                Vai trò này chưa được gán quyền.
-              </li>
+            {!loading && groups.map((group) => {
+              const moduleCatalog = role.isSystem
+                ? group.permissions
+                : selectablePermissions.filter((permission) => permission.module === group.module)
+              const selectedCount = moduleCatalog.filter((permission) => selectedIds.has(permission.id)).length
+              const allSelected = moduleCatalog.length > 0 && selectedCount === moduleCatalog.length
+              return (
+                <section key={group.module} className="rounded-xl border">
+                  <header className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted/40 px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Badge>{group.module}</Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {role.isSystem ? `${group.permissions.length} quyền` : `${selectedCount}/${moduleCatalog.length} đã chọn`}
+                      </span>
+                    </div>
+                    {!role.isSystem && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={disabled}
+                        onClick={() => toggleModule(group.module)}
+                      >
+                        {allSelected ? "Bỏ chọn module" : "Chọn cả module"}
+                      </Button>
+                    )}
+                  </header>
+
+                  <div className="grid gap-0 sm:grid-cols-2">
+                    {group.permissions.map((permission) => (
+                      <label
+                        key={permission.id}
+                        className={`flex gap-3 border-b px-4 py-3 last:border-b-0 sm:odd:border-r ${role.isSystem ? "cursor-default" : "cursor-pointer hover:bg-muted/30"}`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="mt-1 size-4 shrink-0 accent-primary"
+                          checked={role.isSystem || selectedIds.has(permission.id)}
+                          disabled={role.isSystem || disabled}
+                          onChange={() => togglePermission(permission.id)}
+                        />
+                        <span className="min-w-0">
+                          <span className="flex flex-wrap items-center gap-1.5 text-sm font-medium">
+                            {permission.name}
+                            {!permission.isActive && <Badge variant="outline">tạm tắt</Badge>}
+                          </span>
+                          <code className="mt-0.5 block truncate text-xs text-muted-foreground">{permission.code}</code>
+                          <span className="mt-1 block text-xs text-muted-foreground">{permission.description}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </section>
+              )
+            })}
+
+            {!loading && groups.length === 0 && (
+              <p className="rounded-lg border border-dashed px-3 py-8 text-center text-sm text-muted-foreground">
+                {query ? "Không tìm thấy quyền phù hợp." : "Vai trò này chưa có quyền."}
+              </p>
             )}
-          </ul>
+          </div>
         </div>
 
         <DialogFooter>
           <DialogClose render={<Button type="button" variant="outline" />}>Đóng</DialogClose>
-          <Button type="button" variant="outline" onClick={reload} disabled={disabled}>
-            Tải lại
-          </Button>
+          <Button type="button" variant="outline" onClick={reload} disabled={disabled}>Tải lại</Button>
+          {!role.isSystem && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={disabled || !dirty}
+                onClick={() => setSelectedIds(new Set(savedIds))}
+              >
+                Hoàn tác
+              </Button>
+              <Button type="button" disabled={disabled || !dirty} onClick={() => void save()}>
+                {busy && <Loader2 className="animate-spin" />}
+                Lưu quyền
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
