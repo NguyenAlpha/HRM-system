@@ -1,5 +1,8 @@
 # Đánh giá Schema 0.1 — HRM
 
+> [!NOTE]
+> Đây là báo cáo lịch sử trước khi schema được chỉnh tại V20–V27; các nhận xét có thể không còn áp dụng.
+
 > **Ngày đánh giá:** 2026-09-24  
 > **Đối tượng:** Thiết kế dữ liệu, SQL migration V1–V8 và các service thực thi tính toàn vẹn dữ liệu.  
 > **Bối cảnh:** Một doanh nghiệp bán lẻ/phân phối; một trụ sở, hai chi nhánh và các kho là địa điểm làm việc. Payroll gồm lương cơ bản, phụ cấp, tăng ca.  
