@@ -1,5 +1,8 @@
 # Đánh giá Truy vấn 0.1 — HRM
 
+> [!NOTE]
+> Đây là báo cáo lịch sử trước khi repository/service được chuyển sang schema mới và mô hình cũ bị loại bỏ tại V27.
+
 > **Ngày đánh giá:** 2026-09-24  
 > **Đối tượng:** Repository, service đọc/ghi dữ liệu và khả năng hỗ trợ của index trong migration V1–V8.  
 > **Bối cảnh:** HRM một doanh nghiệp; ưu tiên đúng người, đúng phạm vi, đúng kỳ công/lương.  

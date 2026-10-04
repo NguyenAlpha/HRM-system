@@ -44,7 +44,7 @@ api/
 │   │   │       └── impl/           # Các implementation của service
 │   │   └── resources/
 │   │       ├── application.properties # Cấu hình runtime
-│   │       └── db/migration/          # Flyway migrations V1 đến V25
+│   │       └── db/migration/          # Flyway migrations V1 đến V27
 │   └── test/java/                  # Unit, integration và context tests
 ├── docs/                           # Tài liệu API và database của backend
 └── target/                         # Output Maven sinh tự động, không phải source
@@ -82,15 +82,18 @@ Các migration nằm trong `api/src/main/resources/db/migration/` và được F
 | `V21__harden_account_permission_overrides.sql` | Bổ sung audit thu hồi và ràng buộc cho permission override. |
 | `V22` – `V24` | Loại bỏ các vai trò Team Lead, Warehouse Supervisor và Branch Manager đã ngừng sử dụng. |
 | `V25__separate_employee_self_service_permissions.sql` | Tách permission tự phục vụ dành cho nhân viên. |
+| `V26__split_employee_permissions.sql` | Tách quyền quản lý nhân viên theo từng hành động. |
+| `V27__archive_and_remove_legacy_compensation_requests.sql` | Backfill, lưu trữ và loại bỏ mô hình compensation/request cũ. |
 
 ### Tài liệu backend
 
 - `api/docs/api/AUTH.md`: hợp đồng và luồng xác thực API.
 - `api/docs/api/REPORT.md`: hợp đồng API báo cáo nhân sự và lương cơ bản.
-- `api/docs/database/DATABASE_SCHEMA.md`: thiết kế schema database.
-- `api/docs/database/ENTITY_ATTRIBUTES.md`: thuộc tính các entity.
-- `api/docs/database/SCHEMA_REVIEW_0.1.md`: rà soát schema.
-- `api/docs/database/QUERY_REVIEW_0.1.md`: rà soát truy vấn.
+- `api/docs/Fix_database/DATABASE_SCHEMA.md`: schema hiện hành đã được triển khai đến V27.
+- `api/docs/database/DATABASE_SCHEMA.md`: bản thiết kế cũ, chỉ giữ để tham chiếu lịch sử.
+- `api/docs/database/ENTITY_ATTRIBUTES.md`: mô hình entity cũ, chỉ giữ để tham chiếu lịch sử.
+- `api/docs/database/SCHEMA_REVIEW_0.1.md`: báo cáo rà soát schema trước V20.
+- `api/docs/database/QUERY_REVIEW_0.1.md`: báo cáo rà soát truy vấn trước V20.
 - `api/docs/temp1.md`: tài liệu tạm thời.
 
 ## 3. Frontend `apps/web/`
