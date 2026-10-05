@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Loader2 } from "lucide-react"
@@ -41,6 +41,7 @@ import {
   type EmploymentType,
   type Page,
 } from "@/lib/employee"
+import { positionsForOrganizationUnit } from "@/lib/organization-position-filter"
 import {
   getJobPositionOptions,
   getOrganizationUnitOptions,
@@ -109,10 +110,6 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
     () => Object.fromEntries(workLocations.map((location) => [String(location.id), location.name])),
     [workLocations],
   )
-  const positionItems = useMemo(
-    () => Object.fromEntries(positions.map((position) => [String(position.id), position.title])),
-    [positions],
-  )
   const shiftItems = useMemo(
     () => ({ [NONE]: "Không xếp ca", ...Object.fromEntries(shifts.map((shift) => [String(shift.id), shift.name])) }),
     [shifts],
@@ -131,6 +128,7 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
     handleSubmit,
     control,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<AssignmentValues>({
     resolver: zodResolver(assignmentSchema),
@@ -145,6 +143,16 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
       reason: "",
     },
   })
+
+  const selectedUnitId = useWatch({ control, name: "organizationUnitId" })
+  const availablePositions = useMemo(() => positionsForOrganizationUnit(
+    orgUnits.find((unit) => String(unit.id) === selectedUnitId),
+    positions,
+  ), [orgUnits, positions, selectedUnitId])
+  const positionItems = useMemo(
+    () => Object.fromEntries(availablePositions.map((position) => [String(position.id), position.title])),
+    [availablePositions],
+  )
 
   useEffect(() => {
     let active = true
@@ -171,7 +179,12 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
         reset({
           organizationUnitId: current ? String(current.organizationUnitId) : "",
           workLocationId: current ? String(current.workLocationId) : "",
-          positionId: current ? String(current.positionId) : "",
+          positionId: current && positionsForOrganizationUnit(
+            units.find((unit) => unit.id === current.organizationUnitId),
+            jobPositions,
+          ).some((position) => position.id === current.positionId)
+            ? String(current.positionId)
+            : "",
           shiftId: current?.shiftId ? String(current.shiftId) : NONE,
           managerEmployeeId: current?.managerEmployeeId ? String(current.managerEmployeeId) : NONE,
           employmentType: current?.employmentType ?? "",
@@ -241,7 +254,10 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
                   control={control}
                   name="organizationUnitId"
                   render={({ field }) => (
-                    <Select value={field.value} items={orgUnitItems} onValueChange={field.onChange} disabled={loadingOptions}>
+                    <Select value={field.value} items={orgUnitItems} onValueChange={(value) => {
+                      field.onChange(value)
+                      setValue("positionId", "")
+                    }} disabled={loadingOptions}>
                       <SelectTrigger id="assignment-org-unit" className="w-full" aria-invalid={!!errors.organizationUnitId}>
                         <SelectValue placeholder={loadingOptions ? "Đang tải..." : "Chọn đơn vị..."} />
                       </SelectTrigger>
@@ -279,12 +295,12 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
                   control={control}
                   name="positionId"
                   render={({ field }) => (
-                    <Select value={field.value} items={positionItems} onValueChange={field.onChange} disabled={loadingOptions}>
+                    <Select value={field.value} items={positionItems} onValueChange={field.onChange} disabled={loadingOptions || !selectedUnitId || availablePositions.length === 0}>
                       <SelectTrigger id="assignment-position" className="w-full" aria-invalid={!!errors.positionId}>
-                        <SelectValue placeholder={loadingOptions ? "Đang tải..." : "Chọn vị trí..."} />
+                        <SelectValue placeholder={loadingOptions ? "Đang tải..." : !selectedUnitId ? "Chọn đơn vị trước..." : availablePositions.length === 0 ? "Chưa có vị trí phù hợp" : "Chọn vị trí..."} />
                       </SelectTrigger>
                       <SelectContent>
-                        {positions.map((position) => <SelectItem key={position.id} value={String(position.id)}>{position.title}</SelectItem>)}
+                        {availablePositions.map((position) => <SelectItem key={position.id} value={String(position.id)}>{position.title}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   )}

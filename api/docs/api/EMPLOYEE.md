@@ -52,7 +52,6 @@ Endpoint này chỉ tạo `Employee` và `EmployeeAssignment`:
 ```json
 {
   "employee": {
-    "employeeCode": "EMP00125",
     "fullName": "Nguyễn Văn An",
     "dateOfBirth": "1998-05-20",
     "gender": "MALE",
@@ -81,9 +80,8 @@ Endpoint này chỉ tạo `Employee` và `EmployeeAssignment`:
 
 | Field | Bắt buộc | Ràng buộc |
 |:------|:--------:|:----------|
-| `employeeCode` | ✅ | Không rỗng, tối đa 30 ký tự và duy nhất không phân biệt hoa thường |
 | `fullName` | ✅ | Không rỗng, tối đa 200 ký tự |
-| `dateOfBirth` | ❌ | Ngày ISO `YYYY-MM-DD` |
+| `dateOfBirth` | ✅ | Ngày ISO `YYYY-MM-DD`; phải đủ 17 tuổi tính theo ngày hiện tại tại Việt Nam |
 | `gender` | ❌ | `MALE`, `FEMALE`, `OTHER`, `UNDISCLOSED` |
 | `highestEducationLevel` | ❌ | `HIGH_SCHOOL`, `COLLEGE`, `BACHELOR`, `MASTER`, `DOCTORATE` |
 | `major` | ❌ | Tối đa 200 ký tự |
@@ -94,6 +92,8 @@ Endpoint này chỉ tạo `Employee` và `EmployeeAssignment`:
 | `hireDate` | ✅ | Ngày ISO `YYYY-MM-DD` |
 
 Các dữ liệu nhạy cảm như CCCD, email cá nhân, địa chỉ, mã số thuế và thông tin ngân hàng không được nhận tại endpoint này. Chúng thuộc API riêng có permission `employee.sensitive.manage`.
+
+`employeeCode` do server tạo theo vị trí trong `initialAssignment`: `GD` (Giám đốc), `NS` (Nhân sự), `KT` (Kế toán tiền lương), `VH` (Quản lý vận hành), `CN` (Quản lý chi nhánh), `KHO` (Giám sát kho), `TN` (Trưởng nhóm), `NV` (Nhân viên hoặc vị trí chưa cấu hình). Số thứ tự tăng riêng theo tiền tố, tối thiểu bốn chữ số. Mã không đổi khi nhân viên chuyển vị trí và không được tái sử dụng.
 
 #### Phân công ban đầu
 
@@ -118,7 +118,7 @@ Client lấy `organizationUnitId`, `workLocationId` và `positionId` từ [Organ
   "data": {
     "employee": {
       "id": 125,
-      "employeeCode": "EMP00125",
+      "employeeCode": "NS0001",
       "fullName": "Nguyễn Văn An",
       "dateOfBirth": "1998-05-20",
       "gender": "MALE",
@@ -172,7 +172,6 @@ Client lấy `organizationUnitId`, `workLocationId` và `positionId` từ [Organ
 | 404 | `JOB_POSITION_NOT_FOUND` | Không tìm thấy chức danh đang hoạt động |
 | 404 | `WORK_SHIFT_NOT_FOUND` | Không tìm thấy ca làm việc đang hoạt động |
 | 404 | `RESOURCE_NOT_FOUND` | Không tìm thấy account của người thao tác |
-| 409 | `EMPLOYEE_CODE_TAKEN` | Mã nhân viên đã tồn tại, không phân biệt hoa thường |
 | 409 | `EMAIL_TAKEN` | Work email đã được employee hoặc account khác sử dụng |
 
 ---
@@ -368,7 +367,7 @@ Cập nhật các thông tin hồ sơ thông thường được lưu trực ti�
 | Field | Cột trong `employees` | Bắt buộc | Ràng buộc |
 |:------|:----------------------|:--------:|:----------|
 | `fullName` | `full_name` | ✅ | Không rỗng, tối đa 200 ký tự |
-| `dateOfBirth` | `date_of_birth` | ❌ | Ngày ISO `YYYY-MM-DD`; `null` để xóa |
+| `dateOfBirth` | `date_of_birth` | ❌ | Ngày ISO `YYYY-MM-DD`, nếu có phải đủ 17 tuổi tính theo ngày hiện tại tại Việt Nam; `null` để xóa |
 | `gender` | `gender` | ❌ | `MALE`, `FEMALE`, `OTHER`, `UNDISCLOSED`; `null` để xóa |
 | `highestEducationLevel` | `highest_education_level` | ❌ | `HIGH_SCHOOL`, `COLLEGE`, `BACHELOR`, `MASTER`, `DOCTORATE`; `null` để xóa |
 | `major` | `major` | ❌ | Tối đa 200 ký tự; `null` để xóa |

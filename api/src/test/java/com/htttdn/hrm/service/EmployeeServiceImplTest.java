@@ -2,6 +2,7 @@ package com.htttdn.hrm.service;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -10,12 +11,17 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.htttdn.hrm.dto.request.employee.SoftDeleteEmployeeRequest;
+import com.htttdn.hrm.dto.request.employee.CreateEmployeeProfileRequest;
+import com.htttdn.hrm.dto.request.employee.CreateEmployeeRequest;
+import com.htttdn.hrm.dto.request.employee.AssignEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
+import com.htttdn.hrm.entity.enums.EmploymentType;
 import com.htttdn.hrm.exception.ConflictException;
+import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
@@ -31,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 class EmployeeServiceImplTest {
@@ -46,6 +53,72 @@ class EmployeeServiceImplTest {
     @Mock private CurrentAccountProvider currentAccountProvider;
     @Mock private EmployeeAccessScopeService employeeAccessScopeService;
     @Mock private EmployeeAssignmentService employeeAssignmentService;
+    @Mock private EmployeeCodeGenerator employeeCodeGenerator;
+
+    @Test
+    void createUsesServerGeneratedCodeFromInitialPosition() {
+        var profile = new CreateEmployeeProfileRequest(
+            "Nguyễn Văn An", LocalDate.of(2000, 1, 1), null, null, null, null, null, null, null,
+            LocalDate.of(2026, 10, 5)
+        );
+        var assignment = new AssignEmployeeRequest(
+            1L, 1L, 7L, null, null, EmploymentType.FULL_TIME,
+            LocalDate.of(2026, 10, 5), null
+        );
+        when(employeeCodeGenerator.forPosition(7L)).thenReturn("NV0001");
+        when(employeeRepository.save(any(Employee.class))).thenAnswer(invocation -> {
+            Employee employee = invocation.getArgument(0);
+            employee.setId(42L);
+            return employee;
+        });
+        when(employeeAssignmentRepository.findCurrentPrimaryCandidates(any(), any()))
+            .thenReturn(java.util.List.of());
+
+        var result = service().create(new CreateEmployeeRequest(profile, assignment));
+
+        assertEquals("NV0001", result.employee().employeeCode());
+        verify(employeeAssignmentService).createInitial(any(Employee.class), any(AssignEmployeeRequest.class));
+    }
+
+    @Test
+    void createRejectsMissingOrUnderageBirthDate() {
+        LocalDate cutoff = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")).minusYears(17);
+        var assignment = new AssignEmployeeRequest(
+            1L, 1L, 7L, null, null, EmploymentType.FULL_TIME,
+            LocalDate.of(2026, 10, 5), null
+        );
+
+        for (LocalDate birthDate : new LocalDate[] { null, cutoff.plusDays(1) }) {
+            var profile = new CreateEmployeeProfileRequest(
+                "Nguyễn Văn An", birthDate, null, null, null, null, null, null, null,
+                LocalDate.of(2026, 10, 5)
+            );
+            BusinessException exception = assertThrows(BusinessException.class,
+                () -> service().create(new CreateEmployeeRequest(profile, assignment)));
+            assertEquals(ErrorCode.VALIDATION_ERROR, exception.getErrorCode());
+            assertEquals("dateOfBirth", exception.getField());
+        }
+    }
+
+    @Test
+    void birthDateExactlySeventeenYearsAgoIsAllowed() {
+        LocalDate cutoff = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")).minusYears(17);
+        EmployeeBirthDateValidator.validate(cutoff, true);
+    }
+
+    @Test
+    void updateRejectsUnderageBirthDate() {
+        Employee employee = employee(1L);
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        LocalDate cutoff = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")).minusYears(17);
+        UpdateEmployeeRequest request = new UpdateEmployeeRequest(
+            "Employee One", cutoff.plusDays(1), null, null, null, null, null, null, null
+        );
+
+        BusinessException exception = assertThrows(BusinessException.class,
+            () -> service().update(1L, request));
+        assertEquals("dateOfBirth", exception.getField());
+    }
 
     @Test
     void updateRejectsWorkEmailOwnedByAnotherEmployee() {
@@ -138,7 +211,8 @@ class EmployeeServiceImplTest {
             refreshTokenService,
             currentAccountProvider,
             employeeAccessScopeService,
-            employeeAssignmentService
+            employeeAssignmentService,
+            employeeCodeGenerator
         );
     }
 }

@@ -43,6 +43,8 @@ import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 import com.htttdn.hrm.service.EmployeeAccessScopeService;
 import com.htttdn.hrm.service.EmployeeAssignmentService;
+import com.htttdn.hrm.service.EmployeeCodeGenerator;
+import com.htttdn.hrm.service.EmployeeBirthDateValidator;
 import com.htttdn.hrm.service.EmployeeService;
 import com.htttdn.hrm.service.RefreshTokenService;
 
@@ -68,6 +70,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final EmployeeAssignmentService employeeAssignmentService;
+    private final EmployeeCodeGenerator employeeCodeGenerator;
 
     public EmployeeServiceImpl(
         EmployeeRepository employeeRepository,
@@ -80,7 +83,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         RefreshTokenService refreshTokenService,
         CurrentAccountProvider currentAccountProvider,
         EmployeeAccessScopeService employeeAccessScopeService,
-        EmployeeAssignmentService employeeAssignmentService
+        EmployeeAssignmentService employeeAssignmentService,
+        EmployeeCodeGenerator employeeCodeGenerator
     ) {
         this.employeeRepository = employeeRepository;
         this.employeeAssignmentRepository = employeeAssignmentRepository;
@@ -93,6 +97,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         this.currentAccountProvider = currentAccountProvider;
         this.employeeAccessScopeService = employeeAccessScopeService;
         this.employeeAssignmentService = employeeAssignmentService;
+        this.employeeCodeGenerator = employeeCodeGenerator;
     }
 
     @Override
@@ -101,12 +106,14 @@ public class EmployeeServiceImpl implements EmployeeService {
         CreateEmployeeProfileRequest profile = request.employee();
         AssignEmployeeRequest assignmentRequest = request.initialAssignment();
 
+        EmployeeBirthDateValidator.validate(profile.dateOfBirth(), true);
+
         String workEmail = normalizeEmail(profile.workEmail());
-        validateCreateUniqueness(profile, workEmail);
+        validateCreateUniqueness(workEmail);
 
         Instant now = Instant.now();
         Employee employee = Employee.builder()
-            .employeeCode(profile.employeeCode().trim())
+            .employeeCode(employeeCodeGenerator.forPosition(assignmentRequest.positionId()))
             .fullName(profile.fullName().trim())
             .dateOfBirth(profile.dateOfBirth())
             .gender(profile.gender())
@@ -167,6 +174,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     public EmployeeDetailResponse update(Long id, UpdateEmployeeRequest request) {
         Employee employee = findEmployeeOrThrow(id);
         employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_UPDATE);
+
+        EmployeeBirthDateValidator.validate(request.dateOfBirth(), false);
 
         Instant now = Instant.now();
         updateWorkEmail(employee, request.workEmail(), now);
@@ -277,12 +286,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setDeletionReason(request.deletionReason());
     }
 
-    private void validateCreateUniqueness(CreateEmployeeProfileRequest request, String workEmail) {
-        if (employeeRepository.existsByEmployeeCodeIgnoreCase(request.employeeCode().trim())) {
-            throw new ConflictException(
-                ErrorCode.EMPLOYEE_CODE_TAKEN, "Employee code is already taken", "employee.employeeCode"
-            );
-        }
+    private void validateCreateUniqueness(String workEmail) {
         if (workEmail != null && (employeeRepository.existsByWorkEmailIgnoreCase(workEmail)
             || accountRepository.existsByEmailIgnoreCase(workEmail))) {
             throw new ConflictException(ErrorCode.EMAIL_TAKEN, "Work email is already taken", "employee.workEmail");

@@ -94,9 +94,8 @@ export const EMPLOYMENT_TYPE_LABELS: Record<EmploymentType, string> = {
 
 export interface CreateEmployeeInput {
   employee: {
-    employeeCode: string
     fullName: string
-    dateOfBirth: string | null
+    dateOfBirth: string
     gender: Gender | null
     highestEducationLevel: EducationLevel | null
     major: string | null

@@ -1,13 +1,14 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { RbacFeedback } from "@/components/admin/rbac-controls"
+import { EmployeeBirthDateSelect } from "@/components/employee/employee-birth-date-select"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -47,6 +48,8 @@ import {
   type Gender,
   type Page,
 } from "@/lib/employee"
+import { positionsForOrganizationUnit } from "@/lib/organization-position-filter"
+import { isEligibleEmployeeBirthDate } from "@/lib/employee-birth-date"
 import {
   getJobPositionOptions,
   getOrganizationUnitOptions,
@@ -66,10 +69,10 @@ const EMPLOYMENT_TYPE_ITEMS: Record<string, string> = { ...EMPLOYMENT_TYPE_LABEL
 
 const createEmployeeSchema = z
   .object({
-    employeeCode: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự"),
     fullName: z.string().trim().min(1, "Bắt buộc").max(200, "Tối đa 200 ký tự"),
     hireDate: z.string().min(1, "Bắt buộc"),
-    dateOfBirth: z.string().optional(),
+    dateOfBirth: z.string().min(1, "Bắt buộc chọn ngày sinh")
+      .refine((value) => !value || isEligibleEmployeeBirthDate(value), "Nhân sự phải đủ 17 tuổi"),
     gender: z.string(),
     highestEducationLevel: z.string(),
     major: z.string().max(200, "Tối đa 200 ký tự").optional(),
@@ -101,7 +104,6 @@ const createEmployeeSchema = z
 type CreateEmployeeValues = z.infer<typeof createEmployeeSchema>
 
 const EMPTY_VALUES: CreateEmployeeValues = {
-  employeeCode: "",
   fullName: "",
   hireDate: "",
   dateOfBirth: "",
@@ -141,10 +143,6 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
     () => Object.fromEntries(workLocations.map((location) => [String(location.id), location.name])),
     [workLocations],
   )
-  const positionItems = useMemo(
-    () => Object.fromEntries(positions.map((position) => [String(position.id), position.title])),
-    [positions],
-  )
   const managerItems = useMemo(
     () => ({
       [MANAGER_NONE]: "Không có",
@@ -157,11 +155,22 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateEmployeeValues>({
     resolver: zodResolver(createEmployeeSchema),
     defaultValues: EMPTY_VALUES,
   })
+
+  const selectedUnitId = useWatch({ control, name: "organizationUnitId" })
+  const availablePositions = useMemo(() => positionsForOrganizationUnit(
+    orgUnits.find((unit) => String(unit.id) === selectedUnitId),
+    positions,
+  ), [orgUnits, positions, selectedUnitId])
+  const positionItems = useMemo(
+    () => Object.fromEntries(availablePositions.map((position) => [String(position.id), position.title])),
+    [availablePositions],
+  )
 
   useEffect(() => {
     let active = true
@@ -196,9 +205,8 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
     try {
       const result = await createEmployee({
         employee: {
-          employeeCode: values.employeeCode.trim(),
           fullName: values.fullName.trim(),
-          dateOfBirth: values.dateOfBirth || null,
+          dateOfBirth: values.dateOfBirth,
           gender: values.gender === GENDER_NONE ? null : (values.gender as Gender),
           highestEducationLevel: values.highestEducationLevel === EDU_NONE ? null : (values.highestEducationLevel as EducationLevel),
           major: values.major?.trim() || null,
@@ -219,7 +227,7 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
           reason: values.reason?.trim() || null,
         },
       })
-      toast.success(`Đã tạo hồ sơ nhân sự ${result.employee.fullName}`, {
+      toast.success(`Đã tạo ${result.employee.fullName} (${result.employee.employeeCode})`, {
         description: "Tiếp theo: cấp tài khoản đăng nhập cho nhân sự này từ danh sách.",
       })
       onClose()
@@ -248,9 +256,10 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
               <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Hồ sơ nhân sự</p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-1.5">
-                  <Label htmlFor="new-emp-code">Mã nhân viên</Label>
-                  <Input id="new-emp-code" placeholder="VD: EMP00125" aria-invalid={!!errors.employeeCode} {...register("employeeCode")} />
-                  {errors.employeeCode && <p className="text-xs font-medium text-destructive">{errors.employeeCode.message}</p>}
+                  <Label>Mã nhân viên</Label>
+                  <p className="flex min-h-9 items-center rounded-md border bg-muted/50 px-3 text-sm text-muted-foreground">
+                    Tự tạo theo vị trí sau khi lưu
+                  </p>
                 </div>
                 <div className="grid gap-1.5">
                   <Label htmlFor="new-emp-name">Họ tên</Label>
@@ -267,7 +276,11 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
                 </div>
                 <div className="grid gap-1.5">
                   <Label htmlFor="new-emp-dob">Ngày sinh</Label>
-                  <Input id="new-emp-dob" type="date" {...register("dateOfBirth")} />
+                  <Controller control={control} name="dateOfBirth" render={({ field }) => (
+                    <EmployeeBirthDateSelect id="new-emp-dob" value={field.value}
+                      onChange={field.onChange} invalid={!!errors.dateOfBirth} />
+                  )} />
+                  {errors.dateOfBirth && <p className="text-xs font-medium text-destructive">{errors.dateOfBirth.message}</p>}
                 </div>
               </div>
 
@@ -353,7 +366,10 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
                     control={control}
                     name="organizationUnitId"
                     render={({ field }) => (
-                      <Select value={field.value} items={orgUnitItems} onValueChange={field.onChange} disabled={loadingOptions}>
+                      <Select value={field.value} items={orgUnitItems} onValueChange={(value) => {
+                        field.onChange(value)
+                        setValue("positionId", "")
+                      }} disabled={loadingOptions}>
                         <SelectTrigger id="new-emp-org-unit" className="w-full" aria-invalid={!!errors.organizationUnitId}>
                           <SelectValue placeholder={loadingOptions ? "Đang tải..." : "Chọn đơn vị..."} />
                         </SelectTrigger>
@@ -392,12 +408,12 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
                     control={control}
                     name="positionId"
                     render={({ field }) => (
-                      <Select value={field.value} items={positionItems} onValueChange={field.onChange} disabled={loadingOptions}>
+                      <Select value={field.value} items={positionItems} onValueChange={field.onChange} disabled={loadingOptions || !selectedUnitId || availablePositions.length === 0}>
                         <SelectTrigger id="new-emp-position" className="w-full" aria-invalid={!!errors.positionId}>
-                          <SelectValue placeholder={loadingOptions ? "Đang tải..." : "Chọn vị trí..."} />
+                          <SelectValue placeholder={loadingOptions ? "Đang tải..." : !selectedUnitId ? "Chọn đơn vị trước..." : availablePositions.length === 0 ? "Chưa có vị trí phù hợp" : "Chọn vị trí..."} />
                         </SelectTrigger>
                         <SelectContent>
-                          {positions.map((position) => <SelectItem key={position.id} value={String(position.id)}>{position.title}</SelectItem>)}
+                          {availablePositions.map((position) => <SelectItem key={position.id} value={String(position.id)}>{position.title}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     )}

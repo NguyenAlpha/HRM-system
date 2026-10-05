@@ -2,7 +2,7 @@
 
 > Đây là tài liệu thiết kế cơ sở dữ liệu đã được triển khai tăng dần bởi Flyway migration
 > `V20__align_core_schema_with_approved_design.sql` và hoàn tất dọn mô hình cũ tại
-> `V27__archive_and_remove_legacy_compensation_requests.sql`.
+> `V28__create_employee_code_counters.sql`.
 >
 > Hệ thống phục vụ một doanh nghiệp bán lẻ/phân phối có trụ sở, chi nhánh và kho. Kho được xem là địa điểm làm việc, không quản lý hàng hóa hoặc tồn kho.
 >
@@ -394,12 +394,21 @@ erDiagram
 
 ## 3. Hồ sơ, phân công và lương cơ bản
 
+### `employee_code_counters` — Bộ đếm cấp mã nhân viên
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `prefix` | VARCHAR(10) | PK | Tiền tố mã theo vị trí ban đầu |
+| `next_number` | BIGINT | NOT NULL, CHECK > 0 | Số tiếp theo được cấp cho tiền tố |
+
+V28 khởi tạo bộ đếm từ các mã `GD`, `NS`, `KT`, `VH`, `CN`, `KHO`, `TN`, `NV` đã tồn tại. Việc lấy số và tạo employee nằm trong cùng transaction; bảng này là dữ liệu kỹ thuật, không thuộc 24 bảng nghiệp vụ trong sơ đồ.
+
 ### `employees` — Hồ sơ nhân sự
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
-| `employee_code` | VARCHAR(30) | NOT NULL, UNIQUE | Mã nhân viên, không tái sử dụng |
+| `employee_code` | VARCHAR(30) | NOT NULL, UNIQUE | Mã nhân viên do server cấp, không tái sử dụng |
 | `full_name` | VARCHAR(200) | NOT NULL | Họ tên |
 | `date_of_birth` | DATE | | Ngày sinh |
 | `gender` | VARCHAR(20) | | `MALE` / `FEMALE` / `OTHER` / `UNDISCLOSED` |

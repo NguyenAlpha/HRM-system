@@ -92,12 +92,10 @@ public class OrganizationCompanyOwnerProvisioningService {
     private Employee createCompanyOwnerEmployee(CreateCompanyOwnerEmployeeRequest request) {
         return employeeProvisioningService.createActiveMinimalEmployee(
             new EmployeeProvisioningService.MinimalEmployeeCommand(
-                request.employeeCode(),
                 request.fullName(),
                 request.workEmail(),
                 request.phone(),
                 request.hireDate(),
-                "employee.employeeCode",
                 "employee.workEmail"
             )
         );

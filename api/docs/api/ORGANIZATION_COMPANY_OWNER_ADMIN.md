@@ -25,7 +25,6 @@ Tạo đồng thời hồ sơ employee tối thiểu, account đăng nhập và 
 ```json
 {
   "employee": {
-    "employeeCode": "OWNER001",
     "fullName": "Nguyen Van Chu",
     "workEmail": "owner@company.com",
     "phone": "0901234567",
@@ -42,7 +41,6 @@ Tạo đồng thời hồ sơ employee tối thiểu, account đăng nhập và 
 
 | Field | Type | Bắt buộc | Ràng buộc |
 |:------|:-----|:--------:|:----------|
-| `employee.employeeCode` | string | ✅ | Tối đa 30 ký tự; chỉ `A-Z`, `0-9`, `_`, `-`; duy nhất không phân biệt hoa thường |
 | `employee.fullName` | string | ✅ | Không rỗng, tối đa 200 ký tự |
 | `employee.workEmail` | string | ✅ | Email hợp lệ, tối đa 100 ký tự, duy nhất không phân biệt hoa thường |
 | `employee.phone` | string | ❌ | Tối đa 20 ký tự |
@@ -53,6 +51,7 @@ Tạo đồng thời hồ sơ employee tối thiểu, account đăng nhập và 
 | `directorAppointmentReason` | string | ✅ | Lý do bổ nhiệm Director, tối đa 500 ký tự; lưu audit tách biệt với quyền sở hữu |
 
 Employee được tạo ở trạng thái `ACTIVE`; account ở trạng thái `PENDING` và chưa có mật khẩu. Email account lấy từ `employee.workEmail`, được trim và chuyển thành chữ thường.
+Mã nhân viên được server cấp với tiền tố `GD` vì workflow này đồng thời bổ nhiệm Director; mã được trả trong response và giữ nguyên về sau.
 
 ### Transaction và invariant
 
@@ -80,7 +79,7 @@ Hai role được lưu thành hai assignment riêng. Sau này doanh nghiệp có
   "success": true,
   "data": {
     "employeeId": 125,
-    "employeeCode": "OWNER001",
+    "employeeCode": "GD0001",
     "fullName": "Nguyen Van Chu",
     "accountProvisioning": {
       "account": {
