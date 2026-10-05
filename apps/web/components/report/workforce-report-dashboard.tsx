@@ -69,6 +69,8 @@ export function WorkforceReportDashboard({
   const loadReports = useCallback(async (nextFilters: ReportFilters) => {
     setLoading(true)
     setError(null)
+    if (canReadHr) setHrReport(null)
+    if (canReadPayroll) setSalaryReport(null)
     const requests: Promise<void>[] = []
     if (canReadHr) {
       requests.push(getHrWorkforceReport(nextFilters).then(setHrReport))
@@ -76,15 +78,16 @@ export function WorkforceReportDashboard({
     if (canReadPayroll) {
       requests.push(getPayrollSalaryReport(nextFilters).then(setSalaryReport))
     }
-    try {
-      await Promise.all(requests)
-    } catch (caught) {
-      const message = apiErrorMessage(caught)
+    const results = await Promise.allSettled(requests)
+    const failedRequest = results.find(
+      (result): result is PromiseRejectedResult => result.status === "rejected",
+    )
+    if (failedRequest) {
+      const message = apiErrorMessage(failedRequest.reason)
       setError(message)
-      if (isPortalSessionExpired(caught)) onSessionExpired()
-    } finally {
-      setLoading(false)
+      if (isPortalSessionExpired(failedRequest.reason)) onSessionExpired()
     }
+    setLoading(false)
   }, [canReadHr, canReadPayroll, onSessionExpired])
 
   useEffect(() => {
@@ -100,12 +103,16 @@ export function WorkforceReportDashboard({
         if (active) setSalaryReport(report)
       }))
     }
-    Promise.all(requests)
-      .catch((caught) => {
+    Promise.allSettled(requests)
+      .then((results) => {
         if (!active) return
-        const message = apiErrorMessage(caught)
+        const failedRequest = results.find(
+          (result): result is PromiseRejectedResult => result.status === "rejected",
+        )
+        if (!failedRequest) return
+        const message = apiErrorMessage(failedRequest.reason)
         setError(message)
-        if (isPortalSessionExpired(caught)) onSessionExpired()
+        if (isPortalSessionExpired(failedRequest.reason)) onSessionExpired()
       })
       .finally(() => {
         if (active) setLoading(false)

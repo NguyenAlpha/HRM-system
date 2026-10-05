@@ -3,6 +3,10 @@
 API báo cáo tổng hợp nhân sự. Mọi truy vấn đều áp dụng phạm vi của role assignment đang có
 hiệu lực; dữ liệu nhân viên và phân công được xét tại `asOfDate`.
 
+`HR_MANAGER` được seed cả `report.hr.read` và `report.payroll.read`, vì vậy có thể xem đầy đủ
+thống kê trình độ, thâm niên và lương cơ bản trong phạm vi toàn công ty. Các role payroll vẫn
+chỉ được seed `report.payroll.read`.
+
 ## Bộ lọc chung
 
 | Query parameter | Bắt buộc | Ý nghĩa |

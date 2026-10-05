@@ -65,6 +65,7 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "attendance.manage",
             "attendance.overtime.approve",
             "report.hr.read",
+            "report.payroll.read",
             "employee.sensitive.read",
             "employee.sensitive.manage",
             "organization.read",
