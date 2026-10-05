@@ -31,7 +31,6 @@ export interface CompanyOwnerProvisioningResult {
 
 export interface BootstrapCompanyOwnerInput {
   employee: {
-    employeeCode: string
     fullName: string
     workEmail: string
     phone: string | null

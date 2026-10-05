@@ -26,12 +26,6 @@ import { bootstrapCompanyOwner, type CompanyOwnerProvisioningResult } from "@/li
 
 const bootstrapSchema = z
   .object({
-    employeeCode: z
-      .string()
-      .trim()
-      .min(1, "Bắt buộc")
-      .max(30, "Tối đa 30 ký tự")
-      .regex(/^[A-Z0-9_-]+$/, "Chỉ gồm chữ hoa, số, gạch dưới, gạch ngang"),
     fullName: z.string().trim().min(1, "Bắt buộc").max(200, "Tối đa 200 ký tự"),
     workEmail: z
       .string()
@@ -75,7 +69,6 @@ export function CompanyOwnerProvision({ onSessionExpired }: { onSessionExpired: 
     try {
       const response = await bootstrapCompanyOwner({
         employee: {
-          employeeCode: values.employeeCode.trim(),
           fullName: values.fullName.trim(),
           workEmail: values.workEmail.trim(),
           phone: values.phone?.trim() || null,
@@ -180,9 +173,10 @@ export function CompanyOwnerProvision({ onSessionExpired }: { onSessionExpired: 
 
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
-              <Label htmlFor="owner-code">Mã nhân viên</Label>
-              <Input id="owner-code" placeholder="VD: OWNER001" aria-invalid={!!errors.employeeCode} {...register("employeeCode")} />
-              {errors.employeeCode && <p className="text-xs font-medium text-destructive">{errors.employeeCode.message}</p>}
+              <Label>Mã nhân viên</Label>
+              <p className="flex min-h-9 items-center rounded-md border bg-muted/50 px-3 text-sm text-muted-foreground">
+                Tự tạo mã GD sau khi lưu
+              </p>
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="owner-name">Họ tên</Label>

@@ -12,13 +12,10 @@ import jakarta.validation.constraints.Size;
 
 public record CreateEmployeeProfileRequest(
     @NotBlank
-    @Size(max = 30)
-    String employeeCode,
-
-    @NotBlank
     @Size(max = 200)
     String fullName,
 
+    @NotNull
     LocalDate dateOfBirth,
     Gender gender,
     EducationLevel highestEducationLevel,

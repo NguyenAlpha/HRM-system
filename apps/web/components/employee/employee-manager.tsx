@@ -10,6 +10,7 @@ import { BadgeCheck, BriefcaseBusiness, Ellipsis, Eye, KeyRound, Loader2, Pencil
 import { toast } from "sonner"
 
 import { EmployeeAssignmentDialog } from "@/components/employee/employee-assignment-dialog"
+import { EmployeeBirthDateSelect } from "@/components/employee/employee-birth-date-select"
 import { EmployeeCreateDialog } from "@/components/employee/employee-create-dialog"
 import { EmployeeDetailDialog } from "@/components/employee/employee-detail-dialog"
 import { EmployeeProvisionDialog } from "@/components/employee/employee-provision-dialog"
@@ -74,6 +75,7 @@ import {
   type EmployeeSummary,
   type Page,
 } from "@/lib/employee"
+import { isEligibleEmployeeBirthDate } from "@/lib/employee-birth-date"
 
 const GENDER_NONE = "NONE"
 const EDU_NONE = "NONE"
@@ -84,7 +86,8 @@ const EDUCATION_ITEMS: Record<string, string> = { [EDU_NONE]: "Không chọn", .
 const employeeEditSchema = z
   .object({
     fullName: z.string().trim().min(1, "Bắt buộc").max(200, "Tối đa 200 ký tự"),
-    dateOfBirth: z.string().optional(),
+    dateOfBirth: z.string().refine((value) => !value || isEligibleEmployeeBirthDate(value),
+      "Nhân sự phải đủ 17 tuổi"),
     gender: z.string(),
     highestEducationLevel: z.string(),
     major: z.string().max(200, "Tối đa 200 ký tự").optional(),
@@ -453,7 +456,11 @@ export function EmployeeManager({ capabilities, onSessionExpired }: {
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-1.5">
                   <Label htmlFor="emp-dob">Ngày sinh</Label>
-                  <Input id="emp-dob" type="date" {...register("dateOfBirth")} />
+                  <Controller control={control} name="dateOfBirth" render={({ field }) => (
+                    <EmployeeBirthDateSelect key={`${editing?.id}-${dialogOpen}`} id="emp-dob" value={field.value}
+                      onChange={field.onChange} invalid={!!errors.dateOfBirth} />
+                  )} />
+                  {errors.dateOfBirth && <p className="text-xs font-medium text-destructive">{errors.dateOfBirth.message}</p>}
                 </div>
                 <div className="grid gap-1.5">
                   <Label htmlFor="emp-gender">Giới tính</Label>

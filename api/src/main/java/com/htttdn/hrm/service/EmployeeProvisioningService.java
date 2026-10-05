@@ -23,21 +23,17 @@ import com.htttdn.hrm.repository.EmployeeRepository;
 public class EmployeeProvisioningService {
 
     private final EmployeeRepository employeeRepository;
+    private final EmployeeCodeGenerator employeeCodeGenerator;
 
-    public EmployeeProvisioningService(EmployeeRepository employeeRepository) {
+    public EmployeeProvisioningService(
+        EmployeeRepository employeeRepository,
+        EmployeeCodeGenerator employeeCodeGenerator
+    ) {
         this.employeeRepository = employeeRepository;
+        this.employeeCodeGenerator = employeeCodeGenerator;
     }
 
     public Employee createActiveMinimalEmployee(MinimalEmployeeCommand command) {
-        String employeeCode = command.employeeCode().trim();
-        if (employeeRepository.existsByEmployeeCodeIgnoreCase(employeeCode)) {
-            throw new ConflictException(
-                ErrorCode.EMPLOYEE_CODE_TAKEN,
-                "Employee code is already taken",
-                command.employeeCodeField()
-            );
-        }
-
         String workEmail = command.workEmail().trim().toLowerCase(Locale.ROOT);
         if (employeeRepository.existsByWorkEmailIgnoreCase(workEmail)) {
             throw new ConflictException(
@@ -49,7 +45,7 @@ public class EmployeeProvisioningService {
 
         Instant now = Instant.now();
         return employeeRepository.save(Employee.builder()
-            .employeeCode(employeeCode)
+            .employeeCode(employeeCodeGenerator.forDirector())
             .fullName(command.fullName().trim())
             .workEmail(workEmail)
             .phone(normalizeNullable(command.phone()))
@@ -69,12 +65,10 @@ public class EmployeeProvisioningService {
     }
 
     public record MinimalEmployeeCommand(
-        String employeeCode,
         String fullName,
         String workEmail,
         String phone,
         LocalDate hireDate,
-        String employeeCodeField,
         String workEmailField
     ) {
     }
