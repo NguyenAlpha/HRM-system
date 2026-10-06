@@ -1,9 +1,9 @@
 # Database Schema — Hệ thống quản lý nhân sự HRM
 
-> Đây là tài liệu schema hiện hành. Các mục 1–14 ghi lại thiết kế lõi được triển khai từ
-> `V20__align_core_schema_with_approved_design.sql` đến `V28__create_employee_code_counters.sql`;
-> mục 15 mô tả phần mở rộng runtime V29–V34. Khi một mô tả lõi khác với phụ lục, migration mới
-> và phụ lục V29–V34 là nguồn áp dụng.
+> Đây là tài liệu schema hiện hành, mô tả database runtime sau Flyway V34. Mục 15 giữ lịch sử
+> các migration V29–V34 để tra cứu thay đổi; định nghĩa bảng và cột đầy đủ nằm ở các mục 1–14.
+> Khi tài liệu khác với database, migration trong `api/src/main/resources/db/migration/` là
+> nguồn chuẩn.
 >
 > Hệ thống phục vụ một doanh nghiệp bán lẻ/phân phối có trụ sở, chi nhánh và kho. Kho được xem là địa điểm làm việc, không quản lý hàng hóa hoặc tồn kho.
 >
@@ -40,12 +40,7 @@ Nhân viên nghỉ việc
 
 Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 
-### 1.2. Danh sách 24 bảng nghiệp vụ của thiết kế lõi V28
-
-Schema runtime V34 bổ sung `company_holidays`, `employee_payroll_profiles`,
-`employee_tax_dependents`, `payroll_tax_rules`, `payroll_tax_brackets` và
-`payroll_insurance_rules`, nâng tổng số bảng nghiệp vụ lên 30. Bảng kỹ thuật
-`employee_code_counters` không nằm trong con số này.
+### 1.2. Danh sách 30 bảng nghiệp vụ của schema runtime V34
 
 | Nhóm | Các bảng |
 |---|---|
@@ -54,8 +49,13 @@ Schema runtime V34 bổ sung `company_holidays`, `employee_payroll_profiles`,
 | Chính sách phụ cấp | `position_allowance_rules`, `seniority_allowance_rules` |
 | Tài khoản và RBAC | `accounts`, `account_activation_tokens`, `refresh_tokens`, `permissions`, `roles`, `role_permissions`, `role_assignment_requests`, `account_role_assignments`, `account_permission_overrides` |
 | Nghỉ phép | `leave_requests` |
-| Chấm công | `work_shifts`, `attendance_records` |
+| Lịch và chấm công | `company_holidays`, `work_shifts`, `attendance_records` |
+| Hồ sơ khấu trừ | `employee_payroll_profiles`, `employee_tax_dependents` |
+| Quy tắc thuế và bảo hiểm | `payroll_tax_rules`, `payroll_tax_brackets`, `payroll_insurance_rules` |
 | Tính lương | `payroll_periods`, `payslips`, `payslip_items` |
+
+Bảng kỹ thuật `employee_code_counters` không nằm trong con số 30 này. Tính cả nó và hai bảng
+archive ở mục 6.1, database runtime có 33 bảng.
 
 Hai bảng `legacy_employee_compensation_archive` và `legacy_employee_request_archive`
 chỉ là snapshot kiểm toán được tạo tại V27. Chúng không thuộc mô hình nghiệp vụ đang hoạt động,
@@ -63,7 +63,7 @@ không có JPA entity/repository và không được ghi thêm sau migration.
 
 ### 1.3. Sơ đồ quan hệ tổng quát
 
-Sơ đồ có đủ 24 bảng nghiệp vụ và các thuộc tính nghiệp vụ chính. Hai bảng archive V27 không tham gia quan hệ runtime nên được mô tả riêng. Các cột kỹ thuật, người tạo/người duyệt và quan hệ kiểm toán được trình bày trong phần định nghĩa bảng bên dưới để sơ đồ dễ đọc. Chính sách thâm niên được áp dụng bằng thuật toán theo số năm và thời gian hiệu lực, không có khóa ngoại trực tiếp từ nhân viên.
+Sơ đồ có đủ 30 bảng nghiệp vụ và các thuộc tính nghiệp vụ chính. Hai bảng archive V27 không tham gia quan hệ runtime nên được mô tả riêng. Các cột kỹ thuật, người tạo/người duyệt và quan hệ kiểm toán được trình bày trong phần định nghĩa bảng bên dưới để sơ đồ dễ đọc. Chính sách thâm niên được áp dụng bằng thuật toán theo số năm và thời gian hiệu lực, không có khóa ngoại trực tiếp từ nhân viên. `company_holidays` đứng độc lập trong sơ đồ vì nó sửa lịch làm việc chung chứ không tham chiếu bản ghi nào.
 
 ```mermaid
 erDiagram
@@ -183,6 +183,7 @@ erDiagram
         bigint id PK
         varchar code UK
         varchar name
+        varchar grant_policy
     }
 
     ROLE_PERMISSIONS {
@@ -252,10 +253,12 @@ erDiagram
         timestamptz check_in_at
         timestamptz check_out_at
         integer payable_minutes
+        integer leave_minutes
         integer late_minutes
         integer early_leave_minutes
         integer overtime_minutes
         numeric overtime_multiplier
+        boolean overtime_tax_exempt
         varchar status
     }
 
@@ -265,6 +268,7 @@ erDiagram
         smallint month
         date period_start
         date period_end
+        date tax_payment_date
         varchar status
     }
 
@@ -281,7 +285,78 @@ erDiagram
         numeric allowance_pay
         numeric overtime_pay
         numeric gross_pay
+        bigint payroll_profile_id FK
+        bigint insurance_rule_id FK
+        bigint tax_rule_id FK
+        numeric insurance_salary_base
+        numeric unemployment_insurance_base
+        numeric employee_social_insurance
+        numeric employee_health_insurance
+        numeric employee_unemployment_insurance
+        numeric tax_exempt_overtime_pay
+        numeric taxable_income
+        numeric personal_income_tax
         numeric net_pay
+    }
+
+    COMPANY_HOLIDAYS {
+        bigint id PK
+        date holiday_date UK
+        varchar name
+    }
+
+    EMPLOYEE_PAYROLL_PROFILES {
+        bigint id PK
+        bigint employee_id FK
+        date effective_from
+        date effective_to
+        boolean tax_resident
+        boolean social_insurance
+        boolean health_insurance
+        boolean unemployment_insurance
+        numeric insurance_salary
+        smallint wage_region
+    }
+
+    EMPLOYEE_TAX_DEPENDENTS {
+        bigint id PK
+        bigint employee_id FK
+        varchar full_name
+        varchar identifier
+        date effective_from
+        date effective_to
+    }
+
+    PAYROLL_TAX_RULES {
+        bigint id PK
+        date effective_from
+        date effective_to
+        numeric personal_deduction
+        numeric dependent_deduction
+        text source_reference
+    }
+
+    PAYROLL_TAX_BRACKETS {
+        bigint tax_rule_id PK
+        numeric lower_bound PK
+        numeric upper_bound
+        numeric rate
+    }
+
+    PAYROLL_INSURANCE_RULES {
+        bigint id PK
+        date effective_from
+        date effective_to
+        numeric social_rate
+        numeric health_rate
+        numeric unemployment_rate
+        numeric social_health_cap
+        integer unemployment_cap_multiplier
+        numeric region_1_minimum
+        numeric region_2_minimum
+        numeric region_3_minimum
+        numeric region_4_minimum
+        text source_reference
     }
 
     PAYSLIP_ITEMS {
@@ -324,8 +399,14 @@ erDiagram
     EMPLOYEES ||--o{ ATTENDANCE_RECORDS : employee_id
     WORK_SHIFTS ||--o{ ATTENDANCE_RECORDS : shift_id
     LEAVE_REQUESTS |o--o{ ATTENDANCE_RECORDS : leave_request_id
+    EMPLOYEES ||--o{ EMPLOYEE_PAYROLL_PROFILES : employee_id
+    EMPLOYEES ||--o{ EMPLOYEE_TAX_DEPENDENTS : employee_id
+    PAYROLL_TAX_RULES ||--o{ PAYROLL_TAX_BRACKETS : tax_rule_id
     PAYROLL_PERIODS ||--o{ PAYSLIPS : payroll_period_id
     EMPLOYEES ||--o{ PAYSLIPS : employee_id
+    EMPLOYEE_PAYROLL_PROFILES |o--o{ PAYSLIPS : payroll_profile_id
+    PAYROLL_TAX_RULES |o--o{ PAYSLIPS : tax_rule_id
+    PAYROLL_INSURANCE_RULES |o--o{ PAYSLIPS : insurance_rule_id
     PAYSLIPS ||--o{ PAYSLIP_ITEMS : payslip_id
 ```
 
@@ -603,9 +684,13 @@ Ví dụ dữ liệu:
 | `description` | TEXT | | Mô tả |
 | `is_system` | BOOLEAN | NOT NULL, DEFAULT false | Vai trò hệ thống |
 | `is_active` | BOOLEAN | NOT NULL, DEFAULT true | Trạng thái |
+| `grant_policy` | VARCHAR(30) | | Workflow được phép dùng để cấp vai trò |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 | `deleted_at` | TIMESTAMPTZ | | Xóa mềm với vai trò tùy chỉnh |
+
+Giá trị `grant_policy`: `AUTO` cấp ngay khi account được tạo, `HR_ASSIGNABLE` cho HR tự gán,
+`OWNER_APPROVAL` cần Company Owner duyệt, `SYSTEM_ONLY` chỉ seeder gán.
 
 ### `role_permissions` — Quyền mặc định của vai trò
 
@@ -774,7 +859,21 @@ Các bảng archive không có khóa ngoại để dữ liệu kiểm toán khô
 
 ---
 
-## 7. Ca làm việc, chấm công và tăng ca
+## 7. Lịch làm việc, ca, chấm công và tăng ca
+
+### `company_holidays` — Ngày lễ công ty
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `holiday_date` | DATE | NOT NULL, UNIQUE | Ngày nghỉ lễ |
+| `name` | VARCHAR(150) | NOT NULL | Tên ngày lễ |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Thời điểm tạo |
+
+> Lịch làm việc chuẩn là thứ 2 đến thứ 7; ngày có trong bảng này bị loại khỏi lịch đó. Chỉ có
+> ngày lễ do công ty tự khai báo, không nạp sẵn lịch lễ quốc gia. Bảng không xóa mềm vì thêm
+> hoặc bớt một ngày lễ làm thay đổi số ngày công chuẩn của kỳ: thay đổi đưa kỳ lương
+> `CALCULATED` về `DRAFT` để tính lại, và bị chặn từ `APPROVED` trở đi.
 
 ### `work_shifts` — Danh mục ca làm việc
 
@@ -810,12 +909,14 @@ Các bảng archive không có khóa ngoại để dữ liệu kiểm toán khô
 | `check_out_at` | TIMESTAMPTZ | | Giờ ra thực tế |
 | `worked_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút làm thực tế |
 | `payable_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút được tính lương cơ bản |
+| `leave_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút nghỉ theo đơn đã duyệt, tách khỏi phút làm thực tế |
 | `late_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút đi trễ |
 | `early_leave_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút về sớm |
 | `overtime_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút tăng ca được duyệt |
 | `overtime_multiplier` | NUMERIC(8,4) | NOT NULL, DEFAULT 1, CHECK > 0 | Hệ số tăng ca |
 | `overtime_approved_by_account_id` | BIGINT | FK → accounts | Người duyệt tăng ca |
 | `overtime_approved_at` | TIMESTAMPTZ | | Thời điểm duyệt tăng ca |
+| `overtime_tax_exempt` | BOOLEAN | NOT NULL, DEFAULT false | Người duyệt xác nhận khoản tăng ca đủ điều kiện miễn thuế TNCN |
 | `status` | VARCHAR(30) | NOT NULL | Trạng thái ngày công |
 | `note` | TEXT | | Lý do điều chỉnh |
 | `updated_by_account_id` | BIGINT | FK → accounts | Người sửa cuối |
@@ -896,6 +997,107 @@ Quy tắc:
 - Thai sản không bị xem là nghỉ không phép; khoản BHXH thai sản nằm ngoài payroll MVP.
 - Phụ cấp chức vụ và thâm niên được lấy theo chính sách có hiệu lực tại kỳ lương; thay đổi giữa kỳ được phân bổ theo thời gian hiệu lực.
 - Trước khi duyệt có thể tính lại phiếu nháp; từ `APPROVED` trở đi dữ liệu bất biến.
+
+### 8.3. Hồ sơ khấu trừ của nhân viên
+
+Hai bảng dưới đây là dữ liệu do HR nhập cho từng nhân viên. Cả hai đều có thời gian hiệu lực
+để tính lại đúng các kỳ lịch sử.
+
+#### `employee_payroll_profiles` — Hồ sơ bảo hiểm và thuế
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `employee_id` | BIGINT | FK → employees, NOT NULL | Nhân viên |
+| `effective_from` | DATE | NOT NULL | Ngày bắt đầu hiệu lực |
+| `effective_to` | DATE | | Ngày kết thúc, null là đang mở |
+| `tax_resident` | BOOLEAN | NOT NULL | Cá nhân cư trú thuế |
+| `social_insurance` | BOOLEAN | NOT NULL | Có tham gia BHXH |
+| `health_insurance` | BOOLEAN | NOT NULL | Có tham gia BHYT |
+| `unemployment_insurance` | BOOLEAN | NOT NULL | Có tham gia BHTN |
+| `insurance_salary` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Lương làm căn cứ đóng do HR xác nhận theo hợp đồng |
+| `wage_region` | SMALLINT | NOT NULL, CHECK 1..4 | Vùng lương tối thiểu, dùng tính trần BHTN |
+| `created_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người nhập |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Thời điểm tạo |
+
+> `CHECK (effective_to IS NULL OR effective_to >= effective_from)`.
+> `EXCLUDE USING GIST` chặn hai hồ sơ của cùng một nhân viên có khoảng hiệu lực chồng nhau.
+> `insurance_salary` tách khỏi `gross_pay`: tăng ca và phụ cấp không tự động trở thành căn cứ đóng.
+> Nhân viên không cư trú chưa được tính tự động và sẽ nhận lỗi rõ ràng khi tính lương.
+
+#### `employee_tax_dependents` — Người phụ thuộc giảm trừ
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `employee_id` | BIGINT | FK → employees, NOT NULL | Nhân viên đăng ký |
+| `full_name` | VARCHAR(200) | NOT NULL | Họ tên người phụ thuộc |
+| `identifier` | VARCHAR(50) | | Mã số thuế hoặc giấy tờ tùy thân |
+| `effective_from` | DATE | NOT NULL | Ngày bắt đầu được giảm trừ |
+| `effective_to` | DATE | | Ngày kết thúc, null là đang mở |
+| `created_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người nhập |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Thời điểm tạo |
+
+> `CHECK (effective_to IS NULL OR effective_to >= effective_from)`. Từ V32, `EXCLUDE USING GIST`
+> trên `(employee_id, lower(full_name), khoảng hiệu lực)` chặn khai trùng một người phụ thuộc
+> trong cùng thời gian.
+
+### 8.4. Quy tắc thuế và bảo hiểm theo thời gian hiệu lực
+
+Ba bảng dưới đây là dữ liệu pháp lý, được nạp bằng migration chứ không qua API. Mỗi bộ quy tắc
+có khoảng hiệu lực riêng; phiếu lương snapshot lại `id` của bộ quy tắc đã dùng để tính.
+
+#### `payroll_tax_rules` — Mức giảm trừ thuế TNCN
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `effective_from` | DATE | NOT NULL | Ngày bắt đầu hiệu lực |
+| `effective_to` | DATE | | Ngày kết thúc, null là đang mở |
+| `personal_deduction` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Giảm trừ bản thân mỗi tháng |
+| `dependent_deduction` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Giảm trừ mỗi người phụ thuộc mỗi tháng |
+| `source_reference` | TEXT | NOT NULL | Căn cứ pháp lý của bộ quy tắc |
+
+> `EXCLUDE USING GIST` chặn hai bộ quy tắc có khoảng hiệu lực chồng nhau. Bộ nạp sẵn áp dụng
+> từ 01/01/2026 và V32 đóng hiệu lực tại 31/12/2026, nên kỳ lương ngoài năm 2026 sẽ dừng với
+> lỗi yêu cầu bổ sung quy tắc thay vì tính bằng số liệu cũ.
+
+#### `payroll_tax_brackets` — Biểu thuế lũy tiến từng phần
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `tax_rule_id` | BIGINT | FK → payroll_tax_rules, NOT NULL, PK | Bộ quy tắc chứa bậc thuế |
+| `lower_bound` | NUMERIC(15,2) | NOT NULL, CHECK >= 0, PK | Cận dưới thu nhập tính thuế tháng |
+| `upper_bound` | NUMERIC(15,2) | | Cận trên, null là bậc cao nhất |
+| `rate` | NUMERIC(6,5) | NOT NULL, CHECK 0..1 | Thuế suất của bậc |
+
+> Khóa chính là `(tax_rule_id, lower_bound)`.
+> `CHECK (upper_bound IS NULL OR upper_bound > lower_bound)`.
+
+#### `payroll_insurance_rules` — Tỷ lệ và trần đóng bảo hiểm
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `effective_from` | DATE | NOT NULL | Ngày bắt đầu hiệu lực |
+| `effective_to` | DATE | | Ngày kết thúc, null là đang mở |
+| `social_rate` | NUMERIC(6,5) | NOT NULL | Tỷ lệ BHXH phần nhân viên |
+| `health_rate` | NUMERIC(6,5) | NOT NULL | Tỷ lệ BHYT phần nhân viên |
+| `unemployment_rate` | NUMERIC(6,5) | NOT NULL | Tỷ lệ BHTN phần nhân viên |
+| `social_health_cap` | NUMERIC(15,2) | NOT NULL | Trần căn cứ đóng BHXH/BHYT |
+| `unemployment_cap_multiplier` | INTEGER | NOT NULL | Số lần lương tối thiểu vùng làm trần BHTN |
+| `region_1_minimum` | NUMERIC(15,2) | NOT NULL | Lương tối thiểu vùng I |
+| `region_2_minimum` | NUMERIC(15,2) | NOT NULL | Lương tối thiểu vùng II |
+| `region_3_minimum` | NUMERIC(15,2) | NOT NULL | Lương tối thiểu vùng III |
+| `region_4_minimum` | NUMERIC(15,2) | NOT NULL | Lương tối thiểu vùng IV |
+| `source_reference` | TEXT | NOT NULL | Căn cứ pháp lý của bộ quy tắc |
+
+> `EXCLUDE USING GIST` chặn khoảng hiệu lực chồng nhau. Trần BHXH/BHYT thay đổi giữa năm nên
+> năm 2026 được nạp thành hai bộ: 01/01–30/06 và 01/07–31/12. Trần BHTN được tính bằng
+> `unemployment_cap_multiplier × lương tối thiểu của vùng trong hồ sơ nhân viên`, nên hai căn cứ
+> đóng khác nhau và được snapshot riêng trên phiếu lương.
+
+Số liệu cụ thể của bộ quy tắc 2026 và nguồn tham chiếu nằm trong [PAYROLL.md](../api/PAYROLL.md).
 
 ### `payroll_periods` — Kỳ lương tháng
 
@@ -1080,6 +1282,12 @@ CREATE INDEX idx_payslips_employee_period
 
 CREATE INDEX idx_payslip_items_payslip
   ON payslip_items (payslip_id);
+
+CREATE INDEX idx_employee_payroll_profiles_effective
+  ON employee_payroll_profiles (employee_id, effective_from, effective_to);
+
+CREATE INDEX idx_employee_tax_dependents_effective
+  ON employee_tax_dependents (employee_id, effective_from, effective_to);
 ```
 
 ---
@@ -1246,9 +1454,11 @@ Các chức năng ngoài phạm vi không được thêm bảng dự phòng vào
 
 ---
 
-## 15. Phụ lục triển khai V29–V34
+## 15. Lịch sử migration V29–V34
 
-Tài liệu V20 ở trên là thiết kế lõi lịch sử. Schema đang chạy được mở rộng bằng các migration mới, không sửa migration cũ:
+Các mục trên đã mô tả schema sau V34. Bảng dưới đây chỉ ghi lại migration nào mang thay đổi nào,
+dùng khi cần truy ngược một cột về migration sinh ra nó. Schema được mở rộng bằng migration mới,
+không sửa migration cũ:
 
 | Migration | Thay đổi |
 | --- | --- |
