@@ -67,8 +67,7 @@ npm run typecheck
 npm run build
 ```
 
-Dự án chưa cấu hình test runner tự động cho web. Trước khi bàn giao thay đổi auth, thực hiện
-ít nhất checklist thủ công sau:
+Dự án chưa cấu hình test runner tự động cho web. Trước khi bàn giao thay đổi, thực hiện ít nhất checklist thủ công sau:
 
 1. Đăng nhập `employee01` tại `/login` và kiểm tra chuyển tới `/dashboard`.
 2. Đăng nhập `admin` tại `/admin/login` và kiểm tra chuyển tới `/admin`.
@@ -77,20 +76,30 @@ Dự án chưa cấu hình test runner tự động cho web. Trước khi bàn g
 5. Refresh phiên và kiểm tra thông tin tài khoản vẫn tải được.
 6. Logout và kiểm tra route được bảo vệ chuyển về đúng trang đăng nhập.
 7. Đổi mật khẩu và kiểm tra phiên bị xóa, người dùng được đưa về trang đăng nhập.
+8. Với tài khoản HR, mở `/employees`, `/organization`, `/attendance`, `/leave-requests` và `/payslips`; kiểm tra dữ liệu tải đúng theo permission.
+9. Chuẩn bị một tháng công, xử lý bản ghi `MISSING_PUNCH`, sau đó tính thử kỳ lương tương ứng.
+10. Với tài khoản không có quyền, kiểm tra thao tác bị chặn bởi API kể cả khi gọi trực tiếp BFF.
 
-## Cấu trúc liên quan đến auth
+## Cấu trúc ứng dụng
 
 ```text
 app/
 ├── login/                    # Trang đăng nhập HRM
 ├── dashboard/                # Trang HRM sau đăng nhập
+├── employees/                # Hồ sơ nhân viên
+├── organization/             # Tổ chức và ca làm
+├── attendance/               # Chấm công
+├── leave-requests/           # Đơn nghỉ
+├── payslips/                 # Bảo hiểm, thuế và lương
+├── reports/workforce/        # Báo cáo nhân sự
+├── rbac/, role-grant/, role-requests/
 ├── admin/login/              # Trang đăng nhập Admin
-├── admin/                    # Trang Admin sau đăng nhập
+├── admin/                    # Trang Admin và các module quản trị
 └── api/
     ├── session/              # BFF endpoints của HRM
     └── admin-session/        # BFF endpoints của Admin
-components/auth/              # Form đăng nhập và dashboard dùng chung
-lib/auth/                     # Kiểu dữ liệu, client, cấu hình portal và xử lý server
+components/                   # UI theo module nghiệp vụ
+lib/                          # API client, kiểu dữ liệu và auth helpers
 proxy.ts                      # Điều hướng sơ bộ dựa trên sự tồn tại của cookie
 ```
 

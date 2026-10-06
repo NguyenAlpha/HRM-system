@@ -3,14 +3,14 @@
 > [!WARNING]
 > Tài liệu này là bản thiết kế lịch sử trước V20, không còn phản ánh schema runtime.
 > Schema chuẩn hiện hành nằm tại [../Fix_database/DATABASE_SCHEMA.md](../Fix_database/DATABASE_SCHEMA.md)
-> và đã được hoàn tất dọn mô hình compensation/request cũ tại V27.
+> và hiện được triển khai đến Flyway V34, gồm bảo hiểm và thuế TNCN năm 2026.
 > Không dùng tài liệu này để tạo entity, repository hoặc migration mới.
 
 > Đây là bản thiết kế database để duyệt nghiệp vụ, chưa phải Flyway migration.
 >
 > Hệ thống phục vụ **một doanh nghiệp duy nhất**. Dữ liệu seed gồm một trụ sở chính, hai chi nhánh và hai kho. Kho chỉ là địa điểm làm việc/phạm vi quản lý nhân sự, không quản lý hàng hóa hay tồn kho.
 >
-> Phạm vi payroll: lương cơ bản, phụ cấp và tăng ca. Không tính hoa hồng, thưởng, bảo hiểm hoặc thuế.
+> Phạm vi payroll bên dưới là phạm vi lịch sử tại thời điểm thiết kế. Hệ thống hiện hành đã bổ sung bảo hiểm phần nhân viên và thuế TNCN; xem [PAYROLL.md](../api/PAYROLL.md).
 
 ---
 

@@ -1,7 +1,9 @@
 # Đánh giá Schema 0.1 — HRM
 
 > [!NOTE]
-> Đây là báo cáo lịch sử trước khi schema được chỉnh tại V20–V27; các nhận xét có thể không còn áp dụng.
+> Đây là báo cáo lịch sử dựa trên V1–V8, trước khi schema được chỉnh tại V20–V34. Nhiều nhận xét
+> không còn áp dụng. Không dùng điểm số hoặc kết luận bên dưới làm trạng thái hiện tại; xem
+> [schema runtime](../Fix_database/DATABASE_SCHEMA.md) và [mục lục API](../api/README.md).
 
 > **Ngày đánh giá:** 2026-09-24  
 > **Đối tượng:** Thiết kế dữ liệu, SQL migration V1–V8 và các service thực thi tính toàn vẹn dữ liệu.  
@@ -21,8 +23,8 @@ Tiêu chí được xây dựng từ [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md),
 
 | Nguồn | Cách sử dụng |
 |---|---|
-| [.claude/CLAUDE.md](../../../.claude/CLAUDE.md) | Hướng dẫn làm việc: kiểm chứng, chỉ thay đổi phần được yêu cầu |
-| [OVERVIEW.md](../../../docs/OVERVIEW.md) | Tài liệu này còn ghi Phase 0, chưa phản ánh mã nguồn hiện tại |
+| `.claude/CLAUDE.md` tại thời điểm review | Hướng dẫn làm việc cũ; file không còn trong repository |
+| [OVERVIEW.md](../../../docs/OVERVIEW.md) | Tại thời điểm review tài liệu còn ở giai đoạn khởi đầu; bản hiện hành đã được cập nhật theo code V34 |
 | [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md), [ENTITY_ATTRIBUTES.md](./ENTITY_ATTRIBUTES.md) | Ý định nghiệp vụ và mô hình 19 bảng ban đầu |
 | [Migration V1–V8](../../src/main/resources/db/migration) | Căn cứ cho cấu trúc được tạo thực tế: **20 bảng**, có thêm `refresh_tokens` |
 | [Entity](../../src/main/java/com/htttdn/hrm/entity), [service](../../src/main/java/com/htttdn/hrm/service) | Kiểm tra quy tắc nào đã được thực thi, quy tắc nào mới được mô tả |
@@ -123,7 +125,7 @@ Phải xử lý dữ liệu vi phạm trước khi thêm constraint. Service cũ
 
 - Nếu tháng chỉ có một bản ghi với 480 phút công chuẩn và 480 phút được trả, công thức hiện tại cho `lương tháng × 480 / 480`: nhận đủ lương tháng. Luồng tính chưa xác nhận rằng các ngày còn lại đã được ghi là đi làm, nghỉ hay vắng mặt.
 - Đổi `work_shifts.standard_work_minutes` sau khi đã chấm công làm thay đổi mẫu số khi tính lại kỳ nháp. Snapshot giờ bắt đầu/kết thúc chưa giải quyết được việc này.
-- [EmployeeRequestServiceImpl](../../src/main/java/com/htttdn/hrm/service/impl/EmployeeRequestServiceImpl.java), dòng 116–139, duyệt nghỉ phép mới đổi trạng thái đơn; chưa chuyển ngày nghỉ có lương thành nguồn `payable_minutes` mà payroll đang sử dụng.
+- `EmployeeRequestServiceImpl` tại thời điểm review, dòng 116–139, chỉ đổi trạng thái khi duyệt nghỉ phép. Service này đã bị loại bỏ tại V27; luồng hiện hành dùng `LeaveRequestServiceImpl` và đồng bộ phút nghỉ sang bảng công.
 - Checkout ở [AttendanceServiceImpl](../../src/main/java/com/htttdn/hrm/service/impl/AttendanceServiceImpl.java), dòng 127–133, lấy thời gian giữa hai lần chấm và giới hạn theo công chuẩn, chưa xử lý `break_minutes`. Ca 08:00–17:00 nghỉ 60 phút, về 16:00 vẫn có thể được tính đủ 480 phút.
 
 Đây là kết luận từ đường đi trong code và phép tính, chưa phải kết quả chạy API payroll.

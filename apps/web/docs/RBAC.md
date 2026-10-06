@@ -1,7 +1,9 @@
 # Quản lý vai trò và quyền
 
-Đăng nhập tại `/admin/login`, rồi chọn **Vai trò & quyền** hoặc mở trực tiếp `/admin/rbac`.
-Trang dùng phiên Admin Console hiện tại, dành cho tài khoản có role `SYSTEM_ADMIN`.
+Giao diện có ở cả hai portal:
+
+- HRM Workspace: đăng nhập tại `/login`, mở `/rbac`; dành cho account nghiệp vụ có `rbac.manage`, thường là `COMPANY_OWNER`.
+- Admin Console: đăng nhập tại `/admin/login`, mở `/admin/rbac`; dành cho `SYSTEM_ADMIN` có `rbac.manage` theo cấu hình seed hiện tại.
 
 UI đơn giản gồm hai mục:
 
@@ -15,8 +17,7 @@ API vẫn kiểm tra phân quyền, validation và các ràng buộc dữ liệu
 
 ## Gọi API
 
-Browser gọi `/api/admin-session/rbac/...`. Route Handler chỉ chuyển tiếp các endpoint
-role/permission đã cho phép và lấy access token từ cookie admin `HttpOnly`.
+Browser gọi `/api/session/rbac/...` ở HRM Workspace hoặc `/api/admin-session/rbac/...` ở Admin Console. Route Handler chỉ chuyển tiếp các endpoint role/permission đã cho phép và lấy access token từ cookie `HttpOnly` của portal tương ứng.
 Các method hỗ trợ là GET, POST, PUT và DELETE; query phân trang và module được chuyển tiếp.
 Client dùng chung cơ chế refresh của phiên admin, thử lại một lần khi access token hết hạn.
 
@@ -30,13 +31,13 @@ Danh sách endpoint, JSON mẫu và quy tắc xóa nằm trong
 
 ## Kiểm tra thủ công
 
-1. Từ trang admin, mở **Quản lý vai trò & quyền**.
+1. Từ portal phù hợp với account, mở **Vai trò & quyền**.
 2. Tạo role tùy chỉnh, sửa tên/mô tả và kiểm tra danh sách đã cập nhật.
 3. Nhấn **Phân quyền**, chọn cả module `EMPLOYEE`, bỏ một vài quyền rồi nhấn **Lưu quyền**.
 4. Mở lại role và kiểm tra danh sách đã chọn được giữ nguyên.
 5. Dùng **Chọn tất cả**, **Bỏ chọn tất cả**, tìm kiếm và **Hoàn tác** để kiểm tra trạng thái form.
 6. Mở một system role và xác nhận danh sách permission chỉ đọc.
 7. Kiểm tra phân trang, lọc module và các nút bảo vệ role hệ thống.
-8. Kiểm tra truy cập `/admin/rbac` khi chưa đăng nhập và gọi BFF không có cookie admin.
+8. Kiểm tra truy cập `/rbac` và `/admin/rbac` khi chưa đăng nhập; gọi từng BFF không có cookie tương ứng.
 
 Không cần thêm dependency UI hoặc test runner để chạy trang này.
