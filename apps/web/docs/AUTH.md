@@ -174,6 +174,40 @@ Thuộc tính chung:
 Access cookie dùng `expiresIn` do API trả về. Refresh cookie dùng
 `AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS`, mặc định 30 ngày.
 
+## Kích hoạt tài khoản
+
+Đây là luồng duy nhất chạy trước khi có phiên: người dùng chưa đăng nhập được nên không có
+cookie nào tham gia. HR cấp account qua `POST /api/accounts`, hệ thống phát token kích hoạt, và
+người dùng mở link chứa token để tự đặt mật khẩu.
+
+| Thành phần | Đường dẫn |
+|:-----------|:----------|
+| Trang đặt mật khẩu | `/activate/[[...token]]` |
+| BFF | `POST /api/account-activations/{token}/complete` |
+| API | `POST /api/account-activations/{token}/complete` |
+
+Route dùng catch-all tùy chọn nên `/activate` không có token vẫn mở được; khi đó form để trống
+ô mã kích hoạt và người dùng tự dán vào. Có token trên URL thì ô được điền sẵn.
+
+Body gửi lên là `{"password": "...", "passwordConfirmation": "..."}`. Khi thành công, API trả
+`data: null` và trang hiển thị xác nhận kèm nút sang `/login`. API **không** tự đăng nhập người
+dùng và BFF **không** tạo cookie nào trong luồng này.
+
+Khác biệt so với các route BFF còn lại:
+
+- Endpoint API là public, khai báo tại `SecurityConfig` cùng với login và refresh, nên BFF
+  không đọc cookie và không gắn header `Authorization`.
+- Route handler nằm ở `app/api/account-activations/`, tách khỏi `app/api/session/` và
+  `app/api/admin-session/` vì không gắn với portal nào.
+- Client dùng `lib/activation.ts` thay vì client auth dùng chung, vì ở đây không có cơ chế
+  refresh để thử lại.
+
+Route này vẫn áp dụng hai kiểm tra chung của mọi handler BFF: chặn method không hỗ trợ và chặn
+request có header `Origin` khác origin của chính BFF.
+
+Lỗi token sai, hết hạn hoặc đã dùng do API quyết định và được chuyển tiếp nguyên trạng theo
+envelope; xem [tài liệu AUTH của API](../../../api/docs/api/AUTH.md).
+
 ## Error do BFF tạo
 
 Ngoài error được chuyển tiếp từ Spring Boot, BFF có thể trả:
@@ -182,8 +216,10 @@ Ngoài error được chuyển tiếp từ Spring Boot, BFF có thể trả:
 |:----:|:-----|:------------|
 | `400` | `VALIDATION_ERROR` | Request body không phải JSON hợp lệ |
 | `401` | `UNAUTHORIZED` | Thiếu cookie cần thiết cho thao tác |
+| `403` | `FORBIDDEN` | Header `Origin` khác origin của BFF |
 | `403` | `ADMIN_PORTAL_REQUIRED` | Admin dùng HRM portal |
 | `403` | `ADMIN_ACCESS_REQUIRED` | Account thường dùng Admin portal |
+| `405` | `METHOD_NOT_ALLOWED` | Method không được handler hỗ trợ |
 | `502` | `API_UNAVAILABLE` | Next.js không kết nối được tới Spring Boot API |
 | Theo upstream | `INVALID_API_RESPONSE` | API trả response không đọc được theo envelope JSON |
 
