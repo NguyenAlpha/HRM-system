@@ -676,35 +676,58 @@ Ví dụ dữ liệu:
 | `granted_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người thiết lập |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 
-### 5.1. Permission code tối thiểu
+### 5.1. Danh mục permission code
+
+Danh mục quyền thuộc sở hữu của code: `PermissionSeeder` là nguồn chuẩn, không thêm permission
+qua API. Catalog hiện có 49 code trên 8 module của `PermissionModule`. Code đánh dấu `(S)` có
+`assignment_policy = SYSTEM_ONLY`, chỉ seeder gán cho system role; các code còn lại là `DELEGABLE`.
 
 ```text
+EMPLOYEE (14)
 profile.self.read                 profile.self.update
 employee.list.read                employee.read
 employee.create                   employee.update
-employee.probation.confirm        employee.assignment.read
-employee.assignment.manage       employee.lifecycle.manage
-employee.delete
+employee.probation.confirm        employee.delete
+employee.assignment.read          employee.assignment.manage
+employee.lifecycle.manage         employee.lifecycle.approve
 employee.sensitive.read           employee.sensitive.manage
-employee.lifecycle.approve        organization.manage
 
-leave.self.read                   leave.self.create
-leave.self.cancel                 leave.read
-leave.approve                     leave.manage
+ACCOUNT (8)
+account.read                      account.manage
+account.provision                 account.activation.manage
+account.role.assign               role.assignment.request
+role.assignment.approve (S)       account.permission.override.manage (S)
 
-attendance.self.read              attendance.read
-attendance.manage                 attendance.overtime.approve
+ORGANIZATION (4)
+organization.read                 organization.manage
+organization.change.approve       organization.company_owner.bootstrap (S)
 
-salary.read                       salary.manage
-allowance.read                    allowance.manage
+REQUEST (7)
+request.self.read                 request.self.create
+request.self.cancel               request.read
+request.approve                   request.final_approve
+request.manage
 
+ATTENDANCE (5)
+attendance.self.read              attendance.self.record
+attendance.read                   attendance.manage
+attendance.overtime.approve
+
+PAYROLL (8)
 payroll.self.read                 payroll.self.print
+compensation.read                 compensation.manage
 payroll.calculate                 payroll.approve
 payroll.mark_paid                 payroll.lock
 
+REPORT (2)
 report.hr.read                    report.payroll.read
+
+RBAC (1)
 rbac.manage
 ```
+
+Đơn nghỉ dùng tiền tố `request.*` (module `REQUEST`), không phải `leave.*`. Lương và phụ cấp
+dùng `compensation.read` / `compensation.manage`, không phải `salary.*` / `allowance.*`.
 
 ---
 
