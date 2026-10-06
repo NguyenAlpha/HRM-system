@@ -1,12 +1,15 @@
 # Database Schema — Hệ thống quản lý nhân sự HRM
 
-> Đây là tài liệu thiết kế cơ sở dữ liệu đã được triển khai tăng dần bởi Flyway migration
-> `V20__align_core_schema_with_approved_design.sql` và hoàn tất dọn mô hình cũ tại
-> `V28__create_employee_code_counters.sql`.
+> Đây là tài liệu schema hiện hành. Các mục 1–14 ghi lại thiết kế lõi được triển khai từ
+> `V20__align_core_schema_with_approved_design.sql` đến `V28__create_employee_code_counters.sql`;
+> mục 15 mô tả phần mở rộng runtime V29–V34. Khi một mô tả lõi khác với phụ lục, migration mới
+> và phụ lục V29–V34 là nguồn áp dụng.
 >
 > Hệ thống phục vụ một doanh nghiệp bán lẻ/phân phối có trụ sở, chi nhánh và kho. Kho được xem là địa điểm làm việc, không quản lý hàng hóa hoặc tồn kho.
 >
-> Phạm vi tính lương của đồ án gồm: lương cơ bản, phụ cấp chức vụ, phụ cấp thâm niên và tiền tăng ca. Bảo hiểm, thuế, thưởng và hoa hồng nằm ngoài phạm vi MVP.
+> Phạm vi tính lương hiện tại gồm lương cơ bản, phụ cấp chức vụ, phụ cấp thâm niên, tăng ca,
+> bảo hiểm phần nhân viên và thuế TNCN cho người cư trú trong năm 2026. Thưởng, hoa hồng,
+> quyết toán năm và các ngoại lệ ngoài phạm vi nêu trong [PAYROLL.md](../api/PAYROLL.md) chưa được tự động hóa.
 
 ---
 
@@ -37,7 +40,12 @@ Nhân viên nghỉ việc
 
 Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 
-### 1.2. Danh sách 24 bảng nghiệp vụ
+### 1.2. Danh sách 24 bảng nghiệp vụ của thiết kế lõi V28
+
+Schema runtime V34 bổ sung `company_holidays`, `employee_payroll_profiles`,
+`employee_tax_dependents`, `payroll_tax_rules`, `payroll_tax_brackets` và
+`payroll_insurance_rules`, nâng tổng số bảng nghiệp vụ lên 30. Bảng kỹ thuật
+`employee_code_counters` không nằm trong con số này.
 
 | Nhóm | Các bảng |
 |---|---|
@@ -810,6 +818,10 @@ MISSING_PUNCH
 
 ## 8. Tính lương
 
+> Phần này trình bày nền tính gross của thiết kế lõi. Các khoản bảo hiểm, thuế, căn cứ đóng,
+> ngày trả lương và tăng ca miễn thuế được bổ sung ở V31–V34; công thức đầy đủ nằm trong
+> [PAYROLL.md](../api/PAYROLL.md).
+
 ### 8.1. Nguồn dữ liệu tính lương
 
 | Thành phần | Nguồn |
@@ -844,6 +856,14 @@ Tổng thu nhập
   + Phụ cấp chức vụ
   + Phụ cấp thâm niên
   + Tiền tăng ca
+
+Thu nhập tính thuế
+  = max(0, Tổng thu nhập - Tăng ca miễn thuế đã xác nhận
+             - BHXH - BHYT - BHTN
+             - Giảm trừ bản thân - Giảm trừ người phụ thuộc)
+
+Thực nhận
+  = Tổng thu nhập - BHXH - BHYT - BHTN - Thuế TNCN
 ```
 
 Quy tắc:
@@ -863,6 +883,7 @@ Quy tắc:
 | `month` | SMALLINT | NOT NULL, CHECK 1..12 | Tháng lương |
 | `period_start` | DATE | NOT NULL | Ngày đầu kỳ |
 | `period_end` | DATE | NOT NULL | Ngày cuối kỳ |
+| `tax_payment_date` | DATE | Có thể null trước khi tính | Ngày dự kiến/thực tế trả lương, dùng chọn quy tắc thuế |
 | `status` | VARCHAR(20) | NOT NULL | Trạng thái vòng đời |
 | `calculated_by_account_id` | BIGINT | FK → accounts | Người tính |
 | `calculated_at` | TIMESTAMPTZ | | Thời điểm tính |
@@ -899,7 +920,18 @@ Quy tắc:
 | `allowance_pay` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Tổng phụ cấp chức vụ và thâm niên |
 | `overtime_pay` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Tiền tăng ca |
 | `gross_pay` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Tổng thu nhập |
-| `net_pay` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Thực nhận; trong MVP bằng gross |
+| `insurance_salary_base` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Căn cứ BHXH/BHYT sau trần |
+| `unemployment_insurance_base` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Căn cứ BHTN sau trần vùng |
+| `employee_social_insurance` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | BHXH phần nhân viên |
+| `employee_health_insurance` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | BHYT phần nhân viên |
+| `employee_unemployment_insurance` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | BHTN phần nhân viên |
+| `tax_exempt_overtime_pay` | NUMERIC(15,2) | NOT NULL, CHECK 0..overtime_pay | Tiền tăng ca đã xác nhận miễn thuế |
+| `taxable_income` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Thu nhập tính thuế sau giảm trừ |
+| `personal_income_tax` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Thuế TNCN |
+| `tax_rule_id` | BIGINT | FK → payroll_tax_rules | Quy tắc thuế snapshot |
+| `insurance_rule_id` | BIGINT | FK → payroll_insurance_rules | Quy tắc bảo hiểm snapshot |
+| `payroll_profile_id` | BIGINT | FK → employee_payroll_profiles | Hồ sơ bảo hiểm/thuế đã dùng |
+| `net_pay` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Tổng thu nhập trừ bảo hiểm nhân viên và thuế TNCN |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Chỉ cập nhật khi kỳ chưa duyệt |
 
@@ -1116,6 +1148,12 @@ ALTER TABLE payslips ADD CONSTRAINT chk_payslip_total
   CHECK (
     gross_pay = base_salary_pay + allowance_pay + overtime_pay
     AND net_pay = gross_pay
+                  - employee_social_insurance
+                  - employee_health_insurance
+                  - employee_unemployment_insurance
+                  - personal_income_tax
+    AND tax_exempt_overtime_pay >= 0
+    AND tax_exempt_overtime_pay <= overtime_pay
   );
 
 ALTER TABLE payslip_items ADD CONSTRAINT chk_payslip_item_type
@@ -1175,10 +1213,27 @@ ALTER TABLE payslip_items ADD CONSTRAINT chk_payslip_item_type
 - Khách hàng, nhà cung cấp, đơn bán và doanh thu.
 - Tuyển dụng ứng viên, phỏng vấn, KPI và đào tạo.
 - Số dư phép năm và quy tắc cộng phép phức tạp.
-- Hoa hồng, thưởng, bảo hiểm, thuế và quyết toán thuế.
+- Hoa hồng, thưởng, quyết toán thuế năm và các trường hợp bảo hiểm/thuế ngoài phạm vi tự động hóa năm 2026.
 - Tự động làm hồ sơ/chi trả chế độ thai sản từ cơ quan BHXH.
 - Tích hợp máy chấm công vật lý.
 - Nhật ký audit chi tiết cho toàn bộ thay đổi dữ liệu.
 - Multi-tenant, subscription và quản lý nhiều doanh nghiệp.
 
 Các chức năng ngoài phạm vi không được thêm bảng dự phòng vào migration hiện tại.
+
+---
+
+## 15. Phụ lục triển khai V29–V34
+
+Tài liệu V20 ở trên là thiết kế lõi lịch sử. Schema đang chạy được mở rộng bằng các migration mới, không sửa migration cũ:
+
+| Migration | Thay đổi |
+| --- | --- |
+| V29 | `company_holidays` xác định ngày không làm việc trong lịch thứ 2–thứ 7. |
+| V30 | `attendance_records.leave_minutes` tách phút nghỉ khỏi phút làm. |
+| V31 | `employee_payroll_profiles`, `employee_tax_dependents`, `payroll_tax_rules`, `payroll_tax_brackets`, `payroll_insurance_rules`; thêm `payroll_periods.tax_payment_date` và các cột khấu trừ/snapshot của `payslips`. Tổng `net_pay` bằng tổng thu nhập trừ bảo hiểm nhân viên và thuế TNCN. |
+| V32 | Giới hạn quy tắc nạp sẵn tới 31/12/2026; chặn trùng người phụ thuộc cùng thời gian. |
+| V33 | Lưu thêm căn cứ đóng BHTN sau trần vùng trong `payslips.unemployment_insurance_base`. |
+| V34 | `attendance_records.overtime_tax_exempt` do người duyệt xác nhận; `payslips.tax_exempt_overtime_pay` chụp lại phần tăng ca miễn thuế. |
+
+Hồ sơ bảo hiểm và quy tắc thuế/bảo hiểm có ngày hiệu lực. Các phiếu trước V31 giữ số liệu cũ với khấu trừ bằng 0; tính lại cần dữ liệu mới. Xem [PAYROLL.md](../api/PAYROLL.md) để biết API, công thức, nguồn pháp lý và giới hạn nghiệp vụ.

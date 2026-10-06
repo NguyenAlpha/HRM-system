@@ -163,6 +163,12 @@ Mở các địa chỉ sau:
 | Trang mặc định | `http://localhost:3000` |
 | Đăng nhập nhân viên | `http://localhost:3000/login` |
 | HRM dashboard | `http://localhost:3000/dashboard` |
+| Nhân viên | `http://localhost:3000/employees` |
+| Tổ chức và ca làm | `http://localhost:3000/organization` |
+| Chấm công | `http://localhost:3000/attendance` |
+| Đơn nghỉ | `http://localhost:3000/leave-requests` |
+| Lương, bảo hiểm và thuế | `http://localhost:3000/payslips` |
+| Báo cáo nhân sự | `http://localhost:3000/reports/workforce` |
 | Đăng nhập quản trị | `http://localhost:3000/admin/login` |
 | Admin dashboard | `http://localhost:3000/admin` |
 
@@ -182,6 +188,8 @@ tại `/login`. Đăng nhập sai portal sẽ trả `ADMIN_PORTAL_REQUIRED` ho�
 `ADMIN_ACCESS_REQUIRED`.
 
 ## 6. Kiểm tra sau khi setup
+
+Khi chạy API sau thay đổi bảng lương, Flyway tự áp dụng `V31`–`V34` trên database hiện có; **không xóa volume hoặc tạo lại database**. Các phiếu lương cũ được giữ nguyên. Trước khi tính lại một kỳ, HR cần nhập hồ sơ bảo hiểm, người phụ thuộc và kế toán cần khai báo ngày dự kiến trả lương theo [hướng dẫn tính lương](../api/docs/api/PAYROLL.md). Bộ quy tắc nạp sẵn chỉ phục vụ năm 2026; kỳ khác sẽ báo thiếu quy tắc để bổ sung migration phù hợp.
 
 Thực hiện lần lượt:
 
@@ -291,4 +299,6 @@ hoặc reset database local nếu không cần giữ dữ liệu.
 - Auth API: [`api/docs/api/AUTH.md`](../api/docs/api/AUTH.md)
 - Web development: [`apps/web/docs/DEVELOPMENT.md`](../apps/web/docs/DEVELOPMENT.md)
 - Web authentication: [`apps/web/docs/AUTH.md`](../apps/web/docs/AUTH.md)
-- Database schema: [`api/docs/database/DATABASE_SCHEMA.md`](../api/docs/database/DATABASE_SCHEMA.md)
+- Danh mục API: [`api/docs/api/README.md`](../api/docs/api/README.md)
+- Database schema hiện hành: [`api/docs/Fix_database/DATABASE_SCHEMA.md`](../api/docs/Fix_database/DATABASE_SCHEMA.md)
+- Thiết kế database lịch sử: [`api/docs/database/DATABASE_SCHEMA.md`](../api/docs/database/DATABASE_SCHEMA.md)

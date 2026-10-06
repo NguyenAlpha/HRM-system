@@ -1,7 +1,10 @@
 # Đánh giá Truy vấn 0.1 — HRM
 
 > [!NOTE]
-> Đây là báo cáo lịch sử trước khi repository/service được chuyển sang schema mới và mô hình cũ bị loại bỏ tại V27.
+> Đây là báo cáo lịch sử dựa trên V1–V8, trước khi repository/service được chuyển sang schema mới.
+> Nhiều finding đã được xử lý qua V20–V34 và code hiện hành. Không dùng điểm số hoặc kết luận
+> bên dưới làm trạng thái hiện tại; xem [schema runtime](../Fix_database/DATABASE_SCHEMA.md) và
+> [mục lục API](../api/README.md).
 
 > **Ngày đánh giá:** 2026-09-24  
 > **Đối tượng:** Repository, service đọc/ghi dữ liệu và khả năng hỗ trợ của index trong migration V1–V8.  
@@ -14,7 +17,7 @@
 
 Tiêu chí dựa trên các luồng thực tế của đồ án: điều chuyển, thay đổi lương, duyệt đơn/tăng ca, tính lương tháng, xem phiếu lương và quản lý theo đơn vị/địa điểm. Không chấm theo số JOIN đơn thuần; một query nhiều JOIN có điều kiện đúng vẫn có thể phù hợp hơn hàng trăm truy vấn nhỏ.
 
-Nguồn chính là [repository](../../src/main/java/com/htttdn/hrm/repository), [service](../../src/main/java/com/htttdn/hrm/service), [migration](../../src/main/resources/db/migration) và [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md). Tài liệu tổng quan còn ghi Phase 0 nên không được dùng để kết luận dự án chưa có truy vấn.
+Nguồn chính tại thời điểm review là [repository](../../src/main/java/com/htttdn/hrm/repository), [service](../../src/main/java/com/htttdn/hrm/service), [migration](../../src/main/resources/db/migration) và [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md). Tài liệu tổng quan khi đó còn ở giai đoạn khởi đầu; [OVERVIEW hiện hành](../../../docs/OVERVIEW.md) đã được cập nhật theo code V34.
 
 **Mức độ bằng chứng:**
 
@@ -236,7 +239,7 @@ Không thêm chỉ vì báo cáo có cột ngày; so sánh `EXPLAIN (ANALYZE, BU
 
 **3. Index đơn từ chưa khớp mọi cách lọc/sắp xếp trong repository.**
 
-V5 có `(employee_id, status, submitted_at DESC)` và `(request_type, status)`. [EmployeeRequestRepository](../../src/main/java/com/htttdn/hrm/repository/EmployeeRequestRepository.java) còn có `findByStatus(...)` và `findByEmployeeId(...)`. Cột `status` chen giữa có thể khiến index thứ nhất không đáp ứng trực tiếp thứ tự thời gian cho danh sách mọi trạng thái của một người.
+V5 có `(employee_id, status, submitted_at DESC)` và `(request_type, status)`. `EmployeeRequestRepository` tại thời điểm review còn có `findByStatus(...)` và `findByEmployeeId(...)`; repository này đã bị loại bỏ cùng mô hình request cũ ở V27. Cột `status` chen giữa có thể khiến index thứ nhất không đáp ứng trực tiếp thứ tự thời gian cho danh sách mọi trạng thái của một người.
 
 Chốt query màn hình hàng chờ duyệt trước. Nếu luôn lọc trạng thái rồi xếp thời gian, ứng viên là `(status, submitted_at DESC, id DESC)`; nếu luôn kèm loại đơn, cân nhắc `(request_type, status, submitted_at DESC, id DESC)`. Dòng DRAFT có `submitted_at = NULL`, nên quy định vị trí NULL hoặc dùng `created_at` cho danh sách nháp.
 

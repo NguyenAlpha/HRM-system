@@ -4,7 +4,8 @@
 > Tài liệu này mô tả mô hình entity lịch sử trước V20. `EmployeeCompensation` và
 > `EmployeeRequest` đã được thay thế, gỡ khỏi source tại V27. Hãy dùng
 > [schema hiện hành](../Fix_database/DATABASE_SCHEMA.md) và các entity trong
-> `src/main/java/com/htttdn/hrm/entity` làm nguồn chuẩn.
+> `src/main/java/com/htttdn/hrm/entity` làm nguồn chuẩn. Schema runtime hiện ở V34 và đã có
+> hồ sơ bảo hiểm, người phụ thuộc, quy tắc thuế/bảo hiểm cùng snapshot khấu trừ.
 
 > Tài liệu mô tả từng entity (ánh xạ 1-1 với bảng trong [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md)) và thuộc tính ở mức Java, dùng làm cơ sở để viết JPA entity. Kiểu dữ liệu, ràng buộc và ý nghĩa nghiệp vụ giữ nguyên theo schema đã duyệt.
 >

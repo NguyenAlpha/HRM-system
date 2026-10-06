@@ -133,18 +133,20 @@ EMPLOYEE @ SELF
 └── chỉ truy cập chính nhân viên liên kết với account
 ```
 
-### 5.2. Role đề xuất
+### 5.2. Role hệ thống và role đề xuất
 
-| Role | Scope | Mục đích |
-|---|---|---|
-| `EMPLOYEE` | `SELF` | Tự xem hồ sơ, đơn từ, chấm công và phiếu lương |
-| `DEPARTMENT_MANAGER` | `ORG_UNIT` | Quản lý nhân viên, đơn từ và chấm công của cả phòng ban |
-| `HR_MANAGER` | `COMPANY` | Quản trị nghiệp vụ nhân sự trên toàn công ty |
-| `PAYROLL_ACCOUNTANT` | `COMPANY` | Tính và kiểm tra bảng lương |
-| `PAYROLL_APPROVER` | `COMPANY` | Duyệt, xác nhận thanh toán và khóa kỳ lương |
-| `DIRECTOR` | `COMPANY` | Phê duyệt cuối các quyết định nghiệp vụ |
+| Role | Scope điển hình | Trạng thái | Mục đích |
+|---|---|---|---|
+| `EMPLOYEE` | `SELF` | System role đã seed | Tự xem hồ sơ, đơn từ, chấm công và phiếu lương |
+| `HR_MANAGER` | `COMPANY` | System role đã seed | Quản trị nghiệp vụ nhân sự trên toàn công ty |
+| `PAYROLL_ACCOUNTANT` | `COMPANY` | System role đã seed | Tính và kiểm tra bảng lương |
+| `PAYROLL_APPROVER` | `COMPANY` | System role đã seed | Duyệt, xác nhận thanh toán và khóa kỳ lương |
+| `DIRECTOR` | `COMPANY` | System role đã seed | Phê duyệt cuối các quyết định nghiệp vụ |
+| `COMPANY_OWNER` | `COMPANY` | System role đã seed | Quản trị account, role và cấu hình công ty |
+| `SYSTEM_ADMIN` | `COMPANY` | System role đã seed | Bootstrap Company Owner và quản trị hệ thống |
+| `DEPARTMENT_MANAGER` | `ORG_UNIT` | Custom role đề xuất | Quản lý nhân viên, đơn từ và chấm công của một phòng ban |
 
-`DEPARTMENT_MANAGER` là role đề xuất mới để quản lý một phòng ban mà không cần cấp quyền `HR_MANAGER` trên toàn công ty.
+`DEPARTMENT_MANAGER` không được seed sẵn. Người có quyền quản trị RBAC tạo role này, chỉ chọn các permission `DELEGABLE`, rồi gán với scope `ORG_UNIT` phù hợp.
 
 Không nên tạo một role cho mọi chức danh. Chuyên viên và thực tập sinh có thể cùng chỉ mang role `EMPLOYEE` nếu đều chỉ sử dụng chức năng tự phục vụ.
 

@@ -22,8 +22,8 @@ account và thời điểm access token hết hạn.
 
 | Portal | Page routes | BFF prefix | Role rule |
 |:-------|:------------|:-----------|:----------|
-| `hrm` | `/login`, `/dashboard` | `/api/session` | Account không có `SYSTEM_ADMIN` |
-| `admin` | `/admin/login`, `/admin` | `/api/admin-session` | Account có `SYSTEM_ADMIN` |
+| `hrm` | `/login`, `/dashboard` và các route nghiệp vụ | `/api/session` | Account không có `SYSTEM_ADMIN` |
+| `admin` | `/admin/login`, `/admin/*` | `/api/admin-session` | Account có `SYSTEM_ADMIN` |
 
 Nếu một account có nhiều role và một trong số đó là `SYSTEM_ADMIN`, account được xem là
 admin và chỉ được dùng Admin Console.

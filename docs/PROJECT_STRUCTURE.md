@@ -44,7 +44,7 @@ api/
 │   │   │       └── impl/           # Các implementation của service
 │   │   └── resources/
 │   │       ├── application.properties # Cấu hình runtime
-│   │       └── db/migration/          # Flyway migrations V1 đến V28
+│   │       └── db/migration/          # Flyway migrations V1 đến V34
 │   └── test/java/                  # Unit, integration và context tests
 ├── docs/                           # Tài liệu API và database của backend
 └── target/                         # Output Maven sinh tự động, không phải source
@@ -85,17 +85,22 @@ Các migration nằm trong `api/src/main/resources/db/migration/` và được F
 | `V26__split_employee_permissions.sql` | Tách quyền quản lý nhân viên theo từng hành động. |
 | `V27__archive_and_remove_legacy_compensation_requests.sql` | Backfill, lưu trữ và loại bỏ mô hình compensation/request cũ. |
 | `V28__create_employee_code_counters.sql` | Bộ đếm cấp mã nhân viên tự động theo tiền tố vị trí. |
+| `V29` – `V30` | Ngày lễ công ty và số phút nghỉ trong bản ghi công. |
+| `V31` – `V33` | Hồ sơ bảo hiểm, người phụ thuộc, quy tắc thuế/bảo hiểm 2026 có ngày hiệu lực và snapshot khấu trừ trên phiếu lương. |
+| `V34__track_overtime_tax_exemption.sql` | Xác nhận miễn thuế từng khoản tăng ca và snapshot phần tăng ca miễn thuế. |
 
 ### Tài liệu backend
 
 - `api/docs/api/AUTH.md`: hợp đồng và luồng xác thực API.
 - `api/docs/api/REPORT.md`: hợp đồng API báo cáo nhân sự và lương cơ bản.
-- `api/docs/Fix_database/DATABASE_SCHEMA.md`: schema hiện hành đã được triển khai đến V28.
+- `api/docs/api/ATTENDANCE.md`: quy trình chấm công, ngày lễ và tăng ca.
+- `api/docs/api/PAYROLL.md`: công thức lương, bảo hiểm, thuế và các API dữ liệu đầu vào.
+- `api/docs/Fix_database/DATABASE_SCHEMA.md`: thiết kế lõi V20; phần bổ sung V29–V34 ở cuối tài liệu.
 - `api/docs/database/DATABASE_SCHEMA.md`: bản thiết kế cũ, chỉ giữ để tham chiếu lịch sử.
 - `api/docs/database/ENTITY_ATTRIBUTES.md`: mô hình entity cũ, chỉ giữ để tham chiếu lịch sử.
 - `api/docs/database/SCHEMA_REVIEW_0.1.md`: báo cáo rà soát schema trước V20.
 - `api/docs/database/QUERY_REVIEW_0.1.md`: báo cáo rà soát truy vấn trước V20.
-- `api/docs/temp1.md`: tài liệu tạm thời.
+- `api/docs/api/README.md`: mục lục tài liệu API hiện hành.
 
 ## 3. Frontend `apps/web/`
 
@@ -109,14 +114,30 @@ apps/web/
 │   ├── globals.css                   # CSS toàn ứng dụng
 │   ├── login/page.tsx                # Đăng nhập HRM Workspace
 │   ├── dashboard/page.tsx            # Dashboard HRM Workspace
+│   ├── employees/                     # Danh sách và chi tiết nhân viên
+│   ├── organization/page.tsx          # Cơ cấu tổ chức
+│   ├── attendance/page.tsx            # Chấm công
+│   ├── leave-requests/page.tsx         # Đơn nghỉ phép
+│   ├── payslips/page.tsx               # Lương, bảo hiểm, thuế và kỳ lương
+│   ├── rbac/page.tsx                   # Custom role tại HRM Workspace
+│   ├── role-grant/page.tsx             # Gán role trực tiếp theo quyền
+│   ├── role-requests/page.tsx          # Yêu cầu cấp role
 │   ├── reports/workforce/page.tsx    # Báo cáo nhân sự và phân bố lương
 │   ├── admin/
 │   │   ├── login/page.tsx            # Đăng nhập Admin Console
-│   │   └── page.tsx                  # Trang Admin Console
+│   │   ├── page.tsx                  # Trang Admin Console
+│   │   ├── company-owner/page.tsx    # Bootstrap Company Owner
+│   │   ├── organization/page.tsx     # Quản trị tổ chức từ Admin Console
+│   │   ├── rbac/page.tsx             # Quản lý custom role
+│   │   └── role-grant/page.tsx       # Gán role quản trị
 │   └── api/
 │       ├── session/                  # BFF session cho người dùng HRM
 │       └── admin-session/            # BFF session cho system admin
 ├── components/auth/                  # Component login, session và sidebar
+├── components/employee/              # Danh sách và form hồ sơ nhân viên
+├── components/organization/          # Quản lý tổ chức, địa điểm, vị trí và ca
+├── components/rbac/                  # Role, permission và role assignment
+├── components/workforce/             # Chấm công, nghỉ phép và lương
 ├── components/report/                # Dashboard và biểu đồ phân bố báo cáo
 ├── lib/
 │   ├── api.ts                        # API utility dùng chung
@@ -139,8 +160,9 @@ apps/web/
 ├── README.md
 └── docs/
     ├── README.md                     # Tài liệu frontend
-    ├── DEVELOPMENT.md                # Quy trình phát triển
-    └── AUTH.md                        # Kiến trúc authentication BFF
+    ├── AUTH.md                        # Kiến trúc authentication BFF
+    ├── DEVELOPMENT.md                 # Chạy local và checklist
+    └── RBAC.md                        # Giao diện quản trị vai trò và quyền
 ```
 
 ### Hai portal
@@ -182,7 +204,7 @@ Backend tests nằm trong `api/src/test/java/`, bao gồm:
 - JWT, login, refresh token và authorization.
 - Seeder dữ liệu.
 - Global exception handler.
-- Logic tổng hợp báo cáo nhân sự và lương.
+- Chấm công, lịch làm, lương, bảo hiểm, thuế và tổng hợp báo cáo.
 
 Frontend hiện có các script kiểm tra trong `apps/web/package.json`:
 
@@ -223,7 +245,7 @@ Browser
    │
    ▼
 Next.js Web (BFF routes + UI)
-   │  HTTP /api/auth/*
+   │  HTTP qua BFF với Bearer token phía server
    ▼
 Spring Boot API
    │
@@ -234,6 +256,6 @@ Spring Boot API
 PostgreSQL
 ```
 
-Các REST controller hiện bao phủ xác thực, nhân sự, tổ chức, RBAC và báo cáo. Một số nghiệp vụ
-đã có entity/service nhưng chưa có giao diện hoặc endpoint hoàn chỉnh, vì vậy cần kiểm tra controller
-và tài liệu API trước khi tích hợp một module mới.
+Các REST controller hiện bao phủ xác thực, account, nhân sự, phân công, tổ chức, ca làm, RBAC,
+permission override, yêu cầu cấp role, nghỉ phép, chấm công, ngày lễ, lương và báo cáo. Khi tích hợp
+module mới, dùng [mục lục API](../api/docs/api/README.md) và controller đang chạy làm nguồn sự thật.
