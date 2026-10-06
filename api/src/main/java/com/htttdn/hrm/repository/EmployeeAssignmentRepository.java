@@ -16,6 +16,15 @@ import jakarta.persistence.LockModeType;
 
 public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssignment, Long> {
 
+    @Query("""
+        SELECT DISTINCT assignment.employee.id FROM EmployeeAssignment assignment
+        WHERE assignment.isPrimary = true
+          AND assignment.effectiveFrom <= :to
+          AND (assignment.effectiveTo IS NULL OR assignment.effectiveTo >= :from)
+          AND assignment.employee.deletedAt IS NULL
+        """)
+    List<Long> findPrimaryEmployeeIdsOverlapping(@Param("from") LocalDate from, @Param("to") LocalDate to);
+
     Optional<EmployeeAssignment> findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(Long employeeId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

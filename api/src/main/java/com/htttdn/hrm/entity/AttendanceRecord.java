@@ -73,6 +73,9 @@ public class AttendanceRecord {
     @Column(name = "payable_minutes", nullable = false)
     private Integer payableMinutes;
 
+    @Column(name = "leave_minutes", nullable = false)
+    private int leaveMinutes;
+
     @Column(name = "late_minutes", nullable = false)
     private Integer lateMinutes;
 

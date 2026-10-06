@@ -27,9 +27,6 @@ public record AdjustAttendanceRequest(
     AttendanceStatus status,
 
     @NotBlank
-    String note,
-
-    @NotNull
-    Long updatedByAccountId
+    String note
 ) {
 }

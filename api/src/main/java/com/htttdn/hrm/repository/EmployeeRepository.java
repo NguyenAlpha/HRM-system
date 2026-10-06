@@ -2,6 +2,7 @@ package com.htttdn.hrm.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,15 @@ import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import jakarta.persistence.LockModeType;
 
 public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSpecificationExecutor<Employee> {
+
+    @Query("""
+        SELECT employee FROM Employee employee
+        WHERE employee.deletedAt IS NULL
+          AND employee.hireDate <= :to
+          AND (employee.terminationDate IS NULL OR employee.terminationDate >= :from)
+        ORDER BY employee.employeeCode
+        """)
+    List<Employee> findEmployedDuring(@Param("from") LocalDate from, @Param("to") LocalDate to);
 
     List<Employee> findByEmploymentStatusInAndDeletedAtIsNull(List<EmploymentStatus> employmentStatuses);
 

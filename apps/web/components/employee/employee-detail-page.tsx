@@ -199,6 +199,9 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
   const canReadEmployeeList = session.account.permissions.some(
     (permission) => permission.code === "employee.list.read",
   )
+  const canManageCompensation = session.account.permissions.some(
+    (permission) => permission.code === "compensation.manage",
+  )
   const displayedError = hasValidEmployeeId ? error : "Mã nhân sự trên đường dẫn không hợp lệ."
   const displayedLoading = hasValidEmployeeId && loading
 
@@ -304,6 +307,17 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
               </Card>
 
               <div className="grid content-start gap-4">
+                {canManageCompensation && <Card>
+                  <CardHeader>
+                    <CardTitle>Lương nhân viên</CardTitle>
+                    <CardDescription>Nhập mức lương ban đầu hoặc cập nhật lịch sử lương.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button nativeButton={false} render={<Link href={`/payslips?employeeId=${detail.id}&effectiveFrom=${detail.hireDate}`} />}>
+                      Nhập và xem lương
+                    </Button>
+                  </CardContent>
+                </Card>}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2"><KeyRound /> Tài khoản</CardTitle>

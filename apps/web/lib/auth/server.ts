@@ -388,6 +388,71 @@ export async function handleEmployeeRequest(request: Request, segments: string[]
   })
 }
 
+// Explicit workforce routes keep the session cookie on the Next.js server.
+export async function handleWorkforceRequest(request: Request, segments: string[]): Promise<NextResponse> {
+  const path = segments.join("/")
+  const routes = [
+    { pattern: /^attendance\/check-(?:in|out)$/, methods: ["POST"] },
+    { pattern: /^attendance\/prepare$/, methods: ["POST"] },
+    { pattern: /^attendance\/employees\/[1-9]\d*$/, methods: ["GET"] },
+    { pattern: /^attendance\/[1-9]\d*$/, methods: ["GET", "PUT"] },
+    { pattern: /^attendance\/[1-9]\d*\/overtime-approval$/, methods: ["POST"] },
+    { pattern: /^company-holidays$/, methods: ["GET", "POST"] },
+    { pattern: /^company-holidays\/[1-9]\d*$/, methods: ["DELETE"] },
+    { pattern: /^leave-requests$/, methods: ["POST"] },
+    { pattern: /^leave-requests\/pending$/, methods: ["GET"] },
+    { pattern: /^leave-requests\/employees\/[1-9]\d*$/, methods: ["GET"] },
+    { pattern: /^leave-requests\/[1-9]\d*$/, methods: ["GET"] },
+    { pattern: /^leave-requests\/[1-9]\d*\/(?:submit|cancel|approve|reject)$/, methods: ["POST"] },
+    { pattern: /^payroll\/periods$/, methods: ["GET", "POST"] },
+    { pattern: /^payroll\/periods\/[1-9]\d*$/, methods: ["GET"] },
+    { pattern: /^payroll\/periods\/[1-9]\d*\/(?:calculate|approve|mark-paid|lock|cancel)$/, methods: ["POST"] },
+    { pattern: /^payroll\/payslips\/[1-9]\d*$/, methods: ["GET"] },
+    { pattern: /^payroll\/employees\/[1-9]\d*\/payslips$/, methods: ["GET"] },
+    { pattern: /^compensation\/employees\/[1-9]\d*\/salary-history$/, methods: ["GET", "POST"] },
+    { pattern: /^compensation\/employees\/[1-9]\d*\/salary-history\/effective$/, methods: ["GET"] },
+  ]
+  const route = routes.find((candidate) => candidate.pattern.test(path))
+  if (!route) return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
+  if (!route.methods.includes(request.method)) {
+    return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
+  }
+  const origin = request.headers.get("origin")
+  if (request.method !== "GET" && origin && origin !== new URL(request.url).origin) {
+    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
+  }
+  const accessToken = (await cookies()).get(PORTAL_CONFIG.hrm.accessCookie)?.value
+  if (!accessToken) return NextResponse.json(failure("UNAUTHORIZED", "Phiên đăng nhập đã hết hạn"), { status: 401 })
+
+  let body: string | undefined
+  if (request.method === "PUT" || (request.method === "POST" &&
+      (/^(?:leave-requests|payroll\/periods|company-holidays)$/.test(path)
+        || /^compensation\/employees\/[1-9]\d*\/salary-history$/.test(path)
+        || /^attendance\/check-(?:in|out)$/.test(path)
+        || /^attendance\/[1-9]\d*\/overtime-approval$/.test(path)
+        || /^leave-requests\/[1-9]\d*\/(?:approve|reject)$/.test(path)))) {
+    try {
+      body = JSON.stringify(await request.json())
+    } catch {
+      return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
+    }
+  }
+  const query = new URLSearchParams()
+  new URL(request.url).searchParams.forEach((value, key) => {
+    if (["from", "to", "year", "month", "page", "size", "sort", "date"].includes(key)) query.append(key, value)
+  })
+  const result = await callApi<unknown>(`/api/${path}${query.size ? `?${query}` : ""}`, {
+    method: request.method,
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body,
+  })
+  if (!result) return gatewayFailure()
+  return NextResponse.json(result.payload, {
+    status: result.response.status,
+    headers: { "Cache-Control": "no-store" },
+  })
+}
+
 const REFERENCE_RESOURCES = ["organization-units", "work-locations", "job-positions", "work-shifts"] as const
 
 // Only expose the lookup catalogs (organization units, work locations, job positions):

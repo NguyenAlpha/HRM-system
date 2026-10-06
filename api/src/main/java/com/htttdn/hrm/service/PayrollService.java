@@ -24,6 +24,8 @@ public interface PayrollService {
 
     PayrollPeriodResponse getPeriodById(Long periodId);
 
+    Page<PayrollPeriodResponse> listPeriods(Pageable pageable);
+
     PayslipResponse getPayslip(Long payslipId);
 
     Page<PayslipResponse> listPayslipsForEmployee(Long employeeId, Pageable pageable);
