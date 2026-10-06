@@ -10,7 +10,6 @@ HRM-system/
 ├── apps/
 │   └── web/                # Frontend Next.js
 ├── docs/                   # Tài liệu cấp toàn dự án
-├── .github/                # Metadata và workflow hỗ trợ dự án
 ├── docker-compose.yaml     # Khởi chạy PostgreSQL local
 ├── .gitignore
 └── README.md               # Hướng dẫn nhanh
@@ -113,6 +112,7 @@ apps/web/
 │   ├── page.tsx                      # Trang gốc, điều hướng vào login
 │   ├── globals.css                   # CSS toàn ứng dụng
 │   ├── login/page.tsx                # Đăng nhập HRM Workspace
+│   ├── activate/                      # Kích hoạt account bằng token mời
 │   ├── dashboard/page.tsx            # Dashboard HRM Workspace
 │   ├── employees/                     # Danh sách và chi tiết nhân viên
 │   ├── organization/page.tsx          # Cơ cấu tổ chức
@@ -132,23 +132,41 @@ apps/web/
 │   │   └── role-grant/page.tsx       # Gán role quản trị
 │   └── api/
 │       ├── session/                  # BFF session cho người dùng HRM
-│       └── admin-session/            # BFF session cho system admin
-├── components/auth/                  # Component login, session và sidebar
-├── components/employee/              # Danh sách và form hồ sơ nhân viên
-├── components/organization/          # Quản lý tổ chức, địa điểm, vị trí và ca
-├── components/rbac/                  # Role, permission và role assignment
-├── components/workforce/             # Chấm công, nghỉ phép và lương
-├── components/report/                # Dashboard và biểu đồ phân bố báo cáo
+│       ├── admin-session/            # BFF session cho system admin
+│       └── account-activations/      # BFF kích hoạt account, không cần đăng nhập
+├── components/
+│   ├── activation/                   # Màn hình kích hoạt account
+│   ├── admin/                        # Màn hình Admin Console
+│   ├── auth/                         # Component login, session và sidebar
+│   ├── employee/                     # Danh sách, chi tiết và form hồ sơ nhân viên
+│   ├── organization/                 # Quản lý tổ chức, địa điểm, vị trí và ca
+│   ├── rbac/                         # Custom role tại HRM Workspace
+│   ├── report/                       # Dashboard và biểu đồ phân bố báo cáo
+│   ├── role-assignment/              # Gán role, yêu cầu cấp role và permission override
+│   ├── ui/                           # Primitive shadcn/ui dùng chung
+│   └── workforce/                    # Chấm công, nghỉ phép và lương
 ├── lib/
-│   ├── api.ts                        # API utility dùng chung
+│   ├── api.ts                        # Wrapper fetch tới API, hiện chưa có nơi sử dụng
+│   ├── api-helpers.ts                # Chuẩn hóa lỗi trả về từ BFF
+│   ├── account.ts                    # Client account và vòng đời tài khoản
+│   ├── activation.ts                 # Client kích hoạt account
+│   ├── company-owner.ts              # Client bootstrap Company Owner
+│   ├── employee.ts                   # Client và kiểu dữ liệu nhân viên
+│   ├── employee-birth-date.ts        # Xử lý ngày sinh trong form nhân viên
+│   ├── organization-position-filter.ts # Lọc vị trí theo đơn vị tổ chức
+│   ├── rbac.ts                       # Client role, permission và module quyền
+│   ├── reference.ts                  # Client danh mục tổ chức dùng chung
 │   ├── report.ts                     # Client và kiểu dữ liệu báo cáo
 │   ├── report-server.ts              # BFF gọi Report API
+│   ├── role-assignment.ts            # Client role assignment và yêu cầu cấp role
+│   ├── utils.ts                      # Tiện ích dùng chung
 │   └── auth/
 │       ├── client.ts                 # Helper phía client
 │       ├── config.ts                 # Cấu hình cookie và auth
 │       ├── server.ts                 # Helper phía server
 │       └── types.ts                  # TypeScript types cho auth
 ├── proxy.ts                          # Proxy/route protection
+├── components.json                   # Cấu hình shadcn/ui
 ├── .env.example                      # Biến môi trường mẫu
 ├── package.json                      # Scripts và dependencies
 ├── package-lock.json
@@ -158,6 +176,8 @@ apps/web/
 ├── eslint.config.mjs
 ├── next-env.d.ts
 ├── README.md
+├── AGENTS.md                         # Quy tắc cho coding agent, do `next dev` tự sinh
+├── CLAUDE.md                         # Chỉ import AGENTS.md
 └── docs/
     ├── README.md                     # Tài liệu frontend
     ├── AUTH.md                        # Kiến trúc authentication BFF
@@ -220,22 +240,25 @@ Các thư mục sau là metadata hoặc output sinh tự động và không nên
 
 ```text
 .git/
+.idea/
 api/target/
 apps/web/node_modules/
 apps/web/.next/
-.github/modernize/
+apps/web/tsconfig.tsbuildinfo
 ```
 
 - `api/target/` chứa class đã compile, test reports và file JAR do Maven tạo.
 - `apps/web/node_modules/` chứa dependencies cài bằng npm.
 - `apps/web/.next/` chứa output build của Next.js.
-- `.github/modernize/` chứa metadata của các workflow modernization.
+- `.idea/` chứa cấu hình IntelliJ IDEA của từng máy.
+- `apps/web/next-env.d.ts` và `apps/web/AGENTS.md` do Next.js tự sinh lại khi chạy `next dev`.
 
 ## 7. Tài liệu cấp dự án
 
 - `README.md`: hướng dẫn nhanh ở root.
 - `docs/SETUP.md`: hướng dẫn cài đặt và chạy dự án.
 - `docs/OVERVIEW.md`: tổng quan sản phẩm, tech stack và cách chạy.
+- `docs/ORGANIZATION_STRUCTURE.md`: cơ cấu tổ chức, chức danh và mô hình phân quyền.
 - `docs/PROJECT_STRUCTURE.md`: tài liệu cấu trúc hiện tại này.
 
 ## 8. Luồng phụ thuộc chính
