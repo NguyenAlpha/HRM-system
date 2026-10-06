@@ -1,6 +1,7 @@
 package com.htttdn.hrm.service;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,19 +37,22 @@ public class LeaveRequestService {
     private final AccountRepository accountRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
+    private final AttendanceService attendanceService;
 
     public LeaveRequestService(
         LeaveRequestRepository leaveRequestRepository,
         EmployeeRepository employeeRepository,
         AccountRepository accountRepository,
         CurrentAccountProvider currentAccountProvider,
-        EmployeeAccessScopeService employeeAccessScopeService
+        EmployeeAccessScopeService employeeAccessScopeService,
+        AttendanceService attendanceService
     ) {
         this.leaveRequestRepository = leaveRequestRepository;
         this.employeeRepository = employeeRepository;
         this.accountRepository = accountRepository;
         this.currentAccountProvider = currentAccountProvider;
         this.employeeAccessScopeService = employeeAccessScopeService;
+        this.attendanceService = attendanceService;
     }
 
     @PreAuthorize("hasAnyAuthority('request.self.create', 'request.manage')")
@@ -120,6 +124,7 @@ public class LeaveRequestService {
             );
         }
 
+        attendanceService.applyApprovedLeave(request);
         review(request, LeaveRequestStatus.APPROVED, reviewComment);
         return toView(request);
     }
@@ -152,6 +157,19 @@ public class LeaveRequestService {
         requireSelfOrScopedAccess(employeeId, REQUEST_READ);
         return leaveRequestRepository.findByEmployeeIdOrderByCreatedAtDesc(employeeId, pageable)
             .map(this::toView);
+    }
+
+    @PreAuthorize("hasAuthority('request.approve')")
+    @Transactional(readOnly = true)
+    public Page<LeaveRequestView> listPending(Pageable pageable) {
+        List<Long> employeeIds = employeeRepository.findAll(
+            employeeAccessScopeService.accessibleEmployees(REQUEST_APPROVE)).stream()
+            .map(Employee::getId).toList();
+        if (employeeIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return leaveRequestRepository.findByEmployeeIdInAndStatusOrderByCreatedAtDesc(
+            employeeIds, LeaveRequestStatus.PENDING, pageable).map(this::toView);
     }
 
     private void validateCommand(CreateLeaveCommand command) {

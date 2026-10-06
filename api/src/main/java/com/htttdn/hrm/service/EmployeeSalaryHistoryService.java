@@ -13,12 +13,18 @@ import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeSalaryHistory;
+import com.htttdn.hrm.entity.PayrollPeriod;
+import com.htttdn.hrm.entity.Payslip;
+import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
+import com.htttdn.hrm.repository.PayrollPeriodRepository;
+import com.htttdn.hrm.repository.PayslipItemRepository;
+import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
 @Service
@@ -30,6 +36,9 @@ public class EmployeeSalaryHistoryService {
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeSalaryHistoryRepository salaryHistoryRepository;
+    private final PayrollPeriodRepository payrollPeriodRepository;
+    private final PayslipRepository payslipRepository;
+    private final PayslipItemRepository payslipItemRepository;
     private final AccountRepository accountRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
@@ -37,12 +46,18 @@ public class EmployeeSalaryHistoryService {
     public EmployeeSalaryHistoryService(
         EmployeeRepository employeeRepository,
         EmployeeSalaryHistoryRepository salaryHistoryRepository,
+        PayrollPeriodRepository payrollPeriodRepository,
+        PayslipRepository payslipRepository,
+        PayslipItemRepository payslipItemRepository,
         AccountRepository accountRepository,
         CurrentAccountProvider currentAccountProvider,
         EmployeeAccessScopeService employeeAccessScopeService
     ) {
         this.employeeRepository = employeeRepository;
         this.salaryHistoryRepository = salaryHistoryRepository;
+        this.payrollPeriodRepository = payrollPeriodRepository;
+        this.payslipRepository = payslipRepository;
+        this.payslipItemRepository = payslipItemRepository;
         this.accountRepository = accountRepository;
         this.currentAccountProvider = currentAccountProvider;
         this.employeeAccessScopeService = employeeAccessScopeService;
@@ -54,6 +69,19 @@ public class EmployeeSalaryHistoryService {
         Employee employee = employeeRepository.findByIdForUpdate(employeeId)
             .orElseThrow(() -> employeeNotFound(employeeId));
         validateCommand(employee, command);
+
+        List<PayrollPeriod> affectedPeriods = payrollPeriodRepository.findAffectedPeriodsForUpdate(
+            command.effectiveFrom(),
+            List.of(PayrollPeriodStatus.CALCULATED, PayrollPeriodStatus.APPROVED,
+                PayrollPeriodStatus.PAID, PayrollPeriodStatus.LOCKED));
+        for (PayrollPeriod period : affectedPeriods) {
+            if (period.getStatus() != PayrollPeriodStatus.CALCULATED) {
+                throw new ConflictException(ErrorCode.PAYROLL_PERIOD_LOCKED,
+                    "Cannot change salary effective " + command.effectiveFrom()
+                        + ": payroll period " + period.getYear() + "-" + period.getMonth()
+                        + " is " + period.getStatus());
+            }
+        }
 
         List<EmployeeSalaryHistory> openSalaries = salaryHistoryRepository
             .findOpenByEmployeeIdForUpdate(employeeId);
@@ -84,7 +112,18 @@ public class EmployeeSalaryHistoryService {
             .note(normalizeNullable(command.note()))
             .createdAt(Instant.now())
             .build();
-        return toView(salaryHistoryRepository.save(salary));
+        SalaryHistoryView result = toView(salaryHistoryRepository.save(salary));
+        for (PayrollPeriod period : affectedPeriods) {
+            for (Payslip payslip : payslipRepository.findByPayrollPeriodId(period.getId())) {
+                payslipItemRepository.deleteByPayslipId(payslip.getId());
+                payslipRepository.delete(payslip);
+            }
+            period.setStatus(PayrollPeriodStatus.DRAFT);
+            period.setCalculatedByAccount(null);
+            period.setCalculatedAt(null);
+            period.setUpdatedAt(Instant.now());
+        }
+        return result;
     }
 
     @PreAuthorize("hasAuthority('compensation.read')")

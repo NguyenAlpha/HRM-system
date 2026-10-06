@@ -13,14 +13,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeSalaryHistory;
+import com.htttdn.hrm.entity.PayrollPeriod;
+import com.htttdn.hrm.entity.Payslip;
+import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.BusinessException;
+import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
+import com.htttdn.hrm.repository.PayrollPeriodRepository;
+import com.htttdn.hrm.repository.PayslipItemRepository;
+import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,6 +38,9 @@ class EmployeeSalaryHistoryServiceTest {
 
     @Mock private EmployeeRepository employeeRepository;
     @Mock private EmployeeSalaryHistoryRepository salaryHistoryRepository;
+    @Mock private PayrollPeriodRepository payrollPeriodRepository;
+    @Mock private PayslipRepository payslipRepository;
+    @Mock private PayslipItemRepository payslipItemRepository;
     @Mock private AccountRepository accountRepository;
     @Mock private CurrentAccountProvider currentAccountProvider;
     @Mock private EmployeeAccessScopeService employeeAccessScopeService;
@@ -96,10 +107,57 @@ class EmployeeSalaryHistoryServiceTest {
         );
     }
 
+    @Test
+    void setSalaryInvalidatesCalculatedPeriodAndRemovesStalePayslip() {
+        Employee employee = Employee.builder().id(1L).hireDate(LocalDate.of(2024, 1, 1)).build();
+        Account approver = Account.builder().id(9L).build();
+        PayrollPeriod period = PayrollPeriod.builder()
+            .id(7L).year((short) 2026).month((short) 1)
+            .status(PayrollPeriodStatus.CALCULATED)
+            .calculatedByAccount(approver).build();
+        Payslip payslip = Payslip.builder().id(11L).build();
+        when(employeeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(employee));
+        when(payrollPeriodRepository.findAffectedPeriodsForUpdate(any(), any()))
+            .thenReturn(List.of(period));
+        when(salaryHistoryRepository.findOpenByEmployeeIdForUpdate(1L)).thenReturn(List.of());
+        when(currentAccountProvider.accountId()).thenReturn(9L);
+        when(accountRepository.findById(9L)).thenReturn(Optional.of(approver));
+        when(salaryHistoryRepository.save(any(EmployeeSalaryHistory.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+        when(payslipRepository.findByPayrollPeriodId(7L)).thenReturn(List.of(payslip));
+
+        service().setSalary(1L, new EmployeeSalaryHistoryService.SetSalaryCommand(
+            new BigDecimal("12000000"), LocalDate.of(2026, 1, 1), null, null));
+
+        assertEquals(PayrollPeriodStatus.DRAFT, period.getStatus());
+        assertNull(period.getCalculatedByAccount());
+        assertNull(period.getCalculatedAt());
+        verify(payslipItemRepository).deleteByPayslipId(11L);
+        verify(payslipRepository).delete(payslip);
+    }
+
+    @Test
+    void setSalaryRejectsChangeAffectingApprovedPeriod() {
+        Employee employee = Employee.builder().id(1L).hireDate(LocalDate.of(2024, 1, 1)).build();
+        PayrollPeriod period = PayrollPeriod.builder()
+            .id(7L).year((short) 2026).month((short) 1)
+            .status(PayrollPeriodStatus.APPROVED).build();
+        when(employeeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(employee));
+        when(payrollPeriodRepository.findAffectedPeriodsForUpdate(any(), any()))
+            .thenReturn(List.of(period));
+
+        assertThrows(ConflictException.class, () -> service().setSalary(1L,
+            new EmployeeSalaryHistoryService.SetSalaryCommand(
+                new BigDecimal("12000000"), LocalDate.of(2026, 1, 1), null, null)));
+    }
+
     private EmployeeSalaryHistoryService service() {
         return new EmployeeSalaryHistoryService(
             employeeRepository,
             salaryHistoryRepository,
+            payrollPeriodRepository,
+            payslipRepository,
+            payslipItemRepository,
             accountRepository,
             currentAccountProvider,
             employeeAccessScopeService

@@ -123,6 +123,7 @@ public class PermissionSeeder implements ApplicationRunner {
         permission("request.manage", "Quản lý đơn của nhân viên", PermissionModule.REQUEST, "Quản lý đơn từ của nhân viên trong phạm vi được phân công"),
 
         permission("attendance.self.read", "Xem chấm công cá nhân", PermissionModule.ATTENDANCE, "Xem dữ liệu chấm công của chính mình"),
+        permission("attendance.self.record", "Chấm công cá nhân", PermissionModule.ATTENDANCE, "Chấm vào và chấm ra cho chính mình"),
         permission("attendance.read", "Xem dữ liệu chấm công", PermissionModule.ATTENDANCE, "Xem dữ liệu chấm công trong phạm vi được phân công"),
         permission("attendance.manage", "Quản lý chấm công", PermissionModule.ATTENDANCE, "Tạo và điều chỉnh dữ liệu chấm công"),
         permission(

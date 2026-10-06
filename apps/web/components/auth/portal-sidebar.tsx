@@ -6,7 +6,7 @@ import type { AccountSummary, Portal } from "@/lib/auth/types"
 export function PortalSidebar({ portal, account, active = "overview" }: {
   portal: Portal
   account: AccountSummary
-  active?: "overview" | "rbac" | "employees" | "role-requests" | "company-owner" | "role-grant" | "organization" | "reports"
+  active?: "overview" | "rbac" | "employees" | "role-requests" | "company-owner" | "role-grant" | "organization" | "reports" | "attendance" | "leave" | "payroll"
 }) {
   const admin = portal === "admin"
   const canBootstrapCompanyOwner = account.permissions.some(
@@ -22,6 +22,12 @@ export function PortalSidebar({ portal, account, active = "overview" }: {
   const canReadReports = account.permissions.some(
     (permission) => permission.code === "report.hr.read" || permission.code === "report.payroll.read",
   )
+  const canUseAttendance = account.permissions.some((permission) =>
+    ["attendance.self.read", "attendance.read", "attendance.manage"].includes(permission.code))
+  const canUseLeave = account.permissions.some((permission) =>
+    ["request.self.read", "request.read", "request.self.create", "request.approve"].includes(permission.code))
+  const canUsePayroll = account.permissions.some((permission) =>
+    ["payroll.self.read", "report.payroll.read", "payroll.calculate", "compensation.read", "compensation.manage"].includes(permission.code))
 
   return (
     <aside className="portal-sidebar">
@@ -89,9 +95,9 @@ export function PortalSidebar({ portal, account, active = "overview" }: {
                 <span>▥</span> Báo cáo nhân sự
               </Link>
             )}
-            <span className="nav-item disabled"><span>◷</span> Chấm công</span>
-            <span className="nav-item disabled"><span>▱</span> Đơn từ</span>
-            <span className="nav-item disabled"><span>◈</span> Phiếu lương</span>
+            {canUseAttendance && <Link className={`nav-item ${active === "attendance" ? "active" : ""}`} href="/attendance"><span>◷</span> Chấm công</Link>}
+            {canUseLeave && <Link className={`nav-item ${active === "leave" ? "active" : ""}`} href="/leave-requests"><span>▱</span> Đơn từ</Link>}
+            {canUsePayroll && <Link className={`nav-item ${active === "payroll" ? "active" : ""}`} href="/payslips"><span>◈</span> Phiếu lương</Link>}
           </>
         )}
       </nav>

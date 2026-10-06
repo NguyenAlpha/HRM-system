@@ -1,6 +1,7 @@
 package com.htttdn.hrm.repository;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -20,6 +21,9 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
     Page<LeaveRequest> findByEmployeeIdOrderByCreatedAtDesc(Long employeeId, Pageable pageable);
 
     Page<LeaveRequest> findByStatusOrderByCreatedAtDesc(LeaveRequestStatus status, Pageable pageable);
+
+    Page<LeaveRequest> findByEmployeeIdInAndStatusOrderByCreatedAtDesc(
+        Collection<Long> employeeIds, LeaveRequestStatus status, Pageable pageable);
 
     Page<LeaveRequest> findByEmployeeIdAndStatusOrderByCreatedAtDesc(
         Long employeeId,

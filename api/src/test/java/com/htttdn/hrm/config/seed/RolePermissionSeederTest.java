@@ -24,6 +24,7 @@ import com.htttdn.hrm.repository.RolePermissionRepository;
 import com.htttdn.hrm.repository.RoleRepository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -83,5 +84,6 @@ class RolePermissionSeederTest {
                 .filter(code -> code.startsWith("report."))
                 .collect(Collectors.toSet())
         );
+        assertTrue(hrManagerPermissions.containsAll(Set.of("compensation.read", "compensation.manage")));
     }
 }

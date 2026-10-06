@@ -10,8 +10,13 @@ import com.htttdn.hrm.dto.request.attendance.ApproveOvertimeRequest;
 import com.htttdn.hrm.dto.request.attendance.CheckInRequest;
 import com.htttdn.hrm.dto.request.attendance.CheckOutRequest;
 import com.htttdn.hrm.dto.response.attendance.AttendanceRecordResponse;
+import com.htttdn.hrm.entity.LeaveRequest;
 
 public interface AttendanceService {
+
+    int prepareMonth(int year, int month);
+
+    void applyApprovedLeave(LeaveRequest leaveRequest);
 
     AttendanceRecordResponse checkIn(CheckInRequest request);
 

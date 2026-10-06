@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class LeaveRequestServiceTest {
@@ -34,6 +35,7 @@ class LeaveRequestServiceTest {
     @Mock private AccountRepository accountRepository;
     @Mock private CurrentAccountProvider currentAccountProvider;
     @Mock private EmployeeAccessScopeService employeeAccessScopeService;
+    @Mock private AttendanceService attendanceService;
 
     @Test
     void employeeCreatesOwnDraftUsingMinuteBasedPeriod() {
@@ -67,6 +69,24 @@ class LeaveRequestServiceTest {
     }
 
     @Test
+    void approvingLeaveUpdatesAttendance() {
+        Employee employee = Employee.builder().id(1L).build();
+        LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee)
+            .status(LeaveRequestStatus.PENDING)
+            .startAt(Instant.parse("2026-01-05T01:00:00Z"))
+            .endAt(Instant.parse("2026-01-05T10:00:00Z"))
+            .requestedMinutes(480).build();
+        when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
+        when(currentAccountProvider.accountId()).thenReturn(9L);
+        when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).build()));
+
+        service().approve(3L, "Approved");
+
+        verify(attendanceService).applyApprovedLeave(request);
+        assertEquals(LeaveRequestStatus.APPROVED, request.getStatus());
+    }
+
+    @Test
     void approveRejectsOverlappingApprovedLeave() {
         Employee employee = Employee.builder().id(1L).build();
         LeaveRequest request = LeaveRequest.builder()
@@ -95,7 +115,8 @@ class LeaveRequestServiceTest {
             employeeRepository,
             accountRepository,
             currentAccountProvider,
-            employeeAccessScopeService
+            employeeAccessScopeService,
+            attendanceService
         );
     }
 }

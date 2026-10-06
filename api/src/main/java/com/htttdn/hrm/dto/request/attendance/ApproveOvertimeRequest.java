@@ -13,9 +13,6 @@ public record ApproveOvertimeRequest(
 
     @NotNull
     @Positive
-    BigDecimal overtimeMultiplier,
-
-    @NotNull
-    Long approverAccountId
+    BigDecimal overtimeMultiplier
 ) {
 }
