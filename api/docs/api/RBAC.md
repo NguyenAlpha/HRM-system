@@ -645,13 +645,14 @@ Lấy chi tiết một permission.
 Hiện tại `organization.company_owner.bootstrap`, `role.assignment.approve` và `account.permission.override.manage` là `SYSTEM_ONLY`; các permission còn lại là `DELEGABLE`.
 Migration và `RolePermissionSeeder` tự thu hồi mapping `SYSTEM_ONLY` từng bị gán cho custom role trước khi chính sách này được áp dụng.
 
-Ba permission chuẩn bị cho workflow cấp tài khoản và đề xuất role:
+Ba permission chuẩn bị cho workflow cấp tài khoản và đề xuất role. Role nào được seed các
+permission này nằm trong [ma trận bên dưới](#permission-mặc-định-của-system-role):
 
-| Permission | Role hệ thống được seed | Mục đích |
-|:-----------|:------------------------|:---------|
-| `account.provision` | `HR_MANAGER`, `COMPANY_OWNER` | Tạo account cho employee hợp lệ qua `POST /api/accounts` trong scope được giao |
-| `role.assignment.request` | `HR_MANAGER` | Gửi đề xuất cấp role nghiệp vụ |
-| `role.assignment.approve` | `COMPANY_OWNER` | Duyệt hoặc từ chối đề xuất; là `SYSTEM_ONLY` nên không thể gán cho custom role qua API RBAC |
+| Permission | Mục đích |
+|:-----------|:---------|
+| `account.provision` | Tạo account cho employee hợp lệ qua `POST /api/accounts` trong scope được giao |
+| `role.assignment.request` | Gửi đề xuất cấp role nghiệp vụ |
+| `role.assignment.approve` | Duyệt hoặc từ chối đề xuất; là `SYSTEM_ONLY` nên không thể gán cho custom role qua API RBAC |
 
 Hai permission này được sử dụng bởi [Role Assignment Requests](./ROLE_ASSIGNMENT_REQUESTS.md). Role `HR_ASSIGNABLE` được tạo assignment ngay và lưu request `APPROVED` để audit; role `OWNER_APPROVAL` giữ `PENDING` cho tới khi Company Owner duyệt. Request bị từ chối hoặc hủy không cấp quyền cho account.
 
@@ -659,14 +660,133 @@ HR Manager lấy danh sách role có thể đề xuất qua `GET /api/role-assig
 
 Permission dành cho danh mục tổ chức:
 
-| Permission | Role hệ thống được seed | Mục đích |
-|:-----------|:------------------------|:---------|
-| `organization.read` | `HR_MANAGER`, `DIRECTOR`, `COMPANY_OWNER` | Xem cơ cấu tổ chức, địa điểm, chức danh và ca làm việc |
-| `organization.manage` | `COMPANY_OWNER` | Tạo, cập nhật, ngừng sử dụng và xóa mềm các danh mục tổ chức và ca làm việc |
+| Permission | Mục đích |
+|:-----------|:---------|
+| `organization.read` | Xem cơ cấu tổ chức, địa điểm, chức danh và ca làm việc |
+| `organization.manage` | Tạo, cập nhật, ngừng sử dụng và xóa mềm các danh mục tổ chức và ca làm việc |
 
 `organization.change.approve` tiếp tục là quyền phê duyệt nghiệp vụ dành cho `DIRECTOR`, không được dùng thay cho quyền CRUD danh mục.
 
 `SYSTEM_ADMIN` sử dụng riêng permission `organization.company_owner.bootstrap` tại `POST /api/system/organization/company-owner` để tạo Company Owner đầu tiên. Workflow và giới hạn chống tạo trùng được mô tả trong [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md).
+
+---
+
+## Permission mặc định của system role
+
+`RolePermissionSeeder` tạo mapping dưới đây khi khởi động với `RBAC_SEED_ENABLED=true`. Đây là
+quyền mặc định của system role, chưa tính permission override trên từng role assignment và chưa
+tính phạm vi dữ liệu: có permission không đồng nghĩa với truy cập được mọi nhân viên. Custom role
+không có trong bảng vì permission của chúng do người có `rbac.manage` tự chọn.
+
+Ký hiệu cột: **EMP** `EMPLOYEE`, **HRM** `HR_MANAGER`, **PAC** `PAYROLL_ACCOUNTANT`,
+**PAP** `PAYROLL_APPROVER`, **DIR** `DIRECTOR`, **CO** `COMPANY_OWNER`, **SA** `SYSTEM_ADMIN`.
+Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho custom role.
+
+### Module `EMPLOYEE`
+
+| Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
+|:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
+| `profile.self.read` | ✓ | | | | | | |
+| `profile.self.update` | ✓ | | | | | | |
+| `employee.list.read` | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `employee.read` | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `employee.create` | | ✓ | | | ✓ | ✓ | |
+| `employee.update` | | ✓ | | | ✓ | ✓ | |
+| `employee.probation.confirm` | | ✓ | | | ✓ | ✓ | |
+| `employee.assignment.read` | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `employee.assignment.manage` | | ✓ | | | ✓ | ✓ | |
+| `employee.lifecycle.manage` | | ✓ | | | ✓ | ✓ | |
+| `employee.lifecycle.approve` | | | | | ✓ | | |
+| `employee.delete` | | ✓ | | | ✓ | ✓ | |
+| `employee.sensitive.read` | | ✓ | | | | | |
+| `employee.sensitive.manage` | | ✓ | | | | | |
+
+### Module `ACCOUNT`
+
+| Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
+|:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
+| `account.read` | | | | | | ✓ | ✓ |
+| `account.manage` | | | | | | ✓ | |
+| `account.provision` | | ✓ | | | | ✓ | ✓ |
+| `account.activation.manage` | | | | | | ✓ | |
+| `account.role.assign` | | | | | | ✓ | ✓ |
+| `role.assignment.request` | | ✓ | | | | | |
+| `role.assignment.approve` `(S)` | | | | | | ✓ | |
+| `account.permission.override.manage` `(S)` | | | | | | ✓ | |
+
+### Module `ORGANIZATION`
+
+| Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
+|:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
+| `organization.read` | | ✓ | | | ✓ | ✓ | ✓ |
+| `organization.manage` | | | | | | ✓ | ✓ |
+| `organization.change.approve` | | | | | ✓ | | |
+| `organization.company_owner.bootstrap` `(S)` | | | | | | | ✓ |
+
+### Module `REQUEST`
+
+| Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
+|:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
+| `request.self.read` | ✓ | | | | | | |
+| `request.self.create` | ✓ | | | | | | |
+| `request.self.cancel` | ✓ | | | | | | |
+| `request.read` | | ✓ | | | ✓ | | |
+| `request.approve` | | ✓ | | | | | |
+| `request.final_approve` | | | | | ✓ | | |
+| `request.manage` | | ✓ | | | | | |
+
+### Module `ATTENDANCE`
+
+| Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
+|:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
+| `attendance.self.read` | ✓ | | | | | | |
+| `attendance.self.record` | ✓ | | | | | | |
+| `attendance.read` | | ✓ | | | | | |
+| `attendance.manage` | | ✓ | | | | | |
+| `attendance.overtime.approve` | | ✓ | | | | | |
+
+### Module `PAYROLL`
+
+| Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
+|:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
+| `payroll.self.read` | ✓ | | | | | | |
+| `payroll.self.print` | ✓ | | | | | | |
+| `compensation.read` | | ✓ | ✓ | | | | |
+| `compensation.manage` | | ✓ | ✓ | | | | |
+| `payroll.calculate` | | | ✓ | | | | |
+| `payroll.approve` | | | | ✓ | | | |
+| `payroll.mark_paid` | | | | ✓ | | | |
+| `payroll.lock` | | | | ✓ | | | |
+
+### Module `REPORT`
+
+| Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
+|:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
+| `report.hr.read` | | ✓ | | | | | |
+| `report.payroll.read` | | ✓ | ✓ | ✓ | | | |
+
+### Module `RBAC`
+
+| Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
+|:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
+| `rbac.manage` | | | | | | ✓ | ✓ |
+
+### Tổng số permission mỗi role
+
+| EMP | HRM | PAC | PAP | DIR | CO | SA |
+|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
+| 9 | 24 | 7 | 7 | 14 | 19 | 10 |
+
+Một vài ranh giới dễ hiểu nhầm:
+
+- `HR_MANAGER` không có `payroll.calculate`, `payroll.approve` hay `organization.manage`. HR nhập
+  dữ liệu đầu vào cho lương, kế toán tính và người khác duyệt.
+- `PAYROLL_ACCOUNTANT` tính lương nhưng không duyệt; `PAYROLL_APPROVER` duyệt, xác nhận trả và
+  khóa kỳ nhưng không tính. Hai role này tách nhau có chủ đích.
+- `DIRECTOR` phê duyệt `employee.lifecycle.approve`, `request.final_approve` và
+  `organization.change.approve` nhưng không quản trị account hay RBAC.
+- `SYSTEM_ADMIN` không có quyền nghiệp vụ về nghỉ phép, chấm công, lương hay báo cáo.
+- Chỉ `HR_MANAGER` có `employee.sensitive.read` và `employee.sensitive.manage`.
 
 ---
 
