@@ -48,6 +48,9 @@ public class PayrollPeriod {
     @Column(name = "period_end", nullable = false)
     private LocalDate periodEnd;
 
+    @Column(name = "tax_payment_date")
+    private LocalDate taxPaymentDate;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private PayrollPeriodStatus status;

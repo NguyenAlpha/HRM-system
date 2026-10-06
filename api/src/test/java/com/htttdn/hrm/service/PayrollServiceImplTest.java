@@ -47,6 +47,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -66,6 +68,25 @@ class PayrollServiceImplTest {
     @Mock private CurrentAccountProvider currentAccountProvider;
     @Mock private EmployeeAccessScopeService employeeAccessScopeService;
     @Mock private AttendanceCalendarService attendanceCalendarService;
+    @Mock private PayrollDeductionsService payrollDeductionsService;
+
+    @Test
+    void employeeWithOnlyHolidayDatesRequiresManualPayrollReview() {
+        LocalDate holiday = LocalDate.of(2026, 1, 1);
+        PayrollPeriod period = PayrollPeriod.builder().id(1L).periodStart(holiday).periodEnd(holiday)
+            .status(PayrollPeriodStatus.DRAFT).build();
+        Employee employee = Employee.builder().id(2L).employeeCode("EMP002").hireDate(holiday)
+            .terminationDate(holiday).build();
+        when(payrollPeriodRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(period));
+        when(currentAccountProvider.accountId()).thenReturn(9L);
+        when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).build()));
+        when(employeeRepository.findEmployedDuring(holiday, holiday)).thenReturn(List.of(employee));
+
+        BusinessException error = assertThrows(BusinessException.class,
+            () -> service().calculate(1L, new PayrollActionRequest(holiday)));
+        assertTrue(error.getMessage().contains("EMP002"));
+        assertTrue(error.getMessage().contains("company workdays"));
+    }
 
     @Test
     void missingEmployeeInputDoesNotMarkPeriodCalculated() {
@@ -86,7 +107,7 @@ class PayrollServiceImplTest {
         when(employeeSalaryHistoryRepository.findEffective(2L, end)).thenReturn(Optional.empty());
 
         BusinessException error = assertThrows(BusinessException.class,
-            () -> service().calculate(1L, new PayrollActionRequest()));
+            () -> service().calculate(1L, new PayrollActionRequest(end)));
         assertTrue(error.getMessage().contains("EMP002"));
         assertTrue(error.getMessage().contains(end.toString()));
         assertEquals(PayrollPeriodStatus.DRAFT, period.getStatus());
@@ -112,7 +133,7 @@ class PayrollServiceImplTest {
                 WorkShift.builder().standardWorkMinutes(480).build(), Instant.now(), Instant.now(), 480)));
 
         BusinessException error = assertThrows(BusinessException.class,
-            () -> service().calculate(1L, new PayrollActionRequest()));
+            () -> service().calculate(1L, new PayrollActionRequest(end)));
         assertTrue(error.getMessage().contains("EMP001"));
         assertTrue(error.getMessage().contains("2026-10-05"));
         assertEquals(PayrollPeriodStatus.DRAFT, period.getStatus());
@@ -145,7 +166,7 @@ class PayrollServiceImplTest {
             new AttendanceCalendarService.ScheduledDay(first, shift, Instant.now(), Instant.now(), 480),
             new AttendanceCalendarService.ScheduledDay(second, shift, Instant.now(), Instant.now(), 480)));
 
-        assertThrows(BusinessException.class, () -> service().calculate(1L, new PayrollActionRequest()));
+        assertThrows(BusinessException.class, () -> service().calculate(1L, new PayrollActionRequest(second)));
         assertEquals(PayrollPeriodStatus.DRAFT, period.getStatus());
     }
 
@@ -202,6 +223,7 @@ class PayrollServiceImplTest {
             .overtimeMultiplier(new BigDecimal("1.5"))
             .overtimeApprovedByAccount(actor)
             .overtimeApprovedAt(Instant.now())
+            .overtimeTaxExempt(true)
             .workDate(LocalDate.of(2026, 1, 15))
             .build();
 
@@ -234,7 +256,9 @@ class PayrollServiceImplTest {
             return saved;
         });
 
-        service().calculate(1L, new PayrollActionRequest());
+        stubNoDeductions();
+
+        service().calculate(1L, new PayrollActionRequest(end));
 
         ArgumentCaptor<Payslip> payslipCaptor = ArgumentCaptor.forClass(Payslip.class);
         verify(payslipRepository).save(payslipCaptor.capture());
@@ -244,12 +268,15 @@ class PayrollServiceImplTest {
         assertEquals(new BigDecimal("19230.77"), payslip.getSeniorityAllowancePay());
         assertEquals(new BigDecimal("72115.38"), payslip.getOvertimePay());
         assertEquals(new BigDecimal("514423.07"), payslip.getGrossPay());
+        assertEquals(new BigDecimal("72115.38"), payslip.getTaxExemptOvertimePay());
+        verify(payrollDeductionsService).calculate(eq(2L), eq(end), eq(end),
+            eq(new BigDecimal("442307.69")), eq(0L));
         assertEquals(60, payslip.getApprovedOvertimeMinutes());
         verify(payslipItemRepository).saveAll(any());
     }
 
     @Test
-    void salaryChangesWithinMonthAreAppliedToTheirEffectiveDays() {
+    void salaryChangesAndPartialUnpaidDayProratePayAndAllowance() {
         LocalDate start = LocalDate.of(2026, 1, 1);
         LocalDate end = LocalDate.of(2026, 1, 31);
         LocalDate first = LocalDate.of(2026, 1, 15);
@@ -267,7 +294,7 @@ class PayrollServiceImplTest {
         AttendanceRecord firstRecord = AttendanceRecord.builder().workDate(first)
             .scheduledMinutes(480).payableMinutes(480).build();
         AttendanceRecord secondRecord = AttendanceRecord.builder().workDate(second)
-            .scheduledMinutes(480).payableMinutes(480).build();
+            .scheduledMinutes(480).payableMinutes(240).build();
         when(payrollPeriodRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(period));
         when(currentAccountProvider.accountId()).thenReturn(9L);
         when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).build()));
@@ -285,17 +312,24 @@ class PayrollServiceImplTest {
             EmployeeSalaryHistory.builder().baseSalary(new BigDecimal("20000000")).build()));
         when(employeeAssignmentRepository.findCurrentPrimaryCandidates(2L, first)).thenReturn(List.of(assignment));
         when(employeeAssignmentRepository.findCurrentPrimaryCandidates(2L, second)).thenReturn(List.of(assignment));
+        when(positionAllowanceRuleRepository.findEffective(3L, first)).thenReturn(Optional.of(
+            PositionAllowanceRule.builder().monthlyAmount(new BigDecimal("1000000")).build()));
+        when(positionAllowanceRuleRepository.findEffective(3L, second)).thenReturn(Optional.of(
+            PositionAllowanceRule.builder().monthlyAmount(new BigDecimal("1000000")).build()));
         when(payslipRepository.save(any(Payslip.class))).thenAnswer(invocation -> {
             Payslip saved = invocation.getArgument(0);
             saved.setId(10L);
             return saved;
         });
 
-        service().calculate(1L, new PayrollActionRequest());
+        stubNoDeductions();
+
+        service().calculate(1L, new PayrollActionRequest(end));
 
         ArgumentCaptor<Payslip> captor = ArgumentCaptor.forClass(Payslip.class);
         verify(payslipRepository).save(captor.capture());
-        assertEquals(new BigDecimal("1153846.15"), captor.getValue().getBaseSalaryPay());
+        assertEquals(new BigDecimal("769230.77"), captor.getValue().getBaseSalaryPay());
+        assertEquals(new BigDecimal("57692.31"), captor.getValue().getPositionAllowancePay());
         assertEquals(new BigDecimal("20000000"), captor.getValue().getContractualBaseSalary());
     }
 
@@ -313,7 +347,27 @@ class PayrollServiceImplTest {
             accountRepository,
             currentAccountProvider,
             employeeAccessScopeService,
-            attendanceCalendarService
+            attendanceCalendarService,
+            payrollDeductionsService
         );
+    }
+
+    @Test
+    void paymentMonthChangeCannotSilentlyReuseApprovedTax() {
+        PayrollPeriod period = PayrollPeriod.builder().id(1L)
+            .taxPaymentDate(LocalDate.of(2026, 11, 5))
+            .status(PayrollPeriodStatus.APPROVED).build();
+        when(payrollPeriodRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(period));
+
+        assertThrows(ConflictException.class, () -> service().markPaid(1L,
+            new PayrollActionRequest(LocalDate.of(2026, 12, 1))));
+        assertEquals(PayrollPeriodStatus.APPROVED, period.getStatus());
+    }
+
+    private void stubNoDeductions() {
+        when(payrollDeductionsService.calculate(anyLong(), any(LocalDate.class), any(LocalDate.class),
+            any(BigDecimal.class), anyLong())).thenReturn(
+                new PayrollDeductionsService.Deduction(1L, 1L, 1L, BigDecimal.ZERO, BigDecimal.ZERO,
+                    BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO));
     }
 }

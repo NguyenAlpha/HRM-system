@@ -95,6 +95,21 @@ class AttendanceServiceImplTest {
     }
 
     @Test
+    void holidayOvertimeRejectsMultiplierBelowThree() {
+        LocalDate holiday = LocalDate.of(2026, 1, 1);
+        AttendanceRecord record = record(holiday);
+        record.setCheckOutAt(Instant.now());
+        record.setWorkedMinutes(120);
+        record.setPayableMinutes(0);
+        when(attendanceRecordRepository.findById(1L)).thenReturn(Optional.of(record));
+        when(attendanceRecordRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(record));
+        when(attendanceCalendarService.isCompanyHoliday(holiday)).thenReturn(true);
+
+        assertThrows(BusinessException.class, () -> service().approveOvertime(1L,
+            new ApproveOvertimeRequest(120, new java.math.BigDecimal("2.0"))));
+    }
+
+    @Test
     void prepareMonthCreatesMissingPunchForScheduledDay() {
         LocalDate date = LocalDate.of(2026, 1, 15);
         Employee employee = Employee.builder().id(2L).employeeCode("EMP002")
@@ -177,6 +192,8 @@ class AttendanceServiceImplTest {
             Account.builder().employee(record.getEmployee()).build()));
         when(attendanceRecordRepository.findByEmployeeIdAndWorkDateForUpdate(2L, date))
             .thenReturn(Optional.of(record));
+
+        when(attendanceCalendarService.companyWorkDates(date, date)).thenReturn(List.of(date));
 
         var result = service().checkOut(new CheckOutRequest(2L, date));
 

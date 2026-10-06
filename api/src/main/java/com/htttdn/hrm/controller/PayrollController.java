@@ -44,8 +44,9 @@ public class PayrollController {
     }
 
     @PostMapping("/periods/{id}/calculate")
-    public ApiResult<PayrollPeriodResponse> calculate(@PathVariable Long id) {
-        return ApiResult.ok(service.calculate(id, new PayrollActionRequest()));
+    public ApiResult<PayrollPeriodResponse> calculate(@PathVariable Long id,
+        @RequestBody(required = false) PayrollActionRequest request) {
+        return ApiResult.ok(service.calculate(id, request == null ? new PayrollActionRequest() : request));
     }
 
     @PostMapping("/periods/{id}/approve")
@@ -54,8 +55,9 @@ public class PayrollController {
     }
 
     @PostMapping("/periods/{id}/mark-paid")
-    public ApiResult<PayrollPeriodResponse> markPaid(@PathVariable Long id) {
-        return ApiResult.ok(service.markPaid(id, new PayrollActionRequest()));
+    public ApiResult<PayrollPeriodResponse> markPaid(@PathVariable Long id,
+        @RequestBody(required = false) PayrollActionRequest request) {
+        return ApiResult.ok(service.markPaid(id, request == null ? new PayrollActionRequest() : request));
     }
 
     @PostMapping("/periods/{id}/lock")

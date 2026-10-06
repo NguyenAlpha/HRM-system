@@ -21,6 +21,15 @@ public interface PayrollPeriodRepository extends JpaRepository<PayrollPeriod, Lo
     Optional<PayrollPeriod> findFirstByPeriodStartLessThanEqualAndPeriodEndGreaterThanEqual(
         LocalDate periodStart, LocalDate periodEnd);
 
+    @Query("""
+        SELECT CASE WHEN COUNT(period) > 0 THEN true ELSE false END FROM PayrollPeriod period
+        WHERE period.id <> :periodId AND period.taxPaymentDate BETWEEN :from AND :to
+          AND period.status IN :statuses
+        """)
+    boolean existsOtherInPaymentMonth(@Param("periodId") Long periodId,
+        @Param("from") LocalDate from, @Param("to") LocalDate to,
+        @Param("statuses") List<PayrollPeriodStatus> statuses);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT period FROM PayrollPeriod period WHERE period.id = :id")
     Optional<PayrollPeriod> findByIdForUpdate(@Param("id") Long id);
@@ -40,5 +49,18 @@ public interface PayrollPeriodRepository extends JpaRepository<PayrollPeriod, Lo
         """)
     List<PayrollPeriod> findAffectedPeriodsForUpdate(
         @Param("date") LocalDate date,
+        @Param("statuses") List<PayrollPeriodStatus> statuses);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT period FROM PayrollPeriod period
+        WHERE period.taxPaymentDate >= :from
+          AND (:to IS NULL OR period.taxPaymentDate <= :to)
+          AND period.status IN :statuses
+        ORDER BY period.taxPaymentDate, period.id
+        """)
+    List<PayrollPeriod> findAffectedPaymentPeriodsForUpdate(
+        @Param("from") LocalDate from,
+        @Param("to") LocalDate to,
         @Param("statuses") List<PayrollPeriodStatus> statuses);
 }

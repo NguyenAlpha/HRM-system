@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +57,7 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 import com.htttdn.hrm.service.EmployeeAccessScopeService;
 import com.htttdn.hrm.service.AttendanceCalendarService;
 import com.htttdn.hrm.service.PayrollService;
+import com.htttdn.hrm.service.PayrollDeductionsService;
 
 @Service
 @Transactional
@@ -73,6 +76,7 @@ public class PayrollServiceImpl implements PayrollService {
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final AttendanceCalendarService attendanceCalendarService;
+    private final PayrollDeductionsService payrollDeductionsService;
 
     public PayrollServiceImpl(
         PayrollPeriodRepository payrollPeriodRepository,
@@ -87,7 +91,8 @@ public class PayrollServiceImpl implements PayrollService {
         AccountRepository accountRepository,
         CurrentAccountProvider currentAccountProvider,
         EmployeeAccessScopeService employeeAccessScopeService,
-        AttendanceCalendarService attendanceCalendarService
+        AttendanceCalendarService attendanceCalendarService,
+        PayrollDeductionsService payrollDeductionsService
     ) {
         this.payrollPeriodRepository = payrollPeriodRepository;
         this.payslipRepository = payslipRepository;
@@ -102,6 +107,7 @@ public class PayrollServiceImpl implements PayrollService {
         this.currentAccountProvider = currentAccountProvider;
         this.employeeAccessScopeService = employeeAccessScopeService;
         this.attendanceCalendarService = attendanceCalendarService;
+        this.payrollDeductionsService = payrollDeductionsService;
     }
 
     @Override
@@ -121,6 +127,7 @@ public class PayrollServiceImpl implements PayrollService {
             .month(request.month())
             .periodStart(periodStart)
             .periodEnd(periodEnd)
+            .taxPaymentDate(request.taxPaymentDate())
             .status(PayrollPeriodStatus.DRAFT)
             .createdAt(now)
             .updatedAt(now)
@@ -137,6 +144,22 @@ public class PayrollServiceImpl implements PayrollService {
         if (period.getStatus() != PayrollPeriodStatus.DRAFT && period.getStatus() != PayrollPeriodStatus.CALCULATED) {
             throw new ConflictException(
                 ErrorCode.PAYROLL_PERIOD_LOCKED, "Period " + periodId + " can no longer be recalculated");
+        }
+
+        if (request.taxPaymentDate() != null) {
+            period.setTaxPaymentDate(request.taxPaymentDate());
+        }
+        if (period.getTaxPaymentDate() == null) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+                "taxPaymentDate is required to calculate payroll withholding");
+        }
+        LocalDate paymentMonthStart = period.getTaxPaymentDate().withDayOfMonth(1);
+        if (payrollPeriodRepository.existsOtherInPaymentMonth(periodId, paymentMonthStart,
+            paymentMonthStart.withDayOfMonth(paymentMonthStart.lengthOfMonth()),
+            List.of(PayrollPeriodStatus.CALCULATED, PayrollPeriodStatus.APPROVED,
+                PayrollPeriodStatus.PAID, PayrollPeriodStatus.LOCKED))) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+                "Another payroll period uses the same tax payment month; monthly tax deductions require consolidated calculation");
         }
 
         Account calculatedBy = findCurrentAccount();
@@ -170,8 +193,10 @@ public class PayrollServiceImpl implements PayrollService {
                 ? employee.getTerminationDate() : period.getPeriodEnd();
         List<LocalDate> expectedWorkDates = attendanceCalendarService.companyWorkDates(employedFrom, employedTo);
         if (expectedWorkDates.isEmpty()) {
-            return;
+            throw missingPayrollInput(employee, "company workdays between " + employedFrom + " and "
+                + employedTo + "; review holiday or rest-day pay manually");
         }
+
         List<AttendanceCalendarService.ScheduledDay> scheduledDays;
         try {
             scheduledDays = attendanceCalendarService.scheduleFor(employee.getId(), employedFrom, employedTo);
@@ -263,7 +288,8 @@ public class PayrollServiceImpl implements PayrollService {
                 .findEffective(dailyAssignment.getPosition().getId(), date)
                 .map(PositionAllowanceRule::getMonthlyAmount).orElse(BigDecimal.ZERO);
             positionAllowancePay = positionAllowancePay.add(dailyPositionAllowance
-                .divide(BigDecimal.valueOf(companyWorkdays), 8, RoundingMode.HALF_UP));
+                .multiply(BigDecimal.valueOf(payableMinutes))
+                .divide(BigDecimal.valueOf(companyWorkdays * day.minutes()), 8, RoundingMode.HALF_UP));
 
             int dailySeniorityYears = seniorityYears(employee, date);
             BigDecimal dailySeniorityPercentage = seniorityAllowanceRuleRepository
@@ -271,7 +297,8 @@ public class PayrollServiceImpl implements PayrollService {
                 .map(SeniorityAllowanceRule::getPercentage).orElse(BigDecimal.ZERO);
             seniorityAllowancePay = seniorityAllowancePay.add(effectiveSalary
                 .multiply(dailySeniorityPercentage)
-                .divide(BigDecimal.valueOf(companyWorkdays * 100), 8, RoundingMode.HALF_UP));
+                .multiply(BigDecimal.valueOf(payableMinutes))
+                .divide(BigDecimal.valueOf(companyWorkdays * 100 * day.minutes()), 8, RoundingMode.HALF_UP));
         }
         basicSalaryPay = basicSalaryPay.setScale(2, RoundingMode.HALF_UP);
         positionAllowancePay = positionAllowancePay.setScale(2, RoundingMode.HALF_UP);
@@ -294,6 +321,7 @@ public class PayrollServiceImpl implements PayrollService {
             .build());
 
         BigDecimal overtimePay = BigDecimal.ZERO;
+        BigDecimal taxExemptOvertimePay = BigDecimal.ZERO;
         for (AttendanceRecord record : attendanceRecords) {
             if (!hasApprovedOvertime(record)) {
                 continue;
@@ -309,6 +337,9 @@ public class PayrollServiceImpl implements PayrollService {
             BigDecimal amount = overtimeHourlyRate.multiply(hours).multiply(record.getOvertimeMultiplier())
                 .setScale(2, RoundingMode.HALF_UP);
             overtimePay = overtimePay.add(amount);
+            if (record.isOvertimeTaxExempt()) {
+                taxExemptOvertimePay = taxExemptOvertimePay.add(amount);
+            }
             items.add(PayslipItem.builder()
                 .componentType(PayslipItemType.OVERTIME)
                 .componentCode("OVERTIME_" + record.getWorkDate())
@@ -353,6 +384,23 @@ public class PayrollServiceImpl implements PayrollService {
 
         BigDecimal allowancePay = positionAllowancePay.add(seniorityAllowancePay);
         BigDecimal grossPay = basicSalaryPay.add(allowancePay).add(overtimePay);
+        long unpaidDays = scheduledDays.stream().filter(day -> {
+            AttendanceRecord record = attendanceByDate.get(day.workDate());
+            return record.getPayableMinutes() == 0 && (record.getStatus() == AttendanceStatus.UNPAID_LEAVE
+                || record.getStatus() == AttendanceStatus.UNAUTHORIZED_ABSENCE);
+        }).count();
+        PayrollDeductionsService.Deduction deduction;
+        try {
+            deduction = payrollDeductionsService.calculate(employee.getId(), employedTo,
+                period.getTaxPaymentDate(), grossPay.subtract(taxExemptOvertimePay), unpaidDays);
+        } catch (BusinessException error) {
+            throw missingPayrollInput(employee, error.getMessage());
+        }
+        BigDecimal netPay = grossPay.subtract(deduction.social()).subtract(deduction.health())
+            .subtract(deduction.unemployment()).subtract(deduction.incomeTax());
+        if (netPay.signum() < 0) {
+            throw missingPayrollInput(employee, "manual settlement: deductions exceed gross pay");
+        }
 
         Payslip payslip = Payslip.builder()
             .payrollPeriod(period)
@@ -371,8 +419,19 @@ public class PayrollServiceImpl implements PayrollService {
             .seniorityAllowancePay(seniorityAllowancePay)
             .allowancePay(allowancePay)
             .overtimePay(overtimePay)
+            .taxExemptOvertimePay(taxExemptOvertimePay)
             .grossPay(grossPay)
-            .netPay(grossPay)
+            .insuranceSalaryBase(deduction.insuranceSalaryBase())
+            .unemploymentInsuranceBase(deduction.unemploymentInsuranceBase())
+            .employeeSocialInsurance(deduction.social())
+            .employeeHealthInsurance(deduction.health())
+            .employeeUnemploymentInsurance(deduction.unemployment())
+            .taxableIncome(deduction.taxableIncome())
+            .personalIncomeTax(deduction.incomeTax())
+            .taxRuleId(deduction.taxRuleId())
+            .insuranceRuleId(deduction.insuranceRuleId())
+            .payrollProfileId(deduction.profileId())
+            .netPay(netPay)
             .createdAt(Instant.now())
             .updatedAt(Instant.now())
             .build();
@@ -432,9 +491,18 @@ public class PayrollServiceImpl implements PayrollService {
             throw new ConflictException(ErrorCode.CONFLICT, "Period must be APPROVED before it can be marked as paid");
         }
 
+        LocalDate actualPaymentDate = request.taxPaymentDate() == null
+            ? LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")) : request.taxPaymentDate();
+        if (period.getTaxPaymentDate() == null || !YearMonth.from(actualPaymentDate)
+            .equals(YearMonth.from(period.getTaxPaymentDate()))) {
+            throw new ConflictException(ErrorCode.CONFLICT,
+                "Actual payment month differs from the approved tax payment month; review withholding before marking paid");
+        }
+
         Account payer = findCurrentAccount();
 
         period.setStatus(PayrollPeriodStatus.PAID);
+        period.setTaxPaymentDate(actualPaymentDate);
         period.setPaidByAccount(payer);
         period.setPaidAt(Instant.now());
         period.setUpdatedAt(Instant.now());
@@ -564,6 +632,7 @@ public class PayrollServiceImpl implements PayrollService {
             period.getMonth(),
             period.getPeriodStart(),
             period.getPeriodEnd(),
+            period.getTaxPaymentDate(),
             period.getStatus(),
             period.getCalculatedByAccount() != null ? period.getCalculatedByAccount().getId() : null,
             period.getCalculatedAt(),
@@ -604,7 +673,15 @@ public class PayrollServiceImpl implements PayrollService {
             payslip.getBaseSalaryPay(),
             payslip.getAllowancePay(),
             payslip.getOvertimePay(),
+            payslip.getTaxExemptOvertimePay(),
             payslip.getGrossPay(),
+            payslip.getInsuranceSalaryBase(),
+            payslip.getUnemploymentInsuranceBase(),
+            payslip.getEmployeeSocialInsurance(),
+            payslip.getEmployeeHealthInsurance(),
+            payslip.getEmployeeUnemploymentInsurance(),
+            payslip.getTaxableIncome(),
+            payslip.getPersonalIncomeTax(),
             payslip.getNetPay(),
             items
         );

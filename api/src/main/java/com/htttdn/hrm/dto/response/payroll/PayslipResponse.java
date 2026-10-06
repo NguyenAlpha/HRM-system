@@ -18,7 +18,15 @@ public record PayslipResponse(
     BigDecimal basicSalaryPay,
     BigDecimal allowancePay,
     BigDecimal overtimePay,
+    BigDecimal taxExemptOvertimePay,
     BigDecimal grossPay,
+    BigDecimal insuranceSalaryBase,
+    BigDecimal unemploymentInsuranceBase,
+    BigDecimal employeeSocialInsurance,
+    BigDecimal employeeHealthInsurance,
+    BigDecimal employeeUnemploymentInsurance,
+    BigDecimal taxableIncome,
+    BigDecimal personalIncomeTax,
     BigDecimal netPay,
     List<PayslipItemResponse> items
 ) {

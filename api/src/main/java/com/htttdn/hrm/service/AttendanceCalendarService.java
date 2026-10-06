@@ -72,6 +72,10 @@ public class AttendanceCalendarService {
         return companyWorkDates(from, to).size();
     }
 
+    public boolean isCompanyHoliday(LocalDate date) {
+        return holidayRepository.findByHolidayDate(date).isPresent();
+    }
+
     public List<LocalDate> companyWorkDates(LocalDate from, LocalDate to) {
         Set<LocalDate> holidays = holidayRepository.findByHolidayDateBetweenOrderByHolidayDate(from, to)
             .stream().map(CompanyHoliday::getHolidayDate).collect(Collectors.toSet());

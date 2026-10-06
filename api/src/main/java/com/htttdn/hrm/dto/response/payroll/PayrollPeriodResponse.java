@@ -11,6 +11,7 @@ public record PayrollPeriodResponse(
     Short month,
     LocalDate periodStart,
     LocalDate periodEnd,
+    LocalDate taxPaymentDate,
     PayrollPeriodStatus status,
     Long calculatedByAccountId,
     Instant calculatedAt,
