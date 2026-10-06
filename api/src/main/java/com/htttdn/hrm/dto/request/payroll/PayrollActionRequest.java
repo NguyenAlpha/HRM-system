@@ -1,4 +1,9 @@
 package com.htttdn.hrm.dto.request.payroll;
 
-public record PayrollActionRequest() {
+import java.time.LocalDate;
+
+public record PayrollActionRequest(LocalDate taxPaymentDate) {
+    public PayrollActionRequest() {
+        this(null);
+    }
 }

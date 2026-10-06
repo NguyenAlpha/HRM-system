@@ -1,10 +1,12 @@
 package com.htttdn.hrm.service.impl;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -344,6 +346,9 @@ public class AttendanceServiceImpl implements AttendanceService {
                 + (record.getLeaveRequest() != null
                     && record.getLeaveRequest().getSalaryTreatment() == LeaveSalaryTreatment.EMPLOYER_PAID
                     ? record.getLeaveMinutes() : 0));
+        if (attendanceCalendarService.companyWorkDates(record.getWorkDate(), record.getWorkDate()).isEmpty()) {
+            payableMinutes = 0;
+        }
         long earlyLeaveMinutes = Math.max(0, Duration.between(now, record.getScheduledEndAt()).toMinutes());
 
         record.setCheckOutAt(now);
@@ -362,18 +367,31 @@ public class AttendanceServiceImpl implements AttendanceService {
         employeeAccessScopeService.requireEmployeeAccess(record.getEmployee().getId(), "attendance.overtime.approve");
         boolean scheduledDay = !attendanceCalendarService.scheduleFor(record.getEmployee().getId(),
             record.getWorkDate(), record.getWorkDate()).isEmpty();
-        int availableMinutes = scheduledDay
-            ? Math.max(0, record.getWorkedMinutes() - record.getPayableMinutes())
-            : record.getWorkedMinutes();
+        int paidLeaveMinutes = record.getLeaveRequest() != null
+            && record.getLeaveRequest().getSalaryTreatment() == LeaveSalaryTreatment.EMPLOYER_PAID
+                ? record.getLeaveMinutes() : 0;
+        int regularWorkedMinutes = scheduledDay
+            ? Math.min(record.getWorkedMinutes(), Math.max(0, record.getPayableMinutes() - paidLeaveMinutes)) : 0;
+        int availableMinutes = Math.max(0, record.getWorkedMinutes() - regularWorkedMinutes);
         if (record.getCheckOutAt() == null || request.overtimeMinutes() > availableMinutes) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Overtime requires completed attendance and cannot include regular payable time");
+        }
+        BigDecimal minimumMultiplier = attendanceCalendarService.isCompanyHoliday(record.getWorkDate())
+            ? BigDecimal.valueOf(3)
+            : record.getWorkDate().getDayOfWeek() == DayOfWeek.SUNDAY
+                ? BigDecimal.valueOf(2) : BigDecimal.valueOf(1.5);
+        if (request.overtimeMinutes() > 0 && request.overtimeMultiplier().compareTo(minimumMultiplier) < 0) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+                "Overtime multiplier must be at least " + minimumMultiplier + " on " + record.getWorkDate(),
+                "overtimeMultiplier");
         }
         Account approver = request.overtimeMinutes() > 0 ? findCurrentAccount() : null;
 
         Instant now = Instant.now();
         record.setOvertimeMinutes(request.overtimeMinutes());
         record.setOvertimeMultiplier(request.overtimeMultiplier());
+        record.setOvertimeTaxExempt(request.overtimeMinutes() > 0 && Boolean.TRUE.equals(request.taxExempt()));
         record.setOvertimeApprovedByAccount(approver);
         record.setOvertimeApprovedAt(approver != null ? now : null);
         record.setUpdatedAt(now);
@@ -496,6 +514,7 @@ public class AttendanceServiceImpl implements AttendanceService {
             record.getEarlyLeaveMinutes(),
             record.getOvertimeMinutes(),
             record.getOvertimeMultiplier(),
+            record.isOvertimeTaxExempt(),
             record.getStatus()
         );
     }

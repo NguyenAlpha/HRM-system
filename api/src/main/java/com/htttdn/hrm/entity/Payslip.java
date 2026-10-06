@@ -82,8 +82,41 @@ public class Payslip {
     @Column(name = "overtime_pay", nullable = false, precision = 15, scale = 2)
     private BigDecimal overtimePay;
 
+    @Column(name = "tax_exempt_overtime_pay", nullable = false, precision = 15, scale = 2)
+    private BigDecimal taxExemptOvertimePay;
+
     @Column(name = "gross_pay", nullable = false, precision = 15, scale = 2)
     private BigDecimal grossPay;
+
+    @Column(name = "insurance_salary_base", nullable = false, precision = 15, scale = 2)
+    private BigDecimal insuranceSalaryBase;
+
+    @Column(name = "unemployment_insurance_base", nullable = false, precision = 15, scale = 2)
+    private BigDecimal unemploymentInsuranceBase;
+
+    @Column(name = "employee_social_insurance", nullable = false, precision = 15, scale = 2)
+    private BigDecimal employeeSocialInsurance;
+
+    @Column(name = "employee_health_insurance", nullable = false, precision = 15, scale = 2)
+    private BigDecimal employeeHealthInsurance;
+
+    @Column(name = "employee_unemployment_insurance", nullable = false, precision = 15, scale = 2)
+    private BigDecimal employeeUnemploymentInsurance;
+
+    @Column(name = "taxable_income", nullable = false, precision = 15, scale = 2)
+    private BigDecimal taxableIncome;
+
+    @Column(name = "personal_income_tax", nullable = false, precision = 15, scale = 2)
+    private BigDecimal personalIncomeTax;
+
+    @Column(name = "tax_rule_id")
+    private Long taxRuleId;
+
+    @Column(name = "insurance_rule_id")
+    private Long insuranceRuleId;
+
+    @Column(name = "payroll_profile_id")
+    private Long payrollProfileId;
 
     @Column(name = "net_pay", nullable = false, precision = 15, scale = 2)
     private BigDecimal netPay;

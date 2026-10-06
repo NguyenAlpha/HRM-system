@@ -13,22 +13,28 @@ type Section = "attendance" | "leave" | "payroll"
 type Paged<T> = { content: T[]; totalElements: number }
 type Attendance = {
   id: number; workDate: string; scheduledMinutes: number; workedMinutes: number
-  payableMinutes: number; overtimeMinutes: number; status: string
+  payableMinutes: number; overtimeMinutes: number; overtimeMultiplier: number; overtimeTaxExempt: boolean; status: string
   checkInAt: string | null; checkOutAt: string | null
 }
 type Leave = {
   id: number; employeeId: number; startAt: string; endAt: string; requestedMinutes: number
   leaveType: string; salaryTreatment: string; status: string; reason: string
 }
-type Period = { id: number; year: number; month: number; status: string }
+type Period = { id: number; year: number; month: number; taxPaymentDate: string | null; status: string }
 type Payslip = {
   id: number; payrollPeriodId: number; employeeNameSnapshot: string
   scheduledWorkMinutes: number; payableWorkMinutes: number; approvedOvertimeMinutes: number
-  basicSalaryPay: number; allowancePay: number; overtimePay: number; netPay: number
+  basicSalaryPay: number; allowancePay: number; overtimePay: number; taxExemptOvertimePay: number; grossPay: number
+  insuranceSalaryBase: number; unemploymentInsuranceBase: number; employeeSocialInsurance: number; employeeHealthInsurance: number
+  employeeUnemploymentInsurance: number; taxableIncome: number; personalIncomeTax: number; netPay: number
   items: { description: string; amount: number }[]
 }
 type Holiday = { id: number; holidayDate: string; name: string }
 type SalaryHistory = { id: number; baseSalary: number; effectiveFrom: string; effectiveTo: string | null; reason: string | null }
+type PayrollProfile = { id: number; effectiveFrom: string; effectiveTo: string | null; taxResident: boolean
+  socialInsurance: boolean; healthInsurance: boolean; unemploymentInsurance: boolean
+  insuranceSalary: number; wageRegion: number }
+type TaxDependent = { id: number; fullName: string; effectiveFrom: string; effectiveTo: string | null }
 
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date())
 const money = (amount: number) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount)
@@ -52,6 +58,17 @@ export function WorkforcePage({ section }: { section: Section }) {
   const [salaryAmount, setSalaryAmount] = useState("")
   const [salaryEffectiveFrom, setSalaryEffectiveFrom] = useState(today())
   const [salaryReason, setSalaryReason] = useState("")
+  const [profiles, setProfiles] = useState<PayrollProfile[]>([])
+  const [dependents, setDependents] = useState<TaxDependent[]>([])
+  const [profileDate, setProfileDate] = useState(today())
+  const [insuranceSalary, setInsuranceSalary] = useState("")
+  const [wageRegion, setWageRegion] = useState("1")
+  const [socialInsurance, setSocialInsurance] = useState(true)
+  const [healthInsurance, setHealthInsurance] = useState(true)
+  const [unemploymentInsurance, setUnemploymentInsurance] = useState(true)
+  const [dependentName, setDependentName] = useState("")
+  const [dependentDate, setDependentDate] = useState(today())
+  const [taxPaymentDate, setTaxPaymentDate] = useState(today())
   const [selectedPayslip, setSelectedPayslip] = useState<Payslip | null>(null)
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
@@ -129,6 +146,8 @@ export function WorkforcePage({ section }: { section: Section }) {
       } else {
         if (id > 0 && canReadCompensation) {
           setSalaryHistory(await api<SalaryHistory[]>(`compensation/employees/${id}/salary-history`))
+          setProfiles(await api<PayrollProfile[]>(`compensation/employees/${id}/payroll-profiles`))
+          setDependents(await api<TaxDependent[]>(`compensation/employees/${id}/tax-dependents`))
         }
         if (id > 0 && canReadPayslip) {
           const result = await api<Paged<Payslip>>(`payroll/employees/${id}/payslips?size=100`)
@@ -195,7 +214,7 @@ export function WorkforcePage({ section }: { section: Section }) {
               onClick={() => void act("Đã chuẩn bị bảng công", () => api(`attendance/prepare?year=${month.slice(0, 4)}&month=${Number(month.slice(5, 7))}`, "POST"))}>Chuẩn bị bảng công tháng</button>}
           </div>
           <div className="overflow-x-auto rounded border"><table className="w-full text-left text-sm"><thead><tr className="border-b"><th className="p-2">Ngày</th><th className="p-2">Trạng thái</th><th className="p-2">Phút tính lương</th><th className="p-2">Tăng ca</th><th className="p-2">Thao tác</th></tr></thead><tbody>
-            {rows.map((row) => <tr key={row.id} className="border-b"><td className="p-2">{row.workDate}</td><td className="p-2">{row.status}</td><td className="p-2">{row.payableMinutes}/{row.scheduledMinutes}</td><td className="p-2">{row.overtimeMinutes}</td><td className="p-2 space-x-2">
+            {rows.map((row) => <tr key={row.id} className="border-b"><td className="p-2">{row.workDate}</td><td className="p-2">{row.status}</td><td className="p-2">{row.payableMinutes}/{row.scheduledMinutes}</td><td className="p-2">{row.overtimeMinutes}{row.overtimeMinutes > 0 && row.overtimeTaxExempt ? " (miễn thuế)" : ""}</td><td className="p-2 space-x-2">
               {canManageAttendance && <button className="underline" disabled={busy} onClick={() => {
                 const status = window.prompt("Tình trạng sau đối soát: PRESENT hoặc UNAUTHORIZED_ABSENCE", row.status === "MISSING_PUNCH" ? "UNAUTHORIZED_ABSENCE" : row.status)
                 if (status === null) return
@@ -225,7 +244,14 @@ export function WorkforcePage({ section }: { section: Section }) {
                 if (value === null) return
                 const minutes = Number(value)
                 if (!Number.isInteger(minutes) || minutes < 0) { setError("Số phút không hợp lệ"); return }
-                void act("Đã duyệt tăng ca", () => api(`attendance/${row.id}/overtime-approval`, "POST", { overtimeMinutes: minutes, overtimeMultiplier: 1.5 }))
+                const minimum = holidays.some((holiday) => holiday.holidayDate === row.workDate) ? 3
+                  : new Date(`${row.workDate}T12:00:00Z`).getUTCDay() === 0 ? 2 : 1.5
+                const multiplierText = window.prompt("Hệ số tăng ca", String(row.overtimeMinutes ? row.overtimeMultiplier : minimum))
+                if (multiplierText === null) return
+                const multiplier = Number(multiplierText)
+                if (!Number.isFinite(multiplier) || multiplier < minimum) { setError(`Hệ số tối thiểu là ${minimum}`); return }
+                const taxExempt = minutes > 0 && window.confirm("Xác nhận phần tăng ca này đủ điều kiện miễn thuế TNCN theo quy định? Nếu chưa đối soát, chọn Hủy để tính vào thu nhập chịu thuế.")
+                void act("Đã duyệt tăng ca", () => api(`attendance/${row.id}/overtime-approval`, "POST", { overtimeMinutes: minutes, overtimeMultiplier: multiplier, taxExempt }))
               }}>Duyệt tăng ca</button>}
             </td></tr>)}
           </tbody></table>{rows.length === 0 && <p className="p-3 text-sm">Chưa có dữ liệu công trong tháng.</p>}</div>
@@ -301,16 +327,36 @@ export function WorkforcePage({ section }: { section: Section }) {
               <button className="rounded border px-4 py-2" disabled={busy || !id}>Lưu mức lương</button>
             </form>}
           </div>}
-          {canReadPeriods && <div className="space-y-3"><h2 className="text-xl font-semibold">Kỳ lương</h2>{canCalculatePayroll && <div className="flex flex-wrap gap-2"><input aria-label="Tháng kỳ lương" type="month" className="rounded border p-2" value={month} onChange={(event) => setMonth(event.target.value)} /><button className="rounded border px-4 py-2" disabled={busy} onClick={() => void act("Đã tạo kỳ lương", () => api("payroll/periods", "POST", { year: Number(month.slice(0, 4)), month: Number(month.slice(5, 7)) }))}>Tạo kỳ</button></div>}
+          {canReadCompensation && <div className="space-y-3 rounded border p-4"><h2 className="text-xl font-semibold">Hồ sơ bảo hiểm và thuế</h2>
+            {profiles.map((profile) => <p key={profile.id} className="text-sm">{profile.effectiveFrom} → {profile.effectiveTo ?? "hiện tại"}: căn cứ {money(profile.insuranceSalary)}, vùng {profile.wageRegion}; BHXH {profile.socialInsurance ? "có" : "không"}, BHYT {profile.healthInsurance ? "có" : "không"}, BHTN {profile.unemploymentInsurance ? "có" : "không"}</p>)}
+            {profiles.length === 0 && <p className="text-sm">Chưa có hồ sơ; chưa thể tính lương thực lĩnh.</p>}
+            {canManageCompensation && <form className="flex flex-wrap items-end gap-2" onSubmit={(event) => { event.preventDefault(); void act("Đã lưu hồ sơ bảo hiểm", () => api(`compensation/employees/${id}/payroll-profiles`, "POST", { effectiveFrom: profileDate, taxResident: true, socialInsurance, healthInsurance, unemploymentInsurance, insuranceSalary: Number(insuranceSalary), wageRegion: Number(wageRegion) })) }}>
+              <label className="grid gap-1 text-sm">Hiệu lực từ<input required type="date" className="rounded border p-2" value={profileDate} onChange={(event) => setProfileDate(event.target.value)} /></label>
+              <label className="grid gap-1 text-sm">Lương đóng bảo hiểm<input required type="number" min="0" className="rounded border p-2" value={insuranceSalary} onChange={(event) => setInsuranceSalary(event.target.value)} /></label>
+              <label className="grid gap-1 text-sm">Vùng<select className="rounded border p-2" value={wageRegion} onChange={(event) => setWageRegion(event.target.value)}>{[1, 2, 3, 4].map((region) => <option key={region} value={region}>{region}</option>)}</select></label>
+              <label className="flex gap-1 text-sm"><input type="checkbox" checked={socialInsurance} onChange={(event) => setSocialInsurance(event.target.checked)} />BHXH</label>
+              <label className="flex gap-1 text-sm"><input type="checkbox" checked={healthInsurance} onChange={(event) => setHealthInsurance(event.target.checked)} />BHYT</label>
+              <label className="flex gap-1 text-sm"><input type="checkbox" checked={unemploymentInsurance} onChange={(event) => setUnemploymentInsurance(event.target.checked)} />BHTN</label>
+              <button className="rounded border px-4 py-2" disabled={busy || !id}>Lưu hồ sơ</button>
+            </form>}
+            <h3 className="font-semibold">Người phụ thuộc</h3>
+            {dependents.map((dependent) => <p key={dependent.id} className="text-sm">{dependent.fullName}: {dependent.effectiveFrom} → {dependent.effectiveTo ?? "hiện tại"} {canManageCompensation && !dependent.effectiveTo && <button className="underline" disabled={busy} onClick={() => { const end = window.prompt("Ngày cuối được giảm trừ (YYYY-MM-DD)", today()); if (end) void act("Đã kết thúc người phụ thuộc", () => api(`compensation/employees/${id}/tax-dependents/${dependent.id}/end`, "PUT", { effectiveTo: end })) }}>Kết thúc</button>}</p>)}
+            {canManageCompensation && <form className="flex flex-wrap items-end gap-2" onSubmit={(event) => { event.preventDefault(); void act("Đã thêm người phụ thuộc", () => api(`compensation/employees/${id}/tax-dependents`, "POST", { fullName: dependentName, effectiveFrom: dependentDate })) }}>
+              <label className="grid gap-1 text-sm">Họ tên<input required className="rounded border p-2" value={dependentName} onChange={(event) => setDependentName(event.target.value)} /></label>
+              <label className="grid gap-1 text-sm">Hiệu lực từ<input required type="date" className="rounded border p-2" value={dependentDate} onChange={(event) => setDependentDate(event.target.value)} /></label>
+              <button className="rounded border px-4 py-2" disabled={busy || !id}>Thêm người phụ thuộc</button>
+            </form>}
+          </div>}
+          {canReadPeriods && <div className="space-y-3"><h2 className="text-xl font-semibold">Kỳ lương</h2>{canCalculatePayroll && <div className="flex flex-wrap gap-2"><input aria-label="Tháng kỳ lương" type="month" className="rounded border p-2" value={month} onChange={(event) => setMonth(event.target.value)} /><label className="grid gap-1 text-sm">Ngày dự kiến trả lương<input type="date" className="rounded border p-2" value={taxPaymentDate} onChange={(event) => setTaxPaymentDate(event.target.value)} /></label><button className="rounded border px-4 py-2" disabled={busy} onClick={() => void act("Đã tạo kỳ lương", () => api("payroll/periods", "POST", { year: Number(month.slice(0, 4)), month: Number(month.slice(5, 7)), taxPaymentDate }))}>Tạo kỳ</button></div>}
             {periods.map((period) => <div key={period.id} className="flex flex-wrap items-center gap-3 rounded border p-3 text-sm"><strong>{period.month}/{period.year}</strong><span>{period.status}</span>
-              {canCalculatePayroll && (["DRAFT", "CALCULATED"].includes(period.status)) && <button className="underline" disabled={busy} onClick={() => void act("Đã tính kỳ lương", () => api(`payroll/periods/${period.id}/calculate`, "POST"))}>Tính lại</button>}
+              {canCalculatePayroll && (["DRAFT", "CALCULATED"].includes(period.status)) && <button className="underline" disabled={busy} onClick={() => void act("Đã tính kỳ lương", () => api(`payroll/periods/${period.id}/calculate`, "POST", { taxPaymentDate: period.taxPaymentDate ?? taxPaymentDate }))}>Tính lại</button>}
               {period.status === "CALCULATED" && permissions.has("payroll.approve") && <button className="underline" disabled={busy} onClick={() => void act("Đã duyệt kỳ lương", () => api(`payroll/periods/${period.id}/approve`, "POST"))}>Duyệt</button>}
-              {period.status === "APPROVED" && permissions.has("payroll.mark_paid") && <button className="underline" disabled={busy} onClick={() => void act("Đã ghi nhận thanh toán", () => api(`payroll/periods/${period.id}/mark-paid`, "POST"))}>Đã trả</button>}
+              {period.status === "APPROVED" && permissions.has("payroll.mark_paid") && <button className="underline" disabled={busy} onClick={() => void act("Đã ghi nhận thanh toán", () => api(`payroll/periods/${period.id}/mark-paid`, "POST", { taxPaymentDate: today() }))}>Đã trả</button>}
               {period.status === "PAID" && permissions.has("payroll.lock") && <button className="underline" disabled={busy} onClick={() => void act("Đã khóa kỳ lương", () => api(`payroll/periods/${period.id}/lock`, "POST"))}>Khóa</button>}
             </div>)}
           </div>}
           <div className="space-y-3"><h2 className="text-xl font-semibold">Phiếu lương nhân viên</h2>{payslips.map((slip) => <button key={slip.id} className="block w-full rounded border p-3 text-left text-sm" onClick={() => setSelectedPayslip(slip)}><strong>Phiếu #{slip.id}</strong> · Kỳ #{slip.payrollPeriodId} · {slip.employeeNameSnapshot} · Thực lĩnh {money(slip.netPay)}</button>)}{payslips.length === 0 && <p>Chưa có phiếu lương.</p>}</div>
-          {selectedPayslip && <div className="space-y-2 rounded border p-4 text-sm"><h2 className="text-xl font-semibold">Chi tiết phiếu #{selectedPayslip.id}</h2><p>Công: {selectedPayslip.payableWorkMinutes}/{selectedPayslip.scheduledWorkMinutes} phút · Tăng ca: {selectedPayslip.approvedOvertimeMinutes} phút</p>{selectedPayslip.items.map((item, index) => <p key={index}>{item.description}: {money(item.amount)}</p>)}<strong>Thực lĩnh: {money(selectedPayslip.netPay)}</strong></div>}
+          {selectedPayslip && <div className="space-y-2 rounded border p-4 text-sm"><h2 className="text-xl font-semibold">Chi tiết phiếu #{selectedPayslip.id}</h2><p>Công: {selectedPayslip.payableWorkMinutes}/{selectedPayslip.scheduledWorkMinutes} phút · Tăng ca: {selectedPayslip.approvedOvertimeMinutes} phút</p>{selectedPayslip.items.map((item, index) => <p key={index}>{item.description}: {money(item.amount)}</p>)}<p>Tổng thu nhập: {money(selectedPayslip.grossPay)} · Tăng ca miễn thuế đã xác nhận: {money(selectedPayslip.taxExemptOvertimePay)}</p><p>Căn cứ BHXH/BHYT: {money(selectedPayslip.insuranceSalaryBase)} · BHTN: {money(selectedPayslip.unemploymentInsuranceBase)}</p><p>BHXH: {money(selectedPayslip.employeeSocialInsurance)} · BHYT: {money(selectedPayslip.employeeHealthInsurance)} · BHTN: {money(selectedPayslip.employeeUnemploymentInsurance)}</p><p>Thu nhập tính thuế: {money(selectedPayslip.taxableIncome)} · Thuế TNCN: {money(selectedPayslip.personalIncomeTax)}</p><strong>Thực lĩnh: {money(selectedPayslip.netPay)}</strong></div>}
         </>}
       </>}
     </section>

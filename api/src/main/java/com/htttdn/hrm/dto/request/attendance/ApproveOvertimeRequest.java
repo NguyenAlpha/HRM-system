@@ -13,6 +13,11 @@ public record ApproveOvertimeRequest(
 
     @NotNull
     @Positive
-    BigDecimal overtimeMultiplier
+    BigDecimal overtimeMultiplier,
+
+    Boolean taxExempt
 ) {
+    public ApproveOvertimeRequest(Integer overtimeMinutes, BigDecimal overtimeMultiplier) {
+        this(overtimeMinutes, overtimeMultiplier, false);
+    }
 }

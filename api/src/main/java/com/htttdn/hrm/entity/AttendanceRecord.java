@@ -88,6 +88,9 @@ public class AttendanceRecord {
     @Column(name = "overtime_multiplier", nullable = false, precision = 8, scale = 4)
     private BigDecimal overtimeMultiplier;
 
+    @Column(name = "overtime_tax_exempt", nullable = false)
+    private boolean overtimeTaxExempt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "overtime_approved_by_account_id")
     private Account overtimeApprovedByAccount;
