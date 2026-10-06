@@ -173,19 +173,42 @@ Không nên tạo một role cho mọi chức danh. Chuyên viên và thực t�
 
 ---
 
-## 7. Hướng tổ chức seeder
+## 7. Seeder hiện có
 
-Nên chia dữ liệu seed theo trách nhiệm:
+Dữ liệu seed được chia theo trách nhiệm và chạy theo `@Order`. Mỗi nhóm có cờ bật/tắt riêng:
 
-| Seeder | Dữ liệu |
-|---|---|
-| `OrganizationStructureSeeder` | Phòng ban, nhóm và địa điểm làm việc |
-| `JobPositionSeeder` | Danh mục chức danh và cấp bậc |
-| `RoleSeeder` | Danh mục system role |
-| `RolePermissionSeeder` | Permission của từng system role |
-| `AuthorizationDemoSeeder` | Nhân viên, account, assignment và role assignment dùng để test |
+| Thứ tự | Seeder | Cờ cấu hình | Dữ liệu tạo |
+|---|---|---|---|
+| 50 | `CompanyProfileSeeder` | `COMPANY_SEED_ENABLED` (mặc định bật) | Hồ sơ doanh nghiệp |
+| 60 | `OrganizationStructureSeeder` | `COMPANY_SEED_ENABLED` | 5 địa điểm `HO`, `BRANCH-01`, `BRANCH-02`, `WAREHOUSE-01`, `WAREHOUSE-02`; đơn vị `BOARD` và 3 phòng ban `HR`, `ACCOUNTING`, `OPERATIONS` |
+| 70 | `JobPositionSeeder` | `COMPANY_SEED_ENABLED` | 7 chức danh |
+| 80 | `WorkShiftSeeder` | `COMPANY_SEED_ENABLED` | Ca hành chính `OFFICE_DAY` 08:00–17:00 |
+| 100 | `RoleSeeder` | `RBAC_SEED_ENABLED` (mặc định bật) | 7 system role |
+| 200 | `PermissionSeeder` | `RBAC_SEED_ENABLED` | Danh mục 49 permission |
+| 300 | `RolePermissionSeeder` | `RBAC_SEED_ENABLED` | Permission mặc định của từng system role |
+| 400 | `SystemAdminSeeder` | `ADMIN_SEED_ENABLED` (mặc định bật) | Account bootstrap và gán role `SYSTEM_ADMIN` đã có sẵn |
+| 500 | `UserSeeder` | `USER_SEED_ENABLED` (mặc định **tắt**) | 3 account demo để kiểm thử phân quyền |
 
-`AuthorizationDemoSeeder` nên được bật riêng bằng cấu hình như `demo.seed.enabled` hoặc profile `local`/`test`. Không nên tạo nhân viên và tài khoản giả trong môi trường production.
+`UserSeeder` là seeder duy nhất tạo nhân viên và tài khoản giả, nên mặc định tắt. Ba account nó
+tạo khi bật:
+
+| Username | Nhân viên | Role assignment |
+|---|---|---|
+| `employee01` | `EMP001` | `EMPLOYEE` / `SELF` |
+| `hr01` | `EMP002` | `EMPLOYEE` / `SELF` và `HR_MANAGER` / `COMPANY` |
+| `payroll01` | `EMP003` | `EMPLOYEE` / `SELF` và `PAYROLL_ACCOUNTANT` / `COMPANY` |
+
+Mọi account demo đều nhận `EMPLOYEE` / `SELF` trước, rồi mới nhận thêm role nghiệp vụ nếu có.
+Đây là minh họa cho tính cộng dồn của role assignment: quyền tự phục vụ và quyền nghiệp vụ là
+hai assignment riêng, thu hồi cái này không ảnh hưởng cái kia.
+
+Đây là dữ liệu thật đang có, khác với bộ dữ liệu đề xuất ở mục 6: seeder chưa tạo các nhóm cấp
+`TEAM`, các chức danh `HR_HEAD`/`HR_INTERN`, role `DEPARTMENT_MANAGER` hay các account theo phòng
+ban. Muốn kiểm thử các tình huống ở mục 6.1 thì phải tạo tay qua API sau khi bootstrap.
+
+> `JobPositionSeeder` tạo các chức danh `BRANCH_MANAGER`, `WAREHOUSE_SUPERVISOR` và `TEAM_LEAD`.
+> Đây chỉ là **chức danh**; các system role trùng tên đã bị ngừng sử dụng ở V22–V24. Trùng tên
+> không tạo ra quyền — đúng theo nguyên tắc ở mục 2.
 
 ---
 
