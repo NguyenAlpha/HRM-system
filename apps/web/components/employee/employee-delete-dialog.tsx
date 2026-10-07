@@ -76,10 +76,9 @@ export function EmployeeDeleteDialog({ employee, onClose, onDeleted, onSessionEx
 
           <div className="grid gap-4 py-4">
             <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-              Chỉ dùng cho hồ sơ nhập nhầm. Nếu nhân sự đã có tài khoản, phân công, lương, đơn nghỉ,
-              chấm công hoặc phiếu lương thì hệ thống sẽ từ chối; trường hợp đó hãy dùng chức năng
-              nghỉ việc. Hiện mọi hồ sơ tạo trên hệ thống đều kèm phân công ban đầu, nên thao tác này
-              sẽ bị từ chối cho tới khi luồng tạo hồ sơ được điều chỉnh.
+              Chỉ dùng cho hồ sơ nhập nhầm. Nếu nhân sự đã có tài khoản, lương, đơn nghỉ, chấm công,
+              phiếu lương hoặc đã từng được điều chuyển thì hệ thống sẽ từ chối; trường hợp đó hãy
+              dùng chức năng nghỉ việc.
             </p>
 
             <div className="grid gap-2">

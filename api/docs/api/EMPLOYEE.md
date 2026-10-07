@@ -474,10 +474,11 @@ Xóa mềm một hồ sơ **được tạo nhầm**. Đây không phải cách c
 
 Endpoint dùng `POST` thay vì `DELETE` vì lý do xóa là bắt buộc và phải nằm trong body.
 
-Hồ sơ chỉ xóa được khi **chưa có bất kỳ dữ liệu nào** trong số: account đăng nhập, phân công, lịch sử lương, đơn nghỉ phép, bản ghi chấm công, phiếu lương. Chỉ cần một trong số đó tồn tại thì API trả `409`.
+Hồ sơ chỉ xóa được khi **chưa có bất kỳ dữ liệu nào** trong số: account đăng nhập, lịch sử lương, đơn nghỉ phép, bản ghi chấm công, phiếu lương. Chỉ cần một trong số đó tồn tại thì API trả `409`.
 
-> [!WARNING]
-> Với luồng hiện tại, điều kiện trên **không bao giờ đạt được**: `POST /api/employees` bắt buộc có `initialAssignment`, nên mọi hồ sơ tạo qua API đều đã có phân công và endpoint này luôn trả `409`. Muốn dùng được, phải cho phép tạo hồ sơ không kèm phân công hoặc bỏ phân công đầu tiên ra khỏi điều kiện kiểm tra. Xem [FEATURES.md](../../../docs/FEATURES.md).
+Riêng phân công được tính theo số lượng chứ không phải có hay không: `POST /api/employees` luôn tạo một phân công kèm hồ sơ nên bản ghi đầu tiên không chứng minh điều gì. Từ **phân công thứ hai** trở đi mới coi là đã phát sinh nghiệp vụ, vì khi đó đã có người chủ động điều chuyển hoặc bổ nhiệm.
+
+Phân công của hồ sơ đã xóa mềm không còn chặn việc xóa đơn vị, địa điểm, chức danh hay ca làm việc tương ứng.
 
 Hồ sơ bị xóa mềm được ghi `deletedAt`, người xóa và lý do; sau đó không còn xuất hiện ở bất kỳ endpoint employee nào.
 

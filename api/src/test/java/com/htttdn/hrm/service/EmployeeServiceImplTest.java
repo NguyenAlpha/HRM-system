@@ -133,16 +133,30 @@ class EmployeeServiceImplTest {
     }
 
     @Test
-    void softDeleteRejectsEmployeeWithBusinessHistory() {
+    void softDeleteRejectsEmployeeReassignedAtLeastOnce() {
         Employee employee = employee(1L);
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
         when(accountRepository.findByEmployeeId(1L)).thenReturn(Optional.empty());
-        when(employeeAssignmentRepository.existsByEmployeeId(1L)).thenReturn(true);
+        when(employeeAssignmentRepository.countByEmployeeId(1L)).thenReturn(2L);
 
         assertThrows(
             ConflictException.class,
             () -> service().softDelete(1L, new SoftDeleteEmployeeRequest("Created by mistake"))
         );
+    }
+
+    @Test
+    void softDeleteAcceptsEmployeeHoldingOnlyTheAssignmentMadeWithTheProfile() {
+        Employee employee = employee(1L);
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(accountRepository.findByEmployeeId(1L)).thenReturn(Optional.empty());
+        when(employeeAssignmentRepository.countByEmployeeId(1L)).thenReturn(1L);
+        when(currentAccountProvider.accountId()).thenReturn(9L);
+        when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).build()));
+
+        service().softDelete(1L, new SoftDeleteEmployeeRequest("Created by mistake"));
+
+        assertNotNull(employee.getDeletedAt());
     }
 
     @Test
