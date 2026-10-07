@@ -300,5 +300,5 @@ hoặc reset database local nếu không cần giữ dữ liệu.
 - Web development: [`apps/web/docs/DEVELOPMENT.md`](../apps/web/docs/DEVELOPMENT.md)
 - Web authentication: [`apps/web/docs/AUTH.md`](../apps/web/docs/AUTH.md)
 - Danh mục API: [`api/docs/api/README.md`](../api/docs/api/README.md)
-- Database schema hiện hành: [`api/docs/Fix_database/DATABASE_SCHEMA.md`](../api/docs/Fix_database/DATABASE_SCHEMA.md)
-- Thiết kế database lịch sử: [`api/docs/database/DATABASE_SCHEMA.md`](../api/docs/database/DATABASE_SCHEMA.md)
+- Database schema hiện hành: [`api/docs/database/DATABASE_SCHEMA.md`](../api/docs/database/DATABASE_SCHEMA.md)
+- Thiết kế database lịch sử: [`api/docs/archive/DATABASE_SCHEMA.md`](../api/docs/archive/DATABASE_SCHEMA.md)

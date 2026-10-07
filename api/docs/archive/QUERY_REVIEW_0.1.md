@@ -3,7 +3,7 @@
 > [!NOTE]
 > Đây là báo cáo lịch sử dựa trên V1–V8, trước khi repository/service được chuyển sang schema mới.
 > Nhiều finding đã được xử lý qua V20–V34 và code hiện hành. Không dùng điểm số hoặc kết luận
-> bên dưới làm trạng thái hiện tại; xem [schema runtime](../Fix_database/DATABASE_SCHEMA.md) và
+> bên dưới làm trạng thái hiện tại; xem [schema runtime](../database/DATABASE_SCHEMA.md) và
 > [mục lục API](../api/README.md).
 
 > **Ngày đánh giá:** 2026-09-24  
