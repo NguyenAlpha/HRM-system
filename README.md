@@ -26,6 +26,7 @@ Flyway tự áp dụng migration V1–V34. Không cần xóa volume database khi
 ## Tài liệu
 
 - [Cài đặt và kiểm tra](docs/SETUP.md)
+- [Danh sách tính năng hiện có](docs/FEATURES.md)
 - [Tổng quan chức năng và kiến trúc](docs/OVERVIEW.md)
 - [Cấu trúc source](docs/PROJECT_STRUCTURE.md)
 - [Cơ cấu tổ chức và phân quyền](docs/ORGANIZATION_STRUCTURE.md)

@@ -5,7 +5,8 @@ Các endpoint trả envelope `ApiResult`. Trừ đăng nhập, refresh và kích
 ## Danh mục hiện hành
 
 Cột thứ hai liệt kê đúng path prefix do tài liệu đó mô tả, dùng để tra ngược từ một endpoint về
-tài liệu tương ứng. Toàn bộ 22 controller đang chạy đều nằm trong bảng.
+tài liệu tương ứng. Toàn bộ 22 controller đang chạy đều nằm trong bảng. Muốn xem bức tranh tính
+năng theo module thay vì theo endpoint, đọc [docs/FEATURES.md](../../../docs/FEATURES.md).
 
 | Tài liệu | Path prefix |
 | --- | --- |
