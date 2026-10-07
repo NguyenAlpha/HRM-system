@@ -76,6 +76,7 @@ PostgreSQL 16 (:5432)
 ## 7. Tài liệu liên quan
 
 - [Cài đặt](SETUP.md)
+- [Danh sách tính năng hiện có](FEATURES.md)
 - [Cấu trúc source](PROJECT_STRUCTURE.md)
 - [Cơ cấu tổ chức](ORGANIZATION_STRUCTURE.md)
 - [Danh mục API](../api/docs/api/README.md)
