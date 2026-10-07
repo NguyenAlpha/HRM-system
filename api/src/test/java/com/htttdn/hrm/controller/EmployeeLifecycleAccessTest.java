@@ -33,6 +33,8 @@ class EmployeeLifecycleAccessTest {
     private static final String RESIGNATION_PATH = "/api/employees/1/resignation";
     private static final String RESIGNATION_BODY =
         "{\"terminationDate\":\"2026-10-31\",\"terminationReason\":\"Nghỉ theo nguyện vọng\"}";
+    private static final String SOFT_DELETE_PATH = "/api/employees/1/soft-delete";
+    private static final String SOFT_DELETE_BODY = "{\"deletionReason\":\"Tạo nhầm hồ sơ\"}";
 
     @Autowired private MockMvc mockMvc;
     @Autowired private JwtService jwtService;
@@ -75,10 +77,54 @@ class EmployeeLifecycleAccessTest {
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
     }
 
+    @ParameterizedTest
+    @CsvSource({
+        "employee.update",
+        "employee.lifecycle.manage",
+        "NONE"
+    })
+    void softDeleteIsDeniedWithoutDeletePermission(String permission) throws Exception {
+        mockMvc.perform(softDelete(permission, SOFT_DELETE_BODY))
+            .andExpect(status().isForbidden());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "employee.delete"
+    })
+    void softDeletePassesPermissionCheckAndReachesTheService(String permission) throws Exception {
+        mockMvc.perform(softDelete(permission, SOFT_DELETE_BODY))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.error.code").value("EMPLOYEE_NOT_FOUND"));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "'{}'",
+        "'{\"deletionReason\":\"\"}'"
+    })
+    void softDeleteRequiresAReason(String body) throws Exception {
+        mockMvc.perform(softDelete("employee.delete", body))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+    }
+
     private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder resignation(
         String permission, String body
     ) {
-        return post(RESIGNATION_PATH)
+        return request(RESIGNATION_PATH, permission, body);
+    }
+
+    private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder softDelete(
+        String permission, String body
+    ) {
+        return request(SOFT_DELETE_PATH, permission, body);
+    }
+
+    private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder request(
+        String path, String permission, String body
+    ) {
+        return post(path)
             .header(HttpHeaders.AUTHORIZATION, "Bearer " + token(permission))
             .contentType(MediaType.APPLICATION_JSON)
             .content(body);

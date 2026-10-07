@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.htttdn.hrm.dto.request.employee.CompleteResignationRequest;
 import com.htttdn.hrm.dto.request.employee.CreateEmployeeRequest;
+import com.htttdn.hrm.dto.request.employee.SoftDeleteEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
@@ -75,5 +76,14 @@ public class EmployeeController {
         return ApiResult.ok(employeeService.completeResignation(
             employeeId, request.terminationDate(), request.terminationReason()
         ));
+    }
+
+    @PostMapping("/{employeeId}/soft-delete")
+    public ApiResult<Void> softDelete(
+        @PathVariable Long employeeId,
+        @Valid @RequestBody SoftDeleteEmployeeRequest request
+    ) {
+        employeeService.softDelete(employeeId, request);
+        return ApiResult.ok();
     }
 }
