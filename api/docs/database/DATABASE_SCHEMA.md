@@ -1,16 +1,15 @@
-# Database Schema — HRM cho doanh nghiệp bán lẻ/phân phối
+# Database Schema — Hệ thống quản lý nhân sự HRM
 
-> [!WARNING]
-> Tài liệu này là bản thiết kế lịch sử trước V20, không còn phản ánh schema runtime.
-> Schema chuẩn hiện hành nằm tại [../Fix_database/DATABASE_SCHEMA.md](../Fix_database/DATABASE_SCHEMA.md)
-> và hiện được triển khai đến Flyway V34, gồm bảo hiểm và thuế TNCN năm 2026.
-> Không dùng tài liệu này để tạo entity, repository hoặc migration mới.
-
-> Đây là bản thiết kế database để duyệt nghiệp vụ, chưa phải Flyway migration.
+> Đây là tài liệu schema hiện hành, mô tả database runtime sau Flyway V34. Mục 15 giữ lịch sử
+> các migration V29–V34 để tra cứu thay đổi; định nghĩa bảng và cột đầy đủ nằm ở các mục 1–14.
+> Khi tài liệu khác với database, migration trong `api/src/main/resources/db/migration/` là
+> nguồn chuẩn.
 >
-> Hệ thống phục vụ **một doanh nghiệp duy nhất**. Dữ liệu seed gồm một trụ sở chính, hai chi nhánh và hai kho. Kho chỉ là địa điểm làm việc/phạm vi quản lý nhân sự, không quản lý hàng hóa hay tồn kho.
+> Hệ thống phục vụ một doanh nghiệp bán lẻ/phân phối có trụ sở, chi nhánh và kho. Kho được xem là địa điểm làm việc, không quản lý hàng hóa hoặc tồn kho.
 >
-> Phạm vi payroll bên dưới là phạm vi lịch sử tại thời điểm thiết kế. Hệ thống hiện hành đã bổ sung bảo hiểm phần nhân viên và thuế TNCN; xem [PAYROLL.md](../api/PAYROLL.md).
+> Phạm vi tính lương hiện tại gồm lương cơ bản, phụ cấp chức vụ, phụ cấp thâm niên, tăng ca,
+> bảo hiểm phần nhân viên và thuế TNCN cho người cư trú trong năm 2026. Thưởng, hoa hồng,
+> quyết toán năm và các ngoại lệ ngoài phạm vi nêu trong [PAYROLL.md](../api/PAYROLL.md) chưa được tự động hóa.
 
 ---
 
@@ -19,15 +18,16 @@
 - Database: PostgreSQL.
 - Khóa chính dùng `BIGSERIAL`.
 - Thời điểm dùng `TIMESTAMPTZ`, ngày nghiệp vụ dùng `DATE`.
-- Tiền dùng `NUMERIC(15,2)`, hệ số dùng `NUMERIC(8,4)`, thời lượng dùng phút `INTEGER`.
-- Hệ thống một doanh nghiệp nên không có `company_id` trong các bảng nghiệp vụ.
-- Bảng danh mục được xóa mềm bằng `deleted_at`; bảng giao dịch/lịch sử không xóa mà đổi trạng thái.
-- CCCD, tài khoản ngân hàng và lương là dữ liệu nhạy cảm, phải che hoặc mã hóa khi triển khai.
-- Các bảng quan trọng lưu người thực hiện và thời điểm cập nhật; audit log chi tiết để ngoài phạm vi MVP.
+- Tiền dùng `NUMERIC(15,2)`, phần trăm/hệ số dùng `NUMERIC(8,4)`, thời lượng dùng phút `INTEGER`.
+- Hệ thống chỉ phục vụ một doanh nghiệp nên không lặp `company_id` trong các bảng nghiệp vụ.
+- Bảng danh mục được xóa mềm bằng `deleted_at`; bảng giao dịch và lịch sử không xóa mà đổi trạng thái.
+- Lương, CCCD và tài khoản ngân hàng là dữ liệu nhạy cảm, phải che hoặc mã hóa khi triển khai.
+- Lương cơ bản và các chính sách phụ cấp phải có thời gian hiệu lực để tính lại đúng dữ liệu lịch sử.
+- Phiếu lương đã duyệt là dữ liệu snapshot và không thay đổi khi chính sách hoặc thông tin nhân viên thay đổi sau này.
 
-### 1.1. Soft delete nhân sự
+### 1.1. Xử lý nhân viên nghỉ việc
 
-Nhân viên nghỉ việc không phải là bản ghi bị xóa:
+Nhân viên nghỉ việc không bị xóa khỏi hệ thống:
 
 ```text
 Nhân viên nghỉ việc
@@ -35,48 +35,379 @@ Nhân viên nghỉ việc
   → employees.termination_date được cập nhật
   → kết thúc employee_assignments hiện tại
   → accounts.status = DISABLED
-  → giữ nguyên đơn từ, chấm công và bảng lương
+  → giữ nguyên chấm công và phiếu lương lịch sử
 ```
 
-Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`. Khi đó phải có `deleted_by_account_id` và `deletion_reason` để có thể kiểm tra, khôi phục.
+Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 
-### 1.2. Danh sách 22 bảng
+### 1.2. Danh sách 30 bảng nghiệp vụ của schema runtime V34
 
 | Nhóm | Các bảng |
 |---|---|
 | Doanh nghiệp và cơ cấu | `company_profile`, `work_locations`, `organization_units`, `job_positions` |
-| Nhân sự | `employees`, `employee_assignments`, `employee_compensations` |
+| Nhân sự và lương thỏa thuận | `employees`, `employee_assignments`, `employee_salary_history` |
+| Chính sách phụ cấp | `position_allowance_rules`, `seniority_allowance_rules` |
 | Tài khoản và RBAC | `accounts`, `account_activation_tokens`, `refresh_tokens`, `permissions`, `roles`, `role_permissions`, `role_assignment_requests`, `account_role_assignments`, `account_permission_overrides` |
-| Đơn từ | `employee_requests` |
-| Chấm công | `work_shifts`, `attendance_records` |
+| Nghỉ phép | `leave_requests` |
+| Lịch và chấm công | `company_holidays`, `work_shifts`, `attendance_records` |
+| Hồ sơ khấu trừ | `employee_payroll_profiles`, `employee_tax_dependents` |
+| Quy tắc thuế và bảo hiểm | `payroll_tax_rules`, `payroll_tax_brackets`, `payroll_insurance_rules` |
 | Tính lương | `payroll_periods`, `payslips`, `payslip_items` |
+
+Bảng kỹ thuật `employee_code_counters` không nằm trong con số 30 này. Tính cả nó và hai bảng
+archive ở mục 6.1, database runtime có 33 bảng.
+
+Hai bảng `legacy_employee_compensation_archive` và `legacy_employee_request_archive`
+chỉ là snapshot kiểm toán được tạo tại V27. Chúng không thuộc mô hình nghiệp vụ đang hoạt động,
+không có JPA entity/repository và không được ghi thêm sau migration.
 
 ### 1.3. Sơ đồ quan hệ tổng quát
 
+Sơ đồ có đủ 30 bảng nghiệp vụ và các thuộc tính nghiệp vụ chính. Hai bảng archive V27 không tham gia quan hệ runtime nên được mô tả riêng. Các cột kỹ thuật, người tạo/người duyệt và quan hệ kiểm toán được trình bày trong phần định nghĩa bảng bên dưới để sơ đồ dễ đọc. Chính sách thâm niên được áp dụng bằng thuật toán theo số năm và thời gian hiệu lực, không có khóa ngoại trực tiếp từ nhân viên. `company_holidays` đứng độc lập trong sơ đồ vì nó sửa lịch làm việc chung chứ không tham chiếu bản ghi nào.
+
 ```mermaid
 erDiagram
-    WORK_LOCATIONS ||--o{ WORK_LOCATIONS : contains
-    ORGANIZATION_UNITS ||--o{ ORGANIZATION_UNITS : contains
-    EMPLOYEES ||--o{ EMPLOYEE_ASSIGNMENTS : has
-    WORK_LOCATIONS ||--o{ EMPLOYEE_ASSIGNMENTS : workplace
-    ORGANIZATION_UNITS ||--o{ EMPLOYEE_ASSIGNMENTS : unit
-    JOB_POSITIONS ||--o{ EMPLOYEE_ASSIGNMENTS : position
-    EMPLOYEES ||--o| ACCOUNTS : authenticates_as
-    ACCOUNTS ||--o{ ACCOUNT_ACTIVATION_TOKENS : activates_with
-    ACCOUNTS ||--o{ REFRESH_TOKENS : owns
-    ACCOUNTS ||--o{ ACCOUNT_ROLE_ASSIGNMENTS : receives
-    ROLES ||--o{ ACCOUNT_ROLE_ASSIGNMENTS : assigned
-    ACCOUNTS ||--o{ ROLE_ASSIGNMENT_REQUESTS : receives
-    ROLES ||--o{ ROLE_ASSIGNMENT_REQUESTS : requested
-    ROLE_ASSIGNMENT_REQUESTS o|--o| ACCOUNT_ROLE_ASSIGNMENTS : produces
-    ROLES ||--o{ ROLE_PERMISSIONS : contains
-    PERMISSIONS ||--o{ ROLE_PERMISSIONS : grouped_into
-    ACCOUNT_ROLE_ASSIGNMENTS ||--o{ ACCOUNT_PERMISSION_OVERRIDES : customizes
-    EMPLOYEES ||--o{ EMPLOYEE_REQUESTS : submits
-    EMPLOYEES ||--o{ ATTENDANCE_RECORDS : has
-    PAYROLL_PERIODS ||--o{ PAYSLIPS : produces
-    EMPLOYEES ||--o{ PAYSLIPS : receives
-    PAYSLIPS ||--o{ PAYSLIP_ITEMS : details
+    direction TB
+
+    COMPANY_PROFILE {
+        smallint id PK
+        varchar code UK
+        varchar name
+        varchar tax_code UK
+    }
+
+    WORK_LOCATIONS {
+        bigint id PK
+        bigint parent_location_id FK
+        varchar code
+        varchar name
+        varchar location_type
+    }
+
+    ORGANIZATION_UNITS {
+        bigint id PK
+        bigint parent_unit_id FK
+        varchar code
+        varchar name
+        varchar unit_type
+    }
+
+    JOB_POSITIONS {
+        bigint id PK
+        varchar code
+        varchar title
+    }
+
+    EMPLOYEES {
+        bigint id PK
+        varchar employee_code UK
+        varchar full_name
+        date hire_date
+        date seniority_start_date
+        varchar employment_status
+        date termination_date
+    }
+
+    EMPLOYEE_ASSIGNMENTS {
+        bigint id PK
+        bigint employee_id FK
+        bigint organization_unit_id FK
+        bigint work_location_id FK
+        bigint position_id FK
+        bigint shift_id FK
+        bigint manager_employee_id FK
+        date effective_from
+        date effective_to
+        boolean is_primary
+    }
+
+    EMPLOYEE_SALARY_HISTORY {
+        bigint id PK
+        bigint employee_id FK
+        numeric base_salary
+        date effective_from
+        date effective_to
+    }
+
+    POSITION_ALLOWANCE_RULES {
+        bigint id PK
+        bigint job_position_id FK
+        numeric monthly_amount
+        date effective_from
+        date effective_to
+    }
+
+    SENIORITY_ALLOWANCE_RULES {
+        bigint id PK
+        integer min_years
+        integer max_years
+        numeric percentage
+        date effective_from
+        date effective_to
+    }
+
+    ACCOUNTS {
+        bigint id PK
+        bigint employee_id FK,UK
+        varchar username UK
+        varchar email UK
+        varchar password_hash
+        varchar status
+    }
+
+    ACCOUNT_ACTIVATION_TOKENS {
+        bigint id PK
+        bigint account_id FK
+        char token_hash UK
+        timestamptz expires_at
+        timestamptz used_at
+        timestamptz revoked_at
+    }
+
+    REFRESH_TOKENS {
+        bigint id PK
+        char token_hash UK
+        bigint account_id FK
+        timestamptz expires_at
+        timestamptz revoked_at
+    }
+
+    PERMISSIONS {
+        bigint id PK
+        varchar code UK
+        varchar name
+        varchar module
+    }
+
+    ROLES {
+        bigint id PK
+        varchar code UK
+        varchar name
+        varchar grant_policy
+    }
+
+    ROLE_PERMISSIONS {
+        bigint role_id PK,FK
+        bigint permission_id PK,FK
+    }
+
+    ROLE_ASSIGNMENT_REQUESTS {
+        bigint id PK
+        bigint account_id FK
+        bigint role_id FK
+        varchar scope_type
+        date effective_from
+        date effective_to
+        varchar status
+        bigint account_role_assignment_id FK
+    }
+
+    ACCOUNT_ROLE_ASSIGNMENTS {
+        bigint id PK
+        bigint account_id FK
+        bigint role_id FK
+        varchar scope_type
+        bigint organization_unit_id FK
+        bigint work_location_id FK
+        date effective_from
+        date effective_to
+    }
+
+    ACCOUNT_PERMISSION_OVERRIDES {
+        bigint id PK
+        bigint account_role_assignment_id FK
+        bigint permission_id FK
+        varchar effect
+        date effective_from
+        date effective_to
+    }
+
+    LEAVE_REQUESTS {
+        bigint id PK
+        bigint employee_id FK
+        varchar leave_type
+        varchar salary_treatment
+        timestamptz start_at
+        timestamptz end_at
+        integer requested_minutes
+        varchar status
+    }
+
+    WORK_SHIFTS {
+        bigint id PK
+        varchar code
+        varchar name
+        time start_time
+        time end_time
+        integer break_minutes
+        integer standard_work_minutes
+    }
+
+    ATTENDANCE_RECORDS {
+        bigint id PK
+        bigint employee_id FK
+        date work_date
+        bigint shift_id FK
+        bigint leave_request_id FK
+        integer scheduled_minutes
+        timestamptz check_in_at
+        timestamptz check_out_at
+        integer payable_minutes
+        integer leave_minutes
+        integer late_minutes
+        integer early_leave_minutes
+        integer overtime_minutes
+        numeric overtime_multiplier
+        boolean overtime_tax_exempt
+        varchar status
+    }
+
+    PAYROLL_PERIODS {
+        bigint id PK
+        smallint year
+        smallint month
+        date period_start
+        date period_end
+        date tax_payment_date
+        varchar status
+    }
+
+    PAYSLIPS {
+        bigint id PK
+        bigint payroll_period_id FK
+        bigint employee_id FK
+        numeric contractual_base_salary
+        integer scheduled_work_minutes
+        integer payable_work_minutes
+        numeric base_salary_pay
+        numeric position_allowance_pay
+        numeric seniority_allowance_pay
+        numeric allowance_pay
+        numeric overtime_pay
+        numeric gross_pay
+        bigint payroll_profile_id FK
+        bigint insurance_rule_id FK
+        bigint tax_rule_id FK
+        numeric insurance_salary_base
+        numeric unemployment_insurance_base
+        numeric employee_social_insurance
+        numeric employee_health_insurance
+        numeric employee_unemployment_insurance
+        numeric tax_exempt_overtime_pay
+        numeric taxable_income
+        numeric personal_income_tax
+        numeric net_pay
+    }
+
+    COMPANY_HOLIDAYS {
+        bigint id PK
+        date holiday_date UK
+        varchar name
+    }
+
+    EMPLOYEE_PAYROLL_PROFILES {
+        bigint id PK
+        bigint employee_id FK
+        date effective_from
+        date effective_to
+        boolean tax_resident
+        boolean social_insurance
+        boolean health_insurance
+        boolean unemployment_insurance
+        numeric insurance_salary
+        smallint wage_region
+    }
+
+    EMPLOYEE_TAX_DEPENDENTS {
+        bigint id PK
+        bigint employee_id FK
+        varchar full_name
+        varchar identifier
+        date effective_from
+        date effective_to
+    }
+
+    PAYROLL_TAX_RULES {
+        bigint id PK
+        date effective_from
+        date effective_to
+        numeric personal_deduction
+        numeric dependent_deduction
+        text source_reference
+    }
+
+    PAYROLL_TAX_BRACKETS {
+        bigint tax_rule_id PK
+        numeric lower_bound PK
+        numeric upper_bound
+        numeric rate
+    }
+
+    PAYROLL_INSURANCE_RULES {
+        bigint id PK
+        date effective_from
+        date effective_to
+        numeric social_rate
+        numeric health_rate
+        numeric unemployment_rate
+        numeric social_health_cap
+        integer unemployment_cap_multiplier
+        numeric region_1_minimum
+        numeric region_2_minimum
+        numeric region_3_minimum
+        numeric region_4_minimum
+        text source_reference
+    }
+
+    PAYSLIP_ITEMS {
+        bigint id PK
+        bigint payslip_id FK
+        varchar component_type
+        varchar component_code
+        varchar description
+        numeric quantity
+        numeric unit_rate
+        numeric multiplier
+        numeric amount
+    }
+
+    WORK_LOCATIONS |o--o{ WORK_LOCATIONS : parent_location_id
+    ORGANIZATION_UNITS |o--o{ ORGANIZATION_UNITS : parent_unit_id
+    EMPLOYEES ||--o{ EMPLOYEE_ASSIGNMENTS : employee_id
+    ORGANIZATION_UNITS ||--o{ EMPLOYEE_ASSIGNMENTS : organization_unit_id
+    WORK_LOCATIONS ||--o{ EMPLOYEE_ASSIGNMENTS : work_location_id
+    JOB_POSITIONS ||--o{ EMPLOYEE_ASSIGNMENTS : position_id
+    WORK_SHIFTS |o--o{ EMPLOYEE_ASSIGNMENTS : shift_id
+    EMPLOYEES |o--o{ EMPLOYEE_ASSIGNMENTS : manager_employee_id
+    EMPLOYEES ||--o{ EMPLOYEE_SALARY_HISTORY : employee_id
+    JOB_POSITIONS ||--o{ POSITION_ALLOWANCE_RULES : job_position_id
+    EMPLOYEES |o--o| ACCOUNTS : employee_id
+    ACCOUNTS ||--o{ ACCOUNT_ACTIVATION_TOKENS : account_id
+    ACCOUNTS ||--o{ REFRESH_TOKENS : account_id
+    ROLES ||--o{ ROLE_PERMISSIONS : role_id
+    PERMISSIONS ||--o{ ROLE_PERMISSIONS : permission_id
+    ACCOUNTS ||--o{ ROLE_ASSIGNMENT_REQUESTS : account_id
+    ROLES ||--o{ ROLE_ASSIGNMENT_REQUESTS : role_id
+    ACCOUNT_ROLE_ASSIGNMENTS |o--o| ROLE_ASSIGNMENT_REQUESTS : account_role_assignment_id
+    ACCOUNTS ||--o{ ACCOUNT_ROLE_ASSIGNMENTS : account_id
+    ROLES ||--o{ ACCOUNT_ROLE_ASSIGNMENTS : role_id
+    ORGANIZATION_UNITS |o--o{ ACCOUNT_ROLE_ASSIGNMENTS : organization_unit_id
+    WORK_LOCATIONS |o--o{ ACCOUNT_ROLE_ASSIGNMENTS : work_location_id
+    ACCOUNT_ROLE_ASSIGNMENTS ||--o{ ACCOUNT_PERMISSION_OVERRIDES : account_role_assignment_id
+    PERMISSIONS ||--o{ ACCOUNT_PERMISSION_OVERRIDES : permission_id
+    EMPLOYEES ||--o{ LEAVE_REQUESTS : employee_id
+    EMPLOYEES ||--o{ ATTENDANCE_RECORDS : employee_id
+    WORK_SHIFTS ||--o{ ATTENDANCE_RECORDS : shift_id
+    LEAVE_REQUESTS |o--o{ ATTENDANCE_RECORDS : leave_request_id
+    EMPLOYEES ||--o{ EMPLOYEE_PAYROLL_PROFILES : employee_id
+    EMPLOYEES ||--o{ EMPLOYEE_TAX_DEPENDENTS : employee_id
+    PAYROLL_TAX_RULES ||--o{ PAYROLL_TAX_BRACKETS : tax_rule_id
+    PAYROLL_PERIODS ||--o{ PAYSLIPS : payroll_period_id
+    EMPLOYEES ||--o{ PAYSLIPS : employee_id
+    EMPLOYEE_PAYROLL_PROFILES |o--o{ PAYSLIPS : payroll_profile_id
+    PAYROLL_TAX_RULES |o--o{ PAYSLIPS : tax_rule_id
+    PAYROLL_INSURANCE_RULES |o--o{ PAYSLIPS : insurance_rule_id
+    PAYSLIPS ||--o{ PAYSLIP_ITEMS : payslip_id
 ```
 
 ---
@@ -87,7 +418,7 @@ erDiagram
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
-| `id` | SMALLINT | PK, CHECK = 1 | Luôn là `1`, bảo đảm chỉ một doanh nghiệp |
+| `id` | SMALLINT | PK, CHECK = 1 | Luôn bằng `1` |
 | `code` | VARCHAR(30) | NOT NULL, UNIQUE | Mã doanh nghiệp |
 | `name` | VARCHAR(200) | NOT NULL | Tên doanh nghiệp |
 | `tax_code` | VARCHAR(30) | UNIQUE | Mã số thuế |
@@ -98,14 +429,12 @@ erDiagram
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-> Bảng độc lập, không được tham chiếu bằng `company_id`. Mọi dữ liệu trong hệ thống mặc nhiên thuộc doanh nghiệp này.
-
 ### `work_locations` — Trụ sở, chi nhánh và kho
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
-| `parent_location_id` | BIGINT | FK → work_locations | Địa điểm cha trong cây địa điểm |
+| `parent_location_id` | BIGINT | FK → work_locations | Trụ sở/chi nhánh cha của kho |
 | `code` | VARCHAR(30) | NOT NULL | Mã địa điểm |
 | `name` | VARCHAR(150) | NOT NULL | Tên địa điểm |
 | `location_type` | VARCHAR(20) | NOT NULL | `HEAD_OFFICE` / `BRANCH` / `WAREHOUSE` |
@@ -116,14 +445,7 @@ erDiagram
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 | `deleted_at` | TIMESTAMPTZ | | Xóa mềm |
 
-> `UNIQUE(code) WHERE deleted_at IS NULL`.
->
-> Quy tắc:
->
-> - `HEAD_OFFICE`: `parent_location_id IS NULL`.
-> - `BRANCH`: phải có cha là `HEAD_OFFICE`.
-> - `WAREHOUSE`: phải có cha là `HEAD_OFFICE` hoặc `BRANCH`.
-> - Một trụ sở/chi nhánh có thể có nhiều kho; database không giới hạn số kho theo địa điểm cha.
+> `UNIQUE(code) WHERE deleted_at IS NULL`. `WAREHOUSE` phải có cha là `HEAD_OFFICE` hoặc `BRANCH`; hai loại còn lại không có cha.
 
 ### `organization_units` — Phòng ban và nhóm
 
@@ -141,16 +463,16 @@ erDiagram
 
 > `UNIQUE(code) WHERE deleted_at IS NULL`. Phòng ban là cơ cấu quản trị, không đồng nhất với địa điểm làm việc.
 
-### `job_positions` — Vị trí công việc
+### `job_positions` — Chức vụ/vị trí công việc
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
-| `code` | VARCHAR(30) | NOT NULL | Mã vị trí |
-| `title` | VARCHAR(150) | NOT NULL | Nhân viên nhân sự, thủ kho, kế toán lương... |
+| `code` | VARCHAR(30) | NOT NULL | Mã chức vụ |
+| `title` | VARCHAR(150) | NOT NULL | Nhân viên, trưởng nhóm, trưởng phòng, giám đốc... |
 | `description` | TEXT | | Mô tả công việc |
-| `is_managerial` | BOOLEAN | NOT NULL, DEFAULT false | Có phải vị trí quản lý |
-| `is_active` | BOOLEAN | NOT NULL, DEFAULT true | Còn được sử dụng |
+| `is_managerial` | BOOLEAN | NOT NULL, DEFAULT false | Có phải chức vụ quản lý |
+| `is_active` | BOOLEAN | NOT NULL, DEFAULT true | Còn sử dụng |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 | `deleted_at` | TIMESTAMPTZ | | Xóa mềm |
@@ -159,24 +481,33 @@ erDiagram
 
 ---
 
-## 3. Hồ sơ và vòng đời nhân sự
+## 3. Hồ sơ, phân công và lương cơ bản
+
+### `employee_code_counters` — Bộ đếm cấp mã nhân viên
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `prefix` | VARCHAR(10) | PK | Tiền tố mã theo vị trí ban đầu |
+| `next_number` | BIGINT | NOT NULL, CHECK > 0 | Số tiếp theo được cấp cho tiền tố |
+
+V28 khởi tạo bộ đếm từ các mã `GD`, `NS`, `KT`, `VH`, `CN`, `KHO`, `TN`, `NV` đã tồn tại. Việc lấy số và tạo employee nằm trong cùng transaction; bảng này là dữ liệu kỹ thuật, không thuộc 24 bảng nghiệp vụ trong sơ đồ.
 
 ### `employees` — Hồ sơ nhân sự
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
-| `employee_code` | VARCHAR(30) | NOT NULL, UNIQUE không phân biệt hoa thường | Mã nhân viên, không tái sử dụng |
+| `employee_code` | VARCHAR(30) | NOT NULL, UNIQUE | Mã nhân viên do server cấp, không tái sử dụng |
 | `full_name` | VARCHAR(200) | NOT NULL | Họ tên |
 | `date_of_birth` | DATE | | Ngày sinh |
 | `gender` | VARCHAR(20) | | `MALE` / `FEMALE` / `OTHER` / `UNDISCLOSED` |
-| `highest_education_level` | VARCHAR(20) | | Trình độ cao nhất: `HIGH_SCHOOL` / `COLLEGE` / `BACHELOR` / `MASTER` / `DOCTORATE` |
-| `major` | VARCHAR(200) | | Chuyên ngành của trình độ cao nhất |
+| `highest_education_level` | VARCHAR(20) | | Trình độ cao nhất |
+| `major` | VARCHAR(200) | | Chuyên ngành |
 | `institution` | VARCHAR(200) | | Cơ sở đào tạo |
 | `graduation_year` | SMALLINT | | Năm tốt nghiệp |
 | `national_id` | VARCHAR(30) | UNIQUE | CCCD/hộ chiếu |
 | `personal_email` | VARCHAR(100) | | Email cá nhân |
-| `work_email` | VARCHAR(100) | UNIQUE không phân biệt hoa thường | Email công việc |
+| `work_email` | VARCHAR(100) | UNIQUE | Email công việc |
 | `phone` | VARCHAR(20) | | Số điện thoại |
 | `address` | TEXT | | Địa chỉ liên hệ |
 | `tax_code` | VARCHAR(30) | | Mã số thuế cá nhân |
@@ -184,16 +515,17 @@ erDiagram
 | `bank_account_number` | VARCHAR(50) | | Số tài khoản |
 | `bank_account_holder` | VARCHAR(200) | | Tên chủ tài khoản |
 | `hire_date` | DATE | NOT NULL | Ngày vào làm |
+| `seniority_start_date` | DATE | NOT NULL | Mốc bắt đầu tính thâm niên, mặc định bằng `hire_date` |
 | `employment_status` | VARCHAR(20) | NOT NULL | `PROBATION` / `ACTIVE` / `RESIGNED` / `TERMINATED` / `RETIRED` |
 | `termination_date` | DATE | | Ngày làm việc cuối cùng |
 | `termination_reason` | TEXT | | Lý do kết thúc làm việc |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
-| `deleted_at` | TIMESTAMPTZ | | Chỉ dùng cho hồ sơ tạo nhầm |
-| `deleted_by_account_id` | BIGINT | FK → accounts | Người thực hiện xóa mềm |
+| `deleted_at` | TIMESTAMPTZ | | Chỉ dùng với hồ sơ tạo nhầm |
+| `deleted_by_account_id` | BIGINT | FK → accounts | Người xóa mềm |
 | `deletion_reason` | TEXT | | Lý do xóa mềm |
 
-> Báo cáo trạng thái trong quá khứ dựa trên `hire_date`, `termination_date` và các đơn nghỉ đã duyệt. Không cần bảng lịch sử trạng thái riêng trong MVP.
+> `seniority_start_date` cho phép HR điều chỉnh mốc tính thâm niên khi nhân viên nghỉ việc rồi quay lại hoặc được bảo lưu thời gian công tác.
 
 ### `employee_assignments` — Lịch sử phân công
 
@@ -203,8 +535,8 @@ erDiagram
 | `employee_id` | BIGINT | FK → employees, NOT NULL | Nhân viên |
 | `organization_unit_id` | BIGINT | FK → organization_units, NOT NULL | Phòng ban/nhóm |
 | `work_location_id` | BIGINT | FK → work_locations, NOT NULL | Địa điểm làm việc |
-| `position_id` | BIGINT | FK → job_positions, NOT NULL | Vị trí công việc |
-| `shift_id` | BIGINT | FK → work_shifts | Ca làm việc hiện hành của phân công |
+| `position_id` | BIGINT | FK → job_positions, NOT NULL | Chức vụ/vị trí |
+| `shift_id` | BIGINT | FK → work_shifts | Ca làm việc |
 | `manager_employee_id` | BIGINT | FK → employees | Quản lý trực tiếp |
 | `employment_type` | VARCHAR(20) | NOT NULL | `FULL_TIME` / `PART_TIME` / `TEMPORARY` |
 | `effective_from` | DATE | NOT NULL | Ngày bắt đầu |
@@ -214,29 +546,80 @@ erDiagram
 | `created_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người ghi nhận |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 
-> Khi điều chuyển hoặc đổi ca, đóng phân công hiện tại bằng `effective_to`, sau đó tạo bản ghi mới. `chk_employee_assignments_period` bảo đảm ngày kết thúc không trước ngày bắt đầu; exclusion constraint `excl_employee_primary_assignment_overlap` bảo đảm một nhân viên chỉ có một phân công chính hiệu lực tại một thời điểm.
+> Khi đổi phòng ban, địa điểm, chức vụ hoặc ca làm, đóng bản ghi hiện tại bằng `effective_to` rồi tạo bản ghi mới. Một nhân viên chỉ có một phân công chính hiệu lực tại một thời điểm.
 
-### `employee_compensations` — Lương cơ bản và phụ cấp
+### `employee_salary_history` — Lịch sử lương cơ bản
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
 | `employee_id` | BIGINT | FK → employees, NOT NULL | Nhân viên |
-| `component_type` | VARCHAR(20) | NOT NULL | `BASIC_SALARY` / `ALLOWANCE` |
-| `component_code` | VARCHAR(30) | NOT NULL | `BASE`, `LUNCH`, `PHONE`, `RESPONSIBILITY`... |
-| `component_name` | VARCHAR(150) | NOT NULL | Tên khoản lương/phụ cấp |
-| `monthly_amount` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Số tiền theo tháng |
-| `effective_from` | DATE | NOT NULL | Bắt đầu áp dụng |
-| `effective_to` | DATE | | Kết thúc áp dụng |
+| `base_salary` | NUMERIC(15,2) | NOT NULL, CHECK > 0 | Lương cơ bản tháng đã thỏa thuận |
+| `effective_from` | DATE | NOT NULL | Ngày bắt đầu áp dụng |
+| `effective_to` | DATE | | Ngày kết thúc áp dụng |
+| `approved_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người duyệt |
+| `reason` | VARCHAR(250) | | Tuyển mới, tăng lương, điều chỉnh... |
+| `note` | TEXT | | Ghi chú |
+| `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
+
+> Bảng này thay cho `employee_compensations`. Nó chỉ lưu lương cơ bản và lịch sử thay đổi lương, không chứa các khoản phụ cấp. Một nhân viên chỉ có một mức lương cơ bản hiệu lực tại một thời điểm. V27 backfill lần cuối các mức lương hợp lệ rồi xóa bảng cũ; toàn bộ dữ liệu nguồn được giữ tại `legacy_employee_compensation_archive`.
+
+---
+
+## 4. Chính sách phụ cấp
+
+### `position_allowance_rules` — Phụ cấp theo chức vụ
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `job_position_id` | BIGINT | FK → job_positions, NOT NULL | Chức vụ được hưởng |
+| `monthly_amount` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Mức phụ cấp mỗi tháng |
+| `effective_from` | DATE | NOT NULL | Ngày bắt đầu áp dụng |
+| `effective_to` | DATE | | Ngày kết thúc áp dụng |
 | `approved_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người duyệt |
 | `note` | TEXT | | Ghi chú |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 
-> Mỗi nhân viên chỉ có một `BASIC_SALARY` hiệu lực tại một thời điểm. Cùng `component_code` không được chồng khoảng hiệu lực. Trong MVP, mọi thay đổi bắt đầu từ ngày đầu tháng.
+Ví dụ dữ liệu:
+
+| Chức vụ | Phụ cấp tháng |
+|---|---:|
+| Nhân viên | 0 |
+| Trưởng nhóm | 500.000 |
+| Trưởng phòng | 1.500.000 |
+| Giám đốc | 5.000.000 |
+
+> Mỗi chức vụ chỉ có một quy tắc phụ cấp hiệu lực tại một thời điểm. Chức vụ của nhân viên được xác định từ `employee_assignments`.
+
+### `seniority_allowance_rules` — Phụ cấp theo thâm niên
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `min_years` | INTEGER | NOT NULL, CHECK >= 0 | Số năm tối thiểu |
+| `max_years` | INTEGER | | Số năm tối đa; null nghĩa là không giới hạn |
+| `percentage` | NUMERIC(8,4) | NOT NULL, CHECK >= 0 | Tỷ lệ trên lương cơ bản, ví dụ `5.0000` = 5% |
+| `effective_from` | DATE | NOT NULL | Ngày bắt đầu áp dụng chính sách |
+| `effective_to` | DATE | | Ngày kết thúc áp dụng |
+| `approved_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người duyệt |
+| `note` | TEXT | | Ghi chú |
+| `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
+
+Ví dụ dữ liệu:
+
+| Từ năm | Đến dưới năm | Tỷ lệ |
+|---:|---:|---:|
+| 0 | 2 | 0% |
+| 2 | 5 | 5% |
+| 5 | 10 | 10% |
+| 10 | Không giới hạn | 15% |
+
+> Số năm thâm niên được tính tại ngày cuối kỳ lương từ `employees.seniority_start_date`. Các khoảng năm đang hiệu lực không được chồng lấn.
 
 ---
 
-## 4. Tài khoản và phân quyền RBAC
+## 5. Tài khoản và phân quyền RBAC
 
 ### `accounts` — Tài khoản đăng nhập
 
@@ -244,9 +627,9 @@ erDiagram
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
 | `employee_id` | BIGINT | FK → employees, UNIQUE | Hồ sơ liên kết; null chỉ dành cho bootstrap admin |
-| `username` | VARCHAR(50) | NOT NULL, UNIQUE | Tên đăng nhập, không tái sử dụng |
+| `username` | VARCHAR(50) | NOT NULL, UNIQUE | Tên đăng nhập |
 | `email` | VARCHAR(100) | NOT NULL, UNIQUE | Email đăng nhập |
-| `password_hash` | VARCHAR(255) | nullable khi `PENDING` | Mật khẩu đã hash; chỉ được null trước khi kích hoạt |
+| `password_hash` | VARCHAR(255) | nullable khi `PENDING` | Mật khẩu đã hash |
 | `status` | VARCHAR(20) | NOT NULL | `PENDING` / `ACTIVE` / `LOCKED` / `DISABLED` |
 | `failed_login_count` | INTEGER | NOT NULL, DEFAULT 0 | Số lần đăng nhập sai liên tiếp |
 | `locked_until` | TIMESTAMPTZ | | Khóa tạm đến thời điểm |
@@ -254,46 +637,38 @@ erDiagram
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-> Người nghỉ việc có tài khoản chuyển `DISABLED`, không xóa tài khoản. Constraint yêu cầu `password_hash` có giá trị với mọi trạng thái khác `PENDING`. Email được chuẩn hóa về chữ thường và có unique index trên `LOWER(email)`.
-
 ### `account_activation_tokens` — Token kích hoạt tài khoản
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
-| `account_id` | BIGINT | FK → accounts, NOT NULL | Account đang chờ kích hoạt |
-| `token_hash` | CHAR(64) | NOT NULL, UNIQUE | SHA-256 hash của raw token |
-| `expires_at` | TIMESTAMPTZ | NOT NULL | Thời điểm token hết hạn |
-| `used_at` | TIMESTAMPTZ | | Thời điểm kích hoạt thành công |
-| `revoked_at` | TIMESTAMPTZ | | Thời điểm token bị thu hồi |
-| `created_by_account_id` | BIGINT | FK → accounts, NOT NULL | Quản trị viên phát hành token |
+| `account_id` | BIGINT | FK → accounts, NOT NULL | Tài khoản chờ kích hoạt |
+| `token_hash` | CHAR(64) | NOT NULL, UNIQUE | SHA-256 hash của token |
+| `expires_at` | TIMESTAMPTZ | NOT NULL | Thời điểm hết hạn |
+| `used_at` | TIMESTAMPTZ | | Thời điểm sử dụng |
+| `revoked_at` | TIMESTAMPTZ | | Thời điểm thu hồi |
+| `created_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người phát hành |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
-
-> Mỗi account chỉ có một token đồng thời chưa dùng và chưa thu hồi. Token được dùng cho lần đặt mật khẩu đầu tiên hoặc reset mật khẩu do quản trị viên khởi tạo. Phát token mới phải thu hồi token cũ; raw token không được lưu trong database.
 
 ### `refresh_tokens` — Phiên đăng nhập có thể làm mới
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
-| `token_hash` | CHAR(64) | NOT NULL, UNIQUE | SHA-256 hash của raw refresh token |
-| `account_id` | BIGINT | FK → accounts, NOT NULL | Chủ sở hữu phiên đăng nhập |
-| `expires_at` | TIMESTAMPTZ | NOT NULL | Thời điểm token hết hạn |
-| `revoked_at` | TIMESTAMPTZ | | Thời điểm token bị thu hồi hoặc đã được rotate |
+| `token_hash` | CHAR(64) | NOT NULL, UNIQUE | SHA-256 hash của refresh token |
+| `account_id` | BIGINT | FK → accounts, NOT NULL | Chủ phiên |
+| `expires_at` | TIMESTAMPTZ | NOT NULL | Thời điểm hết hạn |
+| `revoked_at` | TIMESTAMPTZ | | Thời điểm thu hồi/rotate |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 
-> Refresh token là credential dùng một lần theo cơ chế rotation; raw token không được lưu trong database.
-
 ### `permissions` — Danh mục quyền nguyên tử
-
-Danh mục này thuộc sở hữu của ứng dụng và được đồng bộ bằng `PermissionSeeder` hoặc database migration. Người dùng doanh nghiệp chỉ đọc và chọn permission có sẵn; hệ thống không cung cấp API tạo, sửa hoặc xóa permission.
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
-| `code` | VARCHAR(100) | NOT NULL, UNIQUE | Mã quyền, ví dụ `leave.approve` |
-| `name` | VARCHAR(150) | NOT NULL | Tên hiển thị của quyền |
-| `module` | VARCHAR(30) | NOT NULL | `EMPLOYEE` / `ACCOUNT` / `ORGANIZATION` / `REQUEST` / `ATTENDANCE` / `PAYROLL` / `RBAC` / `REPORT` |
+| `code` | VARCHAR(100) | NOT NULL, UNIQUE | Mã quyền |
+| `name` | VARCHAR(150) | NOT NULL | Tên hiển thị |
+| `module` | VARCHAR(30) | NOT NULL | Phân hệ |
 | `description` | TEXT | NOT NULL | Mô tả quyền |
 | `assignment_policy` | VARCHAR(20) | NOT NULL | `DELEGABLE` / `SYSTEM_ONLY` |
 | `is_active` | BOOLEAN | NOT NULL, DEFAULT true | Trạng thái |
@@ -301,23 +676,23 @@ Danh mục này thuộc sở hữu của ứng dụng và được đồng bộ 
 
 ### `roles` — Mẫu vai trò
 
-Role có `is_system=true` và bộ permission tương ứng do code định nghĩa, chỉ đọc qua API. Company Owner chỉ quản lý role tùy chỉnh có `is_system=false`.
-
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
 | `code` | VARCHAR(50) | NOT NULL, UNIQUE | Mã vai trò |
 | `name` | VARCHAR(150) | NOT NULL | Tên hiển thị |
 | `description` | TEXT | | Mô tả |
-| `is_system` | BOOLEAN | NOT NULL, DEFAULT false | Vai trò seed, không được xóa |
-| `grant_policy` | VARCHAR(30) | NOT NULL | `AUTO` / `HR_ASSIGNABLE` / `OWNER_APPROVAL` / `SYSTEM_ONLY` |
+| `is_system` | BOOLEAN | NOT NULL, DEFAULT false | Vai trò hệ thống |
+| `is_active` | BOOLEAN | NOT NULL, DEFAULT true | Trạng thái |
+| `grant_policy` | VARCHAR(30) | | Workflow được phép dùng để cấp vai trò |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
-| `deleted_at` | TIMESTAMPTZ | | Chỉ áp dụng cho vai trò tùy chỉnh |
+| `deleted_at` | TIMESTAMPTZ | | Xóa mềm với vai trò tùy chỉnh |
+
+Giá trị `grant_policy`: `AUTO` cấp ngay khi account được tạo, `HR_ASSIGNABLE` cho HR tự gán,
+`OWNER_APPROVAL` cần Company Owner duyệt, `SYSTEM_ONLY` chỉ seeder gán.
 
 ### `role_permissions` — Quyền mặc định của vai trò
-
-Seeder đồng bộ chính xác mapping của system role. API chỉ cho phép thêm hoặc gỡ mapping đối với custom role và chỉ chấp nhận permission có `assignment_policy=DELEGABLE` khi thêm mới.
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
@@ -326,174 +701,179 @@ Seeder đồng bộ chính xác mapping của system role. API chỉ cho phép t
 | `created_by_account_id` | BIGINT | FK → accounts | Người cấu hình; null với seed |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cấp |
 
+### `role_assignment_requests` — Đề xuất cấp vai trò
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `account_id` | BIGINT | FK → accounts, NOT NULL | Tài khoản được đề xuất cấp vai trò |
+| `role_id` | BIGINT | FK → roles, NOT NULL | Vai trò được đề xuất |
+| `scope_type` | VARCHAR(20) | NOT NULL | `SELF` / `COMPANY` / `ORG_UNIT` / `LOCATION` |
+| `organization_unit_id` | BIGINT | FK → organization_units | Phạm vi phòng ban |
+| `work_location_id` | BIGINT | FK → work_locations | Phạm vi địa điểm |
+| `effective_from` | DATE | NOT NULL | Ngày bắt đầu đề xuất |
+| `effective_to` | DATE | | Ngày kết thúc đề xuất |
+| `reason` | TEXT | NOT NULL | Lý do đề xuất |
+| `status` | VARCHAR(20) | NOT NULL | `PENDING` / `APPROVED` / `REJECTED` / `CANCELLED` |
+| `requested_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người gửi đề xuất |
+| `requested_at` | TIMESTAMPTZ | NOT NULL | Thời điểm gửi |
+| `reviewed_by_account_id` | BIGINT | FK → accounts | Người duyệt hoặc từ chối |
+| `reviewed_at` | TIMESTAMPTZ | | Thời điểm xử lý |
+| `review_note` | TEXT | | Nhận xét xử lý |
+| `cancelled_by_account_id` | BIGINT | FK → accounts | Người hủy đề xuất |
+| `cancelled_at` | TIMESTAMPTZ | | Thời điểm hủy |
+| `cancellation_reason` | TEXT | | Lý do hủy |
+| `account_role_assignment_id` | BIGINT | UNIQUE, FK → account_role_assignments | Assignment sinh ra khi duyệt |
+| `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật cuối |
+
+> Không cho phép hai request `PENDING` cùng tài khoản, vai trò, phạm vi và khoảng hiệu lực chồng lấn.
+
 ### `account_role_assignments` — Gán vai trò và phạm vi
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
-| `account_id` | BIGINT | FK → accounts, NOT NULL | Tài khoản nhận vai trò |
-| `role_id` | BIGINT | FK → roles, NOT NULL | Vai trò được gán |
+| `account_id` | BIGINT | FK → accounts, NOT NULL | Tài khoản |
+| `role_id` | BIGINT | FK → roles, NOT NULL | Vai trò |
 | `scope_type` | VARCHAR(20) | NOT NULL | `SELF` / `COMPANY` / `ORG_UNIT` / `LOCATION` |
-| `organization_unit_id` | BIGINT | FK → organization_units | Chỉ dùng với `ORG_UNIT` |
-| `work_location_id` | BIGINT | FK → work_locations | Chỉ dùng với `LOCATION` |
+| `organization_unit_id` | BIGINT | FK → organization_units | Phạm vi phòng ban |
+| `work_location_id` | BIGINT | FK → work_locations | Phạm vi địa điểm |
 | `effective_from` | DATE | NOT NULL | Ngày bắt đầu |
 | `effective_to` | DATE | | Ngày kết thúc |
 | `granted_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người cấp |
-| `reason` | TEXT | | Lý do cấp quyền |
+| `reason` | TEXT | | Lý do |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
-| `revoked_by_account_id` | BIGINT | FK → accounts | Người thu hồi role |
-| `revoked_at` | TIMESTAMPTZ | | Thời điểm thu hồi; assignment mất hiệu lực ngay |
+| `revoked_by_account_id` | BIGINT | FK → accounts | Người thu hồi |
+| `revoked_at` | TIMESTAMPTZ | | Thời điểm thu hồi |
 | `revocation_reason` | TEXT | | Lý do thu hồi |
 
-> Quy tắc scope:
->
-> - `SELF`, `COMPANY`: hai FK phạm vi đều null.
-> - `ORG_UNIT`: chỉ `organization_unit_id` có giá trị.
-> - `LOCATION`: chỉ `work_location_id` có giá trị.
-> - `ORG_UNIT` và `LOCATION` bao gồm nút được gán cùng toàn bộ nút con.
-> - Một tài khoản có thể có nhiều vai trò; các quyền được cộng dồn.
-> - Thu hồi role không xóa assignment. Ba field `revoked_by_account_id`, `revoked_at`, `revocation_reason` phải cùng null hoặc cùng có giá trị.
-> - `effective_to` không được trước `effective_from`.
-
-### `role_assignment_requests` — Đề xuất cấp vai trò
-
-Bảng này lưu workflow đề xuất trước khi role có hiệu lực. Request `PENDING`, `REJECTED` hoặc `CANCELLED` không tham gia tính authorization. Chỉ request `APPROVED` mới liên kết tới một bản ghi thật trong `account_role_assignments`.
+### `account_permission_overrides` — Ngoại lệ quyền
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
-| `account_id` | BIGINT | FK → accounts, NOT NULL | Account được đề xuất cấp role |
-| `role_id` | BIGINT | FK → roles, NOT NULL | Role được đề xuất |
-| `scope_type` | VARCHAR(20) | NOT NULL | `SELF` / `COMPANY` / `ORG_UNIT` / `LOCATION` |
-| `organization_unit_id` | BIGINT | FK → organization_units | Chỉ dùng với `ORG_UNIT` |
-| `work_location_id` | BIGINT | FK → work_locations | Chỉ dùng với `LOCATION` |
-| `effective_from` | DATE | NOT NULL | Ngày role dự kiến bắt đầu hiệu lực |
-| `effective_to` | DATE | | Ngày dự kiến kết thúc hiệu lực |
-| `reason` | TEXT | NOT NULL, không rỗng | Lý do đề xuất |
-| `status` | VARCHAR(20) | NOT NULL | `PENDING` / `APPROVED` / `REJECTED` / `CANCELLED` |
-| `requested_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người gửi đề xuất |
-| `requested_at` | TIMESTAMPTZ | NOT NULL | Thời điểm gửi đề xuất |
-| `reviewed_by_account_id` | BIGINT | FK → accounts | Người duyệt hoặc từ chối |
-| `reviewed_at` | TIMESTAMPTZ | | Thời điểm duyệt hoặc từ chối |
-| `review_note` | TEXT | | Ghi chú xử lý; bắt buộc khi từ chối |
-| `cancelled_by_account_id` | BIGINT | FK → accounts | Người hủy request |
-| `cancelled_at` | TIMESTAMPTZ | | Thời điểm hủy |
-| `cancellation_reason` | TEXT | | Lý do hủy, bắt buộc khi `CANCELLED` |
-| `account_role_assignment_id` | BIGINT | UNIQUE, FK → account_role_assignments | Assignment được tạo khi `APPROVED` |
-| `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật cuối |
-
-Ràng buộc persistence:
-
-- Cấu trúc scope giống `account_role_assignments`.
-- `effective_to` không được trước `effective_from`.
-- Không cho hai request `PENDING` cùng account, role và scope có khoảng hiệu lực chồng lấn.
-- `PENDING` chưa được chứa dữ liệu xử lý hoặc assignment.
-- `APPROVED` bắt buộc có người duyệt, thời điểm duyệt và assignment kết quả.
-- `REJECTED` bắt buộc có người xử lý và ghi chú từ chối.
-- `CANCELLED` bắt buộc có người hủy, thời điểm và lý do hủy.
-
-### `account_permission_overrides` — Ngoại lệ quyền của từng nhân viên
-
-| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
-|---|---|---|---|
-| `id` | BIGSERIAL | PK | Khóa chính |
-| `account_role_assignment_id` | BIGINT | FK → account_role_assignments, NOT NULL | Lần gán vai trò được tùy chỉnh |
-| `permission_id` | BIGINT | FK → permissions, NOT NULL | Quyền cần ghi đè |
+| `account_role_assignment_id` | BIGINT | FK → account_role_assignments, NOT NULL | Lần gán vai trò |
+| `permission_id` | BIGINT | FK → permissions, NOT NULL | Quyền ghi đè |
 | `effect` | VARCHAR(10) | NOT NULL | `GRANT` / `REVOKE` |
-| `effective_from` | DATE | NOT NULL | Bắt đầu ngoại lệ |
-| `effective_to` | DATE | | Kết thúc ngoại lệ |
-| `reason` | TEXT | NOT NULL | Lý do bắt buộc |
+| `effective_from` | DATE | NOT NULL | Ngày bắt đầu |
+| `effective_to` | DATE | | Ngày kết thúc |
+| `reason` | TEXT | NOT NULL | Lý do |
 | `granted_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người thiết lập |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
-| `revoked_by_account_id` | BIGINT | FK → accounts | Người thu hồi ngoại lệ |
-| `revoked_at` | TIMESTAMPTZ | | Thời điểm thu hồi; ngoại lệ mất hiệu lực ngay |
-| `revocation_reason` | TEXT | | Lý do thu hồi |
 
-> Ngoại lệ chỉ áp dụng cho một lần gán vai trò. Nếu vai trò khác vẫn cấp cùng quyền, tài khoản vẫn có quyền đó.
->
-> - Chỉ permission active có `assignment_policy=DELEGABLE` được phép tạo ngoại lệ.
-> - Khoảng hiệu lực phải nằm trong khoảng hiệu lực của role assignment.
-> - Không cho hai ngoại lệ chưa thu hồi của cùng assignment và permission có khoảng hiệu lực chồng lấn.
-> - Ba field thu hồi phải cùng null hoặc cùng có giá trị; bản ghi được giữ lại để audit.
+### 5.1. Danh mục permission code
 
-### 4.1. Vai trò và quyền mặc định
-
-| Vai trò | Phạm vi thường dùng | Quyền mặc định chính |
-|---|---|---|
-| `EMPLOYEE` | `SELF` | Xem/sửa hồ sơ cho phép; gửi đơn; xem chấm công và phiếu lương |
-| `HR_MANAGER` | `COMPANY` | Hồ sơ thường và dữ liệu nhạy cảm của nhân viên; cấp account; đề xuất role; quản lý đơn từ, chấm công và báo cáo toàn công ty |
-| `PAYROLL_ACCOUNTANT` | `COMPANY` | Đọc thành phần thu nhập, tính và kiểm tra lương |
-| `PAYROLL_APPROVER` | `COMPANY` | Duyệt, xác nhận đã trả và khóa kỳ lương |
-| `DIRECTOR` | `COMPANY` | Xem và quản lý hồ sơ nhân sự; phê duyệt cuối nghiệp vụ nhân sự, đơn từ và thay đổi cơ cấu toàn công ty |
-| `COMPANY_OWNER` | `COMPANY` | Xem và quản lý hồ sơ nhân sự; cấp và quản trị account; phê duyệt đề xuất role; quản trị quyền truy cập và cấu hình doanh nghiệp |
-| `SYSTEM_ADMIN` | `COMPANY` | Khởi tạo Company Owner đầu tiên và tạm thời quản lý RBAC; không tham gia quản trị account hoặc nghiệp vụ nội bộ công ty |
-
-Các quyền tự phục vụ chỉ thuộc role `EMPLOYEE / SELF`. Account có role nghiệp vụ như `HR_MANAGER`, `PAYROLL_ACCOUNTANT`, `PAYROLL_APPROVER` hoặc `DIRECTOR` vẫn giữ một assignment `EMPLOYEE / SELF` riêng thay vì lặp permission cá nhân trong role nghiệp vụ.
-
-Mọi nhân viên có tài khoản đều nhận `EMPLOYEE` ở scope `SELF`; vai trò nghiệp vụ được gán thêm.
-
-Các permission code tối thiểu:
+Danh mục quyền thuộc sở hữu của code: `PermissionSeeder` là nguồn chuẩn, không thêm permission
+qua API. Catalog hiện có 49 code trên 8 module của `PermissionModule`. Code đánh dấu `(S)` có
+`assignment_policy = SYSTEM_ONLY`, chỉ seeder gán cho system role; các code còn lại là `DELEGABLE`.
 
 ```text
-profile.self.read             profile.self.update
-employee.list.read           employee.read                 employee.create
-employee.update              employee.probation.confirm    employee.assignment.read
-employee.assignment.manage  employee.lifecycle.manage     employee.delete
-employee.sensitive.read      employee.sensitive.manage     employee.lifecycle.approve
-account.read                 account.manage                account.provision
-account.activation.manage   account.role.assign
-role.assignment.request     role.assignment.approve
-request.self.read            request.self.create           request.self.cancel
-request.read                 request.approve               request.final_approve
-request.manage              organization.read             organization.manage
-organization.change.approve organization.company_owner.bootstrap
-attendance.self.read         attendance.read               attendance.manage
+EMPLOYEE (14)
+profile.self.read                 profile.self.update
+employee.list.read                employee.read
+employee.create                   employee.update
+employee.probation.confirm        employee.delete
+employee.assignment.read          employee.assignment.manage
+employee.lifecycle.manage         employee.lifecycle.approve
+employee.sensitive.read           employee.sensitive.manage
+
+ACCOUNT (8)
+account.read                      account.manage
+account.provision                 account.activation.manage
+account.role.assign               role.assignment.request
+role.assignment.approve (S)       account.permission.override.manage (S)
+
+ORGANIZATION (4)
+organization.read                 organization.manage
+organization.change.approve       organization.company_owner.bootstrap (S)
+
+REQUEST (7)
+request.self.read                 request.self.create
+request.self.cancel               request.read
+request.approve                   request.final_approve
+request.manage
+
+ATTENDANCE (5)
+attendance.self.read              attendance.self.record
+attendance.read                   attendance.manage
 attendance.overtime.approve
-payroll.self.read            payroll.self.print
-compensation.read            compensation.manage
-payroll.calculate            payroll.approve               payroll.mark_paid
-payroll.lock                 report.hr.read                report.payroll.read
+
+PAYROLL (8)
+payroll.self.read                 payroll.self.print
+compensation.read                 compensation.manage
+payroll.calculate                 payroll.approve
+payroll.mark_paid                 payroll.lock
+
+REPORT (2)
+report.hr.read                    report.payroll.read
+
+RBAC (1)
 rbac.manage
 ```
 
+Đơn nghỉ dùng tiền tố `request.*` (module `REQUEST`), không phải `leave.*`. Lương và phụ cấp
+dùng `compensation.read` / `compensation.manage`, không phải `salary.*` / `allowance.*`.
+
 ---
 
-## 5. Đơn nghỉ phép và nghỉ việc
+## 6. Nghỉ phép
 
-### `employee_requests` — Đơn nghỉ phép hoặc nghỉ việc
+### `leave_requests` — Đơn nghỉ của nhân viên
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
 | `employee_id` | BIGINT | FK → employees, NOT NULL | Người gửi đơn |
-| `request_type` | VARCHAR(20) | NOT NULL | `LEAVE` / `RESIGNATION` |
-| `leave_type` | VARCHAR(20) | | `ANNUAL` / `SICK` / `MATERNITY` / `UNPAID` / `OTHER`; chỉ dùng cho đơn nghỉ phép |
-| `is_paid_leave` | BOOLEAN | | Nghỉ có hưởng lương hay không; chỉ dùng cho đơn nghỉ phép |
-| `start_date` | DATE | | Ngày bắt đầu nghỉ phép |
-| `end_date` | DATE | | Ngày kết thúc nghỉ phép |
-| `total_days` | NUMERIC(6,2) | | Tổng số ngày nghỉ |
-| `requested_last_working_date` | DATE | | Ngày làm việc cuối mong muốn |
+| `leave_type` | VARCHAR(30) | NOT NULL | `ANNUAL` / `SICK` / `MATERNITY` / `UNPAID` / `OTHER` |
+| `salary_treatment` | VARCHAR(30) | NOT NULL | `EMPLOYER_PAID` / `SOCIAL_INSURANCE` / `UNPAID` |
+| `start_at` | TIMESTAMPTZ | NOT NULL | Thời điểm bắt đầu nghỉ |
+| `end_at` | TIMESTAMPTZ | NOT NULL | Thời điểm kết thúc nghỉ |
+| `requested_minutes` | INTEGER | NOT NULL, CHECK > 0 | Tổng phút nghỉ theo lịch làm việc |
 | `reason` | TEXT | NOT NULL | Lý do |
 | `attachment_url` | TEXT | | Minh chứng nếu có |
-| `status` | VARCHAR(20) | NOT NULL | `DRAFT` / `PENDING` / `APPROVED` / `REJECTED` / `CANCELLED` / `COMPLETED` |
+| `status` | VARCHAR(20) | NOT NULL | `DRAFT` / `PENDING` / `APPROVED` / `REJECTED` / `CANCELLED` |
 | `submitted_at` | TIMESTAMPTZ | | Thời điểm nộp |
 | `reviewed_by_account_id` | BIGINT | FK → accounts | Người duyệt |
-| `review_comment` | TEXT | | Ý kiến duyệt/từ chối |
+| `review_comment` | TEXT | | Nhận xét duyệt/từ chối |
 | `reviewed_at` | TIMESTAMPTZ | | Thời điểm duyệt |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-> CHECK theo loại:
+> Bảng này thay `employee_requests` chung chung. Nghỉ việc được HR cập nhật trực tiếp vào vòng đời nhân viên; bảng này chỉ quản lý nghỉ phép. V27 backfill lần cuối đơn nghỉ phép rồi xóa bảng cũ; toàn bộ dữ liệu nguồn, bao gồm lịch sử đơn nghỉ việc, được giữ tại `legacy_employee_request_archive`.
 >
-> - `LEAVE`: có `leave_type`, `is_paid_leave`, `start_date`, `end_date`, `total_days`; không có `requested_last_working_date`.
-> - `RESIGNATION`: có `requested_last_working_date`; các trường nghỉ phép và `is_paid_leave` phải null.
-> - Chỉ đơn `DRAFT` được sửa nội dung.
+> Quy tắc mặc định:
+>
+> - `ANNUAL` → `EMPLOYER_PAID`: vẫn tính vào phút hưởng lương.
+> - `UNPAID` → `UNPAID`: không tính vào phút hưởng lương.
+> - `MATERNITY` → `SOCIAL_INSURANCE`: không tính lương doanh nghiệp theo phút; chế độ BHXH nằm ngoài bảng lương MVP.
+> - Nghỉ không phép không tạo `leave_requests` được duyệt; ngày công được đánh dấu `UNAUTHORIZED_ABSENCE`.
 
-> Mỗi đơn chỉ có một người duyệt. `status` lưu kết quả; ba cột `reviewed_*` lưu người, thời điểm và nhận xét.
+### 6.1. Snapshot legacy chỉ đọc
+
+| Bảng | Dữ liệu lưu | Trạng thái migration |
+|---|---|---|
+| `legacy_employee_compensation_archive` | Snapshot toàn bộ lương/phụ cấp từ `employee_compensations`; có liên kết tới `employee_salary_history` nếu backfill thành công | `MIGRATED`, `ARCHIVED_ALLOWANCE`, `ARCHIVED_INVALID_AMOUNT`, `ARCHIVED_CONFLICT` |
+| `legacy_employee_request_archive` | Snapshot toàn bộ đơn phép/nghỉ việc từ `employee_requests`; có liên kết tới `leave_requests` nếu backfill thành công | `MIGRATED`, `ARCHIVED_RESIGNATION`, `ARCHIVED_CONFLICT` |
+
+Các bảng archive không có khóa ngoại để dữ liệu kiểm toán không bị ảnh hưởng bởi vòng đời của bản ghi nghiệp vụ. Không controller, service hoặc repository nào được phép ghi vào chúng.
 
 ---
 
-## 6. Ca làm việc, chấm công và tăng ca
+## 7. Lịch làm việc, ca, chấm công và tăng ca
+
+### `company_holidays` — Ngày lễ công ty
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `holiday_date` | DATE | NOT NULL, UNIQUE | Ngày nghỉ lễ |
+| `name` | VARCHAR(150) | NOT NULL | Tên ngày lễ |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Thời điểm tạo |
+
+> Lịch làm việc chuẩn là thứ 2 đến thứ 7; ngày có trong bảng này bị loại khỏi lịch đó. Chỉ có
+> ngày lễ do công ty tự khai báo, không nạp sẵn lịch lễ quốc gia. Bảng không xóa mềm vì thêm
+> hoặc bớt một ngày lễ làm thay đổi số ngày công chuẩn của kỳ: thay đổi đưa kỳ lương
+> `CALCULATED` về `DRAFT` để tính lại, và bị chặn từ `APPROVED` trở đi.
 
 ### `work_shifts` — Danh mục ca làm việc
 
@@ -504,7 +884,7 @@ rbac.manage
 | `name` | VARCHAR(100) | NOT NULL | Tên ca |
 | `start_time` | TIME | NOT NULL | Giờ bắt đầu |
 | `end_time` | TIME | NOT NULL | Giờ kết thúc |
-| `break_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Thời gian nghỉ |
+| `break_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút nghỉ giữa ca |
 | `standard_work_minutes` | INTEGER | NOT NULL, CHECK > 0 | Phút công chuẩn |
 | `grace_late_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Khoảng trễ cho phép |
 | `crosses_midnight` | BOOLEAN | NOT NULL, DEFAULT false | Ca qua ngày |
@@ -512,10 +892,6 @@ rbac.manage
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 | `deleted_at` | TIMESTAMPTZ | | Xóa mềm |
-
-> `UNIQUE(code) WHERE deleted_at IS NULL`.
->
-> Sau khi ca đã phát sinh dữ liệu chấm công, không cập nhật các thông số lịch làm việc trên cùng bản ghi. Tạo mã ca mới để dữ liệu chấm công và tính lương lịch sử không bị thay đổi theo cấu hình mới.
 
 ### `attendance_records` — Chấm công hằng ngày
 
@@ -525,49 +901,203 @@ rbac.manage
 | `employee_id` | BIGINT | FK → employees, NOT NULL | Nhân viên |
 | `work_date` | DATE | NOT NULL | Ngày công |
 | `shift_id` | BIGINT | FK → work_shifts, NOT NULL | Ca áp dụng |
-| `scheduled_start_at` | TIMESTAMPTZ | NOT NULL | Giờ vào dự kiến được snapshot |
-| `scheduled_end_at` | TIMESTAMPTZ | NOT NULL | Giờ ra dự kiến được snapshot |
+| `leave_request_id` | BIGINT | FK → leave_requests | Đơn nghỉ đã duyệt liên quan |
+| `scheduled_start_at` | TIMESTAMPTZ | NOT NULL | Giờ vào dự kiến snapshot |
+| `scheduled_end_at` | TIMESTAMPTZ | NOT NULL | Giờ ra dự kiến snapshot |
+| `scheduled_minutes` | INTEGER | NOT NULL, CHECK > 0 | Phút công chuẩn snapshot |
 | `check_in_at` | TIMESTAMPTZ | | Giờ vào thực tế |
 | `check_out_at` | TIMESTAMPTZ | | Giờ ra thực tế |
 | `worked_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút làm thực tế |
 | `payable_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút được tính lương cơ bản |
+| `leave_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút nghỉ theo đơn đã duyệt, tách khỏi phút làm thực tế |
 | `late_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút đi trễ |
 | `early_leave_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút về sớm |
-| `overtime_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút tăng ca đã được duyệt để tính lương |
-| `overtime_multiplier` | NUMERIC(8,4) | NOT NULL, DEFAULT 1, CHECK > 0 | Hệ số tăng ca, ví dụ 1.5/2.0/3.0 |
-| `overtime_approved_by_account_id` | BIGINT | FK → accounts | Người duyệt số phút tăng ca |
+| `overtime_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút tăng ca được duyệt |
+| `overtime_multiplier` | NUMERIC(8,4) | NOT NULL, DEFAULT 1, CHECK > 0 | Hệ số tăng ca |
+| `overtime_approved_by_account_id` | BIGINT | FK → accounts | Người duyệt tăng ca |
 | `overtime_approved_at` | TIMESTAMPTZ | | Thời điểm duyệt tăng ca |
-| `status` | VARCHAR(20) | NOT NULL | `PRESENT` / `ABSENT` / `PAID_LEAVE` / `UNPAID_LEAVE` / `HOLIDAY` / `MISSING_PUNCH` |
-| `note` | TEXT | | Lý do điều chỉnh thủ công |
+| `overtime_tax_exempt` | BOOLEAN | NOT NULL, DEFAULT false | Người duyệt xác nhận khoản tăng ca đủ điều kiện miễn thuế TNCN |
+| `status` | VARCHAR(30) | NOT NULL | Trạng thái ngày công |
+| `note` | TEXT | | Lý do điều chỉnh |
 | `updated_by_account_id` | BIGINT | FK → accounts | Người sửa cuối |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-> `UNIQUE(employee_id, work_date)`. Nếu cần sửa công, HR ghi lý do vào `note`; `updated_by_account_id` và `updated_at` cho biết ai sửa và sửa lúc nào. Hệ thống không còn quy trình đăng ký tăng ca riêng: người có quyền `attendance.overtime.approve` nhập trực tiếp số phút và hệ số tăng ca được duyệt vào bản ghi chấm công.
+Giá trị `status`:
+
+```text
+PRESENT
+PAID_LEAVE
+UNPAID_LEAVE
+MATERNITY_LEAVE
+SICK_LEAVE
+UNAUTHORIZED_ABSENCE
+HOLIDAY
+MISSING_PUNCH
+```
+
+> `UNIQUE(employee_id, work_date)`. Đi muộn và về sớm làm giảm `payable_minutes` theo nội quy, không phải là khoản phạt. Về muộn chỉ được tính tăng ca khi số phút và hệ số đã được duyệt.
 
 ---
 
-## 7. Tính lương
+## 8. Tính lương
 
-### 7.1. Công thức
+> Phần này trình bày nền tính gross của thiết kế lõi. Các khoản bảo hiểm, thuế, căn cứ đóng,
+> ngày trả lương và tăng ca miễn thuế được bổ sung ở V31–V34; công thức đầy đủ nằm trong
+> [PAYROLL.md](../api/PAYROLL.md).
+
+### 8.1. Nguồn dữ liệu tính lương
+
+| Thành phần | Nguồn |
+|---|---|
+| Lương cơ bản | `employee_salary_history` |
+| Chức vụ hiện tại | `employee_assignments` |
+| Phụ cấp chức vụ | `position_allowance_rules` |
+| Số năm thâm niên | `employees.seniority_start_date` |
+| Tỷ lệ phụ cấp thâm niên | `seniority_allowance_rules` |
+| Phút công, nghỉ và tăng ca | `attendance_records` |
+
+### 8.2. Công thức
 
 ```text
-Lương giờ = Lương cơ bản tháng / Tổng phút công chuẩn của kỳ × 60
+Đơn giá phút
+  = Lương cơ bản tháng / Tổng phút công chuẩn của kỳ
 
 Lương cơ bản thực nhận
-  = Lương cơ bản tháng × Phút công được hưởng lương / Tổng phút công chuẩn
+  = Lương cơ bản tháng × Phút được hưởng lương / Tổng phút công chuẩn
+
+Phụ cấp chức vụ
+  = Mức phụ cấp chức vụ hiệu lực trong kỳ
+
+Phụ cấp thâm niên
+  = Lương cơ bản tháng × Tỷ lệ thâm niên / 100
 
 Tiền tăng ca
-  = Σ (Số giờ tăng ca được duyệt × Lương giờ × Hệ số tăng ca)
+  = Σ (Phút tăng ca được duyệt × Đơn giá phút × Hệ số tăng ca)
+
+Tổng thu nhập
+  = Lương cơ bản thực nhận
+  + Phụ cấp chức vụ
+  + Phụ cấp thâm niên
+  + Tiền tăng ca
+
+Thu nhập tính thuế
+  = max(0, Tổng thu nhập - Tăng ca miễn thuế đã xác nhận
+             - BHXH - BHYT - BHTN
+             - Giảm trừ bản thân - Giảm trừ người phụ thuộc)
 
 Thực nhận
-  = Lương cơ bản thực nhận + Tổng phụ cấp + Tiền tăng ca
+  = Tổng thu nhập - BHXH - BHYT - BHTN - Thuế TNCN
 ```
 
-- Nghỉ có lương và ngày lễ có lương được tính vào `payable_minutes`.
-- Nghỉ không lương làm giảm `payable_minutes`.
-- Kỳ lương chỉ được tính khi chấm công và tăng ca trong tháng đã hoàn tất.
-- Trước khi duyệt có thể tính lại và thay thế phiếu nháp; từ `APPROVED` trở đi dữ liệu bất biến.
+Quy tắc:
+
+- `PAID_LEAVE` và `HOLIDAY` được tính vào `payable_minutes`.
+- `UNPAID_LEAVE`, `UNAUTHORIZED_ABSENCE` và `MATERNITY_LEAVE` không tính vào `payable_minutes` của doanh nghiệp.
+- Thai sản không bị xem là nghỉ không phép; khoản BHXH thai sản nằm ngoài payroll MVP.
+- Phụ cấp chức vụ và thâm niên được lấy theo chính sách có hiệu lực tại kỳ lương; thay đổi giữa kỳ được phân bổ theo thời gian hiệu lực.
+- Trước khi duyệt có thể tính lại phiếu nháp; từ `APPROVED` trở đi dữ liệu bất biến.
+
+### 8.3. Hồ sơ khấu trừ của nhân viên
+
+Hai bảng dưới đây là dữ liệu do HR nhập cho từng nhân viên. Cả hai đều có thời gian hiệu lực
+để tính lại đúng các kỳ lịch sử.
+
+#### `employee_payroll_profiles` — Hồ sơ bảo hiểm và thuế
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `employee_id` | BIGINT | FK → employees, NOT NULL | Nhân viên |
+| `effective_from` | DATE | NOT NULL | Ngày bắt đầu hiệu lực |
+| `effective_to` | DATE | | Ngày kết thúc, null là đang mở |
+| `tax_resident` | BOOLEAN | NOT NULL | Cá nhân cư trú thuế |
+| `social_insurance` | BOOLEAN | NOT NULL | Có tham gia BHXH |
+| `health_insurance` | BOOLEAN | NOT NULL | Có tham gia BHYT |
+| `unemployment_insurance` | BOOLEAN | NOT NULL | Có tham gia BHTN |
+| `insurance_salary` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Lương làm căn cứ đóng do HR xác nhận theo hợp đồng |
+| `wage_region` | SMALLINT | NOT NULL, CHECK 1..4 | Vùng lương tối thiểu, dùng tính trần BHTN |
+| `created_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người nhập |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Thời điểm tạo |
+
+> `CHECK (effective_to IS NULL OR effective_to >= effective_from)`.
+> `EXCLUDE USING GIST` chặn hai hồ sơ của cùng một nhân viên có khoảng hiệu lực chồng nhau.
+> `insurance_salary` tách khỏi `gross_pay`: tăng ca và phụ cấp không tự động trở thành căn cứ đóng.
+> Nhân viên không cư trú chưa được tính tự động và sẽ nhận lỗi rõ ràng khi tính lương.
+
+#### `employee_tax_dependents` — Người phụ thuộc giảm trừ
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `employee_id` | BIGINT | FK → employees, NOT NULL | Nhân viên đăng ký |
+| `full_name` | VARCHAR(200) | NOT NULL | Họ tên người phụ thuộc |
+| `identifier` | VARCHAR(50) | | Mã số thuế hoặc giấy tờ tùy thân |
+| `effective_from` | DATE | NOT NULL | Ngày bắt đầu được giảm trừ |
+| `effective_to` | DATE | | Ngày kết thúc, null là đang mở |
+| `created_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người nhập |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Thời điểm tạo |
+
+> `CHECK (effective_to IS NULL OR effective_to >= effective_from)`. Từ V32, `EXCLUDE USING GIST`
+> trên `(employee_id, lower(full_name), khoảng hiệu lực)` chặn khai trùng một người phụ thuộc
+> trong cùng thời gian.
+
+### 8.4. Quy tắc thuế và bảo hiểm theo thời gian hiệu lực
+
+Ba bảng dưới đây là dữ liệu pháp lý, được nạp bằng migration chứ không qua API. Mỗi bộ quy tắc
+có khoảng hiệu lực riêng; phiếu lương snapshot lại `id` của bộ quy tắc đã dùng để tính.
+
+#### `payroll_tax_rules` — Mức giảm trừ thuế TNCN
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `effective_from` | DATE | NOT NULL | Ngày bắt đầu hiệu lực |
+| `effective_to` | DATE | | Ngày kết thúc, null là đang mở |
+| `personal_deduction` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Giảm trừ bản thân mỗi tháng |
+| `dependent_deduction` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Giảm trừ mỗi người phụ thuộc mỗi tháng |
+| `source_reference` | TEXT | NOT NULL | Căn cứ pháp lý của bộ quy tắc |
+
+> `EXCLUDE USING GIST` chặn hai bộ quy tắc có khoảng hiệu lực chồng nhau. Bộ nạp sẵn áp dụng
+> từ 01/01/2026 và V32 đóng hiệu lực tại 31/12/2026, nên kỳ lương ngoài năm 2026 sẽ dừng với
+> lỗi yêu cầu bổ sung quy tắc thay vì tính bằng số liệu cũ.
+
+#### `payroll_tax_brackets` — Biểu thuế lũy tiến từng phần
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `tax_rule_id` | BIGINT | FK → payroll_tax_rules, NOT NULL, PK | Bộ quy tắc chứa bậc thuế |
+| `lower_bound` | NUMERIC(15,2) | NOT NULL, CHECK >= 0, PK | Cận dưới thu nhập tính thuế tháng |
+| `upper_bound` | NUMERIC(15,2) | | Cận trên, null là bậc cao nhất |
+| `rate` | NUMERIC(6,5) | NOT NULL, CHECK 0..1 | Thuế suất của bậc |
+
+> Khóa chính là `(tax_rule_id, lower_bound)`.
+> `CHECK (upper_bound IS NULL OR upper_bound > lower_bound)`.
+
+#### `payroll_insurance_rules` — Tỷ lệ và trần đóng bảo hiểm
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `effective_from` | DATE | NOT NULL | Ngày bắt đầu hiệu lực |
+| `effective_to` | DATE | | Ngày kết thúc, null là đang mở |
+| `social_rate` | NUMERIC(6,5) | NOT NULL | Tỷ lệ BHXH phần nhân viên |
+| `health_rate` | NUMERIC(6,5) | NOT NULL | Tỷ lệ BHYT phần nhân viên |
+| `unemployment_rate` | NUMERIC(6,5) | NOT NULL | Tỷ lệ BHTN phần nhân viên |
+| `social_health_cap` | NUMERIC(15,2) | NOT NULL | Trần căn cứ đóng BHXH/BHYT |
+| `unemployment_cap_multiplier` | INTEGER | NOT NULL | Số lần lương tối thiểu vùng làm trần BHTN |
+| `region_1_minimum` | NUMERIC(15,2) | NOT NULL | Lương tối thiểu vùng I |
+| `region_2_minimum` | NUMERIC(15,2) | NOT NULL | Lương tối thiểu vùng II |
+| `region_3_minimum` | NUMERIC(15,2) | NOT NULL | Lương tối thiểu vùng III |
+| `region_4_minimum` | NUMERIC(15,2) | NOT NULL | Lương tối thiểu vùng IV |
+| `source_reference` | TEXT | NOT NULL | Căn cứ pháp lý của bộ quy tắc |
+
+> `EXCLUDE USING GIST` chặn khoảng hiệu lực chồng nhau. Trần BHXH/BHYT thay đổi giữa năm nên
+> năm 2026 được nạp thành hai bộ: 01/01–30/06 và 01/07–31/12. Trần BHTN được tính bằng
+> `unemployment_cap_multiplier × lương tối thiểu của vùng trong hồ sơ nhân viên`, nên hai căn cứ
+> đóng khác nhau và được snapshot riêng trên phiếu lương.
+
+Số liệu cụ thể của bộ quy tắc 2026 và nguồn tham chiếu nằm trong [PAYROLL.md](../api/PAYROLL.md).
 
 ### `payroll_periods` — Kỳ lương tháng
 
@@ -578,19 +1108,20 @@ Thực nhận
 | `month` | SMALLINT | NOT NULL, CHECK 1..12 | Tháng lương |
 | `period_start` | DATE | NOT NULL | Ngày đầu kỳ |
 | `period_end` | DATE | NOT NULL | Ngày cuối kỳ |
+| `tax_payment_date` | DATE | Có thể null trước khi tính | Ngày dự kiến/thực tế trả lương, dùng chọn quy tắc thuế |
 | `status` | VARCHAR(20) | NOT NULL | Trạng thái vòng đời |
 | `calculated_by_account_id` | BIGINT | FK → accounts | Người tính |
-| `calculated_at` | TIMESTAMPTZ | | Thời điểm tính gần nhất |
+| `calculated_at` | TIMESTAMPTZ | | Thời điểm tính |
 | `approved_by_account_id` | BIGINT | FK → accounts | Người duyệt |
 | `approved_at` | TIMESTAMPTZ | | Thời điểm duyệt |
-| `paid_by_account_id` | BIGINT | FK → accounts | Người xác nhận đã trả |
-| `paid_at` | TIMESTAMPTZ | | Thời điểm xác nhận |
+| `paid_by_account_id` | BIGINT | FK → accounts | Người xác nhận trả |
+| `paid_at` | TIMESTAMPTZ | | Thời điểm xác nhận trả |
 | `locked_by_account_id` | BIGINT | FK → accounts | Người khóa |
 | `locked_at` | TIMESTAMPTZ | | Thời điểm khóa |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-> `UNIQUE(year, month)`. Trạng thái: `DRAFT` → `CALCULATED` → `APPROVED` → `PAID` → `LOCKED`; có thể `CANCELLED` trước khi duyệt. Người tính không được là người duyệt.
+> `UNIQUE(year, month)`. Vòng đời: `DRAFT` → `CALCULATED` → `APPROVED` → `PAID` → `LOCKED`. Có thể `CANCELLED` trước khi duyệt.
 
 ### `payslips` — Phiếu lương nhân viên
 
@@ -601,100 +1132,169 @@ Thực nhận
 | `employee_id` | BIGINT | FK → employees, NOT NULL | Nhân viên |
 | `employee_code_snapshot` | VARCHAR(30) | NOT NULL | Mã nhân viên lúc tính |
 | `employee_name_snapshot` | VARCHAR(200) | NOT NULL | Tên nhân viên lúc tính |
+| `position_snapshot` | VARCHAR(150) | NOT NULL | Chức vụ lúc tính |
 | `work_location_snapshot` | VARCHAR(150) | NOT NULL | Địa điểm lúc tính |
 | `organization_unit_snapshot` | VARCHAR(150) | NOT NULL | Phòng ban lúc tính |
-| `contractual_basic_salary` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Lương tháng cấu hình |
-| `scheduled_work_minutes` | INTEGER | NOT NULL, CHECK > 0 | Phút công chuẩn |
-| `payable_work_minutes` | INTEGER | NOT NULL, CHECK >= 0 | Phút được hưởng lương |
-| `approved_overtime_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút tăng ca đã duyệt |
-| `basic_salary_pay` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Lương cơ bản thực nhận |
-| `allowance_pay` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Tổng phụ cấp |
-| `overtime_pay` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Tổng tăng ca |
+| `contractual_base_salary` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Lương cơ bản tháng snapshot |
+| `scheduled_work_minutes` | INTEGER | NOT NULL, CHECK > 0 | Tổng phút công chuẩn |
+| `payable_work_minutes` | INTEGER | NOT NULL, CHECK >= 0 | Tổng phút hưởng lương |
+| `approved_overtime_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút tăng ca được duyệt |
+| `base_salary_pay` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Lương cơ bản thực nhận |
+| `position_allowance_pay` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Phụ cấp chức vụ |
+| `seniority_allowance_pay` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Phụ cấp thâm niên |
+| `allowance_pay` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Tổng phụ cấp chức vụ và thâm niên |
+| `overtime_pay` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Tiền tăng ca |
 | `gross_pay` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Tổng thu nhập |
-| `net_pay` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Thực nhận; hiện bằng gross |
+| `insurance_salary_base` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Căn cứ BHXH/BHYT sau trần |
+| `unemployment_insurance_base` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Căn cứ BHTN sau trần vùng |
+| `employee_social_insurance` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | BHXH phần nhân viên |
+| `employee_health_insurance` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | BHYT phần nhân viên |
+| `employee_unemployment_insurance` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | BHTN phần nhân viên |
+| `tax_exempt_overtime_pay` | NUMERIC(15,2) | NOT NULL, CHECK 0..overtime_pay | Tiền tăng ca đã xác nhận miễn thuế |
+| `taxable_income` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Thu nhập tính thuế sau giảm trừ |
+| `personal_income_tax` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Thuế TNCN |
+| `tax_rule_id` | BIGINT | FK → payroll_tax_rules | Quy tắc thuế snapshot |
+| `insurance_rule_id` | BIGINT | FK → payroll_insurance_rules | Quy tắc bảo hiểm snapshot |
+| `payroll_profile_id` | BIGINT | FK → employee_payroll_profiles | Hồ sơ bảo hiểm/thuế đã dùng |
+| `net_pay` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Tổng thu nhập trừ bảo hiểm nhân viên và thuế TNCN |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Chỉ cập nhật khi kỳ chưa duyệt |
 
-> `UNIQUE(payroll_period_id, employee_id)`. Các trường snapshot giúp phiếu lương cũ không thay đổi khi nhân viên đổi tên, phòng ban hoặc mức lương.
+> `UNIQUE(payroll_period_id, employee_id)`.
 
-### `payslip_items` — Chi tiết khoản lương
+### `payslip_items` — Chi tiết khoản lương snapshot
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
 | `payslip_id` | BIGINT | FK → payslips, NOT NULL | Phiếu lương |
-| `component_type` | VARCHAR(20) | NOT NULL | `BASIC_SALARY` / `ALLOWANCE` / `OVERTIME` |
-| `description` | VARCHAR(250) | NOT NULL | Mô tả được snapshot |
-| `quantity` | NUMERIC(12,4) | NOT NULL, DEFAULT 1 | Ngày/giờ/số lượng |
+| `component_type` | VARCHAR(30) | NOT NULL | Loại thành phần |
+| `component_code` | VARCHAR(50) | NOT NULL | Mã thành phần |
+| `description` | VARCHAR(250) | NOT NULL | Mô tả snapshot |
+| `quantity` | NUMERIC(12,4) | NOT NULL, DEFAULT 1 | Phút, tỷ lệ hoặc số lượng |
 | `unit_rate` | NUMERIC(15,4) | NOT NULL, CHECK >= 0 | Đơn giá snapshot |
 | `multiplier` | NUMERIC(8,4) | NOT NULL, DEFAULT 1, CHECK > 0 | Hệ số snapshot |
 | `amount` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Thành tiền |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 
-> Các dòng là dữ liệu snapshot dùng để giải thích cách hình thành phiếu lương, không giữ khóa ngoại về dữ liệu nguồn. Khi kỳ lương đạt `APPROVED`, không được xóa hoặc sửa các dòng này.
+Giá trị `component_type`:
+
+```text
+BASE_SALARY
+POSITION_ALLOWANCE
+SENIORITY_ALLOWANCE
+OVERTIME
+```
+
+> Mỗi khoản lương cơ bản, phụ cấp chức vụ, phụ cấp thâm niên và tăng ca được lưu thành các dòng chi tiết. `payslip_items` không giữ khóa ngoại về dữ liệu nguồn vì đây là snapshot lịch sử.
 
 ---
 
-## 8. Báo cáo đáp ứng đề bài
+## 9. Ví dụ tính lương
 
-Không cần bảng báo cáo riêng. Báo cáo được tổng hợp từ dữ liệu nguồn:
+Nhân viên A có:
+
+- Lương cơ bản: 10.000.000 đồng.
+- Chức vụ trưởng phòng: 1.500.000 đồng/tháng.
+- Thâm niên 3 năm: 5% lương cơ bản = 500.000 đồng.
+- Không có thời gian nghỉ không lương và chưa tính tăng ca.
+
+```text
+Tổng thu nhập
+  = 10.000.000
+  + 1.500.000
+  +   500.000
+  = 12.000.000 đồng
+```
+
+Nếu tháng có 26 ngày × 8 giờ = 12.480 phút công chuẩn và nhân viên nghỉ không phép 480 phút:
+
+```text
+Lương cơ bản thực nhận
+  = 10.000.000 × (12.480 - 480) / 12.480
+  = 9.615.385 đồng (làm tròn)
+```
+
+Nghỉ phép năm có lương 480 phút vẫn được cộng vào `payable_minutes`, nên không làm giảm lương cơ bản.
+
+---
+
+## 10. Báo cáo đáp ứng đề bài
 
 | Báo cáo | Nguồn dữ liệu |
 |---|---|
-| Nhân sự đang làm/nghỉ phép/nghỉ việc theo tháng | `employees`, `employee_requests` |
-| Nhân sự theo trụ sở/chi nhánh/kho | `employee_assignments`, `work_locations` |
-| Nhân sự theo phòng ban và vị trí | `employee_assignments`, `organization_units`, `job_positions` |
+| Nhân sự đang làm/đã nghỉ việc | `employees` |
+| Nhân sự đang nghỉ phép/thai sản | `leave_requests`, `attendance_records` |
+| Nhân sự theo địa điểm | `employee_assignments`, `work_locations` |
+| Nhân sự theo phòng ban/chức vụ | `employee_assignments`, `organization_units`, `job_positions` |
 | Trình độ nhân sự | `employees.highest_education_level` |
-| Thâm niên | `employees.hire_date` |
-| Chấm công, đi trễ, vắng mặt | `attendance_records` |
+| Thâm niên | `employees.seniority_start_date` |
+| Lịch sử lương cơ bản | `employee_salary_history` |
+| Danh sách phụ cấp theo chức vụ | `position_allowance_rules`, `job_positions` |
+| Chấm công, đi trễ, về sớm, vắng mặt | `attendance_records` |
 | Tổng lương theo tháng/đơn vị/địa điểm | `payroll_periods`, `payslips` |
-| Phiếu lương tháng của nhân viên | `payslips`, `payslip_items` |
-| Bảng lương năm của nhân viên | Tổng hợp 12 tháng từ `payslips` |
-| Lịch sử phân quyền | `role_assignment_requests`, `account_role_assignments`, `account_permission_overrides` |
+| Chi tiết thành phần lương | `payslips`, `payslip_items` |
+| Lịch sử phân quyền | `account_role_assignments`, `account_permission_overrides` |
 
 ---
 
-## 9. Indexes quan trọng
+## 11. Indexes quan trọng
 
 ```sql
 CREATE INDEX idx_locations_parent
   ON work_locations (parent_location_id) WHERE deleted_at IS NULL;
+
 CREATE INDEX idx_units_parent
   ON organization_units (parent_unit_id) WHERE deleted_at IS NULL;
+
 CREATE INDEX idx_employees_status
   ON employees (employment_status) WHERE deleted_at IS NULL;
+
 CREATE INDEX idx_assignments_employee_period
   ON employee_assignments (employee_id, effective_from, effective_to);
-CREATE INDEX idx_assignments_location_period
-  ON employee_assignments (work_location_id, effective_from, effective_to);
-CREATE INDEX idx_assignments_unit_period
-  ON employee_assignments (organization_unit_id, effective_from, effective_to);
-CREATE INDEX idx_compensations_employee_period
-  ON employee_compensations (employee_id, effective_from, effective_to);
+
+CREATE INDEX idx_assignments_position_period
+  ON employee_assignments (position_id, effective_from, effective_to);
+
+CREATE INDEX idx_salary_history_employee_period
+  ON employee_salary_history (employee_id, effective_from, effective_to);
+
+CREATE INDEX idx_position_allowance_period
+  ON position_allowance_rules (job_position_id, effective_from, effective_to);
+
+CREATE INDEX idx_seniority_rules_period
+  ON seniority_allowance_rules (effective_from, effective_to, min_years, max_years);
+
 CREATE INDEX idx_role_assignments_account_period
   ON account_role_assignments (account_id, effective_from, effective_to);
+
 CREATE INDEX idx_permission_overrides_assignment
   ON account_permission_overrides (account_role_assignment_id, effective_from, effective_to);
-CREATE INDEX idx_permission_overrides_permission
-  ON account_permission_overrides (permission_id, effective_from, effective_to)
-  WHERE revoked_at IS NULL;
-CREATE INDEX idx_requests_employee_status
-  ON employee_requests (employee_id, status, submitted_at DESC);
-CREATE INDEX idx_requests_type_status
-  ON employee_requests (request_type, status);
+
+CREATE INDEX idx_leave_requests_employee_status
+  ON leave_requests (employee_id, status, start_at);
+
 CREATE INDEX idx_attendance_employee_date
   ON attendance_records (employee_id, work_date DESC);
+
 CREATE INDEX idx_payslips_employee_period
   ON payslips (employee_id, payroll_period_id);
+
 CREATE INDEX idx_payslip_items_payslip
   ON payslip_items (payslip_id);
+
+CREATE INDEX idx_employee_payroll_profiles_effective
+  ON employee_payroll_profiles (employee_id, effective_from, effective_to);
+
+CREATE INDEX idx_employee_tax_dependents_effective
+  ON employee_tax_dependents (employee_id, effective_from, effective_to);
 ```
 
 ---
 
-## 10. Constraints và quy tắc nghiệp vụ
+## 12. Constraints và quy tắc nghiệp vụ
 
-### 10.1. CHECK constraints chính
+### 12.1. CHECK constraints chính
 
 ```sql
 ALTER TABLE company_profile ADD CONSTRAINT chk_single_company
@@ -706,33 +1306,36 @@ ALTER TABLE work_locations ADD CONSTRAINT chk_location_type
 ALTER TABLE employees ADD CONSTRAINT chk_employee_status
   CHECK (employment_status IN ('PROBATION', 'ACTIVE', 'RESIGNED', 'TERMINATED', 'RETIRED'));
 
-ALTER TABLE employee_requests ADD CONSTRAINT chk_request_fields
+ALTER TABLE employees ADD CONSTRAINT chk_employee_dates
   CHECK (
-    (
-      request_type = 'LEAVE'
-      AND leave_type IS NOT NULL
-      AND leave_type IN ('ANNUAL', 'SICK', 'MATERNITY', 'UNPAID', 'OTHER')
-      AND is_paid_leave IS NOT NULL
-      AND start_date IS NOT NULL
-      AND end_date IS NOT NULL
-      AND end_date >= start_date
-      AND total_days IS NOT NULL
-      AND total_days > 0
-      AND requested_last_working_date IS NULL
-    )
-    OR (
-      request_type = 'RESIGNATION'
-      AND requested_last_working_date IS NOT NULL
-      AND leave_type IS NULL
-      AND is_paid_leave IS NULL
-      AND start_date IS NULL
-      AND end_date IS NULL
-      AND total_days IS NULL
-    )
+    seniority_start_date >= hire_date
+    AND (termination_date IS NULL OR termination_date >= hire_date)
   );
 
-ALTER TABLE employee_requests ADD CONSTRAINT chk_request_status
-  CHECK (status IN ('DRAFT', 'PENDING', 'APPROVED', 'REJECTED', 'CANCELLED', 'COMPLETED'));
+ALTER TABLE employee_salary_history ADD CONSTRAINT chk_salary_period
+  CHECK (effective_to IS NULL OR effective_to >= effective_from);
+
+ALTER TABLE position_allowance_rules ADD CONSTRAINT chk_position_allowance_period
+  CHECK (effective_to IS NULL OR effective_to >= effective_from);
+
+ALTER TABLE seniority_allowance_rules ADD CONSTRAINT chk_seniority_range
+  CHECK (
+    min_years >= 0
+    AND (max_years IS NULL OR max_years > min_years)
+    AND percentage >= 0
+  );
+
+ALTER TABLE leave_requests ADD CONSTRAINT chk_leave_type
+  CHECK (leave_type IN ('ANNUAL', 'SICK', 'MATERNITY', 'UNPAID', 'OTHER'));
+
+ALTER TABLE leave_requests ADD CONSTRAINT chk_leave_salary_treatment
+  CHECK (salary_treatment IN ('EMPLOYER_PAID', 'SOCIAL_INSURANCE', 'UNPAID'));
+
+ALTER TABLE leave_requests ADD CONSTRAINT chk_leave_status
+  CHECK (status IN ('DRAFT', 'PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'));
+
+ALTER TABLE leave_requests ADD CONSTRAINT chk_leave_period
+  CHECK (end_at > start_at AND requested_minutes > 0);
 
 ALTER TABLE accounts ADD CONSTRAINT chk_account_status
   CHECK (status IN ('PENDING', 'ACTIVE', 'LOCKED', 'DISABLED'));
@@ -747,8 +1350,11 @@ ALTER TABLE account_role_assignments ADD CONSTRAINT chk_role_scope
 ALTER TABLE account_permission_overrides ADD CONSTRAINT chk_override_effect
   CHECK (effect IN ('GRANT', 'REVOKE'));
 
-ALTER TABLE employee_compensations ADD CONSTRAINT chk_compensation_type
-  CHECK (component_type IN ('BASIC_SALARY', 'ALLOWANCE'));
+ALTER TABLE attendance_records ADD CONSTRAINT chk_attendance_status
+  CHECK (status IN (
+    'PRESENT', 'PAID_LEAVE', 'UNPAID_LEAVE', 'MATERNITY_LEAVE',
+    'SICK_LEAVE', 'UNAUTHORIZED_ABSENCE', 'HOLIDAY', 'MISSING_PUNCH'
+  ));
 
 ALTER TABLE attendance_records ADD CONSTRAINT chk_attendance_overtime_approval
   CHECK (
@@ -763,95 +1369,104 @@ ALTER TABLE attendance_records ADD CONSTRAINT chk_attendance_overtime_approval
 ALTER TABLE payroll_periods ADD CONSTRAINT chk_payroll_status
   CHECK (status IN ('DRAFT', 'CALCULATED', 'APPROVED', 'PAID', 'LOCKED', 'CANCELLED'));
 
+ALTER TABLE payslips ADD CONSTRAINT chk_payslip_allowance_total
+  CHECK (
+    allowance_pay = position_allowance_pay
+                  + seniority_allowance_pay
+  );
+
 ALTER TABLE payslips ADD CONSTRAINT chk_payslip_total
-  CHECK (gross_pay = basic_salary_pay + allowance_pay + overtime_pay AND net_pay = gross_pay);
+  CHECK (
+    gross_pay = base_salary_pay + allowance_pay + overtime_pay
+    AND net_pay = gross_pay
+                  - employee_social_insurance
+                  - employee_health_insurance
+                  - employee_unemployment_insurance
+                  - personal_income_tax
+    AND tax_exempt_overtime_pay >= 0
+    AND tax_exempt_overtime_pay <= overtime_pay
+  );
+
+ALTER TABLE payslip_items ADD CONSTRAINT chk_payslip_item_type
+  CHECK (component_type IN (
+    'BASE_SALARY', 'POSITION_ALLOWANCE', 'SENIORITY_ALLOWANCE',
+    'OVERTIME'
+  ));
 ```
 
-### 10.2. Quy tắc do Service layer kiểm tra
+### 12.2. Quy tắc do Service layer kiểm tra
 
 - Kho phải có cha là trụ sở hoặc chi nhánh; trụ sở/chi nhánh không có cha.
 - Quản lý trực tiếp không được là chính nhân viên.
-- Phân công chính và các khoản compensation của cùng nhân viên không được chồng khoảng hiệu lực.
-- Mỗi nhân viên chỉ có một lương cơ bản hiệu lực tại một thời điểm.
-- Khi hoàn tất đơn nghỉ việc: cập nhật nhân viên, kết thúc phân công và disable tài khoản trong cùng transaction.
-- Người duyệt chỉ được xử lý đơn thuộc phạm vi quyền hiệu lực.
-- Bản ghi chấm công đã dùng trong kỳ lương `APPROVED` trở lên không được sửa.
-- Chỉ số phút tăng ca đã có người duyệt và thời điểm duyệt mới được đưa vào lương; tổng phút tăng ca trên phiếu lương phải được tổng hợp từ các bản ghi chấm công thuộc đúng kỳ.
-- Tổng các `payslip_items` phải bằng các tổng tương ứng trên `payslips`.
+- Phân công chính của một nhân viên không được chồng khoảng hiệu lực.
+- Lịch sử lương cơ bản của cùng nhân viên không được chồng khoảng hiệu lực.
+- Quy tắc phụ cấp của cùng chức vụ không được chồng khoảng hiệu lực.
+- Các khoảng thâm niên trong cùng giai đoạn chính sách không được chồng lấn.
+- Đơn nghỉ đã duyệt không được chồng với đơn nghỉ đã duyệt khác của cùng nhân viên.
+- `PAID_LEAVE`, `UNPAID_LEAVE`, `MATERNITY_LEAVE`, `SICK_LEAVE` phải tham chiếu đơn nghỉ đã duyệt phù hợp.
+- Khi nhân viên nghỉ việc, phải kết thúc phân công và vô hiệu hóa tài khoản trong cùng transaction.
+- Bản ghi chấm công đã dùng trong kỳ lương từ `APPROVED` trở lên không được sửa.
+- Chỉ tăng ca đã được duyệt mới được đưa vào lương.
+- Khi tính lương phải snapshot từng nguồn vào `payslip_items`.
+- Tổng dòng `payslip_items` theo từng loại phải khớp các trường tổng trên `payslips`.
 - Người tính lương không được đồng thời là người duyệt.
 - Kỳ lương từ `APPROVED` trở đi cùng phiếu lương con là immutable.
 
 ---
 
-## 11. Dữ liệu demo tối thiểu
+## 13. Dữ liệu demo tối thiểu
 
-### 11.1. Địa điểm
+### 13.1. Chính sách phụ cấp
 
-| Code | Loại | Cha |
-|---|---|---|
-| `HO` | `HEAD_OFFICE` | — |
-| `BRANCH-01` | `BRANCH` | `HO` |
-| `BRANCH-02` | `BRANCH` | `HO` |
-| `WAREHOUSE-01` | `WAREHOUSE` | `HO` |
-| `WAREHOUSE-02` | `WAREHOUSE` | `BRANCH-01` |
+- Chức vụ nhân viên: 0 đồng/tháng.
+- Trưởng nhóm: 500.000 đồng/tháng.
+- Trưởng phòng: 1.500.000 đồng/tháng.
+- Giám đốc: 5.000.000 đồng/tháng.
+- Dưới 2 năm: 0% lương cơ bản.
+- Từ 2 đến dưới 5 năm: 5%.
+- Từ 5 đến dưới 10 năm: 10%.
+- Từ 10 năm trở lên: 15%.
 
-### 11.2. Đơn vị tổ chức
+### 13.2. Giao dịch demo
 
-| Code | Loại | Cha |
-|---|---|---|
-| `BOARD` | `BOARD` | — |
-| `HR` | `DEPARTMENT` | `BOARD` |
-| `ACCOUNTING` | `DEPARTMENT` | `BOARD` |
-| `OPERATIONS` | `DEPARTMENT` | `BOARD` |
-
-### 11.3. Vị trí công việc
-
-| Code | Tên hiển thị | Quản lý |
-|---|---|:---:|
-| `DIRECTOR` | Giám đốc | ✅ |
-| `HR_SPECIALIST` | Chuyên viên nhân sự | ❌ |
-| `PAYROLL_ACCOUNTANT` | Kế toán tiền lương | ❌ |
-| `OPERATIONS_MANAGER` | Quản lý vận hành | ✅ |
-| `BRANCH_MANAGER` | Quản lý chi nhánh | ✅ |
-| `WAREHOUSE_SUPERVISOR` | Giám sát kho | ✅ |
-| `TEAM_LEAD` | Trưởng nhóm | ✅ |
-| `GENERAL_STAFF` | Nhân viên | ❌ |
-
-Vị trí công việc dùng cho phân công nhân sự và không tự cấp role hoặc permission cho account. `TEAM_LEAD`, `WAREHOUSE_SUPERVISOR` và `BRANCH_MANAGER` trong bảng này chỉ là chức danh; các system role cùng tên đã được tạm ngừng sử dụng lần lượt từ migration `V22`, `V23` và `V24`.
-
-### 11.4. Tài khoản test
-
-| Username | Vai trò | Phạm vi |
-|---|---|---|
-| `admin` | `SYSTEM_ADMIN` | Công ty |
-| `hr01` | `HR_MANAGER` | Công ty |
-| `payroll01` | `PAYROLL_ACCOUNTANT` | Công ty |
-| `payroll_approver` | `PAYROLL_APPROVER` | Công ty |
-| `employee01` | `EMPLOYEE` | Bản thân |
-
-Ít nhất một tài khoản có ngoại lệ quyền có thời hạn để demo bật/tắt quyền.
-
-### 11.5. Giao dịch demo
-
-- Nhân viên thử việc, đang làm và đã nghỉ việc.
-- Một lần điều chuyển từ trụ sở sang chi nhánh.
-- Đơn nghỉ phép được duyệt/từ chối và đơn nghỉ việc hoàn tất.
-- Chấm công đi trễ, nghỉ có lương và nghỉ không lương.
-- Tăng ca ngày thường và cuối tuần đã duyệt.
+- Nhân viên có hai lần thay đổi lương cơ bản.
+- Một lần điều chuyển và một lần bổ nhiệm chức vụ.
+- Các trường hợp nghỉ phép có lương, nghỉ không lương, nghỉ thai sản và nghỉ không phép.
+- Chấm công đi trễ, về sớm và tăng ca được duyệt.
 - Một kỳ lương `LOCKED` và một kỳ `DRAFT`.
-- Dữ liệu đủ để in phiếu lương tháng và bảng lương năm.
+- Phiếu lương có đủ lương cơ bản, phụ cấp chức vụ, phụ cấp thâm niên và tăng ca.
 
 ---
 
-## 12. Ngoài phạm vi
+## 14. Ngoài phạm vi
 
 - Sản phẩm, tồn kho, nhập kho, xuất kho và điều chuyển hàng.
 - Khách hàng, nhà cung cấp, đơn bán và doanh thu.
 - Tuyển dụng ứng viên, phỏng vấn, KPI và đào tạo.
 - Số dư phép năm và quy tắc cộng phép phức tạp.
-- Hoa hồng, thưởng, bảo hiểm, thuế và quyết toán thuế.
+- Hoa hồng, thưởng, quyết toán thuế năm và các trường hợp bảo hiểm/thuế ngoài phạm vi tự động hóa năm 2026.
+- Tự động làm hồ sơ/chi trả chế độ thai sản từ cơ quan BHXH.
 - Tích hợp máy chấm công vật lý.
 - Nhật ký audit chi tiết cho toàn bộ thay đổi dữ liệu.
 - Multi-tenant, subscription và quản lý nhiều doanh nghiệp.
 
-Các chức năng này không được thêm bảng dự phòng vào migration hiện tại.
+Các chức năng ngoài phạm vi không được thêm bảng dự phòng vào migration hiện tại.
+
+---
+
+## 15. Lịch sử migration V29–V34
+
+Các mục trên đã mô tả schema sau V34. Bảng dưới đây chỉ ghi lại migration nào mang thay đổi nào,
+dùng khi cần truy ngược một cột về migration sinh ra nó. Schema được mở rộng bằng migration mới,
+không sửa migration cũ:
+
+| Migration | Thay đổi |
+| --- | --- |
+| V29 | `company_holidays` xác định ngày không làm việc trong lịch thứ 2–thứ 7. |
+| V30 | `attendance_records.leave_minutes` tách phút nghỉ khỏi phút làm. |
+| V31 | `employee_payroll_profiles`, `employee_tax_dependents`, `payroll_tax_rules`, `payroll_tax_brackets`, `payroll_insurance_rules`; thêm `payroll_periods.tax_payment_date` và các cột khấu trừ/snapshot của `payslips`. Tổng `net_pay` bằng tổng thu nhập trừ bảo hiểm nhân viên và thuế TNCN. |
+| V32 | Giới hạn quy tắc nạp sẵn tới 31/12/2026; chặn trùng người phụ thuộc cùng thời gian. |
+| V33 | Lưu thêm căn cứ đóng BHTN sau trần vùng trong `payslips.unemployment_insurance_base`. |
+| V34 | `attendance_records.overtime_tax_exempt` do người duyệt xác nhận; `payslips.tax_exempt_overtime_pay` chụp lại phần tăng ca miễn thuế. |
+
+Hồ sơ bảo hiểm và quy tắc thuế/bảo hiểm có ngày hiệu lực. Các phiếu trước V31 giữ số liệu cũ với khấu trừ bằng 0; tính lại cần dữ liệu mới. Xem [PAYROLL.md](../api/PAYROLL.md) để biết API, công thức, nguồn pháp lý và giới hạn nghiệp vụ.

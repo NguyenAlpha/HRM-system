@@ -45,7 +45,10 @@ api/
 │   │       ├── application.properties # Cấu hình runtime
 │   │       └── db/migration/          # Flyway migrations V1 đến V34
 │   └── test/java/                  # Unit, integration và context tests
-├── docs/                           # Tài liệu API và database của backend
+├── docs/
+│   ├── api/                        # Hợp đồng API theo module
+│   ├── database/                   # Schema runtime hiện hành
+│   └── archive/                    # Thiết kế và báo cáo rà soát trước V20
 └── target/                         # Output Maven sinh tự động, không phải source
 ```
 
@@ -94,12 +97,12 @@ Các migration nằm trong `api/src/main/resources/db/migration/` và được F
 - `api/docs/api/REPORT.md`: hợp đồng API báo cáo nhân sự và lương cơ bản.
 - `api/docs/api/ATTENDANCE.md`: quy trình chấm công, ngày lễ và tăng ca.
 - `api/docs/api/PAYROLL.md`: công thức lương, bảo hiểm, thuế và các API dữ liệu đầu vào.
-- `api/docs/Fix_database/DATABASE_SCHEMA.md`: thiết kế lõi V20; phần bổ sung V29–V34 ở cuối tài liệu.
-- `api/docs/database/DATABASE_SCHEMA.md`: bản thiết kế cũ, chỉ giữ để tham chiếu lịch sử.
-- `api/docs/database/ENTITY_ATTRIBUTES.md`: mô hình entity cũ, chỉ giữ để tham chiếu lịch sử.
-- `api/docs/database/SCHEMA_REVIEW_0.1.md`: báo cáo rà soát schema trước V20.
-- `api/docs/database/QUERY_REVIEW_0.1.md`: báo cáo rà soát truy vấn trước V20.
 - `api/docs/api/README.md`: mục lục tài liệu API hiện hành.
+- `api/docs/database/DATABASE_SCHEMA.md`: schema runtime sau Flyway V34, gồm định nghĩa bảng, cột, index và constraint.
+- `api/docs/archive/DATABASE_SCHEMA.md`: bản thiết kế trước V20, chỉ giữ để tham chiếu lịch sử.
+- `api/docs/archive/ENTITY_ATTRIBUTES.md`: mô hình entity trước V20, chỉ giữ để tham chiếu lịch sử.
+- `api/docs/archive/SCHEMA_REVIEW_0.1.md`: báo cáo rà soát schema trước V20.
+- `api/docs/archive/QUERY_REVIEW_0.1.md`: báo cáo rà soát truy vấn trước V20.
 
 ## 3. Frontend `apps/web/`
 
@@ -146,7 +149,6 @@ apps/web/
 │   ├── ui/                           # Primitive shadcn/ui dùng chung
 │   └── workforce/                    # Chấm công, nghỉ phép và lương
 ├── lib/
-│   ├── api.ts                        # Wrapper fetch tới API, hiện chưa có nơi sử dụng
 │   ├── api-helpers.ts                # Chuẩn hóa lỗi trả về từ BFF
 │   ├── account.ts                    # Client account và vòng đời tài khoản
 │   ├── activation.ts                 # Client kích hoạt account

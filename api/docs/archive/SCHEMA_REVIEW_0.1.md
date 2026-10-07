@@ -3,7 +3,7 @@
 > [!NOTE]
 > Đây là báo cáo lịch sử dựa trên V1–V8, trước khi schema được chỉnh tại V20–V34. Nhiều nhận xét
 > không còn áp dụng. Không dùng điểm số hoặc kết luận bên dưới làm trạng thái hiện tại; xem
-> [schema runtime](../Fix_database/DATABASE_SCHEMA.md) và [mục lục API](../api/README.md).
+> [schema runtime](../database/DATABASE_SCHEMA.md) và [mục lục API](../api/README.md).
 
 > **Ngày đánh giá:** 2026-09-24  
 > **Đối tượng:** Thiết kế dữ liệu, SQL migration V1–V8 và các service thực thi tính toàn vẹn dữ liệu.  
