@@ -83,6 +83,25 @@ export interface EmployeeDetail extends EmployeeSummary {
   graduationYear: number | null
 }
 
+export interface EmployeeSensitiveData {
+  employeeId: number
+  nationalId: string | null
+  personalEmail: string | null
+  address: string | null
+  taxCode: string | null
+  bankName: string | null
+  bankAccountNumber: string | null
+  bankAccountHolder: string | null
+}
+
+export type EmployeeSensitiveInput = Omit<EmployeeSensitiveData, "employeeId">
+
+const EMPLOYMENT_ENDED_STATUSES: readonly EmploymentStatus[] = ["RESIGNED", "TERMINATED", "RETIRED"]
+
+export function isEmploymentEnded(status: EmploymentStatus): boolean {
+  return EMPLOYMENT_ENDED_STATUSES.includes(status)
+}
+
 export const EMPLOYMENT_TYPES = ["FULL_TIME", "PART_TIME", "TEMPORARY"] as const
 export type EmploymentType = typeof EMPLOYMENT_TYPES[number]
 
@@ -143,6 +162,32 @@ export function employeeMutation<T>(portal: Portal, path: string, method: "POST"
 
 export function createEmployee(input: CreateEmployeeInput): Promise<EmployeeCreationResponse> {
   return employeeMutation<EmployeeCreationResponse>("hrm", "", "POST", input)
+}
+
+export function getEmployeeSensitiveData(employeeId: number): Promise<EmployeeSensitiveData> {
+  return employeeRequest<EmployeeSensitiveData>("hrm", `/${employeeId}/sensitive`)
+}
+
+export function updateEmployeeSensitiveData(
+  employeeId: number,
+  input: EmployeeSensitiveInput,
+): Promise<EmployeeSensitiveData> {
+  return employeeMutation<EmployeeSensitiveData>("hrm", `/${employeeId}/sensitive`, "PUT", input)
+}
+
+export function completeEmployeeResignation(
+  employeeId: number,
+  terminationDate: string,
+  terminationReason: string,
+): Promise<EmployeeDetail> {
+  return employeeMutation<EmployeeDetail>("hrm", `/${employeeId}/resignation`, "POST", {
+    terminationDate,
+    terminationReason,
+  })
+}
+
+export function softDeleteEmployee(employeeId: number, deletionReason: string): Promise<null> {
+  return employeeMutation<null>("hrm", `/${employeeId}/soft-delete`, "POST", { deletionReason })
 }
 
 export function employeeErrorMessage(error: unknown): string {

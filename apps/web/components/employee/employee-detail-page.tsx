@@ -11,14 +11,19 @@ import {
   Clock3,
   GraduationCap,
   KeyRound,
+  LogOut,
   MapPin,
   RefreshCw,
+  Trash2,
   UserRound,
   UsersRound,
 } from "lucide-react"
 
 import { RbacFeedback } from "@/components/admin/rbac-controls"
 import { PortalSidebar } from "@/components/auth/portal-sidebar"
+import { EmployeeDeleteDialog } from "@/components/employee/employee-delete-dialog"
+import { EmployeeResignationDialog } from "@/components/employee/employee-resignation-dialog"
+import { EmployeeSensitiveCard } from "@/components/employee/employee-sensitive-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -47,6 +52,7 @@ import {
   EMPLOYMENT_STATUS_LABELS,
   EMPLOYMENT_TYPE_LABELS,
   GENDER_LABELS,
+  isEmploymentEnded,
   isSessionExpired,
   type EmployeeAssignment,
   type EmployeeDetail,
@@ -118,6 +124,8 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [revision, setRevision] = useState(0)
+  const [resigning, setResigning] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const numericEmployeeId = Number(employeeId)
   const hasValidEmployeeId = /^\d+$/.test(employeeId)
@@ -202,6 +210,18 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
   const canManageCompensation = session.account.permissions.some(
     (permission) => permission.code === "compensation.manage",
   )
+  const canReadSensitive = session.account.permissions.some(
+    (permission) => permission.code === "employee.sensitive.read",
+  )
+  const canManageSensitive = session.account.permissions.some(
+    (permission) => permission.code === "employee.sensitive.manage",
+  )
+  const canManageLifecycle = session.account.permissions.some(
+    (permission) => permission.code === "employee.lifecycle.manage",
+  )
+  const canDeleteEmployee = session.account.permissions.some(
+    (permission) => permission.code === "employee.delete",
+  )
   const displayedError = hasValidEmployeeId ? error : "Mã nhân sự trên đường dẫn không hợp lệ."
   const displayedLoading = hasValidEmployeeId && loading
 
@@ -229,7 +249,17 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {detail && canManageLifecycle && !isEmploymentEnded(detail.employmentStatus) && (
+              <Button type="button" variant="outline" onClick={() => setResigning(true)}>
+                <LogOut /> Nghỉ việc
+              </Button>
+            )}
+            {detail && canDeleteEmployee && (
+              <Button type="button" variant="destructive" onClick={() => setDeleting(true)}>
+                <Trash2 /> Xóa hồ sơ
+              </Button>
+            )}
             <Button
               type="button"
               variant="outline"
@@ -367,6 +397,16 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
                 </Card>
               </div>
 
+              {canReadSensitive && (
+                <div className="lg:col-span-3">
+                  <EmployeeSensitiveCard
+                    employee={detail}
+                    canManage={canManageSensitive}
+                    onSessionExpired={onSessionExpired}
+                  />
+                </div>
+              )}
+
               {canReadAssignments && <Card className="lg:col-span-3">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2"><Clock3 /> Lịch sử phân công</CardTitle>
@@ -453,6 +493,24 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
           )}
         </div>
       </section>
+
+      {resigning && detail && (
+        <EmployeeResignationDialog
+          employee={detail}
+          onClose={() => setResigning(false)}
+          onCompleted={reload}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
+
+      {deleting && detail && (
+        <EmployeeDeleteDialog
+          employee={detail}
+          onClose={() => setDeleting(false)}
+          onDeleted={() => router.replace(canReadEmployeeList ? "/employees" : "/dashboard")}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
     </main>
   )
 }

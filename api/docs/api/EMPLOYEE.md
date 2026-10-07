@@ -476,6 +476,9 @@ Endpoint dùng `POST` thay vì `DELETE` vì lý do xóa là bắt buộc và ph�
 
 Hồ sơ chỉ xóa được khi **chưa có bất kỳ dữ liệu nào** trong số: account đăng nhập, phân công, lịch sử lương, đơn nghỉ phép, bản ghi chấm công, phiếu lương. Chỉ cần một trong số đó tồn tại thì API trả `409`.
 
+> [!WARNING]
+> Với luồng hiện tại, điều kiện trên **không bao giờ đạt được**: `POST /api/employees` bắt buộc có `initialAssignment`, nên mọi hồ sơ tạo qua API đều đã có phân công và endpoint này luôn trả `409`. Muốn dùng được, phải cho phép tạo hồ sơ không kèm phân công hoặc bỏ phân công đầu tiên ra khỏi điều kiện kiểm tra. Xem [FEATURES.md](../../../docs/FEATURES.md).
+
 Hồ sơ bị xóa mềm được ghi `deletedAt`, người xóa và lý do; sau đó không còn xuất hiện ở bất kỳ endpoint employee nào.
 
 ### Request
