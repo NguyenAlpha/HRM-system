@@ -14,6 +14,7 @@ Tạo và tra cứu hồ sơ nhân sự trong phạm vi được phân công. AP
 | `PUT /api/employees/{employeeId}` | ✅ | `employee.update` | Cập nhật các thông tin hồ sơ được phép thay đổi trong entity employee |
 | `POST /api/employees/{employeeId}/confirm` | ✅ | `employee.probation.confirm` | Xác nhận nhân sự thử việc trở thành nhân sự chính thức |
 | `POST /api/employees/{employeeId}/resignation` | ✅ | `employee.lifecycle.manage` | Hoàn tất nghỉ việc, đóng phân công và vô hiệu hóa account |
+| `POST /api/employees/{employeeId}/soft-delete` | ✅ | `employee.delete` | Xóa mềm hồ sơ tạo nhầm, chỉ khi chưa phát sinh dữ liệu nghiệp vụ |
 | `GET /api/employees/{employeeId}/assignments` | ✅ | `employee.assignment.read` | Lấy toàn bộ lịch sử phân công của nhân sự |
 | `GET /api/employees/{employeeId}/assignments/current` | ✅ | `employee.assignment.read` | Lấy phân công đang hiệu lực tại ngày gọi API |
 | `POST /api/employees/{employeeId}/assignments` | ✅ | `employee.assignment.manage` | Điều chuyển, bổ nhiệm hoặc thay đổi phân công của nhân sự |
@@ -464,6 +465,50 @@ Trả `EmployeeDetailResponse` sau khi cập nhật, cùng cấu trúc với `PO
 | 409 | `CONFLICT` | Employee đã kết thúc làm việc trước đó |
 
 `TERMINATED` và `RETIRED` chưa có đường đi qua API; endpoint này chỉ đặt `RESIGNED`.
+
+---
+
+## POST `/api/employees/{employeeId}/soft-delete`
+
+Xóa mềm một hồ sơ **được tạo nhầm**. Đây không phải cách cho nhân sự nghỉ việc: nhân sự đã đi làm luôn có dữ liệu nghiệp vụ và sẽ bị endpoint này từ chối, trường hợp đó dùng `POST /{employeeId}/resignation`.
+
+Endpoint dùng `POST` thay vì `DELETE` vì lý do xóa là bắt buộc và phải nằm trong body.
+
+Hồ sơ chỉ xóa được khi **chưa có bất kỳ dữ liệu nào** trong số: account đăng nhập, phân công, lịch sử lương, đơn nghỉ phép, bản ghi chấm công, phiếu lương. Chỉ cần một trong số đó tồn tại thì API trả `409`.
+
+Hồ sơ bị xóa mềm được ghi `deletedAt`, người xóa và lý do; sau đó không còn xuất hiện ở bất kỳ endpoint employee nào.
+
+### Request
+
+```json
+{
+  "deletionReason": "Tạo nhầm hồ sơ khi nhập liệu"
+}
+```
+
+| Field | Bắt buộc | Ràng buộc |
+|:------|:--------:|:----------|
+| `deletionReason` | ✅ | Không rỗng |
+
+### Response `200 OK`
+
+```json
+{
+  "success": true,
+  "data": null,
+  "error": null
+}
+```
+
+### Lỗi
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 400 | `VALIDATION_ERROR` | Thiếu `deletionReason` |
+| 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
+| 403 | `FORBIDDEN` | Thiếu `employee.delete` hoặc employee nằm ngoài scope được giao |
+| 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
+| 409 | `CONFLICT` | Employee đã phát sinh dữ liệu nghiệp vụ; dùng luồng nghỉ việc thay vì xóa |
 
 ---
 

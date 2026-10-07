@@ -9,7 +9,6 @@ Quy ước trạng thái:
 |---|---|
 | Đủ | Có API, có màn hình, dùng được từ đầu đến cuối |
 | Chỉ API | API chạy được nhưng chưa có màn hình |
-| Chưa dùng được | Service đã viết nhưng không có endpoint nào gọi tới |
 
 ## 1. Tổng quan
 
@@ -18,7 +17,7 @@ Quy ước trạng thái:
 | Xác thực và phiên | Đủ | `/login`, `/admin/login`, `/activate` |
 | Tài khoản | Đủ | `/admin`, trong trang nhân viên |
 | Phân quyền RBAC | Đủ | `/rbac`, `/admin/rbac`, `/role-grant`, `/role-requests` |
-| Hồ sơ nhân viên | Đủ, thiếu 1 thao tác | `/employees`, `/employees/{id}` |
+| Hồ sơ nhân viên | Chỉ API cho 3 thao tác mới | `/employees`, `/employees/{id}` |
 | Cơ cấu tổ chức | Đủ | `/organization`, `/admin/organization` |
 | Ca làm việc và ngày lễ | Đủ | `/organization`, `/attendance` |
 | Nghỉ phép | Đủ | `/leave-requests` |
@@ -100,6 +99,7 @@ Ma trận đầy đủ role → permission: [api/docs/api/RBAC.md](../api/docs/a
 | Cập nhật hồ sơ | `PUT /api/employees/{id}` | `employee.update` |
 | Xác nhận hết thử việc | `POST /api/employees/{id}/confirm` | `employee.probation.confirm` |
 | Hoàn tất nghỉ việc | `POST /api/employees/{id}/resignation` | `employee.lifecycle.manage` |
+| Xóa mềm hồ sơ tạo nhầm | `POST /api/employees/{id}/soft-delete` | `employee.delete` |
 | Xem phân công và lịch sử | `GET /api/employees/{id}/assignments` | `employee.assignment.read` |
 | Điều chuyển, bổ nhiệm | `POST /api/employees/{id}/assignments` | `employee.assignment.manage` |
 | Đọc dữ liệu nhạy cảm | `GET /api/employees/{id}/sensitive` | `employee.sensitive.read` |
@@ -118,7 +118,11 @@ lực để tính lại đúng dữ liệu lịch sử.
 Nghỉ việc là thao tác gộp: đóng phân công đang mở tại ngày nghỉ, chuyển account sang `DISABLED`
 và thu hồi toàn bộ refresh token của account đó. Đây là bước thực thi, không phải bước phê duyệt.
 
-**Một thao tác chưa dùng được** — xem mục 11.
+Xóa mềm chỉ dành cho hồ sơ tạo nhầm: chỉ cần đã có account, phân công, lương, đơn nghỉ, chấm công
+hoặc phiếu lương thì API từ chối và yêu cầu dùng luồng nghỉ việc.
+
+Ba endpoint `sensitive`, `resignation` và `soft-delete` hiện **chưa có màn hình**; chúng đã qua
+BFF allowlist nhưng UI chưa gọi.
 
 ---
 
@@ -240,20 +244,7 @@ Báo cáo lương chỉ trả số liệu tổng hợp theo khoảng, không tr�
 
 ---
 
-## 11. Đã viết nhưng chưa dùng được
-
-Một năng lực có đủ service, kiểm tra quyền và DTO nhưng **không controller nào gọi tới**, nên
-không truy cập được qua HTTP. Permission tương ứng đã nằm trong catalog và đã được seed.
-
-| Năng lực | Vị trí | Permission đã có |
-|---|---|---|
-| Xóa mềm hồ sơ chưa phát sinh nghiệp vụ | `EmployeeServiceImpl.softDelete` | `employee.delete` |
-
-Đây là việc còn thiếu lớp HTTP, không phải viết lại từ đầu.
-
----
-
-## 12. Chưa có
+## 11. Chưa có
 
 - Lịch làm việc cố định thứ 2–thứ 7; chưa có lịch cá nhân hoặc xoay ca theo ngày.
 - Mỗi nhân viên mỗi ngày chỉ một cặp vào/ra và một đơn nghỉ; nghỉ nửa ngày cần HR đối soát tay.
@@ -268,7 +259,7 @@ không truy cập được qua HTTP. Permission tương ứng đã nằm trong c
 
 ---
 
-## 13. Tài liệu liên quan
+## 12. Tài liệu liên quan
 
 - [Tổng quan kiến trúc](OVERVIEW.md)
 - [Cơ cấu tổ chức và phân quyền](ORGANIZATION_STRUCTURE.md)
