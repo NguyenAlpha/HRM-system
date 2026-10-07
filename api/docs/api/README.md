@@ -4,21 +4,32 @@ Các endpoint trả envelope `ApiResult`. Trừ đăng nhập, refresh và kích
 
 ## Danh mục hiện hành
 
-| Tài liệu | API chính |
+Cột thứ hai liệt kê đúng path prefix do tài liệu đó mô tả, dùng để tra ngược từ một endpoint về
+tài liệu tương ứng. Toàn bộ 22 controller đang chạy đều nằm trong bảng.
+
+| Tài liệu | Path prefix |
 | --- | --- |
 | [AUTH.md](AUTH.md) | `/api/auth/*`, `/api/account-activations/*` |
-| [ACCOUNT.md](ACCOUNT.md) | `/api/accounts`, vòng đời account nhân viên |
-| [ACCOUNT_ROLE_ASSIGNMENTS.md](ACCOUNT_ROLE_ASSIGNMENTS.md) | `/api/accounts/{id}/role-assignments` |
-| [ACCOUNT_PERMISSION_OVERRIDES.md](ACCOUNT_PERMISSION_OVERRIDES.md) | `/api/accounts/{id}/role-assignments/{assignmentId}/permission-overrides` |
-| [RBAC.md](RBAC.md) | `/api/roles`, `/api/permissions` |
-| [ROLE_ASSIGNMENT_REQUESTS.md](ROLE_ASSIGNMENT_REQUESTS.md) | `/api/role-assignment-requests` |
-| [EMPLOYEE.md](EMPLOYEE.md) | `/api/employees`, phân công và dữ liệu nhạy cảm |
-| [ORGANIZATION.md](ORGANIZATION.md) | `/api/organization-units`, `/api/work-locations`, `/api/job-positions` |
+| [ACCOUNT.md](ACCOUNT.md) | `/api/accounts`, `/api/accounts/{accountId}` cùng các hành động `suspend`, `activate`, `invitations/resend`, `password-reset` |
+| [ACCOUNT_ROLE_ASSIGNMENTS.md](ACCOUNT_ROLE_ASSIGNMENTS.md) | `/api/accounts/{accountId}/role-assignments` |
+| [ACCOUNT_PERMISSION_OVERRIDES.md](ACCOUNT_PERMISSION_OVERRIDES.md) | `/api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides` |
+| [RBAC.md](RBAC.md) | `/api/roles/*`, `/api/permissions/*` |
+| [ROLE_ASSIGNMENT_REQUESTS.md](ROLE_ASSIGNMENT_REQUESTS.md) | `/api/role-assignment-requests/*` |
+| [EMPLOYEE.md](EMPLOYEE.md) | `/api/employees/*`, `/api/employees/{employeeId}/assignments` |
+| [ORGANIZATION.md](ORGANIZATION.md) | `/api/organization-units/*`, `/api/work-locations/*`, `/api/job-positions/*` |
 | [ORGANIZATION_COMPANY_OWNER_ADMIN.md](ORGANIZATION_COMPANY_OWNER_ADMIN.md) | `/api/system/organization/company-owner` |
-| [WORK_SHIFT.md](WORK_SHIFT.md) | `/api/work-shifts` |
-| [ATTENDANCE.md](ATTENDANCE.md) | ngày lễ, nghỉ phép, chấm công và tăng ca |
-| [PAYROLL.md](PAYROLL.md) | lương, hồ sơ bảo hiểm, người phụ thuộc, thuế và phiếu lương |
+| [WORK_SHIFT.md](WORK_SHIFT.md) | `/api/work-shifts/*` |
+| [ATTENDANCE.md](ATTENDANCE.md) | `/api/attendance/*`, `/api/leave-requests/*`, `/api/company-holidays/*` |
+| [PAYROLL.md](PAYROLL.md) | `/api/payroll/*`, `/api/compensation/employees/{employeeId}/*` |
 | [REPORT.md](REPORT.md) | `/api/reports/hr/*`, `/api/reports/payroll/*` |
+
+Hai chỗ dễ tra nhầm: `role-assignments` và `permission-overrides` nằm dưới `/api/accounts` nhưng
+có tài liệu riêng, còn `/api/compensation/*` thuộc `PAYROLL.md` chứ không phải `EMPLOYEE.md`.
+
+> Permission `employee.sensitive.read` và `employee.sensitive.manage` đã có trong catalog và đã
+> được kiểm tra ở service, nhưng **chưa có controller nào expose dữ liệu nhạy cảm**. Các đoạn
+> trong [EMPLOYEE.md](EMPLOYEE.md) nhắc tới "endpoint riêng" cho CCCD, email cá nhân, địa chỉ,
+> mã số thuế và thông tin ngân hàng là mô tả thiết kế dự kiến, chưa phải API đang chạy.
 
 ## Quy ước chung
 
