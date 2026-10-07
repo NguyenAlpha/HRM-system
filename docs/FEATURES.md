@@ -18,7 +18,7 @@ Quy ước trạng thái:
 | Xác thực và phiên | Đủ | `/login`, `/admin/login`, `/activate` |
 | Tài khoản | Đủ | `/admin`, trong trang nhân viên |
 | Phân quyền RBAC | Đủ | `/rbac`, `/admin/rbac`, `/role-grant`, `/role-requests` |
-| Hồ sơ nhân viên | Đủ, thiếu 3 thao tác | `/employees`, `/employees/{id}` |
+| Hồ sơ nhân viên | Đủ, thiếu 2 thao tác | `/employees`, `/employees/{id}` |
 | Cơ cấu tổ chức | Đủ | `/organization`, `/admin/organization` |
 | Ca làm việc và ngày lễ | Đủ | `/organization`, `/attendance` |
 | Nghỉ phép | Đủ | `/leave-requests` |
@@ -101,6 +101,8 @@ Ma trận đầy đủ role → permission: [api/docs/api/RBAC.md](../api/docs/a
 | Xác nhận hết thử việc | `POST /api/employees/{id}/confirm` | `employee.probation.confirm` |
 | Xem phân công và lịch sử | `GET /api/employees/{id}/assignments` | `employee.assignment.read` |
 | Điều chuyển, bổ nhiệm | `POST /api/employees/{id}/assignments` | `employee.assignment.manage` |
+| Đọc dữ liệu nhạy cảm | `GET /api/employees/{id}/sensitive` | `employee.sensitive.read` |
+| Cập nhật dữ liệu nhạy cảm | `PUT /api/employees/{id}/sensitive` | `employee.sensitive.manage` |
 
 Trạng thái lao động: `PROBATION`, `ACTIVE`, `RESIGNED`, `TERMINATED`, `RETIRED`. Loại hợp đồng:
 `FULL_TIME`, `PART_TIME`, `TEMPORARY`.
@@ -108,7 +110,10 @@ Trạng thái lao động: `PROBATION`, `ACTIVE`, `RESIGNED`, `TERMINATED`, `RET
 Phân công giữ cả đơn vị, địa điểm, vị trí, ca làm và người quản lý trực tiếp, có thời gian hiệu
 lực để tính lại đúng dữ liệu lịch sử.
 
-**Ba thao tác chưa dùng được** — xem mục 11.
+`GET`/`PUT /{id}/sensitive` tách riêng khỏi hồ sơ thường để quyền đọc hồ sơ không kéo theo quyền
+đọc CCCD và tài khoản ngân hàng. `PUT` là thay thế toàn bộ nhóm trường, không vá từng phần.
+
+**Hai thao tác chưa dùng được** — xem mục 11.
 
 ---
 
@@ -232,18 +237,16 @@ Báo cáo lương chỉ trả số liệu tổng hợp theo khoảng, không tr�
 
 ## 11. Đã viết nhưng chưa dùng được
 
-Ba năng lực có đủ service, kiểm tra quyền và DTO nhưng **không controller nào gọi tới**, nên
+Hai năng lực có đủ service, kiểm tra quyền và DTO nhưng **không controller nào gọi tới**, nên
 không truy cập được qua HTTP. Permission tương ứng đã nằm trong catalog và đã được seed.
 
 | Năng lực | Vị trí | Permission đã có |
 |---|---|---|
-| Đọc và sửa dữ liệu nhân sự nhạy cảm | `EmployeeSensitiveDataService` | `employee.sensitive.read`, `employee.sensitive.manage` |
 | Hoàn tất nghỉ việc | `EmployeeServiceImpl.completeResignation` | `employee.lifecycle.manage` |
 | Xóa mềm hồ sơ chưa phát sinh nghiệp vụ | `EmployeeServiceImpl.softDelete` | `employee.delete` |
 
-Dữ liệu nhạy cảm gồm CCCD, email cá nhân, địa chỉ, mã số thuế và thông tin ngân hàng. Các trường
-này đã có trong database và bị loại khỏi response của `/api/employees` đúng như thiết kế, nhưng
-chưa có đường nào đọc hoặc sửa chúng.
+Hệ quả của mục đầu: `employmentStatus` chỉ đi được tới `ACTIVE` qua `POST /{id}/confirm`, nên
+`RESIGNED`, `TERMINATED` và `RETIRED` hiện chưa đạt tới được qua API.
 
 Đây là việc còn thiếu lớp HTTP, không phải viết lại từ đầu.
 
