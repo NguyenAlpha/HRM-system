@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.htttdn.hrm.dto.request.employee.CompleteResignationRequest;
 import com.htttdn.hrm.dto.request.employee.CreateEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
@@ -64,5 +65,15 @@ public class EmployeeController {
     @PostMapping("/{employeeId}/confirm")
     public ApiResult<EmployeeDetailResponse> confirmEmployment(@PathVariable Long employeeId) {
         return ApiResult.ok(employeeService.confirmEmployment(employeeId));
+    }
+
+    @PostMapping("/{employeeId}/resignation")
+    public ApiResult<EmployeeDetailResponse> completeResignation(
+        @PathVariable Long employeeId,
+        @Valid @RequestBody CompleteResignationRequest request
+    ) {
+        return ApiResult.ok(employeeService.completeResignation(
+            employeeId, request.terminationDate(), request.terminationReason()
+        ));
     }
 }

@@ -247,7 +247,9 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     @PreAuthorize("hasAuthority('employee.lifecycle.manage')")
-    public void completeResignation(Long employeeId, LocalDate terminationDate, String terminationReason) {
+    public EmployeeDetailResponse completeResignation(
+        Long employeeId, LocalDate terminationDate, String terminationReason
+    ) {
         Employee employee = findEmployeeOrThrow(employeeId);
         employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_LIFECYCLE_MANAGE);
         if (terminationDate.isBefore(employee.getHireDate())) {
@@ -271,6 +273,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             account.setUpdatedAt(Instant.now());
             refreshTokenService.revokeAll(account.getId());
         });
+        return toDetailResponse(employee);
     }
 
     @Override
