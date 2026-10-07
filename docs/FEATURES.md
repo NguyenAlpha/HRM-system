@@ -118,10 +118,9 @@ lực để tính lại đúng dữ liệu lịch sử.
 Nghỉ việc là thao tác gộp: đóng phân công đang mở tại ngày nghỉ, chuyển account sang `DISABLED`
 và thu hồi toàn bộ refresh token của account đó. Đây là bước thực thi, không phải bước phê duyệt.
 
-Xóa mềm chỉ dành cho hồ sơ tạo nhầm: chỉ cần đã có account, phân công, lương, đơn nghỉ, chấm công
-hoặc phiếu lương thì API từ chối và yêu cầu dùng luồng nghỉ việc. **Trên thực tế điều kiện này
-chưa bao giờ đạt được** vì `POST /api/employees` bắt buộc kèm phân công ban đầu, nên endpoint
-luôn trả `409`. Đây là mâu thuẫn còn tồn đọng giữa luồng tạo và điều kiện xóa, chưa được xử lý.
+Xóa mềm chỉ dành cho hồ sơ tạo nhầm: đã có account, lương, đơn nghỉ, chấm công hoặc phiếu lương
+thì API từ chối và yêu cầu dùng luồng nghỉ việc. Phân công được tính theo số lượng — bản ghi đầu
+tiên do chính luồng tạo hồ sơ sinh ra nên không tính, từ bản ghi thứ hai mới coi là đã điều chuyển.
 
 Ba endpoint `sensitive`, `resignation` và `soft-delete` hiện **chưa có màn hình**; chúng đã qua
 BFF allowlist nhưng UI chưa gọi.

@@ -78,10 +78,13 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
 
     boolean existsByEmployeeId(Long employeeId);
 
+    long countByEmployeeId(Long employeeId);
+
     @Query("""
         SELECT CASE WHEN COUNT(assignment) > 0 THEN true ELSE false END
         FROM EmployeeAssignment assignment
         WHERE assignment.organizationUnit.id = :organizationUnitId
+          AND assignment.employee.deletedAt IS NULL
           AND (assignment.effectiveTo IS NULL OR assignment.effectiveTo >= :date)
         """)
     boolean existsCurrentOrFutureByOrganizationUnitId(
@@ -93,6 +96,7 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
         SELECT CASE WHEN COUNT(assignment) > 0 THEN true ELSE false END
         FROM EmployeeAssignment assignment
         WHERE assignment.workLocation.id = :workLocationId
+          AND assignment.employee.deletedAt IS NULL
           AND (assignment.effectiveTo IS NULL OR assignment.effectiveTo >= :date)
         """)
     boolean existsCurrentOrFutureByWorkLocationId(
@@ -104,6 +108,7 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
         SELECT CASE WHEN COUNT(assignment) > 0 THEN true ELSE false END
         FROM EmployeeAssignment assignment
         WHERE assignment.position.id = :positionId
+          AND assignment.employee.deletedAt IS NULL
           AND (assignment.effectiveTo IS NULL OR assignment.effectiveTo >= :date)
         """)
     boolean existsCurrentOrFutureByPositionId(
@@ -115,6 +120,7 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
         SELECT CASE WHEN COUNT(assignment) > 0 THEN true ELSE false END
         FROM EmployeeAssignment assignment
         WHERE assignment.shift.id = :shiftId
+          AND assignment.employee.deletedAt IS NULL
           AND (assignment.effectiveTo IS NULL OR assignment.effectiveTo >= :date)
         """)
     boolean existsCurrentOrFutureByShiftId(
