@@ -16,7 +16,7 @@ năng theo module thay vì theo endpoint, đọc [docs/FEATURES.md](../../../doc
 | [ACCOUNT_PERMISSION_OVERRIDES.md](ACCOUNT_PERMISSION_OVERRIDES.md) | `/api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides` |
 | [RBAC.md](RBAC.md) | `/api/roles/*`, `/api/permissions/*` |
 | [ROLE_ASSIGNMENT_REQUESTS.md](ROLE_ASSIGNMENT_REQUESTS.md) | `/api/role-assignment-requests/*` |
-| [EMPLOYEE.md](EMPLOYEE.md) | `/api/employees/*`, `/api/employees/{employeeId}/assignments` |
+| [EMPLOYEE.md](EMPLOYEE.md) | `/api/employees/*`, `/api/employees/{employeeId}/assignments`, `/api/employees/{employeeId}/sensitive` |
 | [ORGANIZATION.md](ORGANIZATION.md) | `/api/organization-units/*`, `/api/work-locations/*`, `/api/job-positions/*` |
 | [ORGANIZATION_COMPANY_OWNER_ADMIN.md](ORGANIZATION_COMPANY_OWNER_ADMIN.md) | `/api/system/organization/company-owner` |
 | [WORK_SHIFT.md](WORK_SHIFT.md) | `/api/work-shifts/*` |
@@ -26,11 +26,6 @@ năng theo module thay vì theo endpoint, đọc [docs/FEATURES.md](../../../doc
 
 Hai chỗ dễ tra nhầm: `role-assignments` và `permission-overrides` nằm dưới `/api/accounts` nhưng
 có tài liệu riêng, còn `/api/compensation/*` thuộc `PAYROLL.md` chứ không phải `EMPLOYEE.md`.
-
-> Permission `employee.sensitive.read` và `employee.sensitive.manage` đã có trong catalog và đã
-> được kiểm tra ở service, nhưng **chưa có controller nào expose dữ liệu nhạy cảm**. Các đoạn
-> trong [EMPLOYEE.md](EMPLOYEE.md) nhắc tới "endpoint riêng" cho CCCD, email cá nhân, địa chỉ,
-> mã số thuế và thông tin ngân hàng là mô tả thiết kế dự kiến, chưa phải API đang chạy.
 
 ## Quy ước chung
 

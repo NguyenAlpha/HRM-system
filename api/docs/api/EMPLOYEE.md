@@ -16,10 +16,12 @@ Tạo và tra cứu hồ sơ nhân sự trong phạm vi được phân công. AP
 | `GET /api/employees/{employeeId}/assignments` | ✅ | `employee.assignment.read` | Lấy toàn bộ lịch sử phân công của nhân sự |
 | `GET /api/employees/{employeeId}/assignments/current` | ✅ | `employee.assignment.read` | Lấy phân công đang hiệu lực tại ngày gọi API |
 | `POST /api/employees/{employeeId}/assignments` | ✅ | `employee.assignment.manage` | Điều chuyển, bổ nhiệm hoặc thay đổi phân công của nhân sự |
+| `GET /api/employees/{employeeId}/sensitive` | ✅ | `employee.sensitive.read` | Đọc CCCD, email cá nhân, địa chỉ, mã số thuế và thông tin ngân hàng |
+| `PUT /api/employees/{employeeId}/sensitive` | ✅ | `employee.sensitive.manage` | Cập nhật các trường dữ liệu nhạy cảm nói trên |
 
 Permission chỉ quyết định account được thực hiện hành động nào; scope của role assignment (`SELF`, `ORG_UNIT`, `LOCATION`, `COMPANY`) tiếp tục quyết định hành động đó được áp dụng lên những employee nào. Ví dụ, account có `employee.update` ở scope `ORG_UNIT` chỉ sửa được hồ sơ thuộc đơn vị được giao.
 
-`employee.read` chỉ còn dùng để xem chi tiết một employee. Quyền tổng quát `employee.manage` đã ngừng sử dụng và được thay bằng các quyền nguyên tử. Các nghiệp vụ nội bộ chưa có endpoint trực tiếp còn dùng `employee.lifecycle.manage` cho thực thi thay đổi vòng đời và `employee.delete` cho xóa mềm hồ sơ.
+`employee.read` chỉ còn dùng để xem chi tiết một employee. Quyền tổng quát `employee.manage` đã ngừng sử dụng và được thay bằng các quyền nguyên tử.
 
 Phân quyền mặc định của các system role:
 
@@ -91,7 +93,7 @@ Endpoint này chỉ tạo `Employee` và `EmployeeAssignment`:
 | `phone` | ❌ | Tối đa 20 ký tự |
 | `hireDate` | ✅ | Ngày ISO `YYYY-MM-DD` |
 
-Các dữ liệu nhạy cảm như CCCD, email cá nhân, địa chỉ, mã số thuế và thông tin ngân hàng không được nhận tại endpoint này. Chúng thuộc API riêng có permission `employee.sensitive.manage`.
+Các dữ liệu nhạy cảm như CCCD, email cá nhân, địa chỉ, mã số thuế và thông tin ngân hàng không được nhận tại endpoint này. Chúng được nhập qua `PUT /api/employees/{employeeId}/sensitive` với permission `employee.sensitive.manage`.
 
 `employeeCode` do server tạo theo vị trí trong `initialAssignment`: `GD` (Giám đốc), `NS` (Nhân sự), `KT` (Kế toán tiền lương), `VH` (Quản lý vận hành), `CN` (Quản lý chi nhánh), `KHO` (Giám sát kho), `TN` (Trưởng nhóm), `NV` (Nhân viên hoặc vị trí chưa cấu hình). Số thứ tự tăng riêng theo tiền tố, tối thiểu bốn chữ số. Mã không đổi khi nhân viên chuyển vị trí và không được tái sử dụng.
 
@@ -282,7 +284,7 @@ Response gồm:
 - Phân công chính đang hiệu lực tại `currentAssignment`; trả `null` nếu chưa có phân công hiện tại.
 - Thông tin account tối thiểu tại `account`; trả `null` nếu employee chưa được cấp tài khoản.
 
-Endpoint không trả CCCD, email cá nhân, địa chỉ, mã số thuế hoặc thông tin ngân hàng. Các trường đó cần permission `employee.sensitive.read` và API dữ liệu nhạy cảm riêng.
+Endpoint không trả CCCD, email cá nhân, địa chỉ, mã số thuế hoặc thông tin ngân hàng. Các trường đó được đọc qua `GET /api/employees/{employeeId}/sensitive` với permission `employee.sensitive.read`.
 
 ### Response `200 OK`
 
@@ -384,7 +386,7 @@ Nếu employee đã có account, thay đổi `workEmail` sẽ đồng thời c�
 
 - `id`, `employeeCode`, `createdAt`, `updatedAt`, `deletedAt`, `deletedByAccount`, `deletionReason` do hệ thống quản lý.
 - `employmentStatus`, `terminationDate`, `terminationReason` được thay đổi qua workflow vòng đời nhân sự, không sửa trực tiếp.
-- `nationalId`, `personalEmail`, `address`, `taxCode`, `bankName`, `bankAccountNumber`, `bankAccountHolder` là dữ liệu nhạy cảm, yêu cầu `employee.sensitive.manage` và endpoint riêng.
+- `nationalId`, `personalEmail`, `address`, `taxCode`, `bankName`, `bankAccountNumber`, `bankAccountHolder` là dữ liệu nhạy cảm, cập nhật qua `PUT /api/employees/{employeeId}/sensitive`.
 - `hireDate` không được sửa qua API này để tránh làm sai lịch sử phân công và vòng đời nhân sự.
 
 ### Response `200 OK`
@@ -537,3 +539,84 @@ API này chỉ cập nhật lịch sử công việc trong `employee_assignments
 | 404 | `WORK_SHIFT_NOT_FOUND` | Ca làm việc không tồn tại hoặc không active |
 | 404 | `RESOURCE_NOT_FOUND` | Account thao tác không tồn tại |
 | 409 | `CONFLICT` | Employee đã kết thúc làm việc hoặc dữ liệu phân công hiện tại không nhất quán |
+
+---
+
+## GET `/api/employees/{employeeId}/sensitive`
+
+Đọc các trường nhân sự nhạy cảm. Các trường này cố tình không nằm trong `GET /api/employees/{employeeId}` để một quyền đọc hồ sơ thông thường không kéo theo quyền đọc CCCD hay tài khoản ngân hàng.
+
+### Response `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "employeeId": 40,
+    "nationalId": "079201001234",
+    "personalEmail": "an.nguyen@gmail.com",
+    "address": "12 Nguyễn Huệ, Quận 1, TP.HCM",
+    "taxCode": "8412345678",
+    "bankName": "Vietcombank",
+    "bankAccountNumber": "0071000123456",
+    "bankAccountHolder": "NGUYEN VAN AN"
+  },
+  "error": null
+}
+```
+
+Trường chưa được nhập trả `null`.
+
+### Lỗi
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
+| 403 | `FORBIDDEN` | Thiếu `employee.sensitive.read`, hoặc employee nằm ngoài scope được giao |
+| 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
+
+---
+
+## PUT `/api/employees/{employeeId}/sensitive`
+
+Cập nhật toàn bộ nhóm trường nhạy cảm. Đây là API **thay thế**, không phải vá từng phần: trường nào vắng trong body sẽ được ghi thành `null`. Muốn giữ giá trị cũ thì gửi lại đúng giá trị đó.
+
+### Request
+
+```json
+{
+  "nationalId": "079201001234",
+  "personalEmail": "an.nguyen@gmail.com",
+  "address": "12 Nguyễn Huệ, Quận 1, TP.HCM",
+  "taxCode": "8412345678",
+  "bankName": "Vietcombank",
+  "bankAccountNumber": "0071000123456",
+  "bankAccountHolder": "NGUYEN VAN AN"
+}
+```
+
+| Field | Bắt buộc | Ràng buộc |
+|:------|:--------:|:----------|
+| `nationalId` | | Tối đa 30 ký tự, không trùng với employee khác |
+| `personalEmail` | | Định dạng email, tối đa 100 ký tự |
+| `address` | | Không giới hạn độ dài |
+| `taxCode` | | Tối đa 30 ký tự |
+| `bankName` | | Tối đa 150 ký tự |
+| `bankAccountNumber` | | Tối đa 50 ký tự |
+| `bankAccountHolder` | | Tối đa 200 ký tự |
+
+`taxCode` là dữ liệu đầu vào của tính thuế TNCN; thiếu trường này không chặn tính lương nhưng khiến hồ sơ thuế không đầy đủ.
+
+### Response `200 OK`
+
+Trả về nguyên trạng thái sau khi cập nhật, cùng cấu trúc với `GET`.
+
+### Lỗi
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 400 | `VALIDATION_ERROR` | Email sai định dạng hoặc chuỗi vượt độ dài cho phép |
+| 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
+| 403 | `FORBIDDEN` | Thiếu `employee.sensitive.manage`, hoặc employee nằm ngoài scope được giao |
+| 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
+| 409 | `CONFLICT` | `nationalId` đã thuộc về employee khác |

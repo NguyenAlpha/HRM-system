@@ -340,6 +340,7 @@ export async function handleEmployeeRequest(request: Request, segments: string[]
     { pattern: /^[1-9]\d*$/, methods: ["GET", "PUT"] },
     { pattern: /^[1-9]\d*\/assignments$/, methods: ["GET", "POST"] },
     { pattern: /^[1-9]\d*\/confirm$/, methods: ["POST"] },
+    { pattern: /^[1-9]\d*\/sensitive$/, methods: ["GET", "PUT"] },
   ]
   const route = routes.find((candidate) => candidate.pattern.test(path))
   if (!route) {
