@@ -25,7 +25,7 @@ Quy ước trạng thái:
 | Lương, bảo hiểm, thuế | Đủ | `/payslips` |
 | Báo cáo | Đủ | `/reports/workforce` |
 
-Toàn hệ thống có 22 controller, 49 permission trên 8 module, 7 system role và 33 bảng database.
+Toàn hệ thống có 24 controller, 49 permission trên 8 module, 7 system role và 35 bảng database.
 
 ---
 
@@ -182,8 +182,15 @@ Chi tiết: [api/docs/api/ATTENDANCE.md](../api/docs/api/ATTENDANCE.md).
 | Gửi duyệt, hủy | `POST /api/leave-requests/{id}/submit`, `/cancel` |
 | Duyệt, từ chối | `POST /api/leave-requests/{id}/approve`, `/reject` |
 | Xem đơn của mình, của nhân viên, đơn chờ duyệt | `GET /{id}`, `/employees/{id}`, `/pending` |
+| Xem số dư phép năm | `GET /api/leave-entitlements/employees/{id}` |
+| Điều chỉnh hạn mức, nhập phép chuyển năm trước | `PUT .../adjustment`, `PUT .../carried-over` |
 
 Vòng đời: `DRAFT` → `PENDING` → `APPROVED` / `REJECTED`, hoặc `CANCELLED`.
+
+Nghỉ `ANNUAL` có hạn mức năm: 12 ngày cơ bản, cứ đủ 5 năm thâm niên cộng 1 ngày, chia tỷ lệ theo
+số tháng còn lại nếu vào làm giữa năm. Duyệt đơn vượt số dư bị chặn bằng `409`. Khi kiểm tra, các
+đơn `PENDING` khác được tính như đã tiêu nên nhiều đơn cùng chờ không thể cùng lọt qua. Số dư lưu
+bằng phút để khớp với chấm công và payroll; các loại nghỉ còn lại không trừ hạn mức.
 
 Loại nghỉ `ANNUAL`, `SICK`, `MATERNITY`, `UNPAID`, `OTHER`; cách trả lương `EMPLOYER_PAID`,
 `SOCIAL_INSURANCE`, `UNPAID`. Duyệt đơn tự gắn số phút nghỉ vào bảng công: nghỉ có lương cộng
@@ -252,7 +259,7 @@ Báo cáo lương chỉ trả số liệu tổng hợp theo khoảng, không tr�
 - Chưa có phụ trội ca đêm, thưởng, hoa hồng, truy thu, hoàn thuế hay quyết toán năm.
 - Chưa hỗ trợ người không cư trú thuế.
 - Quy tắc thuế và bảo hiểm chỉ nạp đến hết 2026, phải thêm bằng migration khi chính sách đổi.
-- Chưa có số dư phép năm và quy tắc cộng phép.
+- Chưa tự động chuyển số dư phép sang năm sau; HR nhập tay qua `carried-over`.
 - Chưa tích hợp máy chấm công vật lý.
 - Chưa có nhật ký audit cho toàn bộ thay đổi dữ liệu.
 - Chưa mã hóa cấp cột cho dữ liệu nhạy cảm; hiện chỉ kiểm soát bằng quyền và phạm vi.

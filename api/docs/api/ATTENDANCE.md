@@ -26,6 +26,7 @@ Xem [PAYROLL.md](PAYROLL.md) cho cách tính `grossPay`, bảo hiểm, thuế TN
 ## API và giao diện
 
 - Đơn nghỉ: `POST /api/leave-requests` tạo nháp; `POST /{id}/submit`, `/cancel`, `/approve`, `/reject`; `GET /{id}`, `GET /employees/{employeeId}` và `GET /pending` (chỉ trả đơn trong phạm vi người duyệt). Các đường dẫn con ở đây có tiền tố `/api/leave-requests`.
+- Hạn mức phép năm: `GET /api/leave-entitlements/employees/{employeeId}?year=2026` xem số dư; `PUT .../adjustment` và `PUT .../carried-over` cho HR có `request.manage` điều chỉnh.
 - Kỳ lương: `POST /api/payroll/periods`, `GET /api/payroll/periods`, `GET /api/payroll/periods/{id}`, `POST /api/payroll/periods/{id}/calculate|approve|mark-paid|lock|cancel`; xem phiếu qua `GET /api/payroll/employees/{employeeId}/payslips` hoặc `GET /api/payroll/payslips/{id}`. Nhân viên chỉ xem phiếu từ kỳ đã duyệt trở đi.
 - Cổng HRM có `/attendance`, `/leave-requests`, `/payslips`; tất cả yêu cầu đi qua BFF allowlist và API kiểm tra quyền cùng phạm vi truy cập.
 
@@ -37,3 +38,31 @@ Xem [PAYROLL.md](PAYROLL.md) cho cách tính `grossPay`, bảo hiểm, thuế TN
    Vai trò `HR_MANAGER` có cả hai quyền này. Từ hồ sơ nhân viên, HR chọn **Nhập và xem lương** để mở màn hình lương với nhân viên và ngày vào làm được điền sẵn.
 4. HR nhập hồ sơ bảo hiểm/thuế và người phụ thuộc theo hướng dẫn trong [PAYROLL.md](PAYROLL.md). Nếu thiếu hồ sơ trong kỳ, hệ thống trả lỗi theo nhân viên thay vì giả định không tham gia bảo hiểm.
 5. Tính kỳ lương chỉ thành công khi **mọi nhân viên được tuyển dụng trong kỳ** có phân công, ca, công đã xử lý, lịch sử lương và hồ sơ khấu trừ. API trả lỗi kèm mã nhân viên và dữ liệu thiếu; kỳ vẫn ở trạng thái trước đó để sửa rồi tính lại.
+
+## Hạn mức phép năm
+
+Trước đây đơn `ANNUAL` được duyệt không giới hạn và số phút chảy thẳng vào bảng lương. Từ V35, mỗi nhân viên có một hạn mức cho mỗi năm và `POST /api/leave-requests/{id}/approve` sẽ trả `409` nếu đơn vượt số dư còn lại.
+
+Hạn mức tính theo quy tắc trong `leave_entitlement_rules`, bộ nạp sẵn từ 01/01/2026 là **12 ngày cơ bản, cứ đủ 5 năm làm việc cộng thêm 1 ngày** (Bộ luật Lao động 2019, Điều 113 khoản 1 và Điều 114):
+
+- Thâm niên đếm từ `employees.seniority_start_date`, thiếu thì lấy `hire_date`, và tính theo số năm **đã tròn tại ngày 01/01 của năm phép**. Người đủ 5 năm vào tháng 6 thì được cộng ngày từ năm kế tiếp.
+- Vào làm giữa năm thì chia theo số tháng còn lại của năm. Vào làm tháng 10 được 3/12 của hạn mức.
+- Số ngày quy ra phút theo `standard_work_minutes` của ca trong phân công chính đang mở; không có ca thì dùng 480 phút. Giá trị này được snapshot vào `employee_leave_entitlements.standard_day_minutes` nên đổi ca sau đó không viết lại năm đã cấp.
+
+Chỉ `ANNUAL` trừ vào số dư. `SICK`, `MATERNITY`, `UNPAID` và `OTHER` đi theo quy trình riêng và không ảnh hưởng hạn mức.
+
+Khi kiểm tra, các đơn `PENDING` khác được tính như đã tiêu. Nếu không làm vậy thì ba đơn cùng chờ duyệt sẽ cùng qua được kiểm tra rồi mới vượt hạn mức sau khi duyệt hết.
+
+Bảng hạn mức **không lưu số phút đã dùng**; số đã dùng và đang chờ được tính trực tiếp từ `leave_requests`, nên không thể lệch với đơn thật.
+
+### Điều chỉnh của HR
+
+| Endpoint | Permission | Mục đích |
+|:---------|:-----------|:---------|
+| `GET /api/leave-entitlements/employees/{employeeId}` | `request.read`, hoặc chính nhân viên đó | Xem số dư; thiếu `year` thì lấy năm hiện tại |
+| `PUT /api/leave-entitlements/employees/{employeeId}/adjustment` | `request.manage` | Cộng hoặc trừ hạn mức, bắt buộc có lý do |
+| `PUT /api/leave-entitlements/employees/{employeeId}/carried-over` | `request.manage` | Nhập số phút chuyển từ năm trước |
+
+Response trả `grantedMinutes` (đã gồm chuyển năm trước và điều chỉnh), `usedMinutes`, `pendingMinutes`, `remainingMinutes` và `standardDayMinutes` để client quy ra ngày.
+
+Hệ thống **không tự chuyển số dư sang năm sau**. Luật cho phép thỏa thuận chuyển phép nên việc này do HR nhập tay qua `carried-over`.
