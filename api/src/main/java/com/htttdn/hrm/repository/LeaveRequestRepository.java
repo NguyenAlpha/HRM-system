@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.htttdn.hrm.entity.LeaveRequest;
 import com.htttdn.hrm.entity.enums.LeaveRequestStatus;
+import com.htttdn.hrm.entity.enums.LeaveType;
 
 import jakarta.persistence.LockModeType;
 
@@ -57,4 +58,27 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
     );
 
     boolean existsByEmployeeId(Long employeeId);
+
+    /**
+     * Minutes already committed against a leave year. The caller passes the year bounds because
+     * the business day is resolved in Asia/Ho_Chi_Minh, not UTC.
+     */
+    @Query("""
+        SELECT COALESCE(SUM(request.requestedMinutes), 0)
+        FROM LeaveRequest request
+        WHERE request.employee.id = :employeeId
+          AND request.leaveType = :leaveType
+          AND request.status IN :statuses
+          AND request.startAt >= :from
+          AND request.startAt < :to
+          AND (:excludedRequestId IS NULL OR request.id <> :excludedRequestId)
+        """)
+    long sumMinutesByTypeAndStatuses(
+        @Param("employeeId") Long employeeId,
+        @Param("leaveType") LeaveType leaveType,
+        @Param("statuses") Collection<LeaveRequestStatus> statuses,
+        @Param("from") Instant from,
+        @Param("to") Instant to,
+        @Param("excludedRequestId") Long excludedRequestId
+    );
 }

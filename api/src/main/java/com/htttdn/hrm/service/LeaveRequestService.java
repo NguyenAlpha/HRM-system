@@ -38,6 +38,7 @@ public class LeaveRequestService {
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final AttendanceService attendanceService;
+    private final LeaveEntitlementService leaveEntitlementService;
 
     public LeaveRequestService(
         LeaveRequestRepository leaveRequestRepository,
@@ -45,7 +46,8 @@ public class LeaveRequestService {
         AccountRepository accountRepository,
         CurrentAccountProvider currentAccountProvider,
         EmployeeAccessScopeService employeeAccessScopeService,
-        AttendanceService attendanceService
+        AttendanceService attendanceService,
+        LeaveEntitlementService leaveEntitlementService
     ) {
         this.leaveRequestRepository = leaveRequestRepository;
         this.employeeRepository = employeeRepository;
@@ -53,6 +55,7 @@ public class LeaveRequestService {
         this.currentAccountProvider = currentAccountProvider;
         this.employeeAccessScopeService = employeeAccessScopeService;
         this.attendanceService = attendanceService;
+        this.leaveEntitlementService = leaveEntitlementService;
     }
 
     @PreAuthorize("hasAnyAuthority('request.self.create', 'request.manage')")
@@ -124,6 +127,7 @@ public class LeaveRequestService {
             );
         }
 
+        leaveEntitlementService.requireSufficientBalance(request);
         attendanceService.applyApprovedLeave(request);
         review(request, LeaveRequestStatus.APPROVED, reviewComment);
         return toView(request);

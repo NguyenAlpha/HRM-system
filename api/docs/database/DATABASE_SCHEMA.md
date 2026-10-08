@@ -1,7 +1,7 @@
 # Database Schema — Hệ thống quản lý nhân sự HRM
 
-> Đây là tài liệu schema hiện hành, mô tả database runtime sau Flyway V34. Mục 15 giữ lịch sử
-> các migration V29–V34 để tra cứu thay đổi; định nghĩa bảng và cột đầy đủ nằm ở các mục 1–14.
+> Đây là tài liệu schema hiện hành, mô tả database runtime sau Flyway V35. Mục 15 giữ lịch sử
+> các migration V29–V35 để tra cứu thay đổi; định nghĩa bảng và cột đầy đủ nằm ở các mục 1–14.
 > Khi tài liệu khác với database, migration trong `api/src/main/resources/db/migration/` là
 > nguồn chuẩn.
 >
@@ -40,7 +40,7 @@ Nhân viên nghỉ việc
 
 Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 
-### 1.2. Danh sách 30 bảng nghiệp vụ của schema runtime V34
+### 1.2. Danh sách 32 bảng nghiệp vụ của schema runtime V35
 
 | Nhóm | Các bảng |
 |---|---|
@@ -48,14 +48,14 @@ Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 | Nhân sự và lương thỏa thuận | `employees`, `employee_assignments`, `employee_salary_history` |
 | Chính sách phụ cấp | `position_allowance_rules`, `seniority_allowance_rules` |
 | Tài khoản và RBAC | `accounts`, `account_activation_tokens`, `refresh_tokens`, `permissions`, `roles`, `role_permissions`, `role_assignment_requests`, `account_role_assignments`, `account_permission_overrides` |
-| Nghỉ phép | `leave_requests` |
+| Nghỉ phép | `leave_requests`, `leave_entitlement_rules`, `employee_leave_entitlements` |
 | Lịch và chấm công | `company_holidays`, `work_shifts`, `attendance_records` |
 | Hồ sơ khấu trừ | `employee_payroll_profiles`, `employee_tax_dependents` |
 | Quy tắc thuế và bảo hiểm | `payroll_tax_rules`, `payroll_tax_brackets`, `payroll_insurance_rules` |
 | Tính lương | `payroll_periods`, `payslips`, `payslip_items` |
 
-Bảng kỹ thuật `employee_code_counters` không nằm trong con số 30 này. Tính cả nó và hai bảng
-archive ở mục 6.1, database runtime có 33 bảng.
+Bảng kỹ thuật `employee_code_counters` không nằm trong con số 32 này. Tính cả nó và hai bảng
+archive ở mục 6.1, database runtime có 35 bảng.
 
 Hai bảng `legacy_employee_compensation_archive` và `legacy_employee_request_archive`
 chỉ là snapshot kiểm toán được tạo tại V27. Chúng không thuộc mô hình nghiệp vụ đang hoạt động,
@@ -63,7 +63,7 @@ không có JPA entity/repository và không được ghi thêm sau migration.
 
 ### 1.3. Sơ đồ quan hệ tổng quát
 
-Sơ đồ có đủ 30 bảng nghiệp vụ và các thuộc tính nghiệp vụ chính. Hai bảng archive V27 không tham gia quan hệ runtime nên được mô tả riêng. Các cột kỹ thuật, người tạo/người duyệt và quan hệ kiểm toán được trình bày trong phần định nghĩa bảng bên dưới để sơ đồ dễ đọc. Chính sách thâm niên được áp dụng bằng thuật toán theo số năm và thời gian hiệu lực, không có khóa ngoại trực tiếp từ nhân viên. `company_holidays` đứng độc lập trong sơ đồ vì nó sửa lịch làm việc chung chứ không tham chiếu bản ghi nào.
+Sơ đồ có đủ 32 bảng nghiệp vụ và các thuộc tính nghiệp vụ chính. Hai bảng archive V27 không tham gia quan hệ runtime nên được mô tả riêng. Các cột kỹ thuật, người tạo/người duyệt và quan hệ kiểm toán được trình bày trong phần định nghĩa bảng bên dưới để sơ đồ dễ đọc. Chính sách thâm niên được áp dụng bằng thuật toán theo số năm và thời gian hiệu lực, không có khóa ngoại trực tiếp từ nhân viên. `company_holidays` đứng độc lập trong sơ đồ vì nó sửa lịch làm việc chung chứ không tham chiếu bản ghi nào.
 
 ```mermaid
 erDiagram
@@ -305,6 +305,27 @@ erDiagram
         varchar name
     }
 
+    LEAVE_ENTITLEMENT_RULES {
+        bigint id PK
+        date effective_from
+        date effective_to
+        integer base_days
+        integer seniority_block_years
+        integer seniority_bonus_days
+        text source_reference
+    }
+
+    EMPLOYEE_LEAVE_ENTITLEMENTS {
+        bigint id PK
+        bigint employee_id FK
+        smallint year
+        integer base_minutes
+        integer carried_over_minutes
+        integer adjustment_minutes
+        integer standard_day_minutes
+        bigint rule_id FK
+    }
+
     EMPLOYEE_PAYROLL_PROFILES {
         bigint id PK
         bigint employee_id FK
@@ -396,6 +417,8 @@ erDiagram
     ACCOUNT_ROLE_ASSIGNMENTS ||--o{ ACCOUNT_PERMISSION_OVERRIDES : account_role_assignment_id
     PERMISSIONS ||--o{ ACCOUNT_PERMISSION_OVERRIDES : permission_id
     EMPLOYEES ||--o{ LEAVE_REQUESTS : employee_id
+    EMPLOYEES ||--o{ EMPLOYEE_LEAVE_ENTITLEMENTS : employee_id
+    LEAVE_ENTITLEMENT_RULES |o--o{ EMPLOYEE_LEAVE_ENTITLEMENTS : rule_id
     EMPLOYEES ||--o{ ATTENDANCE_RECORDS : employee_id
     WORK_SHIFTS ||--o{ ATTENDANCE_RECORDS : shift_id
     LEAVE_REQUESTS |o--o{ ATTENDANCE_RECORDS : leave_request_id
@@ -847,6 +870,41 @@ dùng `compensation.read` / `compensation.manage`, không phải `salary.*` / `a
 > - `UNPAID` → `UNPAID`: không tính vào phút hưởng lương.
 > - `MATERNITY` → `SOCIAL_INSURANCE`: không tính lương doanh nghiệp theo phút; chế độ BHXH nằm ngoài bảng lương MVP.
 > - Nghỉ không phép không tạo `leave_requests` được duyệt; ngày công được đánh dấu `UNAUTHORIZED_ABSENCE`.
+
+### `leave_entitlement_rules` — Quy tắc cấp phép năm
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `effective_from` | DATE | NOT NULL | Ngày bắt đầu hiệu lực |
+| `effective_to` | DATE | | Ngày kết thúc, null là đang mở |
+| `base_days` | INTEGER | NOT NULL, CHECK > 0 | Số ngày phép cơ bản mỗi năm |
+| `seniority_block_years` | INTEGER | NOT NULL, CHECK > 0 | Số năm làm việc tạo thành một mốc thâm niên |
+| `seniority_bonus_days` | INTEGER | NOT NULL, CHECK >= 0 | Số ngày cộng thêm cho mỗi mốc đã đủ |
+| `source_reference` | TEXT | NOT NULL | Căn cứ pháp lý |
+
+> `EXCLUDE USING GIST` chặn hai bộ quy tắc có khoảng hiệu lực chồng nhau. Bộ nạp sẵn từ 01/01/2026 là 12 ngày cơ bản, cứ đủ 5 năm cộng 1 ngày, theo Bộ luật Lao động 2019 Điều 113 khoản 1 và Điều 114.
+
+### `employee_leave_entitlements` — Hạn mức phép năm của nhân viên
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `employee_id` | BIGINT | FK → employees, NOT NULL | Nhân viên |
+| `year` | SMALLINT | NOT NULL | Năm phép |
+| `base_minutes` | INTEGER | NOT NULL, CHECK >= 0 | Số phút tính theo quy tắc, snapshot tại thời điểm cấp |
+| `carried_over_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Số phút chuyển từ năm trước, do HR nhập |
+| `adjustment_minutes` | INTEGER | NOT NULL, DEFAULT 0 | Điều chỉnh tay, cộng hoặc trừ |
+| `adjustment_reason` | TEXT | | Lý do điều chỉnh |
+| `standard_day_minutes` | INTEGER | NOT NULL, CHECK > 0 | Số phút một ngày công, snapshot để quy đổi ngày ↔ phút |
+| `rule_id` | BIGINT | FK → leave_entitlement_rules | Quy tắc đã dùng để tính |
+| `created_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người tạo bản ghi |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Thời điểm tạo |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Thời điểm cập nhật |
+
+> `UNIQUE(employee_id, year)`.
+> `base_minutes` và `standard_day_minutes` là snapshot có chủ đích: đổi quy tắc hoặc đổi ca của nhân viên về sau không được âm thầm viết lại một năm đã cấp.
+> Bảng **không** lưu số phút đã dùng. Số đã dùng và đang chờ duyệt được tính trực tiếp từ `leave_requests` có `leave_type = ANNUAL`, nên không thể lệch với dữ liệu đơn thật.
 
 ### 6.1. Snapshot legacy chỉ đọc
 
@@ -1454,9 +1512,9 @@ Các chức năng ngoài phạm vi không được thêm bảng dự phòng vào
 
 ---
 
-## 15. Lịch sử migration V29–V34
+## 15. Lịch sử migration V29–V35
 
-Các mục trên đã mô tả schema sau V34. Bảng dưới đây chỉ ghi lại migration nào mang thay đổi nào,
+Các mục trên đã mô tả schema sau V35. Bảng dưới đây chỉ ghi lại migration nào mang thay đổi nào,
 dùng khi cần truy ngược một cột về migration sinh ra nó. Schema được mở rộng bằng migration mới,
 không sửa migration cũ:
 
@@ -1468,5 +1526,6 @@ không sửa migration cũ:
 | V32 | Giới hạn quy tắc nạp sẵn tới 31/12/2026; chặn trùng người phụ thuộc cùng thời gian. |
 | V33 | Lưu thêm căn cứ đóng BHTN sau trần vùng trong `payslips.unemployment_insurance_base`. |
 | V34 | `attendance_records.overtime_tax_exempt` do người duyệt xác nhận; `payslips.tax_exempt_overtime_pay` chụp lại phần tăng ca miễn thuế. |
+| V35 | `leave_entitlement_rules` và `employee_leave_entitlements` cấp hạn mức phép năm; trước đó nghỉ `ANNUAL` được duyệt không giới hạn. |
 
 Hồ sơ bảo hiểm và quy tắc thuế/bảo hiểm có ngày hiệu lực. Các phiếu trước V31 giữ số liệu cũ với khấu trừ bằng 0; tính lại cần dữ liệu mới. Xem [PAYROLL.md](../api/PAYROLL.md) để biết API, công thức, nguồn pháp lý và giới hạn nghiệp vụ.

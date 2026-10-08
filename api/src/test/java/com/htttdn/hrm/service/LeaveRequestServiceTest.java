@@ -36,6 +36,7 @@ class LeaveRequestServiceTest {
     @Mock private CurrentAccountProvider currentAccountProvider;
     @Mock private EmployeeAccessScopeService employeeAccessScopeService;
     @Mock private AttendanceService attendanceService;
+    @Mock private LeaveEntitlementService leaveEntitlementService;
 
     @Test
     void employeeCreatesOwnDraftUsingMinuteBasedPeriod() {
@@ -116,7 +117,8 @@ class LeaveRequestServiceTest {
             accountRepository,
             currentAccountProvider,
             employeeAccessScopeService,
-            attendanceService
+            attendanceService,
+            leaveEntitlementService
         );
     }
 }
