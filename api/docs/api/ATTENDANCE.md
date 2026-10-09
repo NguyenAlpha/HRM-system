@@ -51,6 +51,8 @@ Hạn mức tính theo quy tắc trong `leave_entitlement_rules`, bộ nạp s�
 
 Chỉ `ANNUAL` trừ vào số dư. `SICK`, `MATERNITY`, `UNPAID` và `OTHER` đi theo quy trình riêng và không ảnh hưởng hạn mức.
 
+Vì vậy cách trả lương của đơn **do server suy ra từ loại nghỉ**, không nhận từ client: `ANNUAL` → `EMPLOYER_PAID`, `SICK` và `MATERNITY` → `SOCIAL_INSURANCE`, `UNPAID` và `OTHER` → `UNPAID`. Nếu client gửi `salaryTreatment` khác giá trị suy ra, API trả `400` trừ khi người gọi có `request.manage`. Không có ràng buộc này thì nhân viên chỉ cần nộp đơn `OTHER` kèm `EMPLOYER_PAID` là được trả lương đủ mà không trừ ngày phép nào. HR vẫn ghi đè được cho các trường hợp như công ty trả lương mấy ngày ốm đầu tiên hoặc nghỉ việc riêng có lương theo Điều 115.
+
 Khi kiểm tra, các đơn `PENDING` khác được tính như đã tiêu. Nếu không làm vậy thì ba đơn cùng chờ duyệt sẽ cùng qua được kiểm tra rồi mới vượt hạn mức sau khi duyệt hết.
 
 Bảng hạn mức **không lưu số phút đã dùng**; số đã dùng và đang chờ được tính trực tiếp từ `leave_requests`, nên không thể lệch với đơn thật.
