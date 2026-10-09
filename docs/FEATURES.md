@@ -192,7 +192,7 @@ số tháng còn lại nếu vào làm giữa năm. Duyệt đơn vượt số d
 đơn `PENDING` khác được tính như đã tiêu nên nhiều đơn cùng chờ không thể cùng lọt qua. Số dư lưu
 bằng phút để khớp với chấm công và payroll; các loại nghỉ còn lại không trừ hạn mức.
 
-Loại nghỉ `ANNUAL`, `SICK`, `MATERNITY`, `UNPAID`, `OTHER`; cách trả lương `EMPLOYER_PAID`,
+Loại nghỉ `ANNUAL`, `SICK`, `MATERNITY`, `UNPAID`, `OTHER`. Cách trả lương do server suy ra từ loại nghỉ, chỉ `request.manage` ghi đè được: `EMPLOYER_PAID`,
 `SOCIAL_INSURANCE`, `UNPAID`. Duyệt đơn tự gắn số phút nghỉ vào bảng công: nghỉ có lương cộng
 vào phút được trả lương, nghỉ không lương và nghỉ do bảo hiểm chi trả thì không.
 

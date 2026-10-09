@@ -864,11 +864,14 @@ dùng `compensation.read` / `compensation.manage`, không phải `salary.*` / `a
 
 > Bảng này thay `employee_requests` chung chung. Nghỉ việc được HR cập nhật trực tiếp vào vòng đời nhân viên; bảng này chỉ quản lý nghỉ phép. V27 backfill lần cuối đơn nghỉ phép rồi xóa bảng cũ; toàn bộ dữ liệu nguồn, bao gồm lịch sử đơn nghỉ việc, được giữ tại `legacy_employee_request_archive`.
 >
-> Quy tắc mặc định:
+> `salary_treatment` **do server suy ra từ `leave_type`**, không nhận từ client. Người chỉ có
+> `request.self.create` gửi giá trị khác sẽ bị từ chối; chỉ `request.manage` mới ghi đè được.
 >
 > - `ANNUAL` → `EMPLOYER_PAID`: vẫn tính vào phút hưởng lương.
-> - `UNPAID` → `UNPAID`: không tính vào phút hưởng lương.
+> - `SICK` → `SOCIAL_INSURANCE`: chế độ ốm đau do BHXH chi trả.
 > - `MATERNITY` → `SOCIAL_INSURANCE`: không tính lương doanh nghiệp theo phút; chế độ BHXH nằm ngoài bảng lương MVP.
+> - `UNPAID` → `UNPAID`: không tính vào phút hưởng lương.
+> - `OTHER` → `UNPAID`: đây là nhóm gom nên để mặc định không lương; nếu để `EMPLOYER_PAID` thì mọi nhân viên có đường đi vòng qua hạn mức phép năm.
 > - Nghỉ không phép không tạo `leave_requests` được duyệt; ngày công được đánh dấu `UNAUTHORIZED_ABSENCE`.
 
 ### `leave_entitlement_rules` — Quy tắc cấp phép năm

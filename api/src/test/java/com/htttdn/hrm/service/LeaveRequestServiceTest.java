@@ -14,6 +14,7 @@ import com.htttdn.hrm.entity.LeaveRequest;
 import com.htttdn.hrm.entity.enums.LeaveRequestStatus;
 import com.htttdn.hrm.entity.enums.LeaveSalaryTreatment;
 import com.htttdn.hrm.entity.enums.LeaveType;
+import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
@@ -108,6 +109,86 @@ class LeaveRequestServiceTest {
         );
 
         assertTrue(exception.getMessage().contains("approved leave request"));
+    }
+
+    @Test
+    void salaryTreatmentFollowsTheLeaveTypeWhenTheRequesterPicksAnother() {
+        stubSelfServiceDraft();
+
+        var result = service().createDraft(new LeaveRequestService.CreateLeaveCommand(
+            1L, LeaveType.SICK, null,
+            Instant.parse("2026-01-05T01:00:00Z"), Instant.parse("2026-01-05T05:00:00Z"),
+            240, "Sick", null
+        ));
+
+        assertEquals(LeaveSalaryTreatment.SOCIAL_INSURANCE, result.salaryTreatment());
+    }
+
+    @Test
+    void otherLeaveDefaultsToUnpaidSoItCannotBypassTheAnnualQuota() {
+        stubSelfServiceDraft();
+
+        var result = service().createDraft(new LeaveRequestService.CreateLeaveCommand(
+            1L, LeaveType.OTHER, null,
+            Instant.parse("2026-01-05T01:00:00Z"), Instant.parse("2026-01-05T05:00:00Z"),
+            240, "Personal", null
+        ));
+
+        assertEquals(LeaveSalaryTreatment.UNPAID, result.salaryTreatment());
+    }
+
+    @Test
+    void requesterCannotMarkUnpaidLeaveAsEmployerPaid() {
+        Employee employee = Employee.builder().id(1L).build();
+        Account actor = Account.builder().id(9L).employee(employee).build();
+        when(employeeRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(employee));
+        when(currentAccountProvider.accountId()).thenReturn(9L);
+        when(accountRepository.findById(9L)).thenReturn(Optional.of(actor));
+        when(currentAccountProvider.hasAuthority("request.manage")).thenReturn(false);
+
+        assertThrows(BusinessException.class, () -> service().createDraft(
+            new LeaveRequestService.CreateLeaveCommand(
+                1L, LeaveType.UNPAID, LeaveSalaryTreatment.EMPLOYER_PAID,
+                Instant.parse("2026-01-05T01:00:00Z"), Instant.parse("2026-01-05T05:00:00Z"),
+                240, "Personal", null
+            )
+        ));
+    }
+
+    @Test
+    void hrMayOverrideTheTreatmentForCompanyPaidSickLeave() {
+        Employee employee = Employee.builder().id(1L).build();
+        Account actor = Account.builder().id(9L).employee(employee).build();
+        when(employeeRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(employee));
+        when(currentAccountProvider.accountId()).thenReturn(9L);
+        when(accountRepository.findById(9L)).thenReturn(Optional.of(actor));
+        when(currentAccountProvider.hasAuthority("request.manage")).thenReturn(true);
+        when(leaveRequestRepository.save(any(LeaveRequest.class))).thenAnswer(invocation -> {
+            LeaveRequest saved = invocation.getArgument(0);
+            saved.setId(4L);
+            return saved;
+        });
+
+        var result = service().createDraft(new LeaveRequestService.CreateLeaveCommand(
+            1L, LeaveType.SICK, LeaveSalaryTreatment.EMPLOYER_PAID,
+            Instant.parse("2026-01-05T01:00:00Z"), Instant.parse("2026-01-05T05:00:00Z"),
+            240, "Company pays the first days", null
+        ));
+
+        assertEquals(LeaveSalaryTreatment.EMPLOYER_PAID, result.salaryTreatment());
+    }
+
+    private void stubSelfServiceDraft() {
+        Employee employee = Employee.builder().id(1L).build();
+        Account actor = Account.builder().id(9L).employee(employee).build();
+        when(employeeRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(employee));
+        when(currentAccountProvider.accountId()).thenReturn(9L);
+        when(accountRepository.findById(9L)).thenReturn(Optional.of(actor));
+        when(leaveRequestRepository.save(any(LeaveRequest.class))).thenAnswer(invocation -> {
+            LeaveRequest saved = invocation.getArgument(0);
+            saved.setId(3L);
+            return saved;
+        });
     }
 
     private LeaveRequestService service() {

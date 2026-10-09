@@ -69,7 +69,7 @@ public class LeaveRequestService {
         LeaveRequest request = LeaveRequest.builder()
             .employee(employee)
             .leaveType(command.leaveType())
-            .salaryTreatment(command.salaryTreatment())
+            .salaryTreatment(resolveSalaryTreatment(command))
             .startAt(command.startAt())
             .endAt(command.endAt())
             .requestedMinutes(command.requestedMinutes())
@@ -183,9 +183,6 @@ public class LeaveRequestService {
         if (command.leaveType() == null) {
             throw validation("leaveType is required", "leaveType");
         }
-        if (command.salaryTreatment() == null) {
-            throw validation("salaryTreatment is required", "salaryTreatment");
-        }
         if (command.startAt() == null) {
             throw validation("startAt is required", "startAt");
         }
@@ -198,6 +195,26 @@ public class LeaveRequestService {
         if (command.reason() == null || command.reason().isBlank()) {
             throw validation("reason is required", "reason");
         }
+    }
+
+    /**
+     * The payroll consequence of a leave request follows its type, not what the client sent.
+     * Without this an employee could file SICK or OTHER leave marked EMPLOYER_PAID, be paid in
+     * full, and never touch the annual quota, which only inspects ANNUAL.
+     */
+    private LeaveSalaryTreatment resolveSalaryTreatment(CreateLeaveCommand command) {
+        LeaveSalaryTreatment derived = command.leaveType().defaultSalaryTreatment();
+        if (command.salaryTreatment() == null || command.salaryTreatment() == derived) {
+            return derived;
+        }
+        if (!currentAccountProvider.hasAuthority(REQUEST_MANAGE)) {
+            throw validation(
+                "Leave of type %s is treated as %s; only request.manage may choose another treatment"
+                    .formatted(command.leaveType(), derived),
+                "salaryTreatment"
+            );
+        }
+        return command.salaryTreatment();
     }
 
     private void review(
