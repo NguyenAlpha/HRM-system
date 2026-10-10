@@ -3,7 +3,7 @@
 
 CREATE TABLE employees (
     id BIGSERIAL PRIMARY KEY,
-    employee_code VARCHAR(30) NOT NULL UNIQUE,
+    employee_code VARCHAR(30) NOT NULL,
     full_name VARCHAR(200) NOT NULL,
     date_of_birth DATE,
     gender VARCHAR(20),
@@ -13,7 +13,7 @@ CREATE TABLE employees (
     graduation_year SMALLINT,
     national_id VARCHAR(30) UNIQUE,
     personal_email VARCHAR(100),
-    work_email VARCHAR(100) UNIQUE,
+    work_email VARCHAR(100),
     phone VARCHAR(20),
     address TEXT,
     tax_code VARCHAR(30),
@@ -44,6 +44,7 @@ CREATE TABLE employees (
 CREATE INDEX idx_employees_status ON employees (employment_status) WHERE deleted_at IS NULL;
 
 -- Employee identity values used for account provisioning must be unique regardless of letter case.
+-- Unique theo LOWER(...) đã bao hàm unique phân biệt hoa thường nên không khai báo UNIQUE trên cột.
 CREATE UNIQUE INDEX uq_employees_employee_code_lower
     ON employees (LOWER(employee_code));
 
@@ -74,7 +75,7 @@ CREATE TABLE accounts (
     id BIGSERIAL PRIMARY KEY,
     employee_id BIGINT UNIQUE REFERENCES employees (id),
     username VARCHAR(50) NOT NULL UNIQUE,
-    email VARCHAR(100) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL,
     password_hash VARCHAR(255),
     status VARCHAR(20) NOT NULL,
     failed_login_count INTEGER NOT NULL DEFAULT 0,
@@ -87,6 +88,7 @@ CREATE TABLE accounts (
         CHECK (status = 'PENDING' OR password_hash IS NOT NULL)
 );
 
+-- Unique theo LOWER(email), tương tự employee_code và work_email.
 CREATE UNIQUE INDEX uq_accounts_email_lower
     ON accounts (LOWER(email));
 

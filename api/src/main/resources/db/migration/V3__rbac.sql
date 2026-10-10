@@ -105,8 +105,6 @@ CREATE TABLE account_permission_overrides (
     revoked_at TIMESTAMPTZ,
     revocation_reason TEXT,
     CONSTRAINT chk_account_permission_overrides_effect CHECK (effect IN ('GRANT', 'REVOKE')),
-    CONSTRAINT chk_account_permission_override_period
-        CHECK (effective_to IS NULL OR effective_to >= effective_from),
     CONSTRAINT chk_permission_override_period
         CHECK (effective_to IS NULL OR effective_to >= effective_from),
     CONSTRAINT chk_permission_override_reason
@@ -154,7 +152,7 @@ CREATE TABLE role_assignment_requests (
     cancelled_at TIMESTAMPTZ,
     cancellation_reason TEXT,
     account_role_assignment_id BIGINT UNIQUE REFERENCES account_role_assignments (id),
-    updated_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT chk_role_assignment_requests_scope CHECK (
         (scope_type IN ('SELF', 'COMPANY') AND organization_unit_id IS NULL AND work_location_id IS NULL)
         OR (scope_type = 'ORG_UNIT' AND organization_unit_id IS NOT NULL AND work_location_id IS NULL)

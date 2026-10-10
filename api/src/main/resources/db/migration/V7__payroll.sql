@@ -70,6 +70,20 @@ CREATE TABLE payroll_insurance_rules (
     region_4_minimum NUMERIC(15,2) NOT NULL,
     source_reference TEXT NOT NULL,
     CONSTRAINT chk_payroll_insurance_rule_dates CHECK (effective_to IS NULL OR effective_to >= effective_from),
+    -- Quy tắc được nạp bằng migration, không qua API, nên database là nơi chặn tỷ lệ hoặc trần nhập sai.
+    CONSTRAINT chk_payroll_insurance_rule_rates CHECK (
+        social_rate BETWEEN 0 AND 1
+        AND health_rate BETWEEN 0 AND 1
+        AND unemployment_rate BETWEEN 0 AND 1
+    ),
+    CONSTRAINT chk_payroll_insurance_rule_caps CHECK (
+        social_health_cap > 0
+        AND unemployment_cap_multiplier > 0
+        AND region_1_minimum > 0
+        AND region_2_minimum > 0
+        AND region_3_minimum > 0
+        AND region_4_minimum > 0
+    ),
     CONSTRAINT excl_payroll_insurance_rules_overlap EXCLUDE USING GIST
         (DATERANGE(effective_from, effective_to + 1, '[)') WITH &&)
 );
@@ -158,45 +172,6 @@ CREATE TABLE payslips (
 
 CREATE INDEX idx_payslips_employee_period ON payslips (employee_id, payroll_period_id);
 
-CREATE FUNCTION complete_payslip_snapshot()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-AS $$
-BEGIN
-    IF NEW.position_snapshot IS NULL OR BTRIM(NEW.position_snapshot) = '' THEN
-        SELECT position.title
-        INTO NEW.position_snapshot
-        FROM payroll_periods period
-        JOIN employee_assignments assignment
-          ON assignment.employee_id = NEW.employee_id
-         AND assignment.effective_from <= period.period_end
-         AND (assignment.effective_to IS NULL OR assignment.effective_to >= period.period_end)
-        JOIN job_positions position ON position.id = assignment.position_id
-        WHERE period.id = NEW.payroll_period_id
-        ORDER BY assignment.is_primary DESC, assignment.effective_from DESC
-        LIMIT 1;
-
-        NEW.position_snapshot := COALESCE(NEW.position_snapshot, 'Chưa xác định');
-    END IF;
-
-    -- Compatibility for the current API, which still supplies one allowance total.
-    IF NEW.allowance_pay <> NEW.position_allowance_pay + NEW.seniority_allowance_pay THEN
-        IF NEW.position_allowance_pay = 0 AND NEW.seniority_allowance_pay = 0 THEN
-            NEW.position_allowance_pay := NEW.allowance_pay;
-        ELSE
-            NEW.allowance_pay := NEW.position_allowance_pay + NEW.seniority_allowance_pay;
-        END IF;
-    END IF;
-
-    RETURN NEW;
-END;
-$$;
-
-CREATE TRIGGER trg_complete_payslip_snapshot
-BEFORE INSERT OR UPDATE ON payslips
-FOR EACH ROW
-EXECUTE FUNCTION complete_payslip_snapshot();
-
 CREATE TABLE payslip_items (
     id BIGSERIAL PRIMARY KEY,
     payslip_id BIGINT NOT NULL REFERENCES payslips (id),
@@ -219,20 +194,3 @@ CREATE TABLE payslip_items (
 );
 
 CREATE INDEX idx_payslip_items_payslip ON payslip_items (payslip_id);
-
-CREATE FUNCTION complete_payslip_item_snapshot()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-AS $$
-BEGIN
-    IF NEW.component_code IS NULL OR BTRIM(NEW.component_code) = '' THEN
-        NEW.component_code := NEW.component_type;
-    END IF;
-    RETURN NEW;
-END;
-$$;
-
-CREATE TRIGGER trg_complete_payslip_item_snapshot
-BEFORE INSERT OR UPDATE OF component_type, component_code ON payslip_items
-FOR EACH ROW
-EXECUTE FUNCTION complete_payslip_item_snapshot();

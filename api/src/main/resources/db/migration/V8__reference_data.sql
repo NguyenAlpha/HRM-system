@@ -1,6 +1,6 @@
 -- Dữ liệu pháp lý dùng chung cho mọi môi trường: thuế TNCN, bảo hiểm bắt buộc và phép năm.
--- Mỗi quy tắc có khoảng hiệu lực; năm/chính sách mới phải được thêm bằng migration mới
--- sau khi đã rà soát, không sửa file này.
+-- Mỗi quy tắc có khoảng hiệu lực; năm/chính sách mới chỉ được thêm sau khi đã rà soát nguồn
+-- (quy ước sửa file hay thêm migration: xem mục 15 của DATABASE_SCHEMA.md).
 
 -- A later tax year needs its own reviewed policy before payroll can be calculated.
 INSERT INTO payroll_tax_rules(effective_from, effective_to, personal_deduction, dependent_deduction, source_reference)
