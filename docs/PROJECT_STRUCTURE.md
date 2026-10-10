@@ -234,7 +234,9 @@ apps/web/tsconfig.tsbuildinfo
 - `apps/web/node_modules/` chứa dependencies cài bằng npm.
 - `apps/web/.next/` chứa output build của Next.js.
 - `.idea/` chứa cấu hình IntelliJ IDEA của từng máy.
-- `apps/web/next-env.d.ts` và `apps/web/AGENTS.md` do Next.js tự sinh lại khi chạy `next dev`.
+- `apps/web/next-env.d.ts` do Next.js tự sinh lại khi chạy `next dev`, `next build` hoặc `npm run typecheck`
+  (script này chạy `next typegen` trước) và nằm trong `.gitignore`.
+- `apps/web/AGENTS.md` do Next.js tự sinh lại khi chạy `next dev`.
 
 ## 7. Tài liệu cấp dự án
 
