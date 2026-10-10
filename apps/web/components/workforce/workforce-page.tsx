@@ -35,6 +35,21 @@ type PayrollProfile = { id: number; effectiveFrom: string; effectiveTo: string |
   socialInsurance: boolean; healthInsurance: boolean; unemploymentInsurance: boolean
   insuranceSalary: number; wageRegion: number }
 type TaxDependent = { id: number; fullName: string; effectiveFrom: string; effectiveTo: string | null }
+type LeaveBalance = {
+  year: number; grantedMinutes: number; carriedOverMinutes: number; adjustmentMinutes: number
+  adjustmentReason: string | null; standardDayMinutes: number
+  usedMinutes: number; pendingMinutes: number; remainingMinutes: number
+}
+
+// Mirrors LeaveType.defaultSalaryTreatment() on the server, which rejects any other value
+// unless the caller holds request.manage.
+const DERIVED_TREATMENT: Record<string, string> = {
+  ANNUAL: "EMPLOYER_PAID", SICK: "SOCIAL_INSURANCE", MATERNITY: "SOCIAL_INSURANCE", UNPAID: "UNPAID", OTHER: "UNPAID",
+}
+const TREATMENT_LABELS: Record<string, string> = {
+  EMPLOYER_PAID: "Công ty trả lương", SOCIAL_INSURANCE: "Bảo hiểm xã hội chi trả", UNPAID: "Không lương",
+}
+const toDays = (minutes: number, dayMinutes: number) => dayMinutes > 0 ? Number((minutes / dayMinutes).toFixed(2)) : 0
 
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date())
 const money = (amount: number) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount)
@@ -79,6 +94,10 @@ export function WorkforcePage({ section }: { section: Section }) {
   const [leaveReason, setLeaveReason] = useState("")
   const [leaveType, setLeaveType] = useState("ANNUAL")
   const [leaveTreatment, setLeaveTreatment] = useState("EMPLOYER_PAID")
+  const [balance, setBalance] = useState<LeaveBalance | null>(null)
+  const [adjustmentDays, setAdjustmentDays] = useState("0")
+  const [adjustmentReason, setAdjustmentReason] = useState("")
+  const [carriedOverDays, setCarriedOverDays] = useState("0")
   const [holidayDate, setHolidayDate] = useState("")
   const [holidayName, setHolidayName] = useState("")
 
@@ -115,6 +134,7 @@ export function WorkforcePage({ section }: { section: Section }) {
   const canReadPayslip = permissions.has("payroll.self.read") || canReadPeriods
   const canReadAttendance = permissions.has("attendance.self.read") || permissions.has("attendance.read")
   const canReadLeave = permissions.has("request.self.read") || permissions.has("request.read")
+  const canManageLeave = permissions.has("request.manage")
   const canUseSection = section === "attendance" ? canReadAttendance || canManageAttendance
     : section === "leave" ? canReadLeave || canApproveLeave || permissions.has("request.self.create")
       : canReadPayslip || canCalculatePayroll || canReadCompensation || canManageCompensation
@@ -138,6 +158,10 @@ export function WorkforcePage({ section }: { section: Section }) {
         if (id > 0 && canReadLeave) {
           const result = await api<Paged<Leave>>(`leave-requests/employees/${id}?size=100`)
           setLeaves(result.content)
+          const loaded = await api<LeaveBalance>(`leave-entitlements/employees/${id}?year=${month.slice(0, 4)}`)
+          setBalance(loaded)
+          setAdjustmentDays(String(toDays(loaded.adjustmentMinutes, loaded.standardDayMinutes)))
+          setCarriedOverDays(String(toDays(loaded.carriedOverMinutes, loaded.standardDayMinutes)))
         }
         if (canApproveLeave) {
           const result = await api<Paged<Leave>>("leave-requests/pending?size=100")
@@ -262,6 +286,40 @@ export function WorkforcePage({ section }: { section: Section }) {
           </div>}
         </>}
         {section === "leave" && <>
+          {balance && <div className="space-y-3 rounded border p-4">
+            <h2 className="text-xl font-semibold">Phép năm {balance.year}</h2>
+            <dl className="grid gap-3 text-sm sm:grid-cols-4">
+              <div><dt className="text-muted-foreground">Được cấp</dt><dd className="text-lg font-semibold">{toDays(balance.grantedMinutes, balance.standardDayMinutes)} ngày</dd></div>
+              <div><dt className="text-muted-foreground">Đã dùng</dt><dd className="text-lg font-semibold">{toDays(balance.usedMinutes, balance.standardDayMinutes)} ngày</dd></div>
+              <div><dt className="text-muted-foreground">Đang chờ duyệt</dt><dd className="text-lg font-semibold">{toDays(balance.pendingMinutes, balance.standardDayMinutes)} ngày</dd></div>
+              <div><dt className="text-muted-foreground">Còn lại</dt><dd className="text-lg font-semibold">{toDays(balance.remainingMinutes, balance.standardDayMinutes)} ngày</dd></div>
+            </dl>
+            <p className="text-xs text-muted-foreground">
+              Một ngày = {balance.standardDayMinutes} phút theo ca làm việc. Đã gồm {toDays(balance.carriedOverMinutes, balance.standardDayMinutes)} ngày chuyển từ năm trước
+              và điều chỉnh {toDays(balance.adjustmentMinutes, balance.standardDayMinutes)} ngày{balance.adjustmentReason ? ` (${balance.adjustmentReason})` : ""}.
+            </p>
+            {canManageLeave && <div className="grid gap-3 border-t pt-3 sm:grid-cols-2">
+              <form className="grid gap-2" onSubmit={(event) => {
+                event.preventDefault()
+                void act("Đã cập nhật điều chỉnh phép năm", () => api(`leave-entitlements/employees/${id}/adjustment?year=${balance.year}`, "PUT", {
+                  adjustmentMinutes: Math.round(Number(adjustmentDays) * balance.standardDayMinutes), reason: adjustmentReason,
+                }))
+              }}>
+                <label className="grid gap-1 text-sm">Tổng điều chỉnh (ngày, có thể âm)<input required type="number" step="0.5" className="rounded border p-2" value={adjustmentDays} onChange={(event) => setAdjustmentDays(event.target.value)} /></label>
+                <label className="grid gap-1 text-sm">Lý do<input required className="rounded border p-2" value={adjustmentReason} onChange={(event) => setAdjustmentReason(event.target.value)} /></label>
+                <button className="rounded border px-4 py-2" disabled={busy || !id}>Lưu điều chỉnh</button>
+              </form>
+              <form className="grid content-start gap-2" onSubmit={(event) => {
+                event.preventDefault()
+                void act("Đã cập nhật phép chuyển từ năm trước", () => api(`leave-entitlements/employees/${id}/carried-over?year=${balance.year}`, "PUT", {
+                  carriedOverMinutes: Math.round(Number(carriedOverDays) * balance.standardDayMinutes),
+                }))
+              }}>
+                <label className="grid gap-1 text-sm">Chuyển từ năm trước (ngày)<input required type="number" min="0" step="0.5" className="rounded border p-2" value={carriedOverDays} onChange={(event) => setCarriedOverDays(event.target.value)} /></label>
+                <button className="rounded border px-4 py-2" disabled={busy || !id}>Lưu phép chuyển năm</button>
+              </form>
+            </div>}
+          </div>}
           {canApproveLeave && <div className="space-y-2"><h2 className="text-xl font-semibold">Đơn chờ duyệt</h2>
             {pendingLeaves.map((leave) => <div key={leave.id} className="rounded border p-3 text-sm">
               <strong>Đơn #{leave.id} · Nhân viên #{leave.employeeId}</strong>
@@ -275,7 +333,7 @@ export function WorkforcePage({ section }: { section: Section }) {
           {permissions.has("request.self.create") && <form className="grid gap-3 rounded border p-4 sm:grid-cols-2" onSubmit={(event) => {
             event.preventDefault()
             void act("Đã tạo đơn nháp", () => api("leave-requests", "POST", {
-              employeeId: id, leaveType, salaryTreatment: leaveTreatment,
+              employeeId: id, leaveType, ...(canManageLeave ? { salaryTreatment: leaveTreatment } : {}),
               startAt: new Date(leaveStart).toISOString(), endAt: new Date(leaveEnd).toISOString(),
               requestedMinutes: Number(leaveMinutes), reason: leaveReason,
             }))
@@ -283,8 +341,10 @@ export function WorkforcePage({ section }: { section: Section }) {
             <h2 className="sm:col-span-2 text-xl font-semibold">Tạo đơn nghỉ</h2>
             <label className="grid gap-1 text-sm">Bắt đầu<input required type="datetime-local" className="rounded border p-2" value={leaveStart} onChange={(event) => setLeaveStart(event.target.value)} /></label>
             <label className="grid gap-1 text-sm">Kết thúc<input required type="datetime-local" className="rounded border p-2" value={leaveEnd} onChange={(event) => setLeaveEnd(event.target.value)} /></label>
-            <label className="grid gap-1 text-sm">Loại nghỉ<select className="rounded border p-2" value={leaveType} onChange={(event) => setLeaveType(event.target.value)}><option value="ANNUAL">Phép năm</option><option value="SICK">Ốm</option><option value="MATERNITY">Thai sản</option><option value="UNPAID">Không lương</option><option value="OTHER">Khác</option></select></label>
-            <label className="grid gap-1 text-sm">Chế độ lương<select className="rounded border p-2" value={leaveTreatment} onChange={(event) => setLeaveTreatment(event.target.value)}><option value="EMPLOYER_PAID">Công ty trả lương</option><option value="UNPAID">Không lương</option><option value="SOCIAL_INSURANCE">Bảo hiểm xã hội</option></select></label>
+            <label className="grid gap-1 text-sm">Loại nghỉ<select className="rounded border p-2" value={leaveType} onChange={(event) => { setLeaveType(event.target.value); setLeaveTreatment(DERIVED_TREATMENT[event.target.value]) }}><option value="ANNUAL">Phép năm</option><option value="SICK">Ốm</option><option value="MATERNITY">Thai sản</option><option value="UNPAID">Không lương</option><option value="OTHER">Khác</option></select></label>
+            {canManageLeave
+              ? <label className="grid gap-1 text-sm">Chế độ lương<select className="rounded border p-2" value={leaveTreatment} onChange={(event) => setLeaveTreatment(event.target.value)}><option value="EMPLOYER_PAID">Công ty trả lương</option><option value="UNPAID">Không lương</option><option value="SOCIAL_INSURANCE">Bảo hiểm xã hội</option></select></label>
+              : <div className="grid gap-1 text-sm">Chế độ lương<span className="rounded border bg-muted p-2">{TREATMENT_LABELS[DERIVED_TREATMENT[leaveType]]}</span></div>}
             <label className="grid gap-1 text-sm">Số phút nghỉ<input required type="number" min="1" className="rounded border p-2" value={leaveMinutes} onChange={(event) => setLeaveMinutes(event.target.value)} /></label>
             <label className="grid gap-1 text-sm">Lý do<input required className="rounded border p-2" value={leaveReason} onChange={(event) => setLeaveReason(event.target.value)} /></label>
             <button className="rounded border px-4 py-2 sm:col-span-2" disabled={busy || !id}>Lưu đơn nháp</button>
