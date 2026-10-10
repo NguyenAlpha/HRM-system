@@ -743,7 +743,7 @@ Giá trị `grant_policy`: `AUTO` cấp ngay khi account được tạo, `HR_ASS
 | `cancelled_at` | TIMESTAMPTZ | | Thời điểm hủy |
 | `cancellation_reason` | TEXT | | Lý do hủy |
 | `account_role_assignment_id` | BIGINT | UNIQUE, FK → account_role_assignments | Assignment sinh ra khi duyệt |
-| `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật cuối |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Thời điểm cập nhật cuối |
 
 > Không cho phép hai request `PENDING` cùng tài khoản, vai trò, phạm vi và khoảng hiệu lực chồng lấn.
 
@@ -1519,6 +1519,7 @@ giữ nguyên, chỉ bỏ hai bảng archive legacy không còn dùng. Database 
 | `V10__drop_payslip_snapshot_triggers.sql` | Bỏ trigger tự điền snapshot của `payslips`/`payslip_items`; service phải tự ghi đủ | 8 |
 | `V11__drop_redundant_unique_indexes.sql` | Chỉ giữ unique theo `LOWER` cho mã nhân viên, email công việc, email tài khoản; bỏ index chấm công trùng unique | 3, 5, 11 |
 | `V12__check_payroll_insurance_rule_values.sql` | CHECK tỷ lệ 0–1 và mức trần/lương tối thiểu vùng dương cho `payroll_insurance_rules` | 8.4 |
+| `V13__default_role_assignment_request_updated_at.sql` | `role_assignment_requests.updated_at` mặc định `now()` như các bảng khác | 5 |
 
 Migration chỉ chứa dữ liệu pháp lý dùng chung. Danh mục permission, role, mapping, cơ cấu tổ chức,
 ca làm việc và tài khoản mẫu do các seeder trong `api/src/main/java/com/htttdn/hrm/config/seed/` tạo.
