@@ -516,7 +516,7 @@ Bộ đếm bắt đầu rỗng; mỗi tiền tố (`GD`, `NS`, `KT`, `VH`, `CN`
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
-| `employee_code` | VARCHAR(30) | NOT NULL, UNIQUE | Mã nhân viên do server cấp, không tái sử dụng |
+| `employee_code` | VARCHAR(30) | NOT NULL, UNIQUE theo `LOWER` | Mã nhân viên do server cấp, không tái sử dụng |
 | `full_name` | VARCHAR(200) | NOT NULL | Họ tên |
 | `date_of_birth` | DATE | | Ngày sinh |
 | `gender` | VARCHAR(20) | | `MALE` / `FEMALE` / `OTHER` / `UNDISCLOSED` |
@@ -526,7 +526,7 @@ Bộ đếm bắt đầu rỗng; mỗi tiền tố (`GD`, `NS`, `KT`, `VH`, `CN`
 | `graduation_year` | SMALLINT | | Năm tốt nghiệp |
 | `national_id` | VARCHAR(30) | UNIQUE | CCCD/hộ chiếu |
 | `personal_email` | VARCHAR(100) | | Email cá nhân |
-| `work_email` | VARCHAR(100) | UNIQUE | Email công việc |
+| `work_email` | VARCHAR(100) | UNIQUE theo `LOWER` | Email công việc |
 | `phone` | VARCHAR(20) | | Số điện thoại |
 | `address` | TEXT | | Địa chỉ liên hệ |
 | `tax_code` | VARCHAR(30) | | Mã số thuế cá nhân |
@@ -647,7 +647,7 @@ Ví dụ dữ liệu:
 | `id` | BIGSERIAL | PK | Khóa chính |
 | `employee_id` | BIGINT | FK → employees, UNIQUE | Hồ sơ liên kết; null chỉ dành cho bootstrap admin |
 | `username` | VARCHAR(50) | NOT NULL, UNIQUE | Tên đăng nhập |
-| `email` | VARCHAR(100) | NOT NULL, UNIQUE | Email đăng nhập |
+| `email` | VARCHAR(100) | NOT NULL, UNIQUE theo `LOWER` | Email đăng nhập |
 | `password_hash` | VARCHAR(255) | nullable khi `PENDING` | Mật khẩu đã hash |
 | `status` | VARCHAR(20) | NOT NULL | `PENDING` / `ACTIVE` / `LOCKED` / `DISABLED` |
 | `failed_login_count` | INTEGER | NOT NULL, DEFAULT 0 | Số lần đăng nhập sai liên tiếp |
@@ -1322,9 +1322,6 @@ CREATE INDEX idx_permission_overrides_assignment
 CREATE INDEX idx_leave_requests_employee_status
   ON leave_requests (employee_id, status, start_at);
 
-CREATE INDEX idx_attendance_employee_date
-  ON attendance_records (employee_id, work_date DESC);
-
 CREATE INDEX idx_payslips_employee_period
   ON payslips (employee_id, payroll_period_id);
 
@@ -1520,6 +1517,7 @@ giữ nguyên, chỉ bỏ hai bảng archive legacy không còn dùng. Database 
 | `V8__reference_data.sql` | Quy tắc thuế TNCN, bảo hiểm năm 2026 và quy tắc phép năm | 6, 8.4 |
 | `V9__drop_duplicate_override_period_check.sql` | Bỏ CHECK kỳ hiệu lực bị trùng trên `account_permission_overrides` | 5 |
 | `V10__drop_payslip_snapshot_triggers.sql` | Bỏ trigger tự điền snapshot của `payslips`/`payslip_items`; service phải tự ghi đủ | 8 |
+| `V11__drop_redundant_unique_indexes.sql` | Chỉ giữ unique theo `LOWER` cho mã nhân viên, email công việc, email tài khoản; bỏ index chấm công trùng unique | 3, 5, 11 |
 
 Migration chỉ chứa dữ liệu pháp lý dùng chung. Danh mục permission, role, mapping, cơ cấu tổ chức,
 ca làm việc và tài khoản mẫu do các seeder trong `api/src/main/java/com/htttdn/hrm/config/seed/` tạo.
