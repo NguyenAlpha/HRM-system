@@ -27,7 +27,7 @@ Web hiện cung cấp hai khu vực độc lập:
 | `/employees`, `/employees/{employeeId}` | Hồ sơ, phân công, lương và vòng đời nhân viên |
 | `/organization` | Đơn vị tổ chức, địa điểm, vị trí và ca làm |
 | `/attendance` | Chấm công, chuẩn bị tháng, xử lý dữ liệu thiếu và tăng ca |
-| `/leave-requests` | Đơn nghỉ và quy trình phê duyệt |
+| `/leave-requests` | Đơn nghỉ, quy trình phê duyệt, số dư phép năm và điều chỉnh hạn mức của HR |
 | `/payslips` | Hồ sơ bảo hiểm, người phụ thuộc, kỳ lương và phiếu lương |
 | `/reports/workforce` | Báo cáo nhân sự, thâm niên và lương cơ bản |
 | `/rbac`, `/role-grant`, `/role-requests` | Quản lý quyền nghiệp vụ theo permission được cấp |

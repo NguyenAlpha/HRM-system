@@ -407,6 +407,8 @@ export async function handleWorkforceRequest(request: Request, segments: string[
     { pattern: /^leave-requests\/employees\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^leave-requests\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^leave-requests\/[1-9]\d*\/(?:submit|cancel|approve|reject)$/, methods: ["POST"] },
+    { pattern: /^leave-entitlements\/employees\/[1-9]\d*$/, methods: ["GET"] },
+    { pattern: /^leave-entitlements\/employees\/[1-9]\d*\/(?:adjustment|carried-over)$/, methods: ["PUT"] },
     { pattern: /^payroll\/periods$/, methods: ["GET", "POST"] },
     { pattern: /^payroll\/periods\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^payroll\/periods\/[1-9]\d*\/(?:calculate|approve|mark-paid|lock|cancel)$/, methods: ["POST"] },
