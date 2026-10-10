@@ -1288,6 +1288,10 @@ Nghỉ phép năm có lương 480 phút vẫn được cộng vào `payable_minu
 
 ## 11. Indexes quan trọng
 
+Danh sách đầy đủ các index thường (`idx_*`). Unique index (mã danh mục theo `deleted_at IS NULL`,
+email/mã nhân viên theo `LOWER`, token kích hoạt đang mở) được ghi ở định nghĩa từng bảng; các
+ràng buộc `UNIQUE` và `EXCLUDE USING GIST` tự tạo index riêng.
+
 ```sql
 CREATE INDEX idx_locations_parent
   ON work_locations (parent_location_id) WHERE deleted_at IS NULL;
@@ -1301,8 +1305,11 @@ CREATE INDEX idx_employees_status
 CREATE INDEX idx_assignments_employee_period
   ON employee_assignments (employee_id, effective_from, effective_to);
 
-CREATE INDEX idx_assignments_position_period
-  ON employee_assignments (position_id, effective_from, effective_to);
+CREATE INDEX idx_assignments_location_period
+  ON employee_assignments (work_location_id, effective_from, effective_to);
+
+CREATE INDEX idx_assignments_unit_period
+  ON employee_assignments (organization_unit_id, effective_from, effective_to);
 
 CREATE INDEX idx_salary_history_employee_period
   ON employee_salary_history (employee_id, effective_from, effective_to);
@@ -1313,26 +1320,56 @@ CREATE INDEX idx_position_allowance_period
 CREATE INDEX idx_seniority_rules_period
   ON seniority_allowance_rules (effective_from, effective_to, min_years, max_years);
 
+CREATE INDEX idx_refresh_tokens_account_id
+  ON refresh_tokens (account_id);
+
+CREATE INDEX idx_refresh_tokens_expires_at
+  ON refresh_tokens (expires_at);
+
+CREATE INDEX idx_account_activation_tokens_account_id
+  ON account_activation_tokens (account_id);
+
+CREATE INDEX idx_account_activation_tokens_expires_at
+  ON account_activation_tokens (expires_at);
+
 CREATE INDEX idx_role_assignments_account_period
   ON account_role_assignments (account_id, effective_from, effective_to);
+
+CREATE INDEX idx_role_assignments_role_active
+  ON account_role_assignments (role_id) WHERE revoked_at IS NULL;
 
 CREATE INDEX idx_permission_overrides_assignment
   ON account_permission_overrides (account_role_assignment_id, effective_from, effective_to);
 
+CREATE INDEX idx_permission_overrides_permission
+  ON account_permission_overrides (permission_id, effective_from, effective_to) WHERE revoked_at IS NULL;
+
+CREATE INDEX idx_role_assignment_requests_account
+  ON role_assignment_requests (account_id, requested_at DESC);
+
+CREATE INDEX idx_role_assignment_requests_requester
+  ON role_assignment_requests (requested_by_account_id, requested_at DESC);
+
+CREATE INDEX idx_role_assignment_requests_status_requested
+  ON role_assignment_requests (status, requested_at DESC);
+
 CREATE INDEX idx_leave_requests_employee_status
   ON leave_requests (employee_id, status, start_at);
 
-CREATE INDEX idx_payslips_employee_period
-  ON payslips (employee_id, payroll_period_id);
-
-CREATE INDEX idx_payslip_items_payslip
-  ON payslip_items (payslip_id);
+CREATE INDEX idx_employee_leave_entitlements_year
+  ON employee_leave_entitlements (year, employee_id);
 
 CREATE INDEX idx_employee_payroll_profiles_effective
   ON employee_payroll_profiles (employee_id, effective_from, effective_to);
 
 CREATE INDEX idx_employee_tax_dependents_effective
   ON employee_tax_dependents (employee_id, effective_from, effective_to);
+
+CREATE INDEX idx_payslips_employee_period
+  ON payslips (employee_id, payroll_period_id);
+
+CREATE INDEX idx_payslip_items_payslip
+  ON payslip_items (payslip_id);
 ```
 
 ---
