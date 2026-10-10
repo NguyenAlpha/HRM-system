@@ -1519,6 +1519,7 @@ giữ nguyên, chỉ bỏ hai bảng archive legacy không còn dùng. Database 
 | `V7__payroll.sql` | Hồ sơ khấu trừ, quy tắc thuế/bảo hiểm, `payroll_periods`, `payslips`, `payslip_items` và trigger snapshot | 8 |
 | `V8__reference_data.sql` | Quy tắc thuế TNCN, bảo hiểm năm 2026 và quy tắc phép năm | 6, 8.4 |
 | `V9__drop_duplicate_override_period_check.sql` | Bỏ CHECK kỳ hiệu lực bị trùng trên `account_permission_overrides` | 5 |
+| `V10__drop_payslip_snapshot_triggers.sql` | Bỏ trigger tự điền snapshot của `payslips`/`payslip_items`; service phải tự ghi đủ | 8 |
 
 Migration chỉ chứa dữ liệu pháp lý dùng chung. Danh mục permission, role, mapping, cơ cấu tổ chức,
 ca làm việc và tài khoản mẫu do các seeder trong `api/src/main/java/com/htttdn/hrm/config/seed/` tạo.
