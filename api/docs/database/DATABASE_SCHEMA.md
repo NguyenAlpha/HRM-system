@@ -1488,7 +1488,7 @@ ALTER TABLE payslip_items ADD CONSTRAINT chk_payslip_item_type
 - Sản phẩm, tồn kho, nhập kho, xuất kho và điều chuyển hàng.
 - Khách hàng, nhà cung cấp, đơn bán và doanh thu.
 - Tuyển dụng ứng viên, phỏng vấn, KPI và đào tạo.
-- Số dư phép năm và quy tắc cộng phép phức tạp.
+- Tự động chuyển số dư phép năm sang năm sau (HR nhập tay qua `carried_over_minutes`) và các quy tắc cộng phép ngoài mức cơ bản + thâm niên của `leave_entitlement_rules`.
 - Hoa hồng, thưởng, quyết toán thuế năm và các trường hợp bảo hiểm/thuế ngoài phạm vi tự động hóa năm 2026.
 - Tự động làm hồ sơ/chi trả chế độ thai sản từ cơ quan BHXH.
 - Tích hợp máy chấm công vật lý.
