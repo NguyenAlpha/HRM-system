@@ -2,33 +2,47 @@ package com.htttdn.hrm.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.sql.Date;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Employee;
+import com.htttdn.hrm.entity.EmployeePayrollProfile;
+import com.htttdn.hrm.entity.EmployeeTaxDependent;
+import com.htttdn.hrm.entity.PayrollInsuranceRule;
+import com.htttdn.hrm.entity.PayrollTaxRule;
 import com.htttdn.hrm.entity.PayrollPeriod;
 import com.htttdn.hrm.entity.Payslip;
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
+import com.htttdn.hrm.repository.AccountRepository;
+import com.htttdn.hrm.repository.EmployeePayrollProfileRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
+import com.htttdn.hrm.repository.EmployeeTaxDependentRepository;
+import com.htttdn.hrm.repository.PayrollInsuranceRuleRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.repository.PayslipItemRepository;
+import com.htttdn.hrm.repository.PayrollTaxBracketRepository;
+import com.htttdn.hrm.repository.PayrollTaxRuleRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
 @Service
 @Transactional
 public class PayrollDeductionsService {
-    private final JdbcTemplate jdbc;
+    private final EmployeePayrollProfileRepository profileRepository;
+    private final EmployeeTaxDependentRepository dependentRepository;
+    private final PayrollTaxRuleRepository taxRules;
+    private final PayrollTaxBracketRepository taxBrackets;
+    private final PayrollInsuranceRuleRepository insuranceRules;
+    private final AccountRepository accounts;
     private final EmployeeRepository employees;
     private final EmployeeAccessScopeService access;
     private final CurrentAccountProvider actor;
@@ -36,10 +50,18 @@ public class PayrollDeductionsService {
     private final PayslipRepository payslips;
     private final PayslipItemRepository items;
 
-    public PayrollDeductionsService(JdbcTemplate jdbc, EmployeeRepository employees,
-        EmployeeAccessScopeService access, CurrentAccountProvider actor, PayrollPeriodRepository periods,
-        PayslipRepository payslips, PayslipItemRepository items) {
-        this.jdbc = jdbc;
+    public PayrollDeductionsService(EmployeePayrollProfileRepository profileRepository,
+        EmployeeTaxDependentRepository dependentRepository, PayrollTaxRuleRepository taxRules,
+        PayrollTaxBracketRepository taxBrackets, PayrollInsuranceRuleRepository insuranceRules,
+        AccountRepository accounts, EmployeeRepository employees, EmployeeAccessScopeService access,
+        CurrentAccountProvider actor, PayrollPeriodRepository periods, PayslipRepository payslips,
+        PayslipItemRepository items) {
+        this.profileRepository = profileRepository;
+        this.dependentRepository = dependentRepository;
+        this.taxRules = taxRules;
+        this.taxBrackets = taxBrackets;
+        this.insuranceRules = insuranceRules;
+        this.accounts = accounts;
         this.employees = employees;
         this.access = access;
         this.actor = actor;
@@ -52,15 +74,8 @@ public class PayrollDeductionsService {
     @Transactional(readOnly = true)
     public List<Profile> profiles(Long employeeId) {
         requireEmployee(employeeId, "compensation.read");
-        return jdbc.query("""
-            SELECT id, employee_id, effective_from, effective_to, tax_resident, social_insurance,
-                   health_insurance, unemployment_insurance, insurance_salary, wage_region
-            FROM employee_payroll_profiles WHERE employee_id = ? ORDER BY effective_from DESC
-            """, (rs, row) -> new Profile(rs.getLong("id"), rs.getLong("employee_id"),
-                rs.getDate("effective_from").toLocalDate(), dateOrNull(rs.getDate("effective_to")),
-                rs.getBoolean("tax_resident"), rs.getBoolean("social_insurance"),
-                rs.getBoolean("health_insurance"), rs.getBoolean("unemployment_insurance"),
-                rs.getBigDecimal("insurance_salary"), rs.getShort("wage_region")), employeeId);
+        return profileRepository.findByEmployeeIdOrderByEffectiveFromDesc(employeeId).stream()
+            .map(PayrollDeductionsService::toProfile).toList();
     }
 
     @PreAuthorize("hasAuthority('compensation.manage')")
@@ -83,37 +98,39 @@ public class PayrollDeductionsService {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "insuranceSalary is required when insurance is enabled");
         }
         invalidateAffectedPayroll(command.effectiveFrom());
-        List<Profile> existing = profilesForUpdate(employeeId);
-        Profile open = existing.stream().filter(profile -> profile.effectiveTo() == null).findFirst().orElse(null);
+        EmployeePayrollProfile open = profileRepository.findByEmployeeIdForUpdate(employeeId).stream()
+            .filter(profile -> profile.getEffectiveTo() == null).findFirst().orElse(null);
         if (open != null) {
-            if (!command.effectiveFrom().isAfter(open.effectiveFrom())) {
+            if (!command.effectiveFrom().isAfter(open.getEffectiveFrom())) {
                 throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                     "effectiveFrom must be after the current payroll profile start date");
             }
-            jdbc.update("UPDATE employee_payroll_profiles SET effective_to = ? WHERE id = ?",
-                Date.valueOf(command.effectiveFrom().minusDays(1)), open.id());
+            open.setEffectiveTo(command.effectiveFrom().minusDays(1));
+            // Hibernate flushes inserts before updates; close the old period first or the
+            // overlap exclusion constraint rejects the new profile.
+            profileRepository.saveAndFlush(open);
         }
-        jdbc.update("""
-            INSERT INTO employee_payroll_profiles(employee_id, effective_from, tax_resident,
-                social_insurance, health_insurance, unemployment_insurance, insurance_salary,
-                wage_region, created_by_account_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, employeeId, Date.valueOf(command.effectiveFrom()), command.taxResident(),
-            command.socialInsurance(), command.healthInsurance(), command.unemploymentInsurance(),
-            command.insuranceSalary(), command.wageRegion(), actor.accountId());
-        return profilesForUpdate(employeeId).stream().filter(p -> p.effectiveFrom().equals(command.effectiveFrom()))
-            .findFirst().orElseThrow();
+        EmployeePayrollProfile created = profileRepository.save(EmployeePayrollProfile.builder()
+            .employee(employee)
+            .effectiveFrom(command.effectiveFrom())
+            .taxResident(command.taxResident())
+            .socialInsurance(command.socialInsurance())
+            .healthInsurance(command.healthInsurance())
+            .unemploymentInsurance(command.unemploymentInsurance())
+            .insuranceSalary(command.insuranceSalary())
+            .wageRegion(command.wageRegion())
+            .createdByAccount(accounts.getReferenceById(actor.accountId()))
+            .createdAt(Instant.now())
+            .build());
+        return toProfile(created);
     }
 
     @PreAuthorize("hasAuthority('compensation.read')")
     @Transactional(readOnly = true)
     public List<Dependent> dependents(Long employeeId) {
         requireEmployee(employeeId, "compensation.read");
-        return jdbc.query("""
-            SELECT id, employee_id, full_name, identifier, effective_from, effective_to
-            FROM employee_tax_dependents WHERE employee_id = ? ORDER BY effective_from DESC, id DESC
-            """, (rs, row) -> new Dependent(rs.getLong("id"), rs.getLong("employee_id"),
-                rs.getString("full_name"), rs.getString("identifier"),
-                rs.getDate("effective_from").toLocalDate(), dateOrNull(rs.getDate("effective_to"))), employeeId);
+        return dependentRepository.findByEmployeeIdOrderByEffectiveFromDescIdDesc(employeeId).stream()
+            .map(PayrollDeductionsService::toDependent).toList();
     }
 
     @PreAuthorize("hasAuthority('compensation.manage')")
@@ -124,58 +141,44 @@ public class PayrollDeductionsService {
             || command.effectiveTo() != null && command.effectiveTo().isBefore(command.effectiveFrom())) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Invalid dependent or effective period");
         }
-        Integer duplicate = jdbc.queryForObject("""
-            SELECT COUNT(*) FROM employee_tax_dependents WHERE employee_id = ?
-              AND lower(full_name) = lower(?)
-              AND effective_from <= COALESCE(?, 'infinity'::date)
-              AND (effective_to IS NULL OR effective_to >= ?)
-            """, Integer.class, employeeId, command.fullName().trim(),
-            command.effectiveTo() == null ? null : Date.valueOf(command.effectiveTo()),
-            Date.valueOf(command.effectiveFrom()));
-        if (duplicate != null && duplicate > 0) {
+        if (dependentRepository.existsOverlappingPeriod(employeeId, command.fullName().trim(),
+            command.effectiveFrom(), command.effectiveTo())) {
             throw new ConflictException(ErrorCode.CONFLICT, "Dependent already overlaps this effective period");
         }
         invalidateAffectedTaxPaymentPeriods(command.effectiveFrom(), command.effectiveTo());
-        jdbc.update("""
-            INSERT INTO employee_tax_dependents(employee_id, full_name, identifier, effective_from,
-                effective_to, created_by_account_id) VALUES (?, ?, ?, ?, ?, ?)
-            """, employeeId, command.fullName().trim(), blankToNull(command.identifier()),
-            Date.valueOf(command.effectiveFrom()),
-            command.effectiveTo() == null ? null : Date.valueOf(command.effectiveTo()), actor.accountId());
-        return dependents(employeeId).stream().filter(d -> d.fullName().equals(command.fullName().trim())
-            && d.effectiveFrom().equals(command.effectiveFrom())).findFirst().orElseThrow();
+        EmployeeTaxDependent created = dependentRepository.save(EmployeeTaxDependent.builder()
+            .employee(employee)
+            .fullName(command.fullName().trim())
+            .identifier(blankToNull(command.identifier()))
+            .effectiveFrom(command.effectiveFrom())
+            .effectiveTo(command.effectiveTo())
+            .createdByAccount(accounts.getReferenceById(actor.accountId()))
+            .createdAt(Instant.now())
+            .build());
+        return toDependent(created);
     }
 
     @PreAuthorize("hasAuthority('compensation.manage')")
     public Dependent endDependent(Long employeeId, Long dependentId, LocalDate effectiveTo) {
         requireEmployee(employeeId, "compensation.manage");
-        Dependent current = dependents(employeeId).stream().filter(d -> d.id().equals(dependentId))
-            .findFirst().orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND,
+        EmployeeTaxDependent current = dependentRepository.findById(dependentId)
+            .filter(dependent -> dependent.getEmployee().getId().equals(employeeId))
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND,
                 "Dependent not found: " + dependentId));
-        if (effectiveTo == null || effectiveTo.isBefore(current.effectiveFrom())
-            || current.effectiveTo() != null && !effectiveTo.isBefore(current.effectiveTo())) {
+        if (effectiveTo == null || effectiveTo.isBefore(current.getEffectiveFrom())
+            || current.getEffectiveTo() != null && !effectiveTo.isBefore(current.getEffectiveTo())) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Invalid dependent end date");
         }
-        invalidateAffectedTaxPaymentPeriods(effectiveTo.plusDays(1), current.effectiveTo());
-        jdbc.update("UPDATE employee_tax_dependents SET effective_to = ? WHERE id = ?",
-            Date.valueOf(effectiveTo), dependentId);
-        return dependents(employeeId).stream().filter(d -> d.id().equals(dependentId)).findFirst().orElseThrow();
+        invalidateAffectedTaxPaymentPeriods(effectiveTo.plusDays(1), current.getEffectiveTo());
+        current.setEffectiveTo(effectiveTo);
+        return toDependent(current);
     }
 
     @Transactional(readOnly = true)
     public Deduction calculate(Long employeeId, LocalDate workMonthEnd, LocalDate paymentDate,
         BigDecimal taxableGrossPay, long unpaidDays) {
-        Profile profile = jdbc.query("""
-            SELECT id, employee_id, effective_from, effective_to, tax_resident, social_insurance,
-                   health_insurance, unemployment_insurance, insurance_salary, wage_region
-            FROM employee_payroll_profiles WHERE employee_id = ? AND effective_from <= ?
-              AND (effective_to IS NULL OR effective_to >= ?)
-            """, (rs, row) -> new Profile(rs.getLong("id"), rs.getLong("employee_id"),
-                rs.getDate("effective_from").toLocalDate(), dateOrNull(rs.getDate("effective_to")),
-                rs.getBoolean("tax_resident"), rs.getBoolean("social_insurance"),
-                rs.getBoolean("health_insurance"), rs.getBoolean("unemployment_insurance"),
-                rs.getBigDecimal("insurance_salary"), rs.getShort("wage_region")),
-            employeeId, Date.valueOf(workMonthEnd), Date.valueOf(workMonthEnd)).stream().findFirst()
+        Profile profile = profileRepository.findEffective(employeeId, workMonthEnd)
+            .map(PayrollDeductionsService::toProfile)
             .orElseThrow(() -> new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Employee " + employeeId + ": missing payroll profile on " + workMonthEnd));
         if (!profile.taxResident()) {
@@ -187,56 +190,41 @@ public class PayrollDeductionsService {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Employee " + employeeId + ": 14 or more unpaid workdays; HR must set the month's insurance participation explicitly");
         }
-        InsuranceRule insurance = jdbc.query("""
-            SELECT * FROM payroll_insurance_rules WHERE effective_from <= ?
-              AND (effective_to IS NULL OR effective_to >= ?)
-            """, (rs, row) -> new InsuranceRule(rs.getLong("id"), rs.getBigDecimal("social_rate"),
-                rs.getBigDecimal("health_rate"), rs.getBigDecimal("unemployment_rate"),
-                rs.getBigDecimal("social_health_cap"), rs.getInt("unemployment_cap_multiplier"),
-                rs.getBigDecimal("region_" + profile.wageRegion() + "_minimum")),
-            Date.valueOf(workMonthEnd), Date.valueOf(workMonthEnd)).stream().findFirst()
+        PayrollInsuranceRule insurance = insuranceRules.findEffective(workMonthEnd)
             .orElseThrow(() -> new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Missing insurance rules for " + workMonthEnd));
         if ((profile.socialInsurance() || profile.healthInsurance() || profile.unemploymentInsurance())
-            && profile.insuranceSalary().compareTo(insurance.regionMinimum()) < 0) {
+            && profile.insuranceSalary().compareTo(insurance.regionMinimum(profile.wageRegion())) < 0) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Employee " + employeeId + ": insuranceSalary is below region " + profile.wageRegion()
                     + " minimum on " + workMonthEnd);
         }
-        BigDecimal socialBase = profile.insuranceSalary().min(insurance.socialHealthCap());
-        BigDecimal unemploymentBase = profile.insuranceSalary().min(insurance.regionMinimum()
-            .multiply(BigDecimal.valueOf(insurance.unemploymentCapMultiplier())));
-        BigDecimal social = profile.socialInsurance() ? money(socialBase.multiply(insurance.socialRate())) : BigDecimal.ZERO;
-        BigDecimal health = profile.healthInsurance() ? money(socialBase.multiply(insurance.healthRate())) : BigDecimal.ZERO;
+        BigDecimal regionMinimum = insurance.regionMinimum(profile.wageRegion());
+        BigDecimal socialBase = profile.insuranceSalary().min(insurance.getSocialHealthCap());
+        BigDecimal unemploymentBase = profile.insuranceSalary().min(regionMinimum
+            .multiply(BigDecimal.valueOf(insurance.getUnemploymentCapMultiplier())));
+        BigDecimal social = profile.socialInsurance() ? money(socialBase.multiply(insurance.getSocialRate())) : BigDecimal.ZERO;
+        BigDecimal health = profile.healthInsurance() ? money(socialBase.multiply(insurance.getHealthRate())) : BigDecimal.ZERO;
         BigDecimal unemployment = profile.unemploymentInsurance()
-            ? money(unemploymentBase.multiply(insurance.unemploymentRate())) : BigDecimal.ZERO;
-        TaxRule tax = jdbc.query("""
-            SELECT id, personal_deduction, dependent_deduction FROM payroll_tax_rules
-            WHERE effective_from <= ? AND (effective_to IS NULL OR effective_to >= ?)
-            """, (rs, row) -> new TaxRule(rs.getLong("id"), rs.getBigDecimal("personal_deduction"),
-                rs.getBigDecimal("dependent_deduction")), Date.valueOf(paymentDate), Date.valueOf(paymentDate))
-            .stream().findFirst().orElseThrow(() -> new BusinessException(ErrorCode.VALIDATION_ERROR,
+            ? money(unemploymentBase.multiply(insurance.getUnemploymentRate())) : BigDecimal.ZERO;
+        PayrollTaxRule tax = taxRules.findEffective(paymentDate)
+            .orElseThrow(() -> new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Missing resident income tax rules for payment date " + paymentDate));
-        Integer dependentCount = jdbc.queryForObject("""
-            SELECT COUNT(*) FROM employee_tax_dependents WHERE employee_id = ? AND effective_from <= ?
-              AND (effective_to IS NULL OR effective_to >= ?)
-            """, Integer.class, employeeId, Date.valueOf(paymentDate), Date.valueOf(paymentDate));
+        long dependentCount = dependentRepository.countEffective(employeeId, paymentDate);
         if (taxableGrossPay.signum() < 0) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Taxable pay cannot be negative");
         }
         BigDecimal taxableIncome = taxableGrossPay.subtract(social).subtract(health).subtract(unemployment)
-            .subtract(tax.personalDeduction())
-            .subtract(tax.dependentDeduction().multiply(BigDecimal.valueOf(dependentCount == null ? 0 : dependentCount)))
+            .subtract(tax.getPersonalDeduction())
+            .subtract(tax.getDependentDeduction().multiply(BigDecimal.valueOf(dependentCount)))
             .max(BigDecimal.ZERO);
-        List<TaxBracket> brackets = jdbc.query("""
-            SELECT lower_bound, upper_bound, rate FROM payroll_tax_brackets
-            WHERE tax_rule_id = ? ORDER BY lower_bound
-            """, (rs, row) -> new TaxBracket(rs.getBigDecimal("lower_bound"),
-                rs.getBigDecimal("upper_bound"), rs.getBigDecimal("rate")), tax.id());
+        List<TaxBracket> brackets = taxBrackets.findByIdTaxRuleIdOrderByIdLowerBound(tax.getId()).stream()
+            .map(bracket -> new TaxBracket(bracket.getId().getLowerBound(), bracket.getUpperBound(), bracket.getRate()))
+            .toList();
         if (brackets.isEmpty()) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Tax rule has no brackets: " + tax.id());
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Tax rule has no brackets: " + tax.getId());
         }
-        return new Deduction(profile.id(), insurance.id(), tax.id(), socialBase, unemploymentBase,
+        return new Deduction(profile.id(), insurance.getId(), tax.getId(), socialBase, unemploymentBase,
             social, health, unemployment, taxableIncome, progressiveTax(taxableIncome, brackets));
     }
 
@@ -297,20 +285,20 @@ public class PayrollDeductionsService {
             period.setStatus(PayrollPeriodStatus.DRAFT);
             period.setCalculatedByAccount(null);
             period.setCalculatedAt(null);
-            period.setUpdatedAt(java.time.Instant.now());
+            period.setUpdatedAt(Instant.now());
         }
     }
 
-    private List<Profile> profilesForUpdate(Long employeeId) {
-        return jdbc.query("""
-            SELECT id, employee_id, effective_from, effective_to, tax_resident, social_insurance,
-                   health_insurance, unemployment_insurance, insurance_salary, wage_region
-            FROM employee_payroll_profiles WHERE employee_id = ? ORDER BY effective_from DESC FOR UPDATE
-            """, (rs, row) -> new Profile(rs.getLong("id"), rs.getLong("employee_id"),
-                rs.getDate("effective_from").toLocalDate(), dateOrNull(rs.getDate("effective_to")),
-                rs.getBoolean("tax_resident"), rs.getBoolean("social_insurance"),
-                rs.getBoolean("health_insurance"), rs.getBoolean("unemployment_insurance"),
-                rs.getBigDecimal("insurance_salary"), rs.getShort("wage_region")), employeeId);
+    private static Profile toProfile(EmployeePayrollProfile profile) {
+        return new Profile(profile.getId(), profile.getEmployee().getId(), profile.getEffectiveFrom(),
+            profile.getEffectiveTo(), profile.getTaxResident(), profile.getSocialInsurance(),
+            profile.getHealthInsurance(), profile.getUnemploymentInsurance(), profile.getInsuranceSalary(),
+            profile.getWageRegion());
+    }
+
+    private static Dependent toDependent(EmployeeTaxDependent dependent) {
+        return new Dependent(dependent.getId(), dependent.getEmployee().getId(), dependent.getFullName(),
+            dependent.getIdentifier(), dependent.getEffectiveFrom(), dependent.getEffectiveTo());
     }
 
     private Employee requireEmployee(Long employeeId, String permission) {
@@ -321,7 +309,6 @@ public class PayrollDeductionsService {
         return employee;
     }
 
-    private static LocalDate dateOrNull(Date date) { return date == null ? null : date.toLocalDate(); }
     private static String blankToNull(String value) { return value == null || value.isBlank() ? null : value.trim(); }
     private static BigDecimal money(BigDecimal value) { return value.setScale(2, RoundingMode.HALF_UP); }
 
@@ -338,9 +325,5 @@ public class PayrollDeductionsService {
         BigDecimal insuranceSalaryBase, BigDecimal unemploymentInsuranceBase,
         BigDecimal social, BigDecimal health,
         BigDecimal unemployment, BigDecimal taxableIncome, BigDecimal incomeTax) {}
-    private record InsuranceRule(Long id, BigDecimal socialRate, BigDecimal healthRate,
-        BigDecimal unemploymentRate, BigDecimal socialHealthCap, int unemploymentCapMultiplier,
-        BigDecimal regionMinimum) {}
-    private record TaxRule(Long id, BigDecimal personalDeduction, BigDecimal dependentDeduction) {}
     static record TaxBracket(BigDecimal lowerBound, BigDecimal upperBound, BigDecimal rate) {}
 }

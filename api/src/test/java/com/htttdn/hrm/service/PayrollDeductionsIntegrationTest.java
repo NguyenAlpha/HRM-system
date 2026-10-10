@@ -2,6 +2,7 @@ package com.htttdn.hrm.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -12,13 +13,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
+import com.htttdn.hrm.repository.AccountRepository;
+import com.htttdn.hrm.repository.EmployeePayrollProfileRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
+import com.htttdn.hrm.repository.EmployeeTaxDependentRepository;
+import com.htttdn.hrm.repository.PayrollInsuranceRuleRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
+import com.htttdn.hrm.repository.PayrollTaxBracketRepository;
+import com.htttdn.hrm.repository.PayrollTaxRuleRepository;
 import com.htttdn.hrm.repository.PayslipItemRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -33,6 +41,12 @@ class PayrollDeductionsIntegrationTest {
     @Autowired private JdbcTemplate jdbc;
     @Autowired private PayrollDeductionsService service;
     @Autowired private EmployeeRepository employees;
+    @Autowired private AccountRepository accounts;
+    @Autowired private EmployeePayrollProfileRepository profiles;
+    @Autowired private EmployeeTaxDependentRepository dependents;
+    @Autowired private PayrollTaxRuleRepository taxRules;
+    @Autowired private PayrollTaxBracketRepository taxBrackets;
+    @Autowired private PayrollInsuranceRuleRepository insuranceRules;
 
     @Test
     void employeeInsuranceUsesSeparateCapsAndDependentDeduction() {
@@ -67,11 +81,7 @@ class PayrollDeductionsIntegrationTest {
     void dependentChangeUsesPaymentDateAndRejectsDuplicate() {
         Long employeeId = seedEmployee();
         PayrollPeriodRepository periods = mock(PayrollPeriodRepository.class);
-        CurrentAccountProvider actor = mock(CurrentAccountProvider.class);
-        when(actor.accountId()).thenReturn(jdbc.queryForObject("SELECT id FROM accounts ORDER BY id LIMIT 1", Long.class));
-        PayrollDeductionsService subject = new PayrollDeductionsService(jdbc, employees,
-            mock(EmployeeAccessScopeService.class), actor, periods,
-            mock(PayslipRepository.class), mock(PayslipItemRepository.class));
+        PayrollDeductionsService subject = subjectWith(periods);
         LocalDate paymentDate = LocalDate.of(2026, 11, 5);
 
         subject.addDependent(employeeId, new PayrollDeductionsService.DependentCommand(
@@ -79,6 +89,35 @@ class PayrollDeductionsIntegrationTest {
         verify(periods).findAffectedPaymentPeriodsForUpdate(eq(paymentDate), isNull(), any());
         assertThrows(ConflictException.class, () -> subject.addDependent(employeeId,
             new PayrollDeductionsService.DependentCommand("Dependent Two", null, paymentDate, null)));
+    }
+
+    @Test
+    void newPayrollProfileClosesTheOpenOneTheDayBefore() {
+        Long employeeId = seedEmployee();
+        PayrollDeductionsService subject = subjectWith(mock(PayrollPeriodRepository.class));
+
+        PayrollDeductionsService.Profile created = subject.setProfile(employeeId,
+            new PayrollDeductionsService.ProfileCommand(LocalDate.of(2026, 11, 1), true, true, true, true,
+                new BigDecimal("20000000"), (short) 2));
+
+        List<PayrollDeductionsService.Profile> history = profiles.findByEmployeeIdOrderByEffectiveFromDesc(employeeId)
+            .stream().map(profile -> new PayrollDeductionsService.Profile(profile.getId(), employeeId,
+                profile.getEffectiveFrom(), profile.getEffectiveTo(), profile.getTaxResident(),
+                profile.getSocialInsurance(), profile.getHealthInsurance(), profile.getUnemploymentInsurance(),
+                profile.getInsuranceSalary(), profile.getWageRegion()))
+            .toList();
+        assertEquals(2, history.size());
+        assertEquals(created, history.get(0));
+        assertNull(history.get(0).effectiveTo());
+        assertEquals(LocalDate.of(2026, 10, 31), history.get(1).effectiveTo());
+    }
+
+    private PayrollDeductionsService subjectWith(PayrollPeriodRepository periods) {
+        CurrentAccountProvider actor = mock(CurrentAccountProvider.class);
+        when(actor.accountId()).thenReturn(jdbc.queryForObject("SELECT id FROM accounts ORDER BY id LIMIT 1", Long.class));
+        return new PayrollDeductionsService(profiles, dependents, taxRules, taxBrackets, insuranceRules,
+            accounts, employees, mock(EmployeeAccessScopeService.class), actor, periods,
+            mock(PayslipRepository.class), mock(PayslipItemRepository.class));
     }
 
     private Long seedEmployee() {
