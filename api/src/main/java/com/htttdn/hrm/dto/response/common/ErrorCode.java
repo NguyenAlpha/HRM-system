@@ -71,6 +71,7 @@ public enum ErrorCode {
 
     // Generic
     RESOURCE_NOT_FOUND,
+    METHOD_NOT_ALLOWED,
     CONFLICT,
     CONCURRENT_MODIFICATION,
     INTERNAL_ERROR

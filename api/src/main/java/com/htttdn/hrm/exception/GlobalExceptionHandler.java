@@ -1,5 +1,7 @@
 package com.htttdn.hrm.exception;
 
+import java.util.Set;
+
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.common.ErrorDetail;
@@ -7,15 +9,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -57,6 +62,24 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(
             ApiResult.fail(ErrorDetail.of(ErrorCode.VALIDATION_ERROR, "Invalid parameter value", exception.getName()))
         );
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResult<?>> handleNoRoute(NoResourceFoundException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+            ApiResult.fail(ErrorDetail.of(ErrorCode.RESOURCE_NOT_FOUND, "No endpoint matches this path"))
+        );
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResult<?>> handleMethodNotAllowed(HttpRequestMethodNotSupportedException exception) {
+        Set<HttpMethod> supported = exception.getSupportedHttpMethods();
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+            .allow(supported == null ? new HttpMethod[0] : supported.toArray(HttpMethod[]::new))
+            .body(ApiResult.fail(ErrorDetail.of(
+                ErrorCode.METHOD_NOT_ALLOWED,
+                "Request method " + exception.getMethod() + " is not supported for this path"
+            )));
     }
 
     @ExceptionHandler(BadCredentialsException.class)

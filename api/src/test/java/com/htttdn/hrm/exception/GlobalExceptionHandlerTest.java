@@ -1,8 +1,13 @@
 package com.htttdn.hrm.exception;
 
+import java.util.Set;
+
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 
@@ -59,6 +64,26 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals(ErrorCode.CONCURRENT_MODIFICATION.name(), response.getBody().error().code());
+    }
+
+    @Test
+    void unknownRouteReturnsNotFoundInsteadOfInternalError() {
+        var response = handler.handleNoRoute(new NoResourceFoundException(HttpMethod.GET, "/api/missing", "api/missing"));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(ErrorCode.RESOURCE_NOT_FOUND.name(), response.getBody().error().code());
+    }
+
+    @Test
+    void unsupportedMethodReturnsMethodNotAllowedWithAllowHeader() {
+        var response = handler.handleMethodNotAllowed(
+            new HttpRequestMethodNotSupportedException("POST", Set.of("GET")));
+
+        assertEquals(HttpStatus.METHOD_NOT_ALLOWED, response.getStatusCode());
+        assertEquals(Set.of(HttpMethod.GET), response.getHeaders().getAllow());
+        assertNotNull(response.getBody());
+        assertEquals(ErrorCode.METHOD_NOT_ALLOWED.name(), response.getBody().error().code());
     }
 
     @Test
