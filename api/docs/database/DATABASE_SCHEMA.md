@@ -1129,15 +1129,15 @@ có khoảng hiệu lực riêng; phiếu lương snapshot lại `id` của bộ
 | `id` | BIGSERIAL | PK | Khóa chính |
 | `effective_from` | DATE | NOT NULL | Ngày bắt đầu hiệu lực |
 | `effective_to` | DATE | | Ngày kết thúc, null là đang mở |
-| `social_rate` | NUMERIC(6,5) | NOT NULL | Tỷ lệ BHXH phần nhân viên |
-| `health_rate` | NUMERIC(6,5) | NOT NULL | Tỷ lệ BHYT phần nhân viên |
-| `unemployment_rate` | NUMERIC(6,5) | NOT NULL | Tỷ lệ BHTN phần nhân viên |
-| `social_health_cap` | NUMERIC(15,2) | NOT NULL | Trần căn cứ đóng BHXH/BHYT |
-| `unemployment_cap_multiplier` | INTEGER | NOT NULL | Số lần lương tối thiểu vùng làm trần BHTN |
-| `region_1_minimum` | NUMERIC(15,2) | NOT NULL | Lương tối thiểu vùng I |
-| `region_2_minimum` | NUMERIC(15,2) | NOT NULL | Lương tối thiểu vùng II |
-| `region_3_minimum` | NUMERIC(15,2) | NOT NULL | Lương tối thiểu vùng III |
-| `region_4_minimum` | NUMERIC(15,2) | NOT NULL | Lương tối thiểu vùng IV |
+| `social_rate` | NUMERIC(6,5) | NOT NULL, CHECK 0–1 | Tỷ lệ BHXH phần nhân viên |
+| `health_rate` | NUMERIC(6,5) | NOT NULL, CHECK 0–1 | Tỷ lệ BHYT phần nhân viên |
+| `unemployment_rate` | NUMERIC(6,5) | NOT NULL, CHECK 0–1 | Tỷ lệ BHTN phần nhân viên |
+| `social_health_cap` | NUMERIC(15,2) | NOT NULL, CHECK > 0 | Trần căn cứ đóng BHXH/BHYT |
+| `unemployment_cap_multiplier` | INTEGER | NOT NULL, CHECK > 0 | Số lần lương tối thiểu vùng làm trần BHTN |
+| `region_1_minimum` | NUMERIC(15,2) | NOT NULL, CHECK > 0 | Lương tối thiểu vùng I |
+| `region_2_minimum` | NUMERIC(15,2) | NOT NULL, CHECK > 0 | Lương tối thiểu vùng II |
+| `region_3_minimum` | NUMERIC(15,2) | NOT NULL, CHECK > 0 | Lương tối thiểu vùng III |
+| `region_4_minimum` | NUMERIC(15,2) | NOT NULL, CHECK > 0 | Lương tối thiểu vùng IV |
 | `source_reference` | TEXT | NOT NULL | Căn cứ pháp lý của bộ quy tắc |
 
 > `EXCLUDE USING GIST` chặn khoảng hiệu lực chồng nhau. Trần BHXH/BHYT thay đổi giữa năm nên
@@ -1518,6 +1518,7 @@ giữ nguyên, chỉ bỏ hai bảng archive legacy không còn dùng. Database 
 | `V9__drop_duplicate_override_period_check.sql` | Bỏ CHECK kỳ hiệu lực bị trùng trên `account_permission_overrides` | 5 |
 | `V10__drop_payslip_snapshot_triggers.sql` | Bỏ trigger tự điền snapshot của `payslips`/`payslip_items`; service phải tự ghi đủ | 8 |
 | `V11__drop_redundant_unique_indexes.sql` | Chỉ giữ unique theo `LOWER` cho mã nhân viên, email công việc, email tài khoản; bỏ index chấm công trùng unique | 3, 5, 11 |
+| `V12__check_payroll_insurance_rule_values.sql` | CHECK tỷ lệ 0–1 và mức trần/lương tối thiểu vùng dương cho `payroll_insurance_rules` | 8.4 |
 
 Migration chỉ chứa dữ liệu pháp lý dùng chung. Danh mục permission, role, mapping, cơ cấu tổ chức,
 ca làm việc và tài khoản mẫu do các seeder trong `api/src/main/java/com/htttdn/hrm/config/seed/` tạo.
