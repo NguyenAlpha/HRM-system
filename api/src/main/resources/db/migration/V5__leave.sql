@@ -1,4 +1,40 @@
--- Annual leave had no quota: an approved ANNUAL request fed its minutes straight into payroll.
+-- Đơn nghỉ phép và hạn mức phép năm.
+
+CREATE TABLE leave_requests (
+    id BIGSERIAL PRIMARY KEY,
+    employee_id BIGINT NOT NULL REFERENCES employees (id),
+    leave_type VARCHAR(30) NOT NULL,
+    salary_treatment VARCHAR(30) NOT NULL,
+    start_at TIMESTAMPTZ NOT NULL,
+    end_at TIMESTAMPTZ NOT NULL,
+    requested_minutes INTEGER NOT NULL,
+    reason TEXT NOT NULL,
+    attachment_url TEXT,
+    status VARCHAR(20) NOT NULL,
+    submitted_at TIMESTAMPTZ,
+    reviewed_by_account_id BIGINT REFERENCES accounts (id),
+    review_comment TEXT,
+    reviewed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT chk_leave_type
+        CHECK (leave_type IN ('ANNUAL', 'SICK', 'MATERNITY', 'UNPAID', 'OTHER')),
+    CONSTRAINT chk_leave_salary_treatment
+        CHECK (salary_treatment IN ('EMPLOYER_PAID', 'SOCIAL_INSURANCE', 'UNPAID')),
+    CONSTRAINT chk_leave_status
+        CHECK (status IN ('DRAFT', 'PENDING', 'APPROVED', 'REJECTED', 'CANCELLED')),
+    CONSTRAINT chk_leave_period
+        CHECK (end_at > start_at AND requested_minutes > 0),
+    CONSTRAINT excl_approved_leave_request_overlap
+        EXCLUDE USING GIST (
+            employee_id WITH =,
+            TSTZRANGE(start_at, end_at, '[)') WITH &&
+        ) WHERE (status = 'APPROVED')
+);
+
+CREATE INDEX idx_leave_requests_employee_status
+    ON leave_requests (employee_id, status, start_at);
+
 CREATE TABLE leave_entitlement_rules (
     id BIGSERIAL PRIMARY KEY,
     effective_from DATE NOT NULL,
@@ -35,12 +71,3 @@ CREATE TABLE employee_leave_entitlements (
 
 CREATE INDEX idx_employee_leave_entitlements_year
     ON employee_leave_entitlements (year, employee_id);
-
--- Bộ luật Lao động 2019: 12 ngày cơ bản, cứ đủ 5 năm làm việc được cộng thêm 1 ngày.
-INSERT INTO leave_entitlement_rules (
-    effective_from, effective_to, base_days, seniority_block_years, seniority_bonus_days, source_reference
-)
-VALUES (
-    '2026-01-01', NULL, 12, 5, 1,
-    'Bộ luật Lao động 2019, Điều 113 khoản 1 và Điều 114'
-);

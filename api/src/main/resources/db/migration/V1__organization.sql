@@ -1,5 +1,8 @@
 -- Doanh nghiệp, cơ cấu tổ chức, vị trí công việc và danh mục ca làm việc.
 
+-- Dùng cho các EXCLUDE constraint chống chồng lấn khoảng thời gian trong toàn bộ schema.
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
 CREATE TABLE company_profile (
     id SMALLINT PRIMARY KEY DEFAULT 1,
     code VARCHAR(30) NOT NULL UNIQUE,

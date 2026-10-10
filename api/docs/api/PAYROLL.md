@@ -12,7 +12,7 @@ Phạm vi đang triển khai: nhân viên **cư trú tại Việt Nam**, nhận 
 - Thu nhập tính thuế của bản này = `max(0, grossPay − tăng ca đã xác nhận miễn thuế − BHXH − BHYT − BHTN − giảm trừ bản thân − giảm trừ người phụ thuộc)`. Người duyệt tăng ca chỉ đánh dấu `taxExempt: true` sau khi đối soát điều kiện và giới hạn pháp luật; tăng ca chưa xác nhận vẫn chịu thuế. Thuế TNCN tính theo bậc lũy tiến tại **ngày trả lương dự kiến**. Nguồn: [hướng dẫn miễn thuế tiền tăng ca năm 2026](https://media.chinhphu.vn/cac-truong-hop-tien-luong-tien-cong-duoc-mien-thue-tncn-102260715163431228.htm).
 - `netPay = grossPay − BHXH − BHYT − BHTN − thuế TNCN`.
 
-Phiếu lương lưu số tiền bảo hiểm từng loại, hai căn cứ đóng sau khi áp trần, số tăng ca đã xác nhận miễn thuế, thu nhập tính thuế, thuế, quy tắc áp dụng và `netPay`. Phiếu cũ trước V31 giữ nguyên tổng và có các cột khấu trừ bằng 0; muốn tính lại phải có đủ hồ sơ mới. Các lần duyệt tăng ca trước V34 mặc định **chưa xác nhận miễn thuế**; HR cần đối soát và duyệt lại trước khi tính lại kỳ.
+Phiếu lương lưu số tiền bảo hiểm từng loại, hai căn cứ đóng sau khi áp trần, số tăng ca đã xác nhận miễn thuế, thu nhập tính thuế, thuế, quy tắc áp dụng và `netPay`.
 
 ## Dữ liệu HR cần nhập
 

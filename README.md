@@ -21,7 +21,8 @@ npm run dev
 
 Mở `http://localhost:3000`. API chạy tại `http://localhost:8080`; PostgreSQL local dùng cổng `5432`.
 
-Flyway tự áp dụng migration V1–V34. Không cần xóa volume database khi cập nhật source.
+Flyway tự áp dụng migration khi API khởi động. Database local tạo trước ngày 2026-10-11 phải
+`docker compose down -v` một lần vì chuỗi migration đã được gộp lại; sau đó không cần xóa volume khi cập nhật source.
 
 ## Tài liệu
 

@@ -41,7 +41,7 @@ Xem [PAYROLL.md](PAYROLL.md) cho cách tính `grossPay`, bảo hiểm, thuế TN
 
 ## Hạn mức phép năm
 
-Trước đây đơn `ANNUAL` được duyệt không giới hạn và số phút chảy thẳng vào bảng lương. Từ V35, mỗi nhân viên có một hạn mức cho mỗi năm và `POST /api/leave-requests/{id}/approve` sẽ trả `409` nếu đơn vượt số dư còn lại.
+Mỗi nhân viên có một hạn mức phép năm cho mỗi năm và `POST /api/leave-requests/{id}/approve` sẽ trả `409` nếu đơn vượt số dư còn lại.
 
 Hạn mức tính theo quy tắc trong `leave_entitlement_rules`, bộ nạp sẵn từ 01/01/2026 là **12 ngày cơ bản, cứ đủ 5 năm làm việc cộng thêm 1 ngày** (Bộ luật Lao động 2019, Điều 113 khoản 1 và Điều 114):
 
