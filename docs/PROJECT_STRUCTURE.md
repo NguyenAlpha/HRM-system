@@ -43,12 +43,12 @@ api/
 │   │   │       └── impl/           # Các implementation của service
 │   │   └── resources/
 │   │       ├── application.properties # Cấu hình runtime
-│   │       └── db/migration/          # Flyway migrations V1 đến V34
+│   │       └── db/migration/          # Flyway migrations theo domain
 │   └── test/java/                  # Unit, integration và context tests
 ├── docs/
 │   ├── api/                        # Hợp đồng API theo module
 │   ├── database/                   # Schema runtime hiện hành
-│   └── archive/                    # Thiết kế và báo cáo rà soát trước V20
+│   └── archive/                    # Thiết kế và báo cáo rà soát cũ
 └── target/                         # Output Maven sinh tự động, không phải source
 ```
 
@@ -67,29 +67,10 @@ api/
 
 ### Database migrations
 
-Các migration nằm trong `api/src/main/resources/db/migration/` và được Flyway chạy theo thứ tự:
-
-| Migration | Phạm vi |
-| --- | --- |
-| `V1__create_organization_structure_tables.sql` | Company profile, địa điểm, đơn vị tổ chức, vị trí công việc và ca làm. |
-| `V2__create_employee_and_account_tables.sql` | Employee và account. |
-| `V3__create_rbac_tables.sql` | Permission, role, role assignment và permission override. |
-| `V4__create_assignment_and_compensation_tables.sql` | Phân công nhân sự và chế độ đãi ngộ. |
-| `V5__create_employee_request_tables.sql` | Đơn nghỉ phép và đơn nghỉ việc. |
-| `V6__create_attendance_tables.sql` | Chấm công và làm thêm giờ. |
-| `V7__create_payroll_tables.sql` | Kỳ lương, payslip và các khoản trong payslip. |
-| `V8__create_refresh_tokens.sql` | Refresh token phục vụ xác thực phiên. |
-| `V9` – `V19` | Bổ sung activation token, permission, audit, identity key và bảo vệ khoảng thời gian. |
-| `V20__align_core_schema_with_approved_design.sql` | Đồng bộ schema lõi với thiết kế HRM đã duyệt. |
-| `V21__harden_account_permission_overrides.sql` | Bổ sung audit thu hồi và ràng buộc cho permission override. |
-| `V22` – `V24` | Loại bỏ các vai trò Team Lead, Warehouse Supervisor và Branch Manager đã ngừng sử dụng. |
-| `V25__separate_employee_self_service_permissions.sql` | Tách permission tự phục vụ dành cho nhân viên. |
-| `V26__split_employee_permissions.sql` | Tách quyền quản lý nhân viên theo từng hành động. |
-| `V27__archive_and_remove_legacy_compensation_requests.sql` | Backfill, lưu trữ và loại bỏ mô hình compensation/request cũ. |
-| `V28__create_employee_code_counters.sql` | Bộ đếm cấp mã nhân viên tự động theo tiền tố vị trí. |
-| `V29` – `V30` | Ngày lễ công ty và số phút nghỉ trong bản ghi công. |
-| `V31` – `V33` | Hồ sơ bảo hiểm, người phụ thuộc, quy tắc thuế/bảo hiểm 2026 có ngày hiệu lực và snapshot khấu trừ trên phiếu lương. |
-| `V34__track_overtime_tax_exemption.sql` | Xác nhận miễn thuế từng khoản tăng ca và snapshot phần tăng ca miễn thuế. |
+Các migration nằm trong `api/src/main/resources/db/migration/` và được Flyway chạy theo thứ tự.
+Mỗi file gom một domain (tổ chức, nhân sự và tài khoản, RBAC, phân công và lương, nghỉ phép,
+chấm công, tính lương, dữ liệu pháp lý). Danh sách bảng của từng file và quy ước thay đổi schema
+nằm ở mục 15 của [DATABASE_SCHEMA.md](../api/docs/database/DATABASE_SCHEMA.md).
 
 ### Tài liệu backend
 
@@ -98,11 +79,11 @@ Các migration nằm trong `api/src/main/resources/db/migration/` và được F
 - `api/docs/api/ATTENDANCE.md`: quy trình chấm công, ngày lễ và tăng ca.
 - `api/docs/api/PAYROLL.md`: công thức lương, bảo hiểm, thuế và các API dữ liệu đầu vào.
 - `api/docs/api/README.md`: mục lục tài liệu API hiện hành.
-- `api/docs/database/DATABASE_SCHEMA.md`: schema runtime sau Flyway V34, gồm định nghĩa bảng, cột, index và constraint.
-- `api/docs/archive/DATABASE_SCHEMA.md`: bản thiết kế trước V20, chỉ giữ để tham chiếu lịch sử.
-- `api/docs/archive/ENTITY_ATTRIBUTES.md`: mô hình entity trước V20, chỉ giữ để tham chiếu lịch sử.
-- `api/docs/archive/SCHEMA_REVIEW_0.1.md`: báo cáo rà soát schema trước V20.
-- `api/docs/archive/QUERY_REVIEW_0.1.md`: báo cáo rà soát truy vấn trước V20.
+- `api/docs/database/DATABASE_SCHEMA.md`: schema runtime hiện hành, gồm định nghĩa bảng, cột, index và constraint.
+- `api/docs/archive/DATABASE_SCHEMA.md`: bản thiết kế cũ trước schema hiện hành, chỉ giữ để tham chiếu lịch sử.
+- `api/docs/archive/ENTITY_ATTRIBUTES.md`: mô hình entity cũ trước schema hiện hành, chỉ giữ để tham chiếu lịch sử.
+- `api/docs/archive/SCHEMA_REVIEW_0.1.md`: báo cáo rà soát schema cũ.
+- `api/docs/archive/QUERY_REVIEW_0.1.md`: báo cáo rà soát truy vấn cũ.
 
 ## 3. Frontend `apps/web/`
 

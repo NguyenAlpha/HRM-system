@@ -25,7 +25,7 @@ Quản lý role tùy chỉnh và quan hệ permission của role. Danh mục per
 
 ### Ranh giới quản trị
 
-- Permission được định nghĩa trong code và đồng bộ bằng `PermissionSeeder` hoặc database migration; không có API tạo, sửa hoặc xóa permission.
+- Permission được định nghĩa trong code và đồng bộ bằng `PermissionSeeder`; migration không seed permission và không có API tạo, sửa hoặc xóa permission.
 - Permission có `assignmentPolicy=DELEGABLE` mới được gán cho custom role; `SYSTEM_ONLY` chỉ được seeder gán cho system role.
 - System role có `isSystem=true` là khuôn mẫu do ứng dụng sở hữu; API chỉ cho phép xem role và danh sách permission của role.
 - Chỉ custom role có `isSystem=false` mới được cập nhật, xóa mềm hoặc thay đổi permission mapping.
@@ -817,4 +817,4 @@ Một vài ranh giới dễ hiểu nhầm:
 
 Không cần cấu hình allowlist hoặc khởi động lại API. Quyền truy cập được quyết định trực tiếp từ permission trong JWT.
 
-Permission catalog, system role và permission mapping của system role thuộc sở hữu của code. `RoleSeeder`, `PermissionSeeder` và `RolePermissionSeeder` chạy trước `SystemAdminSeeder`; seeder admin chỉ tạo account và gán role đã tồn tại, không tự tạo hoặc sửa RBAC. Giữ `RBAC_SEED_ENABLED=true` để ứng dụng đồng bộ các định nghĩa này khi khởi động; nếu tắt RBAC seed thì database phải có sẵn role `SYSTEM_ADMIN` hợp lệ, nếu không admin seed sẽ fail-fast. Permission mới phải được bổ sung qua `PermissionSeeder` hoặc database migration, không qua API. `ADMIN_SEED_ENABLED` có thể tắt sau khi tài khoản bootstrap đã được bảo đảm bằng quy trình vận hành khác.
+Permission catalog, system role và permission mapping của system role thuộc sở hữu của code. `RoleSeeder`, `PermissionSeeder` và `RolePermissionSeeder` chạy trước `SystemAdminSeeder`; seeder admin chỉ tạo account và gán role đã tồn tại, không tự tạo hoặc sửa RBAC. Giữ `RBAC_SEED_ENABLED=true` để ứng dụng đồng bộ các định nghĩa này khi khởi động; nếu tắt RBAC seed thì database phải có sẵn role `SYSTEM_ADMIN` hợp lệ, nếu không admin seed sẽ fail-fast. Permission mới phải được bổ sung qua `PermissionSeeder`, không qua migration hoặc API. `ADMIN_SEED_ENABLED` có thể tắt sau khi tài khoản bootstrap đã được bảo đảm bằng quy trình vận hành khác.

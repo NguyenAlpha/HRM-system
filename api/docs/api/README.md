@@ -39,4 +39,4 @@ có tài liệu riêng, còn `/api/compensation/*` thuộc `PAYROLL.md` chứ kh
 
 Khi tài liệu và code khác nhau, ưu tiên theo thứ tự: migration và controller/service đang chạy, test, tài liệu trong thư mục này, rồi các bản thiết kế lịch sử trong `api/docs/archive/`.
 
-Schema hiện hành được tạo bởi Flyway V1–V34 và được mô tả tại [database/DATABASE_SCHEMA.md](../database/DATABASE_SCHEMA.md). Các tài liệu trong `api/docs/archive/` là thiết kế trước V20, chỉ dùng để tham khảo lịch sử.
+Schema hiện hành được tạo bởi các migration Flyway trong `api/src/main/resources/db/migration/` và được mô tả tại [database/DATABASE_SCHEMA.md](../database/DATABASE_SCHEMA.md). Các tài liệu trong `api/docs/archive/` là thiết kế cũ trước schema hiện hành, chỉ dùng để tham khảo lịch sử.

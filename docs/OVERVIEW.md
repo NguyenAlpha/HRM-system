@@ -9,7 +9,7 @@ HRM là ứng dụng quản trị nhân sự cho một công ty, gồm hai porta
 | HRM Workspace | Nhân viên, HR, kế toán lương, người duyệt | Hồ sơ nhân viên, tổ chức, phân quyền nghiệp vụ, ca làm, nghỉ phép, chấm công, lương và báo cáo |
 | Admin Console | `SYSTEM_ADMIN` | Khởi tạo Company Owner, quản trị account và custom role ở phạm vi hệ thống |
 
-Hệ thống đã có database PostgreSQL với Flyway V1–V34, xác thực JWT/refresh token, BFF giữ token trong cookie `HttpOnly`, kiểm tra permission và scope tại service, cùng giao diện nghiệp vụ cho các module chính.
+Hệ thống đã có database PostgreSQL với schema do Flyway quản lý, xác thực JWT/refresh token, BFF giữ token trong cookie `HttpOnly`, kiểm tra permission và scope tại service, cùng giao diện nghiệp vụ cho các module chính.
 
 ## 2. Module nghiệp vụ
 

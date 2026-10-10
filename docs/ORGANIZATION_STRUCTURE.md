@@ -207,7 +207,7 @@ hai assignment riêng, thu hồi cái này không ảnh hưởng cái kia.
 ban. Muốn kiểm thử các tình huống ở mục 6.1 thì phải tạo tay qua API sau khi bootstrap.
 
 > `JobPositionSeeder` tạo các chức danh `BRANCH_MANAGER`, `WAREHOUSE_SUPERVISOR` và `TEAM_LEAD`.
-> Đây chỉ là **chức danh**; các system role trùng tên đã bị ngừng sử dụng ở V22–V24. Trùng tên
+> Đây chỉ là **chức danh**; các system role trùng tên đã bị loại khỏi danh mục role. Trùng tên
 > không tạo ra quyền — đúng theo nguyên tắc ở mục 2.
 
 ---

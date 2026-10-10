@@ -189,7 +189,7 @@ tại `/login`. Đăng nhập sai portal sẽ trả `ADMIN_PORTAL_REQUIRED` ho�
 
 ## 6. Kiểm tra sau khi setup
 
-Khi chạy API sau thay đổi bảng lương, Flyway tự áp dụng `V31`–`V34` trên database hiện có; **không xóa volume hoặc tạo lại database**. Các phiếu lương cũ được giữ nguyên. Trước khi tính lại một kỳ, HR cần nhập hồ sơ bảo hiểm, người phụ thuộc và kế toán cần khai báo ngày dự kiến trả lương theo [hướng dẫn tính lương](../api/docs/api/PAYROLL.md). Bộ quy tắc nạp sẵn chỉ phục vụ năm 2026; kỳ khác sẽ báo thiếu quy tắc để bổ sung migration phù hợp.
+Ngày 2026-10-11 chuỗi migration được gộp lại thành baseline mới. Database local tạo trước ngày đó phải chạy `docker compose down -v` một lần (xem mục 7), nếu không API sẽ dừng vì Flyway báo lệch checksum. Trước khi tính lương một kỳ, HR cần nhập hồ sơ bảo hiểm, người phụ thuộc và kế toán cần khai báo ngày dự kiến trả lương theo [hướng dẫn tính lương](../api/docs/api/PAYROLL.md). Bộ quy tắc nạp sẵn chỉ phục vụ năm 2026; kỳ khác sẽ báo thiếu quy tắc để bổ sung migration phù hợp.
 
 Thực hiện lần lượt:
 

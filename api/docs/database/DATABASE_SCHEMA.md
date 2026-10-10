@@ -1,9 +1,9 @@
 # Database Schema — Hệ thống quản lý nhân sự HRM
 
-> Đây là tài liệu schema hiện hành, mô tả database runtime sau Flyway V35. Mục 15 giữ lịch sử
-> các migration V29–V35 để tra cứu thay đổi; định nghĩa bảng và cột đầy đủ nằm ở các mục 1–14.
-> Khi tài liệu khác với database, migration trong `api/src/main/resources/db/migration/` là
-> nguồn chuẩn.
+> Đây là tài liệu schema hiện hành, mô tả database runtime do Flyway tạo từ các migration trong
+> `api/src/main/resources/db/migration/`. Định nghĩa bảng và cột đầy đủ nằm ở các mục 1–14;
+> mục 15 cho biết bảng nào nằm trong file migration nào. Khi tài liệu khác với database,
+> migration là nguồn chuẩn.
 >
 > Hệ thống phục vụ một doanh nghiệp bán lẻ/phân phối có trụ sở, chi nhánh và kho. Kho được xem là địa điểm làm việc, không quản lý hàng hóa hoặc tồn kho.
 >
@@ -40,7 +40,7 @@ Nhân viên nghỉ việc
 
 Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 
-### 1.2. Danh sách 32 bảng nghiệp vụ của schema runtime V35
+### 1.2. Danh sách 32 bảng nghiệp vụ
 
 | Nhóm | Các bảng |
 |---|---|
@@ -54,16 +54,12 @@ Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 | Quy tắc thuế và bảo hiểm | `payroll_tax_rules`, `payroll_tax_brackets`, `payroll_insurance_rules` |
 | Tính lương | `payroll_periods`, `payslips`, `payslip_items` |
 
-Bảng kỹ thuật `employee_code_counters` không nằm trong con số 32 này. Tính cả nó và hai bảng
-archive ở mục 6.1, database runtime có 35 bảng.
-
-Hai bảng `legacy_employee_compensation_archive` và `legacy_employee_request_archive`
-chỉ là snapshot kiểm toán được tạo tại V27. Chúng không thuộc mô hình nghiệp vụ đang hoạt động,
-không có JPA entity/repository và không được ghi thêm sau migration.
+Bảng kỹ thuật `employee_code_counters` không nằm trong con số 32 này. Tính cả nó, database
+runtime có 33 bảng (chưa kể bảng `flyway_schema_history` của Flyway).
 
 ### 1.3. Sơ đồ quan hệ tổng quát
 
-Sơ đồ có đủ 32 bảng nghiệp vụ và các thuộc tính nghiệp vụ chính. Hai bảng archive V27 không tham gia quan hệ runtime nên được mô tả riêng. Các cột kỹ thuật, người tạo/người duyệt và quan hệ kiểm toán được trình bày trong phần định nghĩa bảng bên dưới để sơ đồ dễ đọc. Chính sách thâm niên được áp dụng bằng thuật toán theo số năm và thời gian hiệu lực, không có khóa ngoại trực tiếp từ nhân viên. `company_holidays` đứng độc lập trong sơ đồ vì nó sửa lịch làm việc chung chứ không tham chiếu bản ghi nào.
+Sơ đồ có đủ 32 bảng nghiệp vụ và các thuộc tính nghiệp vụ chính. Các cột kỹ thuật, người tạo/người duyệt và quan hệ kiểm toán được trình bày trong phần định nghĩa bảng bên dưới để sơ đồ dễ đọc. Chính sách thâm niên được áp dụng bằng thuật toán theo số năm và thời gian hiệu lực, không có khóa ngoại trực tiếp từ nhân viên. `company_holidays` đứng độc lập trong sơ đồ vì nó sửa lịch làm việc chung chứ không tham chiếu bản ghi nào.
 
 ```mermaid
 erDiagram
@@ -513,7 +509,7 @@ erDiagram
 | `prefix` | VARCHAR(10) | PK | Tiền tố mã theo vị trí ban đầu |
 | `next_number` | BIGINT | NOT NULL, CHECK > 0 | Số tiếp theo được cấp cho tiền tố |
 
-V28 khởi tạo bộ đếm từ các mã `GD`, `NS`, `KT`, `VH`, `CN`, `KHO`, `TN`, `NV` đã tồn tại. Việc lấy số và tạo employee nằm trong cùng transaction; bảng này là dữ liệu kỹ thuật, không thuộc 24 bảng nghiệp vụ trong sơ đồ.
+Bộ đếm bắt đầu rỗng; mỗi tiền tố (`GD`, `NS`, `KT`, `VH`, `CN`, `KHO`, `TN`, `NV`) được tạo ở lần cấp mã đầu tiên. Việc lấy số và tạo employee nằm trong cùng transaction; bảng này là dữ liệu kỹ thuật, không thuộc 24 bảng nghiệp vụ trong sơ đồ.
 
 ### `employees` — Hồ sơ nhân sự
 
@@ -585,7 +581,7 @@ V28 khởi tạo bộ đếm từ các mã `GD`, `NS`, `KT`, `VH`, `CN`, `KHO`, 
 | `note` | TEXT | | Ghi chú |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 
-> Bảng này thay cho `employee_compensations`. Nó chỉ lưu lương cơ bản và lịch sử thay đổi lương, không chứa các khoản phụ cấp. Một nhân viên chỉ có một mức lương cơ bản hiệu lực tại một thời điểm. V27 backfill lần cuối các mức lương hợp lệ rồi xóa bảng cũ; toàn bộ dữ liệu nguồn được giữ tại `legacy_employee_compensation_archive`.
+> Bảng này chỉ lưu lương cơ bản và lịch sử thay đổi lương, không chứa các khoản phụ cấp. Một nhân viên chỉ có một mức lương cơ bản hiệu lực tại một thời điểm.
 
 ---
 
@@ -862,7 +858,7 @@ dùng `compensation.read` / `compensation.manage`, không phải `salary.*` / `a
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-> Bảng này thay `employee_requests` chung chung. Nghỉ việc được HR cập nhật trực tiếp vào vòng đời nhân viên; bảng này chỉ quản lý nghỉ phép. V27 backfill lần cuối đơn nghỉ phép rồi xóa bảng cũ; toàn bộ dữ liệu nguồn, bao gồm lịch sử đơn nghỉ việc, được giữ tại `legacy_employee_request_archive`.
+> Nghỉ việc được HR cập nhật trực tiếp vào vòng đời nhân viên; bảng này chỉ quản lý nghỉ phép.
 >
 > `salary_treatment` **do server suy ra từ `leave_type`**, không nhận từ client. Người chỉ có
 > `request.self.create` gửi giá trị khác sẽ bị từ chối; chỉ `request.manage` mới ghi đè được.
@@ -908,15 +904,6 @@ dùng `compensation.read` / `compensation.manage`, không phải `salary.*` / `a
 > `UNIQUE(employee_id, year)`.
 > `base_minutes` và `standard_day_minutes` là snapshot có chủ đích: đổi quy tắc hoặc đổi ca của nhân viên về sau không được âm thầm viết lại một năm đã cấp.
 > Bảng **không** lưu số phút đã dùng. Số đã dùng và đang chờ duyệt được tính trực tiếp từ `leave_requests` có `leave_type = ANNUAL`, nên không thể lệch với dữ liệu đơn thật.
-
-### 6.1. Snapshot legacy chỉ đọc
-
-| Bảng | Dữ liệu lưu | Trạng thái migration |
-|---|---|---|
-| `legacy_employee_compensation_archive` | Snapshot toàn bộ lương/phụ cấp từ `employee_compensations`; có liên kết tới `employee_salary_history` nếu backfill thành công | `MIGRATED`, `ARCHIVED_ALLOWANCE`, `ARCHIVED_INVALID_AMOUNT`, `ARCHIVED_CONFLICT` |
-| `legacy_employee_request_archive` | Snapshot toàn bộ đơn phép/nghỉ việc từ `employee_requests`; có liên kết tới `leave_requests` nếu backfill thành công | `MIGRATED`, `ARCHIVED_RESIGNATION`, `ARCHIVED_CONFLICT` |
-
-Các bảng archive không có khóa ngoại để dữ liệu kiểm toán không bị ảnh hưởng bởi vòng đời của bản ghi nghiệp vụ. Không controller, service hoặc repository nào được phép ghi vào chúng.
 
 ---
 
@@ -1004,8 +991,8 @@ MISSING_PUNCH
 ## 8. Tính lương
 
 > Phần này trình bày nền tính gross của thiết kế lõi. Các khoản bảo hiểm, thuế, căn cứ đóng,
-> ngày trả lương và tăng ca miễn thuế được bổ sung ở V31–V34; công thức đầy đủ nằm trong
-> [PAYROLL.md](../api/PAYROLL.md).
+> ngày trả lương và tăng ca miễn thuế được mô tả ở mục 8.3–8.4 và các bảng `payroll_periods`,
+> `payslips`; công thức đầy đủ nằm trong [PAYROLL.md](../api/PAYROLL.md).
 
 ### 8.1. Nguồn dữ liệu tính lương
 
@@ -1099,7 +1086,7 @@ Hai bảng dưới đây là dữ liệu do HR nhập cho từng nhân viên. C�
 | `created_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người nhập |
 | `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Thời điểm tạo |
 
-> `CHECK (effective_to IS NULL OR effective_to >= effective_from)`. Từ V32, `EXCLUDE USING GIST`
+> `CHECK (effective_to IS NULL OR effective_to >= effective_from)`. `EXCLUDE USING GIST`
 > trên `(employee_id, lower(full_name), khoảng hiệu lực)` chặn khai trùng một người phụ thuộc
 > trong cùng thời gian.
 
@@ -1120,7 +1107,7 @@ có khoảng hiệu lực riêng; phiếu lương snapshot lại `id` của bộ
 | `source_reference` | TEXT | NOT NULL | Căn cứ pháp lý của bộ quy tắc |
 
 > `EXCLUDE USING GIST` chặn hai bộ quy tắc có khoảng hiệu lực chồng nhau. Bộ nạp sẵn áp dụng
-> từ 01/01/2026 và V32 đóng hiệu lực tại 31/12/2026, nên kỳ lương ngoài năm 2026 sẽ dừng với
+> từ 01/01/2026 và đóng hiệu lực tại 31/12/2026, nên kỳ lương ngoài năm 2026 sẽ dừng với
 > lỗi yêu cầu bổ sung quy tắc thay vì tính bằng số liệu cũ.
 
 #### `payroll_tax_brackets` — Biểu thuế lũy tiến từng phần
@@ -1515,20 +1502,30 @@ Các chức năng ngoài phạm vi không được thêm bảng dự phòng vào
 
 ---
 
-## 15. Lịch sử migration V29–V35
+## 15. Tổ chức migration
 
-Các mục trên đã mô tả schema sau V35. Bảng dưới đây chỉ ghi lại migration nào mang thay đổi nào,
-dùng khi cần truy ngược một cột về migration sinh ra nó. Schema được mở rộng bằng migration mới,
-không sửa migration cũ:
+Ngày 2026-10-11, chuỗi migration phát triển V1–V35 được gộp thành baseline V1–V8 dưới đây; schema
+giữ nguyên, chỉ bỏ hai bảng archive legacy không còn dùng. Database tạo từ chuỗi cũ phải
+`docker compose down -v` rồi chạy lại, nếu không Flyway sẽ báo lệch checksum.
 
-| Migration | Thay đổi |
-| --- | --- |
-| V29 | `company_holidays` xác định ngày không làm việc trong lịch thứ 2–thứ 7. |
-| V30 | `attendance_records.leave_minutes` tách phút nghỉ khỏi phút làm. |
-| V31 | `employee_payroll_profiles`, `employee_tax_dependents`, `payroll_tax_rules`, `payroll_tax_brackets`, `payroll_insurance_rules`; thêm `payroll_periods.tax_payment_date` và các cột khấu trừ/snapshot của `payslips`. Tổng `net_pay` bằng tổng thu nhập trừ bảo hiểm nhân viên và thuế TNCN. |
-| V32 | Giới hạn quy tắc nạp sẵn tới 31/12/2026; chặn trùng người phụ thuộc cùng thời gian. |
-| V33 | Lưu thêm căn cứ đóng BHTN sau trần vùng trong `payslips.unemployment_insurance_base`. |
-| V34 | `attendance_records.overtime_tax_exempt` do người duyệt xác nhận; `payslips.tax_exempt_overtime_pay` chụp lại phần tăng ca miễn thuế. |
-| V35 | `leave_entitlement_rules` và `employee_leave_entitlements` cấp hạn mức phép năm; trước đó nghỉ `ANNUAL` được duyệt không giới hạn. |
+| Migration | Nội dung | Mục tài liệu |
+| --- | --- | --- |
+| `V1__organization.sql` | Extension `btree_gist`; `company_profile`, `work_locations`, `organization_units`, `job_positions`, `work_shifts` | 2, 7 |
+| `V2__employees_and_accounts.sql` | `employees` và trigger thâm niên, `accounts`, `refresh_tokens`, `account_activation_tokens` | 3, 5 |
+| `V3__rbac.sql` | `permissions`, `roles`, `role_permissions`, `account_role_assignments`, `account_permission_overrides`, `role_assignment_requests` | 5 |
+| `V4__employment_and_salary.sql` | `employee_code_counters`, `employee_assignments`, `employee_salary_history`, `position_allowance_rules`, `seniority_allowance_rules` | 3, 4 |
+| `V5__leave.sql` | `leave_requests`, `leave_entitlement_rules`, `employee_leave_entitlements` | 6 |
+| `V6__attendance.sql` | `company_holidays`, `attendance_records` và trigger số phút theo lịch | 7 |
+| `V7__payroll.sql` | Hồ sơ khấu trừ, quy tắc thuế/bảo hiểm, `payroll_periods`, `payslips`, `payslip_items` và trigger snapshot | 8 |
+| `V8__reference_data.sql` | Quy tắc thuế TNCN, bảo hiểm năm 2026 và quy tắc phép năm | 6, 8.4 |
 
-Hồ sơ bảo hiểm và quy tắc thuế/bảo hiểm có ngày hiệu lực. Các phiếu trước V31 giữ số liệu cũ với khấu trừ bằng 0; tính lại cần dữ liệu mới. Xem [PAYROLL.md](../api/PAYROLL.md) để biết API, công thức, nguồn pháp lý và giới hạn nghiệp vụ.
+Migration chỉ chứa dữ liệu pháp lý dùng chung. Danh mục permission, role, mapping, cơ cấu tổ chức,
+ca làm việc và tài khoản mẫu do các seeder trong `api/src/main/java/com/htttdn/hrm/config/seed/` tạo.
+
+Quy ước khi thay đổi schema:
+
+- Không sửa migration đã commit; mỗi thay đổi là một file `V<n+1>__<mô_tả>.sql` mới.
+- Cập nhật mục tương ứng trong tài liệu này và dòng của bảng trên trong cùng commit.
+- Quy tắc pháp lý năm mới được thêm bằng migration mới sau khi đã rà soát nguồn.
+
+Xem [PAYROLL.md](../api/PAYROLL.md) để biết API, công thức, nguồn pháp lý và giới hạn nghiệp vụ.
