@@ -53,8 +53,6 @@ CREATE TABLE attendance_records (
     )
 );
 
-CREATE INDEX idx_attendance_employee_date ON attendance_records (employee_id, work_date DESC);
-
 -- Số phút theo lịch được snapshot từ ca làm việc khi không được truyền vào.
 CREATE FUNCTION set_attendance_scheduled_minutes()
 RETURNS TRIGGER

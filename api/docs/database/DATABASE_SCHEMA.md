@@ -1539,7 +1539,8 @@ Các chức năng ngoài phạm vi không được thêm bảng dự phòng vào
 ## 15. Tổ chức migration
 
 Ngày 2026-10-11, chuỗi migration phát triển V1–V35 được gộp thành baseline V1–V8 dưới đây; schema
-giữ nguyên, chỉ bỏ hai bảng archive legacy không còn dùng. Database tạo từ chuỗi cũ phải
+giữ nguyên, chỉ bỏ hai bảng archive legacy không còn dùng. Các chỉnh sửa sau đó được sửa thẳng
+vào file của domain tương ứng thay vì thêm file vá. Mỗi khi file baseline đổi, database local phải
 `docker compose down -v` rồi chạy lại, nếu không Flyway sẽ báo lệch checksum.
 
 | Migration | Nội dung | Mục tài liệu |
@@ -1550,21 +1551,21 @@ giữ nguyên, chỉ bỏ hai bảng archive legacy không còn dùng. Database 
 | `V4__employment_and_salary.sql` | `employee_code_counters`, `employee_assignments`, `employee_salary_history`, `position_allowance_rules`, `seniority_allowance_rules` | 3, 4 |
 | `V5__leave.sql` | `leave_requests`, `leave_entitlement_rules`, `employee_leave_entitlements` | 6 |
 | `V6__attendance.sql` | `company_holidays`, `attendance_records` và trigger số phút theo lịch | 7 |
-| `V7__payroll.sql` | Hồ sơ khấu trừ, quy tắc thuế/bảo hiểm, `payroll_periods`, `payslips`, `payslip_items` và trigger snapshot | 8 |
+| `V7__payroll.sql` | Hồ sơ khấu trừ, quy tắc thuế/bảo hiểm, `payroll_periods`, `payslips`, `payslip_items` | 8 |
 | `V8__reference_data.sql` | Quy tắc thuế TNCN, bảo hiểm năm 2026 và quy tắc phép năm | 6, 8.4 |
-| `V9__drop_duplicate_override_period_check.sql` | Bỏ CHECK kỳ hiệu lực bị trùng trên `account_permission_overrides` | 5 |
-| `V10__drop_payslip_snapshot_triggers.sql` | Bỏ trigger tự điền snapshot của `payslips`/`payslip_items`; service phải tự ghi đủ | 8 |
-| `V11__drop_redundant_unique_indexes.sql` | Chỉ giữ unique theo `LOWER` cho mã nhân viên, email công việc, email tài khoản; bỏ index chấm công trùng unique | 3, 5, 11 |
-| `V12__check_payroll_insurance_rule_values.sql` | CHECK tỷ lệ 0–1 và mức trần/lương tối thiểu vùng dương cho `payroll_insurance_rules` | 8.4 |
-| `V13__default_role_assignment_request_updated_at.sql` | `role_assignment_requests.updated_at` mặc định `now()` như các bảng khác | 5 |
 
 Migration chỉ chứa dữ liệu pháp lý dùng chung. Danh mục permission, role, mapping, cơ cấu tổ chức,
 ca làm việc và tài khoản mẫu do các seeder trong `api/src/main/java/com/htttdn/hrm/config/seed/` tạo.
 
 Quy ước khi thay đổi schema:
 
-- Không sửa migration đã commit; mỗi thay đổi là một file `V<n+1>__<mô_tả>.sql` mới.
-- Cập nhật mục tương ứng trong tài liệu này và dòng của bảng trên trong cùng commit.
-- Quy tắc pháp lý năm mới được thêm bằng migration mới sau khi đã rà soát nguồn.
+- **Giai đoạn phát triển (hiện tại, đến lần deploy đầu tiên có dữ liệu thật):** sửa thẳng file
+  V1–V8 của domain tương ứng, viết bảng ở dạng cuối cùng; thứ bị bỏ thì xóa khỏi file như chưa từng
+  tồn tại, không thêm file `DROP`/`ALTER` vá. Báo cả nhóm chạy `docker compose down -v`.
+- **Sau lần deploy đầu tiên:** không sửa migration đã chạy trên môi trường thật; mỗi thay đổi là
+  một file `V<n+1>__<mô_tả>.sql` mới.
+- Cập nhật mục tương ứng trong tài liệu này và bảng trên trong cùng commit.
+- Quy tắc pháp lý năm mới: giai đoạn phát triển thì thêm vào `V8__reference_data.sql`; sau deploy
+  thì thêm bằng migration mới sau khi đã rà soát nguồn.
 
 Xem [PAYROLL.md](../api/PAYROLL.md) để biết API, công thức, nguồn pháp lý và giới hạn nghiệp vụ.
