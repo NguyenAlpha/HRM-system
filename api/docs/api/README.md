@@ -34,6 +34,8 @@ có tài liệu riêng, còn `/api/compensation/*` thuộc `PAYROLL.md` chứ kh
 - Scope gồm `SELF`, `ORG_UNIT`, `LOCATION`, `COMPANY`; quyền UI không thay thế authorization backend.
 - Ngày nghiệp vụ dùng ISO `YYYY-MM-DD`; thời điểm dùng ISO-8601 và lưu UTC.
 - Lỗi nghiệp vụ trả `success:false` cùng `error.code`, `message` và `field` nếu có.
+- Đường dẫn không có endpoint trả `404 RESOURCE_NOT_FOUND`; method không được endpoint hỗ trợ trả
+  `405 METHOD_NOT_ALLOWED` kèm header `Allow`. Chỉ lỗi ngoài dự kiến mới trả `500 INTERNAL_ERROR`.
 
 ## Nguồn sự thật
 
