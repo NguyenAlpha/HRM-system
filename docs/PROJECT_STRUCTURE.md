@@ -80,7 +80,6 @@ nằm ở mục 15 của [DATABASE_SCHEMA.md](../api/docs/database/DATABASE_SCHE
 - `api/docs/api/PAYROLL.md`: công thức lương, bảo hiểm, thuế và các API dữ liệu đầu vào.
 - `api/docs/api/README.md`: mục lục tài liệu API hiện hành.
 - `api/docs/database/DATABASE_SCHEMA.md`: schema runtime hiện hành, gồm định nghĩa bảng, cột, index và constraint.
-- `api/docs/archive/DATABASE_SCHEMA.md`: bản thiết kế cũ trước schema hiện hành, chỉ giữ để tham chiếu lịch sử.
 - `api/docs/archive/ENTITY_ATTRIBUTES.md`: mô hình entity cũ trước schema hiện hành, chỉ giữ để tham chiếu lịch sử.
 - `api/docs/archive/SCHEMA_REVIEW_0.1.md`: báo cáo rà soát schema cũ.
 - `api/docs/archive/QUERY_REVIEW_0.1.md`: báo cáo rà soát truy vấn cũ.

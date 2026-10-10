@@ -7,7 +7,7 @@
 > `src/main/java/com/htttdn/hrm/entity` làm nguồn chuẩn. Schema runtime hiện ở V34 và đã có
 > hồ sơ bảo hiểm, người phụ thuộc, quy tắc thuế/bảo hiểm cùng snapshot khấu trừ.
 
-> Tài liệu mô tả từng entity (ánh xạ 1-1 với bảng trong [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md)) và thuộc tính ở mức Java, dùng làm cơ sở để viết JPA entity. Kiểu dữ liệu, ràng buộc và ý nghĩa nghiệp vụ giữ nguyên theo schema đã duyệt.
+> Tài liệu mô tả từng entity (ánh xạ 1-1 với bảng trong `DATABASE_SCHEMA.md` (bản thiết kế cũ, đã xóa)) và thuộc tính ở mức Java, dùng làm cơ sở để viết JPA entity. Kiểu dữ liệu, ràng buộc và ý nghĩa nghiệp vụ giữ nguyên theo schema đã duyệt.
 >
 > Quy ước kiểu Java: `BIGSERIAL`→`Long`, `SMALLINT`→`Short`, `VARCHAR/TEXT`→`String`, `BOOLEAN`→`Boolean`, `DATE`→`LocalDate`, `TIME`→`LocalTime`, `TIMESTAMPTZ`→`Instant`, `NUMERIC`→`BigDecimal`, `INTEGER`→`Integer`. Cột giá trị tĩnh dùng enum tại `com.htttdn.hrm.entity.enums`. Thuộc tính tham chiếu khóa ngoại được viết dưới dạng quan hệ tới entity khác (không phải kiểu `Long` thô) vì đây là mức thiết kế entity, không phải cột DB.
 

@@ -17,7 +17,7 @@
 
 Tiêu chí dựa trên các luồng thực tế của đồ án: điều chuyển, thay đổi lương, duyệt đơn/tăng ca, tính lương tháng, xem phiếu lương và quản lý theo đơn vị/địa điểm. Không chấm theo số JOIN đơn thuần; một query nhiều JOIN có điều kiện đúng vẫn có thể phù hợp hơn hàng trăm truy vấn nhỏ.
 
-Nguồn chính tại thời điểm review là [repository](../../src/main/java/com/htttdn/hrm/repository), [service](../../src/main/java/com/htttdn/hrm/service), [migration](../../src/main/resources/db/migration) và [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md). Tài liệu tổng quan khi đó còn ở giai đoạn khởi đầu; [OVERVIEW hiện hành](../../../docs/OVERVIEW.md) đã được cập nhật theo code V34.
+Nguồn chính tại thời điểm review là [repository](../../src/main/java/com/htttdn/hrm/repository), [service](../../src/main/java/com/htttdn/hrm/service), [migration](../../src/main/resources/db/migration) và `DATABASE_SCHEMA.md` (bản thiết kế cũ, đã xóa). Tài liệu tổng quan khi đó còn ở giai đoạn khởi đầu; [OVERVIEW hiện hành](../../../docs/OVERVIEW.md) đã được cập nhật theo code V34.
 
 **Mức độ bằng chứng:**
 
