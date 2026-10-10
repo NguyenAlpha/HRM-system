@@ -17,7 +17,7 @@
 
 Đây là lần đánh giá đầu tiên của HRM, không phải bản tiếp theo của QuickTech POS. Bốn tài liệu QuickTech chỉ được tham khảo về bố cục: bảng điểm, vấn đề có dẫn chứng, điểm mạnh và thứ tự xử lý.
 
-Tiêu chí được xây dựng từ [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md), đặc biệt các mục 3, 4, 6, 7, 8 và 10.2. Không trừ điểm vì thiếu multi-tenant, tồn kho hàng hóa, hoa hồng, bảo hiểm, thuế, số dư phép năm hay audit log toàn hệ thống: các chức năng này nằm ngoài phạm vi đã xác định. Không yêu cầu partition, read replica hay materialized view khi chưa có bằng chứng cần thiết.
+Tiêu chí được xây dựng từ `DATABASE_SCHEMA.md` (bản thiết kế cũ, đã xóa), đặc biệt các mục 3, 4, 6, 7, 8 và 10.2. Không trừ điểm vì thiếu multi-tenant, tồn kho hàng hóa, hoa hồng, bảo hiểm, thuế, số dư phép năm hay audit log toàn hệ thống: các chức năng này nằm ngoài phạm vi đã xác định. Không yêu cầu partition, read replica hay materialized view khi chưa có bằng chứng cần thiết.
 
 ### Căn cứ và giới hạn
 
@@ -25,7 +25,7 @@ Tiêu chí được xây dựng từ [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md),
 |---|---|
 | `.claude/CLAUDE.md` tại thời điểm review | Hướng dẫn làm việc cũ; file không còn trong repository |
 | [OVERVIEW.md](../../../docs/OVERVIEW.md) | Tại thời điểm review tài liệu còn ở giai đoạn khởi đầu; bản hiện hành đã được cập nhật theo code V34 |
-| [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md), [ENTITY_ATTRIBUTES.md](./ENTITY_ATTRIBUTES.md) | Ý định nghiệp vụ và mô hình 19 bảng ban đầu |
+| `DATABASE_SCHEMA.md` (bản thiết kế cũ, đã xóa), [ENTITY_ATTRIBUTES.md](./ENTITY_ATTRIBUTES.md) | Ý định nghiệp vụ và mô hình 19 bảng ban đầu |
 | [Migration V1–V8](../../src/main/resources/db/migration) | Căn cứ cho cấu trúc được tạo thực tế: **20 bảng**, có thêm `refresh_tokens` |
 | [Entity](../../src/main/java/com/htttdn/hrm/entity), [service](../../src/main/java/com/htttdn/hrm/service) | Kiểm tra quy tắc nào đã được thực thi, quy tắc nào mới được mô tả |
 
