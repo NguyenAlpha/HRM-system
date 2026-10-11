@@ -1,34 +1,34 @@
 "use client"
 
+import type { components } from "@/lib/api-schema"
 import { authorizedRequest } from "@/lib/auth/client"
 import type { Portal } from "@/lib/auth/types"
 
-export interface OrganizationUnitOption {
-  id: number
-  code: string
-  name: string
-}
+// DTO types come from the API's OpenAPI spec; run `npm run gen:api` after changing them.
+type Schemas = components["schemas"]
 
-export interface WorkLocationOption {
-  id: number
-  code: string
-  name: string
-}
+export type OrganizationUnit = Schemas["OrganizationUnitResponse"]
+export type WorkLocation = Schemas["WorkLocationResponse"]
+export type JobPosition = Schemas["JobPositionResponse"]
 
-export interface JobPositionOption {
-  id: number
-  code: string
-  title: string
-}
+// The option lists call the same endpoints with ?active=true; dropdowns only read these fields.
+export type OrganizationUnitOption = Pick<OrganizationUnit, "id" | "code" | "name">
+export type WorkLocationOption = Pick<WorkLocation, "id" | "code" | "name">
+export type JobPositionOption = Pick<JobPosition, "id" | "code" | "title">
+export type WorkShiftOption = Pick<Schemas["WorkShiftResponse"], "id" | "code" | "name">
 
-export interface WorkShiftOption {
-  id: number
-  code: string
-  name: string
-}
+export type CreateOrganizationUnitInput = Schemas["CreateOrganizationUnitRequest"]
+export type UpdateOrganizationUnitInput = Schemas["UpdateOrganizationUnitRequest"]
+export type CreateWorkLocationInput = Schemas["CreateWorkLocationRequest"]
+export type UpdateWorkLocationInput = Schemas["UpdateWorkLocationRequest"]
+export type CreateJobPositionInput = Schemas["CreateJobPositionRequest"]
+export type UpdateJobPositionInput = Schemas["UpdateJobPositionRequest"]
 
-export const ORGANIZATION_UNIT_TYPES = ["BOARD", "DEPARTMENT", "TEAM"] as const
-export type OrganizationUnitType = typeof ORGANIZATION_UNIT_TYPES[number]
+export type OrganizationUnitType = OrganizationUnit["unitType"]
+export type LocationType = WorkLocation["locationType"]
+
+// The label records below must list every enum value, so a value added in the API fails typecheck.
+export const ORGANIZATION_UNIT_TYPES = ["BOARD", "DEPARTMENT", "TEAM"] as const satisfies readonly OrganizationUnitType[]
 
 export const ORGANIZATION_UNIT_TYPE_LABELS: Record<OrganizationUnitType, string> = {
   BOARD: "Ban",
@@ -36,88 +36,12 @@ export const ORGANIZATION_UNIT_TYPE_LABELS: Record<OrganizationUnitType, string>
   TEAM: "Nhóm / Tổ",
 }
 
-export const LOCATION_TYPES = ["HEAD_OFFICE", "BRANCH", "WAREHOUSE"] as const
-export type LocationType = typeof LOCATION_TYPES[number]
+export const LOCATION_TYPES = ["HEAD_OFFICE", "BRANCH", "WAREHOUSE"] as const satisfies readonly LocationType[]
 
 export const LOCATION_TYPE_LABELS: Record<LocationType, string> = {
   HEAD_OFFICE: "Trụ sở chính",
   BRANCH: "Chi nhánh",
   WAREHOUSE: "Kho",
-}
-
-export interface OrganizationUnit {
-  id: number
-  parentUnitId: number | null
-  parentUnitName: string | null
-  code: string
-  name: string
-  unitType: OrganizationUnitType
-  isActive: boolean
-}
-
-export interface WorkLocation {
-  id: number
-  parentLocationId: number | null
-  parentLocationName: string | null
-  code: string
-  name: string
-  locationType: LocationType
-  address: string | null
-  phone: string | null
-  isActive: boolean
-}
-
-export interface JobPosition {
-  id: number
-  code: string
-  title: string
-  description: string | null
-  isManagerial: boolean
-  isActive: boolean
-}
-
-export interface CreateOrganizationUnitInput {
-  parentUnitId: number | null
-  code: string
-  name: string
-  unitType: OrganizationUnitType
-}
-
-export interface UpdateOrganizationUnitInput {
-  parentUnitId: number | null
-  name: string
-  isActive: boolean
-}
-
-export interface CreateWorkLocationInput {
-  parentLocationId: number | null
-  code: string
-  name: string
-  locationType: LocationType
-  address: string
-  phone: string | null
-}
-
-export interface UpdateWorkLocationInput {
-  parentLocationId: number | null
-  name: string
-  address: string
-  phone: string | null
-  isActive: boolean
-}
-
-export interface CreateJobPositionInput {
-  code: string
-  title: string
-  description: string | null
-  isManagerial: boolean
-}
-
-export interface UpdateJobPositionInput {
-  title: string
-  description: string | null
-  isManagerial: boolean
-  isActive: boolean
 }
 
 function referenceRequest<T>(portal: Portal, path: string, init?: RequestInit): Promise<T> {

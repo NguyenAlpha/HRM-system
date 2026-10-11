@@ -1972,7 +1972,7 @@ export interface components {
         };
         CreateJobPositionRequest: {
             code: string;
-            description?: string;
+            description?: string | null;
             isManagerial: boolean;
             title: string;
         };
@@ -2004,7 +2004,7 @@ export interface components {
             code: string;
             name: string;
             /** Format: int64 */
-            parentUnitId?: number;
+            parentUnitId?: number | null;
             /** @enum {string} */
             unitType: "BOARD" | "DEPARTMENT" | "TEAM";
         };
@@ -2057,8 +2057,8 @@ export interface components {
             locationType: "HEAD_OFFICE" | "BRANCH" | "WAREHOUSE";
             name: string;
             /** Format: int64 */
-            parentLocationId?: number;
-            phone?: string;
+            parentLocationId?: number | null;
+            phone?: string | null;
         };
         CreateWorkShiftRequest: {
             /** Format: int32 */
@@ -2221,7 +2221,7 @@ export interface components {
             code: string;
             /** Format: date-time */
             createdAt: string;
-            description: string;
+            description: string | null;
             /** Format: int64 */
             id: number;
             isActive: boolean;
@@ -2286,8 +2286,8 @@ export interface components {
             isActive: boolean;
             name: string;
             /** Format: int64 */
-            parentUnitId: number;
-            parentUnitName: string;
+            parentUnitId: number | null;
+            parentUnitName: string | null;
             /** @enum {string} */
             unitType: "BOARD" | "DEPARTMENT" | "TEAM";
             /** Format: date-time */
@@ -2715,7 +2715,7 @@ export interface components {
             taxCode?: string | null;
         };
         UpdateJobPositionRequest: {
-            description?: string;
+            description?: string | null;
             isActive: boolean;
             isManagerial: boolean;
             title: string;
@@ -2724,7 +2724,7 @@ export interface components {
             isActive: boolean;
             name: string;
             /** Format: int64 */
-            parentUnitId?: number;
+            parentUnitId?: number | null;
         };
         UpdateRoleRequest: {
             description?: string;
@@ -2737,8 +2737,8 @@ export interface components {
             isActive: boolean;
             name: string;
             /** Format: int64 */
-            parentLocationId?: number;
-            phone?: string;
+            parentLocationId?: number | null;
+            phone?: string | null;
         };
         UpdateWorkShiftRequest: {
             /** Format: int32 */
@@ -2765,9 +2765,9 @@ export interface components {
             locationType: "HEAD_OFFICE" | "BRANCH" | "WAREHOUSE";
             name: string;
             /** Format: int64 */
-            parentLocationId: number;
-            parentLocationName: string;
-            phone: string;
+            parentLocationId: number | null;
+            parentLocationName: string | null;
+            phone: string | null;
             /** Format: date-time */
             updatedAt: string;
         };
@@ -2781,7 +2781,7 @@ export interface components {
             /** @enum {string} */
             locationType: "HEAD_OFFICE" | "BRANCH" | "WAREHOUSE";
             name: string;
-            phone: string;
+            phone: string | null;
         };
         WorkShiftResponse: {
             /** Format: int32 */

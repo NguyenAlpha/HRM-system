@@ -64,7 +64,8 @@ sinh từ spec, DTO phải khai báo đúng khả năng null:
 - **Request:** field có `@NotNull`/`@NotBlank` là bắt buộc. Field không bắt buộc và nhận `null`
   phải gắn `@Nullable` để web được phép gửi `null`.
 
-Hiện mới các DTO của module Employee và envelope `ApiResult`/`ErrorDetail` được gắn đầy đủ.
+Đã gắn đầy đủ: DTO của Employee, Organization (đơn vị tổ chức, địa điểm, chức danh) và envelope
+`ApiResult`/`ErrorDetail`.
 
 ## Nguồn sự thật
 
