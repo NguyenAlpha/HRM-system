@@ -906,7 +906,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ApiResultListCompanyHoliday"
+                  "$ref" : "#/components/schemas/ApiResultListCompanyHolidayResponse"
                 }
               }
             },
@@ -932,7 +932,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ApiResultCompanyHoliday"
+                  "$ref" : "#/components/schemas/ApiResultCompanyHolidayResponse"
                 }
               }
             },
@@ -4081,12 +4081,12 @@
         },
         "required" : [ "data", "error", "success" ]
       },
-      "ApiResultCompanyHoliday" : {
+      "ApiResultCompanyHolidayResponse" : {
         "type" : "object",
         "properties" : {
           "data" : {
             "anyOf" : [ {
-              "$ref" : "#/components/schemas/CompanyHoliday"
+              "$ref" : "#/components/schemas/CompanyHolidayResponse"
             }, {
               "type" : "null"
             } ]
@@ -4352,13 +4352,13 @@
         },
         "required" : [ "data", "error", "success" ]
       },
-      "ApiResultListCompanyHoliday" : {
+      "ApiResultListCompanyHolidayResponse" : {
         "type" : "object",
         "properties" : {
           "data" : {
             "type" : [ "array", "null" ],
             "items" : {
-              "$ref" : "#/components/schemas/CompanyHoliday"
+              "$ref" : "#/components/schemas/CompanyHolidayResponse"
             }
           },
           "error" : {
@@ -5575,7 +5575,22 @@
         },
         "required" : [ "employeeId", "workDate" ]
       },
-      "CompanyHoliday" : {
+      "CompanyHolidayRequest" : {
+        "type" : "object",
+        "properties" : {
+          "date" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "name" : {
+            "type" : "string",
+            "maxLength" : 150,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "date", "name" ]
+      },
+      "CompanyHolidayResponse" : {
         "type" : "object",
         "properties" : {
           "createdAt" : {
@@ -5595,21 +5610,6 @@
           }
         },
         "required" : [ "createdAt", "holidayDate", "id", "name" ]
-      },
-      "CompanyHolidayRequest" : {
-        "type" : "object",
-        "properties" : {
-          "date" : {
-            "type" : "string",
-            "format" : "date"
-          },
-          "name" : {
-            "type" : "string",
-            "maxLength" : 150,
-            "minLength" : 0
-          }
-        },
-        "required" : [ "date", "name" ]
       },
       "CompleteAccountActivationRequest" : {
         "type" : "object",

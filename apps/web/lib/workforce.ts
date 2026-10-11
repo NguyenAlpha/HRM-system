@@ -4,7 +4,7 @@ import type { components } from "@/lib/api-schema"
 type Schemas = components["schemas"]
 
 export type AttendanceRecord = Schemas["AttendanceRecordResponse"]
-export type CompanyHoliday = Schemas["CompanyHoliday"]
+export type CompanyHoliday = Schemas["CompanyHolidayResponse"]
 export type LeaveRequest = Schemas["LeaveRequestView"]
 export type LeaveBalance = Schemas["BalanceView"]
 export type PayrollPeriod = Schemas["PayrollPeriodResponse"]
