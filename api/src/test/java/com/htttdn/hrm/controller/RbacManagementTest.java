@@ -373,7 +373,7 @@ class RbacManagementTest {
         return permissionRepository.save(Permission.builder().code(code).name("RBAC test permission")
             .module(PermissionModule.RBAC)
             .description("RBAC test permission").assignmentPolicy(assignmentPolicy)
-            .isActive(true).createdAt(Instant.now()).build());
+            .isActive(true).createdAt(Instant.now()).updatedAt(Instant.now()).build());
     }
 
     private Account savedAccount() {

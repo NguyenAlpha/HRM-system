@@ -13,6 +13,8 @@ CREATE TABLE permissions (
     assignment_policy VARCHAR(20) NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- PermissionSeeder cập nhật khi name, description hoặc assignment_policy trong code thay đổi.
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     -- Keep the database constraint aligned with PermissionModule and the seeded catalog.
     CONSTRAINT chk_permissions_module CHECK (
         module IN (
