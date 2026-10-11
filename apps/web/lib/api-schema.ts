@@ -1371,7 +1371,7 @@ export interface components {
             /** Format: date */
             effectiveFrom: string;
             /** Format: date */
-            effectiveTo: string;
+            effectiveTo: string | null;
             /** Format: int64 */
             grantedByAccountId: number;
             grantedByUsername: string;
@@ -1384,12 +1384,12 @@ export interface components {
             permissionId: number;
             permissionName: string;
             reason: string;
-            revocationReason: string;
+            revocationReason: string | null;
             /** Format: date-time */
-            revokedAt: string;
+            revokedAt: string | null;
             /** Format: int64 */
-            revokedByAccountId: number;
-            revokedByUsername: string;
+            revokedByAccountId: number | null;
+            revokedByUsername: string | null;
             /** @enum {string} */
             status: "SCHEDULED" | "ACTIVE" | "EXPIRED" | "REVOKED";
         };
@@ -1763,21 +1763,21 @@ export interface components {
             taxExempt?: boolean;
         };
         ApproveRoleAssignmentRequest: {
-            note?: string;
+            note?: string | null;
         };
         AssignAccountRoleRequest: {
             /** Format: date */
             effectiveFrom: string;
             /** Format: date */
-            effectiveTo?: string;
+            effectiveTo?: string | null;
             /** Format: int64 */
-            organizationUnitId?: number;
+            organizationUnitId?: number | null;
             reason: string;
             roleCode: string;
             /** @enum {string} */
             scopeType: "SELF" | "COMPANY" | "ORG_UNIT" | "LOCATION";
             /** Format: int64 */
-            workLocationId?: number;
+            workLocationId?: number | null;
         };
         AssignEmployeeRequest: {
             /** Format: date */
@@ -2022,7 +2022,7 @@ export interface components {
             /** Format: date */
             effectiveFrom: string;
             /** Format: date */
-            effectiveTo?: string;
+            effectiveTo?: string | null;
             /** Format: int64 */
             permissionId: number;
             reason: string;
@@ -2033,19 +2033,19 @@ export interface components {
             /** Format: date */
             effectiveFrom: string;
             /** Format: date */
-            effectiveTo?: string;
+            effectiveTo?: string | null;
             /** Format: int64 */
-            organizationUnitId?: number;
+            organizationUnitId?: number | null;
             reason: string;
             roleCode: string;
             /** @enum {string} */
             scopeType: "SELF" | "COMPANY" | "ORG_UNIT" | "LOCATION";
             /** Format: int64 */
-            workLocationId?: number;
+            workLocationId?: number | null;
         };
         CreateRoleRequest: {
             code: string;
-            description?: string;
+            description?: string | null;
             /** @enum {string} */
             grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
             name: string;
@@ -2579,7 +2579,7 @@ export interface components {
             grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
             requiresApproval: boolean;
             roleCode: string;
-            roleDescription: string;
+            roleDescription: string | null;
             /** Format: int64 */
             roleId: number;
             roleName: string;
@@ -2587,40 +2587,40 @@ export interface components {
         RoleAssignmentRequestResponse: {
             /** Format: int64 */
             accountId: number;
-            assignment: components["schemas"]["AccountRoleAssignmentResponse"];
-            cancellationReason: string;
+            assignment: components["schemas"]["AccountRoleAssignmentResponse"] | null;
+            cancellationReason: string | null;
             /** Format: date-time */
-            cancelledAt: string;
+            cancelledAt: string | null;
             /** Format: int64 */
-            cancelledByAccountId: number;
-            cancelledByUsername: string;
+            cancelledByAccountId: number | null;
+            cancelledByUsername: string | null;
             /** Format: date */
             effectiveFrom: string;
             /** Format: date */
-            effectiveTo: string;
-            employeeCode: string;
+            effectiveTo: string | null;
+            employeeCode: string | null;
             /** Format: int64 */
-            employeeId: number;
-            employeeName: string;
+            employeeId: number | null;
+            employeeName: string | null;
             /** @enum {string} */
             grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
             /** Format: int64 */
             id: number;
             /** Format: int64 */
-            organizationUnitId: number;
-            organizationUnitName: string;
+            organizationUnitId: number | null;
+            organizationUnitName: string | null;
             reason: string;
             /** Format: date-time */
             requestedAt: string;
             /** Format: int64 */
             requestedByAccountId: number;
             requestedByUsername: string;
-            reviewNote: string;
+            reviewNote: string | null;
             /** Format: date-time */
-            reviewedAt: string;
+            reviewedAt: string | null;
             /** Format: int64 */
-            reviewedByAccountId: number;
-            reviewedByUsername: string;
+            reviewedByAccountId: number | null;
+            reviewedByUsername: string | null;
             roleCode: string;
             /** Format: int64 */
             roleId: number;
@@ -2632,12 +2632,12 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             /** Format: int64 */
-            workLocationId: number;
-            workLocationName: string;
+            workLocationId: number | null;
+            workLocationName: string | null;
         };
         RoleResponse: {
             code: string;
-            description: string;
+            description: string | null;
             /** @enum {string} */
             grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
             /** Format: int64 */
@@ -2647,7 +2647,7 @@ export interface components {
         };
         RoleWithPermissionsResponse: {
             code: string;
-            description: string;
+            description: string | null;
             /** @enum {string} */
             grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
             /** Format: int64 */
@@ -2727,7 +2727,7 @@ export interface components {
             parentUnitId?: number | null;
         };
         UpdateRoleRequest: {
-            description?: string;
+            description?: string | null;
             /** @enum {string} */
             grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
             name: string;

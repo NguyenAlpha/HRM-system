@@ -1,15 +1,33 @@
 "use client"
 
+import type { components } from "@/lib/api-schema"
 import { authorizedRequest } from "@/lib/auth/client"
 import type { Portal } from "@/lib/auth/types"
 
-export const ROLE_SCOPE_TYPES = ["SELF", "COMPANY", "ORG_UNIT", "LOCATION"] as const
-export type RoleScopeType = typeof ROLE_SCOPE_TYPES[number]
+// DTO types come from the API's OpenAPI spec; run `npm run gen:api` after changing them.
+type Schemas = components["schemas"]
 
-export type RoleGrantPolicy = "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "AUTO" | "SYSTEM_ONLY"
+export type RoleAssignmentOption = Schemas["RoleAssignmentOptionResponse"]
+export type AccountRoleAssignment = Schemas["AccountRoleAssignmentResponse"]
+export type PermissionOverrideOption = Schemas["PermissionOverrideOptionResponse"]
+export type AccountPermissionOverride = Schemas["AccountPermissionOverrideResponse"]
+export type RoleAssignmentRequest = Schemas["RoleAssignmentRequestResponse"]
+export type CreatePermissionOverrideInput = Schemas["CreatePermissionOverrideRequest"]
+export type CreateRoleAssignmentRequestInput = Schemas["CreateRoleAssignmentRequest"]
+export type DirectRoleAssignmentInput = Schemas["AssignAccountRoleRequest"]
 
-export const ROLE_ASSIGNMENT_STATUSES = ["PENDING", "APPROVED", "REJECTED", "CANCELLED"] as const
-export type RoleAssignmentRequestStatus = typeof ROLE_ASSIGNMENT_STATUSES[number]
+export type RoleScopeType = AccountRoleAssignment["scopeType"]
+export type RoleGrantPolicy = RoleAssignmentRequest["grantPolicy"]
+export type RoleAssignmentRequestStatus = RoleAssignmentRequest["status"]
+export type PermissionOverrideEffect = AccountPermissionOverride["effect"]
+export type PermissionOverrideStatus = AccountPermissionOverride["status"]
+
+// The label records below must list every enum value, so a value added in the API fails typecheck.
+export const ROLE_SCOPE_TYPES = ["SELF", "COMPANY", "ORG_UNIT", "LOCATION"] as const satisfies readonly RoleScopeType[]
+
+export const ROLE_ASSIGNMENT_STATUSES = [
+  "PENDING", "APPROVED", "REJECTED", "CANCELLED",
+] as const satisfies readonly RoleAssignmentRequestStatus[]
 
 export const ROLE_ASSIGNMENT_STATUS_LABELS: Record<RoleAssignmentRequestStatus, string> = {
   PENDING: "Chờ duyệt",
@@ -25,38 +43,6 @@ export const ROLE_SCOPE_LABELS: Record<RoleScopeType, string> = {
   LOCATION: "Địa điểm làm việc",
 }
 
-export interface RoleAssignmentOption {
-  roleId: number
-  roleCode: string
-  roleName: string
-  roleDescription: string | null
-  grantPolicy: RoleGrantPolicy
-  requiresApproval: boolean
-  allowedScopeTypes: RoleScopeType[]
-}
-
-export interface AccountRoleAssignment {
-  id: number
-  accountId: number
-  roleId: number
-  roleCode: string
-  roleName: string
-  scopeType: RoleScopeType
-  organizationUnitId: number | null
-  workLocationId: number | null
-  effectiveFrom: string
-  effectiveTo: string | null
-  grantedByAccountId: number
-  reason: string
-  createdAt: string
-  revokedByAccountId: number | null
-  revokedAt: string | null
-  revocationReason: string | null
-}
-
-export type PermissionOverrideEffect = "GRANT" | "REVOKE"
-export type PermissionOverrideStatus = "SCHEDULED" | "ACTIVE" | "EXPIRED" | "REVOKED"
-
 export const PERMISSION_OVERRIDE_EFFECT_LABELS: Record<PermissionOverrideEffect, string> = {
   GRANT: "Cấp thêm",
   REVOKE: "Thu hồi",
@@ -69,95 +55,11 @@ export const PERMISSION_OVERRIDE_STATUS_LABELS: Record<PermissionOverrideStatus,
   REVOKED: "Đã thu hồi",
 }
 
-export interface PermissionOverrideOption {
-  permissionId: number
-  permissionCode: string
-  permissionName: string
-  module: string
-  description: string
-  effect: PermissionOverrideEffect
-}
-
-export interface AccountPermissionOverride {
-  id: number
-  accountRoleAssignmentId: number
-  accountId: number
-  permissionId: number
-  permissionCode: string
-  permissionName: string
-  module: string
-  effect: PermissionOverrideEffect
-  effectiveFrom: string
-  effectiveTo: string | null
-  reason: string
-  grantedByAccountId: number
-  grantedByUsername: string
-  createdAt: string
-  revokedByAccountId: number | null
-  revokedByUsername: string | null
-  revokedAt: string | null
-  revocationReason: string | null
-  status: PermissionOverrideStatus
-}
-
-export interface CreatePermissionOverrideInput {
-  permissionId: number
-  effect: PermissionOverrideEffect
-  effectiveFrom: string
-  effectiveTo: string | null
-  reason: string
-}
-
-export interface RoleAssignmentRequest {
-  id: number
-  accountId: number
-  employeeId: number
-  employeeCode: string
-  employeeName: string
-  roleId: number
-  roleCode: string
-  roleName: string
-  grantPolicy: RoleGrantPolicy
-  scopeType: RoleScopeType
-  organizationUnitId: number | null
-  organizationUnitName: string | null
-  workLocationId: number | null
-  workLocationName: string | null
-  effectiveFrom: string
-  effectiveTo: string | null
-  reason: string
-  status: RoleAssignmentRequestStatus
-  requestedByAccountId: number
-  requestedByUsername: string
-  requestedAt: string
-  reviewedByAccountId: number | null
-  reviewedByUsername: string | null
-  reviewedAt: string | null
-  reviewNote: string | null
-  cancelledByAccountId: number | null
-  cancelledByUsername: string | null
-  cancelledAt: string | null
-  cancellationReason: string | null
-  updatedAt: string
-  assignment: AccountRoleAssignment | null
-}
-
 export interface Page<T> {
   content: T[]
   number: number
   totalElements: number
   totalPages: number
-}
-
-export interface CreateRoleAssignmentRequestInput {
-  accountId: number
-  roleCode: string
-  scopeType: RoleScopeType
-  organizationUnitId: number | null
-  workLocationId: number | null
-  effectiveFrom: string
-  effectiveTo: string | null
-  reason: string
 }
 
 function roleAssignmentRequestApi<T>(path: string, init?: RequestInit): Promise<T> {
@@ -187,25 +89,15 @@ export function listRoleAssignmentRequests(page: number, status?: RoleAssignment
 }
 
 export function approveRoleAssignmentRequest(id: number, note?: string): Promise<RoleAssignmentRequest> {
-  return roleAssignmentMutation<RoleAssignmentRequest>(`/${id}/approve`, { note: note?.trim() || null })
+  return roleAssignmentMutation<RoleAssignmentRequest>(`/${id}/approve`, { note: note?.trim() || null } satisfies Schemas["ApproveRoleAssignmentRequest"])
 }
 
 export function rejectRoleAssignmentRequest(id: number, note: string): Promise<RoleAssignmentRequest> {
-  return roleAssignmentMutation<RoleAssignmentRequest>(`/${id}/reject`, { note })
+  return roleAssignmentMutation<RoleAssignmentRequest>(`/${id}/reject`, { note } satisfies Schemas["RejectRoleAssignmentRequest"])
 }
 
 export function cancelRoleAssignmentRequest(id: number, reason: string): Promise<RoleAssignmentRequest> {
-  return roleAssignmentMutation<RoleAssignmentRequest>(`/${id}/cancel`, { reason })
-}
-
-export interface DirectRoleAssignmentInput {
-  roleCode: string
-  scopeType: RoleScopeType
-  organizationUnitId: number | null
-  workLocationId: number | null
-  effectiveFrom: string
-  effectiveTo: string | null
-  reason: string
+  return roleAssignmentMutation<RoleAssignmentRequest>(`/${id}/cancel`, { reason } satisfies Schemas["CancelRoleAssignmentRequest"])
 }
 
 function accountRoleAssignmentApi<T>(portal: Portal, accountId: number, path: string, init?: RequestInit): Promise<T> {
@@ -280,7 +172,7 @@ export function revokePermissionOverride(
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reason }),
+      body: JSON.stringify({ reason } satisfies Schemas["RevokePermissionOverrideRequest"]),
     },
   )
 }

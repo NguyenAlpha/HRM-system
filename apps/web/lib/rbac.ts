@@ -1,31 +1,33 @@
 "use client"
 
+import type { components } from "@/lib/api-schema"
 import { authorizedRequest } from "@/lib/auth/client"
 import { AuthApiError, type Portal } from "@/lib/auth/types"
-import type { RoleGrantPolicy } from "@/lib/role-assignment"
 
-export const PERMISSION_MODULES = ["EMPLOYEE", "ACCOUNT", "ORGANIZATION", "REQUEST", "ATTENDANCE", "PAYROLL", "RBAC", "REPORT"] as const
-export type PermissionModule = typeof PERMISSION_MODULES[number]
-export type PermissionAssignmentPolicy = "DELEGABLE" | "SYSTEM_ONLY"
+// DTO types come from the API's OpenAPI spec; run `npm run gen:api` after changing them.
+type Schemas = components["schemas"]
 
-export interface Role {
-  id: number
-  code: string
-  name: string
-  description: string | null
-  isSystem: boolean
-  grantPolicy: RoleGrantPolicy
+export type Role = Schemas["RoleResponse"]
+export type Permission = Schemas["PermissionResponse"]
+export type CreateRoleInput = Schemas["CreateRoleRequest"]
+export type UpdateRoleInput = Schemas["UpdateRoleRequest"]
+export type ReplaceRolePermissionsInput = Schemas["ReplaceRolePermissionsRequest"]
+
+export type PermissionModule = Permission["module"]
+export type PermissionAssignmentPolicy = Permission["assignmentPolicy"]
+
+// A Record must name every enum value, so a module added in the API fails typecheck here.
+const PERMISSION_MODULE_SET: Record<PermissionModule, true> = {
+  EMPLOYEE: true,
+  ACCOUNT: true,
+  ORGANIZATION: true,
+  REQUEST: true,
+  ATTENDANCE: true,
+  PAYROLL: true,
+  RBAC: true,
+  REPORT: true,
 }
-
-export interface Permission {
-  id: number
-  code: string
-  name: string
-  module: PermissionModule
-  description: string
-  assignmentPolicy: PermissionAssignmentPolicy
-  isActive: boolean
-}
+export const PERMISSION_MODULES = Object.keys(PERMISSION_MODULE_SET) as PermissionModule[]
 
 export interface Page<T> {
   content: T[]

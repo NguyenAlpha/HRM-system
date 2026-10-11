@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -21,12 +22,15 @@ public record CreateRoleAssignmentRequest(
     @NotNull
     RoleScopeType scopeType,
 
+    @Nullable
     Long organizationUnitId,
+    @Nullable
     Long workLocationId,
 
     @NotNull
     LocalDate effectiveFrom,
 
+    @Nullable
     LocalDate effectiveTo,
 
     @NotBlank

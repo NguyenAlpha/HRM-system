@@ -61,7 +61,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import type { Portal } from "@/lib/auth/types"
-import { isSessionExpired, rbacErrorMessage, rbacMutation, rbacRequest, type Page, type Role } from "@/lib/rbac"
+import {
+  isSessionExpired,
+  rbacErrorMessage,
+  rbacMutation,
+  rbacRequest,
+  type CreateRoleInput,
+  type Page,
+  type Role,
+  type UpdateRoleInput,
+} from "@/lib/rbac"
 
 const CODE_PATTERN = /^(?!ROLE_)[A-Z][A-Z0-9_]*$/
 const ROLE_GRANT_POLICIES = ["AUTO", "HR_ASSIGNABLE", "OWNER_APPROVAL", "SYSTEM_ONLY"] as const
@@ -166,7 +175,7 @@ export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSe
   async function onSubmit(values: RoleValues) {
     setDialogError(null)
     try {
-      const body = {
+      const body: UpdateRoleInput = {
         name: values.name.trim(),
         description: values.description?.trim() || null,
         grantPolicy: values.grantPolicy,
@@ -176,7 +185,7 @@ export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSe
         : await rbacMutation<Role>(portal, "/roles", "POST", {
           ...body,
           code: values.code.trim(),
-        })
+        } satisfies CreateRoleInput)
       if (selected?.id === saved.id) setSelected(saved)
       toast.success(editing ? `Đã cập nhật vai trò ${saved.code}` : `Đã tạo vai trò ${saved.code}`)
       if (!editing) setPage(0)
