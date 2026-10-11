@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server"
 
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 
+// HRM Workspace pages; keep in sync with config.matcher below.
+const HRM_PAGES = [
+  "/dashboard", "/employees", "/accounts", "/organization", "/attendance", "/leave-requests",
+  "/payslips", "/reports", "/rbac", "/role-grant", "/role-requests",
+]
+
 function hasSession(request: NextRequest, portal: "hrm" | "admin"): boolean {
   const config = PORTAL_CONFIG[portal]
   return Boolean(
@@ -19,9 +25,8 @@ export function proxy(request: NextRequest) {
   if (pathname === "/admin/login" && hasSession(request, "admin")) {
     return NextResponse.redirect(new URL("/admin", request.url))
   }
-  if ((pathname.startsWith("/dashboard") || pathname.startsWith("/reports")
-    || pathname.startsWith("/attendance") || pathname.startsWith("/leave-requests")
-    || pathname.startsWith("/payslips")) && !hasSession(request, "hrm")) {
+  const hrmPage = HRM_PAGES.some((page) => pathname === page || pathname.startsWith(`${page}/`))
+  if (hrmPage && !hasSession(request, "hrm")) {
     return NextResponse.redirect(new URL("/login", request.url))
   }
   if (pathname.startsWith("/admin") && pathname !== "/admin/login" && !hasSession(request, "admin")) {
@@ -32,5 +37,9 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login", "/dashboard/:path*", "/reports/:path*", "/attendance/:path*", "/leave-requests/:path*", "/payslips/:path*", "/admin/:path*"],
+  matcher: [
+    "/login", "/dashboard/:path*", "/employees/:path*", "/accounts/:path*", "/organization/:path*",
+    "/attendance/:path*", "/leave-requests/:path*", "/payslips/:path*", "/reports/:path*", "/rbac/:path*",
+    "/role-grant/:path*", "/role-requests/:path*", "/admin/:path*",
+  ],
 }
