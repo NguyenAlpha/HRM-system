@@ -38,10 +38,9 @@ import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
-import com.htttdn.hrm.service.impl.AttendanceServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
-class AttendanceServiceImplTest {
+class AttendanceServiceTest {
 
     @Mock private AttendanceRecordRepository attendanceRecordRepository;
     @Mock private EmployeeRepository employeeRepository;
@@ -231,8 +230,8 @@ class AttendanceServiceImplTest {
             .build();
     }
 
-    private AttendanceServiceImpl service() {
-        return new AttendanceServiceImpl(attendanceRecordRepository, employeeRepository,
+    private AttendanceService service() {
+        return new AttendanceService(attendanceRecordRepository, employeeRepository,
             employeeAssignmentRepository, accountRepository, payrollPeriodRepository,
             currentAccountProvider, employeeAccessScopeService, attendanceCalendarService);
     }
