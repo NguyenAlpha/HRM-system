@@ -106,7 +106,6 @@ phải khai báo thêm biến môi trường.
 | `COMPANY_SEED_ENABLED` | `true` | Seed company profile, work locations, organization units và job positions cơ bản |
 | `RBAC_SEED_ENABLED` | `true` | Seed role, permission và mapping |
 | `ADMIN_SEED_ENABLED` | `true` | Seed system admin |
-| `USER_SEED_ENABLED` | `false` | Seed các tài khoản nhân viên mẫu; chỉ bật cho demo/test |
 
 Thông tin admin có thể được thay bằng:
 
@@ -120,9 +119,9 @@ $env:ADMIN_SEED_PASSWORD = "YourSecurePassword"
 Seeder có tính idempotent và không đổi mật khẩu của account đã tồn tại. Vì vậy biến mật khẩu
 mới chỉ có tác dụng khi account admin chưa được tạo.
 
-`USER_SEED_ENABLED` mặc định tắt để database mới có thể đi qua đúng chuỗi bootstrap thực tế:
-System Admin tạo Company Owner, sau đó Company Owner tạo HR Manager đầu tiên. Nếu cần các account
-demo `employee01`, `hr01` và `payroll01`, hãy bật biến này một cách tường minh.
+Hệ thống không seed nhân viên hay tài khoản HRM nào. Database mới đi qua chuỗi bootstrap thực tế:
+`admin` đăng nhập `/admin/login` và tạo Company Owner tại `/admin/company-owner`, Company Owner kích hoạt
+tài khoản qua link mời rồi đăng nhập `/login` để tạo nhân viên và cấp role (ví dụ HR Manager) cho người khác.
 
 > Các credential, database password và JWT secret mặc định chỉ dành cho local development.
 > Không sử dụng chúng ở staging hoặc production.
@@ -178,17 +177,14 @@ Mở các địa chỉ sau:
 
 ## 5. Tài khoản phát triển
 
-Các tài khoản sau được tạo khi seeder tương ứng được bật:
+Seeder chỉ tạo một tài khoản:
 
 | Portal | Username | Password | Role |
 |:-------|:---------|:---------|:-----|
 | Admin | `admin` | `Admin@123` | `SYSTEM_ADMIN` |
-| HRM | `employee01` | `Employee@123` | `EMPLOYEE` |
-| HRM | `hr01` | `HrStaff@123` | `HR_MANAGER` |
-| HRM | `payroll01` | `Payroll@123` | `PAYROLL_ACCOUNTANT` |
 
-Tài khoản `SYSTEM_ADMIN` phải đăng nhập tại `/admin/login`. Các tài khoản còn lại đăng nhập
-tại `/login`. Đăng nhập sai portal sẽ trả `ADMIN_PORTAL_REQUIRED` hoặc
+Tài khoản `SYSTEM_ADMIN` phải đăng nhập tại `/admin/login`. Tài khoản HRM (Company Owner và người
+được tạo sau đó) đăng nhập tại `/login`. Đăng nhập sai portal sẽ trả `ADMIN_PORTAL_REQUIRED` hoặc
 `ADMIN_ACCESS_REQUIRED`.
 
 ## 6. Kiểm tra sau khi setup
@@ -197,8 +193,8 @@ Ngày 2026-10-11 chuỗi migration được gộp lại thành baseline mới. D
 
 Thực hiện lần lượt:
 
-1. Mở `/login`, đăng nhập bằng `employee01` và kiểm tra được chuyển tới `/dashboard`.
-2. Đăng xuất, mở `/admin/login`, đăng nhập bằng `admin` và kiểm tra được chuyển tới `/admin`.
+1. Mở `/admin/login`, đăng nhập bằng `admin` và kiểm tra được chuyển tới `/admin`.
+2. Tạo Company Owner tại `/admin/company-owner`, kích hoạt qua link mời, đăng nhập `/login` và kiểm tra được chuyển tới `/dashboard`.
 3. Kiểm tra dashboard hiển thị account, role và permission.
 4. Thử refresh session và đăng xuất để kiểm tra cookie/session hoạt động.
 

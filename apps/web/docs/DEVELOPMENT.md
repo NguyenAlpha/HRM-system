@@ -45,16 +45,13 @@ AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS=2592000
 
 ## Tài khoản seed dùng khi phát triển
 
-Các tài khoản dưới đây chỉ tồn tại khi seeder tương ứng được bật trong API:
-
-`USER_SEED_ENABLED` mặc định là `false`; đặt thành `true` khi muốn sử dụng ba account demo của portal HRM.
-
 | Portal | Username | Password mặc định | Role | Điều kiện API |
 |:-------|:---------|:------------------|:-----|:--------------|
-| HRM | `employee01` | `Employee@123` | `EMPLOYEE` | `USER_SEED_ENABLED=true` |
-| HRM | `hr01` | `HrStaff@123` | `HR_MANAGER` | `USER_SEED_ENABLED=true` |
-| HRM | `payroll01` | `Payroll@123` | `PAYROLL_ACCOUNTANT` | `USER_SEED_ENABLED=true` |
 | Admin | `admin` | `Admin@123` | `SYSTEM_ADMIN` | `ADMIN_SEED_ENABLED=true` |
+
+Hệ thống không seed nhân viên hay tài khoản HRM nào. Database mới đi qua chuỗi bootstrap thực tế:
+`admin` đăng nhập `/admin/login` và tạo Company Owner tại `/admin/company-owner`, Company Owner kích hoạt
+tài khoản qua link mời rồi đăng nhập `/login` để tạo nhân viên và cấp role (ví dụ HR Manager) cho người khác.
 
 Không dùng mật khẩu mặc định ở môi trường thật. Production cần tắt seeder hoặc truyền mật
 khẩu an toàn qua biến môi trường.
@@ -113,7 +110,7 @@ rỗng) cho mỗi push lên `main` và mỗi pull request.
 
 Dự án chưa cấu hình test runner tự động cho web. Trước khi bàn giao thay đổi, thực hiện ít nhất checklist thủ công sau:
 
-1. Đăng nhập `employee01` tại `/login` và kiểm tra chuyển tới `/dashboard`.
+1. Đăng nhập một tài khoản HRM đã kích hoạt (ví dụ Company Owner) tại `/login` và kiểm tra chuyển tới `/dashboard`.
 2. Đăng nhập `admin` tại `/admin/login` và kiểm tra chuyển tới `/admin`.
 3. Dùng tài khoản admin tại `/login`; hệ thống phải trả `ADMIN_PORTAL_REQUIRED`.
 4. Dùng tài khoản thường tại `/admin/login`; hệ thống phải trả `ADMIN_ACCESS_REQUIRED`.
