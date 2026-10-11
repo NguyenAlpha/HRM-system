@@ -84,6 +84,9 @@ cd api
 API khởi động thành công khi log hiển thị ứng dụng đã start trên port `8080`. Trong lần chạy
 đầu tiên, Flyway tự động tạo schema và các seeder khởi tạo dữ liệu phát triển.
 
+Swagger UI có tại `http://localhost:8080/swagger-ui.html`; xem
+[api/docs/api/README.md](../api/docs/api/README.md#openapi-và-swagger-ui) để gọi thử endpoint cần JWT.
+
 ### Biến môi trường của API
 
 Các giá trị mặc định đã khớp với `docker-compose.yaml`; local development không bắt buộc
@@ -99,6 +102,7 @@ phải khai báo thêm biến môi trường.
 | `JWT_ACCESS_TOKEN_EXPIRATION_SECONDS` | `900` | Thời gian sống access token |
 | `JWT_REFRESH_TOKEN_EXPIRATION_DAYS` | `30` | Thời gian sống refresh token |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3000` | Origin được phép gọi API |
+| `API_DOCS_ENABLED` | `true` | Bật `/v3/api-docs` và Swagger UI; đặt `false` ngoài môi trường phát triển |
 | `COMPANY_SEED_ENABLED` | `true` | Seed company profile, work locations, organization units và job positions cơ bản |
 | `RBAC_SEED_ENABLED` | `true` | Seed role, permission và mapping |
 | `ADMIN_SEED_ENABLED` | `true` | Seed system admin |

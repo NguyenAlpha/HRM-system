@@ -28,7 +28,7 @@ api/
 │   ├── main/
 │   │   ├── java/com/htttdn/hrm/
 │   │   │   ├── HrmApplication.java # Entry point của Spring Boot
-│   │   │   ├── config/             # Cấu hình ứng dụng và security
+│   │   │   ├── config/             # Cấu hình ứng dụng, security và OpenAPI
 │   │   │   │   └── seed/            # Seeder dữ liệu khởi tạo
 │   │   │   ├── controller/         # REST controller
 │   │   │   ├── dto/                # DTO giao tiếp API
