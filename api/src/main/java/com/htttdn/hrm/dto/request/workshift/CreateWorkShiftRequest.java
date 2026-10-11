@@ -2,6 +2,7 @@ package com.htttdn.hrm.dto.request.workshift;
 
 import java.time.LocalTime;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -29,6 +30,10 @@ public record CreateWorkShiftRequest(
     @Min(0)
     @Max(1439)
     Integer breakMinutes,
+
+    /** Required when breakMinutes is positive, null otherwise. */
+    @Nullable
+    LocalTime breakStartTime,
 
     @NotNull
     @Min(1)

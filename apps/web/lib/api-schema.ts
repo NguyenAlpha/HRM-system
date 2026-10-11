@@ -2076,6 +2076,7 @@ export interface components {
         CreateWorkShiftRequest: {
             /** Format: int32 */
             breakMinutes: number;
+            breakStartTime?: string | null;
             code: string;
             crossesMidnight: boolean;
             endTime: string;
@@ -2763,6 +2764,7 @@ export interface components {
         UpdateWorkShiftRequest: {
             /** Format: int32 */
             breakMinutes: number;
+            breakStartTime?: string | null;
             crossesMidnight: boolean;
             endTime: string;
             /** Format: int32 */
@@ -2806,6 +2808,7 @@ export interface components {
         WorkShiftResponse: {
             /** Format: int32 */
             breakMinutes: number;
+            breakStartTime: string | null;
             code: string;
             /** Format: date-time */
             createdAt: string;

@@ -72,13 +72,17 @@ CREATE TABLE work_shifts (
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     break_minutes INTEGER NOT NULL DEFAULT 0 CHECK (break_minutes >= 0),
+    -- Vị trí giờ nghỉ trong ca, cần để tính công khi chỉ làm một phần ca (nghỉ nửa ngày).
+    break_start_time TIME,
     standard_work_minutes INTEGER NOT NULL CHECK (standard_work_minutes > 0),
     grace_late_minutes INTEGER NOT NULL DEFAULT 0 CHECK (grace_late_minutes >= 0),
     crosses_midnight BOOLEAN NOT NULL DEFAULT false,
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    deleted_at TIMESTAMPTZ
+    deleted_at TIMESTAMPTZ,
+    CONSTRAINT chk_work_shifts_break_start
+        CHECK ((break_minutes = 0) = (break_start_time IS NULL))
 );
 
 CREATE UNIQUE INDEX uq_work_shifts_code ON work_shifts (code) WHERE deleted_at IS NULL;

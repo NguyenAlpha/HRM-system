@@ -6039,6 +6039,9 @@
             "maximum" : 1439,
             "minimum" : 0
           },
+          "breakStartTime" : {
+            "type" : [ "string", "null" ]
+          },
           "code" : {
             "type" : "string",
             "maxLength" : 30,
@@ -7867,6 +7870,9 @@
             "maximum" : 1439,
             "minimum" : 0
           },
+          "breakStartTime" : {
+            "type" : [ "string", "null" ]
+          },
           "crossesMidnight" : {
             "type" : "boolean"
           },
@@ -7985,6 +7991,9 @@
             "type" : "integer",
             "format" : "int32"
           },
+          "breakStartTime" : {
+            "type" : [ "string", "null" ]
+          },
           "code" : {
             "type" : "string"
           },
@@ -8024,7 +8033,7 @@
             "format" : "date-time"
           }
         },
-        "required" : [ "breakMinutes", "code", "createdAt", "crossesMidnight", "endTime", "graceLateMinutes", "id", "isActive", "name", "standardWorkMinutes", "startTime", "updatedAt" ]
+        "required" : [ "breakMinutes", "breakStartTime", "code", "createdAt", "crossesMidnight", "endTime", "graceLateMinutes", "id", "isActive", "name", "standardWorkMinutes", "startTime", "updatedAt" ]
       }
     },
     "securitySchemes" : {
