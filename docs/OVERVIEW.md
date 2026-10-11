@@ -51,7 +51,7 @@ PostgreSQL 16 (:5432)
 
 | Thành phần | Công nghệ |
 | --- | --- |
-| Backend | Java 21, Spring Boot 4.0.8, Spring Security, Spring Data JPA, Flyway |
+| Backend | Java 21, Spring Boot 4.0.8, Spring Security, Spring Data JPA, Flyway, springdoc-openapi 3.0 |
 | Database | PostgreSQL 16 |
 | Frontend | Next.js 16.3.5 App Router, React 19, TypeScript strict, Tailwind CSS 4 |
 | Kiểm tra | JUnit, Mockito, Spring integration tests, ESLint, TypeScript, Next production build |

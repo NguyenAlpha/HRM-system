@@ -37,6 +37,22 @@ có tài liệu riêng, còn `/api/compensation/*` thuộc `PAYROLL.md` chứ kh
 - Đường dẫn không có endpoint trả `404 RESOURCE_NOT_FOUND`; method không được endpoint hỗ trợ trả
   `405 METHOD_NOT_ALLOWED` kèm header `Allow`. Chỉ lỗi ngoài dự kiến mới trả `500 INTERNAL_ERROR`.
 
+## OpenAPI và Swagger UI
+
+Khi API chạy local, springdoc sinh spec từ controller và DTO:
+
+| URL | Nội dung |
+| --- | --- |
+| `http://localhost:8080/swagger-ui.html` | Swagger UI để xem và gọi thử endpoint |
+| `http://localhost:8080/v3/api-docs` | Spec OpenAPI 3.1 dạng JSON |
+
+Hai URL này không cần đăng nhập. Để gọi endpoint cần JWT trong Swagger UI, lấy `accessToken` từ
+`POST /api/auth/login` rồi dán vào nút **Authorize**. Đặt `API_DOCS_ENABLED=false` để tắt cả hai
+ngoài môi trường phát triển.
+
+Spec chỉ phản ánh đúng kiểu dữ liệu và ràng buộc validation; quy tắc nghiệp vụ, permission và mã
+lỗi vẫn được mô tả trong các tài liệu ở bảng trên.
+
 ## Nguồn sự thật
 
 Khi tài liệu và code khác nhau, ưu tiên theo thứ tự: migration và controller/service đang chạy, test, tài liệu trong thư mục này, rồi các bản thiết kế lịch sử trong `api/docs/archive/`.
