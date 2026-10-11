@@ -17,7 +17,7 @@ Quy ước trạng thái:
 | Xác thực và phiên | Đủ | `/login`, `/admin/login`, `/activate` |
 | Tài khoản | Đủ | `/admin`, trong trang nhân viên |
 | Phân quyền RBAC | Đủ | `/rbac`, `/admin/rbac`, `/role-grant`, `/role-requests` |
-| Hồ sơ nhân viên | Chỉ API cho 3 thao tác mới | `/employees`, `/employees/{id}` |
+| Hồ sơ nhân viên | Đủ | `/employees`, `/employees/{id}` |
 | Cơ cấu tổ chức | Đủ | `/organization`, `/admin/organization` |
 | Ca làm việc và ngày lễ | Đủ | `/organization`, `/attendance` |
 | Nghỉ phép | Đủ | `/leave-requests` |
@@ -98,7 +98,7 @@ Ma trận đầy đủ role → permission: [api/docs/api/RBAC.md](../api/docs/a
 | Xem chi tiết | `GET /api/employees/{id}` | `employee.read` |
 | Cập nhật hồ sơ | `PUT /api/employees/{id}` | `employee.update` |
 | Xác nhận hết thử việc | `POST /api/employees/{id}/confirm` | `employee.probation.confirm` |
-| Hoàn tất nghỉ việc | `POST /api/employees/{id}/resignation` | `employee.lifecycle.manage` |
+| Kết thúc làm việc: nghỉ việc, chấm dứt hợp đồng, nghỉ hưu | `POST /api/employees/{id}/employment-end` | `employee.lifecycle.manage` |
 | Xóa mềm hồ sơ tạo nhầm | `POST /api/employees/{id}/soft-delete` | `employee.delete` |
 | Xem phân công và lịch sử | `GET /api/employees/{id}/assignments` | `employee.assignment.read` |
 | Điều chuyển, bổ nhiệm | `POST /api/employees/{id}/assignments` | `employee.assignment.manage` |
@@ -106,8 +106,8 @@ Ma trận đầy đủ role → permission: [api/docs/api/RBAC.md](../api/docs/a
 | Cập nhật dữ liệu nhạy cảm | `PUT /api/employees/{id}/sensitive` | `employee.sensitive.manage` |
 
 Trạng thái lao động: `PROBATION`, `ACTIVE`, `RESIGNED`, `TERMINATED`, `RETIRED`. Loại hợp đồng:
-`FULL_TIME`, `PART_TIME`, `TEMPORARY`. API đi được tới `ACTIVE` và `RESIGNED`; `TERMINATED` và
-`RETIRED` chưa có đường đặt.
+`FULL_TIME`, `PART_TIME`, `TEMPORARY`. `PROBATION` → `ACTIVE` qua `confirm`; từ `PROBATION` hoặc
+`ACTIVE` kết thúc sang một trong ba trạng thái `RESIGNED`, `TERMINATED`, `RETIRED` qua `employment-end`.
 
 Phân công giữ cả đơn vị, địa điểm, vị trí, ca làm và người quản lý trực tiếp, có thời gian hiệu
 lực để tính lại đúng dữ liệu lịch sử.
@@ -115,16 +115,17 @@ lực để tính lại đúng dữ liệu lịch sử.
 `GET`/`PUT /{id}/sensitive` tách riêng khỏi hồ sơ thường để quyền đọc hồ sơ không kéo theo quyền
 đọc CCCD và tài khoản ngân hàng. `PUT` là thay thế toàn bộ nhóm trường, không vá từng phần.
 
-Nghỉ việc là thao tác gộp: đóng phân công đang mở tại ngày nghỉ, chuyển account sang `DISABLED`
-và thu hồi toàn bộ refresh token của account đó. Đây là bước thực thi, không phải bước phê duyệt.
+Kết thúc làm việc là thao tác gộp, giống nhau cho cả ba trạng thái: đóng phân công đang mở tại ngày
+kết thúc, chuyển account sang `DISABLED` và thu hồi toàn bộ refresh token của account đó. Đây là
+bước thực thi, không phải bước phê duyệt.
 
 Xóa mềm chỉ dành cho hồ sơ tạo nhầm: đã có account, lương, đơn nghỉ, chấm công hoặc phiếu lương
-thì API từ chối và yêu cầu dùng luồng nghỉ việc. Phân công được tính theo số lượng — bản ghi đầu
+thì API từ chối và yêu cầu dùng luồng kết thúc làm việc. Phân công được tính theo số lượng — bản ghi đầu
 tiên do chính luồng tạo hồ sơ sinh ra nên không tính, từ bản ghi thứ hai mới coi là đã điều chuyển.
 
-Ba endpoint `sensitive`, `resignation` và `soft-delete` được dùng trên trang
-`/employees/{employeeId}`: thẻ dữ liệu nhạy cảm (đọc/sửa theo `employee.sensitive.*`), nút nghỉ
-việc và nút xóa hồ sơ, mỗi phần chỉ hiện khi account có permission tương ứng.
+Ba endpoint `sensitive`, `employment-end` và `soft-delete` được dùng trên trang
+`/employees/{employeeId}`: thẻ dữ liệu nhạy cảm (đọc/sửa theo `employee.sensitive.*`), nút kết
+thúc làm việc và nút xóa hồ sơ, mỗi phần chỉ hiện khi account có permission tương ứng.
 
 ---
 

@@ -30,9 +30,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class EmployeeLifecycleAccessTest {
 
-    private static final String RESIGNATION_PATH = "/api/employees/1/resignation";
-    private static final String RESIGNATION_BODY =
-        "{\"terminationDate\":\"2026-10-31\",\"terminationReason\":\"Nghỉ theo nguyện vọng\"}";
+    private static final String EMPLOYMENT_END_PATH = "/api/employees/1/employment-end";
+    private static final String EMPLOYMENT_END_BODY =
+        "{\"endStatus\":\"RESIGNED\",\"terminationDate\":\"2026-10-31\",\"terminationReason\":\"Nghỉ theo nguyện vọng\"}";
     private static final String SOFT_DELETE_PATH = "/api/employees/1/soft-delete";
     private static final String SOFT_DELETE_BODY = "{\"deletionReason\":\"Tạo nhầm hồ sơ\"}";
 
@@ -46,8 +46,8 @@ class EmployeeLifecycleAccessTest {
         "employee.lifecycle.approve",
         "NONE"
     })
-    void resignationIsDeniedWithoutLifecycleManagePermission(String permission) throws Exception {
-        mockMvc.perform(resignation(permission, RESIGNATION_BODY))
+    void employmentEndIsDeniedWithoutLifecycleManagePermission(String permission) throws Exception {
+        mockMvc.perform(employmentEnd(permission, EMPLOYMENT_END_BODY))
             .andExpect(status().isForbidden());
     }
 
@@ -59,8 +59,8 @@ class EmployeeLifecycleAccessTest {
     @CsvSource({
         "employee.lifecycle.manage"
     })
-    void resignationPassesPermissionCheckAndReachesTheService(String permission) throws Exception {
-        mockMvc.perform(resignation(permission, RESIGNATION_BODY))
+    void employmentEndPassesPermissionCheckAndReachesTheService(String permission) throws Exception {
+        mockMvc.perform(employmentEnd(permission, EMPLOYMENT_END_BODY))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.error.code").value("EMPLOYEE_NOT_FOUND"));
     }
@@ -68,11 +68,13 @@ class EmployeeLifecycleAccessTest {
     @ParameterizedTest
     @CsvSource({
         "'{}'",
-        "'{\"terminationDate\":\"2026-10-31\"}'",
-        "'{\"terminationReason\":\"Nghỉ theo nguyện vọng\"}'"
+        "'{\"endStatus\":\"RESIGNED\",\"terminationDate\":\"2026-10-31\"}'",
+        "'{\"endStatus\":\"RESIGNED\",\"terminationReason\":\"Nghỉ theo nguyện vọng\"}'",
+        "'{\"terminationDate\":\"2026-10-31\",\"terminationReason\":\"Nghỉ theo nguyện vọng\"}'",
+        "'{\"endStatus\":\"ACTIVE\",\"terminationDate\":\"2026-10-31\",\"terminationReason\":\"Nghỉ\"}'"
     })
-    void resignationRequiresBothDateAndReason(String body) throws Exception {
-        mockMvc.perform(resignation("employee.lifecycle.manage", body))
+    void employmentEndRequiresValidStatusDateAndReason(String body) throws Exception {
+        mockMvc.perform(employmentEnd("employee.lifecycle.manage", body))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
     }
@@ -109,10 +111,10 @@ class EmployeeLifecycleAccessTest {
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
     }
 
-    private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder resignation(
+    private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder employmentEnd(
         String permission, String body
     ) {
-        return request(RESIGNATION_PATH, permission, body);
+        return request(EMPLOYMENT_END_PATH, permission, body);
     }
 
     private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder softDelete(

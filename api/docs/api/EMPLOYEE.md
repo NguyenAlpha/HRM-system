@@ -13,7 +13,7 @@ Tạo và tra cứu hồ sơ nhân sự trong phạm vi được phân công. AP
 | `GET /api/employees/{employeeId}` | ✅ | `employee.read` | Lấy chi tiết hồ sơ, phân công hiện tại và thông tin account nếu đã có |
 | `PUT /api/employees/{employeeId}` | ✅ | `employee.update` | Cập nhật các thông tin hồ sơ được phép thay đổi trong entity employee |
 | `POST /api/employees/{employeeId}/confirm` | ✅ | `employee.probation.confirm` | Xác nhận nhân sự thử việc trở thành nhân sự chính thức |
-| `POST /api/employees/{employeeId}/resignation` | ✅ | `employee.lifecycle.manage` | Hoàn tất nghỉ việc, đóng phân công và vô hiệu hóa account |
+| `POST /api/employees/{employeeId}/employment-end` | ✅ | `employee.lifecycle.manage` | Kết thúc làm việc (nghỉ việc, chấm dứt hợp đồng, nghỉ hưu), đóng phân công và vô hiệu hóa account |
 | `POST /api/employees/{employeeId}/soft-delete` | ✅ | `employee.delete` | Xóa mềm hồ sơ tạo nhầm, chỉ khi chưa phát sinh dữ liệu nghiệp vụ |
 | `GET /api/employees/{employeeId}/assignments` | ✅ | `employee.assignment.read` | Lấy toàn bộ lịch sử phân công của nhân sự |
 | `GET /api/employees/{employeeId}/assignments/current` | ✅ | `employee.assignment.read` | Lấy phân công đang hiệu lực tại ngày gọi API |
@@ -387,7 +387,7 @@ Nếu employee đã có account, thay đổi `workEmail` sẽ đồng thời c�
 ### Các field không cập nhật qua endpoint này
 
 - `id`, `employeeCode`, `createdAt`, `updatedAt`, `deletedAt`, `deletedByAccount`, `deletionReason` do hệ thống quản lý.
-- `employmentStatus`, `terminationDate`, `terminationReason` được thay đổi qua `POST /{employeeId}/confirm` và `POST /{employeeId}/resignation`, không sửa trực tiếp.
+- `employmentStatus`, `terminationDate`, `terminationReason` được thay đổi qua `POST /{employeeId}/confirm` và `POST /{employeeId}/employment-end`, không sửa trực tiếp.
 - `nationalId`, `personalEmail`, `address`, `taxCode`, `bankName`, `bankAccountNumber`, `bankAccountHolder` là dữ liệu nhạy cảm, cập nhật qua `PUT /api/employees/{employeeId}/sensitive`.
 - `hireDate` không được sửa qua API này để tránh làm sai lịch sử phân công và vòng đời nhân sự.
 
@@ -426,13 +426,14 @@ Response `200 OK` trả `EmployeeDetailResponse` sau khi cập nhật.
 
 ---
 
-## POST `/api/employees/{employeeId}/resignation`
+## POST `/api/employees/{employeeId}/employment-end`
 
-Hoàn tất nghỉ việc. Đây là bước **thực thi** một quyết định đã hợp lệ, không phải bước phê duyệt: endpoint không kiểm tra có đơn hay có người duyệt hay chưa.
+Kết thúc làm việc theo một trong ba hình thức: `RESIGNED` (nghỉ việc), `TERMINATED` (chấm dứt hợp
+đồng), `RETIRED` (nghỉ hưu). Ba hình thức có cùng hệ quả, chỉ khác trạng thái được ghi. Đây là bước **thực thi** một quyết định đã hợp lệ, không phải bước phê duyệt: endpoint không kiểm tra có đơn hay có người duyệt hay chưa.
 
 Một lần gọi thay đổi ba thứ trong cùng transaction:
 
-1. `employmentStatus` chuyển sang `RESIGNED`, ghi `terminationDate` và `terminationReason`.
+1. `employmentStatus` chuyển sang `endStatus`, ghi `terminationDate` và `terminationReason`.
 2. Phân công chính đang mở được đóng lại tại `terminationDate`.
 3. Account liên kết chuyển sang `DISABLED` và toàn bộ refresh token của account bị thu hồi, nên các phiên đang đăng nhập không refresh được nữa.
 
@@ -440,6 +441,7 @@ Một lần gọi thay đổi ba thứ trong cùng transaction:
 
 ```json
 {
+  "endStatus": "RESIGNED",
   "terminationDate": "2026-10-31",
   "terminationReason": "Nghỉ theo nguyện vọng cá nhân"
 }
@@ -447,6 +449,7 @@ Một lần gọi thay đổi ba thứ trong cùng transaction:
 
 | Field | Bắt buộc | Ràng buộc |
 |:------|:--------:|:----------|
+| `endStatus` | ✅ | `RESIGNED`, `TERMINATED` hoặc `RETIRED` |
 | `terminationDate` | ✅ | Ngày ISO `YYYY-MM-DD`, không được trước `hireDate` |
 | `terminationReason` | ✅ | Không rỗng |
 
@@ -458,19 +461,17 @@ Trả `EmployeeDetailResponse` sau khi cập nhật, cùng cấu trúc với `PO
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
-| 400 | `VALIDATION_ERROR` | Thiếu `terminationDate` hoặc `terminationReason`, hoặc `terminationDate` trước `hireDate` |
+| 400 | `VALIDATION_ERROR` | Thiếu field bắt buộc, `endStatus` không phải trạng thái kết thúc, hoặc `terminationDate` trước `hireDate` |
 | 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
 | 403 | `FORBIDDEN` | Thiếu `employee.lifecycle.manage` hoặc employee nằm ngoài scope được giao |
 | 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
 | 409 | `CONFLICT` | Employee đã kết thúc làm việc trước đó |
 
-`TERMINATED` và `RETIRED` chưa có đường đi qua API; endpoint này chỉ đặt `RESIGNED`.
-
 ---
 
 ## POST `/api/employees/{employeeId}/soft-delete`
 
-Xóa mềm một hồ sơ **được tạo nhầm**. Đây không phải cách cho nhân sự nghỉ việc: nhân sự đã đi làm luôn có dữ liệu nghiệp vụ và sẽ bị endpoint này từ chối, trường hợp đó dùng `POST /{employeeId}/resignation`.
+Xóa mềm một hồ sơ **được tạo nhầm**. Đây không phải cách cho nhân sự nghỉ việc: nhân sự đã đi làm luôn có dữ liệu nghiệp vụ và sẽ bị endpoint này từ chối, trường hợp đó dùng `POST /{employeeId}/employment-end`.
 
 Endpoint dùng `POST` thay vì `DELETE` vì lý do xóa là bắt buộc và phải nằm trong body.
 

@@ -11,6 +11,7 @@ import com.htttdn.hrm.dto.request.employee.CreateEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.SoftDeleteEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
 import com.htttdn.hrm.entity.Employee;
+import com.htttdn.hrm.entity.enums.EmploymentStatus;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -37,9 +38,10 @@ class EmployeePermissionMappingTest {
         );
         assertPermission(
             EmployeeService.class,
-            "completeResignation",
+            "endEmployment",
             "employee.lifecycle.manage",
             Long.class,
+            EmploymentStatus.class,
             LocalDate.class,
             String.class
         );

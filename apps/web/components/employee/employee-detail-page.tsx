@@ -22,7 +22,7 @@ import {
 import { RbacFeedback } from "@/components/admin/rbac-controls"
 import { PortalSidebar } from "@/components/auth/portal-sidebar"
 import { EmployeeDeleteDialog } from "@/components/employee/employee-delete-dialog"
-import { EmployeeResignationDialog } from "@/components/employee/employee-resignation-dialog"
+import { EmployeeEmploymentEndDialog } from "@/components/employee/employee-employment-end-dialog"
 import { EmployeeSensitiveCard } from "@/components/employee/employee-sensitive-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -124,7 +124,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [revision, setRevision] = useState(0)
-  const [resigning, setResigning] = useState(false)
+  const [endingEmployment, setEndingEmployment] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
   const numericEmployeeId = Number(employeeId)
@@ -251,8 +251,8 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {detail && canManageLifecycle && !isEmploymentEnded(detail.employmentStatus) && (
-              <Button type="button" variant="outline" onClick={() => setResigning(true)}>
-                <LogOut /> Nghỉ việc
+              <Button type="button" variant="outline" onClick={() => setEndingEmployment(true)}>
+                <LogOut /> Kết thúc làm việc
               </Button>
             )}
             {detail && canDeleteEmployee && (
@@ -494,10 +494,10 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
         </div>
       </section>
 
-      {resigning && detail && (
-        <EmployeeResignationDialog
+      {endingEmployment && detail && (
+        <EmployeeEmploymentEndDialog
           employee={detail}
-          onClose={() => setResigning(false)}
+          onClose={() => setEndingEmployment(false)}
           onCompleted={reload}
           onSessionExpired={onSessionExpired}
         />
