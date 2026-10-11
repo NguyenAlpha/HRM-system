@@ -2448,12 +2448,12 @@ export interface components {
         PayrollSalaryReportResponse: {
             /** Format: date */
             asOfDate: string;
-            averageBasicSalary: number;
+            averageBasicSalary: number | null;
             currency: string;
             /** Format: int64 */
             employeesWithBasicSalary: number;
-            maximumBasicSalary: number;
-            minimumBasicSalary: number;
+            maximumBasicSalary: number | null;
+            minimumBasicSalary: number | null;
             /** Format: int64 */
             missingBasicSalary: number;
             salaryDistribution: components["schemas"]["DistributionItemResponse"][];

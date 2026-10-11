@@ -66,7 +66,7 @@ sinh từ spec, DTO phải khai báo đúng khả năng null:
 
 Đã gắn đầy đủ: DTO của Employee, Organization (đơn vị tổ chức, địa điểm, chức danh), Auth, Account
 (account, lời mời, role assignment, permission override), Company Owner, RBAC (role, permission),
-yêu cầu cấp role và envelope `ApiResult`/`ErrorDetail`.
+yêu cầu cấp role, Report và envelope `ApiResult`/`ErrorDetail`.
 
 ## Nguồn sự thật
 

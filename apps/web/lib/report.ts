@@ -1,35 +1,15 @@
 "use client"
 
+import type { components } from "@/lib/api-schema"
 import { authorizedRequest } from "@/lib/auth/client"
 import type { EmploymentStatus } from "@/lib/employee"
 
-export interface DistributionItem {
-  key: string
-  label: string
-  count: number
-  percentage: number
-}
+// DTO types come from the API's OpenAPI spec; run `npm run gen:api` after changing them.
+type Schemas = components["schemas"]
 
-export interface HrWorkforceReport {
-  asOfDate: string
-  totalEmployees: number
-  averageSeniorityYears: number
-  educationDistribution: DistributionItem[]
-  seniorityDistribution: DistributionItem[]
-  missingEducation: number
-}
-
-export interface PayrollSalaryReport {
-  asOfDate: string
-  currency: string
-  totalEmployees: number
-  employeesWithBasicSalary: number
-  averageBasicSalary: number | null
-  minimumBasicSalary: number | null
-  maximumBasicSalary: number | null
-  salaryDistribution: DistributionItem[]
-  missingBasicSalary: number
-}
+export type DistributionItem = Schemas["DistributionItemResponse"]
+export type HrWorkforceReport = Schemas["HrWorkforceReportResponse"]
+export type PayrollSalaryReport = Schemas["PayrollSalaryReportResponse"]
 
 export interface ReportFilters {
   asOfDate: string
