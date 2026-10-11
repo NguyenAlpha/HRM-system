@@ -35,6 +35,7 @@ import {
   EMPLOYMENT_TYPE_LABELS,
   EMPLOYMENT_TYPES,
   isSessionExpired,
+  type AssignEmployeeInput,
   type EmployeeAssignment,
   type EmployeeDetail,
   type EmployeeSummary,
@@ -220,7 +221,7 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
           employmentType: values.employmentType as EmploymentType,
           effectiveFrom: values.effectiveFrom,
           reason: values.reason?.trim() || null,
-        },
+        } satisfies AssignEmployeeInput,
       )
       toast.success(`Đã cập nhật phân công cho ${employee.fullName}`, {
         description: `Hiệu lực từ ${assignment.effectiveFrom}.`,

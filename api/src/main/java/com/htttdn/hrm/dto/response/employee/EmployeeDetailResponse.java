@@ -6,22 +6,24 @@ import com.htttdn.hrm.entity.enums.EducationLevel;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.entity.enums.Gender;
 
+import jakarta.annotation.Nullable;
+
 public record EmployeeDetailResponse(
     Long id,
     String employeeCode,
     String fullName,
-    LocalDate dateOfBirth,
-    Gender gender,
-    EducationLevel highestEducationLevel,
-    String major,
-    String institution,
-    Short graduationYear,
-    String workEmail,
-    String phone,
+    @Nullable LocalDate dateOfBirth,
+    @Nullable Gender gender,
+    @Nullable EducationLevel highestEducationLevel,
+    @Nullable String major,
+    @Nullable String institution,
+    @Nullable Short graduationYear,
+    @Nullable String workEmail,
+    @Nullable String phone,
     LocalDate hireDate,
     EmploymentStatus employmentStatus,
-    LocalDate terminationDate,
-    EmployeeAssignmentResponse currentAssignment,
-    EmployeeAccountSummaryResponse account
+    @Nullable LocalDate terminationDate,
+    @Nullable EmployeeAssignmentResponse currentAssignment,
+    @Nullable EmployeeAccountSummaryResponse account
 ) {
 }

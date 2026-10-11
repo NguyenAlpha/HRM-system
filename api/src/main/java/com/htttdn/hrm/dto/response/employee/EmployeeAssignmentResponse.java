@@ -4,6 +4,8 @@ import java.time.LocalDate;
 
 import com.htttdn.hrm.entity.enums.EmploymentType;
 
+import jakarta.annotation.Nullable;
+
 public record EmployeeAssignmentResponse(
     Long id,
     Long employeeId,
@@ -13,13 +15,13 @@ public record EmployeeAssignmentResponse(
     String workLocationName,
     Long positionId,
     String positionTitle,
-    Long shiftId,
-    String shiftName,
-    Long managerEmployeeId,
-    String managerEmployeeName,
+    @Nullable Long shiftId,
+    @Nullable String shiftName,
+    @Nullable Long managerEmployeeId,
+    @Nullable String managerEmployeeName,
     EmploymentType employmentType,
     LocalDate effectiveFrom,
-    LocalDate effectiveTo,
+    @Nullable LocalDate effectiveTo,
     Boolean isPrimary
 ) {
 }

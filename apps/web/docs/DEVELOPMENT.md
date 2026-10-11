@@ -59,6 +59,26 @@ Các tài khoản dưới đây chỉ tồn tại khi seeder tương ứng đư�
 Không dùng mật khẩu mặc định ở môi trường thật. Production cần tắt seeder hoặc truyền mật
 khẩu an toàn qua biến môi trường.
 
+## Kiểu dữ liệu sinh từ API
+
+`lib/api-schema.ts` được sinh từ spec OpenAPI của API bằng `openapi-typescript`; không sửa tay
+file này. Sau khi đổi DTO ở `api/`, bật API rồi chạy:
+
+```powershell
+npm run gen:api
+npm run typecheck
+```
+
+Typecheck báo lỗi ở những chỗ frontend không còn khớp DTO mới. Commit `lib/api-schema.ts` cùng
+thay đổi DTO để người khác không cần bật API mới typecheck được.
+
+Module dùng type sinh ra định nghĩa alias trong file `lib/<module>.ts`, ví dụ
+`type EmployeeDetail = components["schemas"]["EmployeeDetailResponse"]`, và component chỉ import
+alias đó. Hiện **chỉ module Employee** (`lib/employee.ts`) đã chuyển; các module khác vẫn dùng type
+viết tay. Trước khi chuyển một module, phải gắn `@Nullable` cho các field có thể null trong DTO
+của module đó (xem [quy ước null](../../../api/docs/api/README.md#openapi-và-swagger-ui)), nếu
+không type sinh ra sẽ coi mọi field là luôn có giá trị.
+
 ## Lệnh kiểm tra
 
 ```powershell
@@ -100,6 +120,7 @@ app/
     └── admin-session/        # BFF endpoints của Admin
 components/                   # UI theo module nghiệp vụ
 lib/                          # API client, kiểu dữ liệu và auth helpers
+├── api-schema.ts             # Type sinh từ OpenAPI (npm run gen:api), không sửa tay
 proxy.ts                      # Điều hướng sơ bộ dựa trên sự tồn tại của cookie
 ```
 

@@ -4,16 +4,18 @@ import java.time.LocalDate;
 
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
 
+import jakarta.annotation.Nullable;
+
 public record EmployeeSummaryResponse(
     Long id,
     String employeeCode,
     String fullName,
-    String workEmail,
-    String phone,
+    @Nullable String workEmail,
+    @Nullable String phone,
     LocalDate hireDate,
     EmploymentStatus employmentStatus,
-    LocalDate terminationDate,
-    EmployeeAssignmentResponse currentAssignment,
-    EmployeeAccountSummaryResponse account
+    @Nullable LocalDate terminationDate,
+    @Nullable EmployeeAssignmentResponse currentAssignment,
+    @Nullable EmployeeAccountSummaryResponse account
 ) {
 }
