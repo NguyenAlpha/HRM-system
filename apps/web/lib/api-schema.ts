@@ -4,87 +4,7 @@
  */
 
 export interface paths {
-    "/api/work-shifts/{shiftId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getById"];
-        put: operations["update"];
-        post?: never;
-        delete: operations["delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/work-locations/{locationId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getById_1"];
-        put: operations["update_1"];
-        post?: never;
-        delete: operations["delete_1"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/roles/{roleId}/permissions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listPermissions"];
-        put: operations["replacePermissions"];
-        post: operations["grantPermission"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/roles/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getById_2"];
-        put: operations["update_2"];
-        post?: never;
-        delete: operations["delete_2"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/organization-units/{unitId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getById_3"];
-        put: operations["update_3"];
-        post?: never;
-        delete: operations["delete_3"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/leave-entitlements/employees/{employeeId}/carried-over": {
+    "/api/account-activations/{token}/complete": {
         parameters: {
             query?: never;
             header?: never;
@@ -92,7 +12,647 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["setCarriedOver"];
+        put?: never;
+        post: operations["complete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_11"];
+        put?: never;
+        post: operations["create_10"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounts/{accountId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getById_9"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounts/{accountId}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["activate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounts/{accountId}/invitations/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["resendInvitation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounts/{accountId}/password-reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["initiatePasswordReset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounts/{accountId}/role-assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_12"];
+        put?: never;
+        post: operations["assign_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_13"];
+        put?: never;
+        post: operations["create_11"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides/available-permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["availablePermissions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides/{overrideId}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["revoke_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounts/{accountId}/role-assignments/{assignmentId}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["revoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounts/{accountId}/suspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["suspend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/attendance/check-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["checkIn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/attendance/check-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["checkOut"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/attendance/employees/{employeeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listByEmployee"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/attendance/prepare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["prepare"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/attendance/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getById_6"];
+        put: operations["adjust_1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/attendance/{id}/overtime-approval": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["approveOvertime"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["changePassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["refresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/company-holidays": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_10"];
+        put?: never;
+        post: operations["create_9"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/company-holidays/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_5"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/compensation/employees/{employeeId}/payroll-profiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["profiles"];
+        put?: never;
+        post: operations["setProfile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/compensation/employees/{employeeId}/salary-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_9"];
+        put?: never;
+        post: operations["set"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/compensation/employees/{employeeId}/salary-history/effective": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["effective"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/compensation/employees/{employeeId}/tax-dependents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["dependents"];
+        put?: never;
+        post: operations["addDependent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/compensation/employees/{employeeId}/tax-dependents/{dependentId}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["endDependent"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/employees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_7"];
+        put?: never;
+        post: operations["create_8"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/employees/{employeeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getById_5"];
+        put: operations["update_5"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/employees/{employeeId}/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_8"];
+        put?: never;
+        post: operations["assign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/employees/{employeeId}/assignments/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCurrent"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/employees/{employeeId}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["confirmEmployment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/employees/{employeeId}/resignation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["completeResignation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/employees/{employeeId}/sensitive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get"];
+        put: operations["update_6"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/employees/{employeeId}/soft-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["softDelete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/job-positions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_6"];
+        put?: never;
+        post: operations["create_7"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/job-positions/{positionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getById_4"];
+        put: operations["update_4"];
+        post?: never;
+        delete: operations["delete_4"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/leave-entitlements/employees/{employeeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getBalance"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -116,320 +676,16 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/job-positions/{positionId}": {
+    "/api/leave-entitlements/employees/{employeeId}/carried-over": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["getById_4"];
-        put: operations["update_4"];
+        get?: never;
+        put: operations["setCarriedOver"];
         post?: never;
-        delete: operations["delete_4"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/employees/{employeeId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getById_5"];
-        put: operations["update_5"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/employees/{employeeId}/sensitive": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["get"];
-        put: operations["update_6"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/compensation/employees/{employeeId}/tax-dependents/{dependentId}/end": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: operations["endDependent"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/attendance/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getById_6"];
-        put: operations["adjust_1"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/work-shifts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list"];
-        put?: never;
-        post: operations["create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/work-locations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_1"];
-        put?: never;
-        post: operations["create_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/system/organization/company-owner": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["provision"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/roles": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_2"];
-        put?: never;
-        post: operations["create_2"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/role-assignment-requests": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_3"];
-        put?: never;
-        post: operations["create_3"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/role-assignment-requests/{requestId}/reject": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["reject"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/role-assignment-requests/{requestId}/cancel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["cancel"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/role-assignment-requests/{requestId}/approve": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["approve"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/payroll/periods": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_4"];
-        put?: never;
-        post: operations["create_4"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/payroll/periods/{id}/mark-paid": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["markPaid"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/payroll/periods/{id}/lock": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["lock"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/payroll/periods/{id}/cancel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["cancel_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/payroll/periods/{id}/calculate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["calculate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/payroll/periods/{id}/approve": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["approve_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/organization-units": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_5"];
-        put?: never;
-        post: operations["create_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -452,48 +708,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/leave-requests/{id}/submit": {
+    "/api/leave-requests/employees/{employeeId}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["list_15"];
         put?: never;
-        post: operations["submit"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/leave-requests/{id}/reject": {
+    "/api/leave-requests/pending": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["pending"];
         put?: never;
-        post: operations["reject_1"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/leave-requests/{id}/cancel": {
+    "/api/leave-requests/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["get_2"];
         put?: never;
-        post: operations["cancel_2"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -516,39 +772,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/job-positions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_6"];
-        put?: never;
-        post: operations["create_7"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/employees": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_7"];
-        put?: never;
-        post: operations["create_8"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/employees/{employeeId}/soft-delete": {
+    "/api/leave-requests/{id}/cancel": {
         parameters: {
             query?: never;
             header?: never;
@@ -557,14 +781,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["softDelete"];
+        post: operations["cancel_2"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/employees/{employeeId}/resignation": {
+    "/api/leave-requests/{id}/reject": {
         parameters: {
             query?: never;
             header?: never;
@@ -573,14 +797,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["completeResignation"];
+        post: operations["reject_1"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/employees/{employeeId}/confirm": {
+    "/api/leave-requests/{id}/submit": {
         parameters: {
             query?: never;
             header?: never;
@@ -589,389 +813,37 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["confirmEmployment"];
+        post: operations["submit"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/employees/{employeeId}/assignments": {
+    "/api/organization-units": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["list_8"];
+        get: operations["list_5"];
         put?: never;
-        post: operations["assign"];
+        post: operations["create_5"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/compensation/employees/{employeeId}/tax-dependents": {
+    "/api/organization-units/tree": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["dependents"];
-        put?: never;
-        post: operations["addDependent"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/compensation/employees/{employeeId}/salary-history": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_9"];
-        put?: never;
-        post: operations["set"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/compensation/employees/{employeeId}/payroll-profiles": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["profiles"];
-        put?: never;
-        post: operations["setProfile"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/company-holidays": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_10"];
-        put?: never;
-        post: operations["create_9"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/refresh": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["refresh"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/logout": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["logout"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/login": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["login"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/change-password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["changePassword"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/attendance/{id}/overtime-approval": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["approveOvertime"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/attendance/prepare": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["prepare"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/attendance/check-out": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["checkOut"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/attendance/check-in": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["checkIn"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/accounts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_11"];
-        put?: never;
-        post: operations["create_10"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/accounts/{accountId}/suspend": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["suspend"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/accounts/{accountId}/role-assignments": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_12"];
-        put?: never;
-        post: operations["assign_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/accounts/{accountId}/role-assignments/{assignmentId}/revoke": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["revoke"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_13"];
-        put?: never;
-        post: operations["create_11"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides/{overrideId}/revoke": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["revoke_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/accounts/{accountId}/password-reset": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["initiatePasswordReset"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/accounts/{accountId}/invitations/resend": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["resendInvitation"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/accounts/{accountId}/activate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["activate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/account-activations/{token}/complete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["complete"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/work-locations/tree": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["tree"];
+        get: operations["tree_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -980,14 +852,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/roles/with-permissions": {
+    "/api/organization-units/{unitId}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["listWithPermissions"];
+        get: operations["getById_3"];
+        put: operations["update_3"];
+        post?: never;
+        delete: operations["delete_3"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payroll/employees/{employeeId}/payslips": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["employeePayslips"];
         put?: never;
         post?: never;
         delete?: never;
@@ -996,14 +884,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/role-assignment-requests/{requestId}": {
+    "/api/payroll/payslips/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["getById_7"];
+        get: operations["payslip"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1012,14 +900,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/role-assignment-requests/available-roles": {
+    "/api/payroll/periods": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["listAvailableRoles"];
+        get: operations["list_4"];
+        put?: never;
+        post: operations["create_4"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payroll/periods/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1028,32 +932,80 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/reports/payroll/salary-distribution": {
+    "/api/payroll/periods/{id}/approve": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["salaryDistribution"];
+        get?: never;
         put?: never;
-        post?: never;
+        post: operations["approve_1"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/reports/hr/workforce-distribution": {
+    "/api/payroll/periods/{id}/calculate": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["workforceDistribution"];
+        get?: never;
         put?: never;
-        post?: never;
+        post: operations["calculate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payroll/periods/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["cancel_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payroll/periods/{id}/lock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["lock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payroll/periods/{id}/mark-paid": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["markPaid"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1092,14 +1044,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/payroll/periods/{id}": {
+    "/api/reports/hr/workforce-distribution": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_1"];
+        get: operations["workforceDistribution"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1108,14 +1060,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/payroll/payslips/{id}": {
+    "/api/reports/payroll/salary-distribution": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["payslip"];
+        get: operations["salaryDistribution"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1124,14 +1076,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/payroll/employees/{employeeId}/payslips": {
+    "/api/role-assignment-requests": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["employeePayslips"];
+        get: operations["list_3"];
+        put?: never;
+        post: operations["create_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/role-assignment-requests/available-roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listAvailableRoles"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1140,14 +1108,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/organization-units/tree": {
+    "/api/role-assignment-requests/{requestId}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["tree_1"];
+        get: operations["getById_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1156,14 +1124,78 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/leave-requests/{id}": {
+    "/api/role-assignment-requests/{requestId}/approve": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["get_2"];
+        get?: never;
+        put?: never;
+        post: operations["approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/role-assignment-requests/{requestId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/role-assignment-requests/{requestId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_2"];
+        put?: never;
+        post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roles/with-permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listWithPermissions"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1172,144 +1204,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/leave-requests/pending": {
+    "/api/roles/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["pending"];
-        put?: never;
+        get: operations["getById_2"];
+        put: operations["update_2"];
         post?: never;
-        delete?: never;
+        delete: operations["delete_2"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/leave-requests/employees/{employeeId}": {
+    "/api/roles/{roleId}/permissions": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["list_15"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/leave-entitlements/employees/{employeeId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getBalance"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/employees/{employeeId}/assignments/current": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getCurrent"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/compensation/employees/{employeeId}/salary-history/effective": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["effective"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["me"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/attendance/employees/{employeeId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listByEmployee"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/accounts/{accountId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getById_9"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides/available-permissions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["availablePermissions"];
-        put?: never;
-        post?: never;
+        get: operations["listPermissions"];
+        put: operations["replacePermissions"];
+        post: operations["grantPermission"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1332,7 +1252,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/company-holidays/{id}": {
+    "/api/system/organization/company-owner": {
         parameters: {
             query?: never;
             header?: never;
@@ -1341,8 +1261,88 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        post: operations["provision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/work-locations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_1"];
+        put?: never;
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/work-locations/tree": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tree"];
+        put?: never;
         post?: never;
-        delete: operations["delete_5"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/work-locations/{locationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getById_1"];
+        put: operations["update_1"];
+        post?: never;
+        delete: operations["delete_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/work-shifts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list"];
+        put?: never;
+        post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/work-shifts/{shiftId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getById"];
+        put: operations["update"];
+        post?: never;
+        delete: operations["delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1352,430 +1352,6 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        UpdateWorkShiftRequest: {
-            name: string;
-            startTime: string;
-            endTime: string;
-            /** Format: int32 */
-            breakMinutes: number;
-            /** Format: int32 */
-            standardWorkMinutes: number;
-            /** Format: int32 */
-            graceLateMinutes: number;
-            crossesMidnight: boolean;
-            isActive: boolean;
-        };
-        ApiResultWorkShiftResponse: {
-            success: boolean;
-            data: components["schemas"]["WorkShiftResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        ErrorDetail: {
-            code: string;
-            message: string;
-            field: string | null;
-        };
-        WorkShiftResponse: {
-            /** Format: int64 */
-            id: number;
-            code: string;
-            name: string;
-            startTime: string;
-            endTime: string;
-            /** Format: int32 */
-            breakMinutes: number;
-            /** Format: int32 */
-            standardWorkMinutes: number;
-            /** Format: int32 */
-            graceLateMinutes: number;
-            crossesMidnight: boolean;
-            isActive: boolean;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        UpdateWorkLocationRequest: {
-            /** Format: int64 */
-            parentLocationId?: number;
-            name: string;
-            address: string;
-            phone?: string;
-            isActive: boolean;
-        };
-        ApiResultWorkLocationResponse: {
-            success: boolean;
-            data: components["schemas"]["WorkLocationResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        WorkLocationResponse: {
-            /** Format: int64 */
-            id: number;
-            /** Format: int64 */
-            parentLocationId: number;
-            parentLocationName: string;
-            code: string;
-            name: string;
-            /** @enum {string} */
-            locationType: "HEAD_OFFICE" | "BRANCH" | "WAREHOUSE";
-            address: string;
-            phone: string;
-            isActive: boolean;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        ReplaceRolePermissionsRequest: {
-            permissionIds: number[];
-        };
-        ApiResultListPermissionResponse: {
-            success: boolean;
-            data: components["schemas"]["PermissionResponse"][] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        PermissionResponse: {
-            /** Format: int64 */
-            id: number;
-            code: string;
-            name: string;
-            /** @enum {string} */
-            module: "EMPLOYEE" | "ACCOUNT" | "ORGANIZATION" | "REQUEST" | "ATTENDANCE" | "PAYROLL" | "RBAC" | "REPORT";
-            description: string;
-            /** @enum {string} */
-            assignmentPolicy: "DELEGABLE" | "SYSTEM_ONLY";
-            isActive: boolean;
-        };
-        UpdateRoleRequest: {
-            name: string;
-            description?: string;
-            /** @enum {string} */
-            grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
-        };
-        ApiResultRoleResponse: {
-            success: boolean;
-            data: components["schemas"]["RoleResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        RoleResponse: {
-            /** Format: int64 */
-            id: number;
-            code: string;
-            name: string;
-            description: string;
-            isSystem: boolean;
-            /** @enum {string} */
-            grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
-        };
-        UpdateOrganizationUnitRequest: {
-            /** Format: int64 */
-            parentUnitId?: number;
-            name: string;
-            isActive: boolean;
-        };
-        ApiResultOrganizationUnitResponse: {
-            success: boolean;
-            data: components["schemas"]["OrganizationUnitResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        OrganizationUnitResponse: {
-            /** Format: int64 */
-            id: number;
-            /** Format: int64 */
-            parentUnitId: number;
-            parentUnitName: string;
-            code: string;
-            name: string;
-            /** @enum {string} */
-            unitType: "BOARD" | "DEPARTMENT" | "TEAM";
-            isActive: boolean;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        SetCarriedOverLeaveRequest: {
-            /** Format: int32 */
-            carriedOverMinutes: number;
-            reason?: string;
-        };
-        ApiResultBalanceView: {
-            success: boolean;
-            data: components["schemas"]["BalanceView"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        BalanceView: {
-            /** Format: int64 */
-            employeeId: number;
-            /** Format: int32 */
-            year: number;
-            /** Format: int32 */
-            grantedMinutes: number;
-            /** Format: int32 */
-            carriedOverMinutes: number;
-            /** Format: int32 */
-            adjustmentMinutes: number;
-            adjustmentReason: string;
-            /** Format: int32 */
-            standardDayMinutes: number;
-            /** Format: int32 */
-            usedMinutes: number;
-            /** Format: int32 */
-            pendingMinutes: number;
-            /** Format: int32 */
-            remainingMinutes: number;
-        };
-        AdjustLeaveEntitlementRequest: {
-            /** Format: int32 */
-            adjustmentMinutes: number;
-            reason: string;
-        };
-        UpdateJobPositionRequest: {
-            title: string;
-            description?: string;
-            isManagerial: boolean;
-            isActive: boolean;
-        };
-        ApiResultJobPositionResponse: {
-            success: boolean;
-            data: components["schemas"]["JobPositionResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        JobPositionResponse: {
-            /** Format: int64 */
-            id: number;
-            code: string;
-            title: string;
-            description: string;
-            isManagerial: boolean;
-            isActive: boolean;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        UpdateEmployeeRequest: {
-            fullName: string;
-            /** Format: date */
-            dateOfBirth?: string | null;
-            /** @enum {string|null} */
-            gender?: "MALE" | "FEMALE" | "OTHER" | "UNDISCLOSED" | null;
-            /** @enum {string|null} */
-            highestEducationLevel?: "HIGH_SCHOOL" | "COLLEGE" | "BACHELOR" | "MASTER" | "DOCTORATE" | null;
-            major?: string | null;
-            institution?: string | null;
-            /** Format: int32 */
-            graduationYear?: number | null;
-            /** Format: email */
-            workEmail?: string | null;
-            phone?: string | null;
-        };
-        ApiResultEmployeeDetailResponse: {
-            success: boolean;
-            data: components["schemas"]["EmployeeDetailResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        EmployeeAccountSummaryResponse: {
-            /** Format: int64 */
-            id: number;
-            username: string;
-            email: string;
-            /** @enum {string} */
-            status: "PENDING" | "ACTIVE" | "LOCKED" | "DISABLED";
-        };
-        EmployeeAssignmentResponse: {
-            /** Format: int64 */
-            id: number;
-            /** Format: int64 */
-            employeeId: number;
-            /** Format: int64 */
-            organizationUnitId: number;
-            organizationUnitName: string;
-            /** Format: int64 */
-            workLocationId: number;
-            workLocationName: string;
-            /** Format: int64 */
-            positionId: number;
-            positionTitle: string;
-            /** Format: int64 */
-            shiftId: number | null;
-            shiftName: string | null;
-            /** Format: int64 */
-            managerEmployeeId: number | null;
-            managerEmployeeName: string | null;
-            /** @enum {string} */
-            employmentType: "FULL_TIME" | "PART_TIME" | "TEMPORARY";
-            /** Format: date */
-            effectiveFrom: string;
-            /** Format: date */
-            effectiveTo: string | null;
-            isPrimary: boolean;
-        };
-        EmployeeDetailResponse: {
-            /** Format: int64 */
-            id: number;
-            employeeCode: string;
-            fullName: string;
-            /** Format: date */
-            dateOfBirth: string | null;
-            /** @enum {string|null} */
-            gender: "MALE" | "FEMALE" | "OTHER" | "UNDISCLOSED" | null;
-            /** @enum {string|null} */
-            highestEducationLevel: "HIGH_SCHOOL" | "COLLEGE" | "BACHELOR" | "MASTER" | "DOCTORATE" | null;
-            major: string | null;
-            institution: string | null;
-            /** Format: int32 */
-            graduationYear: number | null;
-            workEmail: string | null;
-            phone: string | null;
-            /** Format: date */
-            hireDate: string;
-            /** @enum {string} */
-            employmentStatus: "PROBATION" | "ACTIVE" | "RESIGNED" | "TERMINATED" | "RETIRED";
-            /** Format: date */
-            terminationDate: string | null;
-            currentAssignment: components["schemas"]["EmployeeAssignmentResponse"] | null;
-            account: components["schemas"]["EmployeeAccountSummaryResponse"] | null;
-        };
-        UpdateEmployeeSensitiveRequest: {
-            nationalId?: string | null;
-            /** Format: email */
-            personalEmail?: string | null;
-            address?: string | null;
-            taxCode?: string | null;
-            bankName?: string | null;
-            bankAccountNumber?: string | null;
-            bankAccountHolder?: string | null;
-        };
-        ApiResultEmployeeSensitiveResponse: {
-            success: boolean;
-            data: components["schemas"]["EmployeeSensitiveResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        EmployeeSensitiveResponse: {
-            /** Format: int64 */
-            employeeId: number;
-            nationalId: string | null;
-            personalEmail: string | null;
-            address: string | null;
-            taxCode: string | null;
-            bankName: string | null;
-            bankAccountNumber: string | null;
-            bankAccountHolder: string | null;
-        };
-        EndDependentCommand: {
-            /** Format: date */
-            effectiveTo?: string;
-        };
-        ApiResultDependent: {
-            success: boolean;
-            data: components["schemas"]["Dependent"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        Dependent: {
-            /** Format: int64 */
-            id: number;
-            /** Format: int64 */
-            employeeId: number;
-            fullName: string;
-            identifier: string;
-            /** Format: date */
-            effectiveFrom: string;
-            /** Format: date */
-            effectiveTo: string;
-        };
-        AdjustAttendanceRequest: {
-            /** Format: int32 */
-            workedMinutes: number;
-            /** Format: int32 */
-            payableMinutes: number;
-            /** Format: int32 */
-            lateMinutes: number;
-            /** Format: int32 */
-            earlyLeaveMinutes: number;
-            /** @enum {string} */
-            status: "PRESENT" | "PAID_LEAVE" | "UNPAID_LEAVE" | "MATERNITY_LEAVE" | "SICK_LEAVE" | "UNAUTHORIZED_ABSENCE" | "HOLIDAY" | "MISSING_PUNCH";
-            note: string;
-        };
-        ApiResultAttendanceRecordResponse: {
-            success: boolean;
-            data: components["schemas"]["AttendanceRecordResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        AttendanceRecordResponse: {
-            /** Format: int64 */
-            id: number;
-            /** Format: int64 */
-            employeeId: number;
-            /** Format: date */
-            workDate: string;
-            /** Format: int64 */
-            shiftId: number;
-            /** Format: date-time */
-            scheduledStartAt: string;
-            /** Format: date-time */
-            scheduledEndAt: string;
-            /** Format: date-time */
-            checkInAt: string;
-            /** Format: date-time */
-            checkOutAt: string;
-            /** Format: int32 */
-            workedMinutes: number;
-            /** Format: int32 */
-            payableMinutes: number;
-            /** Format: int32 */
-            lateMinutes: number;
-            /** Format: int32 */
-            earlyLeaveMinutes: number;
-            /** Format: int32 */
-            overtimeMinutes: number;
-            overtimeMultiplier: number;
-            overtimeTaxExempt: boolean;
-            /** @enum {string} */
-            status: "PRESENT" | "PAID_LEAVE" | "UNPAID_LEAVE" | "MATERNITY_LEAVE" | "SICK_LEAVE" | "UNAUTHORIZED_ABSENCE" | "HOLIDAY" | "MISSING_PUNCH";
-        };
-        CreateWorkShiftRequest: {
-            code: string;
-            name: string;
-            startTime: string;
-            endTime: string;
-            /** Format: int32 */
-            breakMinutes: number;
-            /** Format: int32 */
-            standardWorkMinutes: number;
-            /** Format: int32 */
-            graceLateMinutes: number;
-            crossesMidnight: boolean;
-        };
-        CreateWorkLocationRequest: {
-            /** Format: int64 */
-            parentLocationId?: number;
-            code: string;
-            name: string;
-            /** @enum {string} */
-            locationType: "HEAD_OFFICE" | "BRANCH" | "WAREHOUSE";
-            address: string;
-            phone?: string;
-        };
-        CreateCompanyOwnerAccountRequest: {
-            username: string;
-        };
-        CreateCompanyOwnerEmployeeRequest: {
-            fullName: string;
-            /** Format: email */
-            workEmail: string;
-            phone?: string;
-            /** Format: date */
-            hireDate: string;
-        };
-        CreateOrganizationCompanyOwnerRequest: {
-            employee: components["schemas"]["CreateCompanyOwnerEmployeeRequest"];
-            account: components["schemas"]["CreateCompanyOwnerAccountRequest"];
-            /** Format: date */
-            effectiveFrom: string;
-            ownershipReason: string;
-            directorAppointmentReason: string;
-        };
         AccountInvitationResponse: {
             /** Format: int64 */
             accountId: number;
@@ -1783,500 +1359,402 @@ export interface components {
             /** Format: date-time */
             expiresAt: string;
         };
-        AccountProvisioningResponse: {
-            account: components["schemas"]["AccountResponse"];
-            invitation: components["schemas"]["AccountInvitationResponse"];
-        };
-        AccountResponse: {
-            /** Format: int64 */
-            id: number;
-            /** Format: int64 */
-            employeeId: number;
-            username: string;
-            email: string;
-            /** @enum {string} */
-            status: "PENDING" | "ACTIVE" | "LOCKED" | "DISABLED";
-            /** Format: int32 */
-            failedLoginCount: number;
-            /** Format: date-time */
-            lockedUntil: string;
-            /** Format: date-time */
-            lastLoginAt: string;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        AccountRoleAssignmentResponse: {
-            /** Format: int64 */
-            id: number;
+        AccountPermissionOverrideResponse: {
             /** Format: int64 */
             accountId: number;
             /** Format: int64 */
-            roleId: number;
-            roleCode: string;
-            roleName: string;
+            accountRoleAssignmentId: number;
+            /** Format: date-time */
+            createdAt: string;
             /** @enum {string} */
-            scopeType: "SELF" | "COMPANY" | "ORG_UNIT" | "LOCATION";
-            /** Format: int64 */
-            organizationUnitId: number;
-            /** Format: int64 */
-            workLocationId: number;
+            effect: "GRANT" | "REVOKE";
             /** Format: date */
             effectiveFrom: string;
             /** Format: date */
             effectiveTo: string;
             /** Format: int64 */
             grantedByAccountId: number;
-            reason: string;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: int64 */
-            revokedByAccountId: number;
-            /** Format: date-time */
-            revokedAt: string;
-            revocationReason: string;
-        };
-        ApiResultOrganizationCompanyOwnerProvisioningResponse: {
-            success: boolean;
-            data: components["schemas"]["OrganizationCompanyOwnerProvisioningResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        OrganizationCompanyOwnerProvisioningResponse: {
-            /** Format: int64 */
-            employeeId: number;
-            employeeCode: string;
-            fullName: string;
-            accountProvisioning: components["schemas"]["AccountProvisioningResponse"];
-            companyOwnerRoleAssignment: components["schemas"]["AccountRoleAssignmentResponse"];
-            directorRoleAssignment: components["schemas"]["AccountRoleAssignmentResponse"];
-        };
-        CreateRoleRequest: {
-            code: string;
-            name: string;
-            description?: string;
-            /** @enum {string} */
-            grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
-        };
-        GrantPermissionRequest: {
-            /** Format: int64 */
-            permissionId: number;
-        };
-        ApiResultVoid: {
-            success: boolean;
-            data: null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        CreateRoleAssignmentRequest: {
-            /** Format: int64 */
-            accountId: number;
-            roleCode: string;
-            /** @enum {string} */
-            scopeType: "SELF" | "COMPANY" | "ORG_UNIT" | "LOCATION";
-            /** Format: int64 */
-            organizationUnitId?: number;
-            /** Format: int64 */
-            workLocationId?: number;
-            /** Format: date */
-            effectiveFrom: string;
-            /** Format: date */
-            effectiveTo?: string;
-            reason: string;
-        };
-        ApiResultRoleAssignmentRequestResponse: {
-            success: boolean;
-            data: components["schemas"]["RoleAssignmentRequestResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        RoleAssignmentRequestResponse: {
+            grantedByUsername: string;
             /** Format: int64 */
             id: number;
-            /** Format: int64 */
-            accountId: number;
-            /** Format: int64 */
-            employeeId: number;
-            employeeCode: string;
-            employeeName: string;
-            /** Format: int64 */
-            roleId: number;
-            roleCode: string;
-            roleName: string;
-            /** @enum {string} */
-            grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
-            /** @enum {string} */
-            scopeType: "SELF" | "COMPANY" | "ORG_UNIT" | "LOCATION";
-            /** Format: int64 */
-            organizationUnitId: number;
-            organizationUnitName: string;
-            /** Format: int64 */
-            workLocationId: number;
-            workLocationName: string;
-            /** Format: date */
-            effectiveFrom: string;
-            /** Format: date */
-            effectiveTo: string;
-            reason: string;
-            /** @enum {string} */
-            status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
-            /** Format: int64 */
-            requestedByAccountId: number;
-            requestedByUsername: string;
-            /** Format: date-time */
-            requestedAt: string;
-            /** Format: int64 */
-            reviewedByAccountId: number;
-            reviewedByUsername: string;
-            /** Format: date-time */
-            reviewedAt: string;
-            reviewNote: string;
-            /** Format: int64 */
-            cancelledByAccountId: number;
-            cancelledByUsername: string;
-            /** Format: date-time */
-            cancelledAt: string;
-            cancellationReason: string;
-            /** Format: date-time */
-            updatedAt: string;
-            assignment: components["schemas"]["AccountRoleAssignmentResponse"];
-        };
-        RejectRoleAssignmentRequest: {
-            note: string;
-        };
-        CancelRoleAssignmentRequest: {
-            reason: string;
-        };
-        ApproveRoleAssignmentRequest: {
-            note?: string;
-        };
-        CreatePayrollPeriodRequest: {
-            /** Format: int32 */
-            year: number;
-            /** Format: int32 */
-            month: number;
-            /** Format: date */
-            taxPaymentDate?: string;
-        };
-        ApiResultPayrollPeriodResponse: {
-            success: boolean;
-            data: components["schemas"]["PayrollPeriodResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        PayrollPeriodResponse: {
-            /** Format: int64 */
-            id: number;
-            /** Format: int32 */
-            year: number;
-            /** Format: int32 */
-            month: number;
-            /** Format: date */
-            periodStart: string;
-            /** Format: date */
-            periodEnd: string;
-            /** Format: date */
-            taxPaymentDate: string;
-            /** @enum {string} */
-            status: "DRAFT" | "CALCULATED" | "APPROVED" | "PAID" | "LOCKED" | "CANCELLED";
-            /** Format: int64 */
-            calculatedByAccountId: number;
-            /** Format: date-time */
-            calculatedAt: string;
-            /** Format: int64 */
-            approvedByAccountId: number;
-            /** Format: date-time */
-            approvedAt: string;
-            /** Format: int64 */
-            paidByAccountId: number;
-            /** Format: date-time */
-            paidAt: string;
-            /** Format: int64 */
-            lockedByAccountId: number;
-            /** Format: date-time */
-            lockedAt: string;
-        };
-        PayrollActionRequest: {
-            /** Format: date */
-            taxPaymentDate?: string;
-        };
-        CreateOrganizationUnitRequest: {
-            /** Format: int64 */
-            parentUnitId?: number;
-            code: string;
-            name: string;
-            /** @enum {string} */
-            unitType: "BOARD" | "DEPARTMENT" | "TEAM";
-        };
-        CreateLeaveCommand: {
-            /** Format: int64 */
-            employeeId?: number;
-            /** @enum {string} */
-            leaveType?: "ANNUAL" | "SICK" | "MATERNITY" | "UNPAID" | "OTHER";
-            /** @enum {string} */
-            salaryTreatment?: "EMPLOYER_PAID" | "SOCIAL_INSURANCE" | "UNPAID";
-            /** Format: date-time */
-            startAt?: string;
-            /** Format: date-time */
-            endAt?: string;
-            /** Format: int32 */
-            requestedMinutes?: number;
-            reason?: string;
-            attachmentUrl?: string;
-        };
-        ApiResultLeaveRequestView: {
-            success: boolean;
-            data: components["schemas"]["LeaveRequestView"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        LeaveRequestView: {
-            /** Format: int64 */
-            id: number;
-            /** Format: int64 */
-            employeeId: number;
-            /** @enum {string} */
-            leaveType: "ANNUAL" | "SICK" | "MATERNITY" | "UNPAID" | "OTHER";
-            /** @enum {string} */
-            salaryTreatment: "EMPLOYER_PAID" | "SOCIAL_INSURANCE" | "UNPAID";
-            /** Format: date-time */
-            startAt: string;
-            /** Format: date-time */
-            endAt: string;
-            /** Format: int32 */
-            requestedMinutes: number;
-            reason: string;
-            attachmentUrl: string;
-            /** @enum {string} */
-            status: "DRAFT" | "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
-            /** Format: date-time */
-            submittedAt: string;
-            /** Format: int64 */
-            reviewedByAccountId: number;
-            reviewComment: string;
-            /** Format: date-time */
-            reviewedAt: string;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        ReviewBody: {
-            comment?: string;
-        };
-        CreateJobPositionRequest: {
-            code: string;
-            title: string;
-            description?: string;
-            isManagerial: boolean;
-        };
-        AssignEmployeeRequest: {
-            /** Format: int64 */
-            organizationUnitId: number;
-            /** Format: int64 */
-            workLocationId: number;
-            /** Format: int64 */
-            positionId: number;
-            /** Format: int64 */
-            shiftId?: number | null;
-            /** Format: int64 */
-            managerEmployeeId?: number | null;
-            /** @enum {string} */
-            employmentType: "FULL_TIME" | "PART_TIME" | "TEMPORARY";
-            /** Format: date */
-            effectiveFrom: string;
-            reason?: string | null;
-        };
-        CreateEmployeeProfileRequest: {
-            fullName: string;
-            /** Format: date */
-            dateOfBirth: string;
-            /** @enum {string|null} */
-            gender?: "MALE" | "FEMALE" | "OTHER" | "UNDISCLOSED" | null;
-            /** @enum {string|null} */
-            highestEducationLevel?: "HIGH_SCHOOL" | "COLLEGE" | "BACHELOR" | "MASTER" | "DOCTORATE" | null;
-            major?: string | null;
-            institution?: string | null;
-            /** Format: int32 */
-            graduationYear?: number | null;
-            /** Format: email */
-            workEmail?: string | null;
-            phone?: string | null;
-            /** Format: date */
-            hireDate: string;
-        };
-        CreateEmployeeRequest: {
-            employee: components["schemas"]["CreateEmployeeProfileRequest"];
-            initialAssignment: components["schemas"]["AssignEmployeeRequest"];
-        };
-        ApiResultEmployeeCreationResponse: {
-            success: boolean;
-            data: components["schemas"]["EmployeeCreationResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        EmployeeCreationResponse: {
-            employee: components["schemas"]["EmployeeDetailResponse"];
-            initialAssignment: components["schemas"]["EmployeeAssignmentResponse"];
-        };
-        SoftDeleteEmployeeRequest: {
-            deletionReason: string;
-        };
-        CompleteResignationRequest: {
-            /** Format: date */
-            terminationDate: string;
-            terminationReason: string;
-        };
-        ApiResultEmployeeAssignmentResponse: {
-            success: boolean;
-            data: components["schemas"]["EmployeeAssignmentResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        DependentCommand: {
-            fullName?: string;
-            identifier?: string;
-            /** Format: date */
-            effectiveFrom?: string;
-            /** Format: date */
-            effectiveTo?: string;
-        };
-        SetSalaryCommand: {
-            baseSalary?: number;
-            /** Format: date */
-            effectiveFrom?: string;
-            reason?: string;
-            note?: string;
-        };
-        ApiResultSalaryHistoryView: {
-            success: boolean;
-            data: components["schemas"]["SalaryHistoryView"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        SalaryHistoryView: {
-            /** Format: int64 */
-            id: number;
-            /** Format: int64 */
-            employeeId: number;
-            baseSalary: number;
-            /** Format: date */
-            effectiveFrom: string;
-            /** Format: date */
-            effectiveTo: string;
-            /** Format: int64 */
-            approvedByAccountId: number;
-            reason: string;
-            note: string;
-            /** Format: date-time */
-            createdAt: string;
-        };
-        ProfileCommand: {
-            /** Format: date */
-            effectiveFrom?: string;
-            taxResident?: boolean;
-            socialInsurance?: boolean;
-            healthInsurance?: boolean;
-            unemploymentInsurance?: boolean;
-            insuranceSalary?: number;
-            /** Format: int32 */
-            wageRegion?: number;
-        };
-        ApiResultProfile: {
-            success: boolean;
-            data: components["schemas"]["Profile"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        Profile: {
-            /** Format: int64 */
-            id: number;
-            /** Format: int64 */
-            employeeId: number;
-            /** Format: date */
-            effectiveFrom: string;
-            /** Format: date */
-            effectiveTo: string;
-            taxResident: boolean;
-            socialInsurance: boolean;
-            healthInsurance: boolean;
-            unemploymentInsurance: boolean;
-            insuranceSalary: number;
-            /** Format: int32 */
-            wageRegion: number;
-        };
-        CompanyHolidayRequest: {
-            /** Format: date */
-            date: string;
-            name: string;
-        };
-        ApiResultCompanyHoliday: {
-            success: boolean;
-            data: components["schemas"]["CompanyHoliday"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        CompanyHoliday: {
-            /** Format: int64 */
-            id: number;
-            /** Format: date */
-            holidayDate: string;
-            name: string;
-            /** Format: date-time */
-            createdAt: string;
-        };
-        RefreshTokenRequest: {
-            refreshToken: string;
-        };
-        ApiResultAuthResponse: {
-            success: boolean;
-            data: components["schemas"]["AuthResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        AuthAccountResponse: {
-            /** Format: int64 */
-            accountId: number;
-            username: string;
-            email: string;
-            /** @enum {string} */
-            status: "PENDING" | "ACTIVE" | "LOCKED" | "DISABLED";
-            employee: components["schemas"]["AuthEmployeeResponse"];
-            roles: components["schemas"]["AuthRoleResponse"][];
-            permissions: components["schemas"]["AuthPermissionResponse"][];
-        };
-        AuthEmployeeResponse: {
-            /** Format: int64 */
-            id: number;
-            employeeCode: string;
-            fullName: string;
-        };
-        AuthPermissionResponse: {
-            code: string;
-            name: string;
             /** @enum {string} */
             module: "EMPLOYEE" | "ACCOUNT" | "ORGANIZATION" | "REQUEST" | "ATTENDANCE" | "PAYROLL" | "RBAC" | "REPORT";
-        };
-        AuthResponse: {
-            accessToken: string;
-            refreshToken: string;
-            tokenType: string;
+            permissionCode: string;
             /** Format: int64 */
-            expiresIn: number;
-            account: components["schemas"]["AuthAccountResponse"];
+            permissionId: number;
+            permissionName: string;
+            reason: string;
+            revocationReason: string;
+            /** Format: date-time */
+            revokedAt: string;
+            /** Format: int64 */
+            revokedByAccountId: number;
+            revokedByUsername: string;
+            /** @enum {string} */
+            status: "SCHEDULED" | "ACTIVE" | "EXPIRED" | "REVOKED";
         };
-        AuthRoleResponse: {
-            code: string;
-            name: string;
+        AccountProvisioningResponse: {
+            account: components["schemas"]["AccountResponse"];
+            invitation: components["schemas"]["AccountInvitationResponse"];
+        };
+        AccountResponse: {
+            /** Format: date-time */
+            createdAt: string;
+            email: string;
+            /** Format: int64 */
+            employeeId: number;
+            /** Format: int32 */
+            failedLoginCount: number;
+            /** Format: int64 */
+            id: number;
+            /** Format: date-time */
+            lastLoginAt: string;
+            /** Format: date-time */
+            lockedUntil: string;
+            /** @enum {string} */
+            status: "PENDING" | "ACTIVE" | "LOCKED" | "DISABLED";
+            /** Format: date-time */
+            updatedAt: string;
+            username: string;
+        };
+        AccountRoleAssignmentResponse: {
+            /** Format: int64 */
+            accountId: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date */
+            effectiveFrom: string;
+            /** Format: date */
+            effectiveTo: string;
+            /** Format: int64 */
+            grantedByAccountId: number;
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            organizationUnitId: number;
+            reason: string;
+            revocationReason: string;
+            /** Format: date-time */
+            revokedAt: string;
+            /** Format: int64 */
+            revokedByAccountId: number;
+            roleCode: string;
+            /** Format: int64 */
+            roleId: number;
+            roleName: string;
             /** @enum {string} */
             scopeType: "SELF" | "COMPANY" | "ORG_UNIT" | "LOCATION";
             /** Format: int64 */
-            organizationUnitId: number;
-            organizationUnitName: string;
-            /** Format: int64 */
             workLocationId: number;
-            workLocationName: string;
         };
-        LogoutRequest: {
-            refreshToken: string;
+        AdjustAttendanceRequest: {
+            /** Format: int32 */
+            earlyLeaveMinutes: number;
+            /** Format: int32 */
+            lateMinutes: number;
+            note: string;
+            /** Format: int32 */
+            payableMinutes: number;
+            /** @enum {string} */
+            status: "PRESENT" | "PAID_LEAVE" | "UNPAID_LEAVE" | "MATERNITY_LEAVE" | "SICK_LEAVE" | "UNAUTHORIZED_ABSENCE" | "HOLIDAY" | "MISSING_PUNCH";
+            /** Format: int32 */
+            workedMinutes: number;
         };
-        LoginRequest: {
-            usernameOrEmail: string;
-            password: string;
+        AdjustLeaveEntitlementRequest: {
+            /** Format: int32 */
+            adjustmentMinutes: number;
+            reason: string;
         };
-        ChangeOwnPasswordRequest: {
-            currentPassword: string;
-            newPassword: string;
+        ApiResultAccountInvitationResponse: {
+            data: components["schemas"]["AccountInvitationResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultAccountPermissionOverrideResponse: {
+            data: components["schemas"]["AccountPermissionOverrideResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultAccountProvisioningResponse: {
+            data: components["schemas"]["AccountProvisioningResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultAccountResponse: {
+            data: components["schemas"]["AccountResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultAccountRoleAssignmentResponse: {
+            data: components["schemas"]["AccountRoleAssignmentResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultAttendanceRecordResponse: {
+            data: components["schemas"]["AttendanceRecordResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultAuthAccountResponse: {
+            data: components["schemas"]["AuthAccountResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultAuthResponse: {
+            data: components["schemas"]["AuthResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultBalanceView: {
+            data: components["schemas"]["BalanceView"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultCompanyHoliday: {
+            data: components["schemas"]["CompanyHoliday"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultDependent: {
+            data: components["schemas"]["Dependent"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultEmployeeAssignmentResponse: {
+            data: components["schemas"]["EmployeeAssignmentResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultEmployeeCreationResponse: {
+            data: components["schemas"]["EmployeeCreationResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultEmployeeDetailResponse: {
+            data: components["schemas"]["EmployeeDetailResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultEmployeeSensitiveResponse: {
+            data: components["schemas"]["EmployeeSensitiveResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultHrWorkforceReportResponse: {
+            data: components["schemas"]["HrWorkforceReportResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultInteger: {
+            /** Format: int32 */
+            data: number | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultJobPositionResponse: {
+            data: components["schemas"]["JobPositionResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultLeaveRequestView: {
+            data: components["schemas"]["LeaveRequestView"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListAccountPermissionOverrideResponse: {
+            data: components["schemas"]["AccountPermissionOverrideResponse"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListAccountRoleAssignmentResponse: {
+            data: components["schemas"]["AccountRoleAssignmentResponse"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListCompanyHoliday: {
+            data: components["schemas"]["CompanyHoliday"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListDependent: {
+            data: components["schemas"]["Dependent"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListEmployeeAssignmentResponse: {
+            data: components["schemas"]["EmployeeAssignmentResponse"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListJobPositionResponse: {
+            data: components["schemas"]["JobPositionResponse"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListOrganizationUnitResponse: {
+            data: components["schemas"]["OrganizationUnitResponse"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListOrganizationUnitTreeResponse: {
+            data: components["schemas"]["OrganizationUnitTreeResponse"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListPermissionOverrideOptionResponse: {
+            data: components["schemas"]["PermissionOverrideOptionResponse"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListPermissionResponse: {
+            data: components["schemas"]["PermissionResponse"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListProfile: {
+            data: components["schemas"]["Profile"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListRoleAssignmentOptionResponse: {
+            data: components["schemas"]["RoleAssignmentOptionResponse"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListRoleWithPermissionsResponse: {
+            data: components["schemas"]["RoleWithPermissionsResponse"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListSalaryHistoryView: {
+            data: components["schemas"]["SalaryHistoryView"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListWorkLocationResponse: {
+            data: components["schemas"]["WorkLocationResponse"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListWorkLocationTreeResponse: {
+            data: components["schemas"]["WorkLocationTreeResponse"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListWorkShiftResponse: {
+            data: components["schemas"]["WorkShiftResponse"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultOrganizationCompanyOwnerProvisioningResponse: {
+            data: components["schemas"]["OrganizationCompanyOwnerProvisioningResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultOrganizationUnitResponse: {
+            data: components["schemas"]["OrganizationUnitResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultPagedResultAccountResponse: {
+            data: components["schemas"]["PagedResultAccountResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultPagedResultAttendanceRecordResponse: {
+            data: components["schemas"]["PagedResultAttendanceRecordResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultPagedResultEmployeeSummaryResponse: {
+            data: components["schemas"]["PagedResultEmployeeSummaryResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultPagedResultLeaveRequestView: {
+            data: components["schemas"]["PagedResultLeaveRequestView"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultPagedResultPayrollPeriodResponse: {
+            data: components["schemas"]["PagedResultPayrollPeriodResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultPagedResultPayslipResponse: {
+            data: components["schemas"]["PagedResultPayslipResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultPagedResultPermissionResponse: {
+            data: components["schemas"]["PagedResultPermissionResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultPagedResultRoleAssignmentRequestResponse: {
+            data: components["schemas"]["PagedResultRoleAssignmentRequestResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultPagedResultRoleResponse: {
+            data: components["schemas"]["PagedResultRoleResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultPayrollPeriodResponse: {
+            data: components["schemas"]["PayrollPeriodResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultPayrollSalaryReportResponse: {
+            data: components["schemas"]["PayrollSalaryReportResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultPayslipResponse: {
+            data: components["schemas"]["PayslipResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultPermissionResponse: {
+            data: components["schemas"]["PermissionResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultProfile: {
+            data: components["schemas"]["Profile"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultRoleAssignmentRequestResponse: {
+            data: components["schemas"]["RoleAssignmentRequestResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultRoleResponse: {
+            data: components["schemas"]["RoleResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultSalaryHistoryView: {
+            data: components["schemas"]["SalaryHistoryView"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultVoid: {
+            data: null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultWorkLocationResponse: {
+            data: components["schemas"]["WorkLocationResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultWorkShiftResponse: {
+            data: components["schemas"]["WorkShiftResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
         };
         ApproveOvertimeRequest: {
             /** Format: int32 */
@@ -2284,11 +1762,146 @@ export interface components {
             overtimeMultiplier: number;
             taxExempt?: boolean;
         };
-        ApiResultInteger: {
-            success: boolean;
+        ApproveRoleAssignmentRequest: {
+            note?: string;
+        };
+        AssignAccountRoleRequest: {
+            /** Format: date */
+            effectiveFrom: string;
+            /** Format: date */
+            effectiveTo?: string;
+            /** Format: int64 */
+            organizationUnitId?: number;
+            reason: string;
+            roleCode: string;
+            /** @enum {string} */
+            scopeType: "SELF" | "COMPANY" | "ORG_UNIT" | "LOCATION";
+            /** Format: int64 */
+            workLocationId?: number;
+        };
+        AssignEmployeeRequest: {
+            /** Format: date */
+            effectiveFrom: string;
+            /** @enum {string} */
+            employmentType: "FULL_TIME" | "PART_TIME" | "TEMPORARY";
+            /** Format: int64 */
+            managerEmployeeId?: number | null;
+            /** Format: int64 */
+            organizationUnitId: number;
+            /** Format: int64 */
+            positionId: number;
+            reason?: string | null;
+            /** Format: int64 */
+            shiftId?: number | null;
+            /** Format: int64 */
+            workLocationId: number;
+        };
+        AttendanceRecordResponse: {
+            /** Format: date-time */
+            checkInAt: string;
+            /** Format: date-time */
+            checkOutAt: string;
             /** Format: int32 */
-            data: number | null;
-            error: components["schemas"]["ErrorDetail"] | null;
+            earlyLeaveMinutes: number;
+            /** Format: int64 */
+            employeeId: number;
+            /** Format: int64 */
+            id: number;
+            /** Format: int32 */
+            lateMinutes: number;
+            /** Format: int32 */
+            overtimeMinutes: number;
+            overtimeMultiplier: number;
+            overtimeTaxExempt: boolean;
+            /** Format: int32 */
+            payableMinutes: number;
+            /** Format: date-time */
+            scheduledEndAt: string;
+            /** Format: date-time */
+            scheduledStartAt: string;
+            /** Format: int64 */
+            shiftId: number;
+            /** @enum {string} */
+            status: "PRESENT" | "PAID_LEAVE" | "UNPAID_LEAVE" | "MATERNITY_LEAVE" | "SICK_LEAVE" | "UNAUTHORIZED_ABSENCE" | "HOLIDAY" | "MISSING_PUNCH";
+            /** Format: date */
+            workDate: string;
+            /** Format: int32 */
+            workedMinutes: number;
+        };
+        AuthAccountResponse: {
+            /** Format: int64 */
+            accountId: number;
+            email: string;
+            employee: components["schemas"]["AuthEmployeeResponse"];
+            permissions: components["schemas"]["AuthPermissionResponse"][];
+            roles: components["schemas"]["AuthRoleResponse"][];
+            /** @enum {string} */
+            status: "PENDING" | "ACTIVE" | "LOCKED" | "DISABLED";
+            username: string;
+        };
+        AuthEmployeeResponse: {
+            employeeCode: string;
+            fullName: string;
+            /** Format: int64 */
+            id: number;
+        };
+        AuthPermissionResponse: {
+            code: string;
+            /** @enum {string} */
+            module: "EMPLOYEE" | "ACCOUNT" | "ORGANIZATION" | "REQUEST" | "ATTENDANCE" | "PAYROLL" | "RBAC" | "REPORT";
+            name: string;
+        };
+        AuthResponse: {
+            accessToken: string;
+            account: components["schemas"]["AuthAccountResponse"];
+            /** Format: int64 */
+            expiresIn: number;
+            refreshToken: string;
+            tokenType: string;
+        };
+        AuthRoleResponse: {
+            code: string;
+            name: string;
+            /** Format: int64 */
+            organizationUnitId: number;
+            organizationUnitName: string;
+            /** @enum {string} */
+            scopeType: "SELF" | "COMPANY" | "ORG_UNIT" | "LOCATION";
+            /** Format: int64 */
+            workLocationId: number;
+            workLocationName: string;
+        };
+        BalanceView: {
+            /** Format: int32 */
+            adjustmentMinutes: number;
+            adjustmentReason: string;
+            /** Format: int32 */
+            carriedOverMinutes: number;
+            /** Format: int64 */
+            employeeId: number;
+            /** Format: int32 */
+            grantedMinutes: number;
+            /** Format: int32 */
+            pendingMinutes: number;
+            /** Format: int32 */
+            remainingMinutes: number;
+            /** Format: int32 */
+            standardDayMinutes: number;
+            /** Format: int32 */
+            usedMinutes: number;
+            /** Format: int32 */
+            year: number;
+        };
+        CancelRoleAssignmentRequest: {
+            reason: string;
+        };
+        ChangeOwnPasswordRequest: {
+            currentPassword: string;
+            newPassword: string;
+        };
+        CheckInRequest: {
+            /** Format: int64 */
+            employeeId: number;
         };
         CheckOutRequest: {
             /** Format: int64 */
@@ -2296,135 +1909,399 @@ export interface components {
             /** Format: date */
             workDate: string;
         };
-        CheckInRequest: {
+        CompanyHoliday: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date */
+            holidayDate: string;
             /** Format: int64 */
-            employeeId: number;
+            id: number;
+            name: string;
+        };
+        CompanyHolidayRequest: {
+            /** Format: date */
+            date: string;
+            name: string;
+        };
+        CompleteAccountActivationRequest: {
+            password: string;
+            passwordConfirmation: string;
+        };
+        CompleteResignationRequest: {
+            /** Format: date */
+            terminationDate: string;
+            terminationReason: string;
         };
         CreateAccountRequest: {
             /** Format: int64 */
             employeeId: number;
             username: string;
         };
-        ApiResultAccountProvisioningResponse: {
-            success: boolean;
-            data: components["schemas"]["AccountProvisioningResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
+        CreateCompanyOwnerAccountRequest: {
+            username: string;
         };
-        ApiResultAccountResponse: {
-            success: boolean;
-            data: components["schemas"]["AccountResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
+        CreateCompanyOwnerEmployeeRequest: {
+            fullName: string;
+            /** Format: date */
+            hireDate: string;
+            phone?: string;
+            /** Format: email */
+            workEmail: string;
         };
-        AssignAccountRoleRequest: {
+        CreateEmployeeProfileRequest: {
+            /** Format: date */
+            dateOfBirth: string;
+            fullName: string;
+            /** @enum {string|null} */
+            gender?: "MALE" | "FEMALE" | "OTHER" | "UNDISCLOSED" | null;
+            /** Format: int32 */
+            graduationYear?: number | null;
+            /** @enum {string|null} */
+            highestEducationLevel?: "HIGH_SCHOOL" | "COLLEGE" | "BACHELOR" | "MASTER" | "DOCTORATE" | null;
+            /** Format: date */
+            hireDate: string;
+            institution?: string | null;
+            major?: string | null;
+            phone?: string | null;
+            /** Format: email */
+            workEmail?: string | null;
+        };
+        CreateEmployeeRequest: {
+            employee: components["schemas"]["CreateEmployeeProfileRequest"];
+            initialAssignment: components["schemas"]["AssignEmployeeRequest"];
+        };
+        CreateJobPositionRequest: {
+            code: string;
+            description?: string;
+            isManagerial: boolean;
+            title: string;
+        };
+        CreateLeaveCommand: {
+            attachmentUrl?: string;
+            /** Format: int64 */
+            employeeId?: number;
+            /** Format: date-time */
+            endAt?: string;
+            /** @enum {string} */
+            leaveType?: "ANNUAL" | "SICK" | "MATERNITY" | "UNPAID" | "OTHER";
+            reason?: string;
+            /** Format: int32 */
+            requestedMinutes?: number;
+            /** @enum {string} */
+            salaryTreatment?: "EMPLOYER_PAID" | "SOCIAL_INSURANCE" | "UNPAID";
+            /** Format: date-time */
+            startAt?: string;
+        };
+        CreateOrganizationCompanyOwnerRequest: {
+            account: components["schemas"]["CreateCompanyOwnerAccountRequest"];
+            directorAppointmentReason: string;
+            /** Format: date */
+            effectiveFrom: string;
+            employee: components["schemas"]["CreateCompanyOwnerEmployeeRequest"];
+            ownershipReason: string;
+        };
+        CreateOrganizationUnitRequest: {
+            code: string;
+            name: string;
+            /** Format: int64 */
+            parentUnitId?: number;
+            /** @enum {string} */
+            unitType: "BOARD" | "DEPARTMENT" | "TEAM";
+        };
+        CreatePayrollPeriodRequest: {
+            /** Format: int32 */
+            month: number;
+            /** Format: date */
+            taxPaymentDate?: string;
+            /** Format: int32 */
+            year: number;
+        };
+        CreatePermissionOverrideRequest: {
+            /** @enum {string} */
+            effect: "GRANT" | "REVOKE";
+            /** Format: date */
+            effectiveFrom: string;
+            /** Format: date */
+            effectiveTo?: string;
+            /** Format: int64 */
+            permissionId: number;
+            reason: string;
+        };
+        CreateRoleAssignmentRequest: {
+            /** Format: int64 */
+            accountId: number;
+            /** Format: date */
+            effectiveFrom: string;
+            /** Format: date */
+            effectiveTo?: string;
+            /** Format: int64 */
+            organizationUnitId?: number;
+            reason: string;
             roleCode: string;
             /** @enum {string} */
             scopeType: "SELF" | "COMPANY" | "ORG_UNIT" | "LOCATION";
             /** Format: int64 */
-            organizationUnitId?: number;
-            /** Format: int64 */
             workLocationId?: number;
-            /** Format: date */
-            effectiveFrom: string;
-            /** Format: date */
-            effectiveTo?: string;
-            reason: string;
         };
-        ApiResultAccountRoleAssignmentResponse: {
-            success: boolean;
-            data: components["schemas"]["AccountRoleAssignmentResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        RevokeAccountRoleRequest: {
-            reason: string;
-        };
-        CreatePermissionOverrideRequest: {
-            /** Format: int64 */
-            permissionId: number;
+        CreateRoleRequest: {
+            code: string;
+            description?: string;
             /** @enum {string} */
-            effect: "GRANT" | "REVOKE";
-            /** Format: date */
-            effectiveFrom: string;
-            /** Format: date */
-            effectiveTo?: string;
-            reason: string;
+            grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
+            name: string;
         };
-        AccountPermissionOverrideResponse: {
-            /** Format: int64 */
-            id: number;
-            /** Format: int64 */
-            accountRoleAssignmentId: number;
-            /** Format: int64 */
-            accountId: number;
-            /** Format: int64 */
-            permissionId: number;
-            permissionCode: string;
-            permissionName: string;
+        CreateWorkLocationRequest: {
+            address: string;
+            code: string;
             /** @enum {string} */
-            module: "EMPLOYEE" | "ACCOUNT" | "ORGANIZATION" | "REQUEST" | "ATTENDANCE" | "PAYROLL" | "RBAC" | "REPORT";
-            /** @enum {string} */
-            effect: "GRANT" | "REVOKE";
+            locationType: "HEAD_OFFICE" | "BRANCH" | "WAREHOUSE";
+            name: string;
+            /** Format: int64 */
+            parentLocationId?: number;
+            phone?: string;
+        };
+        CreateWorkShiftRequest: {
+            /** Format: int32 */
+            breakMinutes: number;
+            code: string;
+            crossesMidnight: boolean;
+            endTime: string;
+            /** Format: int32 */
+            graceLateMinutes: number;
+            name: string;
+            /** Format: int32 */
+            standardWorkMinutes: number;
+            startTime: string;
+        };
+        Dependent: {
             /** Format: date */
             effectiveFrom: string;
             /** Format: date */
             effectiveTo: string;
-            reason: string;
             /** Format: int64 */
-            grantedByAccountId: number;
-            grantedByUsername: string;
+            employeeId: number;
+            fullName: string;
+            /** Format: int64 */
+            id: number;
+            identifier: string;
+        };
+        DependentCommand: {
+            /** Format: date */
+            effectiveFrom?: string;
+            /** Format: date */
+            effectiveTo?: string;
+            fullName?: string;
+            identifier?: string;
+        };
+        DistributionItemResponse: {
+            /** Format: int64 */
+            count: number;
+            key: string;
+            label: string;
+            percentage: number;
+        };
+        EmployeeAccountSummaryResponse: {
+            email: string;
+            /** Format: int64 */
+            id: number;
+            /** @enum {string} */
+            status: "PENDING" | "ACTIVE" | "LOCKED" | "DISABLED";
+            username: string;
+        };
+        EmployeeAssignmentResponse: {
+            /** Format: date */
+            effectiveFrom: string;
+            /** Format: date */
+            effectiveTo: string | null;
+            /** Format: int64 */
+            employeeId: number;
+            /** @enum {string} */
+            employmentType: "FULL_TIME" | "PART_TIME" | "TEMPORARY";
+            /** Format: int64 */
+            id: number;
+            isPrimary: boolean;
+            /** Format: int64 */
+            managerEmployeeId: number | null;
+            managerEmployeeName: string | null;
+            /** Format: int64 */
+            organizationUnitId: number;
+            organizationUnitName: string;
+            /** Format: int64 */
+            positionId: number;
+            positionTitle: string;
+            /** Format: int64 */
+            shiftId: number | null;
+            shiftName: string | null;
+            /** Format: int64 */
+            workLocationId: number;
+            workLocationName: string;
+        };
+        EmployeeCreationResponse: {
+            employee: components["schemas"]["EmployeeDetailResponse"];
+            initialAssignment: components["schemas"]["EmployeeAssignmentResponse"];
+        };
+        EmployeeDetailResponse: {
+            account: components["schemas"]["EmployeeAccountSummaryResponse"] | null;
+            currentAssignment: components["schemas"]["EmployeeAssignmentResponse"] | null;
+            /** Format: date */
+            dateOfBirth: string | null;
+            employeeCode: string;
+            /** @enum {string} */
+            employmentStatus: "PROBATION" | "ACTIVE" | "RESIGNED" | "TERMINATED" | "RETIRED";
+            fullName: string;
+            /** @enum {string|null} */
+            gender: "MALE" | "FEMALE" | "OTHER" | "UNDISCLOSED" | null;
+            /** Format: int32 */
+            graduationYear: number | null;
+            /** @enum {string|null} */
+            highestEducationLevel: "HIGH_SCHOOL" | "COLLEGE" | "BACHELOR" | "MASTER" | "DOCTORATE" | null;
+            /** Format: date */
+            hireDate: string;
+            /** Format: int64 */
+            id: number;
+            institution: string | null;
+            major: string | null;
+            phone: string | null;
+            /** Format: date */
+            terminationDate: string | null;
+            workEmail: string | null;
+        };
+        EmployeeSensitiveResponse: {
+            address: string | null;
+            bankAccountHolder: string | null;
+            bankAccountNumber: string | null;
+            bankName: string | null;
+            /** Format: int64 */
+            employeeId: number;
+            nationalId: string | null;
+            personalEmail: string | null;
+            taxCode: string | null;
+        };
+        EmployeeSummaryResponse: {
+            account: components["schemas"]["EmployeeAccountSummaryResponse"] | null;
+            currentAssignment: components["schemas"]["EmployeeAssignmentResponse"] | null;
+            employeeCode: string;
+            /** @enum {string} */
+            employmentStatus: "PROBATION" | "ACTIVE" | "RESIGNED" | "TERMINATED" | "RETIRED";
+            fullName: string;
+            /** Format: date */
+            hireDate: string;
+            /** Format: int64 */
+            id: number;
+            phone: string | null;
+            /** Format: date */
+            terminationDate: string | null;
+            workEmail: string | null;
+        };
+        EndDependentCommand: {
+            /** Format: date */
+            effectiveTo?: string;
+        };
+        ErrorDetail: {
+            code: string;
+            field: string | null;
+            message: string;
+        };
+        GrantPermissionRequest: {
+            /** Format: int64 */
+            permissionId: number;
+        };
+        HrWorkforceReportResponse: {
+            /** Format: date */
+            asOfDate: string;
+            averageSeniorityYears: number;
+            educationDistribution: components["schemas"]["DistributionItemResponse"][];
+            /** Format: int64 */
+            missingEducation: number;
+            seniorityDistribution: components["schemas"]["DistributionItemResponse"][];
+            /** Format: int64 */
+            totalEmployees: number;
+        };
+        JobPositionResponse: {
+            code: string;
+            /** Format: date-time */
+            createdAt: string;
+            description: string;
+            /** Format: int64 */
+            id: number;
+            isActive: boolean;
+            isManagerial: boolean;
+            title: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        LeaveRequestView: {
+            attachmentUrl: string;
             /** Format: date-time */
             createdAt: string;
             /** Format: int64 */
-            revokedByAccountId: number;
-            revokedByUsername: string;
+            employeeId: number;
             /** Format: date-time */
-            revokedAt: string;
-            revocationReason: string;
-            /** @enum {string} */
-            status: "SCHEDULED" | "ACTIVE" | "EXPIRED" | "REVOKED";
-        };
-        ApiResultAccountPermissionOverrideResponse: {
-            success: boolean;
-            data: components["schemas"]["AccountPermissionOverrideResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        RevokePermissionOverrideRequest: {
-            reason: string;
-        };
-        ApiResultAccountInvitationResponse: {
-            success: boolean;
-            data: components["schemas"]["AccountInvitationResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        CompleteAccountActivationRequest: {
-            password: string;
-            passwordConfirmation: string;
-        };
-        ApiResultListWorkShiftResponse: {
-            success: boolean;
-            data: components["schemas"]["WorkShiftResponse"][] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        ApiResultListWorkLocationResponse: {
-            success: boolean;
-            data: components["schemas"]["WorkLocationResponse"][] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        ApiResultListWorkLocationTreeResponse: {
-            success: boolean;
-            data: components["schemas"]["WorkLocationTreeResponse"][] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        WorkLocationTreeResponse: {
+            endAt: string;
             /** Format: int64 */
             id: number;
+            /** @enum {string} */
+            leaveType: "ANNUAL" | "SICK" | "MATERNITY" | "UNPAID" | "OTHER";
+            reason: string;
+            /** Format: int32 */
+            requestedMinutes: number;
+            reviewComment: string;
+            /** Format: date-time */
+            reviewedAt: string;
+            /** Format: int64 */
+            reviewedByAccountId: number;
+            /** @enum {string} */
+            salaryTreatment: "EMPLOYER_PAID" | "SOCIAL_INSURANCE" | "UNPAID";
+            /** Format: date-time */
+            startAt: string;
+            /** @enum {string} */
+            status: "DRAFT" | "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+            /** Format: date-time */
+            submittedAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        LoginRequest: {
+            password: string;
+            usernameOrEmail: string;
+        };
+        LogoutRequest: {
+            refreshToken: string;
+        };
+        OrganizationCompanyOwnerProvisioningResponse: {
+            accountProvisioning: components["schemas"]["AccountProvisioningResponse"];
+            companyOwnerRoleAssignment: components["schemas"]["AccountRoleAssignmentResponse"];
+            directorRoleAssignment: components["schemas"]["AccountRoleAssignmentResponse"];
+            employeeCode: string;
+            /** Format: int64 */
+            employeeId: number;
+            fullName: string;
+        };
+        OrganizationUnitResponse: {
             code: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: int64 */
+            id: number;
+            isActive: boolean;
+            name: string;
+            /** Format: int64 */
+            parentUnitId: number;
+            parentUnitName: string;
+            /** @enum {string} */
+            unitType: "BOARD" | "DEPARTMENT" | "TEAM";
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        OrganizationUnitTreeResponse: {
+            children: components["schemas"]["OrganizationUnitTreeResponse"][];
+            code: string;
+            /** Format: int64 */
+            id: number;
+            isActive: boolean;
             name: string;
             /** @enum {string} */
-            locationType: "HEAD_OFFICE" | "BRANCH" | "WAREHOUSE";
-            address: string;
-            phone: string;
-            isActive: boolean;
-            children: components["schemas"]["WorkLocationTreeResponse"][];
+            unitType: "BOARD" | "DEPARTMENT" | "TEAM";
         };
         Pageable: {
             /** Format: int32 */
@@ -2433,375 +2310,498 @@ export interface components {
             size?: number;
             sort?: string[];
         };
-        ApiResultPagedResultRoleResponse: {
-            success: boolean;
-            data: components["schemas"]["PagedResultRoleResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        PagedResultRoleResponse: {
-            content: components["schemas"]["RoleResponse"][];
+        PagedResultAccountResponse: {
+            content: components["schemas"]["AccountResponse"][];
             /** Format: int32 */
             number: number;
+            /** Format: int32 */
+            size: number;
             /** Format: int64 */
             totalElements: number;
             /** Format: int32 */
             totalPages: number;
-            /** Format: int32 */
-            size: number;
-        };
-        ApiResultListRoleWithPermissionsResponse: {
-            success: boolean;
-            data: components["schemas"]["RoleWithPermissionsResponse"][] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        RoleWithPermissionsResponse: {
-            /** Format: int64 */
-            id: number;
-            code: string;
-            name: string;
-            description: string;
-            isSystem: boolean;
-            /** @enum {string} */
-            grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
-            permissions: components["schemas"]["PermissionResponse"][];
-        };
-        ApiResultPagedResultRoleAssignmentRequestResponse: {
-            success: boolean;
-            data: components["schemas"]["PagedResultRoleAssignmentRequestResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        PagedResultRoleAssignmentRequestResponse: {
-            content: components["schemas"]["RoleAssignmentRequestResponse"][];
-            /** Format: int32 */
-            number: number;
-            /** Format: int64 */
-            totalElements: number;
-            /** Format: int32 */
-            totalPages: number;
-            /** Format: int32 */
-            size: number;
-        };
-        ApiResultListRoleAssignmentOptionResponse: {
-            success: boolean;
-            data: components["schemas"]["RoleAssignmentOptionResponse"][] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        RoleAssignmentOptionResponse: {
-            /** Format: int64 */
-            roleId: number;
-            roleCode: string;
-            roleName: string;
-            roleDescription: string;
-            /** @enum {string} */
-            grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
-            requiresApproval: boolean;
-            allowedScopeTypes: ("SELF" | "COMPANY" | "ORG_UNIT" | "LOCATION")[];
-        };
-        ApiResultPayrollSalaryReportResponse: {
-            success: boolean;
-            data: components["schemas"]["PayrollSalaryReportResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        DistributionItemResponse: {
-            key: string;
-            label: string;
-            /** Format: int64 */
-            count: number;
-            percentage: number;
-        };
-        PayrollSalaryReportResponse: {
-            /** Format: date */
-            asOfDate: string;
-            currency: string;
-            /** Format: int64 */
-            totalEmployees: number;
-            /** Format: int64 */
-            employeesWithBasicSalary: number;
-            averageBasicSalary: number;
-            minimumBasicSalary: number;
-            maximumBasicSalary: number;
-            salaryDistribution: components["schemas"]["DistributionItemResponse"][];
-            /** Format: int64 */
-            missingBasicSalary: number;
-        };
-        ApiResultHrWorkforceReportResponse: {
-            success: boolean;
-            data: components["schemas"]["HrWorkforceReportResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        HrWorkforceReportResponse: {
-            /** Format: date */
-            asOfDate: string;
-            /** Format: int64 */
-            totalEmployees: number;
-            averageSeniorityYears: number;
-            educationDistribution: components["schemas"]["DistributionItemResponse"][];
-            seniorityDistribution: components["schemas"]["DistributionItemResponse"][];
-            /** Format: int64 */
-            missingEducation: number;
-        };
-        ApiResultPagedResultPermissionResponse: {
-            success: boolean;
-            data: components["schemas"]["PagedResultPermissionResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        PagedResultPermissionResponse: {
-            content: components["schemas"]["PermissionResponse"][];
-            /** Format: int32 */
-            number: number;
-            /** Format: int64 */
-            totalElements: number;
-            /** Format: int32 */
-            totalPages: number;
-            /** Format: int32 */
-            size: number;
-        };
-        ApiResultPermissionResponse: {
-            success: boolean;
-            data: components["schemas"]["PermissionResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        ApiResultPagedResultPayrollPeriodResponse: {
-            success: boolean;
-            data: components["schemas"]["PagedResultPayrollPeriodResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        PagedResultPayrollPeriodResponse: {
-            content: components["schemas"]["PayrollPeriodResponse"][];
-            /** Format: int32 */
-            number: number;
-            /** Format: int64 */
-            totalElements: number;
-            /** Format: int32 */
-            totalPages: number;
-            /** Format: int32 */
-            size: number;
-        };
-        ApiResultPayslipResponse: {
-            success: boolean;
-            data: components["schemas"]["PayslipResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        PayslipItemResponse: {
-            /** Format: int64 */
-            id: number;
-            /** @enum {string} */
-            componentType: "BASE_SALARY" | "POSITION_ALLOWANCE" | "SENIORITY_ALLOWANCE" | "OVERTIME";
-            description: string;
-            quantity: number;
-            unitRate: number;
-            multiplier: number;
-            amount: number;
-        };
-        PayslipResponse: {
-            /** Format: int64 */
-            id: number;
-            /** Format: int64 */
-            payrollPeriodId: number;
-            /** Format: int64 */
-            employeeId: number;
-            employeeCodeSnapshot: string;
-            employeeNameSnapshot: string;
-            workLocationSnapshot: string;
-            organizationUnitSnapshot: string;
-            contractualBasicSalary: number;
-            /** Format: int32 */
-            scheduledWorkMinutes: number;
-            /** Format: int32 */
-            payableWorkMinutes: number;
-            /** Format: int32 */
-            approvedOvertimeMinutes: number;
-            basicSalaryPay: number;
-            allowancePay: number;
-            overtimePay: number;
-            taxExemptOvertimePay: number;
-            grossPay: number;
-            insuranceSalaryBase: number;
-            unemploymentInsuranceBase: number;
-            employeeSocialInsurance: number;
-            employeeHealthInsurance: number;
-            employeeUnemploymentInsurance: number;
-            taxableIncome: number;
-            personalIncomeTax: number;
-            netPay: number;
-            items: components["schemas"]["PayslipItemResponse"][];
-        };
-        ApiResultPagedResultPayslipResponse: {
-            success: boolean;
-            data: components["schemas"]["PagedResultPayslipResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        PagedResultPayslipResponse: {
-            content: components["schemas"]["PayslipResponse"][];
-            /** Format: int32 */
-            number: number;
-            /** Format: int64 */
-            totalElements: number;
-            /** Format: int32 */
-            totalPages: number;
-            /** Format: int32 */
-            size: number;
-        };
-        ApiResultListOrganizationUnitResponse: {
-            success: boolean;
-            data: components["schemas"]["OrganizationUnitResponse"][] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        ApiResultListOrganizationUnitTreeResponse: {
-            success: boolean;
-            data: components["schemas"]["OrganizationUnitTreeResponse"][] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        OrganizationUnitTreeResponse: {
-            /** Format: int64 */
-            id: number;
-            code: string;
-            name: string;
-            /** @enum {string} */
-            unitType: "BOARD" | "DEPARTMENT" | "TEAM";
-            isActive: boolean;
-            children: components["schemas"]["OrganizationUnitTreeResponse"][];
-        };
-        ApiResultPagedResultLeaveRequestView: {
-            success: boolean;
-            data: components["schemas"]["PagedResultLeaveRequestView"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        PagedResultLeaveRequestView: {
-            content: components["schemas"]["LeaveRequestView"][];
-            /** Format: int32 */
-            number: number;
-            /** Format: int64 */
-            totalElements: number;
-            /** Format: int32 */
-            totalPages: number;
-            /** Format: int32 */
-            size: number;
-        };
-        ApiResultListJobPositionResponse: {
-            success: boolean;
-            data: components["schemas"]["JobPositionResponse"][] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        ApiResultPagedResultEmployeeSummaryResponse: {
-            success: boolean;
-            data: components["schemas"]["PagedResultEmployeeSummaryResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        EmployeeSummaryResponse: {
-            /** Format: int64 */
-            id: number;
-            employeeCode: string;
-            fullName: string;
-            workEmail: string | null;
-            phone: string | null;
-            /** Format: date */
-            hireDate: string;
-            /** @enum {string} */
-            employmentStatus: "PROBATION" | "ACTIVE" | "RESIGNED" | "TERMINATED" | "RETIRED";
-            /** Format: date */
-            terminationDate: string | null;
-            currentAssignment: components["schemas"]["EmployeeAssignmentResponse"] | null;
-            account: components["schemas"]["EmployeeAccountSummaryResponse"] | null;
-        };
-        PagedResultEmployeeSummaryResponse: {
-            content: components["schemas"]["EmployeeSummaryResponse"][];
-            /** Format: int32 */
-            number: number;
-            /** Format: int64 */
-            totalElements: number;
-            /** Format: int32 */
-            totalPages: number;
-            /** Format: int32 */
-            size: number;
-        };
-        ApiResultListEmployeeAssignmentResponse: {
-            success: boolean;
-            data: components["schemas"]["EmployeeAssignmentResponse"][] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        ApiResultListDependent: {
-            success: boolean;
-            data: components["schemas"]["Dependent"][] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        ApiResultListSalaryHistoryView: {
-            success: boolean;
-            data: components["schemas"]["SalaryHistoryView"][] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        ApiResultListProfile: {
-            success: boolean;
-            data: components["schemas"]["Profile"][] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        ApiResultListCompanyHoliday: {
-            success: boolean;
-            data: components["schemas"]["CompanyHoliday"][] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        ApiResultAuthAccountResponse: {
-            success: boolean;
-            data: components["schemas"]["AuthAccountResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        ApiResultPagedResultAttendanceRecordResponse: {
-            success: boolean;
-            data: components["schemas"]["PagedResultAttendanceRecordResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
         };
         PagedResultAttendanceRecordResponse: {
             content: components["schemas"]["AttendanceRecordResponse"][];
             /** Format: int32 */
             number: number;
+            /** Format: int32 */
+            size: number;
             /** Format: int64 */
             totalElements: number;
             /** Format: int32 */
             totalPages: number;
-            /** Format: int32 */
-            size: number;
         };
-        ApiResultPagedResultAccountResponse: {
-            success: boolean;
-            data: components["schemas"]["PagedResultAccountResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-        };
-        PagedResultAccountResponse: {
-            content: components["schemas"]["AccountResponse"][];
+        PagedResultEmployeeSummaryResponse: {
+            content: components["schemas"]["EmployeeSummaryResponse"][];
             /** Format: int32 */
             number: number;
+            /** Format: int32 */
+            size: number;
             /** Format: int64 */
             totalElements: number;
             /** Format: int32 */
             totalPages: number;
+        };
+        PagedResultLeaveRequestView: {
+            content: components["schemas"]["LeaveRequestView"][];
+            /** Format: int32 */
+            number: number;
             /** Format: int32 */
             size: number;
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            totalPages: number;
         };
-        ApiResultListAccountRoleAssignmentResponse: {
-            success: boolean;
-            data: components["schemas"]["AccountRoleAssignmentResponse"][] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
+        PagedResultPayrollPeriodResponse: {
+            content: components["schemas"]["PayrollPeriodResponse"][];
+            /** Format: int32 */
+            number: number;
+            /** Format: int32 */
+            size: number;
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            totalPages: number;
         };
-        ApiResultListAccountPermissionOverrideResponse: {
-            success: boolean;
-            data: components["schemas"]["AccountPermissionOverrideResponse"][] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
+        PagedResultPayslipResponse: {
+            content: components["schemas"]["PayslipResponse"][];
+            /** Format: int32 */
+            number: number;
+            /** Format: int32 */
+            size: number;
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            totalPages: number;
         };
-        ApiResultListPermissionOverrideOptionResponse: {
-            success: boolean;
-            data: components["schemas"]["PermissionOverrideOptionResponse"][] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
+        PagedResultPermissionResponse: {
+            content: components["schemas"]["PermissionResponse"][];
+            /** Format: int32 */
+            number: number;
+            /** Format: int32 */
+            size: number;
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
+        PagedResultRoleAssignmentRequestResponse: {
+            content: components["schemas"]["RoleAssignmentRequestResponse"][];
+            /** Format: int32 */
+            number: number;
+            /** Format: int32 */
+            size: number;
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
+        PagedResultRoleResponse: {
+            content: components["schemas"]["RoleResponse"][];
+            /** Format: int32 */
+            number: number;
+            /** Format: int32 */
+            size: number;
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
+        PayrollActionRequest: {
+            /** Format: date */
+            taxPaymentDate?: string;
+        };
+        PayrollPeriodResponse: {
+            /** Format: date-time */
+            approvedAt: string;
+            /** Format: int64 */
+            approvedByAccountId: number;
+            /** Format: date-time */
+            calculatedAt: string;
+            /** Format: int64 */
+            calculatedByAccountId: number;
+            /** Format: int64 */
+            id: number;
+            /** Format: date-time */
+            lockedAt: string;
+            /** Format: int64 */
+            lockedByAccountId: number;
+            /** Format: int32 */
+            month: number;
+            /** Format: date-time */
+            paidAt: string;
+            /** Format: int64 */
+            paidByAccountId: number;
+            /** Format: date */
+            periodEnd: string;
+            /** Format: date */
+            periodStart: string;
+            /** @enum {string} */
+            status: "DRAFT" | "CALCULATED" | "APPROVED" | "PAID" | "LOCKED" | "CANCELLED";
+            /** Format: date */
+            taxPaymentDate: string;
+            /** Format: int32 */
+            year: number;
+        };
+        PayrollSalaryReportResponse: {
+            /** Format: date */
+            asOfDate: string;
+            averageBasicSalary: number;
+            currency: string;
+            /** Format: int64 */
+            employeesWithBasicSalary: number;
+            maximumBasicSalary: number;
+            minimumBasicSalary: number;
+            /** Format: int64 */
+            missingBasicSalary: number;
+            salaryDistribution: components["schemas"]["DistributionItemResponse"][];
+            /** Format: int64 */
+            totalEmployees: number;
+        };
+        PayslipItemResponse: {
+            amount: number;
+            /** @enum {string} */
+            componentType: "BASE_SALARY" | "POSITION_ALLOWANCE" | "SENIORITY_ALLOWANCE" | "OVERTIME";
+            description: string;
+            /** Format: int64 */
+            id: number;
+            multiplier: number;
+            quantity: number;
+            unitRate: number;
+        };
+        PayslipResponse: {
+            allowancePay: number;
+            /** Format: int32 */
+            approvedOvertimeMinutes: number;
+            basicSalaryPay: number;
+            contractualBasicSalary: number;
+            employeeCodeSnapshot: string;
+            employeeHealthInsurance: number;
+            /** Format: int64 */
+            employeeId: number;
+            employeeNameSnapshot: string;
+            employeeSocialInsurance: number;
+            employeeUnemploymentInsurance: number;
+            grossPay: number;
+            /** Format: int64 */
+            id: number;
+            insuranceSalaryBase: number;
+            items: components["schemas"]["PayslipItemResponse"][];
+            netPay: number;
+            organizationUnitSnapshot: string;
+            overtimePay: number;
+            /** Format: int32 */
+            payableWorkMinutes: number;
+            /** Format: int64 */
+            payrollPeriodId: number;
+            personalIncomeTax: number;
+            /** Format: int32 */
+            scheduledWorkMinutes: number;
+            taxExemptOvertimePay: number;
+            taxableIncome: number;
+            unemploymentInsuranceBase: number;
+            workLocationSnapshot: string;
         };
         PermissionOverrideOptionResponse: {
-            /** Format: int64 */
-            permissionId: number;
-            permissionCode: string;
-            permissionName: string;
-            /** @enum {string} */
-            module: "EMPLOYEE" | "ACCOUNT" | "ORGANIZATION" | "REQUEST" | "ATTENDANCE" | "PAYROLL" | "RBAC" | "REPORT";
             description: string;
             /** @enum {string} */
             effect: "GRANT" | "REVOKE";
+            /** @enum {string} */
+            module: "EMPLOYEE" | "ACCOUNT" | "ORGANIZATION" | "REQUEST" | "ATTENDANCE" | "PAYROLL" | "RBAC" | "REPORT";
+            permissionCode: string;
+            /** Format: int64 */
+            permissionId: number;
+            permissionName: string;
+        };
+        PermissionResponse: {
+            /** @enum {string} */
+            assignmentPolicy: "DELEGABLE" | "SYSTEM_ONLY";
+            code: string;
+            description: string;
+            /** Format: int64 */
+            id: number;
+            isActive: boolean;
+            /** @enum {string} */
+            module: "EMPLOYEE" | "ACCOUNT" | "ORGANIZATION" | "REQUEST" | "ATTENDANCE" | "PAYROLL" | "RBAC" | "REPORT";
+            name: string;
+        };
+        Profile: {
+            /** Format: date */
+            effectiveFrom: string;
+            /** Format: date */
+            effectiveTo: string;
+            /** Format: int64 */
+            employeeId: number;
+            healthInsurance: boolean;
+            /** Format: int64 */
+            id: number;
+            insuranceSalary: number;
+            socialInsurance: boolean;
+            taxResident: boolean;
+            unemploymentInsurance: boolean;
+            /** Format: int32 */
+            wageRegion: number;
+        };
+        ProfileCommand: {
+            /** Format: date */
+            effectiveFrom?: string;
+            healthInsurance?: boolean;
+            insuranceSalary?: number;
+            socialInsurance?: boolean;
+            taxResident?: boolean;
+            unemploymentInsurance?: boolean;
+            /** Format: int32 */
+            wageRegion?: number;
+        };
+        RefreshTokenRequest: {
+            refreshToken: string;
+        };
+        RejectRoleAssignmentRequest: {
+            note: string;
+        };
+        ReplaceRolePermissionsRequest: {
+            permissionIds: number[];
+        };
+        ReviewBody: {
+            comment?: string;
+        };
+        RevokeAccountRoleRequest: {
+            reason: string;
+        };
+        RevokePermissionOverrideRequest: {
+            reason: string;
+        };
+        RoleAssignmentOptionResponse: {
+            allowedScopeTypes: ("SELF" | "COMPANY" | "ORG_UNIT" | "LOCATION")[];
+            /** @enum {string} */
+            grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
+            requiresApproval: boolean;
+            roleCode: string;
+            roleDescription: string;
+            /** Format: int64 */
+            roleId: number;
+            roleName: string;
+        };
+        RoleAssignmentRequestResponse: {
+            /** Format: int64 */
+            accountId: number;
+            assignment: components["schemas"]["AccountRoleAssignmentResponse"];
+            cancellationReason: string;
+            /** Format: date-time */
+            cancelledAt: string;
+            /** Format: int64 */
+            cancelledByAccountId: number;
+            cancelledByUsername: string;
+            /** Format: date */
+            effectiveFrom: string;
+            /** Format: date */
+            effectiveTo: string;
+            employeeCode: string;
+            /** Format: int64 */
+            employeeId: number;
+            employeeName: string;
+            /** @enum {string} */
+            grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            organizationUnitId: number;
+            organizationUnitName: string;
+            reason: string;
+            /** Format: date-time */
+            requestedAt: string;
+            /** Format: int64 */
+            requestedByAccountId: number;
+            requestedByUsername: string;
+            reviewNote: string;
+            /** Format: date-time */
+            reviewedAt: string;
+            /** Format: int64 */
+            reviewedByAccountId: number;
+            reviewedByUsername: string;
+            roleCode: string;
+            /** Format: int64 */
+            roleId: number;
+            roleName: string;
+            /** @enum {string} */
+            scopeType: "SELF" | "COMPANY" | "ORG_UNIT" | "LOCATION";
+            /** @enum {string} */
+            status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: int64 */
+            workLocationId: number;
+            workLocationName: string;
+        };
+        RoleResponse: {
+            code: string;
+            description: string;
+            /** @enum {string} */
+            grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
+            /** Format: int64 */
+            id: number;
+            isSystem: boolean;
+            name: string;
+        };
+        RoleWithPermissionsResponse: {
+            code: string;
+            description: string;
+            /** @enum {string} */
+            grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
+            /** Format: int64 */
+            id: number;
+            isSystem: boolean;
+            name: string;
+            permissions: components["schemas"]["PermissionResponse"][];
+        };
+        SalaryHistoryView: {
+            /** Format: int64 */
+            approvedByAccountId: number;
+            baseSalary: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date */
+            effectiveFrom: string;
+            /** Format: date */
+            effectiveTo: string;
+            /** Format: int64 */
+            employeeId: number;
+            /** Format: int64 */
+            id: number;
+            note: string;
+            reason: string;
+        };
+        SetCarriedOverLeaveRequest: {
+            /** Format: int32 */
+            carriedOverMinutes: number;
+            reason?: string;
+        };
+        SetSalaryCommand: {
+            baseSalary?: number;
+            /** Format: date */
+            effectiveFrom?: string;
+            note?: string;
+            reason?: string;
+        };
+        SoftDeleteEmployeeRequest: {
+            deletionReason: string;
+        };
+        UpdateEmployeeRequest: {
+            /** Format: date */
+            dateOfBirth?: string | null;
+            fullName: string;
+            /** @enum {string|null} */
+            gender?: "MALE" | "FEMALE" | "OTHER" | "UNDISCLOSED" | null;
+            /** Format: int32 */
+            graduationYear?: number | null;
+            /** @enum {string|null} */
+            highestEducationLevel?: "HIGH_SCHOOL" | "COLLEGE" | "BACHELOR" | "MASTER" | "DOCTORATE" | null;
+            institution?: string | null;
+            major?: string | null;
+            phone?: string | null;
+            /** Format: email */
+            workEmail?: string | null;
+        };
+        UpdateEmployeeSensitiveRequest: {
+            address?: string | null;
+            bankAccountHolder?: string | null;
+            bankAccountNumber?: string | null;
+            bankName?: string | null;
+            nationalId?: string | null;
+            /** Format: email */
+            personalEmail?: string | null;
+            taxCode?: string | null;
+        };
+        UpdateJobPositionRequest: {
+            description?: string;
+            isActive: boolean;
+            isManagerial: boolean;
+            title: string;
+        };
+        UpdateOrganizationUnitRequest: {
+            isActive: boolean;
+            name: string;
+            /** Format: int64 */
+            parentUnitId?: number;
+        };
+        UpdateRoleRequest: {
+            description?: string;
+            /** @enum {string} */
+            grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
+            name: string;
+        };
+        UpdateWorkLocationRequest: {
+            address: string;
+            isActive: boolean;
+            name: string;
+            /** Format: int64 */
+            parentLocationId?: number;
+            phone?: string;
+        };
+        UpdateWorkShiftRequest: {
+            /** Format: int32 */
+            breakMinutes: number;
+            crossesMidnight: boolean;
+            endTime: string;
+            /** Format: int32 */
+            graceLateMinutes: number;
+            isActive: boolean;
+            name: string;
+            /** Format: int32 */
+            standardWorkMinutes: number;
+            startTime: string;
+        };
+        WorkLocationResponse: {
+            address: string;
+            code: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: int64 */
+            id: number;
+            isActive: boolean;
+            /** @enum {string} */
+            locationType: "HEAD_OFFICE" | "BRANCH" | "WAREHOUSE";
+            name: string;
+            /** Format: int64 */
+            parentLocationId: number;
+            parentLocationName: string;
+            phone: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        WorkLocationTreeResponse: {
+            address: string;
+            children: components["schemas"]["WorkLocationTreeResponse"][];
+            code: string;
+            /** Format: int64 */
+            id: number;
+            isActive: boolean;
+            /** @enum {string} */
+            locationType: "HEAD_OFFICE" | "BRANCH" | "WAREHOUSE";
+            name: string;
+            phone: string;
+        };
+        WorkShiftResponse: {
+            /** Format: int32 */
+            breakMinutes: number;
+            code: string;
+            /** Format: date-time */
+            createdAt: string;
+            crossesMidnight: boolean;
+            endTime: string;
+            /** Format: int32 */
+            graceLateMinutes: number;
+            /** Format: int64 */
+            id: number;
+            isActive: boolean;
+            name: string;
+            /** Format: int32 */
+            standardWorkMinutes: number;
+            startTime: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
     };
     responses: never;
@@ -2812,12 +2812,84 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    getById: {
+    complete: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                shiftId: number;
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteAccountActivationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultVoid"];
+                };
+            };
+        };
+    };
+    list_11: {
+        parameters: {
+            query: {
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPagedResultAccountResponse"];
+                };
+            };
+        };
+    };
+    create_10: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAccountProvisioningResponse"];
+                };
+            };
+        };
+    };
+    getById_9: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: number;
             };
             cookie?: never;
         };
@@ -2829,23 +2901,212 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResultWorkShiftResponse"];
+                    "application/json": components["schemas"]["ApiResultAccountResponse"];
                 };
             };
         };
     };
-    update: {
+    activate: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                shiftId: number;
+                accountId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAccountResponse"];
+                };
+            };
+        };
+    };
+    resendInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAccountInvitationResponse"];
+                };
+            };
+        };
+    };
+    initiatePasswordReset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAccountInvitationResponse"];
+                };
+            };
+        };
+    };
+    list_12: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListAccountRoleAssignmentResponse"];
+                };
+            };
+        };
+    };
+    assign_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateWorkShiftRequest"];
+                "application/json": components["schemas"]["AssignAccountRoleRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAccountRoleAssignmentResponse"];
+                };
+            };
+        };
+    };
+    list_13: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: number;
+                assignmentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListAccountPermissionOverrideResponse"];
+                };
+            };
+        };
+    };
+    create_11: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: number;
+                assignmentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePermissionOverrideRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAccountPermissionOverrideResponse"];
+                };
+            };
+        };
+    };
+    availablePermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: number;
+                assignmentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListPermissionOverrideOptionResponse"];
+                };
+            };
+        };
+    };
+    revoke_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: number;
+                assignmentId: number;
+                overrideId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevokePermissionOverrideRequest"];
             };
         };
         responses: {
@@ -2855,17 +3116,400 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResultWorkShiftResponse"];
+                    "application/json": components["schemas"]["ApiResultAccountPermissionOverrideResponse"];
                 };
             };
         };
     };
-    delete: {
+    revoke: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                shiftId: number;
+                accountId: number;
+                assignmentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevokeAccountRoleRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAccountRoleAssignmentResponse"];
+                };
+            };
+        };
+    };
+    suspend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAccountResponse"];
+                };
+            };
+        };
+    };
+    checkIn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckInRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAttendanceRecordResponse"];
+                };
+            };
+        };
+    };
+    checkOut: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckOutRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAttendanceRecordResponse"];
+                };
+            };
+        };
+    };
+    listByEmployee: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPagedResultAttendanceRecordResponse"];
+                };
+            };
+        };
+    };
+    prepare: {
+        parameters: {
+            query: {
+                year: number;
+                month: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultInteger"];
+                };
+            };
+        };
+    };
+    getById_6: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAttendanceRecordResponse"];
+                };
+            };
+        };
+    };
+    adjust_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdjustAttendanceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAttendanceRecordResponse"];
+                };
+            };
+        };
+    };
+    approveOvertime: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApproveOvertimeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAttendanceRecordResponse"];
+                };
+            };
+        };
+    };
+    changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeOwnPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultVoid"];
+                };
+            };
+        };
+    };
+    login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAuthResponse"];
+                };
+            };
+        };
+    };
+    logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LogoutRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultVoid"];
+                };
+            };
+        };
+    };
+    me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAuthAccountResponse"];
+                };
+            };
+        };
+    };
+    refresh: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAuthResponse"];
+                };
+            };
+        };
+    };
+    list_10: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListCompanyHoliday"];
+                };
+            };
+        };
+    };
+    create_9: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanyHolidayRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultCompanyHoliday"];
+                };
+            };
+        };
+    };
+    delete_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
             };
             cookie?: never;
         };
@@ -2882,12 +3526,12 @@ export interface operations {
             };
         };
     };
-    getById_1: {
+    profiles: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                locationId: number;
+                employeeId: number;
             };
             cookie?: never;
         };
@@ -2899,23 +3543,170 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResultWorkLocationResponse"];
+                    "application/json": components["schemas"]["ApiResultListProfile"];
                 };
             };
         };
     };
-    update_1: {
+    setProfile: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                locationId: number;
+                employeeId: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateWorkLocationRequest"];
+                "application/json": components["schemas"]["ProfileCommand"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultProfile"];
+                };
+            };
+        };
+    };
+    list_9: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListSalaryHistoryView"];
+                };
+            };
+        };
+    };
+    set: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetSalaryCommand"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultSalaryHistoryView"];
+                };
+            };
+        };
+    };
+    effective: {
+        parameters: {
+            query: {
+                date: string;
+            };
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultSalaryHistoryView"];
+                };
+            };
+        };
+    };
+    dependents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListDependent"];
+                };
+            };
+        };
+    };
+    addDependent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DependentCommand"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultDependent"];
+                };
+            };
+        };
+    };
+    endDependent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: number;
+                dependentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EndDependentCommand"];
             };
         };
         responses: {
@@ -2925,17 +3716,1436 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResultWorkLocationResponse"];
+                    "application/json": components["schemas"]["ApiResultDependent"];
                 };
             };
         };
     };
-    delete_1: {
+    list_7: {
+        parameters: {
+            query: {
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPagedResultEmployeeSummaryResponse"];
+                };
+            };
+        };
+    };
+    create_8: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEmployeeRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultEmployeeCreationResponse"];
+                };
+            };
+        };
+    };
+    getById_5: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                locationId: number;
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultEmployeeDetailResponse"];
+                };
+            };
+        };
+    };
+    update_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateEmployeeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultEmployeeDetailResponse"];
+                };
+            };
+        };
+    };
+    list_8: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListEmployeeAssignmentResponse"];
+                };
+            };
+        };
+    };
+    assign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignEmployeeRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultEmployeeAssignmentResponse"];
+                };
+            };
+        };
+    };
+    getCurrent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultEmployeeAssignmentResponse"];
+                };
+            };
+        };
+    };
+    confirmEmployment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultEmployeeDetailResponse"];
+                };
+            };
+        };
+    };
+    completeResignation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteResignationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultEmployeeDetailResponse"];
+                };
+            };
+        };
+    };
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultEmployeeSensitiveResponse"];
+                };
+            };
+        };
+    };
+    update_6: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateEmployeeSensitiveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultEmployeeSensitiveResponse"];
+                };
+            };
+        };
+    };
+    softDelete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SoftDeleteEmployeeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultVoid"];
+                };
+            };
+        };
+    };
+    list_6: {
+        parameters: {
+            query?: {
+                active?: boolean;
+                managerial?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListJobPositionResponse"];
+                };
+            };
+        };
+    };
+    create_7: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateJobPositionRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultJobPositionResponse"];
+                };
+            };
+        };
+    };
+    getById_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                positionId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultJobPositionResponse"];
+                };
+            };
+        };
+    };
+    update_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                positionId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateJobPositionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultJobPositionResponse"];
+                };
+            };
+        };
+    };
+    delete_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                positionId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultVoid"];
+                };
+            };
+        };
+    };
+    getBalance: {
+        parameters: {
+            query?: {
+                year?: number;
+            };
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultBalanceView"];
+                };
+            };
+        };
+    };
+    adjust: {
+        parameters: {
+            query?: {
+                year?: number;
+            };
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdjustLeaveEntitlementRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultBalanceView"];
+                };
+            };
+        };
+    };
+    setCarriedOver: {
+        parameters: {
+            query?: {
+                year?: number;
+            };
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetCarriedOverLeaveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultBalanceView"];
+                };
+            };
+        };
+    };
+    create_6: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateLeaveCommand"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultLeaveRequestView"];
+                };
+            };
+        };
+    };
+    list_15: {
+        parameters: {
+            query: {
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPagedResultLeaveRequestView"];
+                };
+            };
+        };
+    };
+    pending: {
+        parameters: {
+            query: {
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPagedResultLeaveRequestView"];
+                };
+            };
+        };
+    };
+    get_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultLeaveRequestView"];
+                };
+            };
+        };
+    };
+    approve_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ReviewBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultLeaveRequestView"];
+                };
+            };
+        };
+    };
+    cancel_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultLeaveRequestView"];
+                };
+            };
+        };
+    };
+    reject_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ReviewBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultLeaveRequestView"];
+                };
+            };
+        };
+    };
+    submit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultLeaveRequestView"];
+                };
+            };
+        };
+    };
+    list_5: {
+        parameters: {
+            query?: {
+                active?: boolean;
+                unitType?: "BOARD" | "DEPARTMENT" | "TEAM";
+                parentUnitId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListOrganizationUnitResponse"];
+                };
+            };
+        };
+    };
+    create_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateOrganizationUnitRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultOrganizationUnitResponse"];
+                };
+            };
+        };
+    };
+    tree_1: {
+        parameters: {
+            query?: {
+                includeInactive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListOrganizationUnitTreeResponse"];
+                };
+            };
+        };
+    };
+    getById_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultOrganizationUnitResponse"];
+                };
+            };
+        };
+    };
+    update_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateOrganizationUnitRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultOrganizationUnitResponse"];
+                };
+            };
+        };
+    };
+    delete_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultVoid"];
+                };
+            };
+        };
+    };
+    employeePayslips: {
+        parameters: {
+            query: {
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPagedResultPayslipResponse"];
+                };
+            };
+        };
+    };
+    payslip: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPayslipResponse"];
+                };
+            };
+        };
+    };
+    list_4: {
+        parameters: {
+            query: {
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPagedResultPayrollPeriodResponse"];
+                };
+            };
+        };
+    };
+    create_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePayrollPeriodRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPayrollPeriodResponse"];
+                };
+            };
+        };
+    };
+    get_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPayrollPeriodResponse"];
+                };
+            };
+        };
+    };
+    approve_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPayrollPeriodResponse"];
+                };
+            };
+        };
+    };
+    calculate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PayrollActionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPayrollPeriodResponse"];
+                };
+            };
+        };
+    };
+    cancel_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPayrollPeriodResponse"];
+                };
+            };
+        };
+    };
+    lock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPayrollPeriodResponse"];
+                };
+            };
+        };
+    };
+    markPaid: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PayrollActionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPayrollPeriodResponse"];
+                };
+            };
+        };
+    };
+    list_14: {
+        parameters: {
+            query: {
+                module?: "EMPLOYEE" | "ACCOUNT" | "ORGANIZATION" | "REQUEST" | "ATTENDANCE" | "PAYROLL" | "RBAC" | "REPORT";
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPagedResultPermissionResponse"];
+                };
+            };
+        };
+    };
+    getById_8: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPermissionResponse"];
+                };
+            };
+        };
+    };
+    workforceDistribution: {
+        parameters: {
+            query?: {
+                asOfDate?: string;
+                organizationUnitId?: number;
+                workLocationId?: number;
+                employmentStatus?: "PROBATION" | "ACTIVE" | "RESIGNED" | "TERMINATED" | "RETIRED";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultHrWorkforceReportResponse"];
+                };
+            };
+        };
+    };
+    salaryDistribution: {
+        parameters: {
+            query?: {
+                asOfDate?: string;
+                organizationUnitId?: number;
+                workLocationId?: number;
+                employmentStatus?: "PROBATION" | "ACTIVE" | "RESIGNED" | "TERMINATED" | "RETIRED";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPayrollSalaryReportResponse"];
+                };
+            };
+        };
+    };
+    list_3: {
+        parameters: {
+            query: {
+                status?: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPagedResultRoleAssignmentRequestResponse"];
+                };
+            };
+        };
+    };
+    create_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRoleAssignmentRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultRoleAssignmentRequestResponse"];
+                };
+            };
+        };
+    };
+    listAvailableRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListRoleAssignmentOptionResponse"];
+                };
+            };
+        };
+    };
+    getById_7: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requestId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultRoleAssignmentRequestResponse"];
+                };
+            };
+        };
+    };
+    approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requestId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApproveRoleAssignmentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultRoleAssignmentRequestResponse"];
+                };
+            };
+        };
+    };
+    cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requestId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelRoleAssignmentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultRoleAssignmentRequestResponse"];
+                };
+            };
+        };
+    };
+    reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requestId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectRoleAssignmentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultRoleAssignmentRequestResponse"];
+                };
+            };
+        };
+    };
+    list_2: {
+        parameters: {
+            query: {
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPagedResultRoleResponse"];
+                };
+            };
+        };
+    };
+    create_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRoleRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultRoleResponse"];
+                };
+            };
+        };
+    };
+    listWithPermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListRoleWithPermissionsResponse"];
+                };
+            };
+        };
+    };
+    getById_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultRoleResponse"];
+                };
+            };
+        };
+    };
+    update_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRoleRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultRoleResponse"];
+                };
+            };
+        };
+    };
+    delete_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
             };
             cookie?: never;
         };
@@ -3026,60 +5236,13 @@ export interface operations {
             };
         };
     };
-    getById_2: {
+    revokePermission: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultRoleResponse"];
-                };
-            };
-        };
-    };
-    update_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateRoleRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultRoleResponse"];
-                };
-            };
-        };
-    };
-    delete_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
+                roleId: number;
+                permissionId: number;
             };
             cookie?: never;
         };
@@ -3096,397 +5259,7 @@ export interface operations {
             };
         };
     };
-    getById_3: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                unitId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultOrganizationUnitResponse"];
-                };
-            };
-        };
-    };
-    update_3: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                unitId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateOrganizationUnitRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultOrganizationUnitResponse"];
-                };
-            };
-        };
-    };
-    delete_3: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                unitId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultVoid"];
-                };
-            };
-        };
-    };
-    setCarriedOver: {
-        parameters: {
-            query?: {
-                year?: number;
-            };
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SetCarriedOverLeaveRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultBalanceView"];
-                };
-            };
-        };
-    };
-    adjust: {
-        parameters: {
-            query?: {
-                year?: number;
-            };
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AdjustLeaveEntitlementRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultBalanceView"];
-                };
-            };
-        };
-    };
-    getById_4: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                positionId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultJobPositionResponse"];
-                };
-            };
-        };
-    };
-    update_4: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                positionId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateJobPositionRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultJobPositionResponse"];
-                };
-            };
-        };
-    };
-    delete_4: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                positionId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultVoid"];
-                };
-            };
-        };
-    };
-    getById_5: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultEmployeeDetailResponse"];
-                };
-            };
-        };
-    };
-    update_5: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateEmployeeRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultEmployeeDetailResponse"];
-                };
-            };
-        };
-    };
-    get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultEmployeeSensitiveResponse"];
-                };
-            };
-        };
-    };
-    update_6: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateEmployeeSensitiveRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultEmployeeSensitiveResponse"];
-                };
-            };
-        };
-    };
-    endDependent: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                employeeId: number;
-                dependentId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["EndDependentCommand"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultDependent"];
-                };
-            };
-        };
-    };
-    getById_6: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAttendanceRecordResponse"];
-                };
-            };
-        };
-    };
-    adjust_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AdjustAttendanceRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAttendanceRecordResponse"];
-                };
-            };
-        };
-    };
-    list: {
-        parameters: {
-            query?: {
-                active?: boolean;
-                crossesMidnight?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultListWorkShiftResponse"];
-                };
-            };
-        };
-    };
-    create: {
+    provision: {
         parameters: {
             query?: never;
             header?: never;
@@ -3495,7 +5268,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreateWorkShiftRequest"];
+                "application/json": components["schemas"]["CreateOrganizationCompanyOwnerRequest"];
             };
         };
         responses: {
@@ -3505,7 +5278,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResultWorkShiftResponse"];
+                    "application/json": components["schemas"]["ApiResultOrganizationCompanyOwnerProvisioningResponse"];
                 };
             };
         };
@@ -3558,1445 +5331,6 @@ export interface operations {
             };
         };
     };
-    provision: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateOrganizationCompanyOwnerRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultOrganizationCompanyOwnerProvisioningResponse"];
-                };
-            };
-        };
-    };
-    list_2: {
-        parameters: {
-            query: {
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPagedResultRoleResponse"];
-                };
-            };
-        };
-    };
-    create_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateRoleRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultRoleResponse"];
-                };
-            };
-        };
-    };
-    list_3: {
-        parameters: {
-            query: {
-                status?: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPagedResultRoleAssignmentRequestResponse"];
-                };
-            };
-        };
-    };
-    create_3: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateRoleAssignmentRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultRoleAssignmentRequestResponse"];
-                };
-            };
-        };
-    };
-    reject: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                requestId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RejectRoleAssignmentRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultRoleAssignmentRequestResponse"];
-                };
-            };
-        };
-    };
-    cancel: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                requestId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CancelRoleAssignmentRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultRoleAssignmentRequestResponse"];
-                };
-            };
-        };
-    };
-    approve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                requestId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ApproveRoleAssignmentRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultRoleAssignmentRequestResponse"];
-                };
-            };
-        };
-    };
-    list_4: {
-        parameters: {
-            query: {
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPagedResultPayrollPeriodResponse"];
-                };
-            };
-        };
-    };
-    create_4: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreatePayrollPeriodRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPayrollPeriodResponse"];
-                };
-            };
-        };
-    };
-    markPaid: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["PayrollActionRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPayrollPeriodResponse"];
-                };
-            };
-        };
-    };
-    lock: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPayrollPeriodResponse"];
-                };
-            };
-        };
-    };
-    cancel_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPayrollPeriodResponse"];
-                };
-            };
-        };
-    };
-    calculate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["PayrollActionRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPayrollPeriodResponse"];
-                };
-            };
-        };
-    };
-    approve_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPayrollPeriodResponse"];
-                };
-            };
-        };
-    };
-    list_5: {
-        parameters: {
-            query?: {
-                active?: boolean;
-                unitType?: "BOARD" | "DEPARTMENT" | "TEAM";
-                parentUnitId?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultListOrganizationUnitResponse"];
-                };
-            };
-        };
-    };
-    create_5: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateOrganizationUnitRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultOrganizationUnitResponse"];
-                };
-            };
-        };
-    };
-    create_6: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateLeaveCommand"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultLeaveRequestView"];
-                };
-            };
-        };
-    };
-    submit: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultLeaveRequestView"];
-                };
-            };
-        };
-    };
-    reject_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["ReviewBody"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultLeaveRequestView"];
-                };
-            };
-        };
-    };
-    cancel_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultLeaveRequestView"];
-                };
-            };
-        };
-    };
-    approve_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["ReviewBody"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultLeaveRequestView"];
-                };
-            };
-        };
-    };
-    list_6: {
-        parameters: {
-            query?: {
-                active?: boolean;
-                managerial?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultListJobPositionResponse"];
-                };
-            };
-        };
-    };
-    create_7: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateJobPositionRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultJobPositionResponse"];
-                };
-            };
-        };
-    };
-    list_7: {
-        parameters: {
-            query: {
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPagedResultEmployeeSummaryResponse"];
-                };
-            };
-        };
-    };
-    create_8: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateEmployeeRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultEmployeeCreationResponse"];
-                };
-            };
-        };
-    };
-    softDelete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SoftDeleteEmployeeRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultVoid"];
-                };
-            };
-        };
-    };
-    completeResignation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CompleteResignationRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultEmployeeDetailResponse"];
-                };
-            };
-        };
-    };
-    confirmEmployment: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultEmployeeDetailResponse"];
-                };
-            };
-        };
-    };
-    list_8: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultListEmployeeAssignmentResponse"];
-                };
-            };
-        };
-    };
-    assign: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AssignEmployeeRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultEmployeeAssignmentResponse"];
-                };
-            };
-        };
-    };
-    dependents: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultListDependent"];
-                };
-            };
-        };
-    };
-    addDependent: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DependentCommand"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultDependent"];
-                };
-            };
-        };
-    };
-    list_9: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultListSalaryHistoryView"];
-                };
-            };
-        };
-    };
-    set: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SetSalaryCommand"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultSalaryHistoryView"];
-                };
-            };
-        };
-    };
-    profiles: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultListProfile"];
-                };
-            };
-        };
-    };
-    setProfile: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ProfileCommand"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultProfile"];
-                };
-            };
-        };
-    };
-    list_10: {
-        parameters: {
-            query: {
-                from: string;
-                to: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultListCompanyHoliday"];
-                };
-            };
-        };
-    };
-    create_9: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CompanyHolidayRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultCompanyHoliday"];
-                };
-            };
-        };
-    };
-    refresh: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RefreshTokenRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAuthResponse"];
-                };
-            };
-        };
-    };
-    logout: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LogoutRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultVoid"];
-                };
-            };
-        };
-    };
-    login: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LoginRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAuthResponse"];
-                };
-            };
-        };
-    };
-    changePassword: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ChangeOwnPasswordRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultVoid"];
-                };
-            };
-        };
-    };
-    approveOvertime: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ApproveOvertimeRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAttendanceRecordResponse"];
-                };
-            };
-        };
-    };
-    prepare: {
-        parameters: {
-            query: {
-                year: number;
-                month: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultInteger"];
-                };
-            };
-        };
-    };
-    checkOut: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CheckOutRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAttendanceRecordResponse"];
-                };
-            };
-        };
-    };
-    checkIn: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CheckInRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAttendanceRecordResponse"];
-                };
-            };
-        };
-    };
-    list_11: {
-        parameters: {
-            query: {
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPagedResultAccountResponse"];
-                };
-            };
-        };
-    };
-    create_10: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateAccountRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAccountProvisioningResponse"];
-                };
-            };
-        };
-    };
-    suspend: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                accountId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAccountResponse"];
-                };
-            };
-        };
-    };
-    list_12: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                accountId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultListAccountRoleAssignmentResponse"];
-                };
-            };
-        };
-    };
-    assign_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                accountId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AssignAccountRoleRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAccountRoleAssignmentResponse"];
-                };
-            };
-        };
-    };
-    revoke: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                accountId: number;
-                assignmentId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RevokeAccountRoleRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAccountRoleAssignmentResponse"];
-                };
-            };
-        };
-    };
-    list_13: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                accountId: number;
-                assignmentId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultListAccountPermissionOverrideResponse"];
-                };
-            };
-        };
-    };
-    create_11: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                accountId: number;
-                assignmentId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreatePermissionOverrideRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAccountPermissionOverrideResponse"];
-                };
-            };
-        };
-    };
-    revoke_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                accountId: number;
-                assignmentId: number;
-                overrideId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RevokePermissionOverrideRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAccountPermissionOverrideResponse"];
-                };
-            };
-        };
-    };
-    initiatePasswordReset: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                accountId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAccountInvitationResponse"];
-                };
-            };
-        };
-    };
-    resendInvitation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                accountId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAccountInvitationResponse"];
-                };
-            };
-        };
-    };
-    activate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                accountId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAccountResponse"];
-                };
-            };
-        };
-    };
-    complete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                token: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CompleteAccountActivationRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultVoid"];
-                };
-            };
-        };
-    };
     tree: {
         parameters: {
             query?: {
@@ -5019,32 +5353,12 @@ export interface operations {
             };
         };
     };
-    listWithPermissions: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultListRoleWithPermissionsResponse"];
-                };
-            };
-        };
-    };
-    getById_7: {
+    getById_1: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                requestId: number;
+                locationId: number;
             };
             cookie?: never;
         };
@@ -5056,114 +5370,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResultRoleAssignmentRequestResponse"];
+                    "application/json": components["schemas"]["ApiResultWorkLocationResponse"];
                 };
             };
         };
     };
-    listAvailableRoles: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultListRoleAssignmentOptionResponse"];
-                };
-            };
-        };
-    };
-    salaryDistribution: {
-        parameters: {
-            query?: {
-                asOfDate?: string;
-                organizationUnitId?: number;
-                workLocationId?: number;
-                employmentStatus?: "PROBATION" | "ACTIVE" | "RESIGNED" | "TERMINATED" | "RETIRED";
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPayrollSalaryReportResponse"];
-                };
-            };
-        };
-    };
-    workforceDistribution: {
-        parameters: {
-            query?: {
-                asOfDate?: string;
-                organizationUnitId?: number;
-                workLocationId?: number;
-                employmentStatus?: "PROBATION" | "ACTIVE" | "RESIGNED" | "TERMINATED" | "RETIRED";
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultHrWorkforceReportResponse"];
-                };
-            };
-        };
-    };
-    list_14: {
-        parameters: {
-            query: {
-                module?: "EMPLOYEE" | "ACCOUNT" | "ORGANIZATION" | "REQUEST" | "ATTENDANCE" | "PAYROLL" | "RBAC" | "REPORT";
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPagedResultPermissionResponse"];
-                };
-            };
-        };
-    };
-    getById_8: {
+    update_1: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: number;
+                locationId: number;
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateWorkLocationRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -5171,337 +5396,17 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResultPermissionResponse"];
+                    "application/json": components["schemas"]["ApiResultWorkLocationResponse"];
                 };
             };
         };
     };
-    get_1: {
+    delete_1: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPayrollPeriodResponse"];
-                };
-            };
-        };
-    };
-    payslip: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPayslipResponse"];
-                };
-            };
-        };
-    };
-    employeePayslips: {
-        parameters: {
-            query: {
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPagedResultPayslipResponse"];
-                };
-            };
-        };
-    };
-    tree_1: {
-        parameters: {
-            query?: {
-                includeInactive?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultListOrganizationUnitTreeResponse"];
-                };
-            };
-        };
-    };
-    get_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultLeaveRequestView"];
-                };
-            };
-        };
-    };
-    pending: {
-        parameters: {
-            query: {
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPagedResultLeaveRequestView"];
-                };
-            };
-        };
-    };
-    list_15: {
-        parameters: {
-            query: {
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPagedResultLeaveRequestView"];
-                };
-            };
-        };
-    };
-    getBalance: {
-        parameters: {
-            query?: {
-                year?: number;
-            };
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultBalanceView"];
-                };
-            };
-        };
-    };
-    getCurrent: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultEmployeeAssignmentResponse"];
-                };
-            };
-        };
-    };
-    effective: {
-        parameters: {
-            query: {
-                date: string;
-            };
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultSalaryHistoryView"];
-                };
-            };
-        };
-    };
-    me: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAuthAccountResponse"];
-                };
-            };
-        };
-    };
-    listByEmployee: {
-        parameters: {
-            query: {
-                from: string;
-                to: string;
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultPagedResultAttendanceRecordResponse"];
-                };
-            };
-        };
-    };
-    getById_9: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                accountId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAccountResponse"];
-                };
-            };
-        };
-    };
-    availablePermissions: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                accountId: number;
-                assignmentId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultListPermissionOverrideOptionResponse"];
-                };
-            };
-        };
-    };
-    revokePermission: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                roleId: number;
-                permissionId: number;
+                locationId: number;
             };
             cookie?: never;
         };
@@ -5518,12 +5423,107 @@ export interface operations {
             };
         };
     };
-    delete_5: {
+    list: {
+        parameters: {
+            query?: {
+                active?: boolean;
+                crossesMidnight?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListWorkShiftResponse"];
+                };
+            };
+        };
+    };
+    create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWorkShiftRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultWorkShiftResponse"];
+                };
+            };
+        };
+    };
+    getById: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: number;
+                shiftId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultWorkShiftResponse"];
+                };
+            };
+        };
+    };
+    update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shiftId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateWorkShiftRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultWorkShiftResponse"];
+                };
+            };
+        };
+    };
+    delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shiftId: number;
             };
             cookie?: never;
         };

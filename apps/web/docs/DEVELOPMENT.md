@@ -61,16 +61,34 @@ khẩu an toàn qua biến môi trường.
 
 ## Kiểu dữ liệu sinh từ API
 
-`lib/api-schema.ts` được sinh từ spec OpenAPI của API bằng `openapi-typescript`; không sửa tay
-file này. Sau khi đổi DTO ở `api/`, bật API rồi chạy:
+Hai file sinh tự động, không sửa tay và luôn commit cùng thay đổi DTO:
+
+| File | Sinh bởi | Nội dung |
+|:-----|:---------|:---------|
+| `openapi.json` | `OpenApiSnapshotTest` ở `api/` | Bản chụp spec OpenAPI của API |
+| `lib/api-schema.ts` | `npm run gen:api` | TypeScript type sinh từ `openapi.json` bằng `openapi-typescript` |
+
+Sau khi đổi DTO hoặc endpoint ở `api/` (không cần bật API):
 
 ```powershell
+# trong api/
+./mvnw.cmd test "-Dtest=OpenApiSnapshotTest" "-Dopenapi.snapshot.update=true"
+# trong apps/web/
 npm run gen:api
 npm run typecheck
 ```
 
-Typecheck báo lỗi ở những chỗ frontend không còn khớp DTO mới. Commit `lib/api-schema.ts` cùng
-thay đổi DTO để người khác không cần bật API mới typecheck được.
+Typecheck báo lỗi ở những chỗ frontend không còn khớp DTO mới.
+
+Quên một trong hai bước sẽ bị chặn:
+
+- Quên cập nhật `openapi.json`: `OpenApiSnapshotTest` fail khi chạy `./mvnw.cmd test`, liệt kê path
+  và schema bị lệch.
+- Quên `npm run gen:api`: `npm run typecheck` fail ở bước `check:api` với thông báo
+  `Generated types are not up-to-date`.
+
+`.gitattributes` giữ hai file này ở LF trên mọi máy; `check:api` so sánh từng byte nên CRLF do
+`core.autocrlf` sẽ làm check fail.
 
 Module dùng type sinh ra định nghĩa alias trong file `lib/<module>.ts`, ví dụ
 `type EmployeeDetail = components["schemas"]["EmployeeDetailResponse"]`, và component chỉ import
@@ -120,7 +138,8 @@ app/
     └── admin-session/        # BFF endpoints của Admin
 components/                   # UI theo module nghiệp vụ
 lib/                          # API client, kiểu dữ liệu và auth helpers
-├── api-schema.ts             # Type sinh từ OpenAPI (npm run gen:api), không sửa tay
+├── api-schema.ts             # Type sinh từ openapi.json (npm run gen:api), không sửa tay
+openapi.json                  # Bản chụp spec OpenAPI do OpenApiSnapshotTest ghi, không sửa tay
 proxy.ts                      # Điều hướng sơ bộ dựa trên sự tồn tại của cookie
 ```
 

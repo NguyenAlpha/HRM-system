@@ -53,9 +53,10 @@ ngoài môi trường phát triển.
 Spec chỉ phản ánh đúng kiểu dữ liệu và ràng buộc validation; quy tắc nghiệp vụ, permission và mã
 lỗi vẫn được mô tả trong các tài liệu ở bảng trên.
 
-Web sinh TypeScript type từ spec này (`npm run gen:api`, xem
-[DEVELOPMENT.md](../../../apps/web/docs/DEVELOPMENT.md#kiểu-dữ-liệu-sinh-từ-api)), nên DTO phải
-khai báo đúng khả năng null:
+Web sinh TypeScript type từ bản chụp spec `apps/web/openapi.json`. Đổi DTO hoặc endpoint mà
+không cập nhật bản chụp thì `OpenApiSnapshotTest` fail; cách cập nhật xem
+[DEVELOPMENT.md](../../../apps/web/docs/DEVELOPMENT.md#kiểu-dữ-liệu-sinh-từ-api). Vì type được
+sinh từ spec, DTO phải khai báo đúng khả năng null:
 
 - **Response:** API luôn trả đủ mọi field, kể cả field `null`, nên `OpenApiConfig` đánh dấu mọi
   field là `required`. Field có thể `null` phải gắn `jakarta.annotation.Nullable`; field không gắn
