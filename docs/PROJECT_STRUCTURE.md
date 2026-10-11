@@ -6,6 +6,7 @@ Tài liệu này mô tả cấu trúc hiện tại của đồ án HRM (Human Re
 
 ```text
 HRM-system/
+├── .github/workflows/      # CI: test API, lint/typecheck/build web
 ├── api/                    # Backend Spring Boot và Maven
 ├── apps/
 │   └── web/                # Frontend Next.js

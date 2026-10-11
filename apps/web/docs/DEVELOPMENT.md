@@ -108,6 +108,9 @@ npm run typecheck
 npm run build
 ```
 
+CI (`.github/workflows/ci.yml`) chạy ba lệnh này cùng `./mvnw test` của API (trên PostgreSQL
+rỗng) cho mỗi push lên `main` và mỗi pull request.
+
 Dự án chưa cấu hình test runner tự động cho web. Trước khi bàn giao thay đổi, thực hiện ít nhất checklist thủ công sau:
 
 1. Đăng nhập `employee01` tại `/login` và kiểm tra chuyển tới `/dashboard`.
