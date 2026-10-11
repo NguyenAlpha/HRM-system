@@ -2,12 +2,14 @@ package com.htttdn.hrm.dto.request.worklocation;
 
 import com.htttdn.hrm.entity.enums.LocationType;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record CreateWorkLocationRequest(
+    @Nullable
     Long parentLocationId,
 
     @NotBlank
@@ -26,6 +28,7 @@ public record CreateWorkLocationRequest(
     String address,
 
     @Size(max = 20)
+    @Nullable
     String phone
 ) {
 }

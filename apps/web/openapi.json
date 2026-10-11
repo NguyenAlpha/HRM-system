@@ -5761,7 +5761,7 @@
             "pattern" : "^[A-Z][A-Z0-9_-]*$"
           },
           "description" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "isManagerial" : {
             "type" : "boolean"
@@ -5850,7 +5850,7 @@
             "minLength" : 0
           },
           "parentUnitId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "unitType" : {
@@ -5995,11 +5995,11 @@
             "minLength" : 0
           },
           "parentLocationId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "phone" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "maxLength" : 20,
             "minLength" : 0
           }
@@ -6439,7 +6439,7 @@
             "format" : "date-time"
           },
           "description" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "id" : {
             "type" : "integer",
@@ -6601,11 +6601,11 @@
             "type" : "string"
           },
           "parentUnitId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "parentUnitName" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "unitType" : {
             "type" : "string",
@@ -7726,7 +7726,7 @@
         "type" : "object",
         "properties" : {
           "description" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "isActive" : {
             "type" : "boolean"
@@ -7754,7 +7754,7 @@
             "minLength" : 0
           },
           "parentUnitId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           }
         },
@@ -7794,11 +7794,11 @@
             "minLength" : 0
           },
           "parentLocationId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "phone" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "maxLength" : 20,
             "minLength" : 0
           }
@@ -7874,14 +7874,14 @@
             "type" : "string"
           },
           "parentLocationId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "parentLocationName" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "phone" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "updatedAt" : {
             "type" : "string",
@@ -7920,7 +7920,7 @@
             "type" : "string"
           },
           "phone" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "required" : [ "address", "children", "code", "id", "isActive", "locationType", "name", "phone" ]

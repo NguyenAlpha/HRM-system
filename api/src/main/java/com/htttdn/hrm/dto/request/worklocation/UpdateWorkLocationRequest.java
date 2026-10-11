@@ -1,10 +1,12 @@
 package com.htttdn.hrm.dto.request.worklocation;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record UpdateWorkLocationRequest(
+    @Nullable
     Long parentLocationId,
 
     @NotBlank
@@ -15,6 +17,7 @@ public record UpdateWorkLocationRequest(
     String address,
 
     @Size(max = 20)
+    @Nullable
     String phone,
 
     @NotNull

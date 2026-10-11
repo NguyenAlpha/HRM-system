@@ -4,15 +4,17 @@ import java.time.Instant;
 
 import com.htttdn.hrm.entity.enums.LocationType;
 
+import jakarta.annotation.Nullable;
+
 public record WorkLocationResponse(
     Long id,
-    Long parentLocationId,
-    String parentLocationName,
+    @Nullable Long parentLocationId,
+    @Nullable String parentLocationName,
     String code,
     String name,
     LocationType locationType,
     String address,
-    String phone,
+    @Nullable String phone,
     Boolean isActive,
     Instant createdAt,
     Instant updatedAt
