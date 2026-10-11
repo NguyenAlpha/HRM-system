@@ -127,7 +127,8 @@ apps/web/
 │   ├── report/                       # Dashboard và biểu đồ phân bố báo cáo
 │   ├── role-assignment/              # Gán role, yêu cầu cấp role và permission override
 │   ├── ui/                           # Primitive shadcn/ui dùng chung
-│   └── workforce/                    # Chấm công, nghỉ phép và lương
+│   └── workforce/                    # Chấm công, nghỉ phép và lương: vỏ trang workforce-page,
+│                                     # attendance/leave/payroll-section và các panel con
 ├── lib/
 │   ├── api-helpers.ts                # Chuẩn hóa lỗi trả về từ BFF
 │   ├── api-schema.ts                 # Type sinh từ openapi.json (npm run gen:api)
@@ -143,7 +144,7 @@ apps/web/
 │   ├── report-server.ts              # BFF gọi Report API
 │   ├── role-assignment.ts            # Client role assignment và yêu cầu cấp role
 │   ├── utils.ts                      # Tiện ích dùng chung
-│   ├── workforce.ts                  # Kiểu dữ liệu chấm công, nghỉ phép và lương
+│   ├── workforce.ts                  # Kiểu dữ liệu và nhãn trạng thái chấm công, nghỉ phép, lương
 │   └── auth/
 │       ├── client.ts                 # Helper phía client
 │       ├── config.ts                 # Cấu hình cookie và auth
