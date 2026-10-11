@@ -692,6 +692,7 @@ Ví dụ dữ liệu:
 | `assignment_policy` | VARCHAR(20) | NOT NULL | `DELEGABLE` / `SYSTEM_ONLY` |
 | `is_active` | BOOLEAN | NOT NULL, DEFAULT true | Trạng thái |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Lần cuối seeder đổi `name`, `description` hoặc `assignment_policy` |
 
 ### `roles` — Mẫu vai trò
 

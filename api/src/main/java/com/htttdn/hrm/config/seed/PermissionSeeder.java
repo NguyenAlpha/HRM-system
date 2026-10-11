@@ -178,6 +178,7 @@ public class PermissionSeeder implements ApplicationRunner {
                 continue;
             }
 
+            Instant now = Instant.now();
             permissionRepository.save(Permission.builder()
                 .code(definition.code())
                 .name(definition.name())
@@ -185,7 +186,8 @@ public class PermissionSeeder implements ApplicationRunner {
                 .description(definition.description())
                 .assignmentPolicy(definition.assignmentPolicy())
                 .isActive(true)
-                .createdAt(Instant.now())
+                .createdAt(now)
+                .updatedAt(now)
                 .build());
             createdCount++;
         }
@@ -199,9 +201,15 @@ public class PermissionSeeder implements ApplicationRunner {
                 definition.code() + " must be active and belong to module " + definition.module()
             );
         }
+        if (permission.getName().equals(definition.name())
+            && permission.getDescription().equals(definition.description())
+            && permission.getAssignmentPolicy() == definition.assignmentPolicy()) {
+            return;
+        }
         permission.setName(definition.name());
         permission.setDescription(definition.description());
         permission.setAssignmentPolicy(definition.assignmentPolicy());
+        permission.setUpdatedAt(Instant.now());
     }
 
     private static PermissionDefinition permission(
