@@ -249,7 +249,7 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
       toast.success(
         created.status === "PENDING"
           ? `Đã gửi đề xuất cấp role ${created.roleName}, đang chờ Company Owner duyệt`
-          : `Đã cấp role ${created.roleName} cho ${created.employeeName}`,
+          : `Đã cấp role ${created.roleName} cho ${created.employeeName ?? `account #${created.accountId}`}`,
       )
       setCreateOpen(false)
       setPage(0)

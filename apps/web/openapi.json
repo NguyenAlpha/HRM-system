@@ -3656,7 +3656,7 @@
             "format" : "date"
           },
           "effectiveTo" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date"
           },
           "grantedByAccountId" : {
@@ -3688,18 +3688,18 @@
             "type" : "string"
           },
           "revocationReason" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "revokedAt" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date-time"
           },
           "revokedByAccountId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "revokedByUsername" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "status" : {
             "type" : "string",
@@ -5204,7 +5204,7 @@
         "type" : "object",
         "properties" : {
           "note" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "maxLength" : 500,
             "minLength" : 0
           }
@@ -5218,11 +5218,11 @@
             "format" : "date"
           },
           "effectiveTo" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date"
           },
           "organizationUnitId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "reason" : {
@@ -5241,7 +5241,7 @@
             "enum" : [ "SELF", "COMPANY", "ORG_UNIT", "LOCATION" ]
           },
           "workLocationId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           }
         },
@@ -5896,7 +5896,7 @@
             "format" : "date"
           },
           "effectiveTo" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date"
           },
           "permissionId" : {
@@ -5923,11 +5923,11 @@
             "format" : "date"
           },
           "effectiveTo" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date"
           },
           "organizationUnitId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "reason" : {
@@ -5946,7 +5946,7 @@
             "enum" : [ "SELF", "COMPANY", "ORG_UNIT", "LOCATION" ]
           },
           "workLocationId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           }
         },
@@ -5962,7 +5962,7 @@
             "pattern" : "(?!ROLE_)[A-Z][A-Z0-9_]*"
           },
           "description" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "grantPolicy" : {
             "type" : "string",
@@ -7372,7 +7372,7 @@
             "type" : "string"
           },
           "roleDescription" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "roleId" : {
             "type" : "integer",
@@ -7392,39 +7392,43 @@
             "format" : "int64"
           },
           "assignment" : {
-            "$ref" : "#/components/schemas/AccountRoleAssignmentResponse"
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/AccountRoleAssignmentResponse"
+            }, {
+              "type" : "null"
+            } ]
           },
           "cancellationReason" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "cancelledAt" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date-time"
           },
           "cancelledByAccountId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "cancelledByUsername" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "effectiveFrom" : {
             "type" : "string",
             "format" : "date"
           },
           "effectiveTo" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date"
           },
           "employeeCode" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "employeeId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "employeeName" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "grantPolicy" : {
             "type" : "string",
@@ -7435,11 +7439,11 @@
             "format" : "int64"
           },
           "organizationUnitId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "organizationUnitName" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "reason" : {
             "type" : "string"
@@ -7456,18 +7460,18 @@
             "type" : "string"
           },
           "reviewNote" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "reviewedAt" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date-time"
           },
           "reviewedByAccountId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "reviewedByUsername" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "roleCode" : {
             "type" : "string"
@@ -7492,11 +7496,11 @@
             "format" : "date-time"
           },
           "workLocationId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "workLocationName" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "required" : [ "accountId", "assignment", "cancellationReason", "cancelledAt", "cancelledByAccountId", "cancelledByUsername", "effectiveFrom", "effectiveTo", "employeeCode", "employeeId", "employeeName", "grantPolicy", "id", "organizationUnitId", "organizationUnitName", "reason", "requestedAt", "requestedByAccountId", "requestedByUsername", "reviewNote", "reviewedAt", "reviewedByAccountId", "reviewedByUsername", "roleCode", "roleId", "roleName", "scopeType", "status", "updatedAt", "workLocationId", "workLocationName" ]
@@ -7508,7 +7512,7 @@
             "type" : "string"
           },
           "description" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "grantPolicy" : {
             "type" : "string",
@@ -7534,7 +7538,7 @@
             "type" : "string"
           },
           "description" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "grantPolicy" : {
             "type" : "string",
@@ -7768,7 +7772,7 @@
         "type" : "object",
         "properties" : {
           "description" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "grantPolicy" : {
             "type" : "string",

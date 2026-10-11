@@ -28,6 +28,7 @@ import {
   rbacRequest,
   type Permission,
   type PermissionModule,
+  type ReplaceRolePermissionsInput,
   type Role,
 } from "@/lib/rbac"
 
@@ -146,7 +147,7 @@ export function RolePermissions({ portal, role, onClose, onSessionExpired }: {
         portal,
         `/roles/${role.id}/permissions`,
         "PUT",
-        { permissionIds: Array.from(selectedIds).sort((left, right) => left - right) },
+        { permissionIds: Array.from(selectedIds).sort((left, right) => left - right) } satisfies ReplaceRolePermissionsInput,
       )
       const updatedIds = new Set(updated.map((permission) => permission.id))
       setAssigned(updated)

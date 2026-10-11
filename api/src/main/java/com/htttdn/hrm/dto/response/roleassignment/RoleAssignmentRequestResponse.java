@@ -8,37 +8,39 @@ import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
 import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 
+import jakarta.annotation.Nullable;
+
 public record RoleAssignmentRequestResponse(
     Long id,
     Long accountId,
-    Long employeeId,
-    String employeeCode,
-    String employeeName,
+    @Nullable Long employeeId,
+    @Nullable String employeeCode,
+    @Nullable String employeeName,
     Long roleId,
     String roleCode,
     String roleName,
     RoleGrantPolicy grantPolicy,
     RoleScopeType scopeType,
-    Long organizationUnitId,
-    String organizationUnitName,
-    Long workLocationId,
-    String workLocationName,
+    @Nullable Long organizationUnitId,
+    @Nullable String organizationUnitName,
+    @Nullable Long workLocationId,
+    @Nullable String workLocationName,
     LocalDate effectiveFrom,
-    LocalDate effectiveTo,
+    @Nullable LocalDate effectiveTo,
     String reason,
     RoleAssignmentRequestStatus status,
     Long requestedByAccountId,
     String requestedByUsername,
     Instant requestedAt,
-    Long reviewedByAccountId,
-    String reviewedByUsername,
-    Instant reviewedAt,
-    String reviewNote,
-    Long cancelledByAccountId,
-    String cancelledByUsername,
-    Instant cancelledAt,
-    String cancellationReason,
+    @Nullable Long reviewedByAccountId,
+    @Nullable String reviewedByUsername,
+    @Nullable Instant reviewedAt,
+    @Nullable String reviewNote,
+    @Nullable Long cancelledByAccountId,
+    @Nullable String cancelledByUsername,
+    @Nullable Instant cancelledAt,
+    @Nullable String cancellationReason,
     Instant updatedAt,
-    AccountRoleAssignmentResponse assignment
+    @Nullable AccountRoleAssignmentResponse assignment
 ) {
 }
