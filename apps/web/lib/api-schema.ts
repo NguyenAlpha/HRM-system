@@ -1402,15 +1402,15 @@ export interface components {
             createdAt: string;
             email: string;
             /** Format: int64 */
-            employeeId: number;
+            employeeId: number | null;
             /** Format: int32 */
             failedLoginCount: number;
             /** Format: int64 */
             id: number;
             /** Format: date-time */
-            lastLoginAt: string;
+            lastLoginAt: string | null;
             /** Format: date-time */
-            lockedUntil: string;
+            lockedUntil: string | null;
             /** @enum {string} */
             status: "PENDING" | "ACTIVE" | "LOCKED" | "DISABLED";
             /** Format: date-time */
@@ -1425,19 +1425,19 @@ export interface components {
             /** Format: date */
             effectiveFrom: string;
             /** Format: date */
-            effectiveTo: string;
+            effectiveTo: string | null;
             /** Format: int64 */
             grantedByAccountId: number;
             /** Format: int64 */
             id: number;
             /** Format: int64 */
-            organizationUnitId: number;
-            reason: string;
-            revocationReason: string;
+            organizationUnitId: number | null;
+            reason: string | null;
+            revocationReason: string | null;
             /** Format: date-time */
-            revokedAt: string;
+            revokedAt: string | null;
             /** Format: int64 */
-            revokedByAccountId: number;
+            revokedByAccountId: number | null;
             roleCode: string;
             /** Format: int64 */
             roleId: number;
@@ -1445,7 +1445,7 @@ export interface components {
             /** @enum {string} */
             scopeType: "SELF" | "COMPANY" | "ORG_UNIT" | "LOCATION";
             /** Format: int64 */
-            workLocationId: number;
+            workLocationId: number | null;
         };
         AdjustAttendanceRequest: {
             /** Format: int32 */
@@ -1832,7 +1832,7 @@ export interface components {
             /** Format: int64 */
             accountId: number;
             email: string;
-            employee: components["schemas"]["AuthEmployeeResponse"];
+            employee: components["schemas"]["AuthEmployeeResponse"] | null;
             permissions: components["schemas"]["AuthPermissionResponse"][];
             roles: components["schemas"]["AuthRoleResponse"][];
             /** @enum {string} */
@@ -1863,13 +1863,13 @@ export interface components {
             code: string;
             name: string;
             /** Format: int64 */
-            organizationUnitId: number;
-            organizationUnitName: string;
+            organizationUnitId: number | null;
+            organizationUnitName: string | null;
             /** @enum {string} */
             scopeType: "SELF" | "COMPANY" | "ORG_UNIT" | "LOCATION";
             /** Format: int64 */
-            workLocationId: number;
-            workLocationName: string;
+            workLocationId: number | null;
+            workLocationName: string | null;
         };
         BalanceView: {
             /** Format: int32 */
@@ -1944,7 +1944,7 @@ export interface components {
             fullName: string;
             /** Format: date */
             hireDate: string;
-            phone?: string;
+            phone?: string | null;
             /** Format: email */
             workEmail: string;
         };

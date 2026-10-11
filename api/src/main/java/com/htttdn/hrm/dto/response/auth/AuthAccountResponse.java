@@ -4,12 +4,14 @@ import java.util.List;
 
 import com.htttdn.hrm.entity.enums.AccountStatus;
 
+import jakarta.annotation.Nullable;
+
 public record AuthAccountResponse(
     Long accountId,
     String username,
     String email,
     AccountStatus status,
-    AuthEmployeeResponse employee,
+    @Nullable AuthEmployeeResponse employee,
     List<AuthRoleResponse> roles,
     List<AuthPermissionResponse> permissions
 ) {

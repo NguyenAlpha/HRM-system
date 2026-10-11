@@ -1,55 +1,21 @@
+import type { components } from "@/lib/api-schema"
+
 export type Portal = "hrm" | "admin"
 
-export interface ApiErrorDetail {
-  code: string
-  message: string
-  field: string | null
-}
+// DTO types come from the API's OpenAPI spec; run `npm run gen:api` after changing them.
+type Schemas = components["schemas"]
+
+export type ApiErrorDetail = Schemas["ErrorDetail"]
+export type AccountSummary = Schemas["AuthAccountResponse"]
+export type AuthEmployee = Schemas["AuthEmployeeResponse"]
+export type AuthRole = Schemas["AuthRoleResponse"]
+export type AuthPermission = Schemas["AuthPermissionResponse"]
+export type BackendAuthData = Schemas["AuthResponse"]
 
 export interface ApiEnvelope<T> {
   success: boolean
   data: T | null
   error: ApiErrorDetail | null
-}
-
-export interface AccountSummary {
-  accountId: number
-  username: string
-  email: string
-  status: string
-  employee: AuthEmployee | null
-  roles: AuthRole[]
-  permissions: AuthPermission[]
-}
-
-export interface AuthEmployee {
-  id: number
-  employeeCode: string
-  fullName: string
-}
-
-export interface AuthRole {
-  code: string
-  name: string
-  scopeType: "SELF" | "ORG_UNIT" | "LOCATION" | "COMPANY"
-  organizationUnitId: number | null
-  organizationUnitName: string | null
-  workLocationId: number | null
-  workLocationName: string | null
-}
-
-export interface AuthPermission {
-  code: string
-  name: string
-  module: string
-}
-
-export interface BackendAuthData {
-  accessToken: string
-  refreshToken: string
-  tokenType: "Bearer"
-  expiresIn: number
-  account: AccountSummary
 }
 
 export interface SessionData {

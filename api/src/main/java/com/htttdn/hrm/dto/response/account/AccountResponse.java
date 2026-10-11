@@ -4,15 +4,17 @@ import java.time.Instant;
 
 import com.htttdn.hrm.entity.enums.AccountStatus;
 
+import jakarta.annotation.Nullable;
+
 public record AccountResponse(
     Long id,
-    Long employeeId,
+    @Nullable Long employeeId,
     String username,
     String email,
     AccountStatus status,
     Integer failedLoginCount,
-    Instant lockedUntil,
-    Instant lastLoginAt,
+    @Nullable Instant lockedUntil,
+    @Nullable Instant lastLoginAt,
     Instant createdAt,
     Instant updatedAt
 ) {

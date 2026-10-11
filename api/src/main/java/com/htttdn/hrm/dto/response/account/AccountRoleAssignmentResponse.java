@@ -5,6 +5,8 @@ import java.time.LocalDate;
 
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 
+import jakarta.annotation.Nullable;
+
 public record AccountRoleAssignmentResponse(
     Long id,
     Long accountId,
@@ -12,15 +14,15 @@ public record AccountRoleAssignmentResponse(
     String roleCode,
     String roleName,
     RoleScopeType scopeType,
-    Long organizationUnitId,
-    Long workLocationId,
+    @Nullable Long organizationUnitId,
+    @Nullable Long workLocationId,
     LocalDate effectiveFrom,
-    LocalDate effectiveTo,
+    @Nullable LocalDate effectiveTo,
     Long grantedByAccountId,
-    String reason,
+    @Nullable String reason,
     Instant createdAt,
-    Long revokedByAccountId,
-    Instant revokedAt,
-    String revocationReason
+    @Nullable Long revokedByAccountId,
+    @Nullable Instant revokedAt,
+    @Nullable String revocationReason
 ) {
 }
