@@ -32,6 +32,7 @@ Access token và refresh token được lưu trong bộ cookie `HttpOnly` riêng
 | Route | Chức năng |
 | --- | --- |
 | `/employees`, `/employees/{id}` | Danh sách, tạo và xem hồ sơ nhân viên |
+| `/accounts` | Gửi lại lời mời, đặt lại mật khẩu, vô hiệu hóa và kích hoạt lại tài khoản |
 | `/organization` | Đơn vị, địa điểm, vị trí và ca làm việc |
 | `/attendance` | Chuẩn bị bảng công, vào/ra ca, xử lý công và tăng ca |
 | `/leave-requests` | Tạo và xử lý đơn nghỉ phép |

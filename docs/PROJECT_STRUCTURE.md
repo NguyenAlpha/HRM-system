@@ -98,6 +98,7 @@ apps/web/
 │   ├── activate/                      # Kích hoạt account bằng token mời
 │   ├── dashboard/page.tsx            # Dashboard HRM Workspace
 │   ├── employees/                     # Danh sách và chi tiết nhân viên
+│   ├── accounts/page.tsx              # Vòng đời tài khoản đăng nhập
 │   ├── organization/page.tsx          # Cơ cấu tổ chức
 │   ├── attendance/page.tsx            # Chấm công
 │   ├── leave-requests/page.tsx         # Đơn nghỉ phép
@@ -118,6 +119,7 @@ apps/web/
 │       ├── admin-session/            # BFF session cho system admin
 │       └── account-activations/      # BFF kích hoạt account, không cần đăng nhập
 ├── components/
+│   ├── account/                      # Danh sách và vòng đời tài khoản
 │   ├── activation/                   # Màn hình kích hoạt account
 │   ├── admin/                        # Màn hình Admin Console
 │   ├── auth/                         # Component login, session và sidebar

@@ -560,7 +560,7 @@ export async function handleReferenceRequest(request: Request, segments: string[
   })
 }
 
-// Only expose account provisioning, never account lifecycle admin actions.
+// Only expose account provisioning; lifecycle actions go through handleAccountLifecycleRequest (HRM only).
 export async function handleAccountProvisionRequest(request: Request, portal: Portal): Promise<NextResponse> {
   if (request.method !== "POST") {
     return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
@@ -588,6 +588,41 @@ export async function handleAccountProvisionRequest(request: Request, portal: Po
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
     body,
+  })
+  if (!result) return gatewayFailure()
+
+  return NextResponse.json(result.payload, {
+    status: result.response.status,
+    headers: { "Cache-Control": "no-store" },
+  })
+}
+
+// Account list and lifecycle actions; SYSTEM_ADMIN holds no account.manage, so this stays HRM-only.
+export async function handleAccountLifecycleRequest(request: Request, segments: string[]): Promise<NextResponse> {
+  const path = segments.join("/")
+  const routes = [
+    { pattern: /^$/, methods: ["GET"] },
+    { pattern: /^[1-9]\d*\/(?:invitations\/resend|password-reset|suspend|activate)$/, methods: ["POST"] },
+  ]
+  const route = routes.find((candidate) => candidate.pattern.test(path))
+  if (!route) return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
+  if (!route.methods.includes(request.method)) {
+    return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
+  }
+  const origin = request.headers.get("origin")
+  if (request.method !== "GET" && origin && origin !== new URL(request.url).origin) {
+    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
+  }
+  const accessToken = (await cookies()).get(PORTAL_CONFIG.hrm.accessCookie)?.value
+  if (!accessToken) return NextResponse.json(failure("UNAUTHORIZED", "Phiên đăng nhập đã hết hạn"), { status: 401 })
+
+  const query = new URLSearchParams()
+  new URL(request.url).searchParams.forEach((value, key) => {
+    if (["page", "size", "sort"].includes(key)) query.append(key, value)
+  })
+  const result = await callApi<unknown>(`/api/accounts${path ? `/${path}` : ""}${query.size ? `?${query}` : ""}`, {
+    method: request.method,
+    headers: { Authorization: `Bearer ${accessToken}` },
   })
   if (!result) return gatewayFailure()
 

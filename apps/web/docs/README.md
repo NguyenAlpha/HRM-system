@@ -25,6 +25,7 @@ Web hiện cung cấp hai khu vực độc lập:
 |:------|:---------|
 | `/dashboard` | Tổng quan phiên đăng nhập và lối tắt nghiệp vụ |
 | `/employees`, `/employees/{employeeId}` | Hồ sơ, dữ liệu nhạy cảm, phân công, lương và vòng đời nhân viên (nghỉ việc, xóa mềm hồ sơ tạo nhầm) |
+| `/accounts` | Danh sách tài khoản; gửi lại lời mời, đặt lại mật khẩu, vô hiệu hóa và kích hoạt lại |
 | `/organization` | Đơn vị tổ chức, địa điểm, vị trí và ca làm |
 | `/attendance` | Vào/ra ca, bảng công tháng, dialog điều chỉnh công và duyệt tăng ca, ngày lễ công ty |
 | `/leave-requests` | Số dư phép năm, đơn nghỉ (chọn nhanh cả ngày/sáng/chiều), duyệt kèm ghi chú, điều chỉnh hạn mức và chốt phép năm |
