@@ -1,14 +1,21 @@
+"use client"
+
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import type { AccountSummary, Portal } from "@/lib/auth/types"
 
-export function PortalSidebar({ portal, account, active = "overview" }: {
-  portal: Portal
-  account: AccountSummary
-  active?: "overview" | "rbac" | "employees" | "accounts" | "role-requests" | "company-owner" | "role-grant" | "organization" | "reports" | "attendance" | "leave" | "payroll"
-}) {
+export function PortalSidebar({ portal, account }: { portal: Portal; account: AccountSummary }) {
   const admin = portal === "admin"
+  const pathname = usePathname()
+  // The home link only matches itself; every other link also covers its sub-pages.
+  const navClass = (href: string) => {
+    const active = href === PORTAL_CONFIG[portal].homePath
+      ? pathname === href
+      : pathname === href || pathname.startsWith(`${href}/`)
+    return `nav-item ${active ? "active" : ""}`
+  }
   const canBootstrapCompanyOwner = account.permissions.some(
     (permission) => permission.code === "organization.company_owner.bootstrap",
   )
@@ -38,27 +45,27 @@ export function PortalSidebar({ portal, account, active = "overview" }: {
       </div>
       <nav aria-label="Điều hướng chính">
         <span className="nav-caption">Workspace</span>
-        <Link className={`nav-item ${active === "overview" ? "active" : ""}`} href={PORTAL_CONFIG[portal].homePath}>
+        <Link className={navClass(PORTAL_CONFIG[portal].homePath)} href={PORTAL_CONFIG[portal].homePath}>
           <span>◫</span> Tổng quan
         </Link>
         {admin ? (
           <>
             <span className="nav-item disabled"><span>◎</span> Tài khoản</span>
-            <Link className={`nav-item ${active === "rbac" ? "active" : ""}`} href="/admin/rbac">
+            <Link className={navClass("/admin/rbac")} href="/admin/rbac">
               <span>◇</span> Vai trò & quyền
             </Link>
             {canAssignRoleDirect && (
-              <Link className={`nav-item ${active === "role-grant" ? "active" : ""}`} href="/admin/role-grant">
+              <Link className={navClass("/admin/role-grant")} href="/admin/role-grant">
                 <span>▥</span> Cấp quyền trực tiếp
               </Link>
             )}
             {canReadOrganization && (
-              <Link className={`nav-item ${active === "organization" ? "active" : ""}`} href="/admin/organization">
+              <Link className={navClass("/admin/organization")} href="/admin/organization">
                 <span>▧</span> Danh mục tổ chức
               </Link>
             )}
             {canBootstrapCompanyOwner && (
-              <Link className={`nav-item ${active === "company-owner" ? "active" : ""}`} href="/admin/company-owner">
+              <Link className={navClass("/admin/company-owner")} href="/admin/company-owner">
                 <span>◆</span> Company Owner
               </Link>
             )}
@@ -67,43 +74,43 @@ export function PortalSidebar({ portal, account, active = "overview" }: {
           <>
             <span className="nav-item disabled"><span>◎</span> Hồ sơ</span>
             {canReadEmployees && (
-              <Link className={`nav-item ${active === "employees" ? "active" : ""}`} href="/employees">
+              <Link className={navClass("/employees")} href="/employees">
                 <span>▤</span> Nhân sự
               </Link>
             )}
             {canReadAccounts && (
-              <Link className={`nav-item ${active === "accounts" ? "active" : ""}`} href="/accounts">
+              <Link className={navClass("/accounts")} href="/accounts">
                 <span>◎</span> Tài khoản
               </Link>
             )}
             {canUseRoleRequests && (
-              <Link className={`nav-item ${active === "role-requests" ? "active" : ""}`} href="/role-requests">
+              <Link className={navClass("/role-requests")} href="/role-requests">
                 <span>◧</span> Đề xuất role
               </Link>
             )}
             {canAssignRoleDirect && (
-              <Link className={`nav-item ${active === "role-grant" ? "active" : ""}`} href="/role-grant">
+              <Link className={navClass("/role-grant")} href="/role-grant">
                 <span>▥</span> Cấp quyền trực tiếp
               </Link>
             )}
             {canManageRbac && (
-              <Link className={`nav-item ${active === "rbac" ? "active" : ""}`} href="/rbac">
+              <Link className={navClass("/rbac")} href="/rbac">
                 <span>◇</span> Vai trò & quyền
               </Link>
             )}
             {canReadOrganization && (
-              <Link className={`nav-item ${active === "organization" ? "active" : ""}`} href="/organization">
+              <Link className={navClass("/organization")} href="/organization">
                 <span>▧</span> Danh mục tổ chức
               </Link>
             )}
             {canReadReports && (
-              <Link className={`nav-item ${active === "reports" ? "active" : ""}`} href="/reports/workforce">
+              <Link className={navClass("/reports/workforce")} href="/reports/workforce">
                 <span>▥</span> Báo cáo nhân sự
               </Link>
             )}
-            {canUseAttendance && <Link className={`nav-item ${active === "attendance" ? "active" : ""}`} href="/attendance"><span>◷</span> Chấm công</Link>}
-            {canUseLeave && <Link className={`nav-item ${active === "leave" ? "active" : ""}`} href="/leave-requests"><span>▱</span> Đơn từ</Link>}
-            {canUsePayroll && <Link className={`nav-item ${active === "payroll" ? "active" : ""}`} href="/payslips"><span>◈</span> Phiếu lương</Link>}
+            {canUseAttendance && <Link className={navClass("/attendance")} href="/attendance"><span>◷</span> Chấm công</Link>}
+            {canUseLeave && <Link className={navClass("/leave-requests")} href="/leave-requests"><span>▱</span> Đơn từ</Link>}
+            {canUsePayroll && <Link className={navClass("/payslips")} href="/payslips"><span>◈</span> Phiếu lương</Link>}
           </>
         )}
       </nav>
