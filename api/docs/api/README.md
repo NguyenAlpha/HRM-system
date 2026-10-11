@@ -53,6 +53,18 @@ ngoài môi trường phát triển.
 Spec chỉ phản ánh đúng kiểu dữ liệu và ràng buộc validation; quy tắc nghiệp vụ, permission và mã
 lỗi vẫn được mô tả trong các tài liệu ở bảng trên.
 
+Web sinh TypeScript type từ spec này (`npm run gen:api`, xem
+[DEVELOPMENT.md](../../../apps/web/docs/DEVELOPMENT.md#kiểu-dữ-liệu-sinh-từ-api)), nên DTO phải
+khai báo đúng khả năng null:
+
+- **Response:** API luôn trả đủ mọi field, kể cả field `null`, nên `OpenApiConfig` đánh dấu mọi
+  field là `required`. Field có thể `null` phải gắn `jakarta.annotation.Nullable`; field không gắn
+  được coi là luôn có giá trị.
+- **Request:** field có `@NotNull`/`@NotBlank` là bắt buộc. Field không bắt buộc và nhận `null`
+  phải gắn `@Nullable` để web được phép gửi `null`.
+
+Hiện mới các DTO của module Employee và envelope `ApiResult`/`ErrorDetail` được gắn đầy đủ.
+
 ## Nguồn sự thật
 
 Khi tài liệu và code khác nhau, ưu tiên theo thứ tự: migration và controller/service đang chạy, test, tài liệu trong thư mục này, rồi các bản thiết kế lịch sử trong `api/docs/archive/`.

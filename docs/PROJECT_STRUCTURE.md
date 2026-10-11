@@ -129,6 +129,7 @@ apps/web/
 │   └── workforce/                    # Chấm công, nghỉ phép và lương
 ├── lib/
 │   ├── api-helpers.ts                # Chuẩn hóa lỗi trả về từ BFF
+│   ├── api-schema.ts                 # Type sinh từ OpenAPI của API (npm run gen:api)
 │   ├── account.ts                    # Client account và vòng đời tài khoản
 │   ├── activation.ts                 # Client kích hoạt account
 │   ├── company-owner.ts              # Client bootstrap Company Owner

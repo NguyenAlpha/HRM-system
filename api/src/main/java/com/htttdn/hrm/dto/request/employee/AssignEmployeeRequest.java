@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 import com.htttdn.hrm.entity.enums.EmploymentType;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 public record AssignEmployeeRequest(
@@ -16,8 +17,10 @@ public record AssignEmployeeRequest(
     @NotNull
     Long positionId,
 
+    @Nullable
     Long shiftId,
 
+    @Nullable
     Long managerEmployeeId,
 
     @NotNull
@@ -26,6 +29,7 @@ public record AssignEmployeeRequest(
     @NotNull
     LocalDate effectiveFrom,
 
+    @Nullable
     String reason
 ) {
 }

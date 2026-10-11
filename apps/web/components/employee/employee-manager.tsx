@@ -71,9 +71,12 @@ import {
   GENDER_LABELS,
   GENDERS,
   isSessionExpired,
+  type EducationLevel,
   type EmployeeDetail,
   type EmployeeSummary,
+  type Gender,
   type Page,
+  type UpdateEmployeeInput,
 } from "@/lib/employee"
 import { isEligibleEmployeeBirthDate } from "@/lib/employee-birth-date"
 
@@ -215,11 +218,11 @@ export function EmployeeManager({ capabilities, onSessionExpired }: {
     if (!editing) return
     setDialogError(null)
     try {
-      const body = {
+      const body: UpdateEmployeeInput = {
         fullName: values.fullName.trim(),
         dateOfBirth: values.dateOfBirth || null,
-        gender: values.gender === GENDER_NONE ? null : values.gender,
-        highestEducationLevel: values.highestEducationLevel === EDU_NONE ? null : values.highestEducationLevel,
+        gender: values.gender === GENDER_NONE ? null : (values.gender as Gender),
+        highestEducationLevel: values.highestEducationLevel === EDU_NONE ? null : (values.highestEducationLevel as EducationLevel),
         major: values.major?.trim() || null,
         institution: values.institution?.trim() || null,
         graduationYear: values.graduationYear ? Number(values.graduationYear) : null,
