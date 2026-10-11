@@ -19,6 +19,9 @@ Web hiện cung cấp hai khu vực độc lập:
 | HRM Workspace | `/login` | `/dashboard` | Tài khoản không có role `SYSTEM_ADMIN` |
 | Admin Console | `/admin/login` | `/admin` | Tài khoản có role `SYSTEM_ADMIN` |
 
+Trang `/activate` nằm ngoài hai khu vực trên: không cần đăng nhập, dùng để tự đặt mật khẩu từ link mời
+(xem [AUTH.md](./AUTH.md#kích-hoạt-tài-khoản)).
+
 ### HRM Workspace
 
 | Route | Nội dung |

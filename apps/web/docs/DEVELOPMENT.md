@@ -126,6 +126,7 @@ Dự án chưa cấu hình test runner tự động cho web. Trước khi bàn g
 ```text
 app/
 ├── login/                    # Trang đăng nhập HRM
+├── activate/                 # Kích hoạt tài khoản bằng token mời, không cần đăng nhập
 ├── dashboard/                # Trang HRM sau đăng nhập
 ├── employees/                # Hồ sơ nhân viên
 ├── accounts/                 # Vòng đời tài khoản đăng nhập
@@ -139,7 +140,8 @@ app/
 ├── admin/                    # Trang Admin và các module quản trị
 └── api/
     ├── session/              # BFF endpoints của HRM
-    └── admin-session/        # BFF endpoints của Admin
+    ├── admin-session/        # BFF endpoints của Admin
+    └── account-activations/  # BFF kích hoạt tài khoản, không gắn portal
 components/                   # UI theo module nghiệp vụ
 lib/                          # API client, kiểu dữ liệu và auth helpers
 ├── api-schema.ts             # Type sinh từ openapi.json (npm run gen:api), không sửa tay

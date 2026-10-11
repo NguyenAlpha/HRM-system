@@ -24,6 +24,9 @@ Mở [http://localhost:3000](http://localhost:3000). Spring Boot API mặc đị
 | HRM Workspace | `/login` | `/dashboard` | Tài khoản đã xác thực, không có `SYSTEM_ADMIN` |
 | Admin Console | `/admin/login` | `/admin` | Tài khoản có `SYSTEM_ADMIN` |
 
+Trang `/activate` dùng chung cho cả hai portal và không cần đăng nhập: người được cấp tài khoản mở
+link mời để tự đặt mật khẩu (xem [xác thực](docs/AUTH.md#kích-hoạt-tài-khoản)).
+
 Access token và refresh token được lưu trong bộ cookie `HttpOnly` riêng của từng portal. Chỉ đặt
 `AUTH_COOKIE_SECURE=false` khi phát triển bằng HTTP local; môi trường HTTPS phải dùng `true`.
 
@@ -57,9 +60,9 @@ npm run typecheck # kiểm tra TypeScript
 
 ```text
 app/          App Router pages và Route Handlers
-components/   UI theo module auth, employee, organization, RBAC, workforce, report
+components/   UI theo module account, activation, admin, auth, employee, organization, RBAC,
+              role-assignment, report, workforce và primitive shadcn/ui (ui/)
 lib/          Kiểu dữ liệu, API client và helper auth phía server/client
-public/       Static assets
 ```
 
 Xem [tài liệu frontend](docs/README.md), [xác thực](docs/AUTH.md), [RBAC](docs/RBAC.md) và [hướng dẫn phát triển](docs/DEVELOPMENT.md).
