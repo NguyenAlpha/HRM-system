@@ -2,6 +2,9 @@ package com.htttdn.hrm.controller;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +18,8 @@ import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.dto.response.payroll.PayrollPeriodResponse;
 import com.htttdn.hrm.dto.response.payroll.PayslipResponse;
+import com.htttdn.hrm.service.PayrollExportService;
+import com.htttdn.hrm.service.PayrollExportService.PayrollExport;
 import com.htttdn.hrm.service.PayrollService;
 
 import jakarta.validation.Valid;
@@ -22,10 +27,14 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/payroll")
 public class PayrollController {
-    private final PayrollService service;
+    static final String XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-    public PayrollController(PayrollService service) {
+    private final PayrollService service;
+    private final PayrollExportService exportService;
+
+    public PayrollController(PayrollService service, PayrollExportService exportService) {
         this.service = service;
+        this.exportService = exportService;
     }
 
     @PostMapping("/periods")
@@ -41,6 +50,15 @@ public class PayrollController {
     @GetMapping("/periods/{id}")
     public ApiResult<PayrollPeriodResponse> get(@PathVariable Long id) {
         return ApiResult.ok(service.getPeriodById(id));
+    }
+
+    @GetMapping(value = "/periods/{id}/export", produces = XLSX)
+    public ResponseEntity<byte[]> export(@PathVariable Long id) {
+        PayrollExport export = exportService.exportPeriod(id);
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                ContentDisposition.attachment().filename(export.fileName()).build().toString())
+            .body(export.content());
     }
 
     @PostMapping("/periods/{id}/calculate")

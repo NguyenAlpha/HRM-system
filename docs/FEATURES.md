@@ -223,6 +223,7 @@ kỳ ngoài phạm vi sẽ dừng với lỗi yêu cầu bổ sung quy tắc.
 | Duyệt | `POST .../approve` | `payroll.approve` |
 | Xác nhận đã trả | `POST .../mark-paid` | `payroll.mark_paid` |
 | Khóa kỳ | `POST .../lock` | `payroll.lock` |
+| Xuất bảng lương của kỳ ra Excel | `GET /api/payroll/periods/{id}/export` | `report.payroll.read` |
 | Xem phiếu lương | `/api/payroll/payslips/{id}`, `/employees/{id}/payslips` | `payroll.self.read` |
 
 Vòng đời kỳ: `DRAFT` → `CALCULATED` → `APPROVED` → `PAID` → `LOCKED`, có thể `CANCELLED` trước

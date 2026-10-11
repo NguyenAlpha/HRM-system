@@ -78,6 +78,36 @@ export async function authorizedRequest<T>(
   }
 }
 
+/** Downloads a file through the BFF, refreshing the session once like `authorizedRequest`. */
+export async function authorizedDownload(portal: Portal, path: string): Promise<void> {
+  const fetchFile = () => fetch(`${PORTAL_CONFIG[portal].apiPrefix}${path}`).catch(() => {
+    throw new AuthApiError("Không thể kết nối tới máy chủ", 0, "NETWORK_ERROR")
+  })
+  let response = await fetchFile()
+  if (response.status === 401) {
+    await refreshSession(portal)
+    response = await fetchFile()
+  }
+  if (!response.ok) {
+    // Failures still come back as the JSON envelope.
+    const payload = (await response.json().catch(() => null)) as ApiEnvelope<never> | null
+    throw new AuthApiError(
+      payload?.error?.message ?? "Không thể tải file",
+      response.status,
+      payload?.error?.code ?? "REQUEST_FAILED",
+      payload?.error?.field ?? null,
+    )
+  }
+  const disposition = response.headers.get("Content-Disposition") ?? ""
+  const fileName = /filename="?([^";]+)"?/.exec(disposition)?.[1] ?? "download"
+  const url = URL.createObjectURL(await response.blob())
+  const link = document.createElement("a")
+  link.href = url
+  link.download = fileName
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
 export function getCurrentSession(portal: Portal): Promise<SessionData> {
   return authorizedRequest<SessionData>(portal, "/me")
 }

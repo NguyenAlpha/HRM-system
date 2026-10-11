@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 
 import { PortalSidebar } from "@/components/auth/portal-sidebar"
-import { authorizedRequest, getCurrentSession } from "@/lib/auth/client"
+import { authorizedDownload, authorizedRequest, getCurrentSession } from "@/lib/auth/client"
 import { AuthApiError, type SessionData } from "@/lib/auth/types"
 import { apiErrorMessage } from "@/lib/api-helpers"
 import type {
@@ -398,6 +398,7 @@ export function WorkforcePage({ section }: { section: Section }) {
               {period.status === "CALCULATED" && permissions.has("payroll.approve") && <button className="underline" disabled={busy} onClick={() => void act("Đã duyệt kỳ lương", () => api(`payroll/periods/${period.id}/approve`, "POST"))}>Duyệt</button>}
               {period.status === "APPROVED" && permissions.has("payroll.mark_paid") && <button className="underline" disabled={busy} onClick={() => void act("Đã ghi nhận thanh toán", () => api(`payroll/periods/${period.id}/mark-paid`, "POST", { taxPaymentDate: today() } satisfies WorkforceBody["PayrollActionRequest"]))}>Đã trả</button>}
               {period.status === "PAID" && permissions.has("payroll.lock") && <button className="underline" disabled={busy} onClick={() => void act("Đã khóa kỳ lương", () => api(`payroll/periods/${period.id}/lock`, "POST"))}>Khóa</button>}
+              {period.status !== "DRAFT" && period.status !== "CANCELLED" && <button className="underline" disabled={busy} onClick={() => void act("Đã tải bảng lương", () => authorizedDownload("hrm", `/workforce/payroll/periods/${period.id}/export`))}>Xuất Excel</button>}
             </div>)}
           </div>}
           <div className="space-y-3"><h2 className="text-xl font-semibold">Phiếu lương nhân viên</h2>{payslips.map((slip) => <button key={slip.id} className="block w-full rounded border p-3 text-left text-sm" onClick={() => setSelectedPayslip(slip)}><strong>Phiếu #{slip.id}</strong> · Kỳ #{slip.payrollPeriodId} · {slip.employeeNameSnapshot} · Thực lĩnh {money(slip.netPay)}</button>)}{payslips.length === 0 && <p>Chưa có phiếu lương.</p>}</div>
