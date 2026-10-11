@@ -1,8 +1,18 @@
 "use client"
 
 import { Fragment, useEffect, useState } from "react"
-import { Calculator, CheckCheck, FileSpreadsheet, ListPlus, Loader2, Lock, Plus, Wallet } from "lucide-react"
+import { Ban, Calculator, CheckCheck, FileSpreadsheet, ListPlus, Loader2, Lock, Plus, Wallet } from "lucide-react"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -184,6 +194,7 @@ function PeriodsCard({ periods, permissions, month, busy, run, onChanged }: {
   const [periodMonth, setPeriodMonth] = useState(month)
   const [taxPaymentDate, setTaxPaymentDate] = useState(today())
   const [adjustingId, setAdjustingId] = useState<number | null>(null)
+  const [cancelling, setCancelling] = useState<PayrollPeriod | null>(null)
 
   return (
     <Card>
@@ -261,6 +272,12 @@ function PeriodsCard({ periods, permissions, month, busy, run, onChanged }: {
                               <Lock /> Khóa
                             </Button>
                           )}
+                          {canCalculate && editable && (
+                            <Button type="button" size="sm" variant="ghost" className="text-muted-foreground hover:text-destructive"
+                              disabled={busy} onClick={() => setCancelling(period)}>
+                              <Ban /> Hủy kỳ
+                            </Button>
+                          )}
                           {canCalculate && (
                             <Button type="button" size="sm" variant={adjustingId === period.id ? "secondary" : "ghost"}
                               onClick={() => setAdjustingId(adjustingId === period.id ? null : period.id)}>
@@ -292,6 +309,34 @@ function PeriodsCard({ periods, permissions, month, busy, run, onChanged }: {
           </Table>
         </div>
       </CardContent>
+
+      <AlertDialog open={cancelling !== null} onOpenChange={(open) => { if (!open && !busy) setCancelling(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hủy {cancelling && periodLabel(cancelling)}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Kỳ chuyển sang Đã hủy và không thể khôi phục; phiếu lương đã tính của kỳ được giữ lại để tra cứu.
+              Sau đó có thể tạo kỳ mới cho cùng tháng.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Không</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              disabled={busy}
+              onClick={(event) => {
+                event.preventDefault()
+                if (!cancelling) return
+                void run("Đã hủy kỳ lương", () => workforceApi(`payroll/periods/${cancelling.id}/cancel`, "POST"))
+                  .then(() => setCancelling(null))
+              }}
+            >
+              {busy && <Loader2 className="animate-spin" />}
+              Hủy kỳ
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   )
 }

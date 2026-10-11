@@ -1192,7 +1192,7 @@ Số liệu cụ thể của bộ quy tắc 2026 và nguồn tham chiếu nằm 
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-> `UNIQUE(year, month)`. Vòng đời: `DRAFT` → `CALCULATED` → `APPROVED` → `PAID` → `LOCKED`. Có thể `CANCELLED` trước khi duyệt.
+> Unique index một phần `uq_payroll_periods_year_month (year, month) WHERE status <> 'CANCELLED'`: mỗi tháng chỉ có một kỳ còn hiệu lực, kỳ đã hủy không chặn việc tạo lại. Vòng đời: `DRAFT` → `CALCULATED` → `APPROVED` → `PAID` → `LOCKED`. Có thể `CANCELLED` trước khi duyệt.
 
 ### `payroll_adjustments` — Khoản cộng/trừ nhập tay theo kỳ
 

@@ -106,7 +106,6 @@ CREATE TABLE payroll_periods (
     locked_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT uq_payroll_periods_year_month UNIQUE (year, month),
     CONSTRAINT chk_payroll_periods_status
         CHECK (status IN ('DRAFT', 'CALCULATED', 'APPROVED', 'PAID', 'LOCKED', 'CANCELLED')),
     CONSTRAINT chk_payroll_period_dates CHECK (period_end >= period_start),
@@ -116,6 +115,10 @@ CREATE TABLE payroll_periods (
         OR calculated_by_account_id <> approved_by_account_id
     )
 );
+
+-- Mỗi tháng chỉ có một kỳ còn hiệu lực; kỳ đã hủy không chặn việc tạo lại kỳ cho tháng đó.
+CREATE UNIQUE INDEX uq_payroll_periods_year_month ON payroll_periods (year, month)
+    WHERE status <> 'CANCELLED';
 
 -- Khoản cộng/trừ kế toán nhập tay cho từng nhân viên trong kỳ chưa duyệt; được đưa vào phiếu
 -- lương ở lần tính tiếp theo. DEDUCTION trừ sau thuế (tạm ứng, phạt).
