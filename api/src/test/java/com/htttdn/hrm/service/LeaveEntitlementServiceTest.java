@@ -16,6 +16,7 @@ import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeLeaveEntitlement;
 import com.htttdn.hrm.entity.LeaveEntitlementRule;
 import com.htttdn.hrm.entity.LeaveRequest;
+import com.htttdn.hrm.entity.enums.LeaveRequestStatus;
 import com.htttdn.hrm.entity.enums.LeaveType;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AccountRepository;
@@ -168,6 +169,90 @@ class LeaveEntitlementServiceTest {
             .build();
 
         assertDoesNotThrow(() -> service().requireSufficientBalance(sickLeave));
+    }
+
+    @Test
+    void carriedOverDaysAreUsableBeforeTheyExpire() {
+        stubCarriedOverEntitlement();
+        stubConsuming(0, 0);
+
+        // 12 base days + 5 carried days, nothing used yet, leave starts in March.
+        assertDoesNotThrow(() -> service().requireSufficientBalance(annualRequest(17 * DAY)));
+    }
+
+    @Test
+    void unusedCarriedOverDaysLapseAfterTheExpiryDate() {
+        stubCarriedOverEntitlement();
+        // 2 days taken before 31 March, so 3 of the 5 carried days lapse.
+        stubConsuming(2 * DAY, 2 * DAY);
+        LeaveRequest april = annualRequest(13 * DAY);
+        april.setStartAt(Instant.parse("2026-04-06T01:00:00Z"));
+
+        assertThrows(ConflictException.class, () -> service().requireSufficientBalance(april));
+        april.setRequestedMinutes(12 * DAY);
+        assertDoesNotThrow(() -> service().requireSufficientBalance(april));
+    }
+
+    @Test
+    void closingTheYearCarriesUnusedDaysUpToTheRuleCap() {
+        LeaveEntitlementRule rule = rule();
+        rule.setMaxCarryOverDays(5);
+        rule.setCarryOverExpiryMonth((short) 3);
+        when(ruleRepository.findEffectiveAt(LocalDate.of(2027, 1, 1))).thenReturn(Optional.of(rule));
+        Employee many = Employee.builder().id(1L).employeeCode("NV001").fullName("A")
+            .hireDate(LocalDate.of(2020, 1, 1)).build();
+        Employee few = Employee.builder().id(2L).employeeCode("NV002").fullName("B")
+            .hireDate(LocalDate.of(2020, 1, 1)).build();
+        when(employeeRepository.findEmployedDuring(LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 1)))
+            .thenReturn(List.of(few, many));
+        EmployeeLeaveEntitlement manyNext = entitlement(many, 2027, 0);
+        EmployeeLeaveEntitlement fewNext = entitlement(few, 2027, 0);
+        when(entitlementRepository.findByEmployeeIdAndYear(1L, (short) 2026))
+            .thenReturn(Optional.of(entitlement(many, 2026, 0)));
+        when(entitlementRepository.findByEmployeeIdAndYear(2L, (short) 2026))
+            .thenReturn(Optional.of(entitlement(few, 2026, 0)));
+        when(entitlementRepository.findByEmployeeIdAndYear(1L, (short) 2027)).thenReturn(Optional.of(manyNext));
+        when(entitlementRepository.findByEmployeeIdAndYear(2L, (short) 2027)).thenReturn(Optional.of(fewNext));
+        // NV001 used 4 of 12 days (8 left), NV002 used 9 (3 left).
+        when(leaveRequestRepository.sumMinutesByTypeAndStatuses(eq(1L), eq(LeaveType.ANNUAL), any(), any(), any(), any()))
+            .thenReturn((long) 4 * DAY);
+        when(leaveRequestRepository.sumMinutesByTypeAndStatuses(eq(2L), eq(LeaveType.ANNUAL), any(), any(), any(), any()))
+            .thenReturn((long) 9 * DAY);
+
+        var view = service().applyCarryOver(2026);
+
+        assertEquals(List.of("NV001", "NV002"), view.items().stream().map(item -> item.employeeCode()).toList());
+        assertEquals(5 * DAY, manyNext.getCarriedOverMinutes());
+        assertEquals(3 * DAY, fewNext.getCarriedOverMinutes());
+        assertEquals(LocalDate.of(2027, 3, 31), manyNext.getCarriedOverExpiresOn());
+    }
+
+    private EmployeeLeaveEntitlement entitlement(Employee employee, int year, int carriedOverMinutes) {
+        return EmployeeLeaveEntitlement.builder()
+            .employee(employee)
+            .year((short) year)
+            .baseMinutes(12 * DAY)
+            .carriedOverMinutes(carriedOverMinutes)
+            .adjustmentMinutes(0)
+            .standardDayMinutes(DAY)
+            .build();
+    }
+
+    private void stubCarriedOverEntitlement() {
+        EmployeeLeaveEntitlement entitlement = entitlement(
+            employee(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 1)), 2026, 5 * DAY);
+        entitlement.setCarriedOverExpiresOn(LocalDate.of(2026, 3, 31));
+        when(entitlementRepository.findByEmployeeIdAndYear(anyLong(), eq((short) 2026)))
+            .thenReturn(Optional.of(entitlement));
+    }
+
+    /** Stubs the minutes consumed before the 31 March expiry and over the whole year. */
+    private void stubConsuming(int beforeExpiry, int wholeYear) {
+        Instant expiryEnd = Instant.parse("2026-03-31T17:00:00Z");
+        when(leaveRequestRepository.sumMinutesByTypeAndStatuses(
+            anyLong(), eq(LeaveType.ANNUAL), any(), any(), any(), any()
+        )).thenAnswer(invocation -> expiryEnd.equals(invocation.getArgument(4))
+            ? (long) beforeExpiry : (long) wholeYear);
     }
 
     private LeaveRequest annualRequest(int minutes) {

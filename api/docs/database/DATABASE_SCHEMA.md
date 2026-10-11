@@ -309,6 +309,8 @@ erDiagram
         integer base_days
         integer seniority_block_years
         integer seniority_bonus_days
+        integer max_carry_over_days
+        smallint carry_over_expiry_month
         text source_reference
     }
 
@@ -318,6 +320,7 @@ erDiagram
         smallint year
         integer base_minutes
         integer carried_over_minutes
+        date carried_over_expires_on
         integer adjustment_minutes
         integer standard_day_minutes
         bigint rule_id FK
@@ -882,9 +885,11 @@ dùng `compensation.read` / `compensation.manage`, không phải `salary.*` / `a
 | `base_days` | INTEGER | NOT NULL, CHECK > 0 | Số ngày phép cơ bản mỗi năm |
 | `seniority_block_years` | INTEGER | NOT NULL, CHECK > 0 | Số năm làm việc tạo thành một mốc thâm niên |
 | `seniority_bonus_days` | INTEGER | NOT NULL, CHECK >= 0 | Số ngày cộng thêm cho mỗi mốc đã đủ |
+| `max_carry_over_days` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Số ngày dư tối đa được chuyển sang năm sau khi chốt phép năm |
+| `carry_over_expiry_month` | SMALLINT | NOT NULL, DEFAULT 3, CHECK 1–12 | Phép chuyển sang dùng đến hết tháng này của năm sau |
 | `source_reference` | TEXT | NOT NULL | Căn cứ pháp lý |
 
-> `EXCLUDE USING GIST` chặn hai bộ quy tắc có khoảng hiệu lực chồng nhau. Bộ nạp sẵn từ 01/01/2026 là 12 ngày cơ bản, cứ đủ 5 năm cộng 1 ngày, theo Bộ luật Lao động 2019 Điều 113 khoản 1 và Điều 114.
+> `EXCLUDE USING GIST` chặn hai bộ quy tắc có khoảng hiệu lực chồng nhau. Bộ nạp sẵn từ 01/01/2026 là 12 ngày cơ bản, cứ đủ 5 năm cộng 1 ngày, theo Bộ luật Lao động 2019 Điều 113 khoản 1 và Điều 114; chính sách công ty chuyển tối đa 5 ngày, dùng đến hết 31/3 năm sau.
 
 ### `employee_leave_entitlements` — Hạn mức phép năm của nhân viên
 
@@ -894,7 +899,8 @@ dùng `compensation.read` / `compensation.manage`, không phải `salary.*` / `a
 | `employee_id` | BIGINT | FK → employees, NOT NULL | Nhân viên |
 | `year` | SMALLINT | NOT NULL | Năm phép |
 | `base_minutes` | INTEGER | NOT NULL, CHECK >= 0 | Số phút tính theo quy tắc, snapshot tại thời điểm cấp |
-| `carried_over_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Số phút chuyển từ năm trước, do HR nhập |
+| `carried_over_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Số phút chuyển từ năm trước, do chốt phép năm ghi hoặc HR nhập tay |
+| `carried_over_expires_on` | DATE | | Sau ngày này phần chuyển sang chưa dùng hết hiệu lực; null là không hết hạn |
 | `adjustment_minutes` | INTEGER | NOT NULL, DEFAULT 0 | Điều chỉnh tay, cộng hoặc trừ |
 | `adjustment_reason` | TEXT | | Lý do điều chỉnh |
 | `standard_day_minutes` | INTEGER | NOT NULL, CHECK > 0 | Số phút một ngày công, snapshot để quy đổi ngày ↔ phút |
@@ -1528,7 +1534,7 @@ ALTER TABLE payslip_items ADD CONSTRAINT chk_payslip_item_type
 - Sản phẩm, tồn kho, nhập kho, xuất kho và điều chuyển hàng.
 - Khách hàng, nhà cung cấp, đơn bán và doanh thu.
 - Tuyển dụng ứng viên, phỏng vấn, KPI và đào tạo.
-- Tự động chuyển số dư phép năm sang năm sau (HR nhập tay qua `carried_over_minutes`) và các quy tắc cộng phép ngoài mức cơ bản + thâm niên của `leave_entitlement_rules`.
+- Tự chạy chốt phép năm vào 01/01 (HR bấm chốt qua API) và các quy tắc cộng phép ngoài mức cơ bản + thâm niên của `leave_entitlement_rules`.
 - Hoa hồng, thưởng, quyết toán thuế năm và các trường hợp bảo hiểm/thuế ngoài phạm vi tự động hóa năm 2026.
 - Tự động làm hồ sơ/chi trả chế độ thai sản từ cơ quan BHXH.
 - Tích hợp máy chấm công vật lý.

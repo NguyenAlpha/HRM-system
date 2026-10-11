@@ -407,6 +407,7 @@ export async function handleWorkforceRequest(request: Request, segments: string[
     { pattern: /^leave-requests\/employees\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^leave-requests\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^leave-requests\/[1-9]\d*\/(?:submit|cancel|approve|reject)$/, methods: ["POST"] },
+    { pattern: /^leave-entitlements\/carry-over$/, methods: ["GET", "POST"] },
     { pattern: /^leave-entitlements\/employees\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^leave-entitlements\/employees\/[1-9]\d*\/(?:adjustment|carried-over)$/, methods: ["PUT"] },
     { pattern: /^payroll\/periods$/, methods: ["GET", "POST"] },
@@ -451,7 +452,7 @@ export async function handleWorkforceRequest(request: Request, segments: string[
   }
   const query = new URLSearchParams()
   new URL(request.url).searchParams.forEach((value, key) => {
-    if (["from", "to", "year", "month", "page", "size", "sort", "date"].includes(key)) query.append(key, value)
+    if (["from", "to", "year", "fromYear", "month", "page", "size", "sort", "date"].includes(key)) query.append(key, value)
   })
   const result = await callApi<unknown>(`/api/${path}${query.size ? `?${query}` : ""}`, {
     method: request.method,

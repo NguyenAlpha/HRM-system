@@ -42,6 +42,10 @@ CREATE TABLE leave_entitlement_rules (
     base_days INTEGER NOT NULL CHECK (base_days > 0),
     seniority_block_years INTEGER NOT NULL CHECK (seniority_block_years > 0),
     seniority_bonus_days INTEGER NOT NULL CHECK (seniority_bonus_days >= 0),
+    -- Chính sách công ty khi chốt phép năm: chuyển tối đa N ngày còn dư sang năm sau, dùng đến hết
+    -- tháng carry_over_expiry_month của năm sau; 0 ngày nghĩa là không chuyển.
+    max_carry_over_days INTEGER NOT NULL DEFAULT 0 CHECK (max_carry_over_days >= 0),
+    carry_over_expiry_month SMALLINT NOT NULL DEFAULT 3 CHECK (carry_over_expiry_month BETWEEN 1 AND 12),
     source_reference TEXT NOT NULL,
     CONSTRAINT chk_leave_entitlement_rule_dates CHECK (effective_to IS NULL OR effective_to >= effective_from),
     CONSTRAINT excl_leave_entitlement_rules_overlap EXCLUDE USING GIST
@@ -56,6 +60,8 @@ CREATE TABLE employee_leave_entitlements (
     year SMALLINT NOT NULL,
     base_minutes INTEGER NOT NULL CHECK (base_minutes >= 0),
     carried_over_minutes INTEGER NOT NULL DEFAULT 0 CHECK (carried_over_minutes >= 0),
+    -- Sau ngày này phần phép chuyển sang chưa dùng hết hiệu lực; NULL là không hết hạn.
+    carried_over_expires_on DATE,
     adjustment_minutes INTEGER NOT NULL DEFAULT 0,
     adjustment_reason TEXT,
     standard_day_minutes INTEGER NOT NULL CHECK (standard_day_minutes > 0),
