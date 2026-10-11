@@ -29,14 +29,15 @@ import { Textarea } from "@/components/ui/textarea"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import { provisionAccount, type AccountProvisioningResponse } from "@/lib/account"
 import type { Portal } from "@/lib/auth/types"
-import { employeeRequest, type EmployeeSummary, type Page as EmployeePage } from "@/lib/employee"
+import { employeeRequest, type EmployeeSummary } from "@/lib/employee"
+import type { Page } from "@/lib/pagination"
 import {
   getOrganizationUnitOptions,
   getWorkLocationOptions,
   type OrganizationUnitOption,
   type WorkLocationOption,
 } from "@/lib/reference"
-import { rbacRequest, type Page as RbacPage, type Role } from "@/lib/rbac"
+import { rbacRequest, type Role } from "@/lib/rbac"
 import {
   assignAccountRoleDirect,
   ROLE_SCOPE_LABELS,
@@ -150,8 +151,8 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
     setLoadingOptions(true)
     setOptionsError(null)
     Promise.all([
-      employeeRequest<EmployeePage<EmployeeSummary>>(portal, "?page=0&size=100"),
-      rbacRequest<RbacPage<Role>>(portal, "/roles?page=0&size=100&sort=name,asc"),
+      employeeRequest<Page<EmployeeSummary>>(portal, "?page=0&size=100"),
+      rbacRequest<Page<Role>>(portal, "/roles?page=0&size=100&sort=name,asc"),
       getOrganizationUnitOptions(portal),
       getWorkLocationOptions(portal),
     ])

@@ -61,13 +61,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import type { Portal } from "@/lib/auth/types"
+import type { Page } from "@/lib/pagination"
 import {
   isSessionExpired,
   rbacErrorMessage,
   rbacMutation,
   rbacRequest,
   type CreateRoleInput,
-  type Page,
   type Role,
   type UpdateRoleInput,
 } from "@/lib/rbac"

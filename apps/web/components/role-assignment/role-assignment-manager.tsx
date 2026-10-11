@@ -45,7 +45,8 @@ import {
 } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
-import { employeeRequest, type EmployeeSummary, type Page as EmployeePage } from "@/lib/employee"
+import { employeeRequest, type EmployeeSummary } from "@/lib/employee"
+import type { Page } from "@/lib/pagination"
 import {
   approveRoleAssignmentRequest,
   cancelRoleAssignmentRequest,
@@ -56,7 +57,6 @@ import {
   ROLE_ASSIGNMENT_STATUS_LABELS,
   ROLE_ASSIGNMENT_STATUSES,
   ROLE_SCOPE_LABELS,
-  type Page,
   type RoleAssignmentOption,
   type RoleAssignmentRequest,
   type RoleAssignmentRequestStatus,
@@ -216,7 +216,7 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
 
     Promise.all([
       getAvailableRoles(),
-      employeeRequest<EmployeePage<EmployeeSummary>>("hrm", "?page=0&size=100"),
+      employeeRequest<Page<EmployeeSummary>>("hrm", "?page=0&size=100"),
       getOrganizationUnitOptions("hrm"),
       getWorkLocationOptions("hrm"),
     ])

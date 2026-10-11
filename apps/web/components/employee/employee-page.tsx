@@ -1,11 +1,8 @@
 "use client"
 
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
-
+import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import { EmployeeManager } from "@/components/employee/employee-manager"
-import { Button } from "@/components/ui/button"
 
 export function EmployeePage() {
   const { session, onSessionExpired } = usePortalSession()
@@ -21,18 +18,11 @@ export function EmployeePage() {
 
   return (
     <>
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="eyebrow">HRM WORKSPACE</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">Nhân sự</h1>
-          <p className="mt-1.5 max-w-xl text-[var(--muted-ink)]">
-            Xem và cập nhật hồ sơ nhân sự trong phạm vi quản lý được phân công.
-          </p>
-        </div>
-        <Button variant="outline" nativeButton={false} render={<Link href="/dashboard" />}>
-          <ArrowLeft /> Về tổng quan
-        </Button>
-      </header>
+      <PageHeader
+        title="Nhân sự"
+        description="Xem và cập nhật hồ sơ nhân sự trong phạm vi quản lý được phân công."
+        backToOverview
+      />
 
       <div className="mt-6">
         <EmployeeManager capabilities={capabilities} onSessionExpired={onSessionExpired} />

@@ -28,10 +28,10 @@ import {
   today,
   useWorkforceAction,
   workforceApi,
-  type Paged,
   type WorkforceContext,
 } from "@/components/workforce/workforce-shared"
 import { apiErrorMessage } from "@/lib/api-helpers"
+import type { Page } from "@/lib/pagination"
 import {
   DERIVED_SALARY_TREATMENT,
   LEAVE_SALARY_TREATMENTS,
@@ -97,11 +97,11 @@ export function LeaveSection({ employeeId, permissions, month }: WorkforceContex
     const showEmployee = employeeId > 0 && canReadLeave
     Promise.all([
       showEmployee
-        ? workforceApi<Paged<LeaveRequest>>(`leave-requests/employees/${employeeId}?size=100`).then((page) => page.content)
+        ? workforceApi<Page<LeaveRequest>>(`leave-requests/employees/${employeeId}?size=100`).then((page) => page.content)
         : Promise.resolve([]),
       showEmployee ? workforceApi<LeaveBalance>(`leave-entitlements/employees/${employeeId}?year=${year}`) : Promise.resolve(null),
       canApprove
-        ? workforceApi<Paged<LeaveRequest>>("leave-requests/pending?size=100").then((page) => page.content)
+        ? workforceApi<Page<LeaveRequest>>("leave-requests/pending?size=100").then((page) => page.content)
         : Promise.resolve([]),
     ])
       .then(([employeeLeaves, loadedBalance, pendingLeaves]) => {

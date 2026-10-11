@@ -81,13 +81,6 @@ export const EMPLOYMENT_TYPE_LABELS: Record<EmploymentType, string> = {
   TEMPORARY: "Thời vụ",
 }
 
-export interface Page<T> {
-  content: T[]
-  number: number
-  totalElements: number
-  totalPages: number
-}
-
 export function employeeRequest<T>(portal: Portal, path: string, init?: RequestInit): Promise<T> {
   return authorizedRequest<T>(portal, `/employees${path}`, { ...init, cache: "no-store" })
 }

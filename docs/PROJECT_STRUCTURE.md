@@ -130,7 +130,7 @@ apps/web/
 │   ├── company-owner/                # Bootstrap Company Owner (chỉ Admin Console)
 │   ├── employee/                     # Danh sách, chi tiết và form hồ sơ nhân viên
 │   ├── organization/                 # Trang danh mục tổ chức (cả hai portal), địa điểm, vị trí và ca
-│   ├── portal/                       # PortalShell (khung + usePortalSession), sidebar, trang tổng quan
+│   ├── portal/                       # PortalShell (khung + usePortalSession), PageHeader, sidebar, trang tổng quan
 │   ├── rbac/                         # Trang vai trò & quyền (cả hai portal), quản lý role và permission
 │   ├── report/                       # Dashboard và biểu đồ phân bố báo cáo
 │   ├── role-assignment/              # Cấp role trực tiếp (cả hai portal), yêu cầu cấp role, permission override
@@ -146,6 +146,7 @@ apps/web/
 │   ├── employee.ts                   # Client và kiểu dữ liệu nhân viên
 │   ├── employee-birth-date.ts        # Xử lý ngày sinh trong form nhân viên
 │   ├── organization-position-filter.ts # Lọc vị trí theo đơn vị tổ chức
+│   ├── pagination.ts                 # Kiểu Page<T> dùng chung cho mọi danh sách phân trang
 │   ├── rbac.ts                       # Client role, permission và module quyền
 │   ├── reference.ts                  # Client danh mục tổ chức dùng chung
 │   ├── report.ts                     # Client và kiểu dữ liệu báo cáo

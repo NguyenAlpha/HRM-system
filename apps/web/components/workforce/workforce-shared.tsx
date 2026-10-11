@@ -16,8 +16,6 @@ export type WorkforceContext = {
   month: string
 }
 
-export type Paged<T> = { content: T[]; totalElements: number }
-
 export const workforceApi = <T,>(path: string, method = "GET", body?: unknown) =>
   authorizedRequest<T>("hrm", `/workforce/${path}`, {
     method,

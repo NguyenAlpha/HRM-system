@@ -1,15 +1,13 @@
 "use client"
 
-import Link from "next/link"
 import { useState } from "react"
-import { ArrowLeft, KeyRound, Users } from "lucide-react"
+import { KeyRound, Users } from "lucide-react"
 
+import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import { PermissionManager } from "@/components/rbac/permission-manager"
 import { RoleManager } from "@/components/rbac/role-manager"
-import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PORTAL_CONFIG } from "@/lib/auth/config"
 
 /** Role and permission management; the same page serves both portals. */
 export function RbacPage() {
@@ -18,18 +16,11 @@ export function RbacPage() {
 
   return (
     <>
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="eyebrow">{portal === "admin" ? "ADMIN CONSOLE" : "HRM WORKSPACE"}</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">Vai trò & quyền</h1>
-          <p className="mt-1.5 max-w-xl text-[var(--muted-ink)]">
-            Quản lý vai trò tùy chỉnh và xem danh mục quyền do hệ thống định nghĩa.
-          </p>
-        </div>
-        <Button variant="outline" nativeButton={false} render={<Link href={PORTAL_CONFIG[portal].homePath} />}>
-          <ArrowLeft /> Về tổng quan
-        </Button>
-      </header>
+      <PageHeader
+        title="Vai trò & quyền"
+        description="Quản lý vai trò tùy chỉnh và xem danh mục quyền do hệ thống định nghĩa."
+        backToOverview
+      />
 
       <Tabs
         className="mt-6"
