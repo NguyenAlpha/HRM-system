@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Loader2, Search, ShieldOff } from "lucide-react"
 import { toast } from "sonner"
 
-import { RbacFeedback } from "@/components/admin/rbac-controls"
+import { ErrorAlert } from "@/components/common/list-controls"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -173,7 +173,7 @@ export function RolePermissions({ portal, role, onClose, onSessionExpired }: {
         </DialogHeader>
 
         <div className="max-h-[70vh] overflow-y-auto py-1">
-          <RbacFeedback error={error} />
+          <ErrorAlert error={error} />
 
           {role.isSystem && (
             <p className="mt-3 flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm text-muted-foreground">

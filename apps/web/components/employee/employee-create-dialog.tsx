@@ -7,7 +7,7 @@ import { z } from "zod"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
-import { RbacFeedback } from "@/components/admin/rbac-controls"
+import { ErrorAlert } from "@/components/common/list-controls"
 import { EmployeeBirthDateSelect } from "@/components/employee/employee-birth-date-select"
 import { Button } from "@/components/ui/button"
 import {
@@ -250,7 +250,7 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
           </DialogHeader>
 
           <div className="mt-4 grid max-h-[65vh] gap-5 overflow-y-auto pr-1">
-            <RbacFeedback error={dialogError} />
+            <ErrorAlert error={dialogError} />
 
             <section className="grid gap-4">
               <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Hồ sơ nhân sự</p>

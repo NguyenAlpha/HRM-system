@@ -7,7 +7,7 @@ import { z } from "zod"
 import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
-import { RbacFeedback } from "@/components/admin/rbac-controls"
+import { ErrorAlert } from "@/components/common/list-controls"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -218,7 +218,7 @@ export function WorkShiftManager({ portal, onSessionExpired }: { portal: Portal;
         </Button>
       </div>
 
-      <RbacFeedback error={error} />
+      <ErrorAlert error={error} />
 
       <div className="rounded-xl border">
         <Table>
@@ -301,7 +301,7 @@ export function WorkShiftManager({ portal, onSessionExpired }: { portal: Portal;
             </DialogHeader>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2"><RbacFeedback error={dialogError} /></div>
+              <div className="sm:col-span-2"><ErrorAlert error={dialogError} /></div>
 
               <div className="grid gap-1.5">
                 <Label htmlFor="shift-code">Mã ca</Label>

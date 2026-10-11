@@ -14,7 +14,7 @@ import { EmployeeBirthDateSelect } from "@/components/employee/employee-birth-da
 import { EmployeeCreateDialog } from "@/components/employee/employee-create-dialog"
 import { EmployeeDetailDialog } from "@/components/employee/employee-detail-dialog"
 import { EmployeeProvisionDialog } from "@/components/employee/employee-provision-dialog"
-import { Pagination, RbacFeedback } from "@/components/admin/rbac-controls"
+import { Pagination, ErrorAlert } from "@/components/common/list-controls"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -283,7 +283,7 @@ export function EmployeeManager({ capabilities, onSessionExpired }: {
           </div>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <RbacFeedback error={error} />
+          <ErrorAlert error={error} />
 
           <div className="rounded-xl border">
             <Table>
@@ -448,7 +448,7 @@ export function EmployeeManager({ capabilities, onSessionExpired }: {
             </DialogHeader>
 
             <div className="mt-4 grid max-h-[65vh] gap-4 overflow-y-auto pr-1">
-              <RbacFeedback error={dialogError} />
+              <ErrorAlert error={dialogError} />
 
               <div className="grid gap-1.5">
                 <Label htmlFor="emp-fullname">Họ tên</Label>

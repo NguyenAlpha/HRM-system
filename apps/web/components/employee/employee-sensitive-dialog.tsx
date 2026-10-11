@@ -7,7 +7,7 @@ import { z } from "zod"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
-import { RbacFeedback } from "@/components/admin/rbac-controls"
+import { ErrorAlert } from "@/components/common/list-controls"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -183,7 +183,7 @@ export function EmployeeSensitiveDialog({ employee, onClose, onSaved, onSessionE
             </div>
           </div>
 
-          {dialogError && <RbacFeedback error={dialogError} />}
+          {dialogError && <ErrorAlert error={dialogError} />}
 
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="outline" />}>Hủy</DialogClose>

@@ -19,8 +19,8 @@ import {
   UsersRound,
 } from "lucide-react"
 
-import { RbacFeedback } from "@/components/admin/rbac-controls"
-import { usePortalSession } from "@/components/auth/portal-shell"
+import { ErrorAlert } from "@/components/common/list-controls"
+import { usePortalSession } from "@/components/portal/portal-shell"
 import { EmployeeDeleteDialog } from "@/components/employee/employee-delete-dialog"
 import { EmployeeEmploymentEndDialog } from "@/components/employee/employee-employment-end-dialog"
 import { EmployeeSensitiveCard } from "@/components/employee/employee-sensitive-card"
@@ -251,7 +251,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
               <CardDescription>Kiểm tra quyền truy cập hoặc thử tải lại dữ liệu.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <RbacFeedback error={displayedError} />
+              <ErrorAlert error={displayedError} />
               <Button type="button" onClick={reload} disabled={!hasValidEmployeeId}>
                 <RefreshCw /> Thử lại
               </Button>

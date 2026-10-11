@@ -125,13 +125,15 @@ apps/web/
 ├── components/
 │   ├── account/                      # Danh sách và vòng đời tài khoản
 │   ├── activation/                   # Màn hình kích hoạt account
-│   ├── admin/                        # Màn hình Admin Console
-│   ├── auth/                         # Login, sidebar và PortalShell (khung + usePortalSession)
+│   ├── auth/                         # Form đăng nhập dùng cho cả hai portal
+│   ├── common/                       # Thành phần dùng chung mọi module: ErrorAlert, Pagination
+│   ├── company-owner/                # Bootstrap Company Owner (chỉ Admin Console)
 │   ├── employee/                     # Danh sách, chi tiết và form hồ sơ nhân viên
-│   ├── organization/                 # Quản lý tổ chức, địa điểm, vị trí và ca
-│   ├── rbac/                         # Custom role tại HRM Workspace
+│   ├── organization/                 # Trang danh mục tổ chức (cả hai portal), địa điểm, vị trí và ca
+│   ├── portal/                       # PortalShell (khung + usePortalSession), sidebar, trang tổng quan
+│   ├── rbac/                         # Trang vai trò & quyền (cả hai portal), quản lý role và permission
 │   ├── report/                       # Dashboard và biểu đồ phân bố báo cáo
-│   ├── role-assignment/              # Gán role, yêu cầu cấp role và permission override
+│   ├── role-assignment/              # Cấp role trực tiếp (cả hai portal), yêu cầu cấp role, permission override
 │   ├── ui/                           # Primitive shadcn/ui dùng chung
 │   └── workforce/                    # Chấm công, nghỉ phép và lương: vỏ trang workforce-page,
 │                                     # attendance/leave/payroll-section và các panel con

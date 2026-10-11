@@ -7,7 +7,7 @@ import { z } from "zod"
 import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
-import { RbacFeedback } from "@/components/admin/rbac-controls"
+import { ErrorAlert } from "@/components/common/list-controls"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -205,7 +205,7 @@ export function OrganizationUnitManager({ portal, onSessionExpired }: { portal: 
         </Button>
       </div>
 
-      <RbacFeedback error={error} />
+      <ErrorAlert error={error} />
 
       <div className="rounded-xl border">
         <Table>
@@ -279,7 +279,7 @@ export function OrganizationUnitManager({ portal, onSessionExpired }: { portal: 
             </DialogHeader>
 
             <div className="mt-4 grid gap-4">
-              <RbacFeedback error={dialogError} />
+              <ErrorAlert error={dialogError} />
 
               <div className="grid gap-1.5">
                 <Label htmlFor="unit-code">Mã đơn vị</Label>

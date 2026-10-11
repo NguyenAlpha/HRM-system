@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react"
 
-import { PortalSidebar } from "@/components/auth/portal-sidebar"
+import { PortalSidebar } from "@/components/portal/portal-sidebar"
 import { apiErrorMessage } from "@/lib/api-helpers"
 import { getCurrentSession } from "@/lib/auth/client"
 import { PORTAL_CONFIG } from "@/lib/auth/config"

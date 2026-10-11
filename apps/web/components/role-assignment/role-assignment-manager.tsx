@@ -7,7 +7,7 @@ import { z } from "zod"
 import { Check, Loader2, Plus, RefreshCw, X } from "lucide-react"
 import { toast } from "sonner"
 
-import { Pagination, RbacFeedback } from "@/components/admin/rbac-controls"
+import { Pagination, ErrorAlert } from "@/components/common/list-controls"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -317,7 +317,7 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
           </div>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <RbacFeedback error={error} />
+          <ErrorAlert error={error} />
 
           <Select
             value={statusFilter || ALL_STATUSES}
@@ -434,7 +434,7 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
             </DialogHeader>
 
             <div className="mt-4 grid max-h-[65vh] gap-4 overflow-y-auto pr-1">
-              <RbacFeedback error={createError} />
+              <ErrorAlert error={createError} />
 
               <div className="grid gap-1.5">
                 <Label htmlFor="req-account">Nhân sự (đã có tài khoản)</Label>
@@ -603,7 +603,7 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
           </DialogHeader>
 
           <div className="grid gap-3">
-            <RbacFeedback error={actionError} />
+            <ErrorAlert error={actionError} />
             <div className="grid gap-1.5">
               <Label htmlFor="action-note">
                 {actionTarget?.action === "approve" ? "Ghi chú (tùy chọn)" : "Lý do (bắt buộc)"}

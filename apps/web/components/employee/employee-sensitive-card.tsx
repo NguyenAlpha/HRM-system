@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Eye, EyeOff, Loader2, PencilLine, ShieldAlert } from "lucide-react"
 
 import { EmployeeSensitiveDialog } from "@/components/employee/employee-sensitive-dialog"
-import { RbacFeedback } from "@/components/admin/rbac-controls"
+import { ErrorAlert } from "@/components/common/list-controls"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -68,7 +68,7 @@ export function EmployeeSensitiveCard({ employee, canManage, onSessionExpired }:
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {error && <RbacFeedback error={error} />}
+          {error && <ErrorAlert error={error} />}
 
           {data && (
             <dl className="grid gap-4 sm:grid-cols-2">

@@ -3,11 +3,11 @@
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 
-import { usePortalSession } from "@/components/auth/portal-shell"
-import { DirectRoleGrantManager } from "@/components/role-assignment/direct-role-grant-manager"
+import { CompanyOwnerProvision } from "@/components/company-owner/company-owner-provision"
+import { usePortalSession } from "@/components/portal/portal-shell"
 import { Button } from "@/components/ui/button"
 
-export function AdminRoleGrantPage() {
+export function CompanyOwnerPage() {
   const { onSessionExpired } = usePortalSession()
 
   return (
@@ -15,9 +15,9 @@ export function AdminRoleGrantPage() {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="eyebrow">ADMIN CONSOLE</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">Cấp quyền trực tiếp</h1>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">Khởi tạo Company Owner</h1>
           <p className="mt-1.5 max-w-xl text-[var(--muted-ink)]">
-            Gán role trực tiếp cho nhân sự và cấp mã kích hoạt tài khoản mà không cần chờ duyệt.
+            Cầu nối từ vận hành nền tảng sang quản trị nội bộ doanh nghiệp — chỉ dùng một lần cho Company Owner đầu tiên.
           </p>
         </div>
         <Button variant="outline" nativeButton={false} render={<Link href="/admin" />}>
@@ -25,8 +25,8 @@ export function AdminRoleGrantPage() {
         </Button>
       </header>
 
-      <div className="mt-6">
-        <DirectRoleGrantManager portal="admin" onSessionExpired={onSessionExpired} />
+      <div className="mt-6 max-w-2xl">
+        <CompanyOwnerProvision onSessionExpired={onSessionExpired} />
       </div>
     </>
   )

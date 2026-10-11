@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { RefreshCw } from "lucide-react"
 
-import { Pagination, RbacFeedback } from "@/components/admin/rbac-controls"
+import { Pagination, ErrorAlert } from "@/components/common/list-controls"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -90,7 +90,7 @@ export function PermissionManager({ portal, onSessionExpired }: { portal: Portal
         </Button>
       </CardHeader>
       <CardContent className="grid gap-4">
-        <RbacFeedback error={error} />
+        <ErrorAlert error={error} />
 
         <Select
           value={moduleFilter || ALL_MODULES}

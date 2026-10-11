@@ -7,7 +7,7 @@ import { z } from "zod"
 import { Check, Copy, KeyRound, Link2, Loader2, ShieldCheck, UserPlus } from "lucide-react"
 import { toast } from "sonner"
 
-import { RbacFeedback } from "@/components/admin/rbac-controls"
+import { ErrorAlert } from "@/components/common/list-controls"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -266,7 +266,7 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
           </CardDescription>
         </CardHeader>
         <CardContent className="grid min-w-0 gap-4">
-          <RbacFeedback error={formError} />
+          <ErrorAlert error={formError} />
 
           {result.assignment && (
             <div className="flex min-w-0 items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm">
@@ -328,7 +328,7 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
       </CardHeader>
       <CardContent>
         <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)}>
-          <RbacFeedback error={formError ?? optionsError} />
+          <ErrorAlert error={formError ?? optionsError} />
 
           <div className="grid gap-1.5">
             <Label htmlFor="grant-employee">Nhân sự</Label>

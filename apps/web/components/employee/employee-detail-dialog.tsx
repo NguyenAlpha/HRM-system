@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { KeyRound, Pencil } from "lucide-react"
 
-import { RbacFeedback } from "@/components/admin/rbac-controls"
+import { ErrorAlert } from "@/components/common/list-controls"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -80,7 +80,7 @@ export function EmployeeDetailDialog({ employeeId, canUpdate, canProvisionAccoun
         </DialogHeader>
 
         <div className="max-h-[65vh] space-y-5 overflow-y-auto py-1">
-          <RbacFeedback error={error} />
+          <ErrorAlert error={error} />
 
           {loading && (
             <div className="grid gap-3">

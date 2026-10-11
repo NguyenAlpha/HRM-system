@@ -1,7 +1,7 @@
 "use client"
 
 import { AccountManager } from "@/components/account/account-manager"
-import { usePortalSession } from "@/components/auth/portal-shell"
+import { usePortalSession } from "@/components/portal/portal-shell"
 
 export function AccountPage() {
   const { session, onSessionExpired } = usePortalSession()
