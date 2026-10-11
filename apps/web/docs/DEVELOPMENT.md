@@ -128,6 +128,7 @@ app/
 ├── login/                    # Trang đăng nhập HRM
 ├── dashboard/                # Trang HRM sau đăng nhập
 ├── employees/                # Hồ sơ nhân viên
+├── accounts/                 # Vòng đời tài khoản đăng nhập
 ├── organization/             # Tổ chức và ca làm
 ├── attendance/               # Chấm công
 ├── leave-requests/           # Đơn nghỉ

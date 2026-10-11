@@ -20,3 +20,19 @@ export function provisionAccount(portal: Portal, employeeId: number, username: s
     cache: "no-store",
   })
 }
+
+export type Account = ProvisionedAccount
+export type AccountPage = Schemas["PagedResultAccountResponse"]
+
+export function listAccounts(page: number): Promise<AccountPage> {
+  return authorizedRequest<AccountPage>("hrm", `/accounts?page=${page}&size=20&sort=id,desc`, { cache: "no-store" })
+}
+
+/** Resend an invitation (PENDING) or start a password reset (ACTIVE/LOCKED); both return a new one-time token. */
+export function issueAccountInvitation(accountId: number, action: "invitations/resend" | "password-reset"): Promise<AccountInvitation> {
+  return authorizedRequest<AccountInvitation>("hrm", `/accounts/${accountId}/${action}`, { method: "POST", cache: "no-store" })
+}
+
+export function changeAccountStatus(accountId: number, action: "suspend" | "activate"): Promise<Account> {
+  return authorizedRequest<Account>("hrm", `/accounts/${accountId}/${action}`, { method: "POST", cache: "no-store" })
+}

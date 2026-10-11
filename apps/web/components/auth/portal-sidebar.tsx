@@ -6,13 +6,14 @@ import type { AccountSummary, Portal } from "@/lib/auth/types"
 export function PortalSidebar({ portal, account, active = "overview" }: {
   portal: Portal
   account: AccountSummary
-  active?: "overview" | "rbac" | "employees" | "role-requests" | "company-owner" | "role-grant" | "organization" | "reports" | "attendance" | "leave" | "payroll"
+  active?: "overview" | "rbac" | "employees" | "accounts" | "role-requests" | "company-owner" | "role-grant" | "organization" | "reports" | "attendance" | "leave" | "payroll"
 }) {
   const admin = portal === "admin"
   const canBootstrapCompanyOwner = account.permissions.some(
     (permission) => permission.code === "organization.company_owner.bootstrap",
   )
   const canReadEmployees = account.permissions.some((permission) => permission.code === "employee.list.read")
+  const canReadAccounts = account.permissions.some((permission) => permission.code === "account.read")
   const canUseRoleRequests = account.permissions.some(
     (permission) => permission.code === "role.assignment.request" || permission.code === "role.assignment.approve",
   )
@@ -68,6 +69,11 @@ export function PortalSidebar({ portal, account, active = "overview" }: {
             {canReadEmployees && (
               <Link className={`nav-item ${active === "employees" ? "active" : ""}`} href="/employees">
                 <span>▤</span> Nhân sự
+              </Link>
+            )}
+            {canReadAccounts && (
+              <Link className={`nav-item ${active === "accounts" ? "active" : ""}`} href="/accounts">
+                <span>◎</span> Tài khoản
               </Link>
             )}
             {canUseRoleRequests && (

@@ -15,7 +15,7 @@ Quy ước trạng thái:
 | Module | Trạng thái | Màn hình |
 |---|---|---|
 | Xác thực và phiên | Đủ | `/login`, `/admin/login`, `/activate` |
-| Tài khoản | Đủ | `/admin`, trong trang nhân viên |
+| Tài khoản | Đủ | `/accounts`, trong trang nhân viên |
 | Phân quyền RBAC | Đủ | `/rbac`, `/admin/rbac`, `/role-grant`, `/role-requests` |
 | Hồ sơ nhân viên | Đủ | `/employees`, `/employees/{id}` |
 | Cơ cấu tổ chức | Đủ | `/organization`, `/admin/organization` |
