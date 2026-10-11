@@ -411,6 +411,7 @@ export async function handleWorkforceRequest(request: Request, segments: string[
     { pattern: /^leave-entitlements\/employees\/[1-9]\d*\/(?:adjustment|carried-over)$/, methods: ["PUT"] },
     { pattern: /^payroll\/periods$/, methods: ["GET", "POST"] },
     { pattern: /^payroll\/periods\/[1-9]\d*$/, methods: ["GET"] },
+    { pattern: /^payroll\/periods\/[1-9]\d*\/export$/, methods: ["GET"] },
     { pattern: /^payroll\/periods\/[1-9]\d*\/(?:calculate|approve|mark-paid|lock|cancel)$/, methods: ["POST"] },
     { pattern: /^payroll\/payslips\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^payroll\/employees\/[1-9]\d*\/payslips$/, methods: ["GET"] },
@@ -431,6 +432,7 @@ export async function handleWorkforceRequest(request: Request, segments: string[
   }
   const accessToken = (await cookies()).get(PORTAL_CONFIG.hrm.accessCookie)?.value
   if (!accessToken) return NextResponse.json(failure("UNAUTHORIZED", "Phiên đăng nhập đã hết hạn"), { status: 401 })
+  if (/^payroll\/periods\/[1-9]\d*\/export$/.test(path)) return proxyDownload(`/api/${path}`, accessToken)
 
   let body: string | undefined
   if (request.method === "PUT" || (request.method === "POST" &&
@@ -460,6 +462,34 @@ export async function handleWorkforceRequest(request: Request, segments: string[
   return NextResponse.json(result.payload, {
     status: result.response.status,
     headers: { "Cache-Control": "no-store" },
+  })
+}
+
+const XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+// Streams a generated file back unchanged; errors keep the JSON envelope and status from the API.
+async function proxyDownload(path: string, accessToken: string): Promise<NextResponse> {
+  let response: Response
+  try {
+    response = await fetch(`${apiBaseUrl}${path}`, {
+      cache: "no-store",
+      headers: { Accept: `${XLSX_TYPE}, application/json`, Authorization: `Bearer ${accessToken}` },
+    })
+  } catch {
+    return gatewayFailure()
+  }
+  if (!response.ok) {
+    const payload = (await response.json().catch(() =>
+      failure("INVALID_API_RESPONSE", "HRM API trả về dữ liệu không hợp lệ"))) as ApiEnvelope<unknown>
+    return NextResponse.json(payload, { status: response.status, headers: { "Cache-Control": "no-store" } })
+  }
+  return new NextResponse(response.body, {
+    status: response.status,
+    headers: {
+      "Content-Type": response.headers.get("Content-Type") ?? XLSX_TYPE,
+      "Content-Disposition": response.headers.get("Content-Disposition") ?? "attachment",
+      "Cache-Control": "no-store",
+    },
   })
 }
 

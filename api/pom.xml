@@ -64,6 +64,12 @@
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>3.0.3</version>
 		</dependency>
+		<!-- Write-only XLSX generator, used for the payroll export; no Apache POI dependency tree. -->
+		<dependency>
+			<groupId>org.dhatim</groupId>
+			<artifactId>fastexcel</artifactId>
+			<version>0.19.0</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.postgresql</groupId>

@@ -29,6 +29,21 @@ Phiếu lương lưu số tiền bảo hiểm từng loại, hai căn cứ đón
 
 HR nhìn thấy hồ sơ bảo hiểm và người phụ thuộc ở `/payslips`; kế toán nhìn thấy ngày trả lương và các khoản khấu trừ trên phiếu. Sửa hồ sơ/người phụ thuộc ảnh hưởng kỳ `CALCULATED` đưa kỳ về `DRAFT`; kỳ `APPROVED` trở đi bị khóa.
 
+## Xuất bảng lương ra Excel
+
+`GET /api/payroll/periods/{id}/export` trả file `bang-luong-<năm>-<tháng>.xlsx`
+(`Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, tải về qua
+`Content-Disposition: attachment`). Cần `report.payroll.read` với phạm vi `COMPANY`, cùng quyền xem
+kỳ lương. Client nên gửi `Accept` gồm cả kiểu xlsx và `application/json`, vì lỗi (`403`, `404
+PAYROLL_PERIOD_NOT_FOUND`) vẫn trả envelope JSON như các endpoint khác.
+
+File có một sheet, mỗi dòng một phiếu lương của kỳ, sắp theo mã nhân viên: mã, họ tên, đơn vị, địa
+điểm, lương hợp đồng, phút công chuẩn/được trả/tăng ca, lương theo công, phụ cấp, tiền tăng ca, tăng
+ca miễn thuế, tổng thu nhập, BHXH, BHYT, BHTN, thu nhập tính thuế, thuế TNCN và thực nhận. Dòng cuối
+là công thức `SUM` cho các cột tiền. Dữ liệu lấy từ snapshot trên phiếu lương, nên file của kỳ đã
+duyệt không đổi theo hồ sơ hiện tại. Trên web, nút **Xuất Excel** hiện ở mỗi kỳ đã tính trở đi trong
+`/payslips`.
+
 ## Quy tắc 2026 đã nạp
 
 - Từ 01/01/2026, giảm trừ bản thân 15.500.000 đồng/tháng và mỗi người phụ thuộc 6.200.000 đồng/tháng; biểu thuế lũy tiến theo tháng: 0–10 triệu 5%, 10–30 triệu 10%, 30–60 triệu 20%, 60–100 triệu 30%, trên 100 triệu 35%. Áp dụng đến 31/12/2026 trong bộ quy tắc hiện tại. Nguồn: [Luật 109/2025/QH15](https://vanban.chinhphu.vn/?classid=1&docid=216495&pageid=27160), [giới thiệu và mức giảm trừ](https://xaydungchinhsach.chinhphu.vn/gioi-thieu-luat-thue-thu-nhap-ca-nhan-so-109-2025-qh15-119260123145437408.htm), [biểu thuế](https://xaydungchinhsach.chinhphu.vn/chi-tiet-bieu-thue-thu-nhap-ca-nhan-luy-tien-tung-phan-119260327091407544.htm).
