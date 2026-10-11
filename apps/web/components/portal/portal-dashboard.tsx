@@ -7,7 +7,7 @@ import { FormEvent, useState } from "react"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import { changePassword, logout, refreshSession } from "@/lib/auth/client"
 import type { SessionData } from "@/lib/auth/types"
-import { usePortalSession } from "@/components/auth/portal-shell"
+import { usePortalSession } from "@/components/portal/portal-shell"
 
 function formatExpiry(value: string): string {
   return new Intl.DateTimeFormat("vi-VN", {

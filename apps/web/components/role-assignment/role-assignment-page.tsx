@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 
-import { usePortalSession } from "@/components/auth/portal-shell"
+import { usePortalSession } from "@/components/portal/portal-shell"
 import { RoleAssignmentManager } from "@/components/role-assignment/role-assignment-manager"
 import { Button } from "@/components/ui/button"
 

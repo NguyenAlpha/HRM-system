@@ -144,8 +144,9 @@ app/
     ├── session/              # BFF endpoints của HRM
     ├── admin-session/        # BFF endpoints của Admin
     └── account-activations/  # BFF kích hoạt tài khoản, không gắn portal
-components/                   # UI theo module nghiệp vụ
-├── auth/portal-shell.tsx     # PortalShell (khung dùng chung) và hook usePortalSession()
+components/                   # UI chia theo tính năng, không theo portal
+├── portal/portal-shell.tsx   # PortalShell (khung dùng chung) và hook usePortalSession()
+├── common/                   # Thành phần dùng chung mọi tính năng (ErrorAlert, Pagination)
 lib/                          # API client, kiểu dữ liệu và auth helpers
 ├── api-schema.ts             # Type sinh từ openapi.json (npm run gen:api), không sửa tay
 openapi.json                  # Bản chụp spec OpenAPI do OpenApiSnapshotTest ghi, không sửa tay
@@ -155,8 +156,12 @@ proxy.ts                      # Điều hướng sơ bộ dựa trên sự tồn
 Trang mới của một portal đặt trong `app/(hrm)/` hoặc `app/admin/(console)/` để tự nằm trong khung
 chung. Component của trang chỉ render nội dung riêng (tiêu đề và phần thân); phiên đăng nhập, quyền
 và hàm `onSessionExpired` lấy từ `usePortalSession()`. Sidebar tự đánh dấu mục đang mở theo URL; khi
-thêm mục menu, sửa `components/auth/portal-sidebar.tsx` và thêm đường dẫn vào `HRM_PAGES` cùng
+thêm mục menu, sửa `components/portal/portal-sidebar.tsx` và thêm đường dẫn vào `HRM_PAGES` cùng
 `config.matcher` trong `proxy.ts`.
+
+Component chia theo tính năng. Tính năng có ở cả hai portal (RBAC, danh mục tổ chức, cấp role trực
+tiếp) chỉ có một component trang, lấy `portal` từ `usePortalSession()`; `app/(hrm)/...` và
+`app/admin/(console)/...` cùng render component đó.
 
 ## Lưu ý khi triển khai
 

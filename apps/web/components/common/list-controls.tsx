@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, TriangleAlert } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 
-export function RbacFeedback({ error }: { error: string | null }) {
+export function ErrorAlert({ error }: { error: string | null }) {
   if (!error) return null
   return (
     <Alert variant="destructive" className="animate-in fade-in slide-in-from-top-1">

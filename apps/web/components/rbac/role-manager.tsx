@@ -7,8 +7,8 @@ import { z } from "zod"
 import { Loader2, Pencil, Plus, RefreshCw, ShieldCheck, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
-import { Pagination, RbacFeedback } from "@/components/admin/rbac-controls"
-import { RolePermissions } from "@/components/admin/role-permissions"
+import { Pagination, ErrorAlert } from "@/components/common/list-controls"
+import { RolePermissions } from "@/components/rbac/role-permissions"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -232,7 +232,7 @@ export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSe
           </div>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <RbacFeedback error={error} />
+          <ErrorAlert error={error} />
 
           <div className="rounded-xl border">
             <Table>
@@ -369,7 +369,7 @@ export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSe
             </DialogHeader>
 
             <div className="mt-4 grid gap-4">
-              <RbacFeedback error={dialogError} />
+              <ErrorAlert error={dialogError} />
 
               <div className="grid gap-1.5">
                 <Label htmlFor="role-code">Mã vai trò</Label>

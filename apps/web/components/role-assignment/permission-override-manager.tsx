@@ -7,7 +7,7 @@ import { z } from "zod"
 import { Loader2, Plus, RefreshCw, ShieldMinus } from "lucide-react"
 import { toast } from "sonner"
 
-import { RbacFeedback } from "@/components/admin/rbac-controls"
+import { ErrorAlert } from "@/components/common/list-controls"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -277,7 +277,7 @@ export function PermissionOverrideManager({ portal, onSessionExpired }: {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-5">
-          <RbacFeedback error={error} />
+          <ErrorAlert error={error} />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5">

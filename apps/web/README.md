@@ -60,8 +60,8 @@ npm run typecheck # kiểm tra TypeScript
 
 ```text
 app/          App Router pages và Route Handlers
-components/   UI theo module account, activation, admin, auth, employee, organization, RBAC,
-              role-assignment, report, workforce và primitive shadcn/ui (ui/)
+components/   UI chia theo tính năng: account, activation, auth, common, company-owner, employee,
+              organization, portal, rbac, report, role-assignment, workforce và shadcn/ui (ui/)
 lib/          Kiểu dữ liệu, API client và helper auth phía server/client
 ```
 

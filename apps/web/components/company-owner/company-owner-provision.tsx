@@ -7,7 +7,7 @@ import { z } from "zod"
 import { Check, Copy, KeyRound, Link2, Loader2, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
 
-import { RbacFeedback } from "@/components/admin/rbac-controls"
+import { ErrorAlert } from "@/components/common/list-controls"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -169,7 +169,7 @@ export function CompanyOwnerProvision({ onSessionExpired }: { onSessionExpired: 
       </CardHeader>
       <CardContent>
         <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)}>
-          <RbacFeedback error={error} />
+          <ErrorAlert error={error} />
 
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">

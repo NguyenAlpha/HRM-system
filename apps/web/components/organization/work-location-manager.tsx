@@ -7,7 +7,7 @@ import { z } from "zod"
 import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
-import { RbacFeedback } from "@/components/admin/rbac-controls"
+import { ErrorAlert } from "@/components/common/list-controls"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -213,7 +213,7 @@ export function WorkLocationManager({ portal, onSessionExpired }: { portal: Port
         </Button>
       </div>
 
-      <RbacFeedback error={error} />
+      <ErrorAlert error={error} />
 
       <div className="rounded-xl border">
         <Table>
@@ -292,7 +292,7 @@ export function WorkLocationManager({ portal, onSessionExpired }: { portal: Port
             </DialogHeader>
 
             <div className="mt-4 grid max-h-[65vh] gap-4 overflow-y-auto pr-1">
-              <RbacFeedback error={dialogError} />
+              <ErrorAlert error={dialogError} />
 
               <div className="grid gap-1.5">
                 <Label htmlFor="location-code">Mã địa điểm</Label>

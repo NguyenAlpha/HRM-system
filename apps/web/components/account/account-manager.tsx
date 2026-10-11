@@ -5,7 +5,7 @@ import { useEffect, useState } from "react"
 import { Ban, Check, CircleCheck, Copy, KeyRound, Link2, Loader2, MailPlus, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 
-import { Pagination, RbacFeedback } from "@/components/admin/rbac-controls"
+import { Pagination, ErrorAlert } from "@/components/common/list-controls"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -182,7 +182,7 @@ export function AccountManager({ currentAccountId, canManage, canManageActivatio
           </Button>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <RbacFeedback error={error} />
+          <ErrorAlert error={error} />
 
           <div className="rounded-xl border">
             <Table>

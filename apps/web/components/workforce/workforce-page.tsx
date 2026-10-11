@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 
-import { usePortalSession } from "@/components/auth/portal-shell"
+import { usePortalSession } from "@/components/portal/portal-shell"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AttendanceSection } from "@/components/workforce/attendance-section"

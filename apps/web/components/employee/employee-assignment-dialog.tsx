@@ -7,7 +7,7 @@ import { z } from "zod"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
-import { RbacFeedback } from "@/components/admin/rbac-controls"
+import { ErrorAlert } from "@/components/common/list-controls"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -246,7 +246,7 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
           </DialogHeader>
 
           <div className="mt-4 grid max-h-[65vh] gap-4 overflow-y-auto pr-1">
-            <RbacFeedback error={dialogError} />
+            <ErrorAlert error={dialogError} />
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="grid gap-1.5">

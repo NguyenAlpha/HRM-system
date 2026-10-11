@@ -7,7 +7,7 @@ import { z } from "zod"
 import { Check, Copy, KeyRound, Link2, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
-import { RbacFeedback } from "@/components/admin/rbac-controls"
+import { ErrorAlert } from "@/components/common/list-controls"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -100,7 +100,7 @@ export function EmployeeProvisionDialog({ employeeId, employeeName, onClose, onP
             </DialogHeader>
 
             <div className="mt-4 grid gap-4">
-              <RbacFeedback error={dialogError} />
+              <ErrorAlert error={dialogError} />
               <div className="grid gap-1.5">
                 <Label htmlFor="prov-username">Tên đăng nhập</Label>
                 <Input id="prov-username" placeholder="VD: an.nguyen" aria-invalid={!!errors.username} {...register("username")} />
