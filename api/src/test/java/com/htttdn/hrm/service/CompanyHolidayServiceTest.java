@@ -3,6 +3,7 @@ package com.htttdn.hrm.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
@@ -15,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.htttdn.hrm.entity.Account;
+import com.htttdn.hrm.entity.CompanyHoliday;
 import com.htttdn.hrm.entity.PayrollPeriod;
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.ConflictException;
@@ -35,6 +37,7 @@ class CompanyHolidayServiceTest {
             .calculatedAt(Instant.now())
             .calculatedByAccount(Account.builder().id(7L).build()).build();
         when(payrollPeriodRepository.findContainingDateForUpdate(date)).thenReturn(Optional.of(period));
+        when(holidayRepository.save(any(CompanyHoliday.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         service().create(date, "Holiday");
 

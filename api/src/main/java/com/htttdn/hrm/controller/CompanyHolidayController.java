@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.htttdn.hrm.dto.request.attendance.CompanyHolidayRequest;
+import com.htttdn.hrm.dto.response.attendance.CompanyHolidayResponse;
 import com.htttdn.hrm.dto.response.common.ApiResult;
-import com.htttdn.hrm.entity.CompanyHoliday;
 import com.htttdn.hrm.service.CompanyHolidayService;
 
 import jakarta.validation.Valid;
@@ -33,14 +33,14 @@ public class CompanyHolidayController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('organization.read')")
-    public ApiResult<List<CompanyHoliday>> list(@RequestParam LocalDate from, @RequestParam LocalDate to) {
+    public ApiResult<List<CompanyHolidayResponse>> list(@RequestParam LocalDate from, @RequestParam LocalDate to) {
         return ApiResult.ok(service.list(from, to));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('organization.manage')")
-    public ApiResult<CompanyHoliday> create(@Valid @RequestBody CompanyHolidayRequest request) {
+    public ApiResult<CompanyHolidayResponse> create(@Valid @RequestBody CompanyHolidayRequest request) {
         return ApiResult.ok(service.create(request.date(), request.name()));
     }
 

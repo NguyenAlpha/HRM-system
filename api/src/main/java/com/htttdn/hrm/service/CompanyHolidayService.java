@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htttdn.hrm.dto.response.attendance.CompanyHolidayResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.CompanyHoliday;
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
@@ -32,20 +33,21 @@ public class CompanyHolidayService {
 
     @PreAuthorize("hasAuthority('organization.read')")
     @Transactional(readOnly = true)
-    public List<CompanyHoliday> list(LocalDate from, LocalDate to) {
+    public List<CompanyHolidayResponse> list(LocalDate from, LocalDate to) {
         accessScopeService.requireCompanyWide("organization.read");
-        return holidayRepository.findByHolidayDateBetweenOrderByHolidayDate(from, to);
+        return holidayRepository.findByHolidayDateBetweenOrderByHolidayDate(from, to).stream()
+            .map(this::toResponse).toList();
     }
 
     @PreAuthorize("hasAuthority('organization.manage')")
-    public CompanyHoliday create(LocalDate date, String name) {
+    public CompanyHolidayResponse create(LocalDate date, String name) {
         accessScopeService.requireCompanyWide("organization.manage");
         invalidateCalculatedPeriodOrReject(date);
         if (holidayRepository.findByHolidayDate(date).isPresent()) {
             throw new ConflictException(ErrorCode.CONFLICT, "Holiday already exists on " + date);
         }
-        return holidayRepository.save(CompanyHoliday.builder()
-            .holidayDate(date).name(name.trim()).createdAt(Instant.now()).build());
+        return toResponse(holidayRepository.save(CompanyHoliday.builder()
+            .holidayDate(date).name(name.trim()).createdAt(Instant.now()).build()));
     }
 
     @PreAuthorize("hasAuthority('organization.manage')")
@@ -55,6 +57,11 @@ public class CompanyHolidayService {
             .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND, "Holiday not found: " + id));
         invalidateCalculatedPeriodOrReject(holiday.getHolidayDate());
         holidayRepository.delete(holiday);
+    }
+
+    private CompanyHolidayResponse toResponse(CompanyHoliday holiday) {
+        return new CompanyHolidayResponse(holiday.getId(), holiday.getHolidayDate(), holiday.getName(),
+            holiday.getCreatedAt());
     }
 
     private void invalidateCalculatedPeriodOrReject(LocalDate date) {

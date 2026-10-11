@@ -1510,8 +1510,8 @@ export interface components {
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
-        ApiResultCompanyHoliday: {
-            data: components["schemas"]["CompanyHoliday"] | null;
+        ApiResultCompanyHolidayResponse: {
+            data: components["schemas"]["CompanyHolidayResponse"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
@@ -1571,8 +1571,8 @@ export interface components {
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
-        ApiResultListCompanyHoliday: {
-            data: components["schemas"]["CompanyHoliday"][] | null;
+        ApiResultListCompanyHolidayResponse: {
+            data: components["schemas"]["CompanyHolidayResponse"][] | null;
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
@@ -1911,18 +1911,18 @@ export interface components {
             /** Format: date */
             workDate: string;
         };
-        CompanyHoliday: {
+        CompanyHolidayRequest: {
+            /** Format: date */
+            date: string;
+            name: string;
+        };
+        CompanyHolidayResponse: {
             /** Format: date-time */
             createdAt: string;
             /** Format: date */
             holidayDate: string;
             /** Format: int64 */
             id: number;
-            name: string;
-        };
-        CompanyHolidayRequest: {
-            /** Format: date */
-            date: string;
             name: string;
         };
         CompleteAccountActivationRequest: {
@@ -3477,7 +3477,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResultListCompanyHoliday"];
+                    "application/json": components["schemas"]["ApiResultListCompanyHolidayResponse"];
                 };
             };
         };
@@ -3501,7 +3501,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResultCompanyHoliday"];
+                    "application/json": components["schemas"]["ApiResultCompanyHolidayResponse"];
                 };
             };
         };
