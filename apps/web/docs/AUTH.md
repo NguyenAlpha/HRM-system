@@ -58,8 +58,8 @@ BFF giữ cùng response envelope với API:
   "data": {
     "account": {
       "accountId": 2,
-      "username": "nguyenvana",
-      "email": "nguyenvana@hrm.local",
+      "username": "an.nguyen",
+      "email": "an.nguyen@company.com",
       "status": "ACTIVE",
       "employee": {
         "id": 1,
@@ -114,8 +114,8 @@ Request:
 
 ```json
 {
-  "usernameOrEmail": "nguyenvana",
-  "password": "Employee@123"
+  "usernameOrEmail": "an.nguyen",
+  "password": "<mật khẩu đã đặt khi kích hoạt>"
 }
 ```
 

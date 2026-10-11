@@ -19,7 +19,7 @@ API vẫn kiểm tra phân quyền, validation và các ràng buộc dữ liệu
 
 Browser gọi `/api/session/rbac/...` ở HRM Workspace hoặc `/api/admin-session/rbac/...` ở Admin Console. Route Handler chỉ chuyển tiếp các endpoint role/permission đã cho phép và lấy access token từ cookie `HttpOnly` của portal tương ứng.
 Các method hỗ trợ là GET, POST, PUT và DELETE; query phân trang và module được chuyển tiếp.
-Client dùng chung cơ chế refresh của phiên admin, thử lại một lần khi access token hết hạn.
+Client dùng chung cơ chế refresh của portal tương ứng (`authorizedRequest`), thử lại một lần khi access token hết hạn.
 
 Không đưa JWT vào JavaScript hoặc lưu token trong localStorage. API Spring Boot là nơi
 quyết định quyền truy cập. Quy tắc đăng nhập của Admin Console vẫn theo [AUTH.md](AUTH.md);
