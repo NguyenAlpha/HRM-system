@@ -19,6 +19,7 @@ import com.htttdn.hrm.service.LeaveRequestService.CreateLeaveCommand;
 import com.htttdn.hrm.service.LeaveRequestService.LeaveRequestView;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/leave-requests")
@@ -31,7 +32,7 @@ public class LeaveRequestController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResult<LeaveRequestView> create(@RequestBody CreateLeaveCommand command) {
+    public ApiResult<LeaveRequestView> create(@Valid @RequestBody CreateLeaveCommand command) {
         return ApiResult.ok(service.createDraft(command));
     }
 

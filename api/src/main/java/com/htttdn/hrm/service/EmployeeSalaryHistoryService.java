@@ -28,6 +28,8 @@ import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 @Service
 @Transactional
@@ -150,20 +152,6 @@ public class EmployeeSalaryHistoryService {
     }
 
     private void validateCommand(Employee employee, SetSalaryCommand command) {
-        if (command.baseSalary() == null || command.baseSalary().signum() <= 0) {
-            throw new BusinessException(
-                ErrorCode.VALIDATION_ERROR,
-                "baseSalary must be greater than zero",
-                "baseSalary"
-            );
-        }
-        if (command.effectiveFrom() == null) {
-            throw new BusinessException(
-                ErrorCode.VALIDATION_ERROR,
-                "effectiveFrom is required",
-                "effectiveFrom"
-            );
-        }
         if (command.effectiveFrom().isBefore(employee.getHireDate())) {
             throw new BusinessException(
                 ErrorCode.VALIDATION_ERROR,
@@ -214,8 +202,8 @@ public class EmployeeSalaryHistoryService {
     }
 
     public record SetSalaryCommand(
-        BigDecimal baseSalary,
-        LocalDate effectiveFrom,
+        @NotNull @Positive BigDecimal baseSalary,
+        @NotNull LocalDate effectiveFrom,
         @Nullable String reason,
         @Nullable String note
     ) {

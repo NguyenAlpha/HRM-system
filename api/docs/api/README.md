@@ -65,9 +65,11 @@ sinh từ spec, DTO phải khai báo đúng khả năng null:
   phải gắn `@Nullable` để web được phép gửi `null`.
 
 Mọi DTO mà web đang dùng đã được gắn đầy đủ, kể cả các record lồng trong service (ví dụ
-`LeaveRequestService.LeaveRequestView`) và envelope `ApiResult`/`ErrorDetail`. Riêng các command
-record của chấm công, nghỉ phép và lương (`CreateLeaveCommand`, `ProfileCommand`…) không có
-`@NotNull` vì service tự kiểm tra, nên trong spec mọi field của chúng là không bắt buộc.
+`LeaveRequestService.LeaveRequestView`) và envelope `ApiResult`/`ErrorDetail`. Các command record
+lồng trong service (`CreateLeaveCommand`, `SetSalaryCommand`, `ProfileCommand`, `DependentCommand`,
+`EndDependentCommand`) cũng dùng Bean Validation như request DTO thường: body sai trả
+`400 VALIDATION_ERROR` kèm `field` trước khi service kiểm tra quyền. Service chỉ giữ các quy tắc cần
+dữ liệu khác, như `endAt` sau `startAt` hay `effectiveFrom` không trước ngày vào làm.
 
 ## Nguồn sự thật
 

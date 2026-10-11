@@ -5801,7 +5801,8 @@
             "enum" : [ "ANNUAL", "SICK", "MATERNITY", "UNPAID", "OTHER" ]
           },
           "reason" : {
-            "type" : "string"
+            "type" : "string",
+            "minLength" : 1
           },
           "requestedMinutes" : {
             "type" : "integer",
@@ -5815,7 +5816,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "employeeId", "endAt", "leaveType", "reason", "requestedMinutes", "startAt" ]
       },
       "CreateOrganizationCompanyOwnerRequest" : {
         "type" : "object",
@@ -6098,12 +6100,14 @@
             "format" : "date"
           },
           "fullName" : {
-            "type" : "string"
+            "type" : "string",
+            "minLength" : 1
           },
           "identifier" : {
             "type" : [ "string", "null" ]
           }
-        }
+        },
+        "required" : [ "effectiveFrom", "fullName" ]
       },
       "DistributionItemResponse" : {
         "type" : "object",
@@ -6376,7 +6380,8 @@
             "type" : "string",
             "format" : "date"
           }
-        }
+        },
+        "required" : [ "effectiveTo" ]
       },
       "ErrorDetail" : {
         "type" : "object",
@@ -7284,9 +7289,12 @@
           },
           "wageRegion" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int32",
+            "maximum" : 4,
+            "minimum" : 1
           }
-        }
+        },
+        "required" : [ "effectiveFrom", "healthInsurance", "insuranceSalary", "socialInsurance", "taxResident", "unemploymentInsurance", "wageRegion" ]
       },
       "RefreshTokenRequest" : {
         "type" : "object",
@@ -7635,7 +7643,8 @@
           "reason" : {
             "type" : [ "string", "null" ]
           }
-        }
+        },
+        "required" : [ "baseSalary", "effectiveFrom" ]
       },
       "SoftDeleteEmployeeRequest" : {
         "type" : "object",
