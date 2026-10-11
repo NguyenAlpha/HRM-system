@@ -60,8 +60,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = {
     "company.seed.enabled=false",
     "rbac.seed.enabled=false",
-    "admin.seed.enabled=false",
-    "user.seed.enabled=false"
+    "admin.seed.enabled=false"
 })
 @AutoConfigureMockMvc
 @Transactional

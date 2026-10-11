@@ -806,7 +806,6 @@ Một vài ranh giới dễ hiểu nhầm:
 |:----------------|:---------|:--------|
 | `RBAC_SEED_ENABLED` | `true` | Seed role, permission và mapping mặc định khi khởi động |
 | `ADMIN_SEED_ENABLED` | `true` | Seed account admin và gán role `SYSTEM_ADMIN` đã được RBAC seed tạo trước |
-| `USER_SEED_ENABLED` | `false` | Seed các account demo, gồm một `HR_MANAGER`; chỉ nên bật ở môi trường demo/test |
 
 Để ủy quyền quản trị custom role cho một người khác:
 

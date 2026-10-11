@@ -30,8 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @SpringBootTest(properties = {
     "company.seed.enabled=false",
     "rbac.seed.enabled=false",
-    "admin.seed.enabled=false",
-    "user.seed.enabled=false"
+    "admin.seed.enabled=false"
 })
 @AutoConfigureMockMvc
 class OpenApiSnapshotTest {

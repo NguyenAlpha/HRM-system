@@ -187,20 +187,9 @@ Dữ liệu seed được chia theo trách nhiệm và chạy theo `@Order`. M�
 | 200 | `PermissionSeeder` | `RBAC_SEED_ENABLED` | Danh mục 49 permission |
 | 300 | `RolePermissionSeeder` | `RBAC_SEED_ENABLED` | Permission mặc định của từng system role |
 | 400 | `SystemAdminSeeder` | `ADMIN_SEED_ENABLED` (mặc định bật) | Account bootstrap và gán role `SYSTEM_ADMIN` đã có sẵn |
-| 500 | `UserSeeder` | `USER_SEED_ENABLED` (mặc định **tắt**) | 3 account demo để kiểm thử phân quyền |
 
-`UserSeeder` là seeder duy nhất tạo nhân viên và tài khoản giả, nên mặc định tắt. Ba account nó
-tạo khi bật:
-
-| Username | Nhân viên | Role assignment |
-|---|---|---|
-| `employee01` | `EMP001` | `EMPLOYEE` / `SELF` |
-| `hr01` | `EMP002` | `EMPLOYEE` / `SELF` và `HR_MANAGER` / `COMPANY` |
-| `payroll01` | `EMP003` | `EMPLOYEE` / `SELF` và `PAYROLL_ACCOUNTANT` / `COMPANY` |
-
-Mọi account demo đều nhận `EMPLOYEE` / `SELF` trước, rồi mới nhận thêm role nghiệp vụ nếu có.
-Đây là minh họa cho tính cộng dồn của role assignment: quyền tự phục vụ và quyền nghiệp vụ là
-hai assignment riêng, thu hồi cái này không ảnh hưởng cái kia.
+Không seeder nào tạo nhân viên hay tài khoản nghiệp vụ; mọi người dùng HRM đi qua chuỗi bootstrap
+Company Owner rồi được tạo qua API.
 
 Đây là dữ liệu thật đang có, khác với bộ dữ liệu đề xuất ở mục 6: seeder chưa tạo các nhóm cấp
 `TEAM`, các chức danh `HR_HEAD`/`HR_INTERN`, role `DEPARTMENT_MANAGER` hay các account theo phòng
