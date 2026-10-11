@@ -96,24 +96,28 @@ apps/web/
 │   ├── globals.css                   # CSS toàn ứng dụng
 │   ├── login/page.tsx                # Đăng nhập HRM Workspace
 │   ├── activate/                      # Kích hoạt account bằng token mời
-│   ├── dashboard/page.tsx            # Dashboard HRM Workspace
-│   ├── employees/                     # Danh sách và chi tiết nhân viên
-│   ├── accounts/page.tsx              # Vòng đời tài khoản đăng nhập
-│   ├── organization/page.tsx          # Cơ cấu tổ chức
-│   ├── attendance/page.tsx            # Chấm công
-│   ├── leave-requests/page.tsx         # Đơn nghỉ phép
-│   ├── payslips/page.tsx               # Lương, bảo hiểm, thuế và kỳ lương
-│   ├── rbac/page.tsx                   # Custom role tại HRM Workspace
-│   ├── role-grant/page.tsx             # Gán role trực tiếp theo quyền
-│   ├── role-requests/page.tsx          # Yêu cầu cấp role
-│   ├── reports/workforce/page.tsx    # Báo cáo nhân sự và phân bố lương
+│   ├── (hrm)/                        # Route group HRM Workspace, không xuất hiện trên URL
+│   │   ├── layout.tsx                # Khung chung: tải phiên một lần, sidebar HRM
+│   │   ├── dashboard/page.tsx        # Dashboard HRM Workspace
+│   │   ├── employees/                # Danh sách và chi tiết nhân viên
+│   │   ├── accounts/page.tsx         # Vòng đời tài khoản đăng nhập
+│   │   ├── organization/page.tsx     # Cơ cấu tổ chức
+│   │   ├── attendance/page.tsx       # Chấm công
+│   │   ├── leave-requests/page.tsx   # Đơn nghỉ phép
+│   │   ├── payslips/page.tsx         # Lương, bảo hiểm, thuế và kỳ lương
+│   │   ├── rbac/page.tsx             # Custom role tại HRM Workspace
+│   │   ├── role-grant/page.tsx       # Gán role trực tiếp theo quyền
+│   │   ├── role-requests/page.tsx    # Yêu cầu cấp role
+│   │   └── reports/workforce/page.tsx # Báo cáo nhân sự và phân bố lương
 │   ├── admin/
-│   │   ├── login/page.tsx            # Đăng nhập Admin Console
-│   │   ├── page.tsx                  # Trang Admin Console
-│   │   ├── company-owner/page.tsx    # Bootstrap Company Owner
-│   │   ├── organization/page.tsx     # Quản trị tổ chức từ Admin Console
-│   │   ├── rbac/page.tsx             # Quản lý custom role
-│   │   └── role-grant/page.tsx       # Gán role quản trị
+│   │   ├── login/page.tsx            # Đăng nhập Admin Console, nằm ngoài khung Admin
+│   │   └── (console)/                # Route group Admin Console
+│   │       ├── layout.tsx            # Khung chung: tải phiên một lần, sidebar Admin
+│   │       ├── page.tsx              # Trang Admin Console
+│   │       ├── company-owner/page.tsx # Bootstrap Company Owner
+│   │       ├── organization/page.tsx # Quản trị tổ chức từ Admin Console
+│   │       ├── rbac/page.tsx         # Quản lý custom role
+│   │       └── role-grant/page.tsx   # Gán role quản trị
 │   └── api/
 │       ├── session/                  # BFF session cho người dùng HRM
 │       ├── admin-session/            # BFF session cho system admin
@@ -122,7 +126,7 @@ apps/web/
 │   ├── account/                      # Danh sách và vòng đời tài khoản
 │   ├── activation/                   # Màn hình kích hoạt account
 │   ├── admin/                        # Màn hình Admin Console
-│   ├── auth/                         # Component login, session và sidebar
+│   ├── auth/                         # Login, sidebar và PortalShell (khung + usePortalSession)
 │   ├── employee/                     # Danh sách, chi tiết và form hồ sơ nhân viên
 │   ├── organization/                 # Quản lý tổ chức, địa điểm, vị trí và ca
 │   ├── rbac/                         # Custom role tại HRM Workspace

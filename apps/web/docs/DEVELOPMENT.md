@@ -127,27 +127,36 @@ Dự án chưa cấu hình test runner tự động cho web. Trước khi bàn g
 app/
 ├── login/                    # Trang đăng nhập HRM
 ├── activate/                 # Kích hoạt tài khoản bằng token mời, không cần đăng nhập
-├── dashboard/                # Trang HRM sau đăng nhập
-├── employees/                # Hồ sơ nhân viên
-├── accounts/                 # Vòng đời tài khoản đăng nhập
-├── organization/             # Tổ chức và ca làm
-├── attendance/               # Chấm công
-├── leave-requests/           # Đơn nghỉ
-├── payslips/                 # Bảo hiểm, thuế và lương
-├── reports/workforce/        # Báo cáo nhân sự
-├── rbac/, role-grant/, role-requests/
-├── admin/login/              # Trang đăng nhập Admin
-├── admin/                    # Trang Admin và các module quản trị
+├── (hrm)/                    # Route group, không xuất hiện trên URL
+│   ├── layout.tsx            # Khung chung HRM: tải phiên một lần, sidebar
+│   ├── dashboard/            # Trang HRM sau đăng nhập
+│   ├── employees/            # Hồ sơ nhân viên
+│   ├── accounts/             # Vòng đời tài khoản đăng nhập
+│   ├── organization/         # Tổ chức và ca làm
+│   ├── attendance/           # Chấm công
+│   ├── leave-requests/       # Đơn nghỉ
+│   ├── payslips/             # Bảo hiểm, thuế và lương
+│   ├── reports/workforce/    # Báo cáo nhân sự
+│   └── rbac/, role-grant/, role-requests/
+├── admin/login/              # Trang đăng nhập Admin, nằm ngoài khung Admin
+├── admin/(console)/          # Trang Admin; layout.tsx là khung chung của Admin
 └── api/
     ├── session/              # BFF endpoints của HRM
     ├── admin-session/        # BFF endpoints của Admin
     └── account-activations/  # BFF kích hoạt tài khoản, không gắn portal
 components/                   # UI theo module nghiệp vụ
+├── auth/portal-shell.tsx     # PortalShell (khung dùng chung) và hook usePortalSession()
 lib/                          # API client, kiểu dữ liệu và auth helpers
 ├── api-schema.ts             # Type sinh từ openapi.json (npm run gen:api), không sửa tay
 openapi.json                  # Bản chụp spec OpenAPI do OpenApiSnapshotTest ghi, không sửa tay
 proxy.ts                      # Điều hướng sơ bộ dựa trên sự tồn tại của cookie
 ```
+
+Trang mới của một portal đặt trong `app/(hrm)/` hoặc `app/admin/(console)/` để tự nằm trong khung
+chung. Component của trang chỉ render nội dung riêng (tiêu đề và phần thân); phiên đăng nhập, quyền
+và hàm `onSessionExpired` lấy từ `usePortalSession()`. Sidebar tự đánh dấu mục đang mở theo URL; khi
+thêm mục menu, sửa `components/auth/portal-sidebar.tsx` và thêm đường dẫn vào `HRM_PAGES` cùng
+`config.matcher` trong `proxy.ts`.
 
 ## Lưu ý khi triển khai
 
