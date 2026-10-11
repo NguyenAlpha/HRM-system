@@ -28,7 +28,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import type { Portal } from "@/lib/auth/types"
-import { employeeRequest, type EmployeeSummary, type Page as EmployeePage } from "@/lib/employee"
+import { employeeRequest, type EmployeeSummary } from "@/lib/employee"
+import type { Page } from "@/lib/pagination"
 import {
   createPermissionOverride,
   listAccountRoleAssignments,
@@ -133,7 +134,7 @@ export function PermissionOverrideManager({ portal, onSessionExpired }: {
 
   useEffect(() => {
     let active = true
-    employeeRequest<EmployeePage<EmployeeSummary>>(portal, "?page=0&size=100")
+    employeeRequest<Page<EmployeeSummary>>(portal, "?page=0&size=100")
       .then((page) => {
         if (active) setEmployees(page.content.filter((employee) => employee.account))
       })

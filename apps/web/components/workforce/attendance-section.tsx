@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { apiErrorMessage } from "@/lib/api-helpers"
+import type { Page } from "@/lib/pagination"
 import {
   ATTENDANCE_STATUS_LABELS,
   type AttendanceRecord,
@@ -35,7 +36,6 @@ import {
   today,
   useWorkforceAction,
   workforceApi,
-  type Paged,
   type WorkforceContext,
 } from "@/components/workforce/workforce-shared"
 
@@ -74,7 +74,7 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
     let active = true
     Promise.all([
       employeeId > 0 && canReadAttendance
-        ? workforceApi<Paged<AttendanceRecord>>(`attendance/employees/${employeeId}?from=${first}&to=${last}&size=100`)
+        ? workforceApi<Page<AttendanceRecord>>(`attendance/employees/${employeeId}?from=${first}&to=${last}&size=100`)
           .then((page) => page.content)
         : Promise.resolve([]),
       canReadHolidays ? workforceApi<CompanyHoliday[]>(`company-holidays?from=${first}&to=${last}`) : Promise.resolve([]),

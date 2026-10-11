@@ -40,9 +40,9 @@ import {
   type EmployeeDetail,
   type EmployeeSummary,
   type EmploymentType,
-  type Page,
 } from "@/lib/employee"
 import { positionsForOrganizationUnit } from "@/lib/organization-position-filter"
+import type { Page } from "@/lib/pagination"
 import {
   getJobPositionOptions,
   getOrganizationUnitOptions,

@@ -91,7 +91,7 @@ Module dùng type sinh ra định nghĩa alias trong file `lib/<module>.ts`, ví
 `type EmployeeDetail = components["schemas"]["EmployeeDetailResponse"]`, và component chỉ import
 alias đó; body gửi lên API được kiểm bằng `satisfies` với type request tương ứng. Mọi module đã
 dùng type sinh ra; chỉ còn viết tay các type không phải DTO: `ApiEnvelope<T>` và `Page<T>` (spec
-sinh một bản riêng cho từng `T`), state/filter của giao diện như `ReportFilters`.
+sinh một bản riêng cho từng `T`; `Page<T>` định nghĩa một lần ở `lib/pagination.ts`), state/filter của giao diện như `ReportFilters`.
 
 Khi thêm DTO mới, gắn `@Nullable` cho field có thể null (xem
 [quy ước null](../../../api/docs/api/README.md#openapi-và-swagger-ui)); thiếu annotation thì type
@@ -154,8 +154,9 @@ proxy.ts                      # Điều hướng sơ bộ dựa trên sự tồn
 ```
 
 Trang mới của một portal đặt trong `app/(hrm)/` hoặc `app/admin/(console)/` để tự nằm trong khung
-chung. Component của trang chỉ render nội dung riêng (tiêu đề và phần thân); phiên đăng nhập, quyền
-và hàm `onSessionExpired` lấy từ `usePortalSession()`. Sidebar tự đánh dấu mục đang mở theo URL; khi
+chung. Component của trang chỉ render nội dung riêng: tiêu đề dùng `PageHeader`
+(`components/portal/page-header.tsx`, tự đổi dòng HRM WORKSPACE/ADMIN CONSOLE và link "Về tổng quan"
+theo portal) và phần thân; phiên đăng nhập, quyền và hàm `onSessionExpired` lấy từ `usePortalSession()`. Sidebar tự đánh dấu mục đang mở theo URL; khi
 thêm mục menu, sửa `components/portal/portal-sidebar.tsx` và thêm đường dẫn vào `HRM_PAGES` cùng
 `config.matcher` trong `proxy.ts`.
 

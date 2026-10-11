@@ -46,10 +46,10 @@ import {
   type EmployeeSummary,
   type EmploymentType,
   type Gender,
-  type Page,
 } from "@/lib/employee"
 import { positionsForOrganizationUnit } from "@/lib/organization-position-filter"
 import { isEligibleEmployeeBirthDate } from "@/lib/employee-birth-date"
+import type { Page } from "@/lib/pagination"
 import {
   getJobPositionOptions,
   getOrganizationUnitOptions,

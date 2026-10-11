@@ -36,11 +36,11 @@ import {
   today,
   useWorkforceAction,
   workforceApi,
-  type Paged,
   type WorkforceContext,
 } from "@/components/workforce/workforce-shared"
 import { apiErrorMessage } from "@/lib/api-helpers"
 import { authorizedDownload } from "@/lib/auth/client"
+import type { Page } from "@/lib/pagination"
 import {
   PAYROLL_PERIOD_STATUS_LABELS,
   type PayrollPeriod,
@@ -90,10 +90,10 @@ export function PayrollSection({ employeeId, permissions, month }: WorkforceCont
       compensation ? workforceApi<PayrollProfile[]>(`compensation/employees/${employeeId}/payroll-profiles`) : Promise.resolve([]),
       compensation ? workforceApi<TaxDependent[]>(`compensation/employees/${employeeId}/tax-dependents`) : Promise.resolve([]),
       employeeId > 0 && canReadPayslip
-        ? workforceApi<Paged<Payslip>>(`payroll/employees/${employeeId}/payslips?size=100`).then((page) => page.content)
+        ? workforceApi<Page<Payslip>>(`payroll/employees/${employeeId}/payslips?size=100`).then((page) => page.content)
         : Promise.resolve([]),
       canReadPeriods
-        ? workforceApi<Paged<PayrollPeriod>>("payroll/periods?size=100&sort=periodStart,desc").then((page) => page.content)
+        ? workforceApi<Page<PayrollPeriod>>("payroll/periods?size=100&sort=periodStart,desc").then((page) => page.content)
         : Promise.resolve([]),
     ])
       .then(([history, loadedProfiles, loadedDependents, loadedPayslips, loadedPeriods]) => {

@@ -30,12 +30,12 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import type { Portal } from "@/lib/auth/types"
+import type { Page } from "@/lib/pagination"
 import {
   isSessionExpired,
   PERMISSION_MODULES,
   rbacErrorMessage,
   rbacRequest,
-  type Page,
   type Permission,
 } from "@/lib/rbac"
 

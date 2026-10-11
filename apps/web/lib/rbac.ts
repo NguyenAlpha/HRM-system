@@ -3,6 +3,7 @@
 import type { components } from "@/lib/api-schema"
 import { authorizedRequest } from "@/lib/auth/client"
 import { AuthApiError, type Portal } from "@/lib/auth/types"
+import type { Page } from "@/lib/pagination"
 
 // DTO types come from the API's OpenAPI spec; run `npm run gen:api` after changing them.
 type Schemas = components["schemas"]
@@ -28,13 +29,6 @@ const PERMISSION_MODULE_SET: Record<PermissionModule, true> = {
   REPORT: true,
 }
 export const PERMISSION_MODULES = Object.keys(PERMISSION_MODULE_SET) as PermissionModule[]
-
-export interface Page<T> {
-  content: T[]
-  number: number
-  totalElements: number
-  totalPages: number
-}
 
 export function rbacRequest<T>(portal: Portal, path: string, init?: RequestInit): Promise<T> {
   return authorizedRequest<T>(portal, `/rbac${path}`, { ...init, cache: "no-store" })

@@ -75,10 +75,10 @@ import {
   type EmployeeDetail,
   type EmployeeSummary,
   type Gender,
-  type Page,
   type UpdateEmployeeInput,
 } from "@/lib/employee"
 import { isEligibleEmployeeBirthDate } from "@/lib/employee-birth-date"
+import type { Page } from "@/lib/pagination"
 
 const GENDER_NONE = "NONE"
 const EDU_NONE = "NONE"

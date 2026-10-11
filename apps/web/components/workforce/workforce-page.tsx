@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 
+import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -54,29 +55,22 @@ export function WorkforcePage({ section }: { section: Section }) {
 
   return (
     <>
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="eyebrow">HRM WORKSPACE</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
-          <p className="mt-1.5 max-w-xl text-[var(--muted-ink)]">{description}</p>
-        </div>
-        {canUseSection && (
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="grid gap-1.5">
-              <Label htmlFor="workforce-employee">Mã nhân viên (ID)</Label>
-              <Input id="workforce-employee" type="number" min="1" className="w-36" value={employeeInput}
-                disabled={!canViewOthers} onChange={(event) => setEmployeeInput(event.target.value)} />
-            </div>
-            {section !== "payroll" && (
-              <div className="grid gap-1.5">
-                <Label htmlFor="workforce-month">{section === "leave" ? "Năm phép (theo tháng)" : "Tháng"}</Label>
-                <Input id="workforce-month" type="month" className="w-44" value={month}
-                  onChange={(event) => { if (event.target.value) setMonth(event.target.value) }} />
-              </div>
-            )}
+      <PageHeader title={title} description={description} alignActions="end" actions={canUseSection && (
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="grid gap-1.5">
+            <Label htmlFor="workforce-employee">Mã nhân viên (ID)</Label>
+            <Input id="workforce-employee" type="number" min="1" className="w-36" value={employeeInput}
+              disabled={!canViewOthers} onChange={(event) => setEmployeeInput(event.target.value)} />
           </div>
-        )}
-      </header>
+          {section !== "payroll" && (
+            <div className="grid gap-1.5">
+              <Label htmlFor="workforce-month">{section === "leave" ? "Năm phép (theo tháng)" : "Tháng"}</Label>
+              <Input id="workforce-month" type="month" className="w-44" value={month}
+                onChange={(event) => { if (event.target.value) setMonth(event.target.value) }} />
+            </div>
+          )}
+        </div>
+      )} />
 
       <div className="mt-6">
         {!canUseSection && <p role="alert">Tài khoản chưa có quyền truy cập mục này.</p>}

@@ -3,6 +3,7 @@
 import type { components } from "@/lib/api-schema"
 import { authorizedRequest } from "@/lib/auth/client"
 import type { Portal } from "@/lib/auth/types"
+import type { Page } from "@/lib/pagination"
 
 // DTO types come from the API's OpenAPI spec; run `npm run gen:api` after changing them.
 type Schemas = components["schemas"]
@@ -53,13 +54,6 @@ export const PERMISSION_OVERRIDE_STATUS_LABELS: Record<PermissionOverrideStatus,
   ACTIVE: "Đang hiệu lực",
   EXPIRED: "Đã hết hạn",
   REVOKED: "Đã thu hồi",
-}
-
-export interface Page<T> {
-  content: T[]
-  number: number
-  totalElements: number
-  totalPages: number
 }
 
 function roleAssignmentRequestApi<T>(path: string, init?: RequestInit): Promise<T> {
