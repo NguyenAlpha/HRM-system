@@ -139,7 +139,9 @@ sửa, xóa mềm bằng `deleted_at`.
 | Đơn vị tổ chức | `/api/organization-units` | Cây `BOARD` / `DEPARTMENT` / `TEAM`, có `/tree` |
 | Địa điểm làm việc | `/api/work-locations` | Cây `HEAD_OFFICE` / `BRANCH` / `WAREHOUSE`, có `/tree` |
 | Chức danh | `/api/job-positions` | Có cờ `is_managerial`, không tự cấp quyền |
-| Ca làm việc | `/api/work-shifts` | Giờ vào/ra, phút nghỉ, công chuẩn, ca qua đêm |
+| Ca làm việc | `/api/work-shifts` | Giờ vào/ra, phút và giờ bắt đầu nghỉ, công chuẩn, ca qua đêm |
+
+Cả bốn danh mục có tab riêng trên `/organization` (và `/admin/organization`) để xem, tạo, sửa, xóa.
 
 Đơn vị và địa điểm là hai chiều độc lập: một nhân viên thuộc phòng Nhân sự vẫn có thể làm ở chi
 nhánh. Chức danh quản lý không tự sinh quyền quản lý trong hệ thống.

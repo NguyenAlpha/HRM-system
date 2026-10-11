@@ -10,12 +10,13 @@ type Schemas = components["schemas"]
 export type OrganizationUnit = Schemas["OrganizationUnitResponse"]
 export type WorkLocation = Schemas["WorkLocationResponse"]
 export type JobPosition = Schemas["JobPositionResponse"]
+export type WorkShift = Schemas["WorkShiftResponse"]
 
 // The option lists call the same endpoints with ?active=true; dropdowns only read these fields.
 export type OrganizationUnitOption = Pick<OrganizationUnit, "id" | "code" | "name">
 export type WorkLocationOption = Pick<WorkLocation, "id" | "code" | "name">
 export type JobPositionOption = Pick<JobPosition, "id" | "code" | "title">
-export type WorkShiftOption = Pick<Schemas["WorkShiftResponse"], "id" | "code" | "name">
+export type WorkShiftOption = Pick<WorkShift, "id" | "code" | "name">
 
 export type CreateOrganizationUnitInput = Schemas["CreateOrganizationUnitRequest"]
 export type UpdateOrganizationUnitInput = Schemas["UpdateOrganizationUnitRequest"]
@@ -23,6 +24,8 @@ export type CreateWorkLocationInput = Schemas["CreateWorkLocationRequest"]
 export type UpdateWorkLocationInput = Schemas["UpdateWorkLocationRequest"]
 export type CreateJobPositionInput = Schemas["CreateJobPositionRequest"]
 export type UpdateJobPositionInput = Schemas["UpdateJobPositionRequest"]
+export type CreateWorkShiftInput = Schemas["CreateWorkShiftRequest"]
+export type UpdateWorkShiftInput = Schemas["UpdateWorkShiftRequest"]
 
 export type OrganizationUnitType = OrganizationUnit["unitType"]
 export type LocationType = WorkLocation["locationType"]
@@ -118,4 +121,20 @@ export function updateJobPosition(portal: Portal, id: number, input: UpdateJobPo
 
 export function deleteJobPosition(portal: Portal, id: number): Promise<null> {
   return referenceMutation<null>(portal, `job-positions/${id}`, "DELETE")
+}
+
+export function listWorkShifts(portal: Portal): Promise<WorkShift[]> {
+  return referenceRequest<WorkShift[]>(portal, "work-shifts")
+}
+
+export function createWorkShift(portal: Portal, input: CreateWorkShiftInput): Promise<WorkShift> {
+  return referenceMutation<WorkShift>(portal, "work-shifts", "POST", input)
+}
+
+export function updateWorkShift(portal: Portal, id: number, input: UpdateWorkShiftInput): Promise<WorkShift> {
+  return referenceMutation<WorkShift>(portal, `work-shifts/${id}`, "PUT", input)
+}
+
+export function deleteWorkShift(portal: Portal, id: number): Promise<null> {
+  return referenceMutation<null>(portal, `work-shifts/${id}`, "DELETE")
 }

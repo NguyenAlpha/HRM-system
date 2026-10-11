@@ -1,6 +1,6 @@
 # API Reference — Work Shift
 
-Quản lý danh mục ca làm việc dùng trong phân công nhân sự, chấm công và tính lương. Ca làm việc là dữ liệu nghiệp vụ, không phải role hoặc permission trong RBAC.
+Quản lý danh mục ca làm việc dùng trong phân công nhân sự, chấm công và tính lương. Ca làm việc là dữ liệu nghiệp vụ, không phải role hoặc permission trong RBAC. Trên web, tab **Ca làm việc** ở `/organization` và `/admin/organization` dùng các endpoint này.
 
 ---
 
