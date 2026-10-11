@@ -44,6 +44,10 @@ public class WorkShift {
     @Column(name = "break_minutes", nullable = false)
     private Integer breakMinutes;
 
+    /** Null exactly when {@code breakMinutes} is zero. */
+    @Column(name = "break_start_time")
+    private LocalTime breakStartTime;
+
     @Column(name = "standard_work_minutes", nullable = false)
     private Integer standardWorkMinutes;
 

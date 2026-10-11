@@ -71,6 +71,7 @@ public class WorkShiftService {
             request.startTime(),
             request.endTime(),
             request.breakMinutes(),
+            request.breakStartTime(),
             request.standardWorkMinutes(),
             request.graceLateMinutes(),
             request.crossesMidnight()
@@ -83,6 +84,7 @@ public class WorkShiftService {
             .startTime(request.startTime())
             .endTime(request.endTime())
             .breakMinutes(request.breakMinutes())
+            .breakStartTime(request.breakStartTime())
             .standardWorkMinutes(request.standardWorkMinutes())
             .graceLateMinutes(request.graceLateMinutes())
             .crossesMidnight(request.crossesMidnight())
@@ -104,6 +106,7 @@ public class WorkShiftService {
             request.startTime(),
             request.endTime(),
             request.breakMinutes(),
+            request.breakStartTime(),
             request.standardWorkMinutes(),
             request.graceLateMinutes(),
             request.crossesMidnight()
@@ -118,6 +121,7 @@ public class WorkShiftService {
         shift.setStartTime(request.startTime());
         shift.setEndTime(request.endTime());
         shift.setBreakMinutes(request.breakMinutes());
+        shift.setBreakStartTime(request.breakStartTime());
         shift.setStandardWorkMinutes(request.standardWorkMinutes());
         shift.setGraceLateMinutes(request.graceLateMinutes());
         shift.setCrossesMidnight(request.crossesMidnight());
@@ -143,6 +147,7 @@ public class WorkShiftService {
         LocalTime startTime,
         LocalTime endTime,
         int breakMinutes,
+        LocalTime breakStartTime,
         int standardWorkMinutes,
         int graceLateMinutes,
         boolean crossesMidnight
@@ -164,6 +169,15 @@ public class WorkShiftService {
         if (breakMinutes >= durationMinutes) {
             throw scheduleInvalid("breakMinutes must be shorter than the shift duration", "breakMinutes");
         }
+        if ((breakMinutes == 0) != (breakStartTime == null)) {
+            throw scheduleInvalid("breakStartTime is required exactly when breakMinutes is positive", "breakStartTime");
+        }
+        if (breakStartTime != null) {
+            long breakOffset = Math.floorMod(Duration.between(startTime, breakStartTime).toMinutes(), MINUTES_PER_DAY);
+            if (breakOffset == 0 || breakOffset + breakMinutes >= durationMinutes) {
+                throw scheduleInvalid("The break must lie strictly inside the shift", "breakStartTime");
+            }
+        }
         if (standardWorkMinutes > durationMinutes - breakMinutes) {
             throw scheduleInvalid(
                 "standardWorkMinutes exceeds the shift duration after breaks",
@@ -179,6 +193,7 @@ public class WorkShiftService {
         return !shift.getStartTime().equals(request.startTime())
             || !shift.getEndTime().equals(request.endTime())
             || !shift.getBreakMinutes().equals(request.breakMinutes())
+            || !Objects.equals(shift.getBreakStartTime(), request.breakStartTime())
             || !shift.getStandardWorkMinutes().equals(request.standardWorkMinutes())
             || !shift.getGraceLateMinutes().equals(request.graceLateMinutes())
             || !shift.getCrossesMidnight().equals(request.crossesMidnight());
@@ -192,6 +207,7 @@ public class WorkShiftService {
             shift.getStartTime(),
             shift.getEndTime(),
             shift.getBreakMinutes(),
+            shift.getBreakStartTime(),
             shift.getStandardWorkMinutes(),
             shift.getGraceLateMinutes(),
             shift.getCrossesMidnight(),

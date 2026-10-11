@@ -3,6 +3,8 @@ package com.htttdn.hrm.dto.response.workshift;
 import java.time.Instant;
 import java.time.LocalTime;
 
+import jakarta.annotation.Nullable;
+
 public record WorkShiftResponse(
     Long id,
     String code,
@@ -10,6 +12,7 @@ public record WorkShiftResponse(
     LocalTime startTime,
     LocalTime endTime,
     Integer breakMinutes,
+    @Nullable LocalTime breakStartTime,
     Integer standardWorkMinutes,
     Integer graceLateMinutes,
     Boolean crossesMidnight,

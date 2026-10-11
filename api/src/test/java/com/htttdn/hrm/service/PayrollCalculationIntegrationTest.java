@@ -77,8 +77,9 @@ class PayrollCalculationIntegrationTest {
             INSERT INTO job_positions(code, title) VALUES (?, 'Chuyên viên kiểm thử') RETURNING id
             """, positionCode);
         Long shiftId = insertId("""
-            INSERT INTO work_shifts(code, name, start_time, end_time, break_minutes, standard_work_minutes)
-            VALUES (?, 'Ca hành chính', '08:00', '17:00', 60, 480) RETURNING id
+            INSERT INTO work_shifts(code, name, start_time, end_time, break_minutes, break_start_time,
+                standard_work_minutes)
+            VALUES (?, 'Ca hành chính', '08:00', '17:00', 60, '12:00', 480) RETURNING id
             """, "PIT_S_" + suffix);
 
         employeeId = insertId("""

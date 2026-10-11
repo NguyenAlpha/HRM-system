@@ -36,6 +36,7 @@ public class WorkShiftSeeder implements ApplicationRunner {
             LocalTime.of(8, 0),
             LocalTime.of(17, 0),
             60,
+            LocalTime.of(12, 0),
             480,
             15,
             false
@@ -73,6 +74,7 @@ public class WorkShiftSeeder implements ApplicationRunner {
                 .startTime(definition.startTime())
                 .endTime(definition.endTime())
                 .breakMinutes(definition.breakMinutes())
+                .breakStartTime(definition.breakStartTime())
                 .standardWorkMinutes(definition.standardWorkMinutes())
                 .graceLateMinutes(definition.graceLateMinutes())
                 .crossesMidnight(definition.crossesMidnight())
@@ -96,6 +98,7 @@ public class WorkShiftSeeder implements ApplicationRunner {
         LocalTime startTime,
         LocalTime endTime,
         int breakMinutes,
+        LocalTime breakStartTime,
         int standardWorkMinutes,
         int graceLateMinutes,
         boolean crossesMidnight
