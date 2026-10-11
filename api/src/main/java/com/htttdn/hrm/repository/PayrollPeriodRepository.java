@@ -16,7 +16,7 @@ import jakarta.persistence.LockModeType;
 
 public interface PayrollPeriodRepository extends JpaRepository<PayrollPeriod, Long> {
 
-    Optional<PayrollPeriod> findByYearAndMonth(Short year, Short month);
+    boolean existsByYearAndMonthAndStatusNot(Short year, Short month, PayrollPeriodStatus status);
 
     Optional<PayrollPeriod> findFirstByPeriodStartLessThanEqualAndPeriodEndGreaterThanEqual(
         LocalDate periodStart, LocalDate periodEnd);
@@ -38,6 +38,7 @@ public interface PayrollPeriodRepository extends JpaRepository<PayrollPeriod, Lo
     @Query("""
         SELECT period FROM PayrollPeriod period
         WHERE period.periodStart <= :date AND period.periodEnd >= :date
+          AND period.status <> com.htttdn.hrm.entity.enums.PayrollPeriodStatus.CANCELLED
         """)
     Optional<PayrollPeriod> findContainingDateForUpdate(@Param("date") LocalDate date);
 

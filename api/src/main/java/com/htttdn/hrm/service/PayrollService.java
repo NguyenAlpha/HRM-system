@@ -115,7 +115,8 @@ public class PayrollService {
     @PreAuthorize("hasAuthority('payroll.calculate')")
     public PayrollPeriodResponse createPeriod(CreatePayrollPeriodRequest request) {
         employeeAccessScopeService.requireCompanyWide("payroll.calculate");
-        if (payrollPeriodRepository.findByYearAndMonth(request.year(), request.month()).isPresent()) {
+        if (payrollPeriodRepository.existsByYearAndMonthAndStatusNot(request.year(), request.month(),
+            PayrollPeriodStatus.CANCELLED)) {
             throw new ConflictException(ErrorCode.CONFLICT, "Payroll period already exists for " + request.year() + "-" + request.month());
         }
 
