@@ -30,6 +30,8 @@ import com.htttdn.hrm.repository.LeaveEntitlementRuleRepository;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
+import jakarta.annotation.Nullable;
+
 /**
  * Annual leave quota. Only {@link LeaveType#ANNUAL} draws on it; sick, maternity, unpaid and
  * other leave are tracked by their own workflows and never reduce the balance.
@@ -295,7 +297,7 @@ public class LeaveEntitlementService {
         int grantedMinutes,
         int carriedOverMinutes,
         int adjustmentMinutes,
-        String adjustmentReason,
+        @Nullable String adjustmentReason,
         int standardDayMinutes,
         int usedMinutes,
         int pendingMinutes,

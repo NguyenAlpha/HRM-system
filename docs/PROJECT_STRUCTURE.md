@@ -142,6 +142,7 @@ apps/web/
 │   ├── report-server.ts              # BFF gọi Report API
 │   ├── role-assignment.ts            # Client role assignment và yêu cầu cấp role
 │   ├── utils.ts                      # Tiện ích dùng chung
+│   ├── workforce.ts                  # Kiểu dữ liệu chấm công, nghỉ phép và lương
 │   └── auth/
 │       ├── client.ts                 # Helper phía client
 │       ├── config.ts                 # Cấu hình cookie và auth

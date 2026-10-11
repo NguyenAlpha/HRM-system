@@ -5,21 +5,23 @@ import java.time.LocalDate;
 
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 
+import jakarta.annotation.Nullable;
+
 public record PayrollPeriodResponse(
     Long id,
     Short year,
     Short month,
     LocalDate periodStart,
     LocalDate periodEnd,
-    LocalDate taxPaymentDate,
+    @Nullable LocalDate taxPaymentDate,
     PayrollPeriodStatus status,
-    Long calculatedByAccountId,
-    Instant calculatedAt,
-    Long approvedByAccountId,
-    Instant approvedAt,
-    Long paidByAccountId,
-    Instant paidAt,
-    Long lockedByAccountId,
-    Instant lockedAt
+    @Nullable Long calculatedByAccountId,
+    @Nullable Instant calculatedAt,
+    @Nullable Long approvedByAccountId,
+    @Nullable Instant approvedAt,
+    @Nullable Long paidByAccountId,
+    @Nullable Instant paidAt,
+    @Nullable Long lockedByAccountId,
+    @Nullable Instant lockedAt
 ) {
 }

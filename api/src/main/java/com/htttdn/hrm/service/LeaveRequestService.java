@@ -24,6 +24,8 @@ import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
+import jakarta.annotation.Nullable;
+
 @Service
 @Transactional
 public class LeaveRequestService {
@@ -310,12 +312,12 @@ public class LeaveRequestService {
     public record CreateLeaveCommand(
         Long employeeId,
         LeaveType leaveType,
-        LeaveSalaryTreatment salaryTreatment,
+        @Nullable LeaveSalaryTreatment salaryTreatment,
         Instant startAt,
         Instant endAt,
         Integer requestedMinutes,
         String reason,
-        String attachmentUrl
+        @Nullable String attachmentUrl
     ) {
     }
 
@@ -328,12 +330,12 @@ public class LeaveRequestService {
         Instant endAt,
         Integer requestedMinutes,
         String reason,
-        String attachmentUrl,
+        @Nullable String attachmentUrl,
         LeaveRequestStatus status,
-        Instant submittedAt,
-        Long reviewedByAccountId,
-        String reviewComment,
-        Instant reviewedAt,
+        @Nullable Instant submittedAt,
+        @Nullable Long reviewedByAccountId,
+        @Nullable String reviewComment,
+        @Nullable Instant reviewedAt,
         Instant createdAt,
         Instant updatedAt
     ) {

@@ -27,6 +27,8 @@ import com.htttdn.hrm.repository.PayslipItemRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
+import jakarta.annotation.Nullable;
+
 @Service
 @Transactional
 public class EmployeeSalaryHistoryService {
@@ -214,8 +216,8 @@ public class EmployeeSalaryHistoryService {
     public record SetSalaryCommand(
         BigDecimal baseSalary,
         LocalDate effectiveFrom,
-        String reason,
-        String note
+        @Nullable String reason,
+        @Nullable String note
     ) {
     }
 
@@ -224,10 +226,10 @@ public class EmployeeSalaryHistoryService {
         Long employeeId,
         BigDecimal baseSalary,
         LocalDate effectiveFrom,
-        LocalDate effectiveTo,
+        @Nullable LocalDate effectiveTo,
         Long approvedByAccountId,
-        String reason,
-        String note,
+        @Nullable String reason,
+        @Nullable String note,
         Instant createdAt
     ) {
     }

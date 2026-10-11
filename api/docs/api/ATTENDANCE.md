@@ -14,6 +14,7 @@ Xem bản ghi qua `GET /api/attendance/{id}` hoặc `GET /api/attendance/employe
 
 ## Quy tắc tính
 
+- `scheduledMinutes` là số phút công chuẩn của ngày theo ca (đã trừ `breakMinutes`), trả kèm mỗi bản ghi công; `payableMinutes` khi điều chỉnh không được vượt giá trị này.
 - `workedMinutes` là khoảng chấm vào/ra trừ `breakMinutes` của ca, không âm.
 - `payableMinutes` là phần thời gian nằm trong ca dự kiến, trừ `breakMinutes`, tối đa bằng số phút công chuẩn; tăng ca đã duyệt được tính riêng. Giờ chấm vào Chủ nhật hoặc ngày lễ không thành phút công thường, chỉ được trả khi duyệt tăng ca.
 - Kỳ lương dùng lịch thứ 2 đến thứ 7, trừ ngày lễ, và yêu cầu bản ghi công đã được xử lý cho từng ngày đó. Thiếu ngày hoặc còn `MISSING_PUNCH` thì không chuyển kỳ sang `CALCULATED`. Lương cơ bản áp dụng mức lương có hiệu lực theo từng ngày; số tiền mỗi ngày bằng lương tháng nhân phút được trả lương, chia cho số ngày làm việc chuẩn của cả tháng và số phút chuẩn của ca ngày đó. Phụ cấp chức vụ và thâm niên cũng chia theo phút được trả lương: nghỉ có lương được tính, nghỉ không lương không được tính. Cách này chia tỷ lệ khi vào làm giữa tháng.
