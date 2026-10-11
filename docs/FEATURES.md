@@ -258,7 +258,8 @@ Báo cáo lương chỉ trả số liệu tổng hợp theo khoảng, không tr�
 ## 11. Chưa có
 
 - Lịch làm việc cố định thứ 2–thứ 7; chưa có lịch cá nhân hoặc xoay ca theo ngày.
-- Mỗi nhân viên mỗi ngày chỉ một cặp vào/ra và một đơn nghỉ; nghỉ nửa ngày cần HR đối soát tay.
+- Mỗi nhân viên mỗi ngày chỉ một cặp vào/ra và một đơn nghỉ. Nghỉ nửa ngày rồi đi làm nửa còn lại được
+  tính đủ công tự động, nhưng chưa có hai đơn khác loại trong cùng một ngày.
 - Chưa có phụ trội ca đêm, thưởng, hoa hồng, truy thu, hoàn thuế hay quyết toán năm.
 - Chưa hỗ trợ người không cư trú thuế.
 - Quy tắc thuế và bảo hiểm chỉ nạp đến hết 2026, phải thêm bằng migration khi chính sách đổi.

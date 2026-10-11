@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Optional;
 import java.util.List;
 
@@ -215,13 +216,80 @@ class AttendanceServiceTest {
         assertThrows(ConflictException.class, () -> service().checkOut(new CheckOutRequest(2L, date)));
     }
 
+    @Test
+    void morningLeaveApprovedAfterAfternoonWorkCompletesTheDay() {
+        LocalDate date = LocalDate.of(2026, 1, 15);
+        // 08:00-17:00 in Asia/Ho_Chi_Minh, break 12:00-13:00; worked 13:00-17:00.
+        AttendanceRecord record = officeDay(date, "2026-01-15T06:00:00Z", "2026-01-15T10:00:00Z");
+        LeaveRequest leave = leave(record, "2026-01-15T01:00:00Z", "2026-01-15T05:00:00Z");
+        stubOfficeDay(record, date);
+
+        service().applyApprovedLeave(leave);
+
+        assertEquals(240, record.getLeaveMinutes());
+        assertEquals(0, record.getLateMinutes());
+        assertEquals(0, record.getEarlyLeaveMinutes());
+        assertEquals(240, record.getWorkedMinutes());
+        assertEquals(480, record.getPayableMinutes());
+        assertEquals(AttendanceStatus.PRESENT, record.getStatus());
+    }
+
+    @Test
+    void afternoonLeaveSpanningTheBreakCountsOnlyWorkMinutes() {
+        LocalDate date = LocalDate.of(2026, 1, 15);
+        // Worked 08:00-12:00; leave filed 12:00-17:00 covers the break, which is not leave time.
+        AttendanceRecord record = officeDay(date, "2026-01-15T01:00:00Z", "2026-01-15T05:00:00Z");
+        LeaveRequest leave = leave(record, "2026-01-15T05:00:00Z", "2026-01-15T10:00:00Z");
+        stubOfficeDay(record, date);
+
+        service().applyApprovedLeave(leave);
+
+        assertEquals(240, record.getLeaveMinutes());
+        assertEquals(0, record.getEarlyLeaveMinutes());
+        assertEquals(480, record.getPayableMinutes());
+    }
+
+    private AttendanceRecord officeDay(LocalDate date, String checkIn, String checkOut) {
+        return AttendanceRecord.builder()
+            .id(1L)
+            .employee(Employee.builder().id(2L).build())
+            .workDate(date)
+            .shift(WorkShift.builder().id(3L).startTime(LocalTime.of(8, 0)).breakMinutes(60)
+                .breakStartTime(LocalTime.of(12, 0)).standardWorkMinutes(480).graceLateMinutes(15).build())
+            .scheduledStartAt(Instant.parse("2026-01-15T01:00:00Z"))
+            .scheduledEndAt(Instant.parse("2026-01-15T10:00:00Z"))
+            .scheduledMinutes(480)
+            .checkInAt(Instant.parse(checkIn))
+            .checkOutAt(Instant.parse(checkOut))
+            .workedMinutes(240)
+            .payableMinutes(240)
+            .status(AttendanceStatus.PRESENT)
+            .build();
+    }
+
+    private static LeaveRequest leave(AttendanceRecord record, String start, String end) {
+        return LeaveRequest.builder().id(5L).employee(record.getEmployee())
+            .startAt(Instant.parse(start)).endAt(Instant.parse(end)).requestedMinutes(240)
+            .salaryTreatment(LeaveSalaryTreatment.EMPLOYER_PAID).leaveType(LeaveType.ANNUAL).build();
+    }
+
+    private void stubOfficeDay(AttendanceRecord record, LocalDate date) {
+        when(attendanceCalendarService.scheduleFor(2L, date.minusDays(1), date))
+            .thenReturn(List.of(new AttendanceCalendarService.ScheduledDay(date, record.getShift(),
+                record.getScheduledStartAt(), record.getScheduledEndAt(), 480)));
+        when(attendanceRecordRepository.findByEmployeeIdAndWorkDateForUpdate(2L, date))
+            .thenReturn(Optional.of(record));
+        when(attendanceCalendarService.companyWorkDates(date, date)).thenReturn(List.of(date));
+    }
+
     private AttendanceRecord record(LocalDate date) {
         Instant now = Instant.now();
         return AttendanceRecord.builder()
             .id(1L)
             .employee(Employee.builder().id(2L).build())
             .workDate(date)
-            .shift(WorkShift.builder().id(3L).breakMinutes(60).standardWorkMinutes(480).build())
+            .shift(WorkShift.builder().id(3L).startTime(LocalTime.of(8, 0)).breakMinutes(60)
+                .breakStartTime(LocalTime.of(10, 0)).standardWorkMinutes(480).graceLateMinutes(0).build())
             .scheduledStartAt(now.minusSeconds(180 * 60))
             .scheduledEndAt(now.plusSeconds(300 * 60))
             .scheduledMinutes(480)
