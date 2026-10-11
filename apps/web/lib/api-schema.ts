@@ -27,9 +27,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_11"];
+        get: operations["list_12"];
         put?: never;
-        post: operations["create_10"];
+        post: operations["create_11"];
         delete?: never;
         options?: never;
         head?: never;
@@ -107,7 +107,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_12"];
+        get: operations["list_13"];
         put?: never;
         post: operations["assign_1"];
         delete?: never;
@@ -123,9 +123,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_13"];
+        get: operations["list_14"];
         put?: never;
-        post: operations["create_11"];
+        post: operations["create_12"];
         delete?: never;
         options?: never;
         head?: never;
@@ -379,9 +379,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_10"];
+        get: operations["list_11"];
         put?: never;
-        post: operations["create_9"];
+        post: operations["create_10"];
         delete?: never;
         options?: never;
         head?: never;
@@ -398,7 +398,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_5"];
+        delete: operations["delete_6"];
         options?: never;
         head?: never;
         patch?: never;
@@ -427,7 +427,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_9"];
+        get: operations["list_10"];
         put?: never;
         post: operations["set"];
         delete?: never;
@@ -491,9 +491,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_7"];
+        get: operations["list_8"];
         put?: never;
-        post: operations["create_8"];
+        post: operations["create_9"];
         delete?: never;
         options?: never;
         head?: never;
@@ -523,7 +523,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_8"];
+        get: operations["list_9"];
         put?: never;
         post: operations["assign"];
         delete?: never;
@@ -619,9 +619,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_6"];
+        get: operations["list_7"];
         put?: never;
-        post: operations["create_7"];
+        post: operations["create_8"];
         delete?: never;
         options?: never;
         head?: never;
@@ -717,7 +717,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_6"];
+        post: operations["create_7"];
         delete?: never;
         options?: never;
         head?: never;
@@ -731,7 +731,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_15"];
+        get: operations["list_16"];
         put?: never;
         post?: never;
         delete?: never;
@@ -843,9 +843,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_5"];
+        get: operations["list_6"];
         put?: never;
-        post: operations["create_5"];
+        post: operations["create_6"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1044,6 +1044,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payroll/periods/{periodId}/adjustments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_5"];
+        put?: never;
+        post: operations["create_5"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payroll/periods/{periodId}/adjustments/{adjustmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_5"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/permissions": {
         parameters: {
             query?: never;
@@ -1051,7 +1083,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_14"];
+        get: operations["list_15"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1638,6 +1670,11 @@ export interface components {
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
+        ApiResultListPayrollAdjustmentResponse: {
+            data: components["schemas"]["PayrollAdjustmentResponse"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
         ApiResultListPermissionOverrideOptionResponse: {
             data: components["schemas"]["PermissionOverrideOptionResponse"][] | null;
             error: components["schemas"]["ErrorDetail"] | null;
@@ -1735,6 +1772,11 @@ export interface components {
         };
         ApiResultPagedResultRoleResponse: {
             data: components["schemas"]["PagedResultRoleResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultPayrollAdjustmentResponse: {
+            data: components["schemas"]["PayrollAdjustmentResponse"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
@@ -2070,6 +2112,14 @@ export interface components {
             parentUnitId?: number | null;
             /** @enum {string} */
             unitType: "BOARD" | "DEPARTMENT" | "TEAM";
+        };
+        CreatePayrollAdjustmentRequest: {
+            amount: number;
+            description: string;
+            /** Format: int64 */
+            employeeId: number;
+            /** @enum {string} */
+            type: "BONUS" | "TAXABLE_ALLOWANCE" | "NON_TAXABLE_ALLOWANCE" | "DEDUCTION";
         };
         CreatePayrollPeriodRequest: {
             /** Format: int32 */
@@ -2484,6 +2534,22 @@ export interface components {
             /** Format: date */
             taxPaymentDate?: string | null;
         };
+        PayrollAdjustmentResponse: {
+            amount: number;
+            /** Format: date-time */
+            createdAt: string;
+            description: string;
+            employeeCode: string;
+            /** Format: int64 */
+            employeeId: number;
+            employeeName: string;
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            payrollPeriodId: number;
+            /** @enum {string} */
+            type: "BONUS" | "TAXABLE_ALLOWANCE" | "NON_TAXABLE_ALLOWANCE" | "DEDUCTION";
+        };
         PayrollPeriodResponse: {
             /** Format: date-time */
             approvedAt: string | null;
@@ -2534,7 +2600,7 @@ export interface components {
         PayslipItemResponse: {
             amount: number;
             /** @enum {string} */
-            componentType: "BASE_SALARY" | "POSITION_ALLOWANCE" | "SENIORITY_ALLOWANCE" | "OVERTIME";
+            componentType: "BASE_SALARY" | "POSITION_ALLOWANCE" | "SENIORITY_ALLOWANCE" | "OVERTIME" | "BONUS" | "TAXABLE_ALLOWANCE" | "NON_TAXABLE_ALLOWANCE" | "DEDUCTION";
             description: string;
             /** Format: int64 */
             id: number;
@@ -2562,6 +2628,8 @@ export interface components {
             items: components["schemas"]["PayslipItemResponse"][];
             netPay: number;
             organizationUnitSnapshot: string;
+            otherDeductions: number;
+            otherEarningsPay: number;
             overtimePay: number;
             /** Format: int32 */
             payableWorkMinutes: number;
@@ -2570,6 +2638,7 @@ export interface components {
             personalIncomeTax: number;
             /** Format: int32 */
             scheduledWorkMinutes: number;
+            taxExemptOtherEarnings: number;
             taxExemptOvertimePay: number;
             taxableIncome: number;
             unemploymentInsuranceBase: number;
@@ -2911,7 +2980,7 @@ export interface operations {
             };
         };
     };
-    list_11: {
+    list_12: {
         parameters: {
             query: {
                 pageable: components["schemas"]["Pageable"];
@@ -2933,7 +3002,7 @@ export interface operations {
             };
         };
     };
-    create_10: {
+    create_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -3045,7 +3114,7 @@ export interface operations {
             };
         };
     };
-    list_12: {
+    list_13: {
         parameters: {
             query?: never;
             header?: never;
@@ -3093,7 +3162,7 @@ export interface operations {
             };
         };
     };
-    list_13: {
+    list_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -3116,7 +3185,7 @@ export interface operations {
             };
         };
     };
-    create_11: {
+    create_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -3530,7 +3599,7 @@ export interface operations {
             };
         };
     };
-    list_10: {
+    list_11: {
         parameters: {
             query: {
                 from: string;
@@ -3553,7 +3622,7 @@ export interface operations {
             };
         };
     };
-    create_9: {
+    create_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -3577,7 +3646,7 @@ export interface operations {
             };
         };
     };
-    delete_5: {
+    delete_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -3647,7 +3716,7 @@ export interface operations {
             };
         };
     };
-    list_9: {
+    list_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -3794,7 +3863,7 @@ export interface operations {
             };
         };
     };
-    list_7: {
+    list_8: {
         parameters: {
             query: {
                 pageable: components["schemas"]["Pageable"];
@@ -3816,7 +3885,7 @@ export interface operations {
             };
         };
     };
-    create_8: {
+    create_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -3888,7 +3957,7 @@ export interface operations {
             };
         };
     };
-    list_8: {
+    list_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -4080,7 +4149,7 @@ export interface operations {
             };
         };
     };
-    list_6: {
+    list_7: {
         parameters: {
             query?: {
                 active?: boolean;
@@ -4103,7 +4172,7 @@ export interface operations {
             };
         };
     };
-    create_7: {
+    create_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -4321,7 +4390,7 @@ export interface operations {
             };
         };
     };
-    create_6: {
+    create_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -4345,7 +4414,7 @@ export interface operations {
             };
         };
     };
-    list_15: {
+    list_16: {
         parameters: {
             query: {
                 pageable: components["schemas"]["Pageable"];
@@ -4509,7 +4578,7 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    list_6: {
         parameters: {
             query?: {
                 active?: boolean;
@@ -4533,7 +4602,7 @@ export interface operations {
             };
         };
     };
-    create_5: {
+    create_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -4903,7 +4972,78 @@ export interface operations {
             };
         };
     };
-    list_14: {
+    list_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                periodId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListPayrollAdjustmentResponse"];
+                };
+            };
+        };
+    };
+    create_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                periodId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePayrollAdjustmentRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPayrollAdjustmentResponse"];
+                };
+            };
+        };
+    };
+    delete_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                periodId: number;
+                adjustmentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultVoid"];
+                };
+            };
+        };
+    };
+    list_15: {
         parameters: {
             query: {
                 module?: "EMPLOYEE" | "ACCOUNT" | "ORGANIZATION" | "REQUEST" | "ATTENDANCE" | "PAYROLL" | "RBAC" | "REPORT";

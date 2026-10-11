@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 
 import { PortalSidebar } from "@/components/auth/portal-sidebar"
 import { LeaveCarryOverPanel } from "@/components/workforce/leave-carry-over-panel"
+import { PayrollAdjustmentsPanel } from "@/components/workforce/payroll-adjustments-panel"
 import { authorizedDownload, authorizedRequest, getCurrentSession } from "@/lib/auth/client"
 import { AuthApiError, type SessionData } from "@/lib/auth/types"
 import { apiErrorMessage } from "@/lib/api-helpers"
@@ -74,6 +75,7 @@ export function WorkforcePage({ section }: { section: Section }) {
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
   const [busy, setBusy] = useState(false)
+  const [adjustingPeriodId, setAdjustingPeriodId] = useState<number | null>(null)
   const [leaveStart, setLeaveStart] = useState("")
   const [leaveEnd, setLeaveEnd] = useState("")
   const [leaveMinutes, setLeaveMinutes] = useState("480")
@@ -402,10 +404,12 @@ export function WorkforcePage({ section }: { section: Section }) {
               {period.status === "APPROVED" && permissions.has("payroll.mark_paid") && <button className="underline" disabled={busy} onClick={() => void act("Đã ghi nhận thanh toán", () => api(`payroll/periods/${period.id}/mark-paid`, "POST", { taxPaymentDate: today() } satisfies WorkforceBody["PayrollActionRequest"]))}>Đã trả</button>}
               {period.status === "PAID" && permissions.has("payroll.lock") && <button className="underline" disabled={busy} onClick={() => void act("Đã khóa kỳ lương", () => api(`payroll/periods/${period.id}/lock`, "POST"))}>Khóa</button>}
               {period.status !== "DRAFT" && period.status !== "CANCELLED" && <button className="underline" disabled={busy} onClick={() => void act("Đã tải bảng lương", () => authorizedDownload("hrm", `/workforce/payroll/periods/${period.id}/export`))}>Xuất Excel</button>}
+              {canCalculatePayroll && <button className="underline" onClick={() => setAdjustingPeriodId(adjustingPeriodId === period.id ? null : period.id)}>Khoản cộng/trừ</button>}
+              {adjustingPeriodId === period.id && <PayrollAdjustmentsPanel periodId={period.id} editable={period.status === "DRAFT" || period.status === "CALCULATED"} onChanged={() => void load()} />}
             </div>)}
           </div>}
           <div className="space-y-3"><h2 className="text-xl font-semibold">Phiếu lương nhân viên</h2>{payslips.map((slip) => <button key={slip.id} className="block w-full rounded border p-3 text-left text-sm" onClick={() => setSelectedPayslip(slip)}><strong>Phiếu #{slip.id}</strong> · Kỳ #{slip.payrollPeriodId} · {slip.employeeNameSnapshot} · Thực lĩnh {money(slip.netPay)}</button>)}{payslips.length === 0 && <p>Chưa có phiếu lương.</p>}</div>
-          {selectedPayslip && <div className="space-y-2 rounded border p-4 text-sm"><h2 className="text-xl font-semibold">Chi tiết phiếu #{selectedPayslip.id}</h2><p>Công: {selectedPayslip.payableWorkMinutes}/{selectedPayslip.scheduledWorkMinutes} phút · Tăng ca: {selectedPayslip.approvedOvertimeMinutes} phút</p>{selectedPayslip.items.map((item, index) => <p key={index}>{item.description}: {money(item.amount)}</p>)}<p>Tổng thu nhập: {money(selectedPayslip.grossPay)} · Tăng ca miễn thuế đã xác nhận: {money(selectedPayslip.taxExemptOvertimePay)}</p><p>Căn cứ BHXH/BHYT: {money(selectedPayslip.insuranceSalaryBase)} · BHTN: {money(selectedPayslip.unemploymentInsuranceBase)}</p><p>BHXH: {money(selectedPayslip.employeeSocialInsurance)} · BHYT: {money(selectedPayslip.employeeHealthInsurance)} · BHTN: {money(selectedPayslip.employeeUnemploymentInsurance)}</p><p>Thu nhập tính thuế: {money(selectedPayslip.taxableIncome)} · Thuế TNCN: {money(selectedPayslip.personalIncomeTax)}</p><strong>Thực lĩnh: {money(selectedPayslip.netPay)}</strong></div>}
+          {selectedPayslip && <div className="space-y-2 rounded border p-4 text-sm"><h2 className="text-xl font-semibold">Chi tiết phiếu #{selectedPayslip.id}</h2><p>Công: {selectedPayslip.payableWorkMinutes}/{selectedPayslip.scheduledWorkMinutes} phút · Tăng ca: {selectedPayslip.approvedOvertimeMinutes} phút</p>{selectedPayslip.items.map((item, index) => <p key={index}>{item.description}: {money(item.amount)}</p>)}<p>Tổng thu nhập: {money(selectedPayslip.grossPay)} · Tăng ca miễn thuế đã xác nhận: {money(selectedPayslip.taxExemptOvertimePay)}</p>{selectedPayslip.otherEarningsPay > 0 && <p>Thưởng, phụ cấp khác: {money(selectedPayslip.otherEarningsPay)} · Trong đó miễn thuế: {money(selectedPayslip.taxExemptOtherEarnings)}</p>}<p>Căn cứ BHXH/BHYT: {money(selectedPayslip.insuranceSalaryBase)} · BHTN: {money(selectedPayslip.unemploymentInsuranceBase)}</p><p>BHXH: {money(selectedPayslip.employeeSocialInsurance)} · BHYT: {money(selectedPayslip.employeeHealthInsurance)} · BHTN: {money(selectedPayslip.employeeUnemploymentInsurance)}</p><p>Thu nhập tính thuế: {money(selectedPayslip.taxableIncome)} · Thuế TNCN: {money(selectedPayslip.personalIncomeTax)}</p>{selectedPayslip.otherDeductions > 0 && <p>Khấu trừ khác: {money(selectedPayslip.otherDeductions)}</p>}<strong>Thực lĩnh: {money(selectedPayslip.netPay)}</strong></div>}
         </>}
       </>}
     </section>

@@ -117,6 +117,25 @@ CREATE TABLE payroll_periods (
     )
 );
 
+-- Khoản cộng/trừ kế toán nhập tay cho từng nhân viên trong kỳ chưa duyệt; được đưa vào phiếu
+-- lương ở lần tính tiếp theo. DEDUCTION trừ sau thuế (tạm ứng, phạt).
+CREATE TABLE payroll_adjustments (
+    id BIGSERIAL PRIMARY KEY,
+    payroll_period_id BIGINT NOT NULL REFERENCES payroll_periods (id),
+    employee_id BIGINT NOT NULL REFERENCES employees (id),
+    adjustment_type VARCHAR(30) NOT NULL,
+    description VARCHAR(250) NOT NULL CHECK (btrim(description) <> ''),
+    amount NUMERIC(15,2) NOT NULL CHECK (amount > 0),
+    created_by_account_id BIGINT NOT NULL REFERENCES accounts (id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT chk_payroll_adjustment_type CHECK (
+        adjustment_type IN ('BONUS', 'TAXABLE_ALLOWANCE', 'NON_TAXABLE_ALLOWANCE', 'DEDUCTION')
+    )
+);
+
+CREATE INDEX idx_payroll_adjustments_period_employee
+    ON payroll_adjustments (payroll_period_id, employee_id);
+
 CREATE TABLE payslips (
     id BIGSERIAL PRIMARY KEY,
     payroll_period_id BIGINT NOT NULL REFERENCES payroll_periods (id),
@@ -137,6 +156,10 @@ CREATE TABLE payslips (
     overtime_pay NUMERIC(15,2) NOT NULL DEFAULT 0 CHECK (overtime_pay >= 0),
     tax_exempt_overtime_pay NUMERIC(15,2) NOT NULL DEFAULT 0
         CHECK (tax_exempt_overtime_pay >= 0 AND tax_exempt_overtime_pay <= overtime_pay),
+    -- Tổng khoản thu nhập nhập tay của kỳ và phần trong đó không chịu thuế.
+    other_earnings_pay NUMERIC(15,2) NOT NULL DEFAULT 0 CHECK (other_earnings_pay >= 0),
+    tax_exempt_other_earnings NUMERIC(15,2) NOT NULL DEFAULT 0
+        CHECK (tax_exempt_other_earnings >= 0 AND tax_exempt_other_earnings <= other_earnings_pay),
     gross_pay NUMERIC(15,2) NOT NULL CHECK (gross_pay >= 0),
     insurance_salary_base NUMERIC(15,2) NOT NULL DEFAULT 0,
     unemployment_insurance_base NUMERIC(15,2) NOT NULL DEFAULT 0
@@ -146,6 +169,8 @@ CREATE TABLE payslips (
     employee_unemployment_insurance NUMERIC(15,2) NOT NULL DEFAULT 0,
     taxable_income NUMERIC(15,2) NOT NULL DEFAULT 0,
     personal_income_tax NUMERIC(15,2) NOT NULL DEFAULT 0,
+    -- Khấu trừ nhập tay sau thuế.
+    other_deductions NUMERIC(15,2) NOT NULL DEFAULT 0 CHECK (other_deductions >= 0),
     net_pay NUMERIC(15,2) NOT NULL CHECK (net_pay >= 0),
     tax_rule_id BIGINT REFERENCES payroll_tax_rules(id),
     insurance_rule_id BIGINT REFERENCES payroll_insurance_rules(id),
@@ -161,9 +186,9 @@ CREATE TABLE payslips (
         allowance_pay = position_allowance_pay + seniority_allowance_pay
     ),
     CONSTRAINT chk_payslip_total CHECK (
-        gross_pay = base_salary_pay + allowance_pay + overtime_pay
+        gross_pay = base_salary_pay + allowance_pay + overtime_pay + other_earnings_pay
         AND net_pay = gross_pay - employee_social_insurance - employee_health_insurance
-            - employee_unemployment_insurance - personal_income_tax
+            - employee_unemployment_insurance - personal_income_tax - other_deductions
         AND insurance_salary_base >= 0 AND taxable_income >= 0
         AND employee_social_insurance >= 0 AND employee_health_insurance >= 0
         AND employee_unemployment_insurance >= 0 AND personal_income_tax >= 0
@@ -188,7 +213,11 @@ CREATE TABLE payslip_items (
             'BASE_SALARY',
             'POSITION_ALLOWANCE',
             'SENIORITY_ALLOWANCE',
-            'OVERTIME'
+            'OVERTIME',
+            'BONUS',
+            'TAXABLE_ALLOWANCE',
+            'NON_TAXABLE_ALLOWANCE',
+            'DEDUCTION'
         )
     )
 );

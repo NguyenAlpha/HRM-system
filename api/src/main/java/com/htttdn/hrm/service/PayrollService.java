@@ -31,12 +31,14 @@ import com.htttdn.hrm.entity.AttendanceRecord;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeAssignment;
 import com.htttdn.hrm.entity.EmployeeSalaryHistory;
+import com.htttdn.hrm.entity.PayrollAdjustment;
 import com.htttdn.hrm.entity.PayrollPeriod;
 import com.htttdn.hrm.entity.Payslip;
 import com.htttdn.hrm.entity.PayslipItem;
 import com.htttdn.hrm.entity.PositionAllowanceRule;
 import com.htttdn.hrm.entity.SeniorityAllowanceRule;
 import com.htttdn.hrm.entity.enums.AttendanceStatus;
+import com.htttdn.hrm.entity.enums.PayrollAdjustmentType;
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.entity.enums.PayslipItemType;
 import com.htttdn.hrm.exception.BusinessException;
@@ -49,6 +51,7 @@ import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
+import com.htttdn.hrm.repository.PayrollAdjustmentRepository;
 import com.htttdn.hrm.repository.PayslipItemRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.repository.PositionAllowanceRuleRepository;
@@ -73,6 +76,7 @@ public class PayrollService {
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final AttendanceCalendarService attendanceCalendarService;
     private final PayrollDeductionsService payrollDeductionsService;
+    private final PayrollAdjustmentRepository payrollAdjustmentRepository;
 
     public PayrollService(
         PayrollPeriodRepository payrollPeriodRepository,
@@ -88,7 +92,8 @@ public class PayrollService {
         CurrentAccountProvider currentAccountProvider,
         EmployeeAccessScopeService employeeAccessScopeService,
         AttendanceCalendarService attendanceCalendarService,
-        PayrollDeductionsService payrollDeductionsService
+        PayrollDeductionsService payrollDeductionsService,
+        PayrollAdjustmentRepository payrollAdjustmentRepository
     ) {
         this.payrollPeriodRepository = payrollPeriodRepository;
         this.payslipRepository = payslipRepository;
@@ -104,6 +109,7 @@ public class PayrollService {
         this.employeeAccessScopeService = employeeAccessScopeService;
         this.attendanceCalendarService = attendanceCalendarService;
         this.payrollDeductionsService = payrollDeductionsService;
+        this.payrollAdjustmentRepository = payrollAdjustmentRepository;
     }
 
     @PreAuthorize("hasAuthority('payroll.calculate')")
@@ -376,8 +382,34 @@ public class PayrollService {
                 .build());
         }
 
+        BigDecimal otherEarningsPay = BigDecimal.ZERO;
+        BigDecimal taxExemptOtherEarnings = BigDecimal.ZERO;
+        BigDecimal otherDeductions = BigDecimal.ZERO;
+        for (PayrollAdjustment adjustment : payrollAdjustmentRepository
+            .findByPayrollPeriodIdAndEmployeeIdOrderByIdAsc(period.getId(), employee.getId())) {
+            PayrollAdjustmentType type = adjustment.getAdjustmentType();
+            if (type == PayrollAdjustmentType.DEDUCTION) {
+                otherDeductions = otherDeductions.add(adjustment.getAmount());
+            } else {
+                otherEarningsPay = otherEarningsPay.add(adjustment.getAmount());
+                if (type == PayrollAdjustmentType.NON_TAXABLE_ALLOWANCE) {
+                    taxExemptOtherEarnings = taxExemptOtherEarnings.add(adjustment.getAmount());
+                }
+            }
+            items.add(PayslipItem.builder()
+                .componentType(PayslipItemType.valueOf(type.name()))
+                .componentCode("ADJUSTMENT_" + adjustment.getId())
+                .description(adjustment.getDescription())
+                .quantity(BigDecimal.ONE)
+                .unitRate(adjustment.getAmount())
+                .multiplier(BigDecimal.ONE)
+                .amount(adjustment.getAmount())
+                .createdAt(Instant.now())
+                .build());
+        }
+
         BigDecimal allowancePay = positionAllowancePay.add(seniorityAllowancePay);
-        BigDecimal grossPay = basicSalaryPay.add(allowancePay).add(overtimePay);
+        BigDecimal grossPay = basicSalaryPay.add(allowancePay).add(overtimePay).add(otherEarningsPay);
         long unpaidDays = scheduledDays.stream().filter(day -> {
             AttendanceRecord record = attendanceByDate.get(day.workDate());
             return record.getPayableMinutes() == 0 && (record.getStatus() == AttendanceStatus.UNPAID_LEAVE
@@ -386,12 +418,13 @@ public class PayrollService {
         PayrollDeductionsService.Deduction deduction;
         try {
             deduction = payrollDeductionsService.calculate(employee.getId(), employedTo,
-                period.getTaxPaymentDate(), grossPay.subtract(taxExemptOvertimePay), unpaidDays);
+                period.getTaxPaymentDate(), grossPay.subtract(taxExemptOvertimePay).subtract(taxExemptOtherEarnings),
+                unpaidDays);
         } catch (BusinessException error) {
             throw missingPayrollInput(employee, error.getMessage());
         }
         BigDecimal netPay = grossPay.subtract(deduction.social()).subtract(deduction.health())
-            .subtract(deduction.unemployment()).subtract(deduction.incomeTax());
+            .subtract(deduction.unemployment()).subtract(deduction.incomeTax()).subtract(otherDeductions);
         if (netPay.signum() < 0) {
             throw missingPayrollInput(employee, "manual settlement: deductions exceed gross pay");
         }
@@ -414,6 +447,8 @@ public class PayrollService {
             .allowancePay(allowancePay)
             .overtimePay(overtimePay)
             .taxExemptOvertimePay(taxExemptOvertimePay)
+            .otherEarningsPay(otherEarningsPay)
+            .taxExemptOtherEarnings(taxExemptOtherEarnings)
             .grossPay(grossPay)
             .insuranceSalaryBase(deduction.insuranceSalaryBase())
             .unemploymentInsuranceBase(deduction.unemploymentInsuranceBase())
@@ -422,6 +457,7 @@ public class PayrollService {
             .employeeUnemploymentInsurance(deduction.unemployment())
             .taxableIncome(deduction.taxableIncome())
             .personalIncomeTax(deduction.incomeTax())
+            .otherDeductions(otherDeductions)
             .taxRuleId(deduction.taxRuleId())
             .insuranceRuleId(deduction.insuranceRuleId())
             .payrollProfileId(deduction.profileId())
@@ -660,6 +696,8 @@ public class PayrollService {
             payslip.getAllowancePay(),
             payslip.getOvertimePay(),
             payslip.getTaxExemptOvertimePay(),
+            payslip.getOtherEarningsPay(),
+            payslip.getTaxExemptOtherEarnings(),
             payslip.getGrossPay(),
             payslip.getInsuranceSalaryBase(),
             payslip.getUnemploymentInsuranceBase(),
@@ -668,6 +706,7 @@ public class PayrollService {
             payslip.getEmployeeUnemploymentInsurance(),
             payslip.getTaxableIncome(),
             payslip.getPersonalIncomeTax(),
+            payslip.getOtherDeductions(),
             payslip.getNetPay(),
             items
         );

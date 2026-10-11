@@ -40,7 +40,7 @@ Nhân viên nghỉ việc
 
 Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 
-### 1.2. Danh sách 32 bảng nghiệp vụ
+### 1.2. Danh sách 33 bảng nghiệp vụ
 
 | Nhóm | Các bảng |
 |---|---|
@@ -52,14 +52,14 @@ Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 | Lịch và chấm công | `company_holidays`, `work_shifts`, `attendance_records` |
 | Hồ sơ khấu trừ | `employee_payroll_profiles`, `employee_tax_dependents` |
 | Quy tắc thuế và bảo hiểm | `payroll_tax_rules`, `payroll_tax_brackets`, `payroll_insurance_rules` |
-| Tính lương | `payroll_periods`, `payslips`, `payslip_items` |
+| Tính lương | `payroll_periods`, `payroll_adjustments`, `payslips`, `payslip_items` |
 
-Bảng kỹ thuật `employee_code_counters` không nằm trong con số 32 này. Tính cả nó, database
-runtime có 33 bảng (chưa kể bảng `flyway_schema_history` của Flyway).
+Bảng kỹ thuật `employee_code_counters` không nằm trong con số 33 này. Tính cả nó, database
+runtime có 34 bảng (chưa kể bảng `flyway_schema_history` của Flyway).
 
 ### 1.3. Sơ đồ quan hệ tổng quát
 
-Sơ đồ có đủ 32 bảng nghiệp vụ và các thuộc tính nghiệp vụ chính. Các cột kỹ thuật, người tạo/người duyệt và quan hệ kiểm toán được trình bày trong phần định nghĩa bảng bên dưới để sơ đồ dễ đọc. Chính sách thâm niên được áp dụng bằng thuật toán theo số năm và thời gian hiệu lực, không có khóa ngoại trực tiếp từ nhân viên. `company_holidays` đứng độc lập trong sơ đồ vì nó sửa lịch làm việc chung chứ không tham chiếu bản ghi nào.
+Sơ đồ có đủ 33 bảng nghiệp vụ và các thuộc tính nghiệp vụ chính. Các cột kỹ thuật, người tạo/người duyệt và quan hệ kiểm toán được trình bày trong phần định nghĩa bảng bên dưới để sơ đồ dễ đọc. Chính sách thâm niên được áp dụng bằng thuật toán theo số năm và thời gian hiệu lực, không có khóa ngoại trực tiếp từ nhân viên. `company_holidays` đứng độc lập trong sơ đồ vì nó sửa lịch làm việc chung chứ không tham chiếu bản ghi nào.
 
 ```mermaid
 erDiagram
@@ -269,6 +269,15 @@ erDiagram
         varchar status
     }
 
+    PAYROLL_ADJUSTMENTS {
+        bigint id PK
+        bigint payroll_period_id FK
+        bigint employee_id FK
+        varchar adjustment_type
+        varchar description
+        numeric amount
+    }
+
     PAYSLIPS {
         bigint id PK
         bigint payroll_period_id FK
@@ -281,6 +290,8 @@ erDiagram
         numeric seniority_allowance_pay
         numeric allowance_pay
         numeric overtime_pay
+        numeric other_earnings_pay
+        numeric tax_exempt_other_earnings
         numeric gross_pay
         bigint payroll_profile_id FK
         bigint insurance_rule_id FK
@@ -293,6 +304,7 @@ erDiagram
         numeric tax_exempt_overtime_pay
         numeric taxable_income
         numeric personal_income_tax
+        numeric other_deductions
         numeric net_pay
     }
 
@@ -425,6 +437,8 @@ erDiagram
     EMPLOYEES ||--o{ EMPLOYEE_PAYROLL_PROFILES : employee_id
     EMPLOYEES ||--o{ EMPLOYEE_TAX_DEPENDENTS : employee_id
     PAYROLL_TAX_RULES ||--o{ PAYROLL_TAX_BRACKETS : tax_rule_id
+    PAYROLL_PERIODS ||--o{ PAYROLL_ADJUSTMENTS : payroll_period_id
+    EMPLOYEES ||--o{ PAYROLL_ADJUSTMENTS : employee_id
     PAYROLL_PERIODS ||--o{ PAYSLIPS : payroll_period_id
     EMPLOYEES ||--o{ PAYSLIPS : employee_id
     EMPLOYEE_PAYROLL_PROFILES |o--o{ PAYSLIPS : payroll_profile_id
@@ -1180,6 +1194,22 @@ Số liệu cụ thể của bộ quy tắc 2026 và nguồn tham chiếu nằm 
 
 > `UNIQUE(year, month)`. Vòng đời: `DRAFT` → `CALCULATED` → `APPROVED` → `PAID` → `LOCKED`. Có thể `CANCELLED` trước khi duyệt.
 
+### `payroll_adjustments` — Khoản cộng/trừ nhập tay theo kỳ
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `payroll_period_id` | BIGINT | FK → payroll_periods, NOT NULL | Kỳ lương |
+| `employee_id` | BIGINT | FK → employees, NOT NULL | Nhân viên |
+| `adjustment_type` | VARCHAR(30) | NOT NULL, CHECK | `BONUS`, `TAXABLE_ALLOWANCE`, `NON_TAXABLE_ALLOWANCE`, `DEDUCTION` |
+| `description` | VARCHAR(250) | NOT NULL, không rỗng | Nội dung hiển thị trên phiếu lương |
+| `amount` | NUMERIC(15,2) | NOT NULL, CHECK > 0 | Số tiền, luôn dương; `DEDUCTION` được trừ |
+| `created_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người nhập |
+| `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm nhập |
+
+> Chỉ sửa được khi kỳ `DRAFT`/`CALCULATED`; thay đổi đưa kỳ đã tính về `DRAFT`. Lần tính lương tiếp theo
+> chép từng khoản thành một dòng `payslip_items`. Index `idx_payroll_adjustments_period_employee`.
+
 ### `payslips` — Phiếu lương nhân viên
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
@@ -1201,6 +1231,8 @@ Số liệu cụ thể của bộ quy tắc 2026 và nguồn tham chiếu nằm 
 | `seniority_allowance_pay` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Phụ cấp thâm niên |
 | `allowance_pay` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Tổng phụ cấp chức vụ và thâm niên |
 | `overtime_pay` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Tiền tăng ca |
+| `other_earnings_pay` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Thưởng và phụ cấp khác nhập tay |
+| `tax_exempt_other_earnings` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK 0..other_earnings_pay | Phần phụ cấp khác miễn thuế |
 | `gross_pay` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Tổng thu nhập |
 | `insurance_salary_base` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Căn cứ BHXH/BHYT sau trần |
 | `unemployment_insurance_base` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Căn cứ BHTN sau trần vùng |
@@ -1210,10 +1242,11 @@ Số liệu cụ thể của bộ quy tắc 2026 và nguồn tham chiếu nằm 
 | `tax_exempt_overtime_pay` | NUMERIC(15,2) | NOT NULL, CHECK 0..overtime_pay | Tiền tăng ca đã xác nhận miễn thuế |
 | `taxable_income` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Thu nhập tính thuế sau giảm trừ |
 | `personal_income_tax` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Thuế TNCN |
+| `other_deductions` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Khấu trừ nhập tay sau thuế |
 | `tax_rule_id` | BIGINT | FK → payroll_tax_rules | Quy tắc thuế snapshot |
 | `insurance_rule_id` | BIGINT | FK → payroll_insurance_rules | Quy tắc bảo hiểm snapshot |
 | `payroll_profile_id` | BIGINT | FK → employee_payroll_profiles | Hồ sơ bảo hiểm/thuế đã dùng |
-| `net_pay` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Tổng thu nhập trừ bảo hiểm nhân viên và thuế TNCN |
+| `net_pay` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Tổng thu nhập trừ bảo hiểm nhân viên, thuế TNCN và khấu trừ khác |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Chỉ cập nhật khi kỳ chưa duyệt |
 
@@ -1241,9 +1274,13 @@ BASE_SALARY
 POSITION_ALLOWANCE
 SENIORITY_ALLOWANCE
 OVERTIME
+BONUS
+TAXABLE_ALLOWANCE
+NON_TAXABLE_ALLOWANCE
+DEDUCTION
 ```
 
-> Mỗi khoản lương cơ bản, phụ cấp chức vụ, phụ cấp thâm niên và tăng ca được lưu thành các dòng chi tiết. `payslip_items` không giữ khóa ngoại về dữ liệu nguồn vì đây là snapshot lịch sử.
+> Mỗi khoản lương cơ bản, phụ cấp chức vụ, phụ cấp thâm niên, tăng ca và từng khoản cộng/trừ nhập tay được lưu thành các dòng chi tiết. `payslip_items` không giữ khóa ngoại về dữ liệu nguồn vì đây là snapshot lịch sử.
 
 ---
 
@@ -1374,6 +1411,9 @@ CREATE INDEX idx_employee_payroll_profiles_effective
 CREATE INDEX idx_employee_tax_dependents_effective
   ON employee_tax_dependents (employee_id, effective_from, effective_to);
 
+CREATE INDEX idx_payroll_adjustments_period_employee
+  ON payroll_adjustments (payroll_period_id, employee_id);
+
 CREATE INDEX idx_payslips_employee_period
   ON payslips (employee_id, payroll_period_id);
 
@@ -1468,12 +1508,13 @@ ALTER TABLE payslips ADD CONSTRAINT chk_payslip_allowance_total
 
 ALTER TABLE payslips ADD CONSTRAINT chk_payslip_total
   CHECK (
-    gross_pay = base_salary_pay + allowance_pay + overtime_pay
+    gross_pay = base_salary_pay + allowance_pay + overtime_pay + other_earnings_pay
     AND net_pay = gross_pay
                   - employee_social_insurance
                   - employee_health_insurance
                   - employee_unemployment_insurance
                   - personal_income_tax
+                  - other_deductions
     AND tax_exempt_overtime_pay >= 0
     AND tax_exempt_overtime_pay <= overtime_pay
   );
@@ -1481,7 +1522,12 @@ ALTER TABLE payslips ADD CONSTRAINT chk_payslip_total
 ALTER TABLE payslip_items ADD CONSTRAINT chk_payslip_item_type
   CHECK (component_type IN (
     'BASE_SALARY', 'POSITION_ALLOWANCE', 'SENIORITY_ALLOWANCE',
-    'OVERTIME'
+    'OVERTIME', 'BONUS', 'TAXABLE_ALLOWANCE', 'NON_TAXABLE_ALLOWANCE', 'DEDUCTION'
+  ));
+
+ALTER TABLE payroll_adjustments ADD CONSTRAINT chk_payroll_adjustment_type
+  CHECK (adjustment_type IN (
+    'BONUS', 'TAXABLE_ALLOWANCE', 'NON_TAXABLE_ALLOWANCE', 'DEDUCTION'
   ));
 ```
 
@@ -1560,7 +1606,7 @@ vào file của domain tương ứng thay vì thêm file vá. Mỗi khi file bas
 | `V4__employment_and_salary.sql` | `employee_code_counters`, `employee_assignments`, `employee_salary_history`, `position_allowance_rules`, `seniority_allowance_rules` | 3, 4 |
 | `V5__leave.sql` | `leave_requests`, `leave_entitlement_rules`, `employee_leave_entitlements` | 6 |
 | `V6__attendance.sql` | `company_holidays`, `attendance_records` và trigger số phút theo lịch | 7 |
-| `V7__payroll.sql` | Hồ sơ khấu trừ, quy tắc thuế/bảo hiểm, `payroll_periods`, `payslips`, `payslip_items` | 8 |
+| `V7__payroll.sql` | Hồ sơ khấu trừ, quy tắc thuế/bảo hiểm, `payroll_periods`, `payroll_adjustments`, `payslips`, `payslip_items` | 8 |
 | `V8__reference_data.sql` | Quy tắc thuế TNCN, bảo hiểm năm 2026 và quy tắc phép năm | 6, 8.4 |
 
 Migration chỉ chứa dữ liệu pháp lý dùng chung. Danh mục permission, role, mapping, cơ cấu tổ chức,

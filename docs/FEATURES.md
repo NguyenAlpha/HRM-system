@@ -25,7 +25,7 @@ Quy ước trạng thái:
 | Lương, bảo hiểm, thuế | Đủ | `/payslips` |
 | Báo cáo | Đủ | `/reports/workforce` |
 
-Toàn hệ thống có 24 controller, 49 permission trên 8 module, 7 system role và 35 bảng database.
+Toàn hệ thống có 26 controller, 49 permission trên 8 module, 7 system role và 34 bảng database.
 
 ---
 
@@ -225,6 +225,7 @@ kỳ ngoài phạm vi sẽ dừng với lỗi yêu cầu bổ sung quy tắc.
 | Xác nhận đã trả | `POST .../mark-paid` | `payroll.mark_paid` |
 | Khóa kỳ | `POST .../lock` | `payroll.lock` |
 | Xuất bảng lương của kỳ ra Excel | `GET /api/payroll/periods/{id}/export` | `report.payroll.read` |
+| Thưởng, phụ cấp khác, khấu trừ nhập tay theo kỳ | `/api/payroll/periods/{id}/adjustments` | `payroll.calculate` |
 | Xem phiếu lương | `/api/payroll/payslips/{id}`, `/employees/{id}/payslips` | `payroll.self.read` |
 
 Vòng đời kỳ: `DRAFT` → `CALCULATED` → `APPROVED` → `PAID` → `LOCKED`, có thể `CANCELLED` trước
@@ -261,7 +262,8 @@ Báo cáo lương chỉ trả số liệu tổng hợp theo khoảng, không tr�
 - Lịch làm việc cố định thứ 2–thứ 7; chưa có lịch cá nhân hoặc xoay ca theo ngày.
 - Mỗi nhân viên mỗi ngày chỉ một cặp vào/ra và một đơn nghỉ. Nghỉ nửa ngày rồi đi làm nửa còn lại được
   tính đủ công tự động, nhưng chưa có hai đơn khác loại trong cùng một ngày.
-- Chưa có phụ trội ca đêm, thưởng, hoa hồng, truy thu, hoàn thuế hay quyết toán năm.
+- Chưa có phụ trội ca đêm, hoa hồng tính tự động, truy thu, hoàn thuế hay quyết toán năm; thưởng và
+  khoản khác chỉ nhập tay theo kỳ.
 - Chưa hỗ trợ người không cư trú thuế.
 - Quy tắc thuế và bảo hiểm chỉ nạp đến hết 2026, phải thêm bằng migration khi chính sách đổi.
 - Chốt phép năm do HR bấm trên `/leave-requests`, chưa tự chạy vào 01/01.

@@ -20,6 +20,7 @@ import com.htttdn.hrm.entity.EmployeeAssignment;
 import com.htttdn.hrm.entity.EmployeeSalaryHistory;
 import com.htttdn.hrm.entity.JobPosition;
 import com.htttdn.hrm.entity.OrganizationUnit;
+import com.htttdn.hrm.entity.PayrollAdjustment;
 import com.htttdn.hrm.entity.PayrollPeriod;
 import com.htttdn.hrm.entity.Payslip;
 import com.htttdn.hrm.entity.PositionAllowanceRule;
@@ -27,6 +28,7 @@ import com.htttdn.hrm.entity.SeniorityAllowanceRule;
 import com.htttdn.hrm.entity.WorkLocation;
 import com.htttdn.hrm.entity.WorkShift;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
+import com.htttdn.hrm.entity.enums.PayrollAdjustmentType;
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
@@ -36,6 +38,7 @@ import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
+import com.htttdn.hrm.repository.PayrollAdjustmentRepository;
 import com.htttdn.hrm.repository.PayslipItemRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.repository.PositionAllowanceRuleRepository;
@@ -57,6 +60,7 @@ class PayrollServiceTest {
     @Mock private PayrollPeriodRepository payrollPeriodRepository;
     @Mock private PayslipRepository payslipRepository;
     @Mock private PayslipItemRepository payslipItemRepository;
+    @Mock private PayrollAdjustmentRepository payrollAdjustmentRepository;
     @Mock private EmployeeRepository employeeRepository;
     @Mock private EmployeeAssignmentRepository employeeAssignmentRepository;
     @Mock private EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository;
@@ -185,7 +189,7 @@ class PayrollServiceTest {
     }
 
     @Test
-    void calculateUsesNewSalaryAndAllowancePoliciesAndApprovedOvertimeOnly() {
+    void calculateUsesSalaryPoliciesApprovedOvertimeAndManualAdjustments() {
         LocalDate start = LocalDate.of(2026, 1, 1);
         LocalDate end = LocalDate.of(2026, 1, 31);
         LocalDate workedDate = LocalDate.of(2026, 1, 15);
@@ -255,6 +259,12 @@ class PayrollServiceTest {
             return saved;
         });
 
+        when(payrollAdjustmentRepository.findByPayrollPeriodIdAndEmployeeIdOrderByIdAsc(1L, 2L)).thenReturn(List.of(
+            adjustment(21L, PayrollAdjustmentType.BONUS, "500000"),
+            adjustment(22L, PayrollAdjustmentType.NON_TAXABLE_ALLOWANCE, "100000"),
+            adjustment(23L, PayrollAdjustmentType.DEDUCTION, "200000")
+        ));
+
         stubNoDeductions();
 
         service().calculate(1L, new PayrollActionRequest(end));
@@ -266,10 +276,16 @@ class PayrollServiceTest {
         assertEquals(new BigDecimal("38461.54"), payslip.getPositionAllowancePay());
         assertEquals(new BigDecimal("19230.77"), payslip.getSeniorityAllowancePay());
         assertEquals(new BigDecimal("72115.38"), payslip.getOvertimePay());
-        assertEquals(new BigDecimal("514423.07"), payslip.getGrossPay());
         assertEquals(new BigDecimal("72115.38"), payslip.getTaxExemptOvertimePay());
+        // Bonus and the non-taxable allowance are earnings; only the bonus is taxable.
+        assertEquals(new BigDecimal("600000"), payslip.getOtherEarningsPay());
+        assertEquals(new BigDecimal("100000"), payslip.getTaxExemptOtherEarnings());
+        assertEquals(new BigDecimal("1114423.07"), payslip.getGrossPay());
         verify(payrollDeductionsService).calculate(eq(2L), eq(end), eq(end),
-            eq(new BigDecimal("442307.69")), eq(0L));
+            eq(new BigDecimal("942307.69")), eq(0L));
+        // The deduction comes off after tax.
+        assertEquals(new BigDecimal("200000"), payslip.getOtherDeductions());
+        assertEquals(new BigDecimal("914423.07"), payslip.getNetPay());
         assertEquals(60, payslip.getApprovedOvertimeMinutes());
         verify(payslipItemRepository).saveAll(any());
     }
@@ -347,7 +363,8 @@ class PayrollServiceTest {
             currentAccountProvider,
             employeeAccessScopeService,
             attendanceCalendarService,
-            payrollDeductionsService
+            payrollDeductionsService,
+            payrollAdjustmentRepository
         );
     }
 
@@ -361,6 +378,11 @@ class PayrollServiceTest {
         assertThrows(ConflictException.class, () -> service().markPaid(1L,
             new PayrollActionRequest(LocalDate.of(2026, 12, 1))));
         assertEquals(PayrollPeriodStatus.APPROVED, period.getStatus());
+    }
+
+    private static PayrollAdjustment adjustment(Long id, PayrollAdjustmentType type, String amount) {
+        return PayrollAdjustment.builder().id(id).adjustmentType(type).description(type.name())
+            .amount(new BigDecimal(amount)).build();
     }
 
     private void stubNoDeductions() {

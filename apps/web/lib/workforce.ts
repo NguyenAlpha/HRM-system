@@ -10,6 +10,8 @@ export type LeaveBalance = Schemas["BalanceView"]
 export type LeaveCarryOver = Schemas["CarryOverView"]
 export type PayrollPeriod = Schemas["PayrollPeriodResponse"]
 export type Payslip = Schemas["PayslipResponse"]
+export type PayrollAdjustment = Schemas["PayrollAdjustmentResponse"]
+export type PayrollAdjustmentType = PayrollAdjustment["type"]
 export type SalaryHistory = Schemas["SalaryHistoryView"]
 export type PayrollProfile = Schemas["Profile"]
 export type TaxDependent = Schemas["Dependent"]
@@ -23,5 +25,5 @@ export type WorkforceBody = Pick<Schemas,
   | "CompanyHolidayRequest" | "CreateLeaveCommand" | "ReviewBody"
   | "AdjustLeaveEntitlementRequest" | "SetCarriedOverLeaveRequest"
   | "SetSalaryCommand" | "ProfileCommand" | "DependentCommand" | "EndDependentCommand"
-  | "CreatePayrollPeriodRequest" | "PayrollActionRequest"
+  | "CreatePayrollPeriodRequest" | "PayrollActionRequest" | "CreatePayrollAdjustmentRequest"
 >
