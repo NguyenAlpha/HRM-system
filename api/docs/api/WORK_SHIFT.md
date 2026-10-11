@@ -24,9 +24,10 @@ Tất cả endpoint yêu cầu Bearer token. `HR_MANAGER`, `DIRECTOR` và `COMPA
 - Ca trong ngày (`crossesMidnight=false`) phải có `endTime` sau `startTime`.
 - Ca qua đêm (`crossesMidnight=true`) phải có `endTime` trước hoặc bằng `startTime`; hai giờ bằng nhau biểu diễn ca đủ 24 giờ.
 - `breakMinutes` phải nhỏ hơn tổng thời lượng ca.
+- `breakStartTime` bắt buộc khi `breakMinutes > 0` và phải là `null` khi bằng 0. Giờ nghỉ phải nằm trọn trong ca, không trùng giờ bắt đầu hay chạm giờ kết thúc; với ca qua đêm được phép rơi vào sáng hôm sau. Chấm công dùng vị trí này để không trừ giờ nghỉ khi nhân viên chỉ làm một phần ca, ví dụ nghỉ phép nửa ngày.
 - `standardWorkMinutes` không được vượt thời lượng ca sau khi trừ thời gian nghỉ.
 - `graceLateMinutes` không được vượt tổng thời lượng ca.
-- Khi ca đã có dữ liệu chấm công, không thể sửa giờ, số phút nghỉ, số phút công chuẩn, thời gian đi trễ cho phép hoặc cờ qua đêm. Hãy tạo mã ca mới để giữ đúng dữ liệu lịch sử.
+- Khi ca đã có dữ liệu chấm công, không thể sửa giờ, số phút nghỉ, giờ bắt đầu nghỉ, số phút công chuẩn, thời gian đi trễ cho phép hoặc cờ qua đêm. Hãy tạo mã ca mới để giữ đúng dữ liệu lịch sử.
 - Ca inactive không thể gán cho phân công mới nhưng phân công và chấm công lịch sử vẫn được giữ.
 
 ---
@@ -55,6 +56,7 @@ Trả danh sách không phân trang, sắp xếp theo tên ca.
       "startTime": "08:00:00",
       "endTime": "17:00:00",
       "breakMinutes": 60,
+      "breakStartTime": "12:00:00",
       "standardWorkMinutes": 480,
       "graceLateMinutes": 15,
       "crossesMidnight": false,
@@ -84,6 +86,7 @@ Trả cùng cấu trúc `WorkShiftResponse` của endpoint danh sách. ID đã b
   "startTime": "08:00:00",
   "endTime": "17:00:00",
   "breakMinutes": 60,
+  "breakStartTime": "12:00:00",
   "standardWorkMinutes": 480,
   "graceLateMinutes": 15,
   "crossesMidnight": false
@@ -97,6 +100,7 @@ Trả cùng cấu trúc `WorkShiftResponse` của endpoint danh sách. ID đã b
 | `startTime` | ✅ | Giờ ISO `HH:mm:ss` |
 | `endTime` | ✅ | Giờ ISO `HH:mm:ss`, phù hợp với `crossesMidnight` |
 | `breakMinutes` | ✅ | Từ 0 đến 1439 và nhỏ hơn tổng thời lượng ca |
+| `breakStartTime` | Khi có giờ nghỉ | Giờ ISO `HH:mm:ss`; bắt buộc khi `breakMinutes > 0`, `null` khi bằng 0; giờ nghỉ nằm trọn trong ca |
 | `standardWorkMinutes` | ✅ | Từ 1 đến 1440 và không vượt thời lượng còn lại sau giờ nghỉ |
 | `graceLateMinutes` | ✅ | Từ 0 đến 1440 và không vượt tổng thời lượng ca |
 | `crossesMidnight` | ✅ | Ca có kết thúc vào ngày kế tiếp hay không |
@@ -115,6 +119,7 @@ Request là trạng thái đầy đủ của các field được phép cập nh�
   "startTime": "08:00:00",
   "endTime": "17:00:00",
   "breakMinutes": 60,
+  "breakStartTime": "12:00:00",
   "standardWorkMinutes": 480,
   "graceLateMinutes": 10,
   "crossesMidnight": false,

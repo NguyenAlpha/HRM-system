@@ -236,6 +236,7 @@ erDiagram
         time start_time
         time end_time
         integer break_minutes
+        time break_start_time
         integer standard_work_minutes
     }
 
@@ -934,6 +935,7 @@ dùng `compensation.read` / `compensation.manage`, không phải `salary.*` / `a
 | `start_time` | TIME | NOT NULL | Giờ bắt đầu |
 | `end_time` | TIME | NOT NULL | Giờ kết thúc |
 | `break_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Phút nghỉ giữa ca |
+| `break_start_time` | TIME | NULL đúng khi `break_minutes = 0` (`chk_work_shifts_break_start`) | Giờ bắt đầu nghỉ; dùng để tính công khi chỉ làm một phần ca |
 | `standard_work_minutes` | INTEGER | NOT NULL, CHECK > 0 | Phút công chuẩn |
 | `grace_late_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Khoảng trễ cho phép |
 | `crosses_midnight` | BOOLEAN | NOT NULL, DEFAULT false | Ca qua ngày |
