@@ -1,48 +1,13 @@
 "use client"
 
+import type { components } from "@/lib/api-schema"
 import { authorizedRequest } from "@/lib/auth/client"
-import type { AccountRoleAssignment } from "@/lib/role-assignment"
 
-export interface CompanyOwnerAccount {
-  id: number
-  employeeId: number
-  username: string
-  email: string
-  status: string
-}
+// DTO types come from the API's OpenAPI spec; run `npm run gen:api` after changing them.
+type Schemas = components["schemas"]
 
-export interface CompanyOwnerInvitation {
-  accountId: number
-  activationToken: string
-  expiresAt: string
-}
-
-export interface CompanyOwnerProvisioningResult {
-  employeeId: number
-  employeeCode: string
-  fullName: string
-  accountProvisioning: {
-    account: CompanyOwnerAccount
-    invitation: CompanyOwnerInvitation
-  }
-  companyOwnerRoleAssignment: AccountRoleAssignment
-  directorRoleAssignment: AccountRoleAssignment
-}
-
-export interface BootstrapCompanyOwnerInput {
-  employee: {
-    fullName: string
-    workEmail: string
-    phone: string | null
-    hireDate: string
-  }
-  account: {
-    username: string
-  }
-  effectiveFrom: string
-  ownershipReason: string
-  directorAppointmentReason: string
-}
+export type CompanyOwnerProvisioningResult = Schemas["OrganizationCompanyOwnerProvisioningResponse"]
+export type BootstrapCompanyOwnerInput = Schemas["CreateOrganizationCompanyOwnerRequest"]
 
 export function bootstrapCompanyOwner(input: BootstrapCompanyOwnerInput): Promise<CompanyOwnerProvisioningResult> {
   return authorizedRequest<CompanyOwnerProvisioningResult>("admin", "/company-owner", {

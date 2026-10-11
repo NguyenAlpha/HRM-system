@@ -3731,7 +3731,7 @@
             "type" : "string"
           },
           "employeeId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "failedLoginCount" : {
@@ -3743,11 +3743,11 @@
             "format" : "int64"
           },
           "lastLoginAt" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date-time"
           },
           "lockedUntil" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date-time"
           },
           "status" : {
@@ -3780,7 +3780,7 @@
             "format" : "date"
           },
           "effectiveTo" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date"
           },
           "grantedByAccountId" : {
@@ -3792,21 +3792,21 @@
             "format" : "int64"
           },
           "organizationUnitId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "reason" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "revocationReason" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "revokedAt" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date-time"
           },
           "revokedByAccountId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "roleCode" : {
@@ -3824,7 +3824,7 @@
             "enum" : [ "SELF", "COMPANY", "ORG_UNIT", "LOCATION" ]
           },
           "workLocationId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           }
         },
@@ -5363,7 +5363,11 @@
             "type" : "string"
           },
           "employee" : {
-            "$ref" : "#/components/schemas/AuthEmployeeResponse"
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/AuthEmployeeResponse"
+            }, {
+              "type" : "null"
+            } ]
           },
           "permissions" : {
             "type" : "array",
@@ -5451,22 +5455,22 @@
             "type" : "string"
           },
           "organizationUnitId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "organizationUnitName" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "scopeType" : {
             "type" : "string",
             "enum" : [ "SELF", "COMPANY", "ORG_UNIT", "LOCATION" ]
           },
           "workLocationId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "workLocationName" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "required" : [ "code", "name", "organizationUnitId", "organizationUnitName", "scopeType", "workLocationId", "workLocationName" ]
@@ -5674,7 +5678,7 @@
             "format" : "date"
           },
           "phone" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "maxLength" : 20,
             "minLength" : 0
           },
