@@ -58,8 +58,8 @@ class PayrollExportServiceTest {
         assertTrue(strings.indexOf("NV001") < strings.indexOf("NV002"), "rows are sorted by employee code");
         assertTrue(strings.contains("Nguyễn Văn A"));
         assertTrue(strings.contains("Tổng cộng"));
-        // Net pay is the 19th column (S); the total row sums rows 2..3.
-        assertTrue(sheet.contains("SUM(S2:S3)"), sheet);
+        // Net pay is the 22nd column (V); the total row sums rows 2..3.
+        assertTrue(sheet.contains("SUM(V2:V3)"), sheet);
     }
 
     @Test
@@ -89,6 +89,7 @@ class PayrollExportServiceTest {
             .baseSalaryPay(new BigDecimal("10000000")).allowancePay(zero).overtimePay(zero)
             .taxExemptOvertimePay(zero).grossPay(new BigDecimal("10000000"))
             .employeeSocialInsurance(zero).employeeHealthInsurance(zero).employeeUnemploymentInsurance(zero)
+            .otherEarningsPay(zero).taxExemptOtherEarnings(zero).otherDeductions(zero)
             .taxableIncome(zero).personalIncomeTax(zero).netPay(new BigDecimal(netPay))
             .build();
     }

@@ -85,6 +85,12 @@ public class Payslip {
     @Column(name = "tax_exempt_overtime_pay", nullable = false, precision = 15, scale = 2)
     private BigDecimal taxExemptOvertimePay;
 
+    @Column(name = "other_earnings_pay", nullable = false, precision = 15, scale = 2)
+    private BigDecimal otherEarningsPay;
+
+    @Column(name = "tax_exempt_other_earnings", nullable = false, precision = 15, scale = 2)
+    private BigDecimal taxExemptOtherEarnings;
+
     @Column(name = "gross_pay", nullable = false, precision = 15, scale = 2)
     private BigDecimal grossPay;
 
@@ -108,6 +114,9 @@ public class Payslip {
 
     @Column(name = "personal_income_tax", nullable = false, precision = 15, scale = 2)
     private BigDecimal personalIncomeTax;
+
+    @Column(name = "other_deductions", nullable = false, precision = 15, scale = 2)
+    private BigDecimal otherDeductions;
 
     @Column(name = "tax_rule_id")
     private Long taxRuleId;

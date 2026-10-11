@@ -413,6 +413,8 @@ export async function handleWorkforceRequest(request: Request, segments: string[
     { pattern: /^payroll\/periods$/, methods: ["GET", "POST"] },
     { pattern: /^payroll\/periods\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^payroll\/periods\/[1-9]\d*\/export$/, methods: ["GET"] },
+    { pattern: /^payroll\/periods\/[1-9]\d*\/adjustments$/, methods: ["GET", "POST"] },
+    { pattern: /^payroll\/periods\/[1-9]\d*\/adjustments\/[1-9]\d*$/, methods: ["DELETE"] },
     { pattern: /^payroll\/periods\/[1-9]\d*\/(?:calculate|approve|mark-paid|lock|cancel)$/, methods: ["POST"] },
     { pattern: /^payroll\/payslips\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^payroll\/employees\/[1-9]\d*\/payslips$/, methods: ["GET"] },
@@ -443,6 +445,7 @@ export async function handleWorkforceRequest(request: Request, segments: string[
         || /^attendance\/[1-9]\d*\/overtime-approval$/.test(path)
         || /^payroll\/periods\/[1-9]\d*\/calculate$/.test(path)
         || /^payroll\/periods\/[1-9]\d*\/mark-paid$/.test(path)
+        || /^payroll\/periods\/[1-9]\d*\/adjustments$/.test(path)
         || /^leave-requests\/[1-9]\d*\/(?:approve|reject)$/.test(path)))) {
     try {
       body = JSON.stringify(await request.json())

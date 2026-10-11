@@ -40,12 +40,15 @@ public class PayrollExportService {
         new Column("Phụ cấp", Payslip::getAllowancePay, true),
         new Column("Tiền tăng ca", Payslip::getOvertimePay, true),
         new Column("Tăng ca miễn thuế", Payslip::getTaxExemptOvertimePay, true),
+        new Column("Thưởng, phụ cấp khác", Payslip::getOtherEarningsPay, true),
+        new Column("Phụ cấp khác miễn thuế", Payslip::getTaxExemptOtherEarnings, true),
         new Column("Tổng thu nhập", Payslip::getGrossPay, true),
         new Column("BHXH", Payslip::getEmployeeSocialInsurance, true),
         new Column("BHYT", Payslip::getEmployeeHealthInsurance, true),
         new Column("BHTN", Payslip::getEmployeeUnemploymentInsurance, true),
         new Column("Thu nhập tính thuế", Payslip::getTaxableIncome, true),
         new Column("Thuế TNCN", Payslip::getPersonalIncomeTax, true),
+        new Column("Khấu trừ khác", Payslip::getOtherDeductions, true),
         new Column("Thực nhận", Payslip::getNetPay, true)
     );
 

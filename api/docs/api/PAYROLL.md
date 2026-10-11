@@ -7,10 +7,10 @@ Phạm vi đang triển khai: nhân viên **cư trú tại Việt Nam**, nhận 
 - Lương cơ bản từng ngày = lương tháng có hiệu lực × `payableMinutes` / (số ngày làm việc chuẩn của tháng × phút chuẩn của ca ngày đó).
 - Phụ cấp chức vụ và thâm niên áp dụng cùng tỷ lệ phút công được trả lương. Nghỉ có lương giữ phần phụ cấp tương ứng; nghỉ không lương, nghỉ do bảo hiểm chi trả hoặc vắng không phép không được trả phần đó.
 - Tăng ca = phút tăng ca **đã duyệt** × đơn giá giờ từ lương tháng và ca của ngày đó × hệ số đã duyệt. Phút công thường và phút tăng ca được tách riêng. Hệ số tối thiểu: 150% ngày thường, 200% Chủ nhật, 300% ngày lễ công ty. Chưa tính cộng thêm cho ca đêm.
-- `grossPay = baseSalaryPay + positionAllowancePay + seniorityAllowancePay + overtimePay`.
+- `grossPay = baseSalaryPay + positionAllowancePay + seniorityAllowancePay + overtimePay + otherEarningsPay`, trong đó `otherEarningsPay` là tổng thưởng và phụ cấp khác nhập tay (xem [Khoản cộng/trừ nhập tay](#khoản-cộngtrừ-nhập-tay)).
 - BHXH/BHYT/BHTN phần nhân viên dùng **lương đóng bảo hiểm do HR nhập**, theo trạng thái tham gia và trần có hiệu lực trong tháng làm việc. Căn cứ này tách khỏi `grossPay`; tăng ca không tự động trở thành căn cứ đóng.
-- Thu nhập tính thuế của bản này = `max(0, grossPay − tăng ca đã xác nhận miễn thuế − BHXH − BHYT − BHTN − giảm trừ bản thân − giảm trừ người phụ thuộc)`. Người duyệt tăng ca chỉ đánh dấu `taxExempt: true` sau khi đối soát điều kiện và giới hạn pháp luật; tăng ca chưa xác nhận vẫn chịu thuế. Thuế TNCN tính theo bậc lũy tiến tại **ngày trả lương dự kiến**. Nguồn: [hướng dẫn miễn thuế tiền tăng ca năm 2026](https://media.chinhphu.vn/cac-truong-hop-tien-luong-tien-cong-duoc-mien-thue-tncn-102260715163431228.htm).
-- `netPay = grossPay − BHXH − BHYT − BHTN − thuế TNCN`.
+- Thu nhập tính thuế của bản này = `max(0, grossPay − tăng ca đã xác nhận miễn thuế − phụ cấp khác miễn thuế − BHXH − BHYT − BHTN − giảm trừ bản thân − giảm trừ người phụ thuộc)`. Người duyệt tăng ca chỉ đánh dấu `taxExempt: true` sau khi đối soát điều kiện và giới hạn pháp luật; tăng ca chưa xác nhận vẫn chịu thuế. Thuế TNCN tính theo bậc lũy tiến tại **ngày trả lương dự kiến**. Nguồn: [hướng dẫn miễn thuế tiền tăng ca năm 2026](https://media.chinhphu.vn/cac-truong-hop-tien-luong-tien-cong-duoc-mien-thue-tncn-102260715163431228.htm).
+- `netPay = grossPay − BHXH − BHYT − BHTN − thuế TNCN − khấu trừ khác`. Khấu trừ khác (tạm ứng, phạt) trừ sau thuế và không làm giảm thu nhập tính thuế.
 
 Phiếu lương lưu số tiền bảo hiểm từng loại, hai căn cứ đóng sau khi áp trần, số tăng ca đã xác nhận miễn thuế, thu nhập tính thuế, thuế, quy tắc áp dụng và `netPay`.
 
@@ -29,6 +29,36 @@ Phiếu lương lưu số tiền bảo hiểm từng loại, hai căn cứ đón
 
 HR nhìn thấy hồ sơ bảo hiểm và người phụ thuộc ở `/payslips`; kế toán nhìn thấy ngày trả lương và các khoản khấu trừ trên phiếu. Sửa hồ sơ/người phụ thuộc ảnh hưởng kỳ `CALCULATED` đưa kỳ về `DRAFT`; kỳ `APPROVED` trở đi bị khóa.
 
+## Khoản cộng/trừ nhập tay
+
+Kế toán có `payroll.calculate` (phạm vi `COMPANY`) nhập thêm khoản cho từng nhân viên trong kỳ:
+
+| Endpoint | Mục đích |
+|:---------|:---------|
+| `GET /api/payroll/periods/{periodId}/adjustments` | Danh sách khoản của kỳ, kèm mã và tên nhân viên |
+| `POST /api/payroll/periods/{periodId}/adjustments` | Thêm khoản, trả `201` |
+| `DELETE /api/payroll/periods/{periodId}/adjustments/{adjustmentId}` | Xóa khoản |
+
+Body `POST`: `{"employeeId":2,"type":"BONUS","description":"Thưởng Tết","amount":5000000}`. `amount`
+dương, tối đa 2 chữ số thập phân; `description` không rỗng, tối đa 250 ký tự.
+
+| `type` | Ý nghĩa | Tổng thu nhập | Thu nhập tính thuế | Thực nhận |
+|:-------|:--------|:-------------:|:------------------:|:---------:|
+| `BONUS` | Thưởng | Cộng | Cộng | Cộng |
+| `TAXABLE_ALLOWANCE` | Phụ cấp khác chịu thuế | Cộng | Cộng | Cộng |
+| `NON_TAXABLE_ALLOWANCE` | Phụ cấp khác miễn thuế; kế toán chịu trách nhiệm đối chiếu điều kiện miễn | Cộng | Không | Cộng |
+| `DEDUCTION` | Khấu trừ sau thuế: tạm ứng, phạt | Không | Không | Trừ |
+
+Không khoản nào làm đổi căn cứ đóng bảo hiểm (lấy từ hồ sơ bảo hiểm do HR nhập). Khoản chỉ đi vào phiếu
+lương ở lần **tính lương** tiếp theo: thêm hoặc xóa khi kỳ đang `CALCULATED` đưa kỳ về `DRAFT`; từ
+`APPROVED` trở đi trả `409 PAYROLL_PERIOD_LOCKED`. Nhân viên phải còn làm việc trong kỳ (`400` với
+`field: employeeId` nếu không). Khấu trừ lớn hơn số còn lại sau thuế làm việc tính lương dừng với lỗi
+yêu cầu đối soát, giống trường hợp khấu trừ bảo hiểm vượt thu nhập.
+
+Phiếu lương có thêm `otherEarningsPay`, `taxExemptOtherEarnings`, `otherDeductions`, và mỗi khoản là một
+dòng trong `items` với `componentType` trùng `type`. Trên web, nút **Khoản cộng/trừ** ở mỗi kỳ trong
+`/payslips` mở danh sách và form nhập.
+
 ## Xuất bảng lương ra Excel
 
 `GET /api/payroll/periods/{id}/export` trả file `bang-luong-<năm>-<tháng>.xlsx`
@@ -39,7 +69,7 @@ PAYROLL_PERIOD_NOT_FOUND`) vẫn trả envelope JSON như các endpoint khác.
 
 File có một sheet, mỗi dòng một phiếu lương của kỳ, sắp theo mã nhân viên: mã, họ tên, đơn vị, địa
 điểm, lương hợp đồng, phút công chuẩn/được trả/tăng ca, lương theo công, phụ cấp, tiền tăng ca, tăng
-ca miễn thuế, tổng thu nhập, BHXH, BHYT, BHTN, thu nhập tính thuế, thuế TNCN và thực nhận. Dòng cuối
+ca miễn thuế, thưởng và phụ cấp khác, phụ cấp khác miễn thuế, tổng thu nhập, BHXH, BHYT, BHTN, thu nhập tính thuế, thuế TNCN, khấu trừ khác và thực nhận. Dòng cuối
 là công thức `SUM` cho các cột tiền. Dữ liệu lấy từ snapshot trên phiếu lương, nên file của kỳ đã
 duyệt không đổi theo hồ sơ hiện tại. Trên web, nút **Xuất Excel** hiện ở mỗi kỳ đã tính trở đi trong
 `/payslips`.
@@ -52,7 +82,7 @@ duyệt không đổi theo hồ sơ hiện tại. Trên web, nút **Xuất Excel
 
 ## Giới hạn cần xử lý thủ công
 
-- Chưa hỗ trợ người không cư trú, khoản thưởng/thu nhập ngoài bốn thành phần hiện có, khoản giảm trừ tự nguyện khác, truy thu, hoàn thuế và quyết toán năm. Không tự động gửi tờ khai thuế hay bảo hiểm.
+- Chưa hỗ trợ người không cư trú, hoa hồng tính tự động, khoản giảm trừ tự nguyện khác, truy thu, hoàn thuế và quyết toán năm. Không tự động gửi tờ khai thuế hay bảo hiểm.
 - Chưa tách giờ làm đêm để cộng hệ số riêng. Tăng ca Chủ nhật/ngày lễ cần chấm vào/ra và duyệt, không tự duyệt. Việc kiểm tra trần giờ làm thêm trong ngày/năm và chứng từ miễn thuế vẫn do HR thực hiện trước khi chọn `taxExempt`.
 - Tính thuế theo một lần trả lương trong một tháng. Nếu ngày trả thực tế đổi tháng hoặc có thêm đợt trả/thưởng cùng tháng, kế toán phải đối soát. Kỳ đã `APPROVED` hiện không có luồng mở lại tự động; cần xử lý điều chỉnh có kiểm soát trước khi ghi nhận `PAID`.
 - Hồ sơ bảo hiểm được chọn theo ngày cuối nhân viên làm việc trong kỳ; trường hợp thay đổi chế độ trong cùng tháng và các ngoại lệ luật định cần đối soát bằng tay. Dữ liệu quy tắc nạp sẵn chỉ đến hết năm 2026.

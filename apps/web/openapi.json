@@ -49,7 +49,7 @@
     },
     "/api/accounts" : {
       "get" : {
-        "operationId" : "list_11",
+        "operationId" : "list_12",
         "parameters" : [ {
           "in" : "query",
           "name" : "pageable",
@@ -73,7 +73,7 @@
         "tags" : [ "account-admin-controller" ]
       },
       "post" : {
-        "operationId" : "create_10",
+        "operationId" : "create_11",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -209,7 +209,7 @@
     },
     "/api/accounts/{accountId}/role-assignments" : {
       "get" : {
-        "operationId" : "list_12",
+        "operationId" : "list_13",
         "parameters" : [ {
           "in" : "path",
           "name" : "accountId",
@@ -271,7 +271,7 @@
     },
     "/api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides" : {
       "get" : {
-        "operationId" : "list_13",
+        "operationId" : "list_14",
         "parameters" : [ {
           "in" : "path",
           "name" : "accountId",
@@ -304,7 +304,7 @@
         "tags" : [ "account-permission-override-controller" ]
       },
       "post" : {
-        "operationId" : "create_11",
+        "operationId" : "create_12",
         "parameters" : [ {
           "in" : "path",
           "name" : "accountId",
@@ -883,7 +883,7 @@
     },
     "/api/company-holidays" : {
       "get" : {
-        "operationId" : "list_10",
+        "operationId" : "list_11",
         "parameters" : [ {
           "in" : "query",
           "name" : "from",
@@ -916,7 +916,7 @@
         "tags" : [ "company-holiday-controller" ]
       },
       "post" : {
-        "operationId" : "create_9",
+        "operationId" : "create_10",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -944,7 +944,7 @@
     },
     "/api/company-holidays/{id}" : {
       "delete" : {
-        "operationId" : "delete_5",
+        "operationId" : "delete_6",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -1033,7 +1033,7 @@
     },
     "/api/compensation/employees/{employeeId}/salary-history" : {
       "get" : {
-        "operationId" : "list_9",
+        "operationId" : "list_10",
         "parameters" : [ {
           "in" : "path",
           "name" : "employeeId",
@@ -1237,7 +1237,7 @@
     },
     "/api/employees" : {
       "get" : {
-        "operationId" : "list_7",
+        "operationId" : "list_8",
         "parameters" : [ {
           "in" : "query",
           "name" : "pageable",
@@ -1261,7 +1261,7 @@
         "tags" : [ "employee-controller" ]
       },
       "post" : {
-        "operationId" : "create_8",
+        "operationId" : "create_9",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1351,7 +1351,7 @@
     },
     "/api/employees/{employeeId}/assignments" : {
       "get" : {
-        "operationId" : "list_8",
+        "operationId" : "list_9",
         "parameters" : [ {
           "in" : "path",
           "name" : "employeeId",
@@ -1603,7 +1603,7 @@
     },
     "/api/job-positions" : {
       "get" : {
-        "operationId" : "list_6",
+        "operationId" : "list_7",
         "parameters" : [ {
           "in" : "query",
           "name" : "active",
@@ -1634,7 +1634,7 @@
         "tags" : [ "job-position-controller" ]
       },
       "post" : {
-        "operationId" : "create_7",
+        "operationId" : "create_8",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1926,7 +1926,7 @@
     },
     "/api/leave-requests" : {
       "post" : {
-        "operationId" : "create_6",
+        "operationId" : "create_7",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1954,7 +1954,7 @@
     },
     "/api/leave-requests/employees/{employeeId}" : {
       "get" : {
-        "operationId" : "list_15",
+        "operationId" : "list_16",
         "parameters" : [ {
           "in" : "path",
           "name" : "employeeId",
@@ -2167,7 +2167,7 @@
     },
     "/api/organization-units" : {
       "get" : {
-        "operationId" : "list_5",
+        "operationId" : "list_6",
         "parameters" : [ {
           "in" : "query",
           "name" : "active",
@@ -2207,7 +2207,7 @@
         "tags" : [ "organization-unit-controller" ]
       },
       "post" : {
-        "operationId" : "create_5",
+        "operationId" : "create_6",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2668,9 +2668,106 @@
         "tags" : [ "payroll-controller" ]
       }
     },
+    "/api/payroll/periods/{periodId}/adjustments" : {
+      "get" : {
+        "operationId" : "list_5",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "periodId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultListPayrollAdjustmentResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "payroll-adjustment-controller" ]
+      },
+      "post" : {
+        "operationId" : "create_5",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "periodId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreatePayrollAdjustmentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultPayrollAdjustmentResponse"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "payroll-adjustment-controller" ]
+      }
+    },
+    "/api/payroll/periods/{periodId}/adjustments/{adjustmentId}" : {
+      "delete" : {
+        "operationId" : "delete_5",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "periodId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "path",
+          "name" : "adjustmentId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultVoid"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "payroll-adjustment-controller" ]
+      }
+    },
     "/api/permissions" : {
       "get" : {
-        "operationId" : "list_14",
+        "operationId" : "list_15",
         "parameters" : [ {
           "in" : "query",
           "name" : "module",
@@ -4587,6 +4684,28 @@
         },
         "required" : [ "data", "error", "success" ]
       },
+      "ApiResultListPayrollAdjustmentResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "$ref" : "#/components/schemas/PayrollAdjustmentResponse"
+            }
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
       "ApiResultListPermissionOverrideOptionResponse" : {
         "type" : "object",
         "properties" : {
@@ -5021,6 +5140,29 @@
           "data" : {
             "anyOf" : [ {
               "$ref" : "#/components/schemas/PagedResultRoleResponse"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
+      "ApiResultPayrollAdjustmentResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/PayrollAdjustmentResponse"
             }, {
               "type" : "null"
             } ]
@@ -6026,6 +6168,28 @@
           }
         },
         "required" : [ "code", "name", "unitType" ]
+      },
+      "CreatePayrollAdjustmentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "amount" : {
+            "type" : "number"
+          },
+          "description" : {
+            "type" : "string",
+            "maxLength" : 250,
+            "minLength" : 0
+          },
+          "employeeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "BONUS", "TAXABLE_ALLOWANCE", "NON_TAXABLE_ALLOWANCE", "DEDUCTION" ]
+          }
+        },
+        "required" : [ "amount", "description", "employeeId", "type" ]
       },
       "CreatePayrollPeriodRequest" : {
         "type" : "object",
@@ -7120,6 +7284,44 @@
           }
         }
       },
+      "PayrollAdjustmentResponse" : {
+        "type" : "object",
+        "properties" : {
+          "amount" : {
+            "type" : "number"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "employeeCode" : {
+            "type" : "string"
+          },
+          "employeeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "employeeName" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "payrollPeriodId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "BONUS", "TAXABLE_ALLOWANCE", "NON_TAXABLE_ALLOWANCE", "DEDUCTION" ]
+          }
+        },
+        "required" : [ "amount", "createdAt", "description", "employeeCode", "employeeId", "employeeName", "id", "payrollPeriodId", "type" ]
+      },
       "PayrollPeriodResponse" : {
         "type" : "object",
         "properties" : {
@@ -7234,7 +7436,7 @@
           },
           "componentType" : {
             "type" : "string",
-            "enum" : [ "BASE_SALARY", "POSITION_ALLOWANCE", "SENIORITY_ALLOWANCE", "OVERTIME" ]
+            "enum" : [ "BASE_SALARY", "POSITION_ALLOWANCE", "SENIORITY_ALLOWANCE", "OVERTIME", "BONUS", "TAXABLE_ALLOWANCE", "NON_TAXABLE_ALLOWANCE", "DEDUCTION" ]
           },
           "description" : {
             "type" : "string"
@@ -7312,6 +7514,12 @@
           "organizationUnitSnapshot" : {
             "type" : "string"
           },
+          "otherDeductions" : {
+            "type" : "number"
+          },
+          "otherEarningsPay" : {
+            "type" : "number"
+          },
           "overtimePay" : {
             "type" : "number"
           },
@@ -7330,6 +7538,9 @@
             "type" : "integer",
             "format" : "int32"
           },
+          "taxExemptOtherEarnings" : {
+            "type" : "number"
+          },
           "taxExemptOvertimePay" : {
             "type" : "number"
           },
@@ -7343,7 +7554,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "allowancePay", "approvedOvertimeMinutes", "basicSalaryPay", "contractualBasicSalary", "employeeCodeSnapshot", "employeeHealthInsurance", "employeeId", "employeeNameSnapshot", "employeeSocialInsurance", "employeeUnemploymentInsurance", "grossPay", "id", "insuranceSalaryBase", "items", "netPay", "organizationUnitSnapshot", "overtimePay", "payableWorkMinutes", "payrollPeriodId", "personalIncomeTax", "scheduledWorkMinutes", "taxExemptOvertimePay", "taxableIncome", "unemploymentInsuranceBase", "workLocationSnapshot" ]
+        "required" : [ "allowancePay", "approvedOvertimeMinutes", "basicSalaryPay", "contractualBasicSalary", "employeeCodeSnapshot", "employeeHealthInsurance", "employeeId", "employeeNameSnapshot", "employeeSocialInsurance", "employeeUnemploymentInsurance", "grossPay", "id", "insuranceSalaryBase", "items", "netPay", "organizationUnitSnapshot", "otherDeductions", "otherEarningsPay", "overtimePay", "payableWorkMinutes", "payrollPeriodId", "personalIncomeTax", "scheduledWorkMinutes", "taxExemptOtherEarnings", "taxExemptOvertimePay", "taxableIncome", "unemploymentInsuranceBase", "workLocationSnapshot" ]
       },
       "PermissionOverrideOptionResponse" : {
         "type" : "object",
