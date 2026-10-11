@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import io.swagger.v3.oas.annotations.servers.Server;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
 import jakarta.annotation.Nullable;
@@ -29,7 +30,8 @@ import jakarta.annotation.Nullable;
  *
  * <p>Mọi endpoint mặc định yêu cầu Bearer JWT, khớp với {@link SecurityConfig}; bấm
  * "Authorize" trong Swagger UI rồi dán {@code accessToken} lấy từ {@code POST /api/auth/login}.
- * Frontend sinh TypeScript type từ spec này nên đổi DTO thì phải sinh lại type.
+ * Frontend sinh TypeScript type từ bản chụp spec {@code apps/web/openapi.json}; đổi DTO thì
+ * {@code OpenApiSnapshotTest} fail cho tới khi bản chụp và type được sinh lại.
  *
  * <h3>Quy ước null</h3>
  * <ul>
@@ -42,6 +44,8 @@ import jakarta.annotation.Nullable;
 @Configuration
 @OpenAPIDefinition(
     info = @Info(title = "HRM API", version = "v1"),
+    // Fixed relative URL so the committed snapshot does not depend on host or port.
+    servers = @Server(url = "/"),
     security = @SecurityRequirement(name = OpenApiConfig.BEARER_SCHEME)
 )
 @SecurityScheme(

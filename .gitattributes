@@ -1,0 +1,4 @@
+# Generated from the API spec. `npm run check:api` compares bytes, so keep LF on every OS
+# regardless of core.autocrlf.
+apps/web/openapi.json text eol=lf
+apps/web/lib/api-schema.ts text eol=lf
