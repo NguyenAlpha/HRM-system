@@ -235,9 +235,14 @@ public class EmployeeService {
     }
 
     @PreAuthorize("hasAuthority('employee.lifecycle.manage')")
-    public EmployeeDetailResponse completeResignation(
-        Long employeeId, LocalDate terminationDate, String terminationReason
+    public EmployeeDetailResponse endEmployment(
+        Long employeeId, EmploymentStatus endStatus, LocalDate terminationDate, String terminationReason
     ) {
+        if (!isEmploymentEnded(endStatus)) {
+            throw new BusinessException(
+                ErrorCode.VALIDATION_ERROR, "endStatus must be RESIGNED, TERMINATED or RETIRED", "endStatus"
+            );
+        }
         Employee employee = findEmployeeOrThrow(employeeId);
         employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_LIFECYCLE_MANAGE);
         if (terminationDate.isBefore(employee.getHireDate())) {
@@ -249,7 +254,7 @@ public class EmployeeService {
             throw new ConflictException(ErrorCode.CONFLICT, "Employee employment has already ended");
         }
 
-        employee.setEmploymentStatus(EmploymentStatus.RESIGNED);
+        employee.setEmploymentStatus(endStatus);
         employee.setTerminationDate(terminationDate);
         employee.setTerminationReason(terminationReason);
         employee.setUpdatedAt(Instant.now());

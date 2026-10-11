@@ -7,6 +7,8 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -18,6 +20,8 @@ import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
+import com.htttdn.hrm.entity.EmployeeAssignment;
+import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.entity.enums.EmploymentType;
 import com.htttdn.hrm.exception.ConflictException;
@@ -198,6 +202,36 @@ class EmployeeServiceTest {
         );
 
         assertEquals(ErrorCode.EMPLOYMENT_STATUS_TRANSITION_NOT_ALLOWED, exception.getErrorCode());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = EmploymentStatus.class, names = { "RESIGNED", "TERMINATED", "RETIRED" })
+    void endEmploymentSetsTheChosenStatusAndClosesAccess(EmploymentStatus endStatus) {
+        Employee employee = employee(1L);
+        EmployeeAssignment assignment = EmployeeAssignment.builder().effectiveFrom(LocalDate.of(2025, 1, 1)).build();
+        Account account = Account.builder().id(5L).status(AccountStatus.ACTIVE).build();
+        LocalDate endDate = LocalDate.of(2026, 10, 31);
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(1L))
+            .thenReturn(Optional.of(assignment));
+        when(accountRepository.findByEmployeeId(1L)).thenReturn(Optional.of(account));
+
+        service().endEmployment(1L, endStatus, endDate, "Reason");
+
+        assertEquals(endStatus, employee.getEmploymentStatus());
+        assertEquals(endDate, employee.getTerminationDate());
+        assertEquals(endDate, assignment.getEffectiveTo());
+        assertEquals(AccountStatus.DISABLED, account.getStatus());
+        verify(refreshTokenService).revokeAll(5L);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = EmploymentStatus.class, names = { "PROBATION", "ACTIVE" })
+    void endEmploymentRejectsStatusThatDoesNotEndEmployment(EmploymentStatus endStatus) {
+        BusinessException exception = assertThrows(BusinessException.class,
+            () -> service().endEmployment(1L, endStatus, LocalDate.of(2026, 10, 31), "Reason"));
+
+        assertEquals("endStatus", exception.getField());
     }
 
     private Employee employee(Long id) {

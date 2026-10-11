@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Loader2 } from "lucide-react"
@@ -20,22 +20,34 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  completeEmployeeResignation,
+  EMPLOYMENT_END_LABELS,
+  EMPLOYMENT_END_STATUSES,
+  endEmployeeEmployment,
   employeeErrorMessage,
   isSessionExpired,
   type EmployeeDetail,
 } from "@/lib/employee"
 
-const resignationSchema = z.object({
+const employmentEndSchema = z.object({
+  endStatus: z.enum(EMPLOYMENT_END_STATUSES),
   terminationDate: z.string().min(1, "Bắt buộc"),
   terminationReason: z.string().trim().min(1, "Bắt buộc"),
 })
 
-type ResignationValues = z.infer<typeof resignationSchema>
+type EmploymentEndValues = z.infer<typeof employmentEndSchema>
 
-export function EmployeeResignationDialog({ employee, onClose, onCompleted, onSessionExpired }: {
+const END_STATUS_ITEMS = { ...EMPLOYMENT_END_LABELS }
+
+export function EmployeeEmploymentEndDialog({ employee, onClose, onCompleted, onSessionExpired }: {
   employee: EmployeeDetail
   onClose: () => void
   onCompleted: () => void
@@ -44,23 +56,25 @@ export function EmployeeResignationDialog({ employee, onClose, onCompleted, onSe
   const [dialogError, setDialogError] = useState<string | null>(null)
 
   const {
+    control,
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<ResignationValues>({
-    resolver: zodResolver(resignationSchema),
-    defaultValues: { terminationDate: "", terminationReason: "" },
+  } = useForm<EmploymentEndValues>({
+    resolver: zodResolver(employmentEndSchema),
+    defaultValues: { endStatus: "RESIGNED", terminationDate: "", terminationReason: "" },
   })
 
-  async function onSubmit(values: ResignationValues) {
+  async function onSubmit(values: EmploymentEndValues) {
     setDialogError(null)
     try {
-      await completeEmployeeResignation(
+      await endEmployeeEmployment(
         employee.id,
+        values.endStatus,
         values.terminationDate,
         values.terminationReason.trim(),
       )
-      toast.success(`Đã ghi nhận nghỉ việc cho ${employee.fullName}`, {
+      toast.success(`Đã ghi nhận ${EMPLOYMENT_END_LABELS[values.endStatus].toLowerCase()} cho ${employee.fullName}`, {
         description: "Phân công hiện tại đã đóng và tài khoản đăng nhập đã bị vô hiệu hóa.",
       })
       onClose()
@@ -76,21 +90,41 @@ export function EmployeeResignationDialog({ employee, onClose, onCompleted, onSe
       <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle>Hoàn tất nghỉ việc</DialogTitle>
+            <DialogTitle>Kết thúc làm việc</DialogTitle>
             <DialogDescription>
-              Ghi nhận nghỉ việc cho {employee.fullName} ({employee.employeeCode}).
+              Ghi nhận kết thúc làm việc cho {employee.fullName} ({employee.employeeCode}).
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-              Thao tác này đóng phân công đang hiệu lực tại ngày nghỉ, chuyển tài khoản đăng nhập sang
+              Thao tác này đóng phân công đang hiệu lực tại ngày kết thúc, chuyển tài khoản đăng nhập sang
               trạng thái vô hiệu hóa và thu hồi toàn bộ phiên đăng nhập của nhân sự. Dữ liệu chấm công và
               phiếu lương đã có được giữ nguyên.
             </p>
 
             <div className="grid gap-2">
-              <Label htmlFor="terminationDate">Ngày nghỉ việc</Label>
+              <Label htmlFor="endStatus">Hình thức</Label>
+              <Controller
+                control={control}
+                name="endStatus"
+                render={({ field }) => (
+                  <Select value={field.value} items={END_STATUS_ITEMS} onValueChange={field.onChange}>
+                    <SelectTrigger id="endStatus" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EMPLOYMENT_END_STATUSES.map((status) => (
+                        <SelectItem key={status} value={status}>{EMPLOYMENT_END_LABELS[status]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="terminationDate">Ngày kết thúc</Label>
               <Input
                 id="terminationDate"
                 type="date"
@@ -120,7 +154,7 @@ export function EmployeeResignationDialog({ employee, onClose, onCompleted, onSe
             <DialogClose render={<Button type="button" variant="outline" />}>Hủy</DialogClose>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="animate-spin" />}
-              Ghi nhận nghỉ việc
+              Xác nhận
             </Button>
           </DialogFooter>
         </form>

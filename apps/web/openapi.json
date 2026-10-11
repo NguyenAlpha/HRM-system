@@ -1465,9 +1465,9 @@
         "tags" : [ "employee-controller" ]
       }
     },
-    "/api/employees/{employeeId}/resignation" : {
+    "/api/employees/{employeeId}/employment-end" : {
       "post" : {
-        "operationId" : "completeResignation",
+        "operationId" : "endEmployment",
         "parameters" : [ {
           "in" : "path",
           "name" : "employeeId",
@@ -1481,7 +1481,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/CompleteResignationRequest"
+                "$ref" : "#/components/schemas/EndEmploymentRequest"
               }
             }
           },
@@ -5627,20 +5627,6 @@
         },
         "required" : [ "password", "passwordConfirmation" ]
       },
-      "CompleteResignationRequest" : {
-        "type" : "object",
-        "properties" : {
-          "terminationDate" : {
-            "type" : "string",
-            "format" : "date"
-          },
-          "terminationReason" : {
-            "type" : "string",
-            "minLength" : 1
-          }
-        },
-        "required" : [ "terminationDate", "terminationReason" ]
-      },
       "CreateAccountRequest" : {
         "type" : "object",
         "properties" : {
@@ -6382,6 +6368,24 @@
           }
         },
         "required" : [ "effectiveTo" ]
+      },
+      "EndEmploymentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "endStatus" : {
+            "type" : "string",
+            "enum" : [ "PROBATION", "ACTIVE", "RESIGNED", "TERMINATED", "RETIRED" ]
+          },
+          "terminationDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "terminationReason" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "endStatus", "terminationDate", "terminationReason" ]
       },
       "ErrorDetail" : {
         "type" : "object",

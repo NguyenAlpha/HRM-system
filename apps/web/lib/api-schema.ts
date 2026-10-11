@@ -564,7 +564,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/employees/{employeeId}/resignation": {
+    "/api/employees/{employeeId}/employment-end": {
         parameters: {
             query?: never;
             header?: never;
@@ -573,7 +573,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["completeResignation"];
+        post: operations["endEmployment"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1929,11 +1929,6 @@ export interface components {
             password: string;
             passwordConfirmation: string;
         };
-        CompleteResignationRequest: {
-            /** Format: date */
-            terminationDate: string;
-            terminationReason: string;
-        };
         CreateAccountRequest: {
             /** Format: int64 */
             employeeId: number;
@@ -2198,6 +2193,13 @@ export interface components {
         EndDependentCommand: {
             /** Format: date */
             effectiveTo: string;
+        };
+        EndEmploymentRequest: {
+            /** @enum {string} */
+            endStatus: "PROBATION" | "ACTIVE" | "RESIGNED" | "TERMINATED" | "RETIRED";
+            /** Format: date */
+            terminationDate: string;
+            terminationReason: string;
         };
         ErrorDetail: {
             code: string;
@@ -3909,7 +3911,7 @@ export interface operations {
             };
         };
     };
-    completeResignation: {
+    endEmployment: {
         parameters: {
             query?: never;
             header?: never;
@@ -3920,7 +3922,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CompleteResignationRequest"];
+                "application/json": components["schemas"]["EndEmploymentRequest"];
             };
         };
         responses: {

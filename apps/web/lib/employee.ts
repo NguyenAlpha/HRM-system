@@ -58,10 +58,19 @@ export const EDUCATION_LEVEL_LABELS: Record<EducationLevel, string> = {
   DOCTORATE: "Tiến sĩ",
 }
 
-const EMPLOYMENT_ENDED_STATUSES: readonly EmploymentStatus[] = ["RESIGNED", "TERMINATED", "RETIRED"]
+export const EMPLOYMENT_END_STATUSES = ["RESIGNED", "TERMINATED", "RETIRED"] as const satisfies readonly EmploymentStatus[]
+
+export type EmploymentEndStatus = (typeof EMPLOYMENT_END_STATUSES)[number]
+
+/** Action labels for ending employment, as opposed to the resulting status labels above. */
+export const EMPLOYMENT_END_LABELS: Record<EmploymentEndStatus, string> = {
+  RESIGNED: "Nghỉ việc",
+  TERMINATED: "Chấm dứt hợp đồng",
+  RETIRED: "Nghỉ hưu",
+}
 
 export function isEmploymentEnded(status: EmploymentStatus): boolean {
-  return EMPLOYMENT_ENDED_STATUSES.includes(status)
+  return (EMPLOYMENT_END_STATUSES as readonly EmploymentStatus[]).includes(status)
 }
 
 export const EMPLOYMENT_TYPES = ["FULL_TIME", "PART_TIME", "TEMPORARY"] as const satisfies readonly EmploymentType[]
@@ -106,15 +115,17 @@ export function updateEmployeeSensitiveData(
   return employeeMutation<EmployeeSensitiveData>("hrm", `/${employeeId}/sensitive`, "PUT", input)
 }
 
-export function completeEmployeeResignation(
+export function endEmployeeEmployment(
   employeeId: number,
+  endStatus: EmploymentEndStatus,
   terminationDate: string,
   terminationReason: string,
 ): Promise<EmployeeDetail> {
-  return employeeMutation<EmployeeDetail>("hrm", `/${employeeId}/resignation`, "POST", {
+  return employeeMutation<EmployeeDetail>("hrm", `/${employeeId}/employment-end`, "POST", {
+    endStatus,
     terminationDate,
     terminationReason,
-  })
+  } satisfies Schemas["EndEmploymentRequest"])
 }
 
 export function softDeleteEmployee(employeeId: number, deletionReason: string): Promise<null> {
