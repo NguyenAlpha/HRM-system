@@ -146,7 +146,8 @@ public class AttendanceService {
         for (AttendanceCalendarService.ScheduledDay day : attendanceCalendarService.scheduleFor(employeeId, from, to)) {
             Instant overlapStart = request.getStartAt().isAfter(day.startAt()) ? request.getStartAt() : day.startAt();
             Instant overlapEnd = request.getEndAt().isBefore(day.endAt()) ? request.getEndAt() : day.endAt();
-            int overlapMinutes = (int) Math.max(0, Duration.between(overlapStart, overlapEnd).toMinutes());
+            int overlapMinutes = workMinutes(day.startAt(), day.endAt(), day.shift(),
+                request.getStartAt(), request.getEndAt());
             int leaveMinutes = Math.min(remainingMinutes, Math.min(day.minutes(), overlapMinutes));
             if (leaveMinutes <= 0) {
                 continue;
@@ -191,7 +192,10 @@ public class AttendanceService {
             }
             record.setLeaveRequest(request);
             record.setLeaveMinutes(leaveMinutes);
-            if (request.getSalaryTreatment() == LeaveSalaryTreatment.EMPLOYER_PAID) {
+            if (record.getCheckInAt() != null) {
+                // The other part of the day was worked: late, early and payable now exclude the leave.
+                applyPunches(record);
+            } else if (request.getSalaryTreatment() == LeaveSalaryTreatment.EMPLOYER_PAID) {
                 record.setPayableMinutes(Math.min(record.getScheduledMinutes(), record.getPayableMinutes() + leaveMinutes));
             }
             if (record.getCheckInAt() == null) {
@@ -268,7 +272,8 @@ public class AttendanceService {
             : toInstant(workDate, shift.getStartTime());
         Instant scheduledEndAt = existing != null ? existing.getScheduledEndAt()
             : toInstant(shift.getCrossesMidnight() ? workDate.plusDays(1) : workDate, shift.getEndTime());
-        long lateMinutes = Math.max(0, Duration.between(scheduledStartAt, now).toMinutes() - shift.getGraceLateMinutes());
+        long lateMinutes = Math.max(0, uncoveredWorkMinutes(scheduledStartAt, scheduledEndAt, shift,
+            existing != null ? existing.getLeaveRequest() : null, scheduledStartAt, now) - shift.getGraceLateMinutes());
 
         if (existing != null) {
             existing.setCheckInAt(now);
@@ -327,30 +332,76 @@ public class AttendanceService {
             throw new ConflictException(ErrorCode.CONFLICT, "Worked time overlaps approved leave");
         }
 
-        WorkShift shift = record.getShift();
-        long workedMinutes = Math.max(0,
-            Duration.between(record.getCheckInAt(), now).toMinutes() - shift.getBreakMinutes());
-        Instant payableStart = record.getCheckInAt().isAfter(record.getScheduledStartAt())
-            ? record.getCheckInAt() : record.getScheduledStartAt();
-        Instant payableEnd = now.isBefore(record.getScheduledEndAt()) ? now : record.getScheduledEndAt();
-        long scheduledOverlap = Math.max(0, Duration.between(payableStart, payableEnd).toMinutes());
-        long payableMinutes = Math.min(record.getScheduledMinutes(),
-            Math.max(0, scheduledOverlap - shift.getBreakMinutes())
-                + (record.getLeaveRequest() != null
-                    && record.getLeaveRequest().getSalaryTreatment() == LeaveSalaryTreatment.EMPLOYER_PAID
-                    ? record.getLeaveMinutes() : 0));
-        if (attendanceCalendarService.companyWorkDates(record.getWorkDate(), record.getWorkDate()).isEmpty()) {
-            payableMinutes = 0;
-        }
-        long earlyLeaveMinutes = Math.max(0, Duration.between(now, record.getScheduledEndAt()).toMinutes());
-
         record.setCheckOutAt(now);
-        record.setWorkedMinutes((int) workedMinutes);
-        record.setPayableMinutes((int) payableMinutes);
-        record.setEarlyLeaveMinutes((int) earlyLeaveMinutes);
+        applyPunches(record);
         record.setUpdatedAt(now);
 
         return toResponse(record);
+    }
+
+    /**
+     * Derives late, worked, payable and early-leave minutes from the punches. The shift break and
+     * an approved leave on the same day are not counted as missing time, so half a day of leave
+     * plus the other half worked adds up to the full scheduled day.
+     */
+    private void applyPunches(AttendanceRecord record) {
+        WorkShift shift = record.getShift();
+        Instant start = record.getScheduledStartAt();
+        Instant end = record.getScheduledEndAt();
+        Instant in = record.getCheckInAt();
+        LeaveRequest leave = record.getLeaveRequest();
+        record.setLateMinutes(Math.max(0,
+            uncoveredWorkMinutes(start, end, shift, leave, start, in) - shift.getGraceLateMinutes()));
+        Instant out = record.getCheckOutAt();
+        if (out == null) {
+            return;
+        }
+        int paidLeaveMinutes = leave != null && leave.getSalaryTreatment() == LeaveSalaryTreatment.EMPLOYER_PAID
+            ? record.getLeaveMinutes() : 0;
+        int payableMinutes = Math.min(record.getScheduledMinutes(),
+            workMinutes(start, end, shift, in, out) + paidLeaveMinutes);
+        if (attendanceCalendarService.companyWorkDates(record.getWorkDate(), record.getWorkDate()).isEmpty()) {
+            payableMinutes = 0;
+        }
+        record.setWorkedMinutes((int) Math.max(0,
+            Duration.between(in, out).toMinutes() - breakMinutesWithin(start, shift, in, out)));
+        record.setPayableMinutes(payableMinutes);
+        record.setEarlyLeaveMinutes(uncoveredWorkMinutes(start, end, shift, leave, out, end));
+    }
+
+    /** Scheduled work minutes in [from, to) covered by neither the shift break nor the leave. */
+    private static int uncoveredWorkMinutes(Instant scheduledStart, Instant scheduledEnd, WorkShift shift,
+        LeaveRequest leave, Instant from, Instant to) {
+        int minutes = workMinutes(scheduledStart, scheduledEnd, shift, from, to);
+        if (leave != null) {
+            Instant leaveFrom = leave.getStartAt().isAfter(from) ? leave.getStartAt() : from;
+            Instant leaveTo = leave.getEndAt().isBefore(to) ? leave.getEndAt() : to;
+            minutes -= workMinutes(scheduledStart, scheduledEnd, shift, leaveFrom, leaveTo);
+        }
+        return Math.max(0, minutes);
+    }
+
+    /** Minutes of [from, to) inside the scheduled window, minus the part that falls in the shift break. */
+    private static int workMinutes(Instant scheduledStart, Instant scheduledEnd, WorkShift shift,
+        Instant from, Instant to) {
+        return Math.max(0, overlapMinutes(from, to, scheduledStart, scheduledEnd)
+            - breakMinutesWithin(scheduledStart, shift, from, to));
+    }
+
+    private static int breakMinutesWithin(Instant scheduledStart, WorkShift shift, Instant from, Instant to) {
+        if (shift.getBreakStartTime() == null) {
+            return 0;
+        }
+        long offset = Math.floorMod(
+            Duration.between(shift.getStartTime(), shift.getBreakStartTime()).toMinutes(), 24L * 60L);
+        Instant breakStart = scheduledStart.plus(Duration.ofMinutes(offset));
+        return overlapMinutes(from, to, breakStart, breakStart.plus(Duration.ofMinutes(shift.getBreakMinutes())));
+    }
+
+    private static int overlapMinutes(Instant from, Instant to, Instant windowStart, Instant windowEnd) {
+        Instant start = from.isAfter(windowStart) ? from : windowStart;
+        Instant end = to.isBefore(windowEnd) ? to : windowEnd;
+        return (int) Math.max(0, Duration.between(start, end).toMinutes());
     }
 
     @PreAuthorize("hasAuthority('attendance.overtime.approve')")
