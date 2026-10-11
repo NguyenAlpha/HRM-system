@@ -122,8 +122,9 @@ Xóa mềm chỉ dành cho hồ sơ tạo nhầm: đã có account, lương, đ�
 thì API từ chối và yêu cầu dùng luồng nghỉ việc. Phân công được tính theo số lượng — bản ghi đầu
 tiên do chính luồng tạo hồ sơ sinh ra nên không tính, từ bản ghi thứ hai mới coi là đã điều chuyển.
 
-Ba endpoint `sensitive`, `resignation` và `soft-delete` hiện **chưa có màn hình**; chúng đã qua
-BFF allowlist nhưng UI chưa gọi.
+Ba endpoint `sensitive`, `resignation` và `soft-delete` được dùng trên trang
+`/employees/{employeeId}`: thẻ dữ liệu nhạy cảm (đọc/sửa theo `employee.sensitive.*`), nút nghỉ
+việc và nút xóa hồ sơ, mỗi phần chỉ hiện khi account có permission tương ứng.
 
 ---
 
