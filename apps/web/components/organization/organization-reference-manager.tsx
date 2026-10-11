@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Briefcase, Building2, Clock, MapPin } from "lucide-react"
+import { Briefcase, Building2, CalendarClock, Clock, MapPin } from "lucide-react"
 
 import { JobPositionManager } from "@/components/organization/job-position-manager"
 import { OrganizationUnitManager } from "@/components/organization/organization-unit-manager"
 import { WorkLocationManager } from "@/components/organization/work-location-manager"
+import { WorkShiftManager } from "@/components/organization/work-shift-manager"
 import {
   Card,
   CardContent,
@@ -24,7 +25,7 @@ export function OrganizationReferenceManager({ portal, onSessionExpired }: { por
     <Card>
       <CardHeader>
         <CardTitle>Danh mục tổ chức</CardTitle>
-        <CardDescription>Quản lý đơn vị tổ chức, địa điểm làm việc, vị trí công việc và hình thức làm việc.</CardDescription>
+        <CardDescription>Quản lý đơn vị tổ chức, địa điểm làm việc, vị trí công việc, ca làm việc và hình thức làm việc.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         <Tabs value={tab} onValueChange={setTab}>
@@ -32,6 +33,7 @@ export function OrganizationReferenceManager({ portal, onSessionExpired }: { por
             <TabsTrigger value="units"><Building2 /> Đơn vị tổ chức</TabsTrigger>
             <TabsTrigger value="locations"><MapPin /> Địa điểm làm việc</TabsTrigger>
             <TabsTrigger value="positions"><Briefcase /> Vị trí công việc</TabsTrigger>
+            <TabsTrigger value="shifts"><CalendarClock /> Ca làm việc</TabsTrigger>
             <TabsTrigger value="employment-types"><Clock /> Hình thức làm việc</TabsTrigger>
           </TabsList>
 
@@ -45,6 +47,10 @@ export function OrganizationReferenceManager({ portal, onSessionExpired }: { por
 
           <TabsContent value="positions" className="mt-4 grid gap-4">
             <JobPositionManager portal={portal} onSessionExpired={onSessionExpired} />
+          </TabsContent>
+
+          <TabsContent value="shifts" className="mt-4 grid gap-4">
+            <WorkShiftManager portal={portal} onSessionExpired={onSessionExpired} />
           </TabsContent>
 
           <TabsContent value="employment-types" className="mt-4">
