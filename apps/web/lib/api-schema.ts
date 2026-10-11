@@ -1981,18 +1981,18 @@ export interface components {
         CreateLeaveCommand: {
             attachmentUrl?: string | null;
             /** Format: int64 */
-            employeeId?: number;
+            employeeId: number;
             /** Format: date-time */
-            endAt?: string;
+            endAt: string;
             /** @enum {string} */
-            leaveType?: "ANNUAL" | "SICK" | "MATERNITY" | "UNPAID" | "OTHER";
-            reason?: string;
+            leaveType: "ANNUAL" | "SICK" | "MATERNITY" | "UNPAID" | "OTHER";
+            reason: string;
             /** Format: int32 */
-            requestedMinutes?: number;
+            requestedMinutes: number;
             /** @enum {string|null} */
             salaryTreatment?: "EMPLOYER_PAID" | "SOCIAL_INSURANCE" | "UNPAID" | null;
             /** Format: date-time */
-            startAt?: string;
+            startAt: string;
         };
         CreateOrganizationCompanyOwnerRequest: {
             account: components["schemas"]["CreateCompanyOwnerAccountRequest"];
@@ -2089,10 +2089,10 @@ export interface components {
         };
         DependentCommand: {
             /** Format: date */
-            effectiveFrom?: string;
+            effectiveFrom: string;
             /** Format: date */
             effectiveTo?: string | null;
-            fullName?: string;
+            fullName: string;
             identifier?: string | null;
         };
         DistributionItemResponse: {
@@ -2197,7 +2197,7 @@ export interface components {
         };
         EndDependentCommand: {
             /** Format: date */
-            effectiveTo?: string;
+            effectiveTo: string;
         };
         ErrorDetail: {
             code: string;
@@ -2548,14 +2548,14 @@ export interface components {
         };
         ProfileCommand: {
             /** Format: date */
-            effectiveFrom?: string;
-            healthInsurance?: boolean;
-            insuranceSalary?: number;
-            socialInsurance?: boolean;
-            taxResident?: boolean;
-            unemploymentInsurance?: boolean;
+            effectiveFrom: string;
+            healthInsurance: boolean;
+            insuranceSalary: number;
+            socialInsurance: boolean;
+            taxResident: boolean;
+            unemploymentInsurance: boolean;
             /** Format: int32 */
-            wageRegion?: number;
+            wageRegion: number;
         };
         RefreshTokenRequest: {
             refreshToken: string;
@@ -2681,9 +2681,9 @@ export interface components {
             reason?: string | null;
         };
         SetSalaryCommand: {
-            baseSalary?: number;
+            baseSalary: number;
             /** Format: date */
-            effectiveFrom?: string;
+            effectiveFrom: string;
             note?: string | null;
             reason?: string | null;
         };

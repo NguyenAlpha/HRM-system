@@ -18,6 +18,8 @@ import com.htttdn.hrm.service.EmployeeSalaryHistoryService;
 import com.htttdn.hrm.service.EmployeeSalaryHistoryService.SalaryHistoryView;
 import com.htttdn.hrm.service.EmployeeSalaryHistoryService.SetSalaryCommand;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/compensation/employees/{employeeId}/salary-history")
 public class EmployeeSalaryHistoryController {
@@ -39,7 +41,7 @@ public class EmployeeSalaryHistoryController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResult<SalaryHistoryView> set(@PathVariable Long employeeId, @RequestBody SetSalaryCommand request) {
+    public ApiResult<SalaryHistoryView> set(@PathVariable Long employeeId, @Valid @RequestBody SetSalaryCommand request) {
         return ApiResult.ok(service.setSalary(employeeId, request));
     }
 }

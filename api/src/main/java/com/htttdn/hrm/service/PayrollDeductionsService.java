@@ -35,6 +35,11 @@ import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 
 @Service
 @Transactional
@@ -83,12 +88,7 @@ public class PayrollDeductionsService {
     @PreAuthorize("hasAuthority('compensation.manage')")
     public Profile setProfile(Long employeeId, ProfileCommand command) {
         Employee employee = requireEmployee(employeeId, "compensation.manage");
-        if (command == null || command.effectiveFrom() == null || command.taxResident() == null
-            || command.socialInsurance() == null || command.healthInsurance() == null
-            || command.unemploymentInsurance() == null || command.insuranceSalary() == null
-            || command.insuranceSalary().signum() < 0 || command.wageRegion() == null
-            || command.wageRegion() < 1 || command.wageRegion() > 4
-            || command.effectiveFrom().isBefore(employee.getHireDate())) {
+        if (command.effectiveFrom().isBefore(employee.getHireDate())) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Invalid payroll profile or effective date");
         }
         if (!command.taxResident()) {
@@ -138,8 +138,7 @@ public class PayrollDeductionsService {
     @PreAuthorize("hasAuthority('compensation.manage')")
     public Dependent addDependent(Long employeeId, DependentCommand command) {
         Employee employee = requireEmployee(employeeId, "compensation.manage");
-        if (command == null || command.fullName() == null || command.fullName().isBlank()
-            || command.effectiveFrom() == null || command.effectiveFrom().isBefore(employee.getHireDate())
+        if (command.effectiveFrom().isBefore(employee.getHireDate())
             || command.effectiveTo() != null && command.effectiveTo().isBefore(command.effectiveFrom())) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Invalid dependent or effective period");
         }
@@ -314,15 +313,18 @@ public class PayrollDeductionsService {
     private static String blankToNull(String value) { return value == null || value.isBlank() ? null : value.trim(); }
     private static BigDecimal money(BigDecimal value) { return value.setScale(2, RoundingMode.HALF_UP); }
 
-    public record ProfileCommand(LocalDate effectiveFrom, Boolean taxResident, Boolean socialInsurance,
-        Boolean healthInsurance, Boolean unemploymentInsurance, BigDecimal insuranceSalary, Short wageRegion) {}
+    public record ProfileCommand(@NotNull LocalDate effectiveFrom, @NotNull Boolean taxResident,
+        @NotNull Boolean socialInsurance, @NotNull Boolean healthInsurance,
+        @NotNull Boolean unemploymentInsurance, @NotNull @PositiveOrZero BigDecimal insuranceSalary,
+        @NotNull @Min(1) @Max(4) Short wageRegion) {}
     public record Profile(Long id, Long employeeId, LocalDate effectiveFrom, @Nullable LocalDate effectiveTo,
         boolean taxResident, boolean socialInsurance, boolean healthInsurance,
         boolean unemploymentInsurance, BigDecimal insuranceSalary, short wageRegion) {}
-    public record DependentCommand(String fullName, @Nullable String identifier, LocalDate effectiveFrom, @Nullable LocalDate effectiveTo) {}
+    public record DependentCommand(@NotBlank String fullName, @Nullable String identifier,
+        @NotNull LocalDate effectiveFrom, @Nullable LocalDate effectiveTo) {}
     public record Dependent(Long id, Long employeeId, String fullName, @Nullable String identifier,
         LocalDate effectiveFrom, @Nullable LocalDate effectiveTo) {}
-    public record EndDependentCommand(LocalDate effectiveTo) {}
+    public record EndDependentCommand(@NotNull LocalDate effectiveTo) {}
     public record Deduction(Long profileId, Long insuranceRuleId, Long taxRuleId,
         BigDecimal insuranceSalaryBase, BigDecimal unemploymentInsuranceBase,
         BigDecimal social, BigDecimal health,

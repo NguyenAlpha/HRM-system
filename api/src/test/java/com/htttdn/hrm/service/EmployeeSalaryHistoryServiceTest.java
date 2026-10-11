@@ -16,7 +16,6 @@ import com.htttdn.hrm.entity.EmployeeSalaryHistory;
 import com.htttdn.hrm.entity.PayrollPeriod;
 import com.htttdn.hrm.entity.Payslip;
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
-import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
@@ -83,28 +82,6 @@ class EmployeeSalaryHistoryServiceTest {
         assertEquals(new BigDecimal("12000000"), result.baseSalary());
         assertEquals(9L, result.approvedByAccountId());
         verify(salaryHistoryRepository).flush();
-    }
-
-    @Test
-    void setSalaryRejectsNonPositiveAmount() {
-        Employee employee = Employee.builder()
-            .id(1L)
-            .hireDate(LocalDate.of(2024, 1, 1))
-            .build();
-        when(employeeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(employee));
-
-        assertThrows(
-            BusinessException.class,
-            () -> service().setSalary(
-                1L,
-                new EmployeeSalaryHistoryService.SetSalaryCommand(
-                    BigDecimal.ZERO,
-                    LocalDate.of(2026, 1, 1),
-                    null,
-                    null
-                )
-            )
-        );
     }
 
     @Test

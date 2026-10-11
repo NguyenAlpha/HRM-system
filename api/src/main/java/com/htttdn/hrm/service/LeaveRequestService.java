@@ -25,6 +25,9 @@ import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 @Service
 @Transactional
@@ -179,23 +182,8 @@ public class LeaveRequestService {
     }
 
     private void validateCommand(CreateLeaveCommand command) {
-        if (command.employeeId() == null) {
-            throw validation("employeeId is required", "employeeId");
-        }
-        if (command.leaveType() == null) {
-            throw validation("leaveType is required", "leaveType");
-        }
-        if (command.startAt() == null) {
-            throw validation("startAt is required", "startAt");
-        }
-        if (command.endAt() == null || !command.endAt().isAfter(command.startAt())) {
+        if (!command.endAt().isAfter(command.startAt())) {
             throw validation("endAt must be after startAt", "endAt");
-        }
-        if (command.requestedMinutes() == null || command.requestedMinutes() <= 0) {
-            throw validation("requestedMinutes must be greater than zero", "requestedMinutes");
-        }
-        if (command.reason() == null || command.reason().isBlank()) {
-            throw validation("reason is required", "reason");
         }
     }
 
@@ -310,13 +298,13 @@ public class LeaveRequestService {
     }
 
     public record CreateLeaveCommand(
-        Long employeeId,
-        LeaveType leaveType,
+        @NotNull Long employeeId,
+        @NotNull LeaveType leaveType,
         @Nullable LeaveSalaryTreatment salaryTreatment,
-        Instant startAt,
-        Instant endAt,
-        Integer requestedMinutes,
-        String reason,
+        @NotNull Instant startAt,
+        @NotNull Instant endAt,
+        @NotNull @Positive Integer requestedMinutes,
+        @NotBlank String reason,
         @Nullable String attachmentUrl
     ) {
     }

@@ -20,6 +20,8 @@ import com.htttdn.hrm.service.PayrollDeductionsService.EndDependentCommand;
 import com.htttdn.hrm.service.PayrollDeductionsService.Profile;
 import com.htttdn.hrm.service.PayrollDeductionsService.ProfileCommand;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/compensation/employees/{employeeId}")
 public class PayrollDeductionsController {
@@ -36,7 +38,7 @@ public class PayrollDeductionsController {
 
     @PostMapping("/payroll-profiles")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResult<Profile> setProfile(@PathVariable Long employeeId, @RequestBody ProfileCommand command) {
+    public ApiResult<Profile> setProfile(@PathVariable Long employeeId, @Valid @RequestBody ProfileCommand command) {
         return ApiResult.ok(service.setProfile(employeeId, command));
     }
 
@@ -47,13 +49,13 @@ public class PayrollDeductionsController {
 
     @PostMapping("/tax-dependents")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResult<Dependent> addDependent(@PathVariable Long employeeId, @RequestBody DependentCommand command) {
+    public ApiResult<Dependent> addDependent(@PathVariable Long employeeId, @Valid @RequestBody DependentCommand command) {
         return ApiResult.ok(service.addDependent(employeeId, command));
     }
 
     @PutMapping("/tax-dependents/{dependentId}/end")
     public ApiResult<Dependent> endDependent(@PathVariable Long employeeId, @PathVariable Long dependentId,
-        @RequestBody EndDependentCommand command) {
+        @Valid @RequestBody EndDependentCommand command) {
         return ApiResult.ok(service.endDependent(employeeId, dependentId, command.effectiveTo()));
     }
 }
