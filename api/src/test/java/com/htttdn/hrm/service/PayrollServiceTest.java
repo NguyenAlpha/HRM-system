@@ -41,7 +41,6 @@ import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.repository.PositionAllowanceRuleRepository;
 import com.htttdn.hrm.repository.SeniorityAllowanceRuleRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
-import com.htttdn.hrm.service.impl.PayrollServiceImpl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -53,7 +52,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class PayrollServiceImplTest {
+class PayrollServiceTest {
 
     @Mock private PayrollPeriodRepository payrollPeriodRepository;
     @Mock private PayslipRepository payslipRepository;
@@ -333,8 +332,8 @@ class PayrollServiceImplTest {
         assertEquals(new BigDecimal("20000000"), captor.getValue().getContractualBaseSalary());
     }
 
-    private PayrollServiceImpl service() {
-        return new PayrollServiceImpl(
+    private PayrollService service() {
+        return new PayrollService(
             payrollPeriodRepository,
             payslipRepository,
             payslipItemRepository,

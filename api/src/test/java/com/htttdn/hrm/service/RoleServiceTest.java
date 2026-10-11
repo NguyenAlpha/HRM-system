@@ -25,7 +25,6 @@ import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.PermissionRepository;
 import com.htttdn.hrm.repository.RolePermissionRepository;
 import com.htttdn.hrm.repository.RoleRepository;
-import com.htttdn.hrm.service.impl.RoleServiceImpl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -36,7 +35,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class RoleServiceImplTest {
+class RoleServiceTest {
 
     @Mock private RoleRepository roleRepository;
     @Mock private PermissionRepository permissionRepository;
@@ -172,8 +171,8 @@ class RoleServiceImplTest {
             .build();
     }
 
-    private RoleServiceImpl service() {
-        return new RoleServiceImpl(
+    private RoleService service() {
+        return new RoleService(
             roleRepository,
             permissionRepository,
             rolePermissionRepository,

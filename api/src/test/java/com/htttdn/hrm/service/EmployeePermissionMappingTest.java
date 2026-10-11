@@ -11,7 +11,6 @@ import com.htttdn.hrm.dto.request.employee.CreateEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.SoftDeleteEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
 import com.htttdn.hrm.entity.Employee;
-import com.htttdn.hrm.service.impl.EmployeeServiceImpl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -20,24 +19,24 @@ class EmployeePermissionMappingTest {
 
     @Test
     void employeeUseCasesRequireAtomicPermissions() throws NoSuchMethodException {
-        assertPermission(EmployeeServiceImpl.class, "create", "employee.create", CreateEmployeeRequest.class);
-        assertPermission(EmployeeServiceImpl.class, "list", "employee.list.read", Pageable.class);
-        assertPermission(EmployeeServiceImpl.class, "getById", "employee.read", Long.class);
+        assertPermission(EmployeeService.class, "create", "employee.create", CreateEmployeeRequest.class);
+        assertPermission(EmployeeService.class, "list", "employee.list.read", Pageable.class);
+        assertPermission(EmployeeService.class, "getById", "employee.read", Long.class);
         assertPermission(
-            EmployeeServiceImpl.class,
+            EmployeeService.class,
             "update",
             "employee.update",
             Long.class,
             UpdateEmployeeRequest.class
         );
         assertPermission(
-            EmployeeServiceImpl.class,
+            EmployeeService.class,
             "confirmEmployment",
             "employee.probation.confirm",
             Long.class
         );
         assertPermission(
-            EmployeeServiceImpl.class,
+            EmployeeService.class,
             "completeResignation",
             "employee.lifecycle.manage",
             Long.class,
@@ -45,7 +44,7 @@ class EmployeePermissionMappingTest {
             String.class
         );
         assertPermission(
-            EmployeeServiceImpl.class,
+            EmployeeService.class,
             "softDelete",
             "employee.delete",
             Long.class,

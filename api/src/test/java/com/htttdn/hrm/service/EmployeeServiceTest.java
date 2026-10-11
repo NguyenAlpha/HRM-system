@@ -30,7 +30,6 @@ import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
-import com.htttdn.hrm.service.impl.EmployeeServiceImpl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -40,7 +39,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
-class EmployeeServiceImplTest {
+class EmployeeServiceTest {
 
     @Mock private EmployeeRepository employeeRepository;
     @Mock private EmployeeAssignmentRepository employeeAssignmentRepository;
@@ -213,8 +212,8 @@ class EmployeeServiceImplTest {
             .build();
     }
 
-    private EmployeeServiceImpl service() {
-        return new EmployeeServiceImpl(
+    private EmployeeService service() {
+        return new EmployeeService(
             employeeRepository,
             employeeAssignmentRepository,
             employeeSalaryHistoryRepository,

@@ -40,7 +40,6 @@ api/
 │   │   │   ├── repository/         # Spring Data repository
 │   │   │   ├── security/           # JWT, user details và xử lý lỗi bảo mật
 │   │   │   └── service/            # Service nghiệp vụ
-│   │   │       └── impl/           # Các implementation của service
 │   │   └── resources/
 │   │       ├── application.properties # Cấu hình runtime
 │   │       └── db/migration/          # Flyway migrations theo domain
@@ -61,7 +60,7 @@ api/
 | `dto` | Mô hình dữ liệu request/response, được chia theo module. |
 | `entity` | Mô hình dữ liệu JPA cho nhân sự, tài khoản, RBAC, chấm công và payroll. |
 | `repository` | Truy vấn và persistence thông qua Spring Data JPA. |
-| `service` | Interface và logic nghiệp vụ; `impl` chứa implementation. |
+| `service` | Logic nghiệp vụ, mỗi service là một class `@Service`; không tách interface và `impl`. |
 | `security` | JWT, xác thực tài khoản, entry point và access-denied handler. |
 | `exception` | Exception dùng chung và chuẩn hóa error response. |
 
