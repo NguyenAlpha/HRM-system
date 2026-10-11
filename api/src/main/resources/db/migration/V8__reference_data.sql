@@ -26,10 +26,12 @@ VALUES
      'Decree 161/2026/ND-CP; Decree 293/2025/ND-CP; Employment Law 2025');
 
 -- Bộ luật Lao động 2019: 12 ngày cơ bản, cứ đủ 5 năm làm việc được cộng thêm 1 ngày.
+-- Chuyển tối đa 5 ngày sang năm sau, dùng đến hết 31/3 là chính sách công ty, HR đổi được.
 INSERT INTO leave_entitlement_rules (
-    effective_from, effective_to, base_days, seniority_block_years, seniority_bonus_days, source_reference
+    effective_from, effective_to, base_days, seniority_block_years, seniority_bonus_days,
+    max_carry_over_days, carry_over_expiry_month, source_reference
 )
 VALUES (
-    '2026-01-01', NULL, 12, 5, 1,
+    '2026-01-01', NULL, 12, 5, 1, 5, 3,
     'Bộ luật Lao động 2019, Điều 113 khoản 1 và Điều 114'
 );

@@ -1,6 +1,7 @@
 package com.htttdn.hrm.entity;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -43,6 +44,9 @@ public class EmployeeLeaveEntitlement {
 
     @Column(name = "carried_over_minutes", nullable = false)
     private Integer carriedOverMinutes;
+
+    @Column(name = "carried_over_expires_on")
+    private LocalDate carriedOverExpiresOn;
 
     @Column(name = "adjustment_minutes", nullable = false)
     private Integer adjustmentMinutes;

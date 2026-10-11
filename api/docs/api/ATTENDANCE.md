@@ -29,7 +29,7 @@ Xem [PAYROLL.md](PAYROLL.md) cho cách tính `grossPay`, bảo hiểm, thuế TN
 ## API và giao diện
 
 - Đơn nghỉ: `POST /api/leave-requests` tạo nháp; `POST /{id}/submit`, `/cancel`, `/approve`, `/reject`; `GET /{id}`, `GET /employees/{employeeId}` và `GET /pending` (chỉ trả đơn trong phạm vi người duyệt). Các đường dẫn con ở đây có tiền tố `/api/leave-requests`.
-- Hạn mức phép năm: `GET /api/leave-entitlements/employees/{employeeId}?year=2026` xem số dư; `PUT .../adjustment` và `PUT .../carried-over` cho HR có `request.manage` điều chỉnh.
+- Hạn mức phép năm: `GET /api/leave-entitlements/employees/{employeeId}?year=2026` xem số dư; `PUT .../adjustment` và `PUT .../carried-over` cho HR có `request.manage` điều chỉnh. Cuối năm HR chốt phép năm qua `GET`/`POST /api/leave-entitlements/carry-over?fromYear=2026`.
 - Kỳ lương: `POST /api/payroll/periods`, `GET /api/payroll/periods`, `GET /api/payroll/periods/{id}`, `POST /api/payroll/periods/{id}/calculate|approve|mark-paid|lock|cancel`; xem phiếu qua `GET /api/payroll/employees/{employeeId}/payslips` hoặc `GET /api/payroll/payslips/{id}`. Nhân viên chỉ xem phiếu từ kỳ đã duyệt trở đi.
 - Cổng HRM có `/attendance`, `/leave-requests`, `/payslips`; tất cả yêu cầu đi qua BFF allowlist và API kiểm tra quyền cùng phạm vi truy cập.
 
@@ -66,8 +66,31 @@ Bảng hạn mức **không lưu số phút đã dùng**; số đã dùng và đ
 |:---------|:-----------|:---------|
 | `GET /api/leave-entitlements/employees/{employeeId}` | `request.read`, hoặc chính nhân viên đó | Xem số dư; thiếu `year` thì lấy năm hiện tại |
 | `PUT /api/leave-entitlements/employees/{employeeId}/adjustment` | `request.manage` | Cộng hoặc trừ hạn mức, bắt buộc có lý do |
-| `PUT /api/leave-entitlements/employees/{employeeId}/carried-over` | `request.manage` | Nhập số phút chuyển từ năm trước |
+| `PUT /api/leave-entitlements/employees/{employeeId}/carried-over` | `request.manage` | Nhập tay số phút chuyển từ năm trước; hạn dùng lấy theo quy tắc của năm |
+| `GET /api/leave-entitlements/carry-over?fromYear=2026` | `request.manage`, phạm vi `COMPANY` | Xem trước kết quả chốt phép năm |
+| `POST /api/leave-entitlements/carry-over?fromYear=2026` | `request.manage`, phạm vi `COMPANY` | Chốt phép năm: ghi số phút chuyển sang năm sau cho từng nhân viên |
 
-Response trả `grantedMinutes` (đã gồm chuyển năm trước và điều chỉnh), `usedMinutes`, `pendingMinutes`, `remainingMinutes` và `standardDayMinutes` để client quy ra ngày.
+Response trả `grantedMinutes` (đã gồm chuyển năm trước và điều chỉnh), `carriedOverMinutes`, `carriedOverExpiresOn`, `expiredCarriedOverMinutes`, `usedMinutes`, `pendingMinutes`, `remainingMinutes` và `standardDayMinutes` để client quy ra ngày.
 
-Hệ thống **không tự chuyển số dư sang năm sau**. Luật cho phép thỏa thuận chuyển phép nên việc này do HR nhập tay qua `carried-over`.
+### Chốt phép năm
+
+Luật cho phép thỏa thuận chuyển phép chưa nghỉ sang năm sau; mức chuyển là chính sách công ty, lưu trong
+`leave_entitlement_rules`: `max_carry_over_days` (bộ nạp sẵn: 5 ngày) và `carry_over_expiry_month`
+(bộ nạp sẵn: tháng 3). Quy tắc được lấy theo ngày 01/01 của năm nhận phép.
+
+`GET /api/leave-entitlements/carry-over?fromYear=2026` trả `CarryOverView`: `fromYear`, `toYear`,
+`maxCarryOverDays`, `expiresOn` (ngày cuối tháng hết hạn của năm sau) và `items`, mỗi phần tử gồm
+`employeeCode`, `fullName`, `remainingMinutes` (số dư năm `fromYear` tính tại 31/12, đơn còn
+`PENDING` được tính như đã dùng), `currentCarriedOverMinutes` (đang ghi cho năm sau) và
+`carriedOverMinutes` (sẽ ghi, bằng số dư nhưng không quá `maxCarryOverDays` ngày). Danh sách gồm nhân
+viên còn làm việc ngày 01/01 năm sau và vào làm trước 31/12 năm chốt.
+
+`POST` cùng đường dẫn tính lại như trên rồi ghi `carried_over_minutes` và `carried_over_expires_on` vào
+hạn mức năm sau, tạo hạn mức nếu chưa có. Gọi lại sẽ tính lại và ghi đè, nên nếu sửa đơn của năm cũ
+sau khi chốt thì chốt lại một lần nữa.
+
+Hết hạn: đơn `ANNUAL` bắt đầu đến hết `carriedOverExpiresOn` dùng phần chuyển sang trước. Sau ngày đó
+phần chuyển sang chưa dùng mất hiệu lực và được báo trong `expiredCarriedOverMinutes`;
+`remainingMinutes` đã trừ phần này. Kiểm tra số dư khi duyệt đơn dùng ngày bắt đầu của đơn, nên đơn
+tháng 4 không được dùng phần đã hết hạn dù được duyệt sớm. `PUT .../carried-over` nhập tay cũng gắn
+hạn theo quy tắc của năm đó; nhập 0 thì bỏ hạn.

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 
 import { PortalSidebar } from "@/components/auth/portal-sidebar"
+import { LeaveCarryOverPanel } from "@/components/workforce/leave-carry-over-panel"
 import { authorizedDownload, authorizedRequest, getCurrentSession } from "@/lib/auth/client"
 import { AuthApiError, type SessionData } from "@/lib/auth/types"
 import { apiErrorMessage } from "@/lib/api-helpers"
@@ -271,6 +272,7 @@ export function WorkforcePage({ section }: { section: Section }) {
           </div>}
         </>}
         {section === "leave" && <>
+          {canManageLeave && <LeaveCarryOverPanel />}
           {balance && <div className="space-y-3 rounded border p-4">
             <h2 className="text-xl font-semibold">Phép năm {balance.year}</h2>
             <dl className="grid gap-3 text-sm sm:grid-cols-4">
@@ -281,6 +283,7 @@ export function WorkforcePage({ section }: { section: Section }) {
             </dl>
             <p className="text-xs text-muted-foreground">
               Một ngày = {balance.standardDayMinutes} phút theo ca làm việc. Đã gồm {toDays(balance.carriedOverMinutes, balance.standardDayMinutes)} ngày chuyển từ năm trước
+              {balance.carriedOverExpiresOn && ` (dùng đến hết ${balance.carriedOverExpiresOn}${balance.expiredCarriedOverMinutes > 0 ? `, đã hết hạn ${toDays(balance.expiredCarriedOverMinutes, balance.standardDayMinutes)} ngày` : ""})`}
               và điều chỉnh {toDays(balance.adjustmentMinutes, balance.standardDayMinutes)} ngày{balance.adjustmentReason ? ` (${balance.adjustmentReason})` : ""}.
             </p>
             {canManageLeave && <div className="grid gap-3 border-t pt-3 sm:grid-cols-2">

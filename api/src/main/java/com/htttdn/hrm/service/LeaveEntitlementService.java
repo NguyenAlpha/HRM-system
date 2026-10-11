@@ -2,8 +2,10 @@ package com.htttdn.hrm.service;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -94,7 +96,7 @@ public class LeaveEntitlementService {
             ? entitlement.getStandardDayMinutes()
             : standardDayMinutes(employeeId);
 
-        return buildBalance(employeeId, year, granted, standardDay, entitlement, null);
+        return buildBalance(employeeId, year, granted, standardDay, entitlement, null, today());
     }
 
     @PreAuthorize("hasAuthority('request.manage')")
@@ -115,7 +117,8 @@ public class LeaveEntitlementService {
         entitlement.setAdjustmentReason(reason.trim());
         entitlement.setUpdatedAt(Instant.now());
         return buildBalance(
-            employeeId, year, entitlement.grantedMinutes(), entitlement.getStandardDayMinutes(), entitlement, null
+            employeeId, year, entitlement.grantedMinutes(), entitlement.getStandardDayMinutes(), entitlement, null,
+            today()
         );
     }
 
@@ -128,13 +131,13 @@ public class LeaveEntitlementService {
             );
         }
         EmployeeLeaveEntitlement entitlement = materialize(employeeId, year);
-        entitlement.setCarriedOverMinutes(carriedOverMinutes);
+        applyCarriedOver(entitlement, carriedOverMinutes, carryOverExpiry(entitlement.getRule(), year));
         if (reason != null && !reason.isBlank()) {
             entitlement.setAdjustmentReason(reason.trim());
         }
-        entitlement.setUpdatedAt(Instant.now());
         return buildBalance(
-            employeeId, year, entitlement.grantedMinutes(), entitlement.getStandardDayMinutes(), entitlement, null
+            employeeId, year, entitlement.grantedMinutes(), entitlement.getStandardDayMinutes(), entitlement, null,
+            today()
         );
     }
 
@@ -148,11 +151,12 @@ public class LeaveEntitlementService {
             return;
         }
         Long employeeId = request.getEmployee().getId();
-        int year = request.getStartAt().atZone(BUSINESS_ZONE).getYear();
+        LocalDate startDate = request.getStartAt().atZone(BUSINESS_ZONE).toLocalDate();
+        int year = startDate.getYear();
         EmployeeLeaveEntitlement entitlement = materialize(employeeId, year);
         BalanceView balance = buildBalance(
             employeeId, year, entitlement.grantedMinutes(), entitlement.getStandardDayMinutes(),
-            entitlement, request.getId()
+            entitlement, request.getId(), startDate
         );
 
         if (request.getRequestedMinutes() > balance.remainingMinutes()) {
@@ -162,6 +166,74 @@ public class LeaveEntitlementService {
                     .formatted(year, balance.remainingMinutes(), request.getRequestedMinutes())
             );
         }
+    }
+
+    /** Year-end close preview: what each employee would carry from {@code fromYear} into the next year. */
+    @PreAuthorize("hasAuthority('request.manage')")
+    @Transactional(readOnly = true)
+    public CarryOverView previewCarryOver(int fromYear) {
+        employeeAccessScopeService.requireCompanyWide(REQUEST_MANAGE);
+        return computeCarryOver(fromYear);
+    }
+
+    /**
+     * Writes the preview into next year's entitlements. Running it again recomputes and overwrites,
+     * so a correction made to {@code fromYear} afterwards can be carried by closing the year again.
+     */
+    @PreAuthorize("hasAuthority('request.manage')")
+    public CarryOverView applyCarryOver(int fromYear) {
+        employeeAccessScopeService.requireCompanyWide(REQUEST_MANAGE);
+        CarryOverView view = computeCarryOver(fromYear);
+        for (CarryOverItem item : view.items()) {
+            EmployeeLeaveEntitlement entitlement = materialize(item.employeeId(), view.toYear());
+            applyCarriedOver(entitlement, item.carriedOverMinutes(), view.expiresOn());
+        }
+        return view;
+    }
+
+    private CarryOverView computeCarryOver(int fromYear) {
+        int toYear = fromYear + 1;
+        LocalDate closingDate = LocalDate.of(fromYear, 12, 31);
+        LocalDate nextYearStart = LocalDate.of(toYear, 1, 1);
+        LeaveEntitlementRule rule = ruleRepository.findEffectiveAt(nextYearStart).orElse(null);
+        int maxDays = rule == null ? 0 : rule.getMaxCarryOverDays();
+        LocalDate expiresOn = carryOverExpiry(rule, toYear);
+
+        List<CarryOverItem> items = employeeRepository.findEmployedDuring(nextYearStart, nextYearStart).stream()
+            .filter(employee -> employee.getHireDate() == null || !employee.getHireDate().isAfter(closingDate))
+            .sorted(Comparator.comparing(Employee::getEmployeeCode))
+            .map(employee -> {
+                EmployeeLeaveEntitlement source = entitlementRepository
+                    .findByEmployeeIdAndYear(employee.getId(), (short) fromYear).orElse(null);
+                int standardDay = source != null ? source.getStandardDayMinutes() : standardDayMinutes(employee.getId());
+                int granted = source != null ? source.grantedMinutes()
+                    : computeBaseMinutes(employee, fromYear, resolveRule(employee, fromYear), standardDay);
+                int remaining = buildBalance(employee.getId(), fromYear, granted, standardDay, source, null,
+                    closingDate).remainingMinutes();
+                int carried = Math.max(0, Math.min(remaining, maxDays * standardDay));
+                int current = entitlementRepository.findByEmployeeIdAndYear(employee.getId(), (short) toYear)
+                    .map(EmployeeLeaveEntitlement::getCarriedOverMinutes).orElse(0);
+                return new CarryOverItem(employee.getId(), employee.getEmployeeCode(), employee.getFullName(),
+                    remaining, standardDay, current, carried);
+            })
+            .toList();
+        return new CarryOverView(fromYear, toYear, maxDays, expiresOn, items);
+    }
+
+    private void applyCarriedOver(EmployeeLeaveEntitlement entitlement, int carriedOverMinutes,
+        @Nullable LocalDate expiresOn) {
+        entitlement.setCarriedOverMinutes(carriedOverMinutes);
+        entitlement.setCarriedOverExpiresOn(carriedOverMinutes > 0 ? expiresOn : null);
+        entitlement.setUpdatedAt(Instant.now());
+    }
+
+    /** Last day of the rule's expiry month in {@code year}; null when no rule applies. */
+    private static @Nullable LocalDate carryOverExpiry(@Nullable LeaveEntitlementRule rule, int year) {
+        return rule == null ? null : YearMonth.of(year, rule.getCarryOverExpiryMonth()).atEndOfMonth();
+    }
+
+    private static LocalDate today() {
+        return LocalDate.now(BUSINESS_ZONE);
     }
 
     private EmployeeLeaveEntitlement materialize(Long employeeId, int year) {
@@ -225,10 +297,23 @@ public class LeaveEntitlementService {
         int grantedMinutes,
         int standardDayMinutes,
         EmployeeLeaveEntitlement entitlement,
-        Long excludedRequestId
+        Long excludedRequestId,
+        LocalDate asOf
     ) {
         Instant from = LocalDate.of(year, 1, 1).atStartOfDay(BUSINESS_ZONE).toInstant();
         Instant to = LocalDate.of(year + 1, 1, 1).atStartOfDay(BUSINESS_ZONE).toInstant();
+        int carriedOver = entitlement == null ? 0 : entitlement.getCarriedOverMinutes();
+        LocalDate expiresOn = entitlement == null ? null : entitlement.getCarriedOverExpiresOn();
+        int expiredCarriedOver = 0;
+        if (carriedOver > 0 && expiresOn != null && asOf.isAfter(expiresOn)) {
+            // Leave taken up to the expiry date draws on the carried-over days first; what is
+            // left of them afterwards lapses.
+            long usedBeforeExpiry = leaveRequestRepository.sumMinutesByTypeAndStatuses(
+                employeeId, LeaveType.ANNUAL, CONSUMING_STATUSES, from,
+                expiresOn.plusDays(1).atStartOfDay(BUSINESS_ZONE).toInstant(), excludedRequestId
+            );
+            expiredCarriedOver = (int) Math.max(0, carriedOver - usedBeforeExpiry);
+        }
         long used = leaveRequestRepository.sumMinutesByTypeAndStatuses(
             employeeId, LeaveType.ANNUAL, APPROVED_ONLY, from, to, excludedRequestId
         );
@@ -239,13 +324,15 @@ public class LeaveEntitlementService {
             employeeId,
             year,
             grantedMinutes,
-            entitlement == null ? 0 : entitlement.getCarriedOverMinutes(),
+            carriedOver,
+            expiresOn,
+            expiredCarriedOver,
             entitlement == null ? 0 : entitlement.getAdjustmentMinutes(),
             entitlement == null ? null : entitlement.getAdjustmentReason(),
             standardDayMinutes,
             Math.toIntExact(used),
             Math.toIntExact(committed - used),
-            Math.toIntExact(grantedMinutes - committed)
+            Math.toIntExact(grantedMinutes - expiredCarriedOver - committed)
         );
     }
 
@@ -296,11 +383,31 @@ public class LeaveEntitlementService {
         int year,
         int grantedMinutes,
         int carriedOverMinutes,
+        @Nullable LocalDate carriedOverExpiresOn,
+        int expiredCarriedOverMinutes,
         int adjustmentMinutes,
         @Nullable String adjustmentReason,
         int standardDayMinutes,
         int usedMinutes,
         int pendingMinutes,
         int remainingMinutes
+    ) { }
+
+    public record CarryOverView(
+        int fromYear,
+        int toYear,
+        int maxCarryOverDays,
+        @Nullable LocalDate expiresOn,
+        List<CarryOverItem> items
+    ) { }
+
+    public record CarryOverItem(
+        Long employeeId,
+        String employeeCode,
+        String fullName,
+        int remainingMinutes,
+        int standardDayMinutes,
+        int currentCarriedOverMinutes,
+        int carriedOverMinutes
     ) { }
 }

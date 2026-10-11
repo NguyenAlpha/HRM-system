@@ -43,6 +43,12 @@ public class LeaveEntitlementRule {
     @Column(name = "seniority_bonus_days", nullable = false)
     private Integer seniorityBonusDays;
 
+    @Column(name = "max_carry_over_days", nullable = false)
+    private Integer maxCarryOverDays;
+
+    @Column(name = "carry_over_expiry_month", nullable = false)
+    private Short carryOverExpiryMonth;
+
     @Column(name = "source_reference", nullable = false, columnDefinition = "TEXT")
     private String sourceReference;
 }

@@ -186,6 +186,7 @@ Chi tiết: [api/docs/api/ATTENDANCE.md](../api/docs/api/ATTENDANCE.md).
 | Xem đơn của mình, của nhân viên, đơn chờ duyệt | `GET /{id}`, `/employees/{id}`, `/pending` |
 | Xem số dư phép năm | `GET /api/leave-entitlements/employees/{id}` |
 | Điều chỉnh hạn mức, nhập phép chuyển năm trước | `PUT .../adjustment`, `PUT .../carried-over` |
+| Chốt phép năm: xem trước rồi chuyển phép dư sang năm sau | `GET`/`POST /api/leave-entitlements/carry-over?fromYear=` |
 
 Vòng đời: `DRAFT` → `PENDING` → `APPROVED` / `REJECTED`, hoặc `CANCELLED`.
 
@@ -263,7 +264,7 @@ Báo cáo lương chỉ trả số liệu tổng hợp theo khoảng, không tr�
 - Chưa có phụ trội ca đêm, thưởng, hoa hồng, truy thu, hoàn thuế hay quyết toán năm.
 - Chưa hỗ trợ người không cư trú thuế.
 - Quy tắc thuế và bảo hiểm chỉ nạp đến hết 2026, phải thêm bằng migration khi chính sách đổi.
-- Chưa tự động chuyển số dư phép sang năm sau; HR nhập tay qua `carried-over`.
+- Chốt phép năm do HR bấm trên `/leave-requests`, chưa tự chạy vào 01/01.
 - Chưa tích hợp máy chấm công vật lý.
 - Chưa có nhật ký audit cho toàn bộ thay đổi dữ liệu.
 - Chưa mã hóa cấp cột cho dữ liệu nhạy cảm; hiện chỉ kiểm soát bằng quyền và phạm vi.
