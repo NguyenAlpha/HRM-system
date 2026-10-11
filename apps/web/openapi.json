@@ -7007,7 +7007,7 @@
             "format" : "date"
           },
           "averageBasicSalary" : {
-            "type" : "number"
+            "type" : [ "number", "null" ]
           },
           "currency" : {
             "type" : "string"
@@ -7017,10 +7017,10 @@
             "format" : "int64"
           },
           "maximumBasicSalary" : {
-            "type" : "number"
+            "type" : [ "number", "null" ]
           },
           "minimumBasicSalary" : {
-            "type" : "number"
+            "type" : [ "number", "null" ]
           },
           "missingBasicSalary" : {
             "type" : "integer",

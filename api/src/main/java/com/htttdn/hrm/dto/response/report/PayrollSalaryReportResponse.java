@@ -4,14 +4,16 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+import jakarta.annotation.Nullable;
+
 public record PayrollSalaryReportResponse(
     LocalDate asOfDate,
     String currency,
     long totalEmployees,
     long employeesWithBasicSalary,
-    BigDecimal averageBasicSalary,
-    BigDecimal minimumBasicSalary,
-    BigDecimal maximumBasicSalary,
+    @Nullable BigDecimal averageBasicSalary,
+    @Nullable BigDecimal minimumBasicSalary,
+    @Nullable BigDecimal maximumBasicSalary,
     List<DistributionItemResponse> salaryDistribution,
     long missingBasicSalary
 ) {

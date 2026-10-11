@@ -94,8 +94,8 @@ Module dùng type sinh ra định nghĩa alias trong file `lib/<module>.ts`, ví
 `type EmployeeDetail = components["schemas"]["EmployeeDetailResponse"]`, và component chỉ import
 alias đó. Đã chuyển: **Employee** (`lib/employee.ts`), **Organization** (`lib/reference.ts`),
 **Account/Auth/Company Owner** (`lib/account.ts`, `lib/auth/types.ts`, `lib/company-owner.ts`),
-**RBAC/Role assignment** (`lib/rbac.ts`, `lib/role-assignment.ts`); các module khác vẫn dùng type
-viết tay. `ApiEnvelope<T>` vẫn viết tay vì spec sinh một bản riêng cho
+**RBAC/Role assignment** (`lib/rbac.ts`, `lib/role-assignment.ts`), **Report** (`lib/report.ts`); các
+module khác vẫn dùng type viết tay. `ApiEnvelope<T>` vẫn viết tay vì spec sinh một bản riêng cho
 từng `T`. Trước khi chuyển một module, phải gắn `@Nullable` cho các field có thể null trong DTO
 của module đó (xem [quy ước null](../../../api/docs/api/README.md#openapi-và-swagger-ui)), nếu
 không type sinh ra sẽ coi mọi field là luôn có giá trị.
