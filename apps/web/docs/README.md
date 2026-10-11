@@ -24,7 +24,7 @@ Web hiện cung cấp hai khu vực độc lập:
 | Route | Nội dung |
 |:------|:---------|
 | `/dashboard` | Tổng quan phiên đăng nhập và lối tắt nghiệp vụ |
-| `/employees`, `/employees/{employeeId}` | Hồ sơ, phân công, lương và vòng đời nhân viên |
+| `/employees`, `/employees/{employeeId}` | Hồ sơ, dữ liệu nhạy cảm, phân công, lương và vòng đời nhân viên (nghỉ việc, xóa mềm hồ sơ tạo nhầm) |
 | `/organization` | Đơn vị tổ chức, địa điểm, vị trí và ca làm |
 | `/attendance` | Chấm công, chuẩn bị tháng, xử lý dữ liệu thiếu và tăng ca |
 | `/leave-requests` | Đơn nghỉ, quy trình phê duyệt, số dư phép năm và điều chỉnh hạn mức của HR |
