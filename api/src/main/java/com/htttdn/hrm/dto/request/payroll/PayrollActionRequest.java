@@ -2,7 +2,9 @@ package com.htttdn.hrm.dto.request.payroll;
 
 import java.time.LocalDate;
 
-public record PayrollActionRequest(LocalDate taxPaymentDate) {
+import jakarta.annotation.Nullable;
+
+public record PayrollActionRequest(@Nullable LocalDate taxPaymentDate) {
     public PayrollActionRequest() {
         this(null);
     }

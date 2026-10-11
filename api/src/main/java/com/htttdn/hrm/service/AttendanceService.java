@@ -495,6 +495,7 @@ public class AttendanceService {
             record.getShift().getId(),
             record.getScheduledStartAt(),
             record.getScheduledEndAt(),
+            record.getScheduledMinutes(),
             record.getCheckInAt(),
             record.getCheckOutAt(),
             record.getWorkedMinutes(),

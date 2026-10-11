@@ -6,6 +6,8 @@ import java.time.LocalDate;
 
 import com.htttdn.hrm.entity.enums.AttendanceStatus;
 
+import jakarta.annotation.Nullable;
+
 public record AttendanceRecordResponse(
     Long id,
     Long employeeId,
@@ -13,8 +15,9 @@ public record AttendanceRecordResponse(
     Long shiftId,
     Instant scheduledStartAt,
     Instant scheduledEndAt,
-    Instant checkInAt,
-    Instant checkOutAt,
+    Integer scheduledMinutes,
+    @Nullable Instant checkInAt,
+    @Nullable Instant checkOutAt,
     Integer workedMinutes,
     Integer payableMinutes,
     Integer lateMinutes,

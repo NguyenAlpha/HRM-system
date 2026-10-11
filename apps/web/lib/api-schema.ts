@@ -1760,7 +1760,7 @@ export interface components {
             /** Format: int32 */
             overtimeMinutes: number;
             overtimeMultiplier: number;
-            taxExempt?: boolean;
+            taxExempt?: boolean | null;
         };
         ApproveRoleAssignmentRequest: {
             note?: string | null;
@@ -1798,9 +1798,9 @@ export interface components {
         };
         AttendanceRecordResponse: {
             /** Format: date-time */
-            checkInAt: string;
+            checkInAt: string | null;
             /** Format: date-time */
-            checkOutAt: string;
+            checkOutAt: string | null;
             /** Format: int32 */
             earlyLeaveMinutes: number;
             /** Format: int64 */
@@ -1817,6 +1817,8 @@ export interface components {
             payableMinutes: number;
             /** Format: date-time */
             scheduledEndAt: string;
+            /** Format: int32 */
+            scheduledMinutes: number;
             /** Format: date-time */
             scheduledStartAt: string;
             /** Format: int64 */
@@ -1874,7 +1876,7 @@ export interface components {
         BalanceView: {
             /** Format: int32 */
             adjustmentMinutes: number;
-            adjustmentReason: string;
+            adjustmentReason: string | null;
             /** Format: int32 */
             carriedOverMinutes: number;
             /** Format: int64 */
@@ -1977,7 +1979,7 @@ export interface components {
             title: string;
         };
         CreateLeaveCommand: {
-            attachmentUrl?: string;
+            attachmentUrl?: string | null;
             /** Format: int64 */
             employeeId?: number;
             /** Format: date-time */
@@ -1987,8 +1989,8 @@ export interface components {
             reason?: string;
             /** Format: int32 */
             requestedMinutes?: number;
-            /** @enum {string} */
-            salaryTreatment?: "EMPLOYER_PAID" | "SOCIAL_INSURANCE" | "UNPAID";
+            /** @enum {string|null} */
+            salaryTreatment?: "EMPLOYER_PAID" | "SOCIAL_INSURANCE" | "UNPAID" | null;
             /** Format: date-time */
             startAt?: string;
         };
@@ -2012,7 +2014,7 @@ export interface components {
             /** Format: int32 */
             month: number;
             /** Format: date */
-            taxPaymentDate?: string;
+            taxPaymentDate?: string | null;
             /** Format: int32 */
             year: number;
         };
@@ -2077,21 +2079,21 @@ export interface components {
             /** Format: date */
             effectiveFrom: string;
             /** Format: date */
-            effectiveTo: string;
+            effectiveTo: string | null;
             /** Format: int64 */
             employeeId: number;
             fullName: string;
             /** Format: int64 */
             id: number;
-            identifier: string;
+            identifier: string | null;
         };
         DependentCommand: {
             /** Format: date */
             effectiveFrom?: string;
             /** Format: date */
-            effectiveTo?: string;
+            effectiveTo?: string | null;
             fullName?: string;
-            identifier?: string;
+            identifier?: string | null;
         };
         DistributionItemResponse: {
             /** Format: int64 */
@@ -2231,7 +2233,7 @@ export interface components {
             updatedAt: string;
         };
         LeaveRequestView: {
-            attachmentUrl: string;
+            attachmentUrl: string | null;
             /** Format: date-time */
             createdAt: string;
             /** Format: int64 */
@@ -2245,11 +2247,11 @@ export interface components {
             reason: string;
             /** Format: int32 */
             requestedMinutes: number;
-            reviewComment: string;
+            reviewComment: string | null;
             /** Format: date-time */
-            reviewedAt: string;
+            reviewedAt: string | null;
             /** Format: int64 */
-            reviewedByAccountId: number;
+            reviewedByAccountId: number | null;
             /** @enum {string} */
             salaryTreatment: "EMPLOYER_PAID" | "SOCIAL_INSURANCE" | "UNPAID";
             /** Format: date-time */
@@ -2257,7 +2259,7 @@ export interface components {
             /** @enum {string} */
             status: "DRAFT" | "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
             /** Format: date-time */
-            submittedAt: string;
+            submittedAt: string | null;
             /** Format: date-time */
             updatedAt: string;
         };
@@ -2411,29 +2413,29 @@ export interface components {
         };
         PayrollActionRequest: {
             /** Format: date */
-            taxPaymentDate?: string;
+            taxPaymentDate?: string | null;
         };
         PayrollPeriodResponse: {
             /** Format: date-time */
-            approvedAt: string;
+            approvedAt: string | null;
             /** Format: int64 */
-            approvedByAccountId: number;
+            approvedByAccountId: number | null;
             /** Format: date-time */
-            calculatedAt: string;
+            calculatedAt: string | null;
             /** Format: int64 */
-            calculatedByAccountId: number;
+            calculatedByAccountId: number | null;
             /** Format: int64 */
             id: number;
             /** Format: date-time */
-            lockedAt: string;
+            lockedAt: string | null;
             /** Format: int64 */
-            lockedByAccountId: number;
+            lockedByAccountId: number | null;
             /** Format: int32 */
             month: number;
             /** Format: date-time */
-            paidAt: string;
+            paidAt: string | null;
             /** Format: int64 */
-            paidByAccountId: number;
+            paidByAccountId: number | null;
             /** Format: date */
             periodEnd: string;
             /** Format: date */
@@ -2441,7 +2443,7 @@ export interface components {
             /** @enum {string} */
             status: "DRAFT" | "CALCULATED" | "APPROVED" | "PAID" | "LOCKED" | "CANCELLED";
             /** Format: date */
-            taxPaymentDate: string;
+            taxPaymentDate: string | null;
             /** Format: int32 */
             year: number;
         };
@@ -2531,7 +2533,7 @@ export interface components {
             /** Format: date */
             effectiveFrom: string;
             /** Format: date */
-            effectiveTo: string;
+            effectiveTo: string | null;
             /** Format: int64 */
             employeeId: number;
             healthInsurance: boolean;
@@ -2565,7 +2567,7 @@ export interface components {
             permissionIds: number[];
         };
         ReviewBody: {
-            comment?: string;
+            comment?: string | null;
         };
         RevokeAccountRoleRequest: {
             reason: string;
@@ -2665,25 +2667,25 @@ export interface components {
             /** Format: date */
             effectiveFrom: string;
             /** Format: date */
-            effectiveTo: string;
+            effectiveTo: string | null;
             /** Format: int64 */
             employeeId: number;
             /** Format: int64 */
             id: number;
-            note: string;
-            reason: string;
+            note: string | null;
+            reason: string | null;
         };
         SetCarriedOverLeaveRequest: {
             /** Format: int32 */
             carriedOverMinutes: number;
-            reason?: string;
+            reason?: string | null;
         };
         SetSalaryCommand: {
             baseSalary?: number;
             /** Format: date */
             effectiveFrom?: string;
-            note?: string;
-            reason?: string;
+            note?: string | null;
+            reason?: string | null;
         };
         SoftDeleteEmployeeRequest: {
             deletionReason: string;

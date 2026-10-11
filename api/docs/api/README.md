@@ -64,9 +64,10 @@ sinh từ spec, DTO phải khai báo đúng khả năng null:
 - **Request:** field có `@NotNull`/`@NotBlank` là bắt buộc. Field không bắt buộc và nhận `null`
   phải gắn `@Nullable` để web được phép gửi `null`.
 
-Đã gắn đầy đủ: DTO của Employee, Organization (đơn vị tổ chức, địa điểm, chức danh), Auth, Account
-(account, lời mời, role assignment, permission override), Company Owner, RBAC (role, permission),
-yêu cầu cấp role, Report và envelope `ApiResult`/`ErrorDetail`.
+Mọi DTO mà web đang dùng đã được gắn đầy đủ, kể cả các record lồng trong service (ví dụ
+`LeaveRequestService.LeaveRequestView`) và envelope `ApiResult`/`ErrorDetail`. Riêng các command
+record của chấm công, nghỉ phép và lương (`CreateLeaveCommand`, `ProfileCommand`…) không có
+`@NotNull` vì service tự kiểm tra, nên trong spec mọi field của chúng là không bắt buộc.
 
 ## Nguồn sự thật
 

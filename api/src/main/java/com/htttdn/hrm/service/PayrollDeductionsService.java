@@ -34,6 +34,8 @@ import com.htttdn.hrm.repository.PayrollTaxRuleRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
+import jakarta.annotation.Nullable;
+
 @Service
 @Transactional
 public class PayrollDeductionsService {
@@ -314,12 +316,12 @@ public class PayrollDeductionsService {
 
     public record ProfileCommand(LocalDate effectiveFrom, Boolean taxResident, Boolean socialInsurance,
         Boolean healthInsurance, Boolean unemploymentInsurance, BigDecimal insuranceSalary, Short wageRegion) {}
-    public record Profile(Long id, Long employeeId, LocalDate effectiveFrom, LocalDate effectiveTo,
+    public record Profile(Long id, Long employeeId, LocalDate effectiveFrom, @Nullable LocalDate effectiveTo,
         boolean taxResident, boolean socialInsurance, boolean healthInsurance,
         boolean unemploymentInsurance, BigDecimal insuranceSalary, short wageRegion) {}
-    public record DependentCommand(String fullName, String identifier, LocalDate effectiveFrom, LocalDate effectiveTo) {}
-    public record Dependent(Long id, Long employeeId, String fullName, String identifier,
-        LocalDate effectiveFrom, LocalDate effectiveTo) {}
+    public record DependentCommand(String fullName, @Nullable String identifier, LocalDate effectiveFrom, @Nullable LocalDate effectiveTo) {}
+    public record Dependent(Long id, Long employeeId, String fullName, @Nullable String identifier,
+        LocalDate effectiveFrom, @Nullable LocalDate effectiveTo) {}
     public record EndDependentCommand(LocalDate effectiveTo) {}
     public record Deduction(Long profileId, Long insuranceRuleId, Long taxRuleId,
         BigDecimal insuranceSalaryBase, BigDecimal unemploymentInsuranceBase,

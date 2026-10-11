@@ -5195,7 +5195,7 @@
             "type" : "number"
           },
           "taxExempt" : {
-            "type" : "boolean"
+            "type" : [ "boolean", "null" ]
           }
         },
         "required" : [ "overtimeMinutes", "overtimeMultiplier" ]
@@ -5288,11 +5288,11 @@
         "type" : "object",
         "properties" : {
           "checkInAt" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date-time"
           },
           "checkOutAt" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date-time"
           },
           "earlyLeaveMinutes" : {
@@ -5329,6 +5329,10 @@
             "type" : "string",
             "format" : "date-time"
           },
+          "scheduledMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "scheduledStartAt" : {
             "type" : "string",
             "format" : "date-time"
@@ -5350,7 +5354,7 @@
             "format" : "int32"
           }
         },
-        "required" : [ "checkInAt", "checkOutAt", "earlyLeaveMinutes", "employeeId", "id", "lateMinutes", "overtimeMinutes", "overtimeMultiplier", "overtimeTaxExempt", "payableMinutes", "scheduledEndAt", "scheduledStartAt", "shiftId", "status", "workDate", "workedMinutes" ]
+        "required" : [ "checkInAt", "checkOutAt", "earlyLeaveMinutes", "employeeId", "id", "lateMinutes", "overtimeMinutes", "overtimeMultiplier", "overtimeTaxExempt", "payableMinutes", "scheduledEndAt", "scheduledMinutes", "scheduledStartAt", "shiftId", "status", "workDate", "workedMinutes" ]
       },
       "AuthAccountResponse" : {
         "type" : "object",
@@ -5483,7 +5487,7 @@
             "format" : "int32"
           },
           "adjustmentReason" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "carriedOverMinutes" : {
             "type" : "integer",
@@ -5782,7 +5786,7 @@
         "type" : "object",
         "properties" : {
           "attachmentUrl" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "employeeId" : {
             "type" : "integer",
@@ -5804,8 +5808,8 @@
             "format" : "int32"
           },
           "salaryTreatment" : {
-            "type" : "string",
-            "enum" : [ "EMPLOYER_PAID", "SOCIAL_INSURANCE", "UNPAID" ]
+            "type" : [ "string", "null" ],
+            "enum" : [ "EMPLOYER_PAID", "SOCIAL_INSURANCE", "UNPAID", null ]
           },
           "startAt" : {
             "type" : "string",
@@ -5874,7 +5878,7 @@
             "minimum" : 1
           },
           "taxPaymentDate" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date"
           },
           "year" : {
@@ -6062,7 +6066,7 @@
             "format" : "date"
           },
           "effectiveTo" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date"
           },
           "employeeId" : {
@@ -6077,7 +6081,7 @@
             "format" : "int64"
           },
           "identifier" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "required" : [ "effectiveFrom", "effectiveTo", "employeeId", "fullName", "id", "identifier" ]
@@ -6090,14 +6094,14 @@
             "format" : "date"
           },
           "effectiveTo" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date"
           },
           "fullName" : {
             "type" : "string"
           },
           "identifier" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         }
       },
@@ -6469,7 +6473,7 @@
         "type" : "object",
         "properties" : {
           "attachmentUrl" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "createdAt" : {
             "type" : "string",
@@ -6499,14 +6503,14 @@
             "format" : "int32"
           },
           "reviewComment" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "reviewedAt" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date-time"
           },
           "reviewedByAccountId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "salaryTreatment" : {
@@ -6522,7 +6526,7 @@
             "enum" : [ "DRAFT", "PENDING", "APPROVED", "REJECTED", "CANCELLED" ]
           },
           "submittedAt" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date-time"
           },
           "updatedAt" : {
@@ -6928,7 +6932,7 @@
         "type" : "object",
         "properties" : {
           "taxPaymentDate" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date"
           }
         }
@@ -6937,19 +6941,19 @@
         "type" : "object",
         "properties" : {
           "approvedAt" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date-time"
           },
           "approvedByAccountId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "calculatedAt" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date-time"
           },
           "calculatedByAccountId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "id" : {
@@ -6957,11 +6961,11 @@
             "format" : "int64"
           },
           "lockedAt" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date-time"
           },
           "lockedByAccountId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "month" : {
@@ -6969,11 +6973,11 @@
             "format" : "int32"
           },
           "paidAt" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date-time"
           },
           "paidByAccountId" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int64"
           },
           "periodEnd" : {
@@ -6989,7 +6993,7 @@
             "enum" : [ "DRAFT", "CALCULATED", "APPROVED", "PAID", "LOCKED", "CANCELLED" ]
           },
           "taxPaymentDate" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date"
           },
           "year" : {
@@ -7223,7 +7227,7 @@
             "format" : "date"
           },
           "effectiveTo" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date"
           },
           "employeeId" : {
@@ -7325,7 +7329,7 @@
         "type" : "object",
         "properties" : {
           "comment" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         }
       },
@@ -7582,7 +7586,7 @@
             "format" : "date"
           },
           "effectiveTo" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date"
           },
           "employeeId" : {
@@ -7594,10 +7598,10 @@
             "format" : "int64"
           },
           "note" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "reason" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "required" : [ "approvedByAccountId", "baseSalary", "createdAt", "effectiveFrom", "effectiveTo", "employeeId", "id", "note", "reason" ]
@@ -7610,7 +7614,7 @@
             "format" : "int32"
           },
           "reason" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "required" : [ "carriedOverMinutes" ]
@@ -7626,10 +7630,10 @@
             "format" : "date"
           },
           "note" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "reason" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         }
       },

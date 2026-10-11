@@ -18,6 +18,8 @@ import com.htttdn.hrm.service.LeaveRequestService;
 import com.htttdn.hrm.service.LeaveRequestService.CreateLeaveCommand;
 import com.htttdn.hrm.service.LeaveRequestService.LeaveRequestView;
 
+import jakarta.annotation.Nullable;
+
 @RestController
 @RequestMapping("/api/leave-requests")
 public class LeaveRequestController {
@@ -69,5 +71,5 @@ public class LeaveRequestController {
         return ApiResult.ok(service.reject(id, body == null ? null : body.comment()));
     }
 
-    public record ReviewBody(String comment) { }
+    public record ReviewBody(@Nullable String comment) { }
 }
