@@ -1,13 +1,17 @@
 package com.htttdn.hrm.service;
 
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htttdn.hrm.dto.request.account.AccountSearchCriteria;
 import com.htttdn.hrm.dto.request.account.CreateAccountRequest;
 import com.htttdn.hrm.dto.response.account.AccountInvitationResponse;
 import com.htttdn.hrm.dto.response.account.AccountProvisioningResponse;
@@ -18,6 +22,8 @@ import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
+import com.htttdn.hrm.repository.specification.AccountSpecifications;
+import com.htttdn.hrm.repository.specification.SearchPatterns;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
 @Service
@@ -25,6 +31,10 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 public class AccountAdminService {
 
     private static final String ACCOUNT_PROVISION = "account.provision";
+
+    private static final Set<String> SORTABLE_PROPERTIES = Set.of(
+        "id", "username", "email", "status", "lastLoginAt", "createdAt"
+    );
 
     private final AccountRepository accountRepository;
     private final AccountProvisioningService accountProvisioningService;
@@ -64,8 +74,19 @@ public class AccountAdminService {
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('account.read')")
-    public Page<AccountResponse> list(Pageable pageable) {
-        return accountRepository.findAll(pageable).map(this::toResponse);
+    public Page<AccountResponse> list(AccountSearchCriteria criteria, Pageable pageable) {
+        Specification<Account> specification = (root, query, builder) -> builder.conjunction();
+        for (Specification<Account> filter : Arrays.asList(
+            AccountSpecifications.matchesKeyword(criteria.keyword()),
+            AccountSpecifications.hasStatus(criteria.status()),
+            AccountSpecifications.hasRole(criteria.roleCode())
+        )) {
+            if (filter != null) {
+                specification = specification.and(filter);
+            }
+        }
+        return accountRepository.findAll(specification, SearchPatterns.requireSortable(pageable, SORTABLE_PROPERTIES))
+            .map(this::toResponse);
     }
 
     @Transactional(readOnly = true)

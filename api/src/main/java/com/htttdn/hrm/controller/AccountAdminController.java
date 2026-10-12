@@ -9,15 +9,18 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.htttdn.hrm.dto.request.account.AccountSearchCriteria;
 import com.htttdn.hrm.dto.request.account.CreateAccountRequest;
 import com.htttdn.hrm.dto.response.account.AccountInvitationResponse;
 import com.htttdn.hrm.dto.response.account.AccountProvisioningResponse;
 import com.htttdn.hrm.dto.response.account.AccountResponse;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
+import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.service.AccountAdminService;
 
 import jakarta.validation.Valid;
@@ -42,9 +45,13 @@ public class AccountAdminController {
     @GetMapping
     @PreAuthorize("hasAuthority('account.read')")
     public ApiResult<PagedResult<AccountResponse>> list(
+        @RequestParam(required = false) String keyword,
+        @RequestParam(required = false) AccountStatus status,
+        @RequestParam(required = false) String roleCode,
         @PageableDefault(sort = "id", size = 20) Pageable pageable
     ) {
-        return ApiResult.ok(PagedResult.of(accountAdminService.list(pageable)));
+        AccountSearchCriteria criteria = new AccountSearchCriteria(keyword, status, roleCode);
+        return ApiResult.ok(PagedResult.of(accountAdminService.list(criteria, pageable)));
     }
 
     @GetMapping("/{accountId}")

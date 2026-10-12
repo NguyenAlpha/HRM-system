@@ -9,10 +9,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.htttdn.hrm.dto.request.employee.CreateEmployeeRequest;
+import com.htttdn.hrm.dto.request.employee.EmployeeSearchCriteria;
 import com.htttdn.hrm.dto.request.employee.EndEmploymentRequest;
 import com.htttdn.hrm.dto.request.employee.SoftDeleteEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
@@ -21,6 +23,7 @@ import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.dto.response.employee.EmployeeCreationResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeDetailResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeSummaryResponse;
+import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.service.EmployeeService;
 
 import jakarta.validation.Valid;
@@ -45,9 +48,14 @@ public class EmployeeController {
 
     @GetMapping
     public ApiResult<PagedResult<EmployeeSummaryResponse>> list(
+        @RequestParam(required = false) String keyword,
+        @RequestParam(required = false) EmploymentStatus employmentStatus,
+        @RequestParam(required = false) Long organizationUnitId,
+        @RequestParam(required = false) Long positionId,
         @PageableDefault(sort = "id", size = 20) Pageable pageable
     ) {
-        return ApiResult.ok(PagedResult.of(employeeService.list(pageable)));
+        EmployeeSearchCriteria criteria = new EmployeeSearchCriteria(keyword, employmentStatus, organizationUnitId, positionId);
+        return ApiResult.ok(PagedResult.of(employeeService.list(criteria, pageable)));
     }
 
     @GetMapping("/{employeeId}")

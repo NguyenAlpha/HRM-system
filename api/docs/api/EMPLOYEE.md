@@ -187,14 +187,20 @@ Lấy danh sách employee chưa bị xóa mềm trong phạm vi mà account đan
 Endpoint có phân trang:
 
 ```http
-GET /api/employees?page=0&size=20&sort=id,asc
+GET /api/employees?page=0&size=20&sort=fullName,asc&keyword=an&employmentStatus=ACTIVE&organizationUnitId=3
 ```
 
 | Parameter | Type | Mặc định | Ý nghĩa |
 |:----------|:-----|:--------:|:--------|
 | `page` | integer | `0` | Số trang, bắt đầu từ 0 |
 | `size` | integer | `20` | Số employee mỗi trang |
-| `sort` | string | `id,asc` | Thuộc tính và chiều sắp xếp |
+| `sort` | string | `id,asc` | `id`, `employeeCode`, `fullName`, `hireDate` hoặc `employmentStatus`, kèm `asc`/`desc`; thuộc tính khác trả `400 VALIDATION_ERROR` |
+| `keyword` | string | — | Tìm không phân biệt hoa thường trong mã, họ tên và email công việc; `%` và `_` được hiểu theo nghĩa đen |
+| `employmentStatus` | enum | — | `PROBATION`, `ACTIVE`, `RESIGNED`, `TERMINATED` hoặc `RETIRED` |
+| `organizationUnitId` | long | — | Chỉ employee có phân công chính đang hiệu lực thuộc đơn vị này |
+| `positionId` | long | — | Chỉ employee có phân công chính đang hiệu lực ở vị trí này |
+
+Các bộ lọc kết hợp theo AND và luôn nằm trong phạm vi dữ liệu của account đang đăng nhập.
 
 ### Response `200 OK`
 
