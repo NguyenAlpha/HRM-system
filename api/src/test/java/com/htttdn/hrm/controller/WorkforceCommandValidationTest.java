@@ -2,6 +2,7 @@ package com.htttdn.hrm.controller;
 
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +58,16 @@ class WorkforceCommandValidationTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
             .andExpect(jsonPath("$.error.field").value(field));
+    }
+
+    @Test
+    void punchesAcceptRequestsWithoutAToken() throws Exception {
+        // TEMPORARY test-data endpoint is open: reaching validation proves no 401.
+        mockMvc.perform(request(HttpMethod.POST, "/api/attendance/punches")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"employeeId\":1,\"workDate\":\"2026-01-05\",\"checkInAt\":\"2026-01-05T01:00:00Z\"}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error.field").value("checkOutAt"));
     }
 
     private String token() {

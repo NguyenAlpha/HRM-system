@@ -163,7 +163,7 @@ web, không tự chấm.
 |---|---|---|
 | Khai báo, xem, xóa ngày lễ | `/api/company-holidays` | `organization.manage` / `.read` |
 | Chuẩn bị bảng công tháng | `POST /api/attendance/prepare` | `attendance.manage` |
-| Ghi giờ vào/ra | `POST /api/attendance/punches` | `attendance.manage` |
+| Ghi giờ vào/ra (tạm thời để test) | `POST /api/attendance/punches` | Không cần xác thực |
 | Đối soát ngày thiếu dữ liệu | `PUT /api/attendance/{id}` | `attendance.manage` |
 | Duyệt tăng ca | `POST /api/attendance/{id}/overtime-approval` | `attendance.overtime.approve` |
 | Xem bản ghi công | `GET /api/attendance/{id}`, `/employees/{id}` | `attendance.self.read` / `attendance.read` |

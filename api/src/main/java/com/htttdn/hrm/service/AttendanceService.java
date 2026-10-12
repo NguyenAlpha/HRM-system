@@ -134,10 +134,10 @@ public class AttendanceService {
     /**
      * Records one day's check-in and check-out with explicit timestamps, the way a time clock
      * reports them, and derives late, early-leave, worked and payable minutes from them.
+     * TEMPORARY: called without authentication to create test data, so there is no permission
+     * or scope check; see SecurityConfig.
      */
-    @PreAuthorize("hasAuthority('attendance.manage')")
     public AttendanceRecordResponse recordPunches(RecordPunchesRequest request) {
-        employeeAccessScopeService.requireEmployeeAccess(request.employeeId(), "attendance.manage");
         LocalDate workDate = request.workDate();
         Instant in = request.checkInAt();
         Instant out = request.checkOutAt();

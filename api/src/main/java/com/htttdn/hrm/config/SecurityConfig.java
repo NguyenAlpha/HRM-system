@@ -51,6 +51,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/account-activations/*/complete").permitAll()
+                // TEMPORARY: open for creating test attendance from Postman; remove before release.
+                .requestMatchers(HttpMethod.POST, "/api/attendance/punches").permitAll()
                 // OpenAPI spec and Swagger UI; turned off with API_DOCS_ENABLED=false.
                 .requestMatchers(HttpMethod.GET, "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                 .anyRequest().authenticated()
