@@ -8,9 +8,9 @@ Quy trình một tháng:
 
 1. Người có `organization.manage` khai báo ngày lễ qua `POST /api/company-holidays`.
 2. Bảng công tháng được chuẩn bị tự động (xem [Tự động chuẩn bị](#tự-động-chuẩn-bị)); HR gọi lại `POST /api/attendance/prepare` sau khi sửa phân công cho nhân viên bị bỏ qua, hoặc để chuẩn bị tháng khác.
-3. Giờ vào/ra được ghi qua `POST /api/attendance/punches` với thời điểm cụ thể. Sau này máy chấm công của công ty sẽ gửi dữ liệu vào đây; phần tích hợp máy **chưa triển khai**, hiện API này **tạm thời không cần xác thực** để tạo dữ liệu test (kể cả cho ngày đã qua). Nhân viên chỉ xem lịch sử chấm công trên web.
+3. Giờ vào/ra được ghi qua `POST /api/attendance/punches` với thời điểm cụ thể. Sau này máy chấm công của công ty sẽ gửi dữ liệu vào đây; phần tích hợp máy **chưa triển khai**, hiện HR nhập qua API này (cũng là cách tạo dữ liệu test cho ngày đã qua). Nhân viên chỉ xem lịch sử chấm công trên web.
 4. Nhân viên nộp đơn nghỉ qua `/api/leave-requests`; người duyệt duyệt đơn và hệ thống tự gắn đơn vào bảng công.
-5. HR đối soát các ngày `MISSING_PUNCH` qua `PUT /api/attendance/{id}`; người có `attendance.overtime.approve` duyệt tăng ca.
+5. HR đối soát các ngày `MISSING_PUNCH`: nhân viên có đi làm thì nhập giờ vào/ra thực tế qua `POST /api/attendance/punches`, vắng không báo thì ghi `UNAUTHORIZED_ABSENCE` qua `PUT /api/attendance/{id}`. Người có `attendance.overtime.approve` duyệt tăng ca.
 6. Kế toán tính kỳ lương. Xem [Hoàn thiện dữ liệu trước khi tính lương](#hoàn-thiện-dữ-liệu-trước-khi-tính-lương).
 
 ---
@@ -23,7 +23,7 @@ Quy trình một tháng:
 | `POST /api/company-holidays` | `organization.manage`, phạm vi `COMPANY` | Khai báo ngày lễ |
 | `DELETE /api/company-holidays/{id}` | `organization.manage`, phạm vi `COMPANY` | Xóa ngày lễ |
 | `POST /api/attendance/prepare` | `attendance.manage`, phạm vi `COMPANY` | Tạo bản ghi `MISSING_PUNCH` cho các ngày làm việc của tháng |
-| `POST /api/attendance/punches` | Không cần xác thực (tạm thời, chỉ để test) | Ghi giờ vào/ra của một ngày công |
+| `POST /api/attendance/punches` | `attendance.manage` (trong scope) | Ghi hoặc sửa giờ vào/ra của một ngày công |
 | `PUT /api/attendance/{id}` | `attendance.manage` | Điều chỉnh / đối soát bản ghi công |
 | `POST /api/attendance/{id}/overtime-approval` | `attendance.overtime.approve` | Duyệt hoặc hủy duyệt tăng ca |
 | `GET /api/attendance/{id}` | `attendance.self.read` (chính mình) hoặc `attendance.read` (trong scope) | Chi tiết một bản ghi công |
@@ -38,7 +38,7 @@ Quy trình một tháng:
 | `GET /api/leave-requests/pending` | `request.approve` | Đơn `PENDING` trong phạm vi người duyệt |
 | `GET /api/leave-entitlements/employees/{employeeId}` | Chính nhân viên đó, hoặc `request.read` (trong scope) | Xem số dư phép năm |
 
-Tất cả endpoint yêu cầu Bearer token, trừ `POST /api/attendance/punches`. Permission `*.self.*` chỉ cho thao tác trên hồ sơ nhân viên gắn với account đang đăng nhập; permission còn lại được kiểm tra thêm theo scope của role (phân công hiện hành của nhân viên). Phần kiểm tra chính mình/scope nằm ở service, nên request ngoài scope trả `403 FORBIDDEN`.
+Tất cả endpoint yêu cầu Bearer token. Permission `*.self.*` chỉ cho thao tác trên hồ sơ nhân viên gắn với account đang đăng nhập; permission còn lại được kiểm tra thêm theo scope của role (phân công hiện hành của nhân viên). Phần kiểm tra chính mình/scope nằm ở service, nên request ngoài scope trả `403 FORBIDDEN`.
 
 Từ khi kỳ lương chứa ngày đó ở `APPROVED`, `PAID` hoặc `LOCKED`, mọi thao tác sửa dữ liệu công và ngày lễ trả `409 PAYROLL_PERIOD_LOCKED`.
 
@@ -174,10 +174,12 @@ Backend tự làm việc tương tự cho **tháng hiện tại** (giờ `Asia/H
 
 Ghi giờ vào và giờ ra của một ngày công bằng thời điểm cụ thể, như máy chấm công báo về. Hệ thống tự tính `lateMinutes`, `earlyLeaveMinutes`, `workedMinutes`, `payableMinutes` theo [Quy tắc tính công](#quy-tắc-tính-công) và đặt `status = PRESENT`.
 
-> **Tạm thời:** endpoint này mở không cần token và không kiểm tra permission/scope, để tạo dữ liệu test nhanh bằng Postman. Phải xóa (hoặc đóng lại) trước khi phát hành.
+Đây cũng là cách HR đối soát một ngày nhân viên có đi làm: quên chấm công, máy chấm sai giờ, đi công tác, hoặc đi làm Chủ nhật/ngày lễ. HR nhập giờ thực tế thay vì tự tính số phút.
 
-- Nếu ngày đó đã có bản ghi `MISSING_PUNCH` (từ `prepare` hoặc từ đơn nghỉ nửa ngày), bản ghi đó được cập nhật.
-- Nếu chưa có, bản ghi được tạo từ ca của phân công chính hiệu lực ngày đó, kể cả chủ nhật và ngày lễ. Ngày không thuộc lịch làm việc có `payableMinutes = 0`; giờ làm được duyệt qua tăng ca.
+- Ngày đã có bản ghi thì bản ghi đó được ghi đè, kể cả khi đã có giờ vào/ra hoặc đã được đối soát (ví dụ đã ghi `UNAUTHORIZED_ABSENCE` rồi dữ liệu máy chấm mới về). Riêng ngày nghỉ cả ngày theo đơn đã duyệt thì bị từ chối.
+- Ngày chưa có bản ghi thì được tạo từ ca của phân công chính hiệu lực ngày đó, kể cả Chủ nhật và ngày lễ. Ngày không thuộc lịch làm việc có `payableMinutes = 0`; giờ làm được trả qua duyệt tăng ca.
+- Tăng ca đã duyệt của ngày đó bị xóa (về 0 phút, hệ số 1) vì đã duyệt theo giờ cũ; người duyệt phải duyệt lại.
+- Người gọi được lưu vào người cập nhật bản ghi, `note` lưu lý do.
 
 ### Request
 
@@ -186,7 +188,8 @@ Ghi giờ vào và giờ ra của một ngày công bằng thời điểm cụ t
   "employeeId": 2,
   "workDate": "2026-01-15",
   "checkInAt": "2026-01-15T01:20:00Z",
-  "checkOutAt": "2026-01-15T10:00:00Z"
+  "checkOutAt": "2026-01-15T10:00:00Z",
+  "note": "Quên chấm công, trưởng phòng xác nhận"
 }
 ```
 
@@ -196,6 +199,7 @@ Ghi giờ vào và giờ ra của một ngày công bằng thời điểm cụ t
 | `workDate` | date | ✅ | Ngày công; với ca qua đêm là ngày bắt đầu ca |
 | `checkInAt` | instant | ✅ | Không ở tương lai; theo giờ `Asia/Ho_Chi_Minh` phải rơi vào đúng `workDate` |
 | `checkOutAt` | instant | ✅ | Không ở tương lai; sau `checkInAt` và cách không quá 24 giờ |
+| `note` | string | | Lý do nhập hoặc sửa, tối đa 1000 ký tự; để trống khi dữ liệu đến từ máy chấm |
 
 Ví dụ trên là ca `08:00–17:00` nghỉ trưa 60 phút, ân hạn đi muộn 15 phút: vào lúc 08:20 giờ Việt Nam cho `lateMinutes = 5`, `workedMinutes = payableMinutes = 460`.
 
@@ -208,15 +212,16 @@ Trả `AttendanceRecordResponse` (xem [GET `/api/attendance/{id}`](#get-apiatten
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Vi phạm ràng buộc ở bảng trên, nhân viên chưa vào làm/đã nghỉ việc, hoặc không có phân công chính ngày đó |
+| 403 | `FORBIDDEN` | Không có `attendance.manage` hoặc nhân viên ngoài scope |
 | 404 | `EMPLOYEE_NOT_FOUND` | Nhân viên không tồn tại |
-| 409 | `CONFLICT` | Ngày đó đã có giờ vào/ra hoặc đã được đối soát/nghỉ cả ngày; hoặc giờ làm trùng đơn nghỉ đã duyệt |
+| 409 | `CONFLICT` | Ngày nghỉ cả ngày theo đơn đã duyệt, hoặc giờ làm trùng đơn nghỉ nửa ngày đã duyệt |
 | 409 | `PAYROLL_PERIOD_LOCKED` | Ngày thuộc kỳ lương đã duyệt, đã trả hoặc đã khóa |
 
 ---
 
 ## PUT `/api/attendance/{id}`
 
-HR đối soát một bản ghi công, chủ yếu để xử lý `MISSING_PUNCH`. Nghỉ có lương phải đi qua quy trình duyệt đơn nghỉ, không nhập tay ở đây. Không dùng số phút tính lương để tự suy ra nhân viên đã làm việc.
+HR ghi đè trực tiếp số phút và trạng thái của một bản ghi công. Web chỉ dùng API này để ghi **vắng không phép**; ngày nhân viên có đi làm thì nên nhập giờ vào/ra qua [`POST /api/attendance/punches`](#post-apiattendancepunches) để hệ thống tự tính phút và duyệt được tăng ca. Nghỉ có lương phải đi qua quy trình duyệt đơn nghỉ, không nhập tay ở đây.
 
 ### Request
 
@@ -546,7 +551,7 @@ Số đã dùng và đang chờ được tính trực tiếp từ `leave_request
 ## Hoàn thiện dữ liệu trước khi tính lương
 
 1. Tạo phân công chính và chọn ca có hiệu lực từ **ngày làm việc đầu tiên** của nhân viên. `POST /api/attendance/prepare` báo mã nhân viên và ngày nếu thiếu phân công hoặc ca; sau khi sửa phân công, gọi lại để tạo các bản ghi `MISSING_PUNCH`.
-2. HR đối soát từng `MISSING_PUNCH`: ghi nhận `PRESENT` với phút thực làm và phút tính lương, hoặc `UNAUTHORIZED_ABSENCE` với cả hai bằng 0; cần lý do điều chỉnh. Nghỉ có lương cần đi qua quy trình duyệt đơn nghỉ.
+2. HR đối soát từng `MISSING_PUNCH`: có đi làm thì nhập giờ vào/ra thực tế (`POST /api/attendance/punches`), vắng không báo thì ghi `UNAUTHORIZED_ABSENCE` (`PUT /api/attendance/{id}`); cả hai cần lý do. Nghỉ có lương cần đi qua quy trình duyệt đơn nghỉ.
 3. Người có `compensation.manage` nhập mức lương tháng qua `POST /api/compensation/employees/{employeeId}/salary-history`, ví dụ `{"baseSalary":12000000,"effectiveFrom":"2026-01-01","reason":"Mức lương ban đầu"}`. Xem lịch sử bằng `GET` cùng đường dẫn với quyền `compensation.read`. Ngày hiệu lực phải phủ tất cả ngày làm việc cần tính lương. Sửa mức lương ảnh hưởng kỳ `CALCULATED` sẽ đưa kỳ về `DRAFT` và xóa phiếu cũ; kỳ đã duyệt, trả hoặc khóa thì bị chặn.
    Vai trò `HR_MANAGER` có cả hai quyền này. Từ hồ sơ nhân viên, HR chọn **Nhập và xem lương** để mở màn hình lương với nhân viên và ngày vào làm được điền sẵn.
 4. HR nhập hồ sơ bảo hiểm/thuế và người phụ thuộc theo hướng dẫn trong [PAYROLL.md](PAYROLL.md). Nếu thiếu hồ sơ trong kỳ, hệ thống trả lỗi theo nhân viên thay vì giả định không tham gia bảo hiểm.
@@ -558,7 +563,7 @@ Endpoint kỳ lương: `POST /api/payroll/periods`, `GET /api/payroll/periods`, 
 
 ## Ghi chú
 
-- Giờ vào/ra sẽ đến từ máy chấm công qua `POST /api/attendance/punches`; web không có thao tác tự chấm công.
+- Giờ vào/ra sẽ đến từ máy chấm công qua `POST /api/attendance/punches`; web không có thao tác tự chấm công, chỉ HR nhập hoặc sửa giờ khi đối soát.
 - Actor duyệt đơn, điều chỉnh công và duyệt tăng ca luôn lấy từ JWT/Security Context.
 - Cổng HRM có `/attendance`, `/leave-requests`, `/payslips`; tất cả yêu cầu đi qua BFF allowlist và API kiểm tra quyền cùng phạm vi truy cập.
 - Giới hạn hiện tại: mỗi ca có một khoảng nghỉ. Mô hình chỉ lưu một cặp chấm vào/ra và một đơn nghỉ cho mỗi nhân viên mỗi ngày, nên không có hai đơn khác loại trong cùng một ngày (ví dụ sáng nghỉ phép năm, chiều nghỉ ốm). Chỉ có ngày lễ do công ty khai báo, không tự nhập lịch lễ quốc gia.

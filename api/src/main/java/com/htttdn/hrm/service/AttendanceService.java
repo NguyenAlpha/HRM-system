@@ -46,6 +46,9 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 public class AttendanceService {
 
     private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+    /** Set by an approved leave covering the whole day; changed only through the leave workflow. */
+    private static final Set<AttendanceStatus> FULL_DAY_LEAVE = Set.of(AttendanceStatus.PAID_LEAVE,
+        AttendanceStatus.UNPAID_LEAVE, AttendanceStatus.MATERNITY_LEAVE, AttendanceStatus.SICK_LEAVE);
 
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final EmployeeRepository employeeRepository;
@@ -156,11 +159,14 @@ public class AttendanceService {
 
     /**
      * Records one day's check-in and check-out with explicit timestamps, the way a time clock
-     * reports them, and derives late, early-leave, worked and payable minutes from them.
-     * TEMPORARY: called without authentication to create test data, so there is no permission
-     * or scope check; see SecurityConfig.
+     * reports them, and derives late, early-leave, worked and payable minutes from them. HR also
+     * uses it to reconcile a day: it overwrites earlier punches or an earlier adjustment, and
+     * creates the day from the assignment's shift when it has no record yet (Sundays, holidays).
+     * Approved overtime is cleared because it was approved against the old punches.
      */
+    @PreAuthorize("hasAuthority('attendance.manage')")
     public AttendanceRecordResponse recordPunches(RecordPunchesRequest request) {
+        employeeAccessScopeService.requireEmployeeAccess(request.employeeId(), "attendance.manage");
         LocalDate workDate = request.workDate();
         Instant in = request.checkInAt();
         Instant out = request.checkOutAt();
@@ -185,8 +191,8 @@ public class AttendanceService {
 
         AttendanceRecord record = attendanceRecordRepository
             .findByEmployeeIdAndWorkDateForUpdate(employee.getId(), workDate).orElse(null);
-        if (record != null && (record.getCheckInAt() != null || record.getStatus() != AttendanceStatus.MISSING_PUNCH)) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Attendance on " + workDate + " is already recorded");
+        if (record != null && FULL_DAY_LEAVE.contains(record.getStatus())) {
+            throw new ConflictException(ErrorCode.CONFLICT, "Attendance on " + workDate + " is a full day of approved leave");
         }
         if (record != null && record.getLeaveRequest() != null
             && in.isBefore(record.getLeaveRequest().getEndAt()) && out.isAfter(record.getLeaveRequest().getStartAt())) {
@@ -218,6 +224,13 @@ public class AttendanceService {
         record.setCheckOutAt(out);
         applyPunches(record);
         record.setStatus(AttendanceStatus.PRESENT);
+        record.setOvertimeMinutes(0);
+        record.setOvertimeMultiplier(java.math.BigDecimal.ONE);
+        record.setOvertimeTaxExempt(false);
+        record.setOvertimeApprovedByAccount(null);
+        record.setOvertimeApprovedAt(null);
+        record.setNote(request.note() == null || request.note().isBlank() ? null : request.note().trim());
+        record.setUpdatedByAccount(findCurrentAccount());
         record.setUpdatedAt(now);
         return toResponse(attendanceRecordRepository.save(record));
     }

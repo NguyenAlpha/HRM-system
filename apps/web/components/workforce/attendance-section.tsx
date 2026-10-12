@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { CalendarPlus, Clock, Loader2, Pencil, Trash2, Zap } from "lucide-react"
+import { CalendarPlus, Clock, Loader2, LogIn, Trash2, UserX, Zap } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { apiErrorMessage } from "@/lib/api-helpers"
@@ -49,8 +48,18 @@ const STATUS_TONE: Record<AttendanceStatus, "default" | "secondary" | "outline" 
   MISSING_PUNCH: "destructive",
 }
 
-/** HR may only resolve a day to one of these; leave statuses come from approved requests. */
-const ADJUSTABLE_STATUSES = ["PRESENT", "UNAUTHORIZED_ABSENCE"] as const satisfies readonly AttendanceStatus[]
+/** Set by an approved leave covering the whole day; HR changes these only through the leave workflow. */
+const FULL_DAY_LEAVE: ReadonlySet<AttendanceStatus> = new Set(["PAID_LEAVE", "UNPAID_LEAVE", "MATERNITY_LEAVE", "SICK_LEAVE"])
+
+const BUSINESS_TIME = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+})
+
+/** HH:mm of an instant in the business time zone, for a time input. */
+const businessTime = (instant: string) => BUSINESS_TIME.format(new Date(instant))
+
+/** Instant of a date + HH:mm in the business time zone (UTC+7, no daylight saving). */
+const businessInstant = (date: string, hhmm: string) => new Date(`${date}T${hhmm}:00+07:00`)
 
 export function AttendanceSection({ employeeId, permissions, month }: WorkforceContext) {
   const canReadAttendance = permissions.has("attendance.self.read") || permissions.has("attendance.read")
@@ -63,7 +72,9 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
   const [holidays, setHolidays] = useState<CompanyHoliday[]>([])
   const [error, setError] = useState<string | null>(null)
   const [revision, setRevision] = useState(0)
-  const [adjusting, setAdjusting] = useState<AttendanceRecord | null>(null)
+  const [absent, setAbsent] = useState<AttendanceRecord | null>(null)
+  // A record to fix, or {} to enter a day that has no record yet (a Sunday or holiday worked).
+  const [punching, setPunching] = useState<{ record?: AttendanceRecord } | null>(null)
   const [approving, setApproving] = useState<AttendanceRecord | null>(null)
   const { busy, run } = useWorkforceAction(() => setRevision((value) => value + 1))
   const { first, last } = monthRange(month)
@@ -96,6 +107,11 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
             Phút công tính lương không gồm giờ nghỉ giữa ca; ngày nghỉ phép được duyệt tự gắn vào bảng công.
           </CardDescription>
           <CardAction className="flex flex-wrap gap-2">
+            {canManage && employeeId > 0 && (
+              <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => setPunching({})}>
+                <LogIn /> Nhập giờ ngày khác
+              </Button>
+            )}
             {canManage && (
               <Button type="button" size="sm" variant="outline" disabled={busy}
                 onClick={() => void run("Đã chuẩn bị bảng công",
@@ -142,12 +158,16 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
                             <Zap />
                           </Button>
                         )}
-                        {canManage && (
-                          <Button type="button" variant="ghost" size="icon-sm" aria-label={`Điều chỉnh công ngày ${row.workDate}`}
-                            disabled={busy} onClick={() => setAdjusting(row)}>
-                            <Pencil />
+                        {canManage && !FULL_DAY_LEAVE.has(row.status) && <>
+                          <Button type="button" variant="ghost" size="icon-sm" aria-label={`Nhập giờ vào/ra ngày ${row.workDate}`}
+                            disabled={busy} onClick={() => setPunching({ record: row })}>
+                            <LogIn />
                           </Button>
-                        )}
+                          <Button type="button" variant="ghost" size="icon-sm" aria-label={`Ghi vắng không phép ngày ${row.workDate}`}
+                            disabled={busy} className="text-muted-foreground hover:text-destructive" onClick={() => setAbsent(row)}>
+                            <UserX />
+                          </Button>
+                        </>}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -165,9 +185,13 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
         <HolidayCard holidays={holidays} canManage={canManageHolidays} busy={busy} run={run} />
       )}
 
-      {adjusting && (
-        <AdjustAttendanceDialog record={adjusting} busy={busy} onClose={() => setAdjusting(null)}
-          onSubmit={(body) => run("Đã điều chỉnh công", () => workforceApi(`attendance/${adjusting.id}`, "PUT", body))} />
+      {punching && (
+        <PunchDialog employeeId={employeeId} record={punching.record} month={month} busy={busy} onClose={() => setPunching(null)}
+          onSubmit={(body) => run("Đã ghi giờ vào/ra", () => workforceApi("attendance/punches", "POST", body))} />
+      )}
+      {absent && (
+        <AbsenceDialog record={absent} busy={busy} onClose={() => setAbsent(null)}
+          onSubmit={(body) => run("Đã ghi vắng không phép", () => workforceApi(`attendance/${absent.id}`, "PUT", body))} />
       )}
       {approving && (
         <OvertimeDialog record={approving} holidays={holidays} busy={busy} onClose={() => setApproving(null)}
@@ -231,76 +255,119 @@ function HolidayCard({ holidays, canManage, busy, run }: {
   )
 }
 
-function AdjustAttendanceDialog({ record, busy, onClose, onSubmit }: {
-  record: AttendanceRecord
+/**
+ * HR reconciles a day by entering the actual check-in and check-out; the server derives every
+ * minute figure from them, as it does for the time clock. Overwrites earlier punches or an
+ * earlier adjustment and clears approved overtime, which must be approved again.
+ */
+function PunchDialog({ employeeId, record, month, busy, onClose, onSubmit }: {
+  employeeId: number
+  record?: AttendanceRecord
+  month: string
   busy: boolean
   onClose: () => void
-  onSubmit: (body: WorkforceBody["AdjustAttendanceRequest"]) => Promise<boolean>
+  onSubmit: (body: WorkforceBody["RecordPunchesRequest"]) => Promise<boolean>
 }) {
-  const initialStatus = record.status === "MISSING_PUNCH" ? "UNAUTHORIZED_ABSENCE" : record.status
-  const [status, setStatus] = useState<AttendanceStatus>(initialStatus)
-  const present = status === "PRESENT"
-  const [worked, setWorked] = useState(String(record.workedMinutes))
-  const [payable, setPayable] = useState(String(record.payableMinutes))
-  const [late, setLate] = useState(String(record.lateMinutes))
-  const [early, setEarly] = useState(String(record.earlyLeaveMinutes))
+  const { first, last } = monthRange(month)
+  const [date, setDate] = useState(record?.workDate ?? "")
+  // Prefill with the recorded punches, else with the scheduled shift (the usual "forgot to punch" case).
+  const [checkIn, setCheckIn] = useState(record ? businessTime(record.checkInAt ?? record.scheduledStartAt) : "08:00")
+  const [checkOut, setCheckOut] = useState(record ? businessTime(record.checkOutAt ?? record.scheduledEndAt) : "17:00")
   const [note, setNote] = useState("")
   const [error, setError] = useState<string | null>(null)
-  const statusItems = Object.fromEntries(ADJUSTABLE_STATUSES.map((value) => [value, ATTENDANCE_STATUS_LABELS[value]]))
 
   function submit(event: React.FormEvent) {
     event.preventDefault()
-    const values = present
-      ? { workedMinutes: Number(worked), payableMinutes: Number(payable), lateMinutes: Number(late), earlyLeaveMinutes: Number(early) }
-      : { workedMinutes: 0, payableMinutes: 0, lateMinutes: 0, earlyLeaveMinutes: 0 }
-    if (Object.values(values).some((value) => !Number.isInteger(value) || value < 0)) {
-      setError("Số phút phải là số nguyên không âm"); return
-    }
-    if (values.payableMinutes > record.scheduledMinutes) {
-      setError(`Phút tính lương không vượt ${record.scheduledMinutes} phút công chuẩn`); return
-    }
-    if (present && values.workedMinutes === 0) {
-      setError("Có mặt thì phút thực làm phải lớn hơn 0"); return
-    }
-    void onSubmit({ ...values, status, note: note.trim() }).then((ok) => { if (ok) onClose() })
+    const checkInAt = businessInstant(date, checkIn)
+    const checkOutAt = businessInstant(date, checkOut)
+    // A check-out earlier than the check-in is the next morning, as on a night shift.
+    if (checkOutAt <= checkInAt) checkOutAt.setUTCDate(checkOutAt.getUTCDate() + 1)
+    if (checkOutAt > new Date()) { setError("Giờ ra chưa tới, không ghi trước được"); return }
+    void onSubmit({
+      employeeId, workDate: date, checkInAt: checkInAt.toISOString(), checkOutAt: checkOutAt.toISOString(), note: note.trim(),
+    }).then((ok) => { if (ok) onClose() })
   }
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-md">
         <form onSubmit={submit}>
           <DialogHeader>
-            <DialogTitle>Điều chỉnh công ngày {record.workDate}</DialogTitle>
+            <DialogTitle>{record ? `Nhập giờ vào/ra ngày ${record.workDate}` : "Nhập giờ vào/ra ngày khác"}</DialogTitle>
             <DialogDescription>
-              Hiện tại: {ATTENDANCE_STATUS_LABELS[record.status]}, {record.payableMinutes}/{record.scheduledMinutes} phút.
-              Nghỉ có lương phải đi qua quy trình duyệt đơn, không nhập ở đây.
+              {record
+                ? `Hiện tại: ${ATTENDANCE_STATUS_LABELS[record.status]}, ${record.payableMinutes}/${record.scheduledMinutes} phút. `
+                : "Dùng cho ngày chưa có trong bảng công, ví dụ đi làm Chủ nhật hoặc ngày lễ. "}
+              Hệ thống tự tính phút muộn, sớm và công tính lương; tăng ca đã duyệt của ngày này phải duyệt lại.
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div className="grid gap-1.5 sm:col-span-2">
-              <Label htmlFor="adjust-status">Tình trạng sau đối soát</Label>
-              <Select value={status} items={statusItems} onValueChange={(value) => setStatus(value as AttendanceStatus)}>
-                <SelectTrigger id="adjust-status" className="w-full"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {ADJUSTABLE_STATUSES.map((value) => <SelectItem key={value} value={value}>{ATTENDANCE_STATUS_LABELS[value]}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            {!record && (
+              <div className="grid gap-1.5 sm:col-span-2">
+                <Label htmlFor="punch-date">Ngày làm việc</Label>
+                <Input id="punch-date" type="date" required min={first} max={last} value={date}
+                  onChange={(event) => setDate(event.target.value)} />
+              </div>
+            )}
+            <div className="grid gap-1.5">
+              <Label htmlFor="punch-in">Giờ vào</Label>
+              <Input id="punch-in" type="time" required value={checkIn} onChange={(event) => setCheckIn(event.target.value)} />
             </div>
-            {present && <>
-              <MinutesField id="adjust-worked" label="Phút thực làm" value={worked} onChange={setWorked} />
-              <MinutesField id="adjust-payable" label={`Phút tính lương (tối đa ${record.scheduledMinutes})`} value={payable} onChange={setPayable} />
-              <MinutesField id="adjust-late" label="Phút đi muộn" value={late} onChange={setLate} />
-              <MinutesField id="adjust-early" label="Phút về sớm" value={early} onChange={setEarly} />
-            </>}
+            <div className="grid gap-1.5">
+              <Label htmlFor="punch-out">Giờ ra</Label>
+              <Input id="punch-out" type="time" required value={checkOut} onChange={(event) => setCheckOut(event.target.value)} />
+            </div>
+            <p className="text-xs text-muted-foreground sm:col-span-2">Giờ ra nhỏ hơn giờ vào được hiểu là sáng hôm sau (ca đêm).</p>
             <div className="grid gap-1.5 sm:col-span-2">
-              <Label htmlFor="adjust-note">Lý do và căn cứ đối soát</Label>
-              <Textarea id="adjust-note" required rows={3} value={note} onChange={(event) => setNote(event.target.value)} />
+              <Label htmlFor="punch-note">Lý do và căn cứ</Label>
+              <Textarea id="punch-note" required rows={3} maxLength={1000} value={note} onChange={(event) => setNote(event.target.value)} />
             </div>
             {error && <p role="alert" className="text-sm text-destructive sm:col-span-2">{error}</p>}
           </div>
           <DialogFooter className="mt-4">
             <Button type="button" variant="outline" onClick={onClose}>Hủy</Button>
-            <Button type="submit" disabled={busy || !note.trim()}>{busy && <Loader2 className="animate-spin" />} Lưu điều chỉnh</Button>
+            <Button type="submit" disabled={busy || !date || !note.trim()}>{busy && <Loader2 className="animate-spin" />} Lưu giờ vào/ra</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function AbsenceDialog({ record, busy, onClose, onSubmit }: {
+  record: AttendanceRecord
+  busy: boolean
+  onClose: () => void
+  onSubmit: (body: WorkforceBody["AdjustAttendanceRequest"]) => Promise<boolean>
+}) {
+  const [note, setNote] = useState("")
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="sm:max-w-md">
+        <form onSubmit={(event) => {
+          event.preventDefault()
+          void onSubmit({
+            workedMinutes: 0, payableMinutes: 0, lateMinutes: 0, earlyLeaveMinutes: 0,
+            status: "UNAUTHORIZED_ABSENCE", note: note.trim(),
+          }).then((ok) => { if (ok) onClose() })
+        }}>
+          <DialogHeader>
+            <DialogTitle>Ghi vắng không phép ngày {record.workDate}</DialogTitle>
+            <DialogDescription>
+              Hiện tại: {ATTENDANCE_STATUS_LABELS[record.status]}, {record.payableMinutes}/{record.scheduledMinutes} phút.
+              Ngày này sẽ không được trả lương. Nghỉ có lương phải đi qua quy trình duyệt đơn.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 grid gap-1.5">
+            <Label htmlFor="absence-note">Lý do và căn cứ</Label>
+            <Textarea id="absence-note" required rows={3} value={note} onChange={(event) => setNote(event.target.value)} />
+          </div>
+          <DialogFooter className="mt-4">
+            <Button type="button" variant="outline" onClick={onClose}>Hủy</Button>
+            <Button type="submit" variant="destructive" disabled={busy || !note.trim()}>
+              {busy && <Loader2 className="animate-spin" />} Ghi vắng không phép
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

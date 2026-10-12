@@ -7443,6 +7443,11 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "note" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 1000,
+            "minLength" : 0
+          },
           "workDate" : {
             "type" : "string",
             "format" : "date"
