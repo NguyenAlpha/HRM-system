@@ -8,7 +8,7 @@ Quy trình một tháng:
 
 1. Người có `organization.manage` khai báo ngày lễ qua `POST /api/company-holidays`.
 2. HR chuẩn bị bảng công tháng qua `POST /api/attendance/prepare`. Nên chuẩn bị trước khi nhân viên bắt đầu chấm công.
-3. Giờ vào/ra được ghi qua `POST /api/attendance/punches` với thời điểm cụ thể. Sau này máy chấm công của công ty sẽ gửi dữ liệu vào đây; phần tích hợp máy **chưa triển khai**, hiện HR gọi API này (kể cả để tạo dữ liệu test cho ngày đã qua). Nhân viên chỉ xem lịch sử chấm công trên web.
+3. Giờ vào/ra được ghi qua `POST /api/attendance/punches` với thời điểm cụ thể. Sau này máy chấm công của công ty sẽ gửi dữ liệu vào đây; phần tích hợp máy **chưa triển khai**, hiện API này **tạm thời không cần xác thực** để tạo dữ liệu test (kể cả cho ngày đã qua). Nhân viên chỉ xem lịch sử chấm công trên web.
 4. Nhân viên nộp đơn nghỉ qua `/api/leave-requests`; người duyệt duyệt đơn và hệ thống tự gắn đơn vào bảng công.
 5. HR đối soát các ngày `MISSING_PUNCH` qua `PUT /api/attendance/{id}`; người có `attendance.overtime.approve` duyệt tăng ca.
 6. Kế toán tính kỳ lương. Xem [Hoàn thiện dữ liệu trước khi tính lương](#hoàn-thiện-dữ-liệu-trước-khi-tính-lương).
@@ -23,7 +23,7 @@ Quy trình một tháng:
 | `POST /api/company-holidays` | `organization.manage`, phạm vi `COMPANY` | Khai báo ngày lễ |
 | `DELETE /api/company-holidays/{id}` | `organization.manage`, phạm vi `COMPANY` | Xóa ngày lễ |
 | `POST /api/attendance/prepare` | `attendance.manage`, phạm vi `COMPANY` | Tạo bản ghi `MISSING_PUNCH` cho các ngày làm việc của tháng |
-| `POST /api/attendance/punches` | `attendance.manage` (trong scope) | Ghi giờ vào/ra của một ngày công |
+| `POST /api/attendance/punches` | Không cần xác thực (tạm thời, chỉ để test) | Ghi giờ vào/ra của một ngày công |
 | `PUT /api/attendance/{id}` | `attendance.manage` | Điều chỉnh / đối soát bản ghi công |
 | `POST /api/attendance/{id}/overtime-approval` | `attendance.overtime.approve` | Duyệt hoặc hủy duyệt tăng ca |
 | `GET /api/attendance/{id}` | `attendance.self.read` (chính mình) hoặc `attendance.read` (trong scope) | Chi tiết một bản ghi công |
@@ -42,7 +42,7 @@ Quy trình một tháng:
 | `GET /api/leave-entitlements/carry-over` | `request.manage`, phạm vi `COMPANY` | Xem trước kết quả chốt phép năm |
 | `POST /api/leave-entitlements/carry-over` | `request.manage`, phạm vi `COMPANY` | Chốt phép năm |
 
-Tất cả endpoint yêu cầu Bearer token. Permission `*.self.*` chỉ cho thao tác trên hồ sơ nhân viên gắn với account đang đăng nhập; permission còn lại được kiểm tra thêm theo scope của role (phân công hiện hành của nhân viên). Phần kiểm tra chính mình/scope nằm ở service, nên request ngoài scope trả `403 FORBIDDEN`.
+Tất cả endpoint yêu cầu Bearer token, trừ `POST /api/attendance/punches`. Permission `*.self.*` chỉ cho thao tác trên hồ sơ nhân viên gắn với account đang đăng nhập; permission còn lại được kiểm tra thêm theo scope của role (phân công hiện hành của nhân viên). Phần kiểm tra chính mình/scope nằm ở service, nên request ngoài scope trả `403 FORBIDDEN`.
 
 Từ khi kỳ lương chứa ngày đó ở `APPROVED`, `PAID` hoặc `LOCKED`, mọi thao tác sửa dữ liệu công và ngày lễ trả `409 PAYROLL_PERIOD_LOCKED`.
 
@@ -170,6 +170,8 @@ API kiểm tra mọi nhân viên có thời gian làm việc trong tháng. Nếu
 
 Ghi giờ vào và giờ ra của một ngày công bằng thời điểm cụ thể, như máy chấm công báo về. Hệ thống tự tính `lateMinutes`, `earlyLeaveMinutes`, `workedMinutes`, `payableMinutes` theo [Quy tắc tính công](#quy-tắc-tính-công) và đặt `status = PRESENT`.
 
+> **Tạm thời:** endpoint này mở không cần token và không kiểm tra permission/scope, để tạo dữ liệu test nhanh bằng Postman. Phải xóa (hoặc đóng lại) trước khi phát hành.
+
 - Nếu ngày đó đã có bản ghi `MISSING_PUNCH` (từ `prepare` hoặc từ đơn nghỉ nửa ngày), bản ghi đó được cập nhật.
 - Nếu chưa có, bản ghi được tạo từ ca của phân công chính hiệu lực ngày đó, kể cả chủ nhật và ngày lễ. Ngày không thuộc lịch làm việc có `payableMinutes = 0`; giờ làm được duyệt qua tăng ca.
 
@@ -202,7 +204,6 @@ Trả `AttendanceRecordResponse` (xem [GET `/api/attendance/{id}`](#get-apiatten
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Vi phạm ràng buộc ở bảng trên, nhân viên chưa vào làm/đã nghỉ việc, hoặc không có phân công chính ngày đó |
-| 403 | `FORBIDDEN` | Không có `attendance.manage` hoặc nhân viên ngoài scope |
 | 404 | `EMPLOYEE_NOT_FOUND` | Nhân viên không tồn tại |
 | 409 | `CONFLICT` | Ngày đó đã có giờ vào/ra hoặc đã được đối soát/nghỉ cả ngày; hoặc giờ làm trùng đơn nghỉ đã duyệt |
 | 409 | `PAYROLL_PERIOD_LOCKED` | Ngày thuộc kỳ lương đã duyệt, đã trả hoặc đã khóa |
