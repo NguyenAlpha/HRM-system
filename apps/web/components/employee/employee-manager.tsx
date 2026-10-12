@@ -77,6 +77,8 @@ import {
   type Gender,
   type UpdateEmployeeInput,
 } from "@/lib/employee"
+import { PORTAL_CONFIG } from "@/lib/auth/config"
+import type { Portal } from "@/lib/auth/types"
 import { isEligibleEmployeeBirthDate } from "@/lib/employee-birth-date"
 import type { Page } from "@/lib/pagination"
 
@@ -133,7 +135,8 @@ type EmployeeCapabilities = {
   canProvisionAccount: boolean
 }
 
-export function EmployeeManager({ capabilities, onSessionExpired }: {
+export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
+  portal: Portal
   capabilities: EmployeeCapabilities
   onSessionExpired: () => void
 }) {
@@ -172,7 +175,7 @@ export function EmployeeManager({ capabilities, onSessionExpired }: {
 
   useEffect(() => {
     let active = true
-    employeeRequest<Page<EmployeeSummary>>("hrm", `?page=${page}&size=10`)
+    employeeRequest<Page<EmployeeSummary>>(portal, `?page=${page}&size=10`)
       .then((result) => {
         if (!active) return
         if (page > 0 && page >= result.totalPages) {
@@ -189,7 +192,7 @@ export function EmployeeManager({ capabilities, onSessionExpired }: {
         setLoading(false)
       })
     return () => { active = false }
-  }, [page, revision, onSessionExpired])
+  }, [portal, page, revision, onSessionExpired])
 
   function reload() {
     setLoading(true)
@@ -206,7 +209,7 @@ export function EmployeeManager({ capabilities, onSessionExpired }: {
 
   async function openEditFromList(employeeId: number) {
     try {
-      const detail = await employeeRequest<EmployeeDetail>("hrm", `/${employeeId}`)
+      const detail = await employeeRequest<EmployeeDetail>(portal, `/${employeeId}`)
       openEdit(detail)
     } catch (caught) {
       if (isSessionExpired(caught)) onSessionExpired()
@@ -229,7 +232,7 @@ export function EmployeeManager({ capabilities, onSessionExpired }: {
         workEmail: values.workEmail?.trim() || null,
         phone: values.phone?.trim() || null,
       }
-      const saved = await employeeMutation<EmployeeDetail>("hrm", `/${editing.id}`, "PUT", body)
+      const saved = await employeeMutation<EmployeeDetail>(portal, `/${editing.id}`, "PUT", body)
       toast.success(`Đã cập nhật hồ sơ ${saved.fullName}`)
       setDialogOpen(false)
       setSheetRevision((value) => value + 1)
@@ -244,7 +247,7 @@ export function EmployeeManager({ capabilities, onSessionExpired }: {
     if (!confirming) return
     setConfirmingEmployment(true)
     try {
-      const saved = await employeeMutation<EmployeeDetail>("hrm", `/${confirming.id}/confirm`, "POST")
+      const saved = await employeeMutation<EmployeeDetail>(portal, `/${confirming.id}/confirm`, "POST")
       toast.success(`Đã xác nhận ${saved.fullName} là nhân sự chính thức`)
       setConfirming(null)
       setSheetRevision((value) => value + 1)
@@ -372,7 +375,7 @@ export function EmployeeManager({ capabilities, onSessionExpired }: {
                               {canReadDetail && (
                                 <Menu.LinkItem
                                   closeOnClick
-                                  render={<Link href={`/employees/${employee.id}`} />}
+                                  render={<Link href={`${PORTAL_CONFIG[portal].pagePrefix}/employees/${employee.id}`} />}
                                   className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
                                 >
                                   <Eye className="size-4" /> Xem chi tiết
@@ -429,6 +432,7 @@ export function EmployeeManager({ capabilities, onSessionExpired }: {
       {selectedId !== null && (
         <EmployeeDetailDialog
           key={`${selectedId}-${sheetRevision}`}
+          portal={portal}
           employeeId={selectedId}
           canUpdate={canUpdate}
           canProvisionAccount={canProvisionAccount}
@@ -556,6 +560,7 @@ export function EmployeeManager({ capabilities, onSessionExpired }: {
 
       {provisioning && (
         <EmployeeProvisionDialog
+          portal={portal}
           employeeId={provisioning.id}
           employeeName={provisioning.fullName}
           onClose={() => setProvisioning(null)}

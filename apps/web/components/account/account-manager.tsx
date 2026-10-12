@@ -39,6 +39,8 @@ import {
   type AccountInvitation,
   type AccountPage,
 } from "@/lib/account"
+import { PORTAL_CONFIG } from "@/lib/auth/config"
+import type { Portal } from "@/lib/auth/types"
 
 const STATUS_LABELS: Record<Account["status"], string> = {
   PENDING: "Chờ kích hoạt",
@@ -94,7 +96,8 @@ function formatDateTime(value: string | null) {
   return value ? new Date(value).toLocaleString("vi-VN") : "—"
 }
 
-export function AccountManager({ currentAccountId, canManage, canManageActivation, onSessionExpired }: {
+export function AccountManager({ portal, currentAccountId, canManage, canManageActivation, onSessionExpired }: {
+  portal: Portal
   currentAccountId: number
   canManage: boolean
   canManageActivation: boolean
@@ -107,11 +110,14 @@ export function AccountManager({ currentAccountId, canManage, canManageActivatio
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState<{ account: Account; kind: ActionKind } | null>(null)
   const [running, setRunning] = useState(false)
+  // The Admin Console only reads accounts: SYSTEM_ADMIN holds neither lifecycle permission.
+  const hasActions = canManage || canManageActivation
+  const columns = hasActions ? 5 : 4
   const [invitation, setInvitation] = useState<{ account: Account; invitation: AccountInvitation } | null>(null)
 
   useEffect(() => {
     let active = true
-    listAccounts(page)
+    listAccounts(portal, page)
       .then((result) => {
         if (!active) return
         if (page > 0 && page >= result.totalPages) {
@@ -128,7 +134,7 @@ export function AccountManager({ currentAccountId, canManage, canManageActivatio
         setLoading(false)
       })
     return () => { active = false }
-  }, [page, revision, onSessionExpired])
+  }, [portal, page, revision, onSessionExpired])
 
   function reload() {
     setLoading(true)
@@ -175,7 +181,11 @@ export function AccountManager({ currentAccountId, canManage, canManageActivatio
         <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
           <div>
             <CardTitle>Danh sách tài khoản</CardTitle>
-            <CardDescription>Gửi lại lời mời, đặt lại mật khẩu, vô hiệu hóa hoặc kích hoạt lại tài khoản đăng nhập.</CardDescription>
+            <CardDescription>
+              {hasActions
+                ? "Gửi lại lời mời, đặt lại mật khẩu, vô hiệu hóa hoặc kích hoạt lại tài khoản đăng nhập."
+                : "Danh sách tài khoản đăng nhập (chỉ xem)."}
+            </CardDescription>
           </div>
           <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
             <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
@@ -192,14 +202,14 @@ export function AccountManager({ currentAccountId, canManage, canManageActivatio
                   <TableHead>Nhân viên</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead>Đăng nhập gần nhất</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
+                  {hasActions && <TableHead className="text-right">Thao tác</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading &&
                   Array.from({ length: 5 }).map((_, index) => (
                     <TableRow key={index}>
-                      {Array.from({ length: 5 }).map((__, cell) => (
+                      {Array.from({ length: columns }).map((__, cell) => (
                         <TableCell key={cell}><Skeleton className="h-4 w-full" /></TableCell>
                       ))}
                     </TableRow>
@@ -207,7 +217,7 @@ export function AccountManager({ currentAccountId, canManage, canManageActivatio
 
                 {!loading && data?.content.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">Chưa có tài khoản nào.</TableCell>
+                    <TableCell colSpan={columns} className="py-8 text-center text-muted-foreground">Chưa có tài khoản nào.</TableCell>
                   </TableRow>
                 )}
 
@@ -221,7 +231,7 @@ export function AccountManager({ currentAccountId, canManage, canManageActivatio
                     <TableCell>
                       {account.employeeId === null
                         ? <span className="text-muted-foreground">—</span>
-                        : <Link className="text-sm underline-offset-4 hover:underline" href={`/employees/${account.employeeId}`}>Hồ sơ #{account.employeeId}</Link>}
+                        : <Link className="text-sm underline-offset-4 hover:underline" href={`${PORTAL_CONFIG[portal].pagePrefix}/employees/${account.employeeId}`}>Hồ sơ #{account.employeeId}</Link>}
                     </TableCell>
                     <TableCell>
                       <Badge variant={STATUS_VARIANTS[account.status]}>{STATUS_LABELS[account.status]}</Badge>
@@ -230,7 +240,7 @@ export function AccountManager({ currentAccountId, canManage, canManageActivatio
                       )}
                     </TableCell>
                     <TableCell className="text-sm">{formatDateTime(account.lastLoginAt)}</TableCell>
-                    <TableCell>
+                    {hasActions && <TableCell>
                       <div className="flex justify-end gap-1">
                         {availableActions(account).map((kind) => {
                           const Icon = ICONS[kind]
@@ -255,7 +265,7 @@ export function AccountManager({ currentAccountId, canManage, canManageActivatio
                           )
                         })}
                       </div>
-                    </TableCell>
+                    </TableCell>}
                   </TableRow>
                 ))}
               </TableBody>

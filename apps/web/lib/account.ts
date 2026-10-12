@@ -24,8 +24,8 @@ export function provisionAccount(portal: Portal, employeeId: number, username: s
 export type Account = ProvisionedAccount
 export type AccountPage = Schemas["PagedResultAccountResponse"]
 
-export function listAccounts(page: number): Promise<AccountPage> {
-  return authorizedRequest<AccountPage>("hrm", `/accounts?page=${page}&size=20&sort=id,desc`, { cache: "no-store" })
+export function listAccounts(portal: Portal, page: number): Promise<AccountPage> {
+  return authorizedRequest<AccountPage>(portal, `/accounts?page=${page}&size=20&sort=id,desc`, { cache: "no-store" })
 }
 
 /** Resend an invitation (PENDING) or start a password reset (ACTIVE/LOCKED); both return a new one-time token. */

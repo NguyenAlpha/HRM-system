@@ -5,7 +5,7 @@ async function handle(request: Request) {
 }
 
 async function list(request: Request) {
-  return handleAccountLifecycleRequest(request, [])
+  return handleAccountLifecycleRequest(request, [], "hrm")
 }
 
 export { handle as POST, list as GET }

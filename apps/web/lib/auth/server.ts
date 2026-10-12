@@ -560,7 +560,7 @@ export async function handleReferenceRequest(request: Request, segments: string[
   })
 }
 
-// Only expose account provisioning; lifecycle actions go through handleAccountLifecycleRequest (HRM only).
+// Only expose account provisioning; listing and lifecycle actions go through handleAccountLifecycleRequest.
 export async function handleAccountProvisionRequest(request: Request, portal: Portal): Promise<NextResponse> {
   if (request.method !== "POST") {
     return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
@@ -597,12 +597,18 @@ export async function handleAccountProvisionRequest(request: Request, portal: Po
   })
 }
 
-// Account list and lifecycle actions; SYSTEM_ADMIN holds no account.manage, so this stays HRM-only.
-export async function handleAccountLifecycleRequest(request: Request, segments: string[]): Promise<NextResponse> {
+// Account list for both portals; lifecycle actions are HRM-only because SYSTEM_ADMIN holds no account.manage.
+export async function handleAccountLifecycleRequest(
+  request: Request,
+  segments: string[],
+  portal: Portal,
+): Promise<NextResponse> {
   const path = segments.join("/")
   const routes = [
     { pattern: /^$/, methods: ["GET"] },
-    { pattern: /^[1-9]\d*\/(?:invitations\/resend|password-reset|suspend|activate)$/, methods: ["POST"] },
+    ...(portal === "hrm"
+      ? [{ pattern: /^[1-9]\d*\/(?:invitations\/resend|password-reset|suspend|activate)$/, methods: ["POST"] }]
+      : []),
   ]
   const route = routes.find((candidate) => candidate.pattern.test(path))
   if (!route) return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
@@ -613,7 +619,7 @@ export async function handleAccountLifecycleRequest(request: Request, segments: 
   if (request.method !== "GET" && origin && origin !== new URL(request.url).origin) {
     return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
   }
-  const accessToken = (await cookies()).get(PORTAL_CONFIG.hrm.accessCookie)?.value
+  const accessToken = (await cookies()).get(PORTAL_CONFIG[portal].accessCookie)?.value
   if (!accessToken) return NextResponse.json(failure("UNAUTHORIZED", "Phiên đăng nhập đã hết hạn"), { status: 401 })
 
   const query = new URLSearchParams()

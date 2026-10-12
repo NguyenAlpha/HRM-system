@@ -50,7 +50,16 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
         </Link>
         {admin ? (
           <>
-            <span className="nav-item disabled"><span>◎</span> Tài khoản</span>
+            {canReadEmployees && (
+              <Link className={navClass("/admin/employees")} href="/admin/employees">
+                <span>▤</span> Nhân sự
+              </Link>
+            )}
+            {canReadAccounts && (
+              <Link className={navClass("/admin/accounts")} href="/admin/accounts">
+                <span>◎</span> Tài khoản
+              </Link>
+            )}
             <Link className={navClass("/admin/rbac")} href="/admin/rbac">
               <span>◇</span> Vai trò & quyền
             </Link>

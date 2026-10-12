@@ -20,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
+import type { Portal } from "@/lib/auth/types"
 import { provisionAccount, type AccountProvisioningResponse } from "@/lib/account"
 
 const provisionSchema = z.object({
@@ -33,7 +34,8 @@ const provisionSchema = z.object({
 
 type ProvisionValues = z.infer<typeof provisionSchema>
 
-export function EmployeeProvisionDialog({ employeeId, employeeName, onClose, onProvisioned, onSessionExpired }: {
+export function EmployeeProvisionDialog({ portal, employeeId, employeeName, onClose, onProvisioned, onSessionExpired }: {
+  portal: Portal
   employeeId: number
   employeeName: string
   onClose: () => void
@@ -54,7 +56,7 @@ export function EmployeeProvisionDialog({ employeeId, employeeName, onClose, onP
   async function onSubmit(values: ProvisionValues) {
     setDialogError(null)
     try {
-      const response = await provisionAccount("hrm", employeeId, values.username.trim())
+      const response = await provisionAccount(portal, employeeId, values.username.trim())
       setResult(response)
       onProvisioned()
     } catch (caught) {
