@@ -395,7 +395,6 @@ export async function handleEmployeeRequest(request: Request, segments: string[]
 export async function handleWorkforceRequest(request: Request, segments: string[]): Promise<NextResponse> {
   const path = segments.join("/")
   const routes = [
-    { pattern: /^attendance\/check-(?:in|out)$/, methods: ["POST"] },
     { pattern: /^attendance\/prepare$/, methods: ["POST"] },
     { pattern: /^attendance\/employees\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^attendance\/[1-9]\d*$/, methods: ["GET", "PUT"] },
@@ -441,7 +440,6 @@ export async function handleWorkforceRequest(request: Request, segments: string[
   if (request.method === "PUT" || (request.method === "POST" &&
       (/^(?:leave-requests|payroll\/periods|company-holidays)$/.test(path)
         || /^compensation\/employees\/[1-9]\d*\/(?:salary-history|payroll-profiles|tax-dependents)$/.test(path)
-        || /^attendance\/check-(?:in|out)$/.test(path)
         || /^attendance\/[1-9]\d*\/overtime-approval$/.test(path)
         || /^payroll\/periods\/[1-9]\d*\/calculate$/.test(path)
         || /^payroll\/periods\/[1-9]\d*\/mark-paid$/.test(path)

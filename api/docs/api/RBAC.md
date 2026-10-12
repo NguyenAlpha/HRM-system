@@ -740,7 +740,6 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 | Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
 |:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
 | `attendance.self.read` | ✓ | | | | | | |
-| `attendance.self.record` | ✓ | | | | | | |
 | `attendance.read` | | ✓ | | | | | |
 | `attendance.manage` | | ✓ | | | | | |
 | `attendance.overtime.approve` | | ✓ | | | | | |

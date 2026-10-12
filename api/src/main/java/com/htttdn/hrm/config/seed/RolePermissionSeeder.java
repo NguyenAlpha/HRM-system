@@ -45,7 +45,6 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "request.self.create",
             "request.self.cancel",
             "attendance.self.read",
-            "attendance.self.record",
             "payroll.self.read",
             "payroll.self.print"
         )),

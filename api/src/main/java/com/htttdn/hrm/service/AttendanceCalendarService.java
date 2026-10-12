@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -55,17 +56,30 @@ public class AttendanceCalendarService {
             if (assignment == null) {
                 continue;
             }
-            WorkShift shift = assignment.getShift();
-            if (shift == null) {
-                throw new BusinessException(ErrorCode.VALIDATION_ERROR,
-                    "Employee " + employeeId + " has no shift on " + workDate);
-            }
-            Instant start = LocalDateTime.of(workDate, shift.getStartTime()).atZone(ZONE).toInstant();
-            LocalDate endDate = Boolean.TRUE.equals(shift.getCrossesMidnight()) ? workDate.plusDays(1) : workDate;
-            Instant end = LocalDateTime.of(endDate, shift.getEndTime()).atZone(ZONE).toInstant();
-            days.add(new ScheduledDay(workDate, shift, start, end, shift.getStandardWorkMinutes()));
+            days.add(toScheduledDay(employeeId, workDate, assignment));
         }
         return days;
+    }
+
+    /**
+     * The shift window of the primary assignment on {@code date}, Sundays and company holidays
+     * included, so punches on a day off can still be recorded as overtime.
+     */
+    public Optional<ScheduledDay> assignedDay(Long employeeId, LocalDate date) {
+        return assignmentRepository.findCurrentPrimaryCandidates(employeeId, date).stream().findFirst()
+            .map(assignment -> toScheduledDay(employeeId, date, assignment));
+    }
+
+    private static ScheduledDay toScheduledDay(Long employeeId, LocalDate workDate, EmployeeAssignment assignment) {
+        WorkShift shift = assignment.getShift();
+        if (shift == null) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+                "Employee " + employeeId + " has no shift on " + workDate);
+        }
+        Instant start = LocalDateTime.of(workDate, shift.getStartTime()).atZone(ZONE).toInstant();
+        LocalDate endDate = Boolean.TRUE.equals(shift.getCrossesMidnight()) ? workDate.plusDays(1) : workDate;
+        Instant end = LocalDateTime.of(endDate, shift.getEndTime()).atZone(ZONE).toInstant();
+        return new ScheduledDay(workDate, shift, start, end, shift.getStandardWorkMinutes());
     }
 
     public long companyWorkdayCount(LocalDate from, LocalDate to) {

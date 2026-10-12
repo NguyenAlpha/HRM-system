@@ -14,7 +14,7 @@ import { today, type WorkforceContext } from "@/components/workforce/workforce-s
 type Section = "attendance" | "leave" | "payroll"
 
 const SECTION_TEXT: Record<Section, { title: string; description: string }> = {
-  attendance: { title: "Chấm công", description: "Vào ca, ra ca, bảng công tháng, tăng ca và ngày lễ công ty." },
+  attendance: { title: "Chấm công", description: "Lịch sử chấm công từ máy chấm công, bảng công tháng, tăng ca và ngày lễ công ty." },
   leave: { title: "Đơn nghỉ phép", description: "Số dư phép năm, tạo và duyệt đơn nghỉ, chốt phép cuối năm." },
   payroll: { title: "Phiếu lương", description: "Kỳ lương, phiếu lương, lương cơ bản, bảo hiểm và người phụ thuộc." },
 }

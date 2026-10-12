@@ -4,7 +4,6 @@ import java.time.LocalDate;
 
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,14 +12,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.validation.annotation.Validated;
 
 import com.htttdn.hrm.dto.request.attendance.AdjustAttendanceRequest;
 import com.htttdn.hrm.dto.request.attendance.ApproveOvertimeRequest;
-import com.htttdn.hrm.dto.request.attendance.CheckInRequest;
-import com.htttdn.hrm.dto.request.attendance.CheckOutRequest;
+import com.htttdn.hrm.dto.request.attendance.RecordPunchesRequest;
 import com.htttdn.hrm.dto.response.attendance.AttendanceRecordResponse;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
@@ -40,24 +37,17 @@ public class AttendanceController {
         this.service = service;
     }
 
-    @PostMapping("/check-in")
-    @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyAuthority('attendance.self.record', 'attendance.manage')")
-    public ApiResult<AttendanceRecordResponse> checkIn(@Valid @RequestBody CheckInRequest request) {
-        return ApiResult.ok(service.checkIn(request));
-    }
-
-    @PostMapping("/check-out")
-    @PreAuthorize("hasAnyAuthority('attendance.self.record', 'attendance.manage')")
-    public ApiResult<AttendanceRecordResponse> checkOut(@Valid @RequestBody CheckOutRequest request) {
-        return ApiResult.ok(service.checkOut(request));
-    }
-
     @PostMapping("/prepare")
     @PreAuthorize("hasAuthority('attendance.manage')")
     public ApiResult<Integer> prepare(@RequestParam @Min(2000) @Max(9999) int year,
         @RequestParam @Min(1) @Max(12) int month) {
         return ApiResult.ok(service.prepareMonth(year, month));
+    }
+
+    @PostMapping("/punches")
+    @PreAuthorize("hasAuthority('attendance.manage')")
+    public ApiResult<AttendanceRecordResponse> recordPunches(@Valid @RequestBody RecordPunchesRequest request) {
+        return ApiResult.ok(service.recordPunches(request));
     }
 
     @PutMapping("/{id}")

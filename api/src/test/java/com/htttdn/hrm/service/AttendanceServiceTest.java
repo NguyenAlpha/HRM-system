@@ -17,10 +17,9 @@ import org.mockito.Mock;
 import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.htttdn.hrm.dto.request.attendance.CheckOutRequest;
-import com.htttdn.hrm.dto.request.attendance.CheckInRequest;
 import com.htttdn.hrm.dto.request.attendance.ApproveOvertimeRequest;
 import com.htttdn.hrm.dto.request.attendance.AdjustAttendanceRequest;
+import com.htttdn.hrm.dto.request.attendance.RecordPunchesRequest;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AttendanceRecord;
 import com.htttdn.hrm.entity.Employee;
@@ -31,11 +30,10 @@ import com.htttdn.hrm.entity.enums.AttendanceStatus;
 import com.htttdn.hrm.entity.enums.LeaveSalaryTreatment;
 import com.htttdn.hrm.entity.enums.LeaveType;
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
-import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.BusinessException;
+import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
-import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
@@ -45,7 +43,6 @@ class AttendanceServiceTest {
 
     @Mock private AttendanceRecordRepository attendanceRecordRepository;
     @Mock private EmployeeRepository employeeRepository;
-    @Mock private EmployeeAssignmentRepository employeeAssignmentRepository;
     @Mock private AccountRepository accountRepository;
     @Mock private PayrollPeriodRepository payrollPeriodRepository;
     @Mock private CurrentAccountProvider currentAccountProvider;
@@ -162,61 +159,6 @@ class AttendanceServiceTest {
     }
 
     @Test
-    void checkInUsesExistingMissingPunchRecord() {
-        LocalDate date = LocalDate.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
-        AttendanceRecord record = record(date);
-        record.setCheckInAt(null);
-        record.setStatus(AttendanceStatus.MISSING_PUNCH);
-        record.getShift().setGraceLateMinutes(0);
-        when(currentAccountProvider.hasAuthority("attendance.self.record")).thenReturn(true);
-        when(currentAccountProvider.accountId()).thenReturn(7L);
-        when(accountRepository.findById(7L)).thenReturn(Optional.of(
-            Account.builder().employee(record.getEmployee()).build()));
-        when(employeeRepository.findById(2L)).thenReturn(Optional.of(record.getEmployee()));
-        when(attendanceRecordRepository.findByEmployeeIdAndWorkDateForUpdate(2L, date))
-            .thenReturn(Optional.of(record));
-
-        var result = service().checkIn(new CheckInRequest(2L));
-
-        assertEquals(AttendanceStatus.PRESENT, result.status());
-        assertEquals(record.getCheckInAt(), result.checkInAt());
-    }
-
-    @Test
-    void checkOutSubtractsBreakAndRejectsDuplicate() {
-        LocalDate date = LocalDate.now();
-        AttendanceRecord record = record(date);
-        when(currentAccountProvider.hasAuthority("attendance.self.record")).thenReturn(true);
-        when(currentAccountProvider.accountId()).thenReturn(7L);
-        when(accountRepository.findById(7L)).thenReturn(Optional.of(
-            Account.builder().employee(record.getEmployee()).build()));
-        when(attendanceRecordRepository.findByEmployeeIdAndWorkDateForUpdate(2L, date))
-            .thenReturn(Optional.of(record));
-
-        when(attendanceCalendarService.companyWorkDates(date, date)).thenReturn(List.of(date));
-
-        var result = service().checkOut(new CheckOutRequest(2L, date));
-
-        assertEquals(60, result.workedMinutes());
-        assertEquals(60, result.payableMinutes());
-        assertThrows(ConflictException.class, () -> service().checkOut(new CheckOutRequest(2L, date)));
-    }
-
-    @Test
-    void approvedPayrollBlocksCheckOut() {
-        LocalDate date = LocalDate.now();
-        AttendanceRecord record = record(date);
-        when(currentAccountProvider.hasAuthority("attendance.self.record")).thenReturn(true);
-        when(currentAccountProvider.accountId()).thenReturn(7L);
-        when(accountRepository.findById(7L)).thenReturn(Optional.of(
-            Account.builder().employee(record.getEmployee()).build()));
-        when(payrollPeriodRepository.findContainingDateForUpdate(date)).thenReturn(Optional.of(
-            PayrollPeriod.builder().id(10L).status(PayrollPeriodStatus.APPROVED).build()));
-
-        assertThrows(ConflictException.class, () -> service().checkOut(new CheckOutRequest(2L, date)));
-    }
-
-    @Test
     void morningLeaveApprovedAfterAfternoonWorkCompletesTheDay() {
         LocalDate date = LocalDate.of(2026, 1, 15);
         // 08:00-17:00 in Asia/Ho_Chi_Minh, break 12:00-13:00; worked 13:00-17:00.
@@ -247,6 +189,52 @@ class AttendanceServiceTest {
         assertEquals(240, record.getLeaveMinutes());
         assertEquals(0, record.getEarlyLeaveMinutes());
         assertEquals(480, record.getPayableMinutes());
+    }
+
+    @Test
+    void recordPunchesCreatesTheDayAndDerivesMinutes() {
+        LocalDate date = LocalDate.of(2026, 1, 15);
+        // 08:00-17:00 in Asia/Ho_Chi_Minh, break 12:00-13:00; punched 08:20-17:00 with 15 minutes grace.
+        WorkShift shift = WorkShift.builder().id(3L).startTime(LocalTime.of(8, 0)).breakMinutes(60)
+            .breakStartTime(LocalTime.of(12, 0)).standardWorkMinutes(480).graceLateMinutes(15).build();
+        when(employeeRepository.findById(2L)).thenReturn(Optional.of(
+            Employee.builder().id(2L).hireDate(LocalDate.of(2024, 1, 1)).build()));
+        when(attendanceRecordRepository.findByEmployeeIdAndWorkDateForUpdate(2L, date)).thenReturn(Optional.empty());
+        when(attendanceCalendarService.assignedDay(2L, date)).thenReturn(Optional.of(
+            new AttendanceCalendarService.ScheduledDay(date, shift,
+                Instant.parse("2026-01-15T01:00:00Z"), Instant.parse("2026-01-15T10:00:00Z"), 480)));
+        when(attendanceCalendarService.companyWorkDates(date, date)).thenReturn(List.of(date));
+        when(attendanceRecordRepository.save(org.mockito.ArgumentMatchers.any(AttendanceRecord.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        var response = service().recordPunches(new RecordPunchesRequest(2L, date,
+            Instant.parse("2026-01-15T01:20:00Z"), Instant.parse("2026-01-15T10:00:00Z")));
+
+        assertEquals(AttendanceStatus.PRESENT, response.status());
+        assertEquals(5, response.lateMinutes());
+        assertEquals(0, response.earlyLeaveMinutes());
+        assertEquals(460, response.workedMinutes());
+        assertEquals(460, response.payableMinutes());
+    }
+
+    @Test
+    void recordPunchesRejectsAnAlreadyRecordedDay() {
+        LocalDate date = LocalDate.of(2026, 1, 15);
+        AttendanceRecord record = officeDay(date, "2026-01-15T01:00:00Z", "2026-01-15T10:00:00Z");
+        when(employeeRepository.findById(2L)).thenReturn(Optional.of(
+            Employee.builder().id(2L).hireDate(LocalDate.of(2024, 1, 1)).build()));
+        when(attendanceRecordRepository.findByEmployeeIdAndWorkDateForUpdate(2L, date)).thenReturn(Optional.of(record));
+
+        assertThrows(ConflictException.class, () -> service().recordPunches(new RecordPunchesRequest(2L, date,
+            Instant.parse("2026-01-15T01:00:00Z"), Instant.parse("2026-01-15T10:00:00Z"))));
+    }
+
+    @Test
+    void recordPunchesRejectsCheckInOnAnotherDay() {
+        LocalDate date = LocalDate.of(2026, 1, 15);
+
+        assertThrows(BusinessException.class, () -> service().recordPunches(new RecordPunchesRequest(2L, date,
+            Instant.parse("2026-01-16T01:00:00Z"), Instant.parse("2026-01-16T10:00:00Z"))));
     }
 
     private AttendanceRecord officeDay(LocalDate date, String checkIn, String checkOut) {
@@ -300,7 +288,7 @@ class AttendanceServiceTest {
 
     private AttendanceService service() {
         return new AttendanceService(attendanceRecordRepository, employeeRepository,
-            employeeAssignmentRepository, accountRepository, payrollPeriodRepository,
+            accountRepository, payrollPeriodRepository,
             currentAccountProvider, employeeAccessScopeService, attendanceCalendarService);
     }
 }
