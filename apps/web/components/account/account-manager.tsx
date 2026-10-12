@@ -5,6 +5,15 @@ import { useEffect, useState } from "react"
 import { Ban, Check, CircleCheck, Copy, KeyRound, Link2, Loader2, MailPlus, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 
+import {
+  ALL_OPTION,
+  FilterSelect,
+  ListToolbar,
+  SortableHead,
+  sortParam,
+  useDebouncedValue,
+  type SortState,
+} from "@/components/common/list-filters"
 import { Pagination, ErrorAlert } from "@/components/common/list-controls"
 import {
   AlertDialog,
@@ -37,9 +46,12 @@ import {
   listAccounts,
   type Account,
   type AccountInvitation,
+  type AccountFilters,
   type AccountPage,
 } from "@/lib/account"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
+import type { Page } from "@/lib/pagination"
+import { rbacRequest, type Role } from "@/lib/rbac"
 import type { Portal } from "@/lib/auth/types"
 
 const STATUS_LABELS: Record<Account["status"], string> = {
@@ -48,6 +60,8 @@ const STATUS_LABELS: Record<Account["status"], string> = {
   LOCKED: "Đang khóa",
   DISABLED: "Đã vô hiệu hóa",
 }
+
+const EMPTY_FILTERS: AccountFilters = { keyword: "", status: "", roleCode: "" }
 
 const STATUS_VARIANTS: Record<Account["status"], "default" | "secondary" | "destructive" | "outline"> = {
   PENDING: "secondary",
@@ -114,10 +128,26 @@ export function AccountManager({ portal, currentAccountId, canManage, canManageA
   const hasActions = canManage || canManageActivation
   const columns = hasActions ? 5 : 4
   const [invitation, setInvitation] = useState<{ account: Account; invitation: AccountInvitation } | null>(null)
+  const [filters, setFilters] = useState<AccountFilters>(EMPTY_FILTERS)
+  const [sort, setSort] = useState<SortState>({ field: "id", direction: "desc" })
+  const [roleOptions, setRoleOptions] = useState<{ value: string; label: string }[]>([])
+  const keyword = useDebouncedValue(filters.keyword)
+
+  // Role filter options; listing roles needs rbac.manage, so without it the role filter stays empty.
+  useEffect(() => {
+    let active = true
+    rbacRequest<Page<Role>>(portal, "/roles?page=0&size=100&sort=name,asc")
+      .then((result) => {
+        if (active) setRoleOptions(result.content.map((role) => ({ value: role.code, label: role.name })))
+      })
+      .catch(() => undefined)
+    return () => { active = false }
+  }, [portal])
 
   useEffect(() => {
     let active = true
-    listAccounts(portal, page)
+    // The keyword goes through its debounced copy so typing does not fire a request per key.
+    listAccounts(portal, page, { keyword, status: filters.status, roleCode: filters.roleCode }, sortParam(sort))
       .then((result) => {
         if (!active) return
         if (page > 0 && page >= result.totalPages) {
@@ -134,7 +164,19 @@ export function AccountManager({ portal, currentAccountId, canManage, canManageA
         setLoading(false)
       })
     return () => { active = false }
-  }, [portal, page, revision, onSessionExpired])
+  }, [portal, page, revision, keyword, filters.status, filters.roleCode, sort, onSessionExpired])
+
+  function changeFilters(next: Partial<AccountFilters>) {
+    setLoading(true)
+    setPage(0)
+    setFilters((current) => ({ ...current, ...next }))
+  }
+
+  function changeSort(next: SortState) {
+    setLoading(true)
+    setPage(0)
+    setSort(next)
+  }
 
   function reload() {
     setLoading(true)
@@ -194,14 +236,39 @@ export function AccountManager({ portal, currentAccountId, canManage, canManageA
         <CardContent className="grid gap-4">
           <ErrorAlert error={error} />
 
+          <ListToolbar
+            keyword={filters.keyword}
+            onKeywordChange={(value) => changeFilters({ keyword: value })}
+            placeholder="Tìm theo tên đăng nhập, email, tên hoặc mã nhân viên"
+            activeFilters={(filters.status ? 1 : 0) + (filters.roleCode ? 1 : 0)}
+            onReset={() => changeFilters(EMPTY_FILTERS)}
+          >
+            <FilterSelect
+              id="account-status-filter"
+              label="Trạng thái"
+              value={filters.status || ALL_OPTION}
+              onChange={(value) => changeFilters({ status: value === ALL_OPTION ? "" : value as Account["status"] })}
+              options={Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label }))}
+            />
+            {roleOptions.length > 0 && (
+              <FilterSelect
+                id="account-role-filter"
+                label="Vai trò đang giữ"
+                value={filters.roleCode || ALL_OPTION}
+                onChange={(value) => changeFilters({ roleCode: value === ALL_OPTION ? "" : value })}
+                options={roleOptions}
+              />
+            )}
+          </ListToolbar>
+
           <div className="rounded-xl border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Tài khoản</TableHead>
+                  <SortableHead label="Tài khoản" field="username" sort={sort} onSort={changeSort} />
                   <TableHead>Nhân viên</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead>Đăng nhập gần nhất</TableHead>
+                  <SortableHead label="Trạng thái" field="status" sort={sort} onSort={changeSort} />
+                  <SortableHead label="Đăng nhập gần nhất" field="lastLoginAt" sort={sort} onSort={changeSort} />
                   {hasActions && <TableHead className="text-right">Thao tác</TableHead>}
                 </TableRow>
               </TableHeader>
@@ -217,7 +284,9 @@ export function AccountManager({ portal, currentAccountId, canManage, canManageA
 
                 {!loading && data?.content.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={columns} className="py-8 text-center text-muted-foreground">Chưa có tài khoản nào.</TableCell>
+                    <TableCell colSpan={columns} className="py-8 text-center text-muted-foreground">
+                      {filters.keyword || filters.status || filters.roleCode ? "Không có tài khoản phù hợp với bộ lọc." : "Chưa có tài khoản nào."}
+                    </TableCell>
                   </TableRow>
                 )}
 

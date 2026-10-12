@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.htttdn.hrm.dto.request.employee.AssignEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.CreateEmployeeRequest;
+import com.htttdn.hrm.dto.request.employee.EmployeeSearchCriteria;
 import com.htttdn.hrm.dto.request.employee.SoftDeleteEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
 import com.htttdn.hrm.entity.Employee;
@@ -21,7 +22,7 @@ class EmployeePermissionMappingTest {
     @Test
     void employeeUseCasesRequireAtomicPermissions() throws NoSuchMethodException {
         assertPermission(EmployeeService.class, "create", "employee.create", CreateEmployeeRequest.class);
-        assertPermission(EmployeeService.class, "list", "employee.list.read", Pageable.class);
+        assertPermission(EmployeeService.class, "list", "employee.list.read", EmployeeSearchCriteria.class, Pageable.class);
         assertPermission(EmployeeService.class, "getById", "employee.read", Long.class);
         assertPermission(
             EmployeeService.class,

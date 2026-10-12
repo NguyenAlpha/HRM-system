@@ -2983,6 +2983,9 @@ export interface operations {
     list_12: {
         parameters: {
             query: {
+                keyword?: string;
+                status?: "PENDING" | "ACTIVE" | "LOCKED" | "DISABLED";
+                roleCode?: string;
                 pageable: components["schemas"]["Pageable"];
             };
             header?: never;
@@ -3866,6 +3869,10 @@ export interface operations {
     list_8: {
         parameters: {
             query: {
+                keyword?: string;
+                employmentStatus?: "PROBATION" | "ACTIVE" | "RESIGNED" | "TERMINATED" | "RETIRED";
+                organizationUnitId?: number;
+                positionId?: number;
                 pageable: components["schemas"]["Pageable"];
             };
             header?: never;

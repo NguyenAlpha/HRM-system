@@ -376,7 +376,7 @@ export async function handleEmployeeRequest(request: Request, segments: string[]
 
   const query = new URLSearchParams()
   new URL(request.url).searchParams.forEach((value, key) => {
-    if (["page", "size", "sort"].includes(key)) query.append(key, value)
+    if (["page", "size", "sort", "keyword", "employmentStatus", "organizationUnitId", "positionId"].includes(key)) query.append(key, value)
   })
   const result = await callApi<unknown>(`/api/employees${path ? `/${path}` : ""}?${query}`, {
     method: request.method,
@@ -622,7 +622,7 @@ export async function handleAccountLifecycleRequest(
 
   const query = new URLSearchParams()
   new URL(request.url).searchParams.forEach((value, key) => {
-    if (["page", "size", "sort"].includes(key)) query.append(key, value)
+    if (["page", "size", "sort", "keyword", "status", "roleCode"].includes(key)) query.append(key, value)
   })
   const result = await callApi<unknown>(`/api/accounts${path ? `/${path}` : ""}${query.size ? `?${query}` : ""}`, {
     method: request.method,

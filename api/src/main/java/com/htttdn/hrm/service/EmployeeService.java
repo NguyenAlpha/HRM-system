@@ -2,14 +2,17 @@ package com.htttdn.hrm.service;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.htttdn.hrm.dto.request.employee.AssignEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.CreateEmployeeProfileRequest;
 import com.htttdn.hrm.dto.request.employee.CreateEmployeeRequest;
+import com.htttdn.hrm.dto.request.employee.EmployeeSearchCriteria;
 import com.htttdn.hrm.dto.request.employee.SoftDeleteEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
@@ -38,6 +42,8 @@ import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
+import com.htttdn.hrm.repository.specification.EmployeeSpecifications;
+import com.htttdn.hrm.repository.specification.SearchPatterns;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
@@ -48,6 +54,9 @@ public class EmployeeService {
 
     private static final String EMPLOYEE_READ = "employee.read";
     private static final String EMPLOYEE_LIST_READ = "employee.list.read";
+    private static final Set<String> SORTABLE_PROPERTIES = Set.of(
+        "id", "employeeCode", "fullName", "hireDate", "employmentStatus"
+    );
     private static final String EMPLOYEE_UPDATE = "employee.update";
     private static final String EMPLOYEE_PROBATION_CONFIRM = "employee.probation.confirm";
     private static final String EMPLOYEE_LIFECYCLE_MANAGE = "employee.lifecycle.manage";
@@ -144,10 +153,20 @@ public class EmployeeService {
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('employee.list.read')")
-    public Page<EmployeeSummaryResponse> list(Pageable pageable) {
+    public Page<EmployeeSummaryResponse> list(EmployeeSearchCriteria criteria, Pageable pageable) {
+        Specification<Employee> specification = employeeAccessScopeService.accessibleEmployees(EMPLOYEE_LIST_READ);
+        for (Specification<Employee> filter : Arrays.asList(
+            EmployeeSpecifications.matchesKeyword(criteria.keyword()),
+            EmployeeSpecifications.hasEmploymentStatus(criteria.employmentStatus()),
+            EmployeeSpecifications.currentlyAssignedTo(criteria.organizationUnitId(), criteria.positionId(), LocalDate.now())
+        )) {
+            if (filter != null) {
+                specification = specification.and(filter);
+            }
+        }
         Page<Employee> employees = employeeRepository.findAll(
-            employeeAccessScopeService.accessibleEmployees(EMPLOYEE_LIST_READ),
-            pageable
+            specification,
+            SearchPatterns.requireSortable(pageable, SORTABLE_PROPERTIES)
         );
         Map<Long, Account> accountsByEmployeeId = findAccountsByEmployeeId(employees.getContent());
         Map<Long, EmployeeAssignment> assignmentsByEmployeeId = findCurrentAssignmentsByEmployeeId(

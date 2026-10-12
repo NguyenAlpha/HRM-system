@@ -109,11 +109,18 @@ Phần tạo account ở trên được triển khai bởi component provisionin
 
 ## GET `/api/accounts`
 
-Lấy danh sách account có phân trang.
+Lấy danh sách account có phân trang, tìm kiếm và lọc.
 
 ```http
-GET /api/accounts?page=0&size=20&sort=id,asc
+GET /api/accounts?page=0&size=20&sort=username,asc&keyword=an&status=ACTIVE&roleCode=HR_MANAGER
 ```
+
+| Parameter | Type | Ý nghĩa |
+|:----------|:-----|:--------|
+| `sort` | string | `id`, `username`, `email`, `status`, `lastLoginAt` hoặc `createdAt`, kèm `asc`/`desc`; mặc định `id,asc`; thuộc tính khác trả `400 VALIDATION_ERROR` |
+| `keyword` | string | Tìm không phân biệt hoa thường trong username, email, họ tên và mã của employee liên kết |
+| `status` | enum | `PENDING`, `ACTIVE`, `LOCKED` hoặc `DISABLED` |
+| `roleCode` | string | Chỉ account đang giữ assignment chưa thu hồi của role này |
 
 Response `200 OK` dùng cấu trúc `Page<AccountResponse>` của Spring với các field `content`, `totalElements`, `totalPages`, `number` và `size`.
 

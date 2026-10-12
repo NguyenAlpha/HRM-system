@@ -81,6 +81,24 @@ export const EMPLOYMENT_TYPE_LABELS: Record<EmploymentType, string> = {
   TEMPORARY: "Thời vụ",
 }
 
+/** Filters of the employee list; an empty string means "no filter". */
+export interface EmployeeFilters {
+  keyword: string
+  employmentStatus: "" | EmploymentStatus
+  organizationUnitId: string
+  positionId: string
+}
+
+/** Query string (with leading `?`) for one page of the filtered employee list. */
+export function employeeListQuery(page: number, size: number, filters: EmployeeFilters, sort: string): string {
+  const params = new URLSearchParams({ page: String(page), size: String(size), sort })
+  if (filters.keyword.trim()) params.set("keyword", filters.keyword.trim())
+  if (filters.employmentStatus) params.set("employmentStatus", filters.employmentStatus)
+  if (filters.organizationUnitId) params.set("organizationUnitId", filters.organizationUnitId)
+  if (filters.positionId) params.set("positionId", filters.positionId)
+  return `?${params}`
+}
+
 export function employeeRequest<T>(portal: Portal, path: string, init?: RequestInit): Promise<T> {
   return authorizedRequest<T>(portal, `/employees${path}`, { ...init, cache: "no-store" })
 }

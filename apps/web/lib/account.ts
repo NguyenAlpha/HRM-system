@@ -24,8 +24,19 @@ export function provisionAccount(portal: Portal, employeeId: number, username: s
 export type Account = ProvisionedAccount
 export type AccountPage = Schemas["PagedResultAccountResponse"]
 
-export function listAccounts(portal: Portal, page: number): Promise<AccountPage> {
-  return authorizedRequest<AccountPage>(portal, `/accounts?page=${page}&size=20&sort=id,desc`, { cache: "no-store" })
+/** Filters of the account list; an empty string means "no filter". */
+export interface AccountFilters {
+  keyword: string
+  status: "" | Account["status"]
+  roleCode: string
+}
+
+export function listAccounts(portal: Portal, page: number, filters: AccountFilters, sort: string): Promise<AccountPage> {
+  const params = new URLSearchParams({ page: String(page), size: "20", sort })
+  if (filters.keyword.trim()) params.set("keyword", filters.keyword.trim())
+  if (filters.status) params.set("status", filters.status)
+  if (filters.roleCode) params.set("roleCode", filters.roleCode)
+  return authorizedRequest<AccountPage>(portal, `/accounts?${params}`, { cache: "no-store" })
 }
 
 /** Resend an invitation (PENDING) or start a password reset (ACTIVE/LOCKED); both return a new one-time token. */

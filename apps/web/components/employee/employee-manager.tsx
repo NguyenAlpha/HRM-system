@@ -14,6 +14,15 @@ import { EmployeeBirthDateSelect } from "@/components/employee/employee-birth-da
 import { EmployeeCreateDialog } from "@/components/employee/employee-create-dialog"
 import { EmployeeDetailDialog } from "@/components/employee/employee-detail-dialog"
 import { EmployeeProvisionDialog } from "@/components/employee/employee-provision-dialog"
+import {
+  ALL_OPTION,
+  FilterSelect,
+  ListToolbar,
+  SortableHead,
+  sortParam,
+  useDebouncedValue,
+  type SortState,
+} from "@/components/common/list-filters"
 import { Pagination, ErrorAlert } from "@/components/common/list-controls"
 import {
   AlertDialog,
@@ -65,6 +74,7 @@ import {
   EDUCATION_LEVEL_LABELS,
   EDUCATION_LEVELS,
   employeeErrorMessage,
+  employeeListQuery,
   employeeMutation,
   employeeRequest,
   EMPLOYMENT_STATUS_LABELS,
@@ -73,7 +83,9 @@ import {
   isSessionExpired,
   type EducationLevel,
   type EmployeeDetail,
+  type EmployeeFilters,
   type EmployeeSummary,
+  type EmploymentStatus,
   type Gender,
   type UpdateEmployeeInput,
 } from "@/lib/employee"
@@ -81,6 +93,19 @@ import { PORTAL_CONFIG } from "@/lib/auth/config"
 import type { Portal } from "@/lib/auth/types"
 import { isEligibleEmployeeBirthDate } from "@/lib/employee-birth-date"
 import type { Page } from "@/lib/pagination"
+import { getJobPositionOptions, getOrganizationUnitOptions } from "@/lib/reference"
+
+const EMPTY_FILTERS: EmployeeFilters = { keyword: "", employmentStatus: "", organizationUnitId: "", positionId: "" }
+
+const DEFAULT_SORT: SortState = { field: "id", direction: "desc" }
+
+const SORT_OPTIONS = [
+  { value: "fullName,asc", label: "Họ tên A → Z" },
+  { value: "fullName,desc", label: "Họ tên Z → A" },
+  { value: "employeeCode,asc", label: "Mã nhân sự" },
+  { value: "hireDate,desc", label: "Ngày vào làm (mới nhất)" },
+  { value: "hireDate,asc", label: "Ngày vào làm (lâu nhất)" },
+]
 
 const GENDER_NONE = "NONE"
 const EDU_NONE = "NONE"
@@ -164,6 +189,11 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
   const [assigning, setAssigning] = useState<EmployeeSummary | null>(null)
   const [confirming, setConfirming] = useState<EmployeeSummary | null>(null)
   const [confirmingEmployment, setConfirmingEmployment] = useState(false)
+  const [filters, setFilters] = useState<EmployeeFilters>(EMPTY_FILTERS)
+  const [sort, setSort] = useState<SortState>(DEFAULT_SORT)
+  const [unitOptions, setUnitOptions] = useState<{ value: string; label: string }[]>([])
+  const [positionOptions, setPositionOptions] = useState<{ value: string; label: string }[]>([])
+  const keyword = useDebouncedValue(filters.keyword)
 
   const {
     register,
@@ -173,9 +203,29 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
     formState: { errors, isSubmitting },
   } = useForm<EmployeeEditValues>({ resolver: zodResolver(employeeEditSchema) })
 
+  // Unit and position filters need organization.read; without it those two filters are not shown.
   useEffect(() => {
     let active = true
-    employeeRequest<Page<EmployeeSummary>>(portal, `?page=${page}&size=10`)
+    Promise.all([getOrganizationUnitOptions(portal), getJobPositionOptions(portal)])
+      .then(([units, positions]) => {
+        if (!active) return
+        setUnitOptions(units.map((unit) => ({ value: String(unit.id), label: `${unit.name} (${unit.code})` })))
+        setPositionOptions(positions.map((position) => ({ value: String(position.id), label: position.title })))
+      })
+      .catch(() => undefined)
+    return () => { active = false }
+  }, [portal])
+
+  useEffect(() => {
+    let active = true
+    // The keyword goes through its debounced copy so typing does not fire a request per key.
+    const query = employeeListQuery(page, 10, {
+      keyword,
+      employmentStatus: filters.employmentStatus,
+      organizationUnitId: filters.organizationUnitId,
+      positionId: filters.positionId,
+    }, sortParam(sort))
+    employeeRequest<Page<EmployeeSummary>>(portal, query)
       .then((result) => {
         if (!active) return
         if (page > 0 && page >= result.totalPages) {
@@ -192,7 +242,19 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
         setLoading(false)
       })
     return () => { active = false }
-  }, [portal, page, revision, onSessionExpired])
+  }, [portal, page, revision, keyword, filters.employmentStatus, filters.organizationUnitId, filters.positionId, sort, onSessionExpired])
+
+  function changeFilters(next: Partial<EmployeeFilters>) {
+    setLoading(true)
+    setPage(0)
+    setFilters((current) => ({ ...current, ...next }))
+  }
+
+  function changeSort(next: SortState) {
+    setLoading(true)
+    setPage(0)
+    setSort(next)
+  }
 
   function reload() {
     setLoading(true)
@@ -288,11 +350,57 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
         <CardContent className="grid gap-4">
           <ErrorAlert error={error} />
 
+          <ListToolbar
+            keyword={filters.keyword}
+            onKeywordChange={(value) => changeFilters({ keyword: value })}
+            placeholder="Tìm theo họ tên, mã nhân sự hoặc email công việc"
+            activeFilters={[filters.employmentStatus, filters.organizationUnitId, filters.positionId].filter(Boolean).length}
+            onReset={() => { changeFilters(EMPTY_FILTERS); changeSort(DEFAULT_SORT) }}
+          >
+            <FilterSelect
+              id="employee-status-filter"
+              label="Trạng thái làm việc"
+              value={filters.employmentStatus || ALL_OPTION}
+              onChange={(value) => changeFilters({ employmentStatus: value === ALL_OPTION ? "" : value as EmploymentStatus })}
+              options={Object.entries(EMPLOYMENT_STATUS_LABELS).map(([value, label]) => ({ value, label }))}
+            />
+            {unitOptions.length > 0 && (
+              <FilterSelect
+                id="employee-unit-filter"
+                label="Đơn vị (phân công hiện tại)"
+                value={filters.organizationUnitId || ALL_OPTION}
+                onChange={(value) => changeFilters({ organizationUnitId: value === ALL_OPTION ? "" : value })}
+                options={unitOptions}
+              />
+            )}
+            {positionOptions.length > 0 && (
+              <FilterSelect
+                id="employee-position-filter"
+                label="Vị trí công việc"
+                value={filters.positionId || ALL_OPTION}
+                onChange={(value) => changeFilters({ positionId: value === ALL_OPTION ? "" : value })}
+                options={positionOptions}
+              />
+            )}
+            <FilterSelect
+              id="employee-sort"
+              label="Sắp xếp theo"
+              value={SORT_OPTIONS.some((option) => option.value === sortParam(sort)) ? sortParam(sort) : ALL_OPTION}
+              onChange={(value) => {
+                if (value === ALL_OPTION) return changeSort(DEFAULT_SORT)
+                const [field, direction] = value.split(",")
+                changeSort({ field, direction: direction as SortState["direction"] })
+              }}
+              options={SORT_OPTIONS}
+              allLabel="Mới thêm gần đây"
+            />
+          </ListToolbar>
+
           <div className="rounded-xl border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nhân sự</TableHead>
+                  <SortableHead label="Nhân sự" field="fullName" sort={sort} onSort={changeSort} />
                   <TableHead>Đơn vị</TableHead>
                   <TableHead>Địa điểm</TableHead>
                   <TableHead>Vị trí công việc</TableHead>
@@ -416,7 +524,9 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
                 {!loading && data?.content.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                      Chưa có nhân sự nào trong phạm vi của bạn.
+                      {filters.keyword || filters.employmentStatus || filters.organizationUnitId || filters.positionId
+                        ? "Không có nhân sự phù hợp với bộ lọc."
+                        : "Chưa có nhân sự nào trong phạm vi của bạn."}
                     </TableCell>
                   </TableRow>
                 )}

@@ -52,6 +52,28 @@
         "operationId" : "list_12",
         "parameters" : [ {
           "in" : "query",
+          "name" : "keyword",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "PENDING", "ACTIVE", "LOCKED", "DISABLED" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "roleCode",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
           "name" : "pageable",
           "required" : true,
           "schema" : {
@@ -1239,6 +1261,37 @@
       "get" : {
         "operationId" : "list_8",
         "parameters" : [ {
+          "in" : "query",
+          "name" : "keyword",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "employmentStatus",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "PROBATION", "ACTIVE", "RESIGNED", "TERMINATED", "RETIRED" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "organizationUnitId",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "positionId",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
           "in" : "query",
           "name" : "pageable",
           "required" : true,
