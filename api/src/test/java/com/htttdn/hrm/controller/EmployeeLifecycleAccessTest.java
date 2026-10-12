@@ -23,16 +23,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = {
     "company.seed.enabled=false",
     "rbac.seed.enabled=false",
-    "admin.seed.enabled=false"
+    "admin.seed.enabled=false",
+    "owner.seed.enabled=false"
 })
 @AutoConfigureMockMvc
 @Transactional
 class EmployeeLifecycleAccessTest {
 
-    private static final String EMPLOYMENT_END_PATH = "/api/employees/1/employment-end";
+    private static final String EMPLOYMENT_END_PATH = "/api/employees/999999999/employment-end";
     private static final String EMPLOYMENT_END_BODY =
         "{\"endStatus\":\"RESIGNED\",\"terminationDate\":\"2026-10-31\",\"terminationReason\":\"Nghỉ theo nguyện vọng\"}";
-    private static final String SOFT_DELETE_PATH = "/api/employees/1/soft-delete";
+    private static final String SOFT_DELETE_PATH = "/api/employees/999999999/soft-delete";
     private static final String SOFT_DELETE_BODY = "{\"deletionReason\":\"Tạo nhầm hồ sơ\"}";
 
     @Autowired private MockMvc mockMvc;

@@ -55,6 +55,10 @@ class PayrollCalculationIntegrationTest {
 
     @BeforeEach
     void seedPayrollInputs() {
+        // Payroll covers every employee employed in the period, including seeded ones such as the
+        // company owner; hide them inside this rolled-back transaction so only the test employee counts.
+        jdbc.update("UPDATE employees SET deleted_at = now() WHERE deleted_at IS NULL");
+
         String suffix = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         accountantId = jdbc.queryForObject("""
             INSERT INTO accounts(username, email, password_hash, status)

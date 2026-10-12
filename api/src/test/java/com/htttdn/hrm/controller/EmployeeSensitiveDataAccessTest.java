@@ -24,13 +24,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = {
     "company.seed.enabled=false",
     "rbac.seed.enabled=false",
-    "admin.seed.enabled=false"
+    "admin.seed.enabled=false",
+    "owner.seed.enabled=false"
 })
 @AutoConfigureMockMvc
 @Transactional
 class EmployeeSensitiveDataAccessTest {
 
-    private static final String PATH = "/api/employees/1/sensitive";
+    private static final String PATH = "/api/employees/999999999/sensitive";
 
     @Autowired private MockMvc mockMvc;
     @Autowired private JwtService jwtService;

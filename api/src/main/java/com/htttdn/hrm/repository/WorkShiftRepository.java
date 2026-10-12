@@ -16,6 +16,8 @@ public interface WorkShiftRepository extends JpaRepository<WorkShift, Long> {
 
     Optional<WorkShift> findByIdAndDeletedAtIsNull(Long id);
 
+    Optional<WorkShift> findByCodeAndDeletedAtIsNull(String code);
+
     boolean existsByCodeAndDeletedAtIsNull(String code);
 
     List<WorkShift> findByDeletedAtIsNullOrderByNameAsc();

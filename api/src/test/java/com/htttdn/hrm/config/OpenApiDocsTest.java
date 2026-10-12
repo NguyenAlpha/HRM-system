@@ -16,7 +16,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = {
     "company.seed.enabled=false",
     "rbac.seed.enabled=false",
-    "admin.seed.enabled=false"
+    "admin.seed.enabled=false",
+    "owner.seed.enabled=false"
 })
 @AutoConfigureMockMvc
 class OpenApiDocsTest {
