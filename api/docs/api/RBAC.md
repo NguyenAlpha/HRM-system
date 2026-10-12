@@ -21,7 +21,7 @@ Quản lý role tùy chỉnh và quan hệ permission của role. Danh mục per
 | `GET /api/permissions` | ✅ | `rbac.manage` | Tra cứu danh mục permission có phân trang và có thể lọc theo module |
 | `GET /api/permissions/{id}` | ✅ | `rbac.manage` | Lấy thông tin chi tiết của một permission |
 
-`COMPANY_OWNER` và, tạm thời, `SYSTEM_ADMIN` được seed permission `rbac.manage`. Có thể ủy quyền quản trị custom role cho một custom role khác bằng cách gán permission này; backend không hard-code role code khi kiểm tra truy cập RBAC.
+`COMPANY_OWNER` và `SYSTEM_ADMIN` được seed permission `rbac.manage`. Có thể ủy quyền quản trị custom role cho một custom role khác bằng cách gán permission này; backend không hard-code role code khi kiểm tra truy cập RBAC.
 
 ### Ranh giới quản trị
 
@@ -706,13 +706,13 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 | Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
 |:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
 | `account.read` | | | | | | ✓ | ✓ |
-| `account.manage` | | | | | | ✓ | |
+| `account.manage` | | | | | | ✓ | ✓ |
 | `account.provision` | | ✓ | | | | ✓ | ✓ |
-| `account.activation.manage` | | | | | | ✓ | |
+| `account.activation.manage` | | | | | | ✓ | ✓ |
 | `account.role.assign` | | | | | | ✓ | ✓ |
 | `role.assignment.request` | | ✓ | | | | | |
 | `role.assignment.approve` `(S)` | | | | | | ✓ | |
-| `account.permission.override.manage` `(S)` | | | | | | ✓ | |
+| `account.permission.override.manage` `(S)` | | | | | | ✓ | ✓ |
 
 ### Module `ORGANIZATION`
 
@@ -785,7 +785,7 @@ Một vài ranh giới dễ hiểu nhầm:
   khóa kỳ nhưng không tính. Hai role này tách nhau có chủ đích.
 - `DIRECTOR` phê duyệt `employee.lifecycle.approve`, `request.final_approve` và
   `organization.change.approve` nhưng không quản trị account hay RBAC.
-- `SYSTEM_ADMIN` không có quyền nghiệp vụ về nghỉ phép, chấm công, lương hay báo cáo.
+- `SYSTEM_ADMIN` quản trị *truy cập* (tài khoản, role, permission override, danh mục tổ chức) và chỉ *xem* hồ sơ nhân sự; nghiệp vụ nhân sự, chấm công, lương, báo cáo và dữ liệu nhạy cảm thuộc các role nghiệp vụ. Tài khoản đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được khóa, phát mã kích hoạt, đổi role hoặc permission override (mở khóa vẫn được phép), nên người quản trị truy cập không chiếm được quyền chủ doanh nghiệp. Không ai được đổi permission override trên chính account của mình.
 - Chỉ `HR_MANAGER` có `employee.sensitive.read` và `employee.sensitive.manage`.
 
 ---

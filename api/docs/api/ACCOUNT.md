@@ -28,7 +28,7 @@ Company Owner tạo HR Manager đầu tiên và các HR Manager tiếp theo bằ
 | `POST /api/accounts/{accountId}/suspend` | `account.manage` | Vô hiệu hóa account và thu hồi toàn bộ refresh token |
 | `POST /api/accounts/{accountId}/activate` | `account.manage` | Kích hoạt lại account `DISABLED` hoặc mở khóa account `LOCKED` đã có mật khẩu |
 
-Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` được seed sẵn toàn bộ permission trên. `HR_MANAGER` chỉ được seed `account.provision` trong nhóm API này; các thao tác quản trị vòng đời account vẫn thuộc Company Owner. `SYSTEM_ADMIN` không được quản trị tài khoản nội bộ doanh nghiệp.
+Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` và `SYSTEM_ADMIN` được seed sẵn toàn bộ permission trên. `HR_MANAGER` chỉ được seed `account.provision` trong nhóm API này. `SYSTEM_ADMIN` quản trị *truy cập* (tài khoản, role, permission override, danh mục tổ chức) và chỉ *xem* hồ sơ nhân sự; nghiệp vụ nhân sự, chấm công, lương, báo cáo và dữ liệu nhạy cảm thuộc các role nghiệp vụ. Tài khoản đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được khóa, phát mã kích hoạt, đổi role hoặc permission override (mở khóa vẫn được phép), nên người quản trị truy cập không chiếm được quyền chủ doanh nghiệp.
 
 Raw activation token là credential bí mật và chỉ xuất hiện trong response của thao tác tạo, gửi lại lời mời hoặc reset mật khẩu. API không lưu hoặc ghi log raw token. Khi có hạ tầng email, lớp gửi thông báo sẽ tiếp nhận token này và API không cần trả nó cho frontend quản trị.
 
