@@ -40,6 +40,7 @@ class WorkforceCommandValidationTest {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
+        "POST|/api/attendance/punches|{\"employeeId\":1,\"workDate\":\"2099-01-05\",\"checkInAt\":\"2099-01-05T01:00:00Z\",\"checkOutAt\":\"2026-01-05T10:00:00Z\"}|checkInAt",
         "POST|/api/leave-requests|{\"employeeId\":1,\"leaveType\":\"ANNUAL\",\"startAt\":\"2026-01-05T01:00:00Z\",\"endAt\":\"2026-01-05T05:00:00Z\",\"requestedMinutes\":240,\"reason\":\" \"}|reason",
         "POST|/api/leave-requests|{\"employeeId\":1,\"leaveType\":\"ANNUAL\",\"startAt\":\"2026-01-05T01:00:00Z\",\"endAt\":\"2026-01-05T05:00:00Z\",\"requestedMinutes\":0,\"reason\":\"Trip\"}|requestedMinutes",
         "POST|/api/compensation/employees/1/salary-history|{\"baseSalary\":0,\"effectiveFrom\":\"2026-01-01\"}|baseSalary",

@@ -196,38 +196,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/attendance/check-in": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["checkIn"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/attendance/check-out": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["checkOut"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/attendance/employees/{employeeId}": {
         parameters: {
             query?: never;
@@ -254,6 +222,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["prepare"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/attendance/punches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["recordPunches"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2009,16 +1993,6 @@ export interface components {
             currentPassword: string;
             newPassword: string;
         };
-        CheckInRequest: {
-            /** Format: int64 */
-            employeeId: number;
-        };
-        CheckOutRequest: {
-            /** Format: int64 */
-            employeeId: number;
-            /** Format: date */
-            workDate: string;
-        };
         CompanyHolidayRequest: {
             /** Format: date */
             date: string;
@@ -2695,6 +2669,16 @@ export interface components {
             /** Format: int32 */
             wageRegion: number;
         };
+        RecordPunchesRequest: {
+            /** Format: date-time */
+            checkInAt: string;
+            /** Format: date-time */
+            checkOutAt: string;
+            /** Format: int64 */
+            employeeId: number;
+            /** Format: date */
+            workDate: string;
+        };
         RefreshTokenRequest: {
             refreshToken: string;
         };
@@ -3315,54 +3299,6 @@ export interface operations {
             };
         };
     };
-    checkIn: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CheckInRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAttendanceRecordResponse"];
-                };
-            };
-        };
-    };
-    checkOut: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CheckOutRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultAttendanceRecordResponse"];
-                };
-            };
-        };
-    };
     listByEmployee: {
         parameters: {
             query: {
@@ -3408,6 +3344,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultInteger"];
+                };
+            };
+        };
+    };
+    recordPunches: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordPunchesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAttendanceRecordResponse"];
                 };
             };
         };

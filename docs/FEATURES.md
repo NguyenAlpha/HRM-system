@@ -155,11 +155,15 @@ tiên, dùng một lần khi khởi tạo hệ thống.
 
 Lịch làm việc chuẩn là thứ 2 đến thứ 7, trừ ngày trong `company_holidays`.
 
+Giờ vào/ra được ghi qua `POST /api/attendance/punches` với thời điểm cụ thể; sau này máy chấm công
+của công ty sẽ gửi vào đây (tích hợp máy chưa triển khai). Nhân viên chỉ xem lịch sử chấm công trên
+web, không tự chấm.
+
 | Chức năng | Endpoint | Permission |
 |---|---|---|
 | Khai báo, xem, xóa ngày lễ | `/api/company-holidays` | `organization.manage` / `.read` |
 | Chuẩn bị bảng công tháng | `POST /api/attendance/prepare` | `attendance.manage` |
-| Chấm vào, chấm ra | `POST /api/attendance/check-in`, `/check-out` | `attendance.self.record` |
+| Ghi giờ vào/ra | `POST /api/attendance/punches` | `attendance.manage` |
 | Đối soát ngày thiếu dữ liệu | `PUT /api/attendance/{id}` | `attendance.manage` |
 | Duyệt tăng ca | `POST /api/attendance/{id}/overtime-approval` | `attendance.overtime.approve` |
 | Xem bản ghi công | `GET /api/attendance/{id}`, `/employees/{id}` | `attendance.self.read` / `attendance.read` |

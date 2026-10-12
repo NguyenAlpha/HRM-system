@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { CalendarPlus, Clock, Loader2, LogIn, LogOut, Pencil, Trash2, Zap } from "lucide-react"
+import { CalendarPlus, Clock, Loader2, Pencil, Trash2, Zap } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -33,7 +33,6 @@ import {
   SectionError,
   monthRange,
   time,
-  today,
   useWorkforceAction,
   workforceApi,
   type WorkforceContext,
@@ -54,7 +53,6 @@ const STATUS_TONE: Record<AttendanceStatus, "default" | "secondary" | "outline" 
 const ADJUSTABLE_STATUSES = ["PRESENT", "UNAUTHORIZED_ABSENCE"] as const satisfies readonly AttendanceStatus[]
 
 export function AttendanceSection({ employeeId, permissions, month }: WorkforceContext) {
-  const canRecordSelf = permissions.has("attendance.self.record")
   const canReadAttendance = permissions.has("attendance.self.read") || permissions.has("attendance.read")
   const canManage = permissions.has("attendance.manage")
   const canApproveOvertime = permissions.has("attendance.overtime.approve")
@@ -89,8 +87,6 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
     return () => { active = false }
   }, [employeeId, first, last, canReadAttendance, canReadHolidays, revision])
 
-  const openRecord = rows.find((row) => row.checkInAt && !row.checkOutAt)
-
   return (
     <div className="grid gap-6">
       <Card>
@@ -100,18 +96,6 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
             Phút công tính lương không gồm giờ nghỉ giữa ca; ngày nghỉ phép được duyệt tự gắn vào bảng công.
           </CardDescription>
           <CardAction className="flex flex-wrap gap-2">
-            {canRecordSelf && <>
-              <Button type="button" size="sm" disabled={busy || !employeeId}
-                onClick={() => void run("Đã ghi nhận vào ca", () => workforceApi("attendance/check-in", "POST",
-                  { employeeId } satisfies WorkforceBody["CheckInRequest"]))}>
-                <LogIn /> Vào ca
-              </Button>
-              <Button type="button" size="sm" variant="outline" disabled={busy || !employeeId}
-                onClick={() => void run("Đã ghi nhận ra ca", () => workforceApi("attendance/check-out", "POST",
-                  { employeeId, workDate: openRecord?.workDate ?? today() } satisfies WorkforceBody["CheckOutRequest"]))}>
-                <LogOut /> Ra ca
-              </Button>
-            </>}
             {canManage && (
               <Button type="button" size="sm" variant="outline" disabled={busy}
                 onClick={() => void run("Đã chuẩn bị bảng công",
@@ -152,13 +136,6 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-1">
-                        {canRecordSelf && row.checkInAt && !row.checkOutAt && (
-                          <Button type="button" variant="ghost" size="icon-sm" aria-label={`Ra ca ngày ${row.workDate}`} disabled={busy}
-                            onClick={() => void run("Đã ghi nhận ra ca", () => workforceApi("attendance/check-out", "POST",
-                              { employeeId, workDate: row.workDate } satisfies WorkforceBody["CheckOutRequest"]))}>
-                            <LogOut />
-                          </Button>
-                        )}
                         {canApproveOvertime && row.checkOutAt && (
                           <Button type="button" variant="ghost" size="icon-sm" aria-label={`Duyệt tăng ca ngày ${row.workDate}`}
                             disabled={busy} onClick={() => setApproving(row)}>

@@ -24,7 +24,7 @@ export type PayrollPeriodStatus = PayrollPeriod["status"]
 
 /** Request bodies, keyed by schema name, for `satisfies` checks at each call site. */
 export type WorkforceBody = Pick<Schemas,
-  | "CheckInRequest" | "CheckOutRequest" | "AdjustAttendanceRequest" | "ApproveOvertimeRequest"
+  | "AdjustAttendanceRequest" | "ApproveOvertimeRequest"
   | "CompanyHolidayRequest" | "CreateLeaveCommand" | "ReviewBody"
   | "AdjustLeaveEntitlementRequest" | "SetCarriedOverLeaveRequest"
   | "SetSalaryCommand" | "ProfileCommand" | "DependentCommand" | "EndDependentCommand"

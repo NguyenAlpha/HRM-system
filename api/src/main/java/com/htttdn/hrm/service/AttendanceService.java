@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.DayOfWeek;
 import java.util.List;
@@ -19,14 +18,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.request.attendance.AdjustAttendanceRequest;
 import com.htttdn.hrm.dto.request.attendance.ApproveOvertimeRequest;
-import com.htttdn.hrm.dto.request.attendance.CheckInRequest;
-import com.htttdn.hrm.dto.request.attendance.CheckOutRequest;
+import com.htttdn.hrm.dto.request.attendance.RecordPunchesRequest;
 import com.htttdn.hrm.dto.response.attendance.AttendanceRecordResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AttendanceRecord;
 import com.htttdn.hrm.entity.Employee;
-import com.htttdn.hrm.entity.EmployeeAssignment;
 import com.htttdn.hrm.entity.LeaveRequest;
 import com.htttdn.hrm.entity.WorkShift;
 import com.htttdn.hrm.entity.enums.AttendanceStatus;
@@ -39,7 +36,6 @@ import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
-import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
@@ -52,7 +48,6 @@ public class AttendanceService {
 
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final EmployeeRepository employeeRepository;
-    private final EmployeeAssignmentRepository employeeAssignmentRepository;
     private final AccountRepository accountRepository;
     private final PayrollPeriodRepository payrollPeriodRepository;
     private final CurrentAccountProvider currentAccountProvider;
@@ -62,7 +57,6 @@ public class AttendanceService {
     public AttendanceService(
         AttendanceRecordRepository attendanceRecordRepository,
         EmployeeRepository employeeRepository,
-        EmployeeAssignmentRepository employeeAssignmentRepository,
         AccountRepository accountRepository,
         PayrollPeriodRepository payrollPeriodRepository,
         CurrentAccountProvider currentAccountProvider,
@@ -71,7 +65,6 @@ public class AttendanceService {
     ) {
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.employeeRepository = employeeRepository;
-        this.employeeAssignmentRepository = employeeAssignmentRepository;
         this.accountRepository = accountRepository;
         this.payrollPeriodRepository = payrollPeriodRepository;
         this.currentAccountProvider = currentAccountProvider;
@@ -136,6 +129,74 @@ public class AttendanceService {
             }
         }
         return created;
+    }
+
+    /**
+     * Records one day's check-in and check-out with explicit timestamps, the way a time clock
+     * reports them, and derives late, early-leave, worked and payable minutes from them.
+     */
+    @PreAuthorize("hasAuthority('attendance.manage')")
+    public AttendanceRecordResponse recordPunches(RecordPunchesRequest request) {
+        employeeAccessScopeService.requireEmployeeAccess(request.employeeId(), "attendance.manage");
+        LocalDate workDate = request.workDate();
+        Instant in = request.checkInAt();
+        Instant out = request.checkOutAt();
+        if (!LocalDate.ofInstant(in, ZONE).equals(workDate)) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+                "Check-in must fall on the work date " + workDate, "checkInAt");
+        }
+        if (!out.isAfter(in) || Duration.between(in, out).compareTo(Duration.ofDays(1)) > 0) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+                "Check-out must be after check-in and within 24 hours", "checkOutAt");
+        }
+        Employee employee = employeeRepository.findById(request.employeeId())
+            .filter(e -> e.getDeletedAt() == null)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                ErrorCode.EMPLOYEE_NOT_FOUND, "Employee not found: " + request.employeeId()));
+        if (employee.getHireDate().isAfter(workDate)
+            || employee.getTerminationDate() != null && employee.getTerminationDate().isBefore(workDate)) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+                "Employee is not employed on " + workDate, "workDate");
+        }
+        assertAttendanceEditable(workDate);
+
+        AttendanceRecord record = attendanceRecordRepository
+            .findByEmployeeIdAndWorkDateForUpdate(employee.getId(), workDate).orElse(null);
+        if (record != null && (record.getCheckInAt() != null || record.getStatus() != AttendanceStatus.MISSING_PUNCH)) {
+            throw new ConflictException(ErrorCode.CONFLICT, "Attendance on " + workDate + " is already recorded");
+        }
+        if (record != null && record.getLeaveRequest() != null
+            && in.isBefore(record.getLeaveRequest().getEndAt()) && out.isAfter(record.getLeaveRequest().getStartAt())) {
+            throw new ConflictException(ErrorCode.CONFLICT, "Worked time overlaps approved leave");
+        }
+        Instant now = Instant.now();
+        if (record == null) {
+            AttendanceCalendarService.ScheduledDay day = attendanceCalendarService
+                .assignedDay(employee.getId(), workDate)
+                .orElseThrow(() -> new BusinessException(ErrorCode.VALIDATION_ERROR,
+                    "Employee has no primary assignment on " + workDate, "workDate"));
+            record = AttendanceRecord.builder()
+                .employee(employee)
+                .workDate(workDate)
+                .shift(day.shift())
+                .scheduledStartAt(day.startAt())
+                .scheduledEndAt(day.endAt())
+                .scheduledMinutes(day.minutes())
+                .workedMinutes(0)
+                .payableMinutes(0)
+                .lateMinutes(0)
+                .earlyLeaveMinutes(0)
+                .overtimeMinutes(0)
+                .overtimeMultiplier(java.math.BigDecimal.ONE)
+                .createdAt(now)
+                .build();
+        }
+        record.setCheckInAt(in);
+        record.setCheckOutAt(out);
+        applyPunches(record);
+        record.setStatus(AttendanceStatus.PRESENT);
+        record.setUpdatedAt(now);
+        return toResponse(attendanceRecordRepository.save(record));
     }
 
     public void applyApprovedLeave(LeaveRequest request) {
@@ -225,118 +286,6 @@ public class AttendanceService {
             }
         }
         return AttendanceStatus.UNPAID_LEAVE;
-    }
-
-    @PreAuthorize("hasAnyAuthority('attendance.self.record', 'attendance.manage')")
-    public AttendanceRecordResponse checkIn(CheckInRequest request) {
-        requireSelfOrScopedAccess(request.employeeId(), "attendance.self.record", "attendance.manage");
-        Employee employee = employeeRepository.findById(request.employeeId())
-            .filter(e -> e.getDeletedAt() == null)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.EMPLOYEE_NOT_FOUND, "Employee not found: " + request.employeeId()));
-
-        Instant now = Instant.now();
-        LocalDate workDate = LocalDate.ofInstant(now, ZONE);
-        LocalDate previousDate = workDate.minusDays(1);
-        EmployeeAssignment previousAssignment = employeeAssignmentRepository
-            .findCurrentPrimaryCandidates(employee.getId(), previousDate).stream().findFirst().orElse(null);
-        if (previousAssignment != null && previousAssignment.getShift() != null
-            && Boolean.TRUE.equals(previousAssignment.getShift().getCrossesMidnight())
-            && now.isBefore(toInstant(workDate, previousAssignment.getShift().getEndTime()))) {
-            workDate = previousDate;
-        }
-        assertAttendanceEditable(workDate);
-        AttendanceRecord existing = attendanceRecordRepository
-            .findByEmployeeIdAndWorkDateForUpdate(employee.getId(), workDate).orElse(null);
-        if (existing != null && (existing.getCheckInAt() != null || existing.getCheckOutAt() != null
-            || existing.getStatus() != AttendanceStatus.MISSING_PUNCH)) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Attendance record cannot be checked in again");
-        }
-        if (existing != null && existing.getLeaveRequest() != null
-            && !now.isBefore(existing.getLeaveRequest().getStartAt())
-            && now.isBefore(existing.getLeaveRequest().getEndAt())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Check-in overlaps approved leave");
-        }
-        EmployeeAssignment assignment = existing == null ? employeeAssignmentRepository
-            .findCurrentPrimaryCandidates(employee.getId(), workDate).stream()
-            .findFirst()
-            .orElseThrow(() -> new BusinessException(
-                ErrorCode.VALIDATION_ERROR, "Employee has no active assignment", "employeeId")) : null;
-
-        WorkShift shift = existing != null ? existing.getShift() : assignment.getShift();
-        if (shift == null) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Employee has no shift assigned", "employeeId");
-        }
-
-        Instant scheduledStartAt = existing != null ? existing.getScheduledStartAt()
-            : toInstant(workDate, shift.getStartTime());
-        Instant scheduledEndAt = existing != null ? existing.getScheduledEndAt()
-            : toInstant(shift.getCrossesMidnight() ? workDate.plusDays(1) : workDate, shift.getEndTime());
-        long lateMinutes = Math.max(0, uncoveredWorkMinutes(scheduledStartAt, scheduledEndAt, shift,
-            existing != null ? existing.getLeaveRequest() : null, scheduledStartAt, now) - shift.getGraceLateMinutes());
-
-        if (existing != null) {
-            existing.setCheckInAt(now);
-            existing.setLateMinutes((int) lateMinutes);
-            existing.setStatus(AttendanceStatus.PRESENT);
-            existing.setUpdatedAt(now);
-            return toResponse(existing);
-        }
-
-        AttendanceRecord record = AttendanceRecord.builder()
-            .employee(employee)
-            .workDate(workDate)
-            .shift(shift)
-            .scheduledStartAt(scheduledStartAt)
-            .scheduledEndAt(scheduledEndAt)
-            .scheduledMinutes(shift.getStandardWorkMinutes())
-            .checkInAt(now)
-            .workedMinutes(0)
-            .payableMinutes(0)
-            .lateMinutes((int) lateMinutes)
-            .earlyLeaveMinutes(0)
-            .overtimeMinutes(0)
-            .overtimeMultiplier(java.math.BigDecimal.ONE)
-            .status(AttendanceStatus.PRESENT)
-            .createdAt(now)
-            .updatedAt(now)
-            .build();
-
-        return toResponse(attendanceRecordRepository.save(record));
-    }
-
-    @PreAuthorize("hasAnyAuthority('attendance.self.record', 'attendance.manage')")
-    public AttendanceRecordResponse checkOut(CheckOutRequest request) {
-        requireSelfOrScopedAccess(request.employeeId(), "attendance.self.record", "attendance.manage");
-        assertAttendanceEditable(request.workDate());
-        AttendanceRecord record = attendanceRecordRepository
-            .findByEmployeeIdAndWorkDateForUpdate(request.employeeId(), request.workDate())
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ATTENDANCE_NOT_FOUND,
-                "No attendance record for employee " + request.employeeId() + " on " + request.workDate()));
-
-        if (record.getCheckInAt() == null) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Employee has not checked in yet");
-        }
-        if (record.getCheckOutAt() != null) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Employee has already checked out");
-        }
-
-        Instant now = Instant.now();
-        if (!now.isAfter(record.getCheckInAt())) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Check-out must be after check-in");
-        }
-        if (record.getLeaveRequest() != null
-            && record.getCheckInAt().isBefore(record.getLeaveRequest().getEndAt())
-            && now.isAfter(record.getLeaveRequest().getStartAt())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Worked time overlaps approved leave");
-        }
-
-        record.setCheckOutAt(now);
-        applyPunches(record);
-        record.setUpdatedAt(now);
-
-        return toResponse(record);
     }
 
     /**
@@ -532,10 +481,6 @@ public class AttendanceService {
             throw new ForbiddenException(ErrorCode.FORBIDDEN, "Employee is outside the assigned scope");
         }
         employeeAccessScopeService.requireEmployeeAccess(employeeId, scopedPermission);
-    }
-
-    private Instant toInstant(LocalDate date, java.time.LocalTime time) {
-        return LocalDateTime.of(date, time).atZone(ZONE).toInstant();
     }
 
     private AttendanceRecordResponse toResponse(AttendanceRecord record) {

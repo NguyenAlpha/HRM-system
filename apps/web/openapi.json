@@ -529,62 +529,6 @@
         "tags" : [ "account-admin-controller" ]
       }
     },
-    "/api/attendance/check-in" : {
-      "post" : {
-        "operationId" : "checkIn",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/CheckInRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "201" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ApiResultAttendanceRecordResponse"
-                }
-              }
-            },
-            "description" : "Created"
-          }
-        },
-        "tags" : [ "attendance-controller" ]
-      }
-    },
-    "/api/attendance/check-out" : {
-      "post" : {
-        "operationId" : "checkOut",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/CheckOutRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ApiResultAttendanceRecordResponse"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "tags" : [ "attendance-controller" ]
-      }
-    },
     "/api/attendance/employees/{employeeId}" : {
       "get" : {
         "operationId" : "listByEmployee",
@@ -665,6 +609,34 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ApiResultInteger"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-controller" ]
+      }
+    },
+    "/api/attendance/punches" : {
+      "post" : {
+        "operationId" : "recordPunches",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RecordPunchesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultAttendanceRecordResponse"
                 }
               }
             },
@@ -5917,30 +5889,6 @@
         },
         "required" : [ "currentPassword", "newPassword" ]
       },
-      "CheckInRequest" : {
-        "type" : "object",
-        "properties" : {
-          "employeeId" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        },
-        "required" : [ "employeeId" ]
-      },
-      "CheckOutRequest" : {
-        "type" : "object",
-        "properties" : {
-          "employeeId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "workDate" : {
-            "type" : "string",
-            "format" : "date"
-          }
-        },
-        "required" : [ "employeeId", "workDate" ]
-      },
       "CompanyHolidayRequest" : {
         "type" : "object",
         "properties" : {
@@ -7737,6 +7685,28 @@
           }
         },
         "required" : [ "effectiveFrom", "healthInsurance", "insuranceSalary", "socialInsurance", "taxResident", "unemploymentInsurance", "wageRegion" ]
+      },
+      "RecordPunchesRequest" : {
+        "type" : "object",
+        "properties" : {
+          "checkInAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "checkOutAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "employeeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "workDate" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        },
+        "required" : [ "checkInAt", "checkOutAt", "employeeId", "workDate" ]
       },
       "RefreshTokenRequest" : {
         "type" : "object",
