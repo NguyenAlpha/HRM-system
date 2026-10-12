@@ -110,7 +110,7 @@ export function AccountManager({ portal, currentAccountId, canManage, canManageA
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState<{ account: Account; kind: ActionKind } | null>(null)
   const [running, setRunning] = useState(false)
-  // The Admin Console only reads accounts: SYSTEM_ADMIN holds neither lifecycle permission.
+  // Without either lifecycle permission the list is read-only and the actions column is hidden.
   const hasActions = canManage || canManageActivation
   const columns = hasActions ? 5 : 4
   const [invitation, setInvitation] = useState<{ account: Account; invitation: AccountInvitation } | null>(null)
@@ -159,10 +159,10 @@ export function AccountManager({ portal, currentAccountId, canManage, canManageA
     setRunning(true)
     try {
       if (kind === "invitations/resend" || kind === "password-reset") {
-        const issued = await issueAccountInvitation(account.id, kind)
+        const issued = await issueAccountInvitation(portal, account.id, kind)
         setInvitation({ account, invitation: issued })
       } else {
-        await changeAccountStatus(account.id, kind)
+        await changeAccountStatus(portal, account.id, kind)
         toast.success(`${ACTIONS[kind].label}: ${account.username}`)
       }
       setPending(null)

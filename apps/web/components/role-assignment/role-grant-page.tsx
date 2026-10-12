@@ -8,7 +8,6 @@ import { PermissionOverrideManager } from "@/components/role-assignment/permissi
 /** Direct role grants; the same page serves both portals. */
 export function RoleGrantPage() {
   const { portal, session, onSessionExpired } = usePortalSession()
-  // SYSTEM_ADMIN is not seeded with this permission, so the override section stays HRM-only in practice.
   const canManageOverrides = session.account.permissions.some(
     (permission) => permission.code === "account.permission.override.manage",
   )

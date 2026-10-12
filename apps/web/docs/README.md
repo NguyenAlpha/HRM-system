@@ -42,11 +42,11 @@ Trang `/activate` nằm ngoài hai khu vực trên: không cần đăng nhập, 
 |:------|:---------|
 | `/admin` | Tổng quan quản trị hệ thống |
 | `/admin/employees`, `/admin/employees/{employeeId}` | Xem danh sách, hồ sơ nhân viên và cấp tài khoản (chỉ đọc hồ sơ) |
-| `/admin/accounts` | Xem danh sách tài khoản; khóa, mở khóa và reset mật khẩu chỉ có ở HRM Workspace |
+| `/admin/accounts` | Danh sách tài khoản; gửi lại lời mời, reset mật khẩu, vô hiệu hóa và kích hoạt lại (trừ tài khoản Company Owner) |
 | `/admin/company-owner` | Khởi tạo Company Owner đầu tiên |
 | `/admin/organization` | Dữ liệu tổ chức phục vụ bootstrap |
 | `/admin/rbac` | CRUD custom role, xem permission và đồng bộ quyền |
-| `/admin/role-grant` | Gán hoặc thu hồi role theo chính sách backend |
+| `/admin/role-grant` | Gán hoặc thu hồi role và permission override theo chính sách backend |
 
 Browser gọi API qua BFF và không nhận JWT. Việc hiển thị nút dựa trên permission chỉ phục vụ giao diện; backend tiếp tục kiểm tra permission và scope cho mọi thao tác.
 

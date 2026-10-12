@@ -597,7 +597,7 @@ export async function handleAccountProvisionRequest(request: Request, portal: Po
   })
 }
 
-// Account list for both portals; lifecycle actions are HRM-only because SYSTEM_ADMIN holds no account.manage.
+// Account list and lifecycle actions for both portals; the API checks the permissions.
 export async function handleAccountLifecycleRequest(
   request: Request,
   segments: string[],
@@ -606,9 +606,7 @@ export async function handleAccountLifecycleRequest(
   const path = segments.join("/")
   const routes = [
     { pattern: /^$/, methods: ["GET"] },
-    ...(portal === "hrm"
-      ? [{ pattern: /^[1-9]\d*\/(?:invitations\/resend|password-reset|suspend|activate)$/, methods: ["POST"] }]
-      : []),
+    { pattern: /^[1-9]\d*\/(?:invitations\/resend|password-reset|suspend|activate)$/, methods: ["POST"] },
   ]
   const route = routes.find((candidate) => candidate.pattern.test(path))
   if (!route) return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
