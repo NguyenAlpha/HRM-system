@@ -175,7 +175,7 @@ Trạng thái ngày công: `PRESENT`, `PAID_LEAVE`, `UNPAID_LEAVE`, `MATERNITY_L
 `UNAUTHORIZED_ABSENCE`, `HOLIDAY`, `MISSING_PUNCH`.
 
 `prepare` tạo bản ghi `MISSING_PUNCH` cho mọi ngày làm việc chưa có dữ liệu, gọi lặp không tạo
-trùng. Backend tự chạy việc này cho tháng hiện tại lúc khởi động và 00:05 ngày 1 hằng tháng, bỏ qua
+trùng. Backend tự chạy việc này cho tháng hiện tại lúc khởi động và 00:05 mỗi đêm, bỏ qua
 (và ghi log) nhân viên thiếu phân công/ca; tắt bằng `attendance.auto-prepare.enabled=false`. Kỳ lương không chuyển sang `CALCULATED` khi còn `MISSING_PUNCH`.
 
 Duyệt tăng ca ghi cả số phút, hệ số và cờ miễn thuế. Hệ số tối thiểu 1,5 ngày thường, 2 Chủ nhật,
