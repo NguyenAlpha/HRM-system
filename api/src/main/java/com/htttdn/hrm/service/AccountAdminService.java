@@ -32,6 +32,7 @@ public class AccountAdminService {
     private final RefreshTokenService refreshTokenService;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
+    private final CompanyOwnerAccountGuard companyOwnerAccountGuard;
 
     public AccountAdminService(
         AccountRepository accountRepository,
@@ -39,7 +40,8 @@ public class AccountAdminService {
         AccountActivationService accountActivationService,
         RefreshTokenService refreshTokenService,
         CurrentAccountProvider currentAccountProvider,
-        EmployeeAccessScopeService employeeAccessScopeService
+        EmployeeAccessScopeService employeeAccessScopeService,
+        CompanyOwnerAccountGuard companyOwnerAccountGuard
     ) {
         this.accountRepository = accountRepository;
         this.accountProvisioningService = accountProvisioningService;
@@ -47,6 +49,7 @@ public class AccountAdminService {
         this.refreshTokenService = refreshTokenService;
         this.currentAccountProvider = currentAccountProvider;
         this.employeeAccessScopeService = employeeAccessScopeService;
+        this.companyOwnerAccountGuard = companyOwnerAccountGuard;
     }
 
     @PreAuthorize("hasAuthority('account.provision')")
@@ -73,6 +76,7 @@ public class AccountAdminService {
 
     @PreAuthorize("hasAuthority('account.activation.manage')")
     public AccountInvitationResponse resendInvitation(Long accountId) {
+        companyOwnerAccountGuard.requireCanManage(accountId);
         return issueInvitation(accountId, currentAccountProvider.accountId());
     }
 
@@ -80,6 +84,7 @@ public class AccountAdminService {
     public AccountInvitationResponse initiatePasswordReset(Long accountId) {
         Long actorAccountId = currentAccountProvider.accountId();
         ensureNotSelf(accountId, actorAccountId, "Administrators must use the self-service password change");
+        companyOwnerAccountGuard.requireCanManage(accountId);
 
         Account account = findAccountForUpdate(accountId);
         if (account.getStatus() != AccountStatus.ACTIVE && account.getStatus() != AccountStatus.LOCKED) {
@@ -100,6 +105,7 @@ public class AccountAdminService {
     public AccountResponse suspend(Long accountId) {
         Long actorAccountId = currentAccountProvider.accountId();
         ensureNotSelf(accountId, actorAccountId, "Administrators cannot suspend their own account");
+        companyOwnerAccountGuard.requireCanManage(accountId);
 
         Account account = findAccountForUpdate(accountId);
         if (account.getStatus() == AccountStatus.DISABLED) {

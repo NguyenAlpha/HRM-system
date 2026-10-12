@@ -32,6 +32,7 @@ public class AccountRoleAssignmentAdminService {
     private final AccountRoleAssignmentMapper roleAssignmentMapper;
     private final RefreshTokenService refreshTokenService;
     private final CurrentAccountProvider currentAccountProvider;
+    private final CompanyOwnerAccountGuard companyOwnerAccountGuard;
 
     public AccountRoleAssignmentAdminService(
         AccountRepository accountRepository,
@@ -39,7 +40,8 @@ public class AccountRoleAssignmentAdminService {
         AccountRoleAssignmentCommandService roleAssignmentCommandService,
         AccountRoleAssignmentMapper roleAssignmentMapper,
         RefreshTokenService refreshTokenService,
-        CurrentAccountProvider currentAccountProvider
+        CurrentAccountProvider currentAccountProvider,
+        CompanyOwnerAccountGuard companyOwnerAccountGuard
     ) {
         this.accountRepository = accountRepository;
         this.roleAssignmentRepository = roleAssignmentRepository;
@@ -47,6 +49,7 @@ public class AccountRoleAssignmentAdminService {
         this.roleAssignmentMapper = roleAssignmentMapper;
         this.refreshTokenService = refreshTokenService;
         this.currentAccountProvider = currentAccountProvider;
+        this.companyOwnerAccountGuard = companyOwnerAccountGuard;
     }
 
     @Transactional(readOnly = true)
@@ -60,6 +63,7 @@ public class AccountRoleAssignmentAdminService {
 
     @PreAuthorize("hasAuthority('account.role.assign')")
     public AccountRoleAssignmentResponse assign(Long accountId, AssignAccountRoleRequest request) {
+        companyOwnerAccountGuard.requireCanManage(accountId);
         AccountRoleAssignment assignment = roleAssignmentCommandService.assignDirect(
             accountId,
             request,
@@ -74,6 +78,7 @@ public class AccountRoleAssignmentAdminService {
         Long assignmentId,
         RevokeAccountRoleRequest request
     ) {
+        companyOwnerAccountGuard.requireCanManage(accountId);
         AccountRoleAssignment assignment = roleAssignmentRepository
             .findByIdAndAccountIdForUpdate(assignmentId, accountId)
             .orElseThrow(() -> new ResourceNotFoundException(

@@ -23,6 +23,7 @@ import com.htttdn.hrm.entity.enums.PermissionOverrideEffect;
 import com.htttdn.hrm.entity.enums.PermissionOverrideStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
+import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountPermissionOverrideRepository;
 import com.htttdn.hrm.repository.AccountRepository;
@@ -44,6 +45,7 @@ public class AccountPermissionOverrideService {
     private final RolePermissionRepository rolePermissionRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final RefreshTokenService refreshTokenService;
+    private final CompanyOwnerAccountGuard companyOwnerAccountGuard;
 
     public AccountPermissionOverrideService(
         AccountRepository accountRepository,
@@ -52,7 +54,8 @@ public class AccountPermissionOverrideService {
         PermissionRepository permissionRepository,
         RolePermissionRepository rolePermissionRepository,
         CurrentAccountProvider currentAccountProvider,
-        RefreshTokenService refreshTokenService
+        RefreshTokenService refreshTokenService,
+        CompanyOwnerAccountGuard companyOwnerAccountGuard
     ) {
         this.accountRepository = accountRepository;
         this.assignmentRepository = assignmentRepository;
@@ -61,6 +64,7 @@ public class AccountPermissionOverrideService {
         this.rolePermissionRepository = rolePermissionRepository;
         this.currentAccountProvider = currentAccountProvider;
         this.refreshTokenService = refreshTokenService;
+        this.companyOwnerAccountGuard = companyOwnerAccountGuard;
     }
 
     @Transactional(readOnly = true)
@@ -93,6 +97,7 @@ public class AccountPermissionOverrideService {
         Long assignmentId,
         CreatePermissionOverrideRequest request
     ) {
+        requireCanChangeOverrides(accountId);
         AccountRoleAssignment assignment = findAssignmentForUpdate(accountId, assignmentId);
         validateAssignment(assignment);
         Permission permission = permissionRepository.findById(request.permissionId())
@@ -143,6 +148,7 @@ public class AccountPermissionOverrideService {
         Long overrideId,
         RevokePermissionOverrideRequest request
     ) {
+        requireCanChangeOverrides(accountId);
         findAssignmentForUpdate(accountId, assignmentId);
         AccountPermissionOverride permissionOverride = overrideRepository
             .findByIdAndAssignmentIdForUpdate(overrideId, assignmentId)
@@ -160,6 +166,17 @@ public class AccountPermissionOverrideService {
         permissionOverride.setRevocationReason(request.reason().trim());
         refreshTokenService.revokeAll(accountId);
         return toResponse(permissionOverride);
+    }
+
+    /** Nobody changes their own effective permissions, and Company Owner accounts stay with Company Owners. */
+    private void requireCanChangeOverrides(Long accountId) {
+        if (accountId.equals(currentAccountProvider.accountId())) {
+            throw new ForbiddenException(
+                ErrorCode.FORBIDDEN,
+                "Permission overrides cannot be changed on your own account"
+            );
+        }
+        companyOwnerAccountGuard.requireCanManage(accountId);
     }
 
     private AccountRoleAssignment findAssignment(Long accountId, Long assignmentId) {

@@ -195,7 +195,7 @@ Email được chuẩn hóa về chữ thường. Username giữ nguyên chữ h
 | `account.roles` | Các role đang có hiệu lực, gồm code kỹ thuật, tên hiển thị và phạm vi áp dụng |
 | `account.permissions` | Hợp quyền đang có hiệu lực, gồm code kỹ thuật, tên hiển thị và module |
 
-`SYSTEM_ADMIN` có `organization.company_owner.bootstrap` và tạm thời có thêm `rbac.manage`. Role này vẫn không quản trị account hoặc nghiệp vụ nội bộ doanh nghiệp. Với scope `ORG_UNIT` hoặc `LOCATION`, response trả cả ID và tên đối tượng phạm vi tương ứng để client có thể hiển thị trực tiếp.
+`SYSTEM_ADMIN` có `organization.company_owner.bootstrap` cùng các permission quản trị truy cập. `SYSTEM_ADMIN` quản trị *truy cập* (tài khoản, role, permission override, danh mục tổ chức) và chỉ *xem* hồ sơ nhân sự; nghiệp vụ nhân sự, chấm công, lương, báo cáo và dữ liệu nhạy cảm thuộc các role nghiệp vụ. Tài khoản đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được khóa, phát mã kích hoạt, đổi role hoặc permission override (mở khóa vẫn được phép), nên người quản trị truy cập không chiếm được quyền chủ doanh nghiệp. Với scope `ORG_UNIT` hoặc `LOCATION`, response trả cả ID và tên đối tượng phạm vi tương ứng để client có thể hiển thị trực tiếp.
 
 ### JWT payload
 

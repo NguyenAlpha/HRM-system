@@ -139,8 +139,11 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "employee.read",
             "employee.assignment.read",
             "account.read",
+            "account.manage",
             "account.provision",
-            "account.role.assign"
+            "account.activation.manage",
+            "account.role.assign",
+            "account.permission.override.manage"
         ))
     );
 
