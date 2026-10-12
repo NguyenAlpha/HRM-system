@@ -153,7 +153,9 @@ tiên, dùng một lần khi khởi tạo hệ thống.
 
 ## 7. Ngày lễ và chấm công
 
-Lịch làm việc chuẩn là thứ 2 đến thứ 7, trừ ngày trong `company_holidays`.
+Lịch làm việc chuẩn là thứ 2 đến thứ 7, trừ ngày trong `company_holidays`. Ngày lễ được hưởng nguyên
+lương vì không tính vào số ngày công chuẩn của tháng; đi làm ngày lễ được duyệt tăng ca hệ số tối thiểu 3.
+Lịch lễ, Tết 2025 và 2026 (11 ngày mỗi năm) được seed sẵn; từ 2027 HR tự khai báo.
 
 Giờ vào/ra được ghi qua `POST /api/attendance/punches` với thời điểm cụ thể; sau này máy chấm công
 của công ty sẽ gửi vào đây (tích hợp máy chưa triển khai). Nhân viên chỉ xem lịch sử chấm công trên

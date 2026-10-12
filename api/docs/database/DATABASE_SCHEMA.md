@@ -877,8 +877,7 @@ Hạn mức phép năm **không có bảng riêng**: 12 ngày mỗi năm, vào l
 | `name` | VARCHAR(150) | NOT NULL | Tên ngày lễ |
 | `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Thời điểm tạo |
 
-> Lịch làm việc chuẩn là thứ 2 đến thứ 7; ngày có trong bảng này bị loại khỏi lịch đó. Chỉ có
-> ngày lễ do công ty tự khai báo, không nạp sẵn lịch lễ quốc gia. Bảng không xóa mềm vì thêm
+> Lịch làm việc chuẩn là thứ 2 đến thứ 7; ngày có trong bảng này bị loại khỏi lịch đó. Lịch nghỉ lễ, Tết hưởng nguyên lương năm 2025 và 2026 (Điều 112 Bộ luật Lao động 2019, 11 ngày mỗi năm) được nạp sẵn bởi `CompanyHolidaySeeder` khi `company.seed.enabled=true`; Tết Âm lịch và ngày liền kề Quốc khánh lấy theo lịch của khối nhà nước, lễ rơi vào Chủ nhật được nghỉ bù ngày làm việc kế tiếp. Năm đã có ngày lễ nào thì seeder bỏ qua cả năm, nên HR sửa hoặc xóa không bị ghi đè; các năm sau HR tự khai báo. Bảng không xóa mềm vì thêm
 > hoặc bớt một ngày lễ làm thay đổi số ngày công chuẩn của kỳ: thay đổi đưa kỳ lương
 > `CALCULATED` về `DRAFT` để tính lại, và bị chặn từ `APPROVED` trở đi.
 

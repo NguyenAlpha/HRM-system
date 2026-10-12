@@ -78,7 +78,7 @@ GET /api/company-holidays?from=2026-01-01&to=2026-12-31
 
 ## POST `/api/company-holidays`
 
-Khai báo một ngày lễ. Chỉ có ngày lễ do công ty khai báo; hệ thống không tự nhập lịch lễ quốc gia.
+Khai báo một ngày lễ. Lịch nghỉ lễ, Tết hưởng nguyên lương năm 2025 và 2026 (Điều 112 Bộ luật Lao động 2019, 11 ngày mỗi năm) được nạp sẵn bởi `CompanyHolidaySeeder` khi `company.seed.enabled=true`; Tết Âm lịch và ngày liền kề Quốc khánh lấy theo lịch của khối nhà nước, lễ rơi vào Chủ nhật được nghỉ bù ngày làm việc kế tiếp. Năm đã có ngày lễ nào thì seeder bỏ qua cả năm, nên HR sửa hoặc xóa không bị ghi đè; các năm sau HR tự khai báo.
 
 ### Request
 
@@ -566,4 +566,4 @@ Endpoint kỳ lương: `POST /api/payroll/periods`, `GET /api/payroll/periods`, 
 - Giờ vào/ra sẽ đến từ máy chấm công qua `POST /api/attendance/punches`; web không có thao tác tự chấm công, chỉ HR nhập hoặc sửa giờ khi đối soát.
 - Actor duyệt đơn, điều chỉnh công và duyệt tăng ca luôn lấy từ JWT/Security Context.
 - Cổng HRM có `/attendance`, `/leave-requests`, `/payslips`; tất cả yêu cầu đi qua BFF allowlist và API kiểm tra quyền cùng phạm vi truy cập.
-- Giới hạn hiện tại: mỗi ca có một khoảng nghỉ. Mô hình chỉ lưu một cặp chấm vào/ra và một đơn nghỉ cho mỗi nhân viên mỗi ngày, nên không có hai đơn khác loại trong cùng một ngày (ví dụ sáng nghỉ phép năm, chiều nghỉ ốm). Chỉ có ngày lễ do công ty khai báo, không tự nhập lịch lễ quốc gia.
+- Giới hạn hiện tại: mỗi ca có một khoảng nghỉ. Mô hình chỉ lưu một cặp chấm vào/ra và một đơn nghỉ cho mỗi nhân viên mỗi ngày, nên không có hai đơn khác loại trong cùng một ngày (ví dụ sáng nghỉ phép năm, chiều nghỉ ốm). Lịch lễ chỉ nạp sẵn cho 2025 và 2026; từ 2027 HR tự khai báo.
