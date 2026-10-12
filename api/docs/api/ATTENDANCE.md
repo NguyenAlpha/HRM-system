@@ -7,7 +7,7 @@ Lịch làm việc là **thứ 2 đến thứ 7**, trừ các ngày trong `compa
 Quy trình một tháng:
 
 1. Người có `organization.manage` khai báo ngày lễ qua `POST /api/company-holidays`.
-2. HR chuẩn bị bảng công tháng qua `POST /api/attendance/prepare`. Nên chuẩn bị trước khi nhân viên bắt đầu chấm công.
+2. Bảng công tháng được chuẩn bị tự động (xem [Tự động chuẩn bị](#tự-động-chuẩn-bị)); HR gọi lại `POST /api/attendance/prepare` sau khi sửa phân công cho nhân viên bị bỏ qua, hoặc để chuẩn bị tháng khác.
 3. Giờ vào/ra được ghi qua `POST /api/attendance/punches` với thời điểm cụ thể. Sau này máy chấm công của công ty sẽ gửi dữ liệu vào đây; phần tích hợp máy **chưa triển khai**, hiện API này **tạm thời không cần xác thực** để tạo dữ liệu test (kể cả cho ngày đã qua). Nhân viên chỉ xem lịch sử chấm công trên web.
 4. Nhân viên nộp đơn nghỉ qua `/api/leave-requests`; người duyệt duyệt đơn và hệ thống tự gắn đơn vào bảng công.
 5. HR đối soát các ngày `MISSING_PUNCH` qua `PUT /api/attendance/{id}`; người có `attendance.overtime.approve` duyệt tăng ca.
@@ -155,6 +155,14 @@ POST /api/attendance/prepare?year=2026&month=1
 ```
 
 API kiểm tra mọi nhân viên có thời gian làm việc trong tháng. Nếu thiếu phân công chính hoặc ca ở ngày làm việc nào, API trả `400 VALIDATION_ERROR` kèm mã nhân viên và ngày đó; sửa phân công rồi gọi lại.
+
+### Tự động chuẩn bị
+
+Backend tự làm việc tương tự cho **tháng hiện tại** (giờ `Asia/Ho_Chi_Minh`) lúc khởi động và lúc 00:05 ngày 1 hằng tháng. Khác với gọi API:
+
+- Mỗi nhân viên chạy trong transaction riêng; nhân viên thiếu phân công hoặc ca bị bỏ qua và ghi log `WARN` (kèm mã nhân viên và ngày), các nhân viên khác vẫn được tạo.
+- Nếu tháng thuộc kỳ lương đã duyệt, đã trả hoặc đã khóa thì bỏ qua cả tháng.
+- Tắt bằng `attendance.auto-prepare.enabled=false` (biến môi trường `ATTENDANCE_AUTO_PREPARE_ENABLED`).
 
 ### Lỗi
 

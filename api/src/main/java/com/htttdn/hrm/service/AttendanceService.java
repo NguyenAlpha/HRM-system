@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.request.attendance.AdjustAttendanceRequest;
@@ -80,53 +81,75 @@ public class AttendanceService {
         assertAttendanceEditable(from);
         int created = 0;
         for (Employee employee : employeeRepository.findEmployedDuring(from, to)) {
-            LocalDate employedFrom = employee.getHireDate().isAfter(from) ? employee.getHireDate() : from;
-            LocalDate employedTo = employee.getTerminationDate() != null
-                && employee.getTerminationDate().isBefore(to) ? employee.getTerminationDate() : to;
-            List<AttendanceCalendarService.ScheduledDay> scheduledDays;
-            try {
-                scheduledDays = attendanceCalendarService.scheduleFor(employee.getId(), employedFrom, employedTo);
-            } catch (BusinessException error) {
+            created += prepareEmployee(employee, from, to);
+        }
+        return created;
+    }
+
+    /**
+     * {@link #prepareMonth} for one employee, used by the background job: there is no caller to
+     * authorize, and each employee runs in its own transaction so one with a missing assignment
+     * or shift does not roll back the others.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public int autoPrepareEmployee(Long employeeId, int year, int month) {
+        LocalDate from = LocalDate.of(year, month, 1);
+        LocalDate to = from.withDayOfMonth(from.lengthOfMonth());
+        assertAttendanceEditable(from);
+        Employee employee = employeeRepository.findById(employeeId)
+            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.EMPLOYEE_NOT_FOUND, "Employee not found: " + employeeId));
+        return prepareEmployee(employee, from, to);
+    }
+
+    /** Checks the whole schedule before saving, so a failing employee gets no records at all. */
+    private int prepareEmployee(Employee employee, LocalDate from, LocalDate to) {
+        int created = 0;
+        LocalDate employedFrom = employee.getHireDate().isAfter(from) ? employee.getHireDate() : from;
+        LocalDate employedTo = employee.getTerminationDate() != null
+            && employee.getTerminationDate().isBefore(to) ? employee.getTerminationDate() : to;
+        List<AttendanceCalendarService.ScheduledDay> scheduledDays;
+        try {
+            scheduledDays = attendanceCalendarService.scheduleFor(employee.getId(), employedFrom, employedTo);
+        } catch (BusinessException error) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+                "Cannot prepare attendance for employee " + employee.getEmployeeCode()
+                    + " (ID " + employee.getId() + "): " + error.getMessage());
+        }
+        Set<LocalDate> scheduledDates = scheduledDays.stream()
+            .map(AttendanceCalendarService.ScheduledDay::workDate).collect(Collectors.toSet());
+        for (LocalDate date : attendanceCalendarService.companyWorkDates(employedFrom, employedTo)) {
+            if (!scheduledDates.contains(date)) {
                 throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                     "Cannot prepare attendance for employee " + employee.getEmployeeCode()
-                        + " (ID " + employee.getId() + "): " + error.getMessage());
+                        + " (ID " + employee.getId() + "): missing primary assignment and work shift on " + date);
             }
-            Set<LocalDate> scheduledDates = scheduledDays.stream()
-                .map(AttendanceCalendarService.ScheduledDay::workDate).collect(Collectors.toSet());
-            for (LocalDate date : attendanceCalendarService.companyWorkDates(employedFrom, employedTo)) {
-                if (!scheduledDates.contains(date)) {
-                    throw new BusinessException(ErrorCode.VALIDATION_ERROR,
-                        "Cannot prepare attendance for employee " + employee.getEmployeeCode()
-                            + " (ID " + employee.getId() + "): missing primary assignment and work shift on " + date);
-                }
+        }
+        Set<LocalDate> existingDates = attendanceRecordRepository
+            .findByEmployeeIdAndWorkDateBetween(employee.getId(), from, to).stream()
+            .map(AttendanceRecord::getWorkDate).collect(Collectors.toSet());
+        for (AttendanceCalendarService.ScheduledDay day : scheduledDays) {
+            if (existingDates.contains(day.workDate())) {
+                continue;
             }
-            Set<LocalDate> existingDates = attendanceRecordRepository
-                .findByEmployeeIdAndWorkDateBetween(employee.getId(), from, to).stream()
-                .map(AttendanceRecord::getWorkDate).collect(Collectors.toSet());
-            for (AttendanceCalendarService.ScheduledDay day : scheduledDays) {
-                if (existingDates.contains(day.workDate())) {
-                    continue;
-                }
-                Instant now = Instant.now();
-                attendanceRecordRepository.save(AttendanceRecord.builder()
-                    .employee(employee)
-                    .workDate(day.workDate())
-                    .shift(day.shift())
-                    .scheduledStartAt(day.startAt())
-                    .scheduledEndAt(day.endAt())
-                    .scheduledMinutes(day.minutes())
-                    .workedMinutes(0)
-                    .payableMinutes(0)
-                    .lateMinutes(0)
-                    .earlyLeaveMinutes(0)
-                    .overtimeMinutes(0)
-                    .overtimeMultiplier(java.math.BigDecimal.ONE)
-                    .status(AttendanceStatus.MISSING_PUNCH)
-                    .createdAt(now)
-                    .updatedAt(now)
-                    .build());
-                created++;
-            }
+            Instant now = Instant.now();
+            attendanceRecordRepository.save(AttendanceRecord.builder()
+                .employee(employee)
+                .workDate(day.workDate())
+                .shift(day.shift())
+                .scheduledStartAt(day.startAt())
+                .scheduledEndAt(day.endAt())
+                .scheduledMinutes(day.minutes())
+                .workedMinutes(0)
+                .payableMinutes(0)
+                .lateMinutes(0)
+                .earlyLeaveMinutes(0)
+                .overtimeMinutes(0)
+                .overtimeMultiplier(java.math.BigDecimal.ONE)
+                .status(AttendanceStatus.MISSING_PUNCH)
+                .createdAt(now)
+                .updatedAt(now)
+                .build());
+            created++;
         }
         return created;
     }
