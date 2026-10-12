@@ -1,9 +1,11 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AttendanceSection } from "@/components/workforce/attendance-section"
@@ -15,7 +17,7 @@ type Section = "attendance" | "leave" | "payroll"
 
 const SECTION_TEXT: Record<Section, { title: string; description: string }> = {
   attendance: { title: "Chấm công", description: "Lịch sử chấm công từ máy chấm công, bảng công tháng, tăng ca và ngày lễ công ty." },
-  leave: { title: "Đơn nghỉ phép", description: "Số dư phép năm, tạo và duyệt đơn nghỉ, chốt phép cuối năm." },
+  leave: { title: "Đơn nghỉ phép", description: "Số dư phép năm, tạo và duyệt đơn nghỉ." },
   payroll: { title: "Phiếu lương", description: "Kỳ lương, phiếu lương, lương cơ bản, bảo hiểm và người phụ thuộc." },
 }
 
@@ -24,6 +26,12 @@ const OTHERS_PERMISSIONS: Record<Section, string[]> = {
   attendance: ["attendance.read", "attendance.manage"],
   leave: ["request.read", "request.manage"],
   payroll: ["report.payroll.read", "compensation.read", "compensation.manage"],
+}
+
+/** YYYY-MM shifted by a number of months. */
+function shiftMonth(month: string, by: number): string {
+  const date = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)) - 1 + by, 1))
+  return date.toISOString().slice(0, 7)
 }
 
 export function WorkforcePage({ section }: { section: Section }) {
@@ -65,8 +73,14 @@ export function WorkforcePage({ section }: { section: Section }) {
           {section !== "payroll" && (
             <div className="grid gap-1.5">
               <Label htmlFor="workforce-month">{section === "leave" ? "Năm phép (theo tháng)" : "Tháng"}</Label>
-              <Input id="workforce-month" type="month" className="w-44" value={month}
-                onChange={(event) => { if (event.target.value) setMonth(event.target.value) }} />
+              <div className="flex items-center gap-1">
+                <Button type="button" variant="outline" size="icon" aria-label="Tháng trước"
+                  onClick={() => setMonth(shiftMonth(month, -1))}><ChevronLeft /></Button>
+                <Input id="workforce-month" type="month" className="w-44" value={month}
+                  onChange={(event) => { if (event.target.value) setMonth(event.target.value) }} />
+                <Button type="button" variant="outline" size="icon" aria-label="Tháng sau"
+                  onClick={() => setMonth(shiftMonth(month, 1))}><ChevronRight /></Button>
+              </div>
             </div>
           )}
         </div>
