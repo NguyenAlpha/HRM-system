@@ -673,7 +673,7 @@
         "tags" : [ "attendance-controller" ]
       },
       "put" : {
-        "operationId" : "adjust_1",
+        "operationId" : "adjust",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -1772,58 +1772,6 @@
         "tags" : [ "job-position-controller" ]
       }
     },
-    "/api/leave-entitlements/carry-over" : {
-      "get" : {
-        "operationId" : "preview",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "fromYear",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ApiResultCarryOverView"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "tags" : [ "leave-carry-over-controller" ]
-      },
-      "post" : {
-        "operationId" : "apply",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "fromYear",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ApiResultCarryOverView"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "tags" : [ "leave-carry-over-controller" ]
-      }
-    },
     "/api/leave-entitlements/employees/{employeeId}" : {
       "get" : {
         "operationId" : "getBalance",
@@ -1844,96 +1792,6 @@
             "format" : "int32"
           }
         } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ApiResultBalanceView"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "tags" : [ "leave-entitlement-controller" ]
-      }
-    },
-    "/api/leave-entitlements/employees/{employeeId}/adjustment" : {
-      "put" : {
-        "operationId" : "adjust",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "employeeId",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        }, {
-          "in" : "query",
-          "name" : "year",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/AdjustLeaveEntitlementRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ApiResultBalanceView"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "tags" : [ "leave-entitlement-controller" ]
-      }
-    },
-    "/api/leave-entitlements/employees/{employeeId}/carried-over" : {
-      "put" : {
-        "operationId" : "setCarriedOver",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "employeeId",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        }, {
-          "in" : "query",
-          "name" : "year",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/SetCarriedOverLeaveRequest"
-              }
-            }
-          },
-          "required" : true
-        },
         "responses" : {
           "200" : {
             "content" : {
@@ -4062,20 +3920,6 @@
         },
         "required" : [ "earlyLeaveMinutes", "lateMinutes", "note", "payableMinutes", "status", "workedMinutes" ]
       },
-      "AdjustLeaveEntitlementRequest" : {
-        "type" : "object",
-        "properties" : {
-          "adjustmentMinutes" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "reason" : {
-            "type" : "string",
-            "minLength" : 1
-          }
-        },
-        "required" : [ "adjustmentMinutes", "reason" ]
-      },
       "ApiResultAccountInvitationResponse" : {
         "type" : "object",
         "properties" : {
@@ -4266,29 +4110,6 @@
           "data" : {
             "anyOf" : [ {
               "$ref" : "#/components/schemas/BalanceView"
-            }, {
-              "type" : "null"
-            } ]
-          },
-          "error" : {
-            "anyOf" : [ {
-              "$ref" : "#/components/schemas/ErrorDetail"
-            }, {
-              "type" : "null"
-            } ]
-          },
-          "success" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "data", "error", "success" ]
-      },
-      "ApiResultCarryOverView" : {
-        "type" : "object",
-        "properties" : {
-          "data" : {
-            "anyOf" : [ {
-              "$ref" : "#/components/schemas/CarryOverView"
             }, {
               "type" : "null"
             } ]
@@ -5752,28 +5573,9 @@
       "BalanceView" : {
         "type" : "object",
         "properties" : {
-          "adjustmentMinutes" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "adjustmentReason" : {
-            "type" : [ "string", "null" ]
-          },
-          "carriedOverExpiresOn" : {
-            "type" : [ "string", "null" ],
-            "format" : "date"
-          },
-          "carriedOverMinutes" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
           "employeeId" : {
             "type" : "integer",
             "format" : "int64"
-          },
-          "expiredCarriedOverMinutes" : {
-            "type" : "integer",
-            "format" : "int32"
           },
           "grantedMinutes" : {
             "type" : "integer",
@@ -5800,7 +5602,7 @@
             "format" : "int32"
           }
         },
-        "required" : [ "adjustmentMinutes", "adjustmentReason", "carriedOverExpiresOn", "carriedOverMinutes", "employeeId", "expiredCarriedOverMinutes", "grantedMinutes", "pendingMinutes", "remainingMinutes", "standardDayMinutes", "usedMinutes", "year" ]
+        "required" : [ "employeeId", "grantedMinutes", "pendingMinutes", "remainingMinutes", "standardDayMinutes", "usedMinutes", "year" ]
       },
       "CancelRoleAssignmentRequest" : {
         "type" : "object",
@@ -5812,66 +5614,6 @@
           }
         },
         "required" : [ "reason" ]
-      },
-      "CarryOverItem" : {
-        "type" : "object",
-        "properties" : {
-          "carriedOverMinutes" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "currentCarriedOverMinutes" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "employeeCode" : {
-            "type" : "string"
-          },
-          "employeeId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "fullName" : {
-            "type" : "string"
-          },
-          "remainingMinutes" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "standardDayMinutes" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        },
-        "required" : [ "carriedOverMinutes", "currentCarriedOverMinutes", "employeeCode", "employeeId", "fullName", "remainingMinutes", "standardDayMinutes" ]
-      },
-      "CarryOverView" : {
-        "type" : "object",
-        "properties" : {
-          "expiresOn" : {
-            "type" : [ "string", "null" ],
-            "format" : "date"
-          },
-          "fromYear" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "items" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/CarryOverItem"
-            }
-          },
-          "maxCarryOverDays" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "toYear" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        },
-        "required" : [ "expiresOn", "fromYear", "items", "maxCarryOverDays", "toYear" ]
       },
       "ChangeOwnPasswordRequest" : {
         "type" : "object",
@@ -8025,19 +7767,6 @@
           }
         },
         "required" : [ "approvedByAccountId", "baseSalary", "createdAt", "effectiveFrom", "effectiveTo", "employeeId", "id", "note", "reason" ]
-      },
-      "SetCarriedOverLeaveRequest" : {
-        "type" : "object",
-        "properties" : {
-          "carriedOverMinutes" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "reason" : {
-            "type" : [ "string", "null" ]
-          }
-        },
-        "required" : [ "carriedOverMinutes" ]
       },
       "SetSalaryCommand" : {
         "type" : "object",

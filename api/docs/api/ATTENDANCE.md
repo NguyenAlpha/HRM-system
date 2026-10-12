@@ -37,10 +37,6 @@ Quy trình một tháng:
 | `GET /api/leave-requests/employees/{employeeId}` | `request.self.read` (chính mình) hoặc `request.read` (trong scope) | Đơn nghỉ của một nhân viên, có phân trang |
 | `GET /api/leave-requests/pending` | `request.approve` | Đơn `PENDING` trong phạm vi người duyệt |
 | `GET /api/leave-entitlements/employees/{employeeId}` | Chính nhân viên đó, hoặc `request.read` (trong scope) | Xem số dư phép năm |
-| `PUT /api/leave-entitlements/employees/{employeeId}/adjustment` | `request.manage` (trong scope) | Cộng hoặc trừ hạn mức |
-| `PUT /api/leave-entitlements/employees/{employeeId}/carried-over` | `request.manage` (trong scope) | Nhập tay số phút chuyển từ năm trước |
-| `GET /api/leave-entitlements/carry-over` | `request.manage`, phạm vi `COMPANY` | Xem trước kết quả chốt phép năm |
-| `POST /api/leave-entitlements/carry-over` | `request.manage`, phạm vi `COMPANY` | Chốt phép năm |
 
 Tất cả endpoint yêu cầu Bearer token, trừ `POST /api/attendance/punches`. Permission `*.self.*` chỉ cho thao tác trên hồ sơ nhân viên gắn với account đang đăng nhập; permission còn lại được kiểm tra thêm theo scope của role (phân công hiện hành của nhân viên). Phần kiểm tra chính mình/scope nằm ở service, nên request ngoài scope trả `403 FORBIDDEN`.
 
@@ -492,16 +488,11 @@ GET /api/leave-entitlements/employees/1?year=2026
   "data": {
     "employeeId": 1,
     "year": 2026,
-    "grantedMinutes": 6240,
-    "carriedOverMinutes": 480,
-    "carriedOverExpiresOn": "2026-03-31",
-    "expiredCarriedOverMinutes": 0,
-    "adjustmentMinutes": 0,
-    "adjustmentReason": null,
+    "grantedMinutes": 5760,
     "standardDayMinutes": 480,
     "usedMinutes": 960,
     "pendingMinutes": 240,
-    "remainingMinutes": 5040
+    "remainingMinutes": 4560
   },
   "error": null
 }
@@ -509,118 +500,17 @@ GET /api/leave-entitlements/employees/1?year=2026
 
 | Field | Ý nghĩa |
 |:------|:--------|
-| `grantedMinutes` | Tổng hạn mức, đã gồm phần chuyển từ năm trước và điều chỉnh |
-| `carriedOverMinutes`, `carriedOverExpiresOn` | Phần chuyển từ năm trước và hạn dùng |
-| `expiredCarriedOverMinutes` | Phần chuyển sang chưa dùng đã hết hạn |
-| `adjustmentMinutes`, `adjustmentReason` | Điều chỉnh của HR |
+| `grantedMinutes` | Hạn mức của năm, tính theo [Hạn mức phép năm](#hạn-mức-phép-năm) |
 | `usedMinutes`, `pendingMinutes` | Đơn `ANNUAL` đã duyệt và đang chờ |
-| `remainingMinutes` | Số dư còn lại, đã trừ phần hết hạn |
+| `remainingMinutes` | `grantedMinutes − usedMinutes − pendingMinutes` |
 | `standardDayMinutes` | Số phút một ngày phép, để client quy ra ngày |
 
----
-
-## PUT `/api/leave-entitlements/employees/{employeeId}/adjustment`
-
-Cộng hoặc trừ hạn mức của năm (`?year=`, mặc định năm hiện tại). Giá trị gửi lên thay thế điều chỉnh trước đó.
-
-### Request
-
-```json
-{
-  "adjustmentMinutes": 480,
-  "reason": "Thưởng thêm 1 ngày phép"
-}
-```
-
-| Field | Type | Bắt buộc | Ràng buộc |
-|:------|:-----|:--------:|:----------|
-| `adjustmentMinutes` | int | ✅ | Có thể âm, nhưng hạn mức năm sau điều chỉnh không được âm |
-| `reason` | string | ✅ | Không rỗng |
-
-Response `200 OK` trả `BalanceView` mới.
-
----
-
-## PUT `/api/leave-entitlements/employees/{employeeId}/carried-over`
-
-Nhập tay số phút chuyển từ năm trước vào năm `?year=`. Hạn dùng lấy theo quy tắc của năm đó; nhập 0 thì bỏ hạn.
-
-### Request
-
-```json
-{
-  "carriedOverMinutes": 960,
-  "reason": "Chuyển phép từ hệ thống cũ"
-}
-```
-
-| Field | Type | Bắt buộc | Ràng buộc |
-|:------|:-----|:--------:|:----------|
-| `carriedOverMinutes` | int | ✅ | ≥ 0 |
-| `reason` | string | | |
-
-Response `200 OK` trả `BalanceView` mới.
-
-### Lỗi chung của hạn mức phép
+### Lỗi
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
-| 400 | `VALIDATION_ERROR` | Thiếu lý do, điều chỉnh làm hạn mức âm, hoặc số phút chuyển âm |
-| 403 | `FORBIDDEN` | Không có permission hoặc nhân viên ngoài scope |
+| 403 | `FORBIDDEN` | Không phải chính nhân viên đó, và không có `request.read` hoặc nhân viên ngoài scope |
 | 404 | `EMPLOYEE_NOT_FOUND` | Nhân viên không tồn tại hoặc đã bị xóa mềm |
-
----
-
-## GET `/api/leave-entitlements/carry-over`
-
-Xem trước kết quả chốt phép năm.
-
-```http
-GET /api/leave-entitlements/carry-over?fromYear=2026
-```
-
-### Response `200 OK`
-
-```json
-{
-  "success": true,
-  "data": {
-    "fromYear": 2026,
-    "toYear": 2027,
-    "maxCarryOverDays": 5,
-    "expiresOn": "2027-03-31",
-    "items": [
-      {
-        "employeeId": 1,
-        "employeeCode": "GD0001",
-        "fullName": "Nguyễn Văn An",
-        "remainingMinutes": 1440,
-        "standardDayMinutes": 480,
-        "currentCarriedOverMinutes": 0,
-        "carriedOverMinutes": 1440
-      }
-    ]
-  },
-  "error": null
-}
-```
-
-| Field | Ý nghĩa |
-|:------|:--------|
-| `expiresOn` | Ngày cuối của tháng hết hạn trong năm sau |
-| `items[].remainingMinutes` | Số dư năm `fromYear` tính tại 31/12; đơn còn `PENDING` được tính như đã dùng |
-| `items[].currentCarriedOverMinutes` | Số phút đang ghi cho năm sau |
-| `items[].carriedOverMinutes` | Số phút sẽ ghi: bằng số dư nhưng không quá `maxCarryOverDays` ngày |
-
-Danh sách gồm nhân viên còn làm việc ngày 01/01 năm sau và vào làm trước 31/12 năm chốt.
-
----
-
-## POST `/api/leave-entitlements/carry-over`
-
-Chốt phép năm: tính lại như bản xem trước rồi ghi `carried_over_minutes` và `carried_over_expires_on` vào hạn mức năm sau, tạo hạn mức nếu chưa có. Response giống `GET`.
-
-Gọi lại sẽ tính lại và ghi đè, nên nếu sửa đơn của năm cũ sau khi chốt thì chốt lại một lần nữa.
 
 ---
 
@@ -638,25 +528,18 @@ Gọi lại sẽ tính lại và ghi đè, nên nếu sửa đơn của năm cũ
 
 ## Hạn mức phép năm
 
-Mỗi nhân viên có một hạn mức phép năm cho mỗi năm và `POST /api/leave-requests/{id}/approve` sẽ trả `409` nếu đơn vượt số dư còn lại.
+Mỗi nhân viên được **12 ngày phép năm** (Bộ luật Lao động 2019, Điều 113) và `POST /api/leave-requests/{id}/approve` sẽ trả `409` nếu đơn vượt số dư còn lại. Chỉ có hai quy tắc:
 
-Hạn mức tính theo quy tắc trong `leave_entitlement_rules`, bộ nạp sẵn từ 01/01/2026 là **12 ngày cơ bản, cứ đủ 5 năm làm việc cộng thêm 1 ngày** (Bộ luật Lao động 2019, Điều 113 khoản 1 và Điều 114):
+- Làm cả năm: 12 ngày.
+- Vào làm giữa năm: 12 × số tháng làm việc / 12, tháng vào làm tính trọn tháng. Vào làm tháng 9 được 4 ngày, tháng 10 được 3 ngày.
 
-- Thâm niên đếm từ `employees.seniority_start_date`, thiếu thì lấy `hire_date`, và tính theo số năm **đã tròn tại ngày 01/01 của năm phép**. Người đủ 5 năm vào tháng 6 thì được cộng ngày từ năm kế tiếp.
-- Vào làm giữa năm thì chia theo số tháng còn lại của năm. Vào làm tháng 10 được 3/12 của hạn mức.
-- Số ngày quy ra phút theo `standard_work_minutes` của ca trong phân công chính đang mở; không có ca thì dùng 480 phút. Giá trị này được snapshot vào `employee_leave_entitlements.standard_day_minutes` nên đổi ca sau đó không viết lại năm đã cấp.
+Không cộng phép theo thâm niên, không chuyển phép dư sang năm sau và HR không điều chỉnh tay. Hạn mức **không lưu trong database** mà được tính mỗi lần từ `employees.hire_date`; số ngày quy ra phút theo `standard_work_minutes` của ca trong phân công chính đang mở, không có ca thì dùng 480 phút.
 
 Chỉ `ANNUAL` trừ vào số dư. `SICK`, `MATERNITY`, `UNPAID` và `OTHER` đi theo quy trình riêng và không ảnh hưởng hạn mức.
 
 Khi kiểm tra, các đơn `PENDING` khác được tính như đã tiêu. Nếu không làm vậy thì ba đơn cùng chờ duyệt sẽ cùng qua được kiểm tra rồi mới vượt hạn mức sau khi duyệt hết.
 
-Bảng hạn mức **không lưu số phút đã dùng**; số đã dùng và đang chờ được tính trực tiếp từ `leave_requests`, nên không thể lệch với đơn thật.
-
-### Chốt phép năm
-
-Luật cho phép thỏa thuận chuyển phép chưa nghỉ sang năm sau; mức chuyển là chính sách công ty, lưu trong `leave_entitlement_rules`: `max_carry_over_days` (bộ nạp sẵn: 5 ngày) và `carry_over_expiry_month` (bộ nạp sẵn: tháng 3). Quy tắc được lấy theo ngày 01/01 của năm nhận phép.
-
-Hết hạn: đơn `ANNUAL` bắt đầu đến hết `carriedOverExpiresOn` dùng phần chuyển sang trước. Sau ngày đó phần chuyển sang chưa dùng mất hiệu lực và được báo trong `expiredCarriedOverMinutes`; `remainingMinutes` đã trừ phần này. Kiểm tra số dư khi duyệt đơn dùng ngày bắt đầu của đơn, nên đơn tháng 4 không được dùng phần đã hết hạn dù được duyệt sớm.
+Số đã dùng và đang chờ được tính trực tiếp từ `leave_requests`, nên không thể lệch với đơn thật.
 
 ---
 
