@@ -115,7 +115,7 @@ apps/web/
 │   │       ├── layout.tsx            # Khung chung: tải phiên một lần, sidebar Admin
 │   │       ├── page.tsx              # Trang Admin Console
 │   │       ├── employees/            # Danh sách và hồ sơ nhân viên (chỉ đọc, cấp tài khoản)
-│   │       ├── accounts/page.tsx     # Danh sách tài khoản (chỉ đọc)
+│   │       ├── accounts/page.tsx     # Danh sách và vòng đời tài khoản
 │   │       ├── company-owner/page.tsx # Bootstrap Company Owner
 │   │       ├── organization/page.tsx # Quản trị tổ chức từ Admin Console
 │   │       ├── rbac/page.tsx         # Quản lý custom role

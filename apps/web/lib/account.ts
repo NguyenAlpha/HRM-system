@@ -29,10 +29,14 @@ export function listAccounts(portal: Portal, page: number): Promise<AccountPage>
 }
 
 /** Resend an invitation (PENDING) or start a password reset (ACTIVE/LOCKED); both return a new one-time token. */
-export function issueAccountInvitation(accountId: number, action: "invitations/resend" | "password-reset"): Promise<AccountInvitation> {
-  return authorizedRequest<AccountInvitation>("hrm", `/accounts/${accountId}/${action}`, { method: "POST", cache: "no-store" })
+export function issueAccountInvitation(
+  portal: Portal,
+  accountId: number,
+  action: "invitations/resend" | "password-reset",
+): Promise<AccountInvitation> {
+  return authorizedRequest<AccountInvitation>(portal, `/accounts/${accountId}/${action}`, { method: "POST", cache: "no-store" })
 }
 
-export function changeAccountStatus(accountId: number, action: "suspend" | "activate"): Promise<Account> {
-  return authorizedRequest<Account>("hrm", `/accounts/${accountId}/${action}`, { method: "POST", cache: "no-store" })
+export function changeAccountStatus(portal: Portal, accountId: number, action: "suspend" | "activate"): Promise<Account> {
+  return authorizedRequest<Account>(portal, `/accounts/${accountId}/${action}`, { method: "POST", cache: "no-store" })
 }
