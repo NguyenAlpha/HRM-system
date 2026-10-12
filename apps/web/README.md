@@ -42,7 +42,7 @@ Access token và refresh token được lưu trong bộ cookie `HttpOnly` riêng
 | `/payslips` | Lương, bảo hiểm, người phụ thuộc, kỳ lương và phiếu lương |
 | `/reports/workforce` | Báo cáo nhân sự và phân bố lương cơ bản |
 | `/rbac`, `/role-grant`, `/role-requests` | Custom role, gán role và yêu cầu cấp role |
-| `/admin/company-owner`, `/admin/organization`, `/admin/rbac`, `/admin/role-grant` | Các chức năng quản trị hệ thống |
+| `/admin/employees`, `/admin/accounts`, `/admin/company-owner`, `/admin/organization`, `/admin/rbac`, `/admin/role-grant` | Các chức năng quản trị hệ thống; nhân sự và tài khoản ở Admin chỉ xem và cấp tài khoản |
 
 Mỗi trang tự ẩn thao tác không có quyền để cải thiện trải nghiệm; Spring Boot API vẫn là nơi quyết định authorization và scope dữ liệu.
 

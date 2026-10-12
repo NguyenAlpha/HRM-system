@@ -26,6 +26,7 @@ import {
   isSessionExpired,
   type EmployeeDetail,
 } from "@/lib/employee"
+import type { Portal } from "@/lib/auth/types"
 
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
@@ -36,7 +37,8 @@ function Field({ label, value }: { label: string; value: string | null | undefin
   )
 }
 
-export function EmployeeDetailDialog({ employeeId, canUpdate, canProvisionAccount, onClose, onEdit, onProvision, onSessionExpired }: {
+export function EmployeeDetailDialog({ portal, employeeId, canUpdate, canProvisionAccount, onClose, onEdit, onProvision, onSessionExpired }: {
+  portal: Portal
   employeeId: number
   canUpdate: boolean
   canProvisionAccount: boolean
@@ -51,7 +53,7 @@ export function EmployeeDetailDialog({ employeeId, canUpdate, canProvisionAccoun
 
   useEffect(() => {
     let active = true
-    employeeRequest<EmployeeDetail>("hrm", `/${employeeId}`)
+    employeeRequest<EmployeeDetail>(portal, `/${employeeId}`)
       .then((result) => {
         if (active) setDetail(result)
       })
@@ -64,7 +66,7 @@ export function EmployeeDetailDialog({ employeeId, canUpdate, canProvisionAccoun
         if (active) setLoading(false)
       })
     return () => { active = false }
-  }, [employeeId, onSessionExpired])
+  }, [portal, employeeId, onSessionExpired])
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>

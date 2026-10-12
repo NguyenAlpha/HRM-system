@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
 
 export function AccountPage() {
-  const { session, onSessionExpired } = usePortalSession()
+  const { portal, session, onSessionExpired } = usePortalSession()
   const has = (code: string) => session.account.permissions.some((permission) => permission.code === code)
 
   return (
@@ -18,6 +18,7 @@ export function AccountPage() {
       <div className="mt-6 grid gap-6">
         {has("account.read") ? (
           <AccountManager
+            portal={portal}
             currentAccountId={session.account.accountId}
             canManage={has("account.manage")}
             canManageActivation={has("account.activation.manage")}

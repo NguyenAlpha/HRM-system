@@ -41,6 +41,8 @@ Trang `/activate` nằm ngoài hai khu vực trên: không cần đăng nhập, 
 | Route | Nội dung |
 |:------|:---------|
 | `/admin` | Tổng quan quản trị hệ thống |
+| `/admin/employees`, `/admin/employees/{employeeId}` | Xem danh sách, hồ sơ nhân viên và cấp tài khoản (chỉ đọc hồ sơ) |
+| `/admin/accounts` | Xem danh sách tài khoản; khóa, mở khóa và reset mật khẩu chỉ có ở HRM Workspace |
 | `/admin/company-owner` | Khởi tạo Company Owner đầu tiên |
 | `/admin/organization` | Dữ liệu tổ chức phục vụ bootstrap |
 | `/admin/rbac` | CRUD custom role, xem permission và đồng bộ quyền |

@@ -6,6 +6,8 @@ interface PortalConfig {
   apiPrefix: string
   loginPath: string
   homePath: string
+  /** Prefix of the portal's own pages, e.g. `${pagePrefix}/employees`. */
+  pagePrefix: string
 }
 
 export const PORTAL_CONFIG: Record<Portal, PortalConfig> = {
@@ -15,6 +17,7 @@ export const PORTAL_CONFIG: Record<Portal, PortalConfig> = {
     apiPrefix: "/api/session",
     loginPath: "/login",
     homePath: "/dashboard",
+    pagePrefix: "",
   },
   admin: {
     accessCookie: "hrm_admin_access_token",
@@ -22,6 +25,7 @@ export const PORTAL_CONFIG: Record<Portal, PortalConfig> = {
     apiPrefix: "/api/admin-session",
     loginPath: "/admin/login",
     homePath: "/admin",
+    pagePrefix: "/admin",
   },
 }
 

@@ -55,6 +55,7 @@ import {
   type EmployeeAssignment,
   type EmployeeDetail,
 } from "@/lib/employee"
+import { PORTAL_CONFIG } from "@/lib/auth/config"
 
 const ACCOUNT_STATUS_LABELS: Record<string, string> = {
   PENDING: "Chờ kích hoạt",
@@ -115,7 +116,7 @@ function DetailSkeleton() {
 
 export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
   const router = useRouter()
-  const { session, onSessionExpired } = usePortalSession()
+  const { portal, session, onSessionExpired } = usePortalSession()
   const [detail, setDetail] = useState<EmployeeDetail | null>(null)
   const [assignments, setAssignments] = useState<EmployeeAssignment[]>([])
   const [loading, setLoading] = useState(true)
@@ -137,9 +138,9 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
       (permission) => permission.code === "employee.assignment.read",
     )
     Promise.all([
-      employeeRequest<EmployeeDetail>("hrm", `/${numericEmployeeId}`),
+      employeeRequest<EmployeeDetail>(portal, `/${numericEmployeeId}`),
       canReadAssignments
-        ? employeeRequest<EmployeeAssignment[]>("hrm", `/${numericEmployeeId}/assignments`)
+        ? employeeRequest<EmployeeAssignment[]>(portal, `/${numericEmployeeId}/assignments`)
         : Promise.resolve([]),
     ])
       .then(([employeeDetail, assignmentHistory]) => {
@@ -157,7 +158,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
       })
 
     return () => { active = false }
-  }, [hasValidEmployeeId, numericEmployeeId, onSessionExpired, revision, session])
+  }, [hasValidEmployeeId, numericEmployeeId, onSessionExpired, portal, revision, session])
 
   function reload() {
     setLoading(true)
@@ -172,6 +173,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
   const canReadEmployeeList = session.account.permissions.some(
     (permission) => permission.code === "employee.list.read",
   )
+  const backHref = canReadEmployeeList ? `${PORTAL_CONFIG[portal].pagePrefix}/employees` : PORTAL_CONFIG[portal].homePath
   const canManageCompensation = session.account.permissions.some(
     (permission) => permission.code === "compensation.manage",
   )
@@ -234,7 +236,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
           <Button
             variant="outline"
             nativeButton={false}
-            render={<Link href={canReadEmployeeList ? "/employees" : "/dashboard"} />}
+            render={<Link href={backHref} />}
           >
             <ArrowLeft /> {canReadEmployeeList ? "Về danh sách" : "Về tổng quan"}
           </Button>
@@ -469,7 +471,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
         <EmployeeDeleteDialog
           employee={detail}
           onClose={() => setDeleting(false)}
-          onDeleted={() => router.replace(canReadEmployeeList ? "/employees" : "/dashboard")}
+          onDeleted={() => router.replace(backHref)}
           onSessionExpired={onSessionExpired}
         />
       )}

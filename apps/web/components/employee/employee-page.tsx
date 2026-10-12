@@ -5,7 +5,7 @@ import { usePortalSession } from "@/components/portal/portal-shell"
 import { EmployeeManager } from "@/components/employee/employee-manager"
 
 export function EmployeePage() {
-  const { session, onSessionExpired } = usePortalSession()
+  const { portal, session, onSessionExpired } = usePortalSession()
   const permissionCodes = new Set(session.account.permissions.map((permission) => permission.code))
   const capabilities = {
     canReadDetail: permissionCodes.has("employee.read"),
@@ -25,7 +25,7 @@ export function EmployeePage() {
       />
 
       <div className="mt-6">
-        <EmployeeManager capabilities={capabilities} onSessionExpired={onSessionExpired} />
+        <EmployeeManager portal={portal} capabilities={capabilities} onSessionExpired={onSessionExpired} />
       </div>
     </>
   )
