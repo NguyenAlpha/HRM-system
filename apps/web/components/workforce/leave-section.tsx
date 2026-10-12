@@ -19,7 +19,6 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
-import { LeaveCarryOverPanel } from "@/components/workforce/leave-carry-over-panel"
 import {
   EmptyRow,
   SectionError,
@@ -126,10 +125,7 @@ export function LeaveSection({ employeeId, permissions, month }: WorkforceContex
     <div className="grid gap-6">
       <SectionError error={error} />
 
-      {balance && (
-        <BalanceCard key={`${balance.employeeId}-${balance.year}-${balance.adjustmentMinutes}-${balance.carriedOverMinutes}`}
-          balance={balance} employeeId={employeeId} canManage={canManage} busy={busy} run={run} />
-      )}
+      {balance && <BalanceCard balance={balance} />}
 
       {canApprove && (
         <Card>
@@ -174,8 +170,6 @@ export function LeaveSection({ employeeId, permissions, month }: WorkforceContex
           </CardContent>
         </Card>
       )}
-
-      {canManage && <LeaveCarryOverPanel />}
 
       {review && (
         <ReviewDialog review={review} busy={busy} onClose={() => setReview(null)}
@@ -236,17 +230,8 @@ function LeaveTable({ leaves, showEmployee = false, emptyText, actions }: {
   )
 }
 
-function BalanceCard({ balance, employeeId, canManage, busy, run }: {
-  balance: LeaveBalance
-  employeeId: number
-  canManage: boolean
-  busy: boolean
-  run: (success: string, action: () => Promise<unknown>) => Promise<boolean>
-}) {
+function BalanceCard({ balance }: { balance: LeaveBalance }) {
   const day = balance.standardDayMinutes
-  const [adjustmentDays, setAdjustmentDays] = useState(String(toDays(balance.adjustmentMinutes, day)))
-  const [adjustmentReason, setAdjustmentReason] = useState(balance.adjustmentReason ?? "")
-  const [carriedOverDays, setCarriedOverDays] = useState(String(toDays(balance.carriedOverMinutes, day)))
   const stats = [
     ["Được cấp", balance.grantedMinutes],
     ["Đã dùng", balance.usedMinutes],
@@ -259,12 +244,11 @@ function BalanceCard({ balance, employeeId, canManage, busy, run }: {
       <CardHeader>
         <CardTitle>Phép năm {balance.year}</CardTitle>
         <CardDescription>
-          Một ngày = {day} phút theo ca làm việc. Đã gồm {toDays(balance.carriedOverMinutes, day)} ngày chuyển từ năm trước
-          {balance.carriedOverExpiresOn && ` (dùng đến hết ${balance.carriedOverExpiresOn})`} và điều chỉnh {toDays(balance.adjustmentMinutes, day)} ngày
-          {balance.adjustmentReason ? ` (${balance.adjustmentReason})` : ""}.
+          12 ngày mỗi năm, vào làm giữa năm thì tính theo số tháng làm việc. Phép không dùng hết không chuyển sang năm sau.
+          Một ngày = {day} phút theo ca làm việc.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent>
         <dl className="grid gap-3 sm:grid-cols-4">
           {stats.map(([label, minutes]) => (
             <div key={label} className="rounded-xl border px-4 py-3">
@@ -273,42 +257,6 @@ function BalanceCard({ balance, employeeId, canManage, busy, run }: {
             </div>
           ))}
         </dl>
-        {balance.expiredCarriedOverMinutes > 0 && (
-          <p className="text-sm text-muted-foreground">
-            {toDays(balance.expiredCarriedOverMinutes, day)} ngày chuyển từ năm trước đã hết hạn và không còn dùng được.
-          </p>
-        )}
-        {canManage && (
-          <div className="grid gap-4 border-t pt-4 sm:grid-cols-2">
-            <form className="grid content-start gap-2" onSubmit={(event) => {
-              event.preventDefault()
-              void run("Đã cập nhật điều chỉnh phép năm", () => workforceApi(
-                `leave-entitlements/employees/${employeeId}/adjustment?year=${balance.year}`, "PUT", {
-                  adjustmentMinutes: Math.round(Number(adjustmentDays) * day), reason: adjustmentReason.trim(),
-                } satisfies WorkforceBody["AdjustLeaveEntitlementRequest"]))
-            }}>
-              <Label htmlFor="leave-adjustment">Tổng điều chỉnh (ngày, có thể âm)</Label>
-              <Input id="leave-adjustment" required type="number" step="0.5" value={adjustmentDays}
-                onChange={(event) => setAdjustmentDays(event.target.value)} />
-              <Label htmlFor="leave-adjustment-reason">Lý do</Label>
-              <Input id="leave-adjustment-reason" required value={adjustmentReason} onChange={(event) => setAdjustmentReason(event.target.value)} />
-              <Button type="submit" variant="outline" disabled={busy}>Lưu điều chỉnh</Button>
-            </form>
-            <form className="grid content-start gap-2" onSubmit={(event) => {
-              event.preventDefault()
-              void run("Đã cập nhật phép chuyển từ năm trước", () => workforceApi(
-                `leave-entitlements/employees/${employeeId}/carried-over?year=${balance.year}`, "PUT", {
-                  carriedOverMinutes: Math.round(Number(carriedOverDays) * day),
-                } satisfies WorkforceBody["SetCarriedOverLeaveRequest"]))
-            }}>
-              <Label htmlFor="leave-carried-over">Chuyển từ năm trước (ngày)</Label>
-              <Input id="leave-carried-over" required type="number" min="0" step="0.5" value={carriedOverDays}
-                onChange={(event) => setCarriedOverDays(event.target.value)} />
-              <p className="text-xs text-muted-foreground">Thường do “Chốt phép năm” ghi; chỉ sửa tay khi cần đính chính.</p>
-              <Button type="submit" variant="outline" disabled={busy}>Lưu phép chuyển năm</Button>
-            </form>
-          </div>
-        )}
       </CardContent>
     </Card>
   )

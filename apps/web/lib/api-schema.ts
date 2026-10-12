@@ -252,7 +252,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["getById_6"];
-        put: operations["adjust_1"];
+        put: operations["adjust"];
         post?: never;
         delete?: never;
         options?: never;
@@ -628,22 +628,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/leave-entitlements/carry-over": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["preview"];
-        put?: never;
-        post: operations["apply"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/leave-entitlements/employees/{employeeId}": {
         parameters: {
             query?: never;
@@ -653,38 +637,6 @@ export interface paths {
         };
         get: operations["getBalance"];
         put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/leave-entitlements/employees/{employeeId}/adjustment": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: operations["adjust"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/leave-entitlements/employees/{employeeId}/carried-over": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: operations["setCarriedOver"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1508,11 +1460,6 @@ export interface components {
             /** Format: int32 */
             workedMinutes: number;
         };
-        AdjustLeaveEntitlementRequest: {
-            /** Format: int32 */
-            adjustmentMinutes: number;
-            reason: string;
-        };
         ApiResultAccountInvitationResponse: {
             data: components["schemas"]["AccountInvitationResponse"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
@@ -1555,11 +1502,6 @@ export interface components {
         };
         ApiResultBalanceView: {
             data: components["schemas"]["BalanceView"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-            success: boolean;
-        };
-        ApiResultCarryOverView: {
-            data: components["schemas"]["CarryOverView"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
@@ -1937,17 +1879,8 @@ export interface components {
             workLocationName: string | null;
         };
         BalanceView: {
-            /** Format: int32 */
-            adjustmentMinutes: number;
-            adjustmentReason: string | null;
-            /** Format: date */
-            carriedOverExpiresOn: string | null;
-            /** Format: int32 */
-            carriedOverMinutes: number;
             /** Format: int64 */
             employeeId: number;
-            /** Format: int32 */
-            expiredCarriedOverMinutes: number;
             /** Format: int32 */
             grantedMinutes: number;
             /** Format: int32 */
@@ -1963,31 +1896,6 @@ export interface components {
         };
         CancelRoleAssignmentRequest: {
             reason: string;
-        };
-        CarryOverItem: {
-            /** Format: int32 */
-            carriedOverMinutes: number;
-            /** Format: int32 */
-            currentCarriedOverMinutes: number;
-            employeeCode: string;
-            /** Format: int64 */
-            employeeId: number;
-            fullName: string;
-            /** Format: int32 */
-            remainingMinutes: number;
-            /** Format: int32 */
-            standardDayMinutes: number;
-        };
-        CarryOverView: {
-            /** Format: date */
-            expiresOn: string | null;
-            /** Format: int32 */
-            fromYear: number;
-            items: components["schemas"]["CarryOverItem"][];
-            /** Format: int32 */
-            maxCarryOverDays: number;
-            /** Format: int32 */
-            toYear: number;
         };
         ChangeOwnPasswordRequest: {
             currentPassword: string;
@@ -2797,11 +2705,6 @@ export interface components {
             note: string | null;
             reason: string | null;
         };
-        SetCarriedOverLeaveRequest: {
-            /** Format: int32 */
-            carriedOverMinutes: number;
-            reason?: string | null;
-        };
         SetSalaryCommand: {
             baseSalary: number;
             /** Format: date */
@@ -3394,7 +3297,7 @@ export interface operations {
             };
         };
     };
-    adjust_1: {
+    adjust: {
         parameters: {
             query?: never;
             header?: never;
@@ -4233,50 +4136,6 @@ export interface operations {
             };
         };
     };
-    preview: {
-        parameters: {
-            query: {
-                fromYear: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultCarryOverView"];
-                };
-            };
-        };
-    };
-    apply: {
-        parameters: {
-            query: {
-                fromYear: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultCarryOverView"];
-                };
-            };
-        };
-    };
     getBalance: {
         parameters: {
             query?: {
@@ -4289,62 +4148,6 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultBalanceView"];
-                };
-            };
-        };
-    };
-    adjust: {
-        parameters: {
-            query?: {
-                year?: number;
-            };
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AdjustLeaveEntitlementRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultBalanceView"];
-                };
-            };
-        };
-    };
-    setCarriedOver: {
-        parameters: {
-            query?: {
-                year?: number;
-            };
-            header?: never;
-            path: {
-                employeeId: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SetCarriedOverLeaveRequest"];
-            };
-        };
         responses: {
             /** @description OK */
             200: {

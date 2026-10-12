@@ -1,4 +1,4 @@
--- Dữ liệu pháp lý dùng chung cho mọi môi trường: thuế TNCN, bảo hiểm bắt buộc và phép năm.
+-- Dữ liệu pháp lý dùng chung cho mọi môi trường: thuế TNCN và bảo hiểm bắt buộc.
 -- Mỗi quy tắc có khoảng hiệu lực; năm/chính sách mới chỉ được thêm sau khi đã rà soát nguồn
 -- (quy ước sửa file hay thêm migration: xem mục 15 của DATABASE_SCHEMA.md).
 
@@ -24,14 +24,3 @@ VALUES
     ('2026-07-01', '2026-12-31', 0.08, 0.015, 0.01, 50600000, 20,
      5310000, 4730000, 4140000, 3700000,
      'Decree 161/2026/ND-CP; Decree 293/2025/ND-CP; Employment Law 2025');
-
--- Bộ luật Lao động 2019: 12 ngày cơ bản, cứ đủ 5 năm làm việc được cộng thêm 1 ngày.
--- Chuyển tối đa 5 ngày sang năm sau, dùng đến hết 31/3 là chính sách công ty, HR đổi được.
-INSERT INTO leave_entitlement_rules (
-    effective_from, effective_to, base_days, seniority_block_years, seniority_bonus_days,
-    max_carry_over_days, carry_over_expiry_month, source_reference
-)
-VALUES (
-    '2026-01-01', NULL, 12, 5, 1, 5, 3,
-    'Bộ luật Lao động 2019, Điều 113 khoản 1 và Điều 114'
-);

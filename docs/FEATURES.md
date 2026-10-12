@@ -25,7 +25,7 @@ Quy ước trạng thái:
 | Lương, bảo hiểm, thuế | Đủ | `/payslips` |
 | Báo cáo | Đủ | `/reports/workforce` |
 
-Toàn hệ thống có 26 controller, 49 permission trên 8 module, 7 system role và 34 bảng database.
+Toàn hệ thống có 25 controller, 49 permission trên 8 module, 7 system role và 32 bảng database.
 
 ---
 
@@ -192,13 +192,12 @@ Chi tiết: [api/docs/api/ATTENDANCE.md](../api/docs/api/ATTENDANCE.md).
 | Duyệt, từ chối | `POST /api/leave-requests/{id}/approve`, `/reject` |
 | Xem đơn của mình, của nhân viên, đơn chờ duyệt | `GET /{id}`, `/employees/{id}`, `/pending` |
 | Xem số dư phép năm | `GET /api/leave-entitlements/employees/{id}` |
-| Điều chỉnh hạn mức, nhập phép chuyển năm trước | `PUT .../adjustment`, `PUT .../carried-over` |
-| Chốt phép năm: xem trước rồi chuyển phép dư sang năm sau | `GET`/`POST /api/leave-entitlements/carry-over?fromYear=` |
 
 Vòng đời: `DRAFT` → `PENDING` → `APPROVED` / `REJECTED`, hoặc `CANCELLED`.
 
-Nghỉ `ANNUAL` có hạn mức năm: 12 ngày cơ bản, cứ đủ 5 năm thâm niên cộng 1 ngày, chia tỷ lệ theo
-số tháng còn lại nếu vào làm giữa năm. Duyệt đơn vượt số dư bị chặn bằng `409`. Khi kiểm tra, các
+Nghỉ `ANNUAL` có hạn mức năm: 12 ngày, chia tỷ lệ theo số tháng làm việc nếu vào làm giữa năm (tháng
+vào làm tính trọn tháng). Không cộng theo thâm niên, không chuyển phép dư sang năm sau, HR không điều
+chỉnh tay; hạn mức được tính mỗi lần, không lưu database. Duyệt đơn vượt số dư bị chặn bằng `409`. Khi kiểm tra, các
 đơn `PENDING` khác được tính như đã tiêu nên nhiều đơn cùng chờ không thể cùng lọt qua. Số dư lưu
 bằng phút để khớp với chấm công và payroll; các loại nghỉ còn lại không trừ hạn mức.
 
@@ -273,7 +272,7 @@ Báo cáo lương chỉ trả số liệu tổng hợp theo khoảng, không tr�
   khoản khác chỉ nhập tay theo kỳ.
 - Chưa hỗ trợ người không cư trú thuế.
 - Quy tắc thuế và bảo hiểm chỉ nạp đến hết 2026, phải thêm bằng migration khi chính sách đổi.
-- Chốt phép năm do HR bấm trên `/leave-requests`, chưa tự chạy vào 01/01.
+- Phép năm không cộng theo thâm niên (Điều 114) và không chuyển phép dư sang năm sau.
 - Chưa tích hợp máy chấm công vật lý.
 - Chưa có nhật ký audit cho toàn bộ thay đổi dữ liệu.
 - Chưa mã hóa cấp cột cho dữ liệu nhạy cảm; hiện chỉ kiểm soát bằng quyền và phạm vi.

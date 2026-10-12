@@ -40,7 +40,7 @@ Nhân viên nghỉ việc
 
 Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 
-### 1.2. Danh sách 33 bảng nghiệp vụ
+### 1.2. Danh sách 31 bảng nghiệp vụ
 
 | Nhóm | Các bảng |
 |---|---|
@@ -48,18 +48,18 @@ Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 | Nhân sự và lương thỏa thuận | `employees`, `employee_assignments`, `employee_salary_history` |
 | Chính sách phụ cấp | `position_allowance_rules`, `seniority_allowance_rules` |
 | Tài khoản và RBAC | `accounts`, `account_activation_tokens`, `refresh_tokens`, `permissions`, `roles`, `role_permissions`, `role_assignment_requests`, `account_role_assignments`, `account_permission_overrides` |
-| Nghỉ phép | `leave_requests`, `leave_entitlement_rules`, `employee_leave_entitlements` |
+| Nghỉ phép | `leave_requests` |
 | Lịch và chấm công | `company_holidays`, `work_shifts`, `attendance_records` |
 | Hồ sơ khấu trừ | `employee_payroll_profiles`, `employee_tax_dependents` |
 | Quy tắc thuế và bảo hiểm | `payroll_tax_rules`, `payroll_tax_brackets`, `payroll_insurance_rules` |
 | Tính lương | `payroll_periods`, `payroll_adjustments`, `payslips`, `payslip_items` |
 
-Bảng kỹ thuật `employee_code_counters` không nằm trong con số 33 này. Tính cả nó, database
-runtime có 34 bảng (chưa kể bảng `flyway_schema_history` của Flyway).
+Bảng kỹ thuật `employee_code_counters` không nằm trong con số 31 này. Tính cả nó, database
+runtime có 32 bảng (chưa kể bảng `flyway_schema_history` của Flyway).
 
 ### 1.3. Sơ đồ quan hệ tổng quát
 
-Sơ đồ có đủ 33 bảng nghiệp vụ và các thuộc tính nghiệp vụ chính. Các cột kỹ thuật, người tạo/người duyệt và quan hệ kiểm toán được trình bày trong phần định nghĩa bảng bên dưới để sơ đồ dễ đọc. Chính sách thâm niên được áp dụng bằng thuật toán theo số năm và thời gian hiệu lực, không có khóa ngoại trực tiếp từ nhân viên. `company_holidays` đứng độc lập trong sơ đồ vì nó sửa lịch làm việc chung chứ không tham chiếu bản ghi nào.
+Sơ đồ có đủ 31 bảng nghiệp vụ và các thuộc tính nghiệp vụ chính. Các cột kỹ thuật, người tạo/người duyệt và quan hệ kiểm toán được trình bày trong phần định nghĩa bảng bên dưới để sơ đồ dễ đọc. Chính sách thâm niên được áp dụng bằng thuật toán theo số năm và thời gian hiệu lực, không có khóa ngoại trực tiếp từ nhân viên. `company_holidays` đứng độc lập trong sơ đồ vì nó sửa lịch làm việc chung chứ không tham chiếu bản ghi nào.
 
 ```mermaid
 erDiagram
@@ -314,30 +314,6 @@ erDiagram
         varchar name
     }
 
-    LEAVE_ENTITLEMENT_RULES {
-        bigint id PK
-        date effective_from
-        date effective_to
-        integer base_days
-        integer seniority_block_years
-        integer seniority_bonus_days
-        integer max_carry_over_days
-        smallint carry_over_expiry_month
-        text source_reference
-    }
-
-    EMPLOYEE_LEAVE_ENTITLEMENTS {
-        bigint id PK
-        bigint employee_id FK
-        smallint year
-        integer base_minutes
-        integer carried_over_minutes
-        date carried_over_expires_on
-        integer adjustment_minutes
-        integer standard_day_minutes
-        bigint rule_id FK
-    }
-
     EMPLOYEE_PAYROLL_PROFILES {
         bigint id PK
         bigint employee_id FK
@@ -429,8 +405,6 @@ erDiagram
     ACCOUNT_ROLE_ASSIGNMENTS ||--o{ ACCOUNT_PERMISSION_OVERRIDES : account_role_assignment_id
     PERMISSIONS ||--o{ ACCOUNT_PERMISSION_OVERRIDES : permission_id
     EMPLOYEES ||--o{ LEAVE_REQUESTS : employee_id
-    EMPLOYEES ||--o{ EMPLOYEE_LEAVE_ENTITLEMENTS : employee_id
-    LEAVE_ENTITLEMENT_RULES |o--o{ EMPLOYEE_LEAVE_ENTITLEMENTS : rule_id
     EMPLOYEES ||--o{ ATTENDANCE_RECORDS : employee_id
     WORK_SHIFTS ||--o{ ATTENDANCE_RECORDS : shift_id
     LEAVE_REQUESTS |o--o{ ATTENDANCE_RECORDS : leave_request_id
@@ -888,43 +862,7 @@ dùng `compensation.read` / `compensation.manage`, không phải `salary.*` / `a
 > - `OTHER` → `UNPAID`: đây là nhóm gom nên để mặc định không lương; nếu để `EMPLOYER_PAID` thì mọi nhân viên có đường đi vòng qua hạn mức phép năm.
 > - Nghỉ không phép không tạo `leave_requests` được duyệt; ngày công được đánh dấu `UNAUTHORIZED_ABSENCE`.
 
-### `leave_entitlement_rules` — Quy tắc cấp phép năm
-
-| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
-|---|---|---|---|
-| `id` | BIGSERIAL | PK | Khóa chính |
-| `effective_from` | DATE | NOT NULL | Ngày bắt đầu hiệu lực |
-| `effective_to` | DATE | | Ngày kết thúc, null là đang mở |
-| `base_days` | INTEGER | NOT NULL, CHECK > 0 | Số ngày phép cơ bản mỗi năm |
-| `seniority_block_years` | INTEGER | NOT NULL, CHECK > 0 | Số năm làm việc tạo thành một mốc thâm niên |
-| `seniority_bonus_days` | INTEGER | NOT NULL, CHECK >= 0 | Số ngày cộng thêm cho mỗi mốc đã đủ |
-| `max_carry_over_days` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Số ngày dư tối đa được chuyển sang năm sau khi chốt phép năm |
-| `carry_over_expiry_month` | SMALLINT | NOT NULL, DEFAULT 3, CHECK 1–12 | Phép chuyển sang dùng đến hết tháng này của năm sau |
-| `source_reference` | TEXT | NOT NULL | Căn cứ pháp lý |
-
-> `EXCLUDE USING GIST` chặn hai bộ quy tắc có khoảng hiệu lực chồng nhau. Bộ nạp sẵn từ 01/01/2026 là 12 ngày cơ bản, cứ đủ 5 năm cộng 1 ngày, theo Bộ luật Lao động 2019 Điều 113 khoản 1 và Điều 114; chính sách công ty chuyển tối đa 5 ngày, dùng đến hết 31/3 năm sau.
-
-### `employee_leave_entitlements` — Hạn mức phép năm của nhân viên
-
-| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
-|---|---|---|---|
-| `id` | BIGSERIAL | PK | Khóa chính |
-| `employee_id` | BIGINT | FK → employees, NOT NULL | Nhân viên |
-| `year` | SMALLINT | NOT NULL | Năm phép |
-| `base_minutes` | INTEGER | NOT NULL, CHECK >= 0 | Số phút tính theo quy tắc, snapshot tại thời điểm cấp |
-| `carried_over_minutes` | INTEGER | NOT NULL, DEFAULT 0, CHECK >= 0 | Số phút chuyển từ năm trước, do chốt phép năm ghi hoặc HR nhập tay |
-| `carried_over_expires_on` | DATE | | Sau ngày này phần chuyển sang chưa dùng hết hiệu lực; null là không hết hạn |
-| `adjustment_minutes` | INTEGER | NOT NULL, DEFAULT 0 | Điều chỉnh tay, cộng hoặc trừ |
-| `adjustment_reason` | TEXT | | Lý do điều chỉnh |
-| `standard_day_minutes` | INTEGER | NOT NULL, CHECK > 0 | Số phút một ngày công, snapshot để quy đổi ngày ↔ phút |
-| `rule_id` | BIGINT | FK → leave_entitlement_rules | Quy tắc đã dùng để tính |
-| `created_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người tạo bản ghi |
-| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Thời điểm tạo |
-| `updated_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Thời điểm cập nhật |
-
-> `UNIQUE(employee_id, year)`.
-> `base_minutes` và `standard_day_minutes` là snapshot có chủ đích: đổi quy tắc hoặc đổi ca của nhân viên về sau không được âm thầm viết lại một năm đã cấp.
-> Bảng **không** lưu số phút đã dùng. Số đã dùng và đang chờ duyệt được tính trực tiếp từ `leave_requests` có `leave_type = ANNUAL`, nên không thể lệch với dữ liệu đơn thật.
+Hạn mức phép năm **không có bảng riêng**: 12 ngày mỗi năm, vào làm giữa năm thì chia theo số tháng làm việc, tính mỗi lần từ `employees.hire_date`. Số đã dùng và đang chờ duyệt lấy trực tiếp từ `leave_requests` có `leave_type = ANNUAL`.
 
 ---
 
@@ -1401,9 +1339,6 @@ CREATE INDEX idx_role_assignment_requests_status_requested
 CREATE INDEX idx_leave_requests_employee_status
   ON leave_requests (employee_id, status, start_at);
 
-CREATE INDEX idx_employee_leave_entitlements_year
-  ON employee_leave_entitlements (year, employee_id);
-
 CREATE INDEX idx_employee_payroll_profiles_effective
   ON employee_payroll_profiles (employee_id, effective_from, effective_to);
 
@@ -1579,7 +1514,7 @@ ALTER TABLE payroll_adjustments ADD CONSTRAINT chk_payroll_adjustment_type
 - Sản phẩm, tồn kho, nhập kho, xuất kho và điều chuyển hàng.
 - Khách hàng, nhà cung cấp, đơn bán và doanh thu.
 - Tuyển dụng ứng viên, phỏng vấn, KPI và đào tạo.
-- Tự chạy chốt phép năm vào 01/01 (HR bấm chốt qua API) và các quy tắc cộng phép ngoài mức cơ bản + thâm niên của `leave_entitlement_rules`.
+- Cộng phép năm theo thâm niên, chuyển phép dư sang năm sau và điều chỉnh hạn mức phép bằng tay (phép năm chỉ gồm 12 ngày, chia theo tháng nếu vào làm giữa năm).
 - Hoa hồng, thưởng, quyết toán thuế năm và các trường hợp bảo hiểm/thuế ngoài phạm vi tự động hóa năm 2026.
 - Tự động làm hồ sơ/chi trả chế độ thai sản từ cơ quan BHXH.
 - Tích hợp máy chấm công vật lý.
@@ -1603,7 +1538,7 @@ vào file của domain tương ứng thay vì thêm file vá. Mỗi khi file bas
 | `V2__employees_and_accounts.sql` | `employees` và trigger thâm niên, `accounts`, `refresh_tokens`, `account_activation_tokens` | 3, 5 |
 | `V3__rbac.sql` | `permissions`, `roles`, `role_permissions`, `account_role_assignments`, `account_permission_overrides`, `role_assignment_requests` | 5 |
 | `V4__employment_and_salary.sql` | `employee_code_counters`, `employee_assignments`, `employee_salary_history`, `position_allowance_rules`, `seniority_allowance_rules` | 3, 4 |
-| `V5__leave.sql` | `leave_requests`, `leave_entitlement_rules`, `employee_leave_entitlements` | 6 |
+| `V5__leave.sql` | `leave_requests` | 6 |
 | `V6__attendance.sql` | `company_holidays`, `attendance_records` và trigger số phút theo lịch | 7 |
 | `V7__payroll.sql` | Hồ sơ khấu trừ, quy tắc thuế/bảo hiểm, `payroll_periods`, `payroll_adjustments`, `payslips`, `payslip_items` | 8 |
 | `V8__reference_data.sql` | Quy tắc thuế TNCN, bảo hiểm năm 2026 và quy tắc phép năm | 6, 8.4 |

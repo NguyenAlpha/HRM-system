@@ -3,7 +3,6 @@ package com.htttdn.hrm.service;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,17 +12,13 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import com.htttdn.hrm.entity.Employee;
-import com.htttdn.hrm.entity.EmployeeLeaveEntitlement;
-import com.htttdn.hrm.entity.LeaveEntitlementRule;
 import com.htttdn.hrm.entity.LeaveRequest;
 import com.htttdn.hrm.entity.enums.LeaveRequestStatus;
 import com.htttdn.hrm.entity.enums.LeaveType;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
-import com.htttdn.hrm.repository.EmployeeLeaveEntitlementRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
-import com.htttdn.hrm.repository.LeaveEntitlementRuleRepository;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
@@ -41,8 +36,6 @@ class LeaveEntitlementServiceTest {
 
     private static final int DAY = 480;
 
-    @Mock private EmployeeLeaveEntitlementRepository entitlementRepository;
-    @Mock private LeaveEntitlementRuleRepository ruleRepository;
     @Mock private LeaveRequestRepository leaveRequestRepository;
     @Mock private EmployeeRepository employeeRepository;
     @Mock private EmployeeAssignmentRepository employeeAssignmentRepository;
@@ -52,96 +45,56 @@ class LeaveEntitlementServiceTest {
 
     private LeaveEntitlementService service() {
         return new LeaveEntitlementService(
-            entitlementRepository, ruleRepository, leaveRequestRepository, employeeRepository,
-            employeeAssignmentRepository, accountRepository, currentAccountProvider,
-            employeeAccessScopeService
+            leaveRequestRepository, employeeRepository, employeeAssignmentRepository,
+            accountRepository, currentAccountProvider, employeeAccessScopeService
         );
     }
 
-    private LeaveEntitlementRule rule() {
-        return LeaveEntitlementRule.builder()
-            .id(1L)
-            .effectiveFrom(LocalDate.of(2026, 1, 1))
-            .baseDays(12)
-            .seniorityBlockYears(5)
-            .seniorityBonusDays(1)
-            .sourceReference("test")
-            .build();
-    }
-
-    private Employee employee(LocalDate hireDate, LocalDate seniorityStart) {
-        return Employee.builder()
-            .id(1L)
-            .hireDate(hireDate)
-            .seniorityStartDate(seniorityStart)
-            .build();
+    private Employee employee(LocalDate hireDate) {
+        return Employee.builder().id(1L).hireDate(hireDate).build();
     }
 
     @Test
-    void fullYearWithoutSeniorityGrantsTheBaseDays() {
-        Employee employee = employee(LocalDate.of(2020, 3, 1), LocalDate.of(2026, 1, 1));
+    void fullYearGrantsTwelveDaysWhateverTheSeniority() {
+        Employee tenYears = employee(LocalDate.of(2016, 1, 1));
 
-        assertEquals(12 * DAY, service().computeBaseMinutes(employee, 2026, rule(), DAY));
-    }
-
-    @Test
-    void everyCompletedSeniorityBlockAddsABonusDay() {
-        Employee tenYears = employee(LocalDate.of(2016, 1, 1), LocalDate.of(2016, 1, 1));
-
-        assertEquals(14 * DAY, service().computeBaseMinutes(tenYears, 2026, rule(), DAY));
-    }
-
-    @Test
-    void aBlockStillRunningDoesNotCountYet() {
-        Employee fourYears = employee(LocalDate.of(2022, 1, 1), LocalDate.of(2022, 1, 1));
-
-        assertEquals(12 * DAY, service().computeBaseMinutes(fourYears, 2026, rule(), DAY));
+        assertEquals(12 * DAY, LeaveEntitlementService.grantedMinutes(tenYears, 2026, DAY));
     }
 
     @Test
     void joiningPartWayThroughTheYearProratesByMonthsWorked() {
-        Employee hiredInJuly = employee(LocalDate.of(2026, 7, 1), LocalDate.of(2026, 7, 1));
+        Employee hiredInSeptember = employee(LocalDate.of(2026, 9, 29));
 
-        assertEquals(12 * DAY * 6 / 12, service().computeBaseMinutes(hiredInJuly, 2026, rule(), DAY));
+        // September to December: the month of joining counts as a whole month.
+        assertEquals(4 * DAY, LeaveEntitlementService.grantedMinutes(hiredInSeptember, 2026, DAY));
     }
 
     @Test
     void employeeHiredAfterTheYearGetsNothing() {
-        Employee hiredNextYear = employee(LocalDate.of(2027, 2, 1), LocalDate.of(2027, 2, 1));
+        Employee hiredNextYear = employee(LocalDate.of(2027, 2, 1));
 
-        assertEquals(0, service().computeBaseMinutes(hiredNextYear, 2026, rule(), DAY));
-    }
-
-    @Test
-    void withoutARuleNothingIsGranted() {
-        Employee employee = employee(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 1));
-
-        assertEquals(0, service().computeBaseMinutes(employee, 2026, null, DAY));
+        assertEquals(0, LeaveEntitlementService.grantedMinutes(hiredNextYear, 2026, DAY));
     }
 
     @Test
     void shorterShiftsProduceASmallerMinuteBalanceForTheSameDays() {
-        Employee employee = employee(LocalDate.of(2020, 1, 1), LocalDate.of(2026, 1, 1));
+        Employee employee = employee(LocalDate.of(2020, 1, 1));
 
-        assertEquals(12 * 240, service().computeBaseMinutes(employee, 2026, rule(), 240));
+        assertEquals(12 * 240, LeaveEntitlementService.grantedMinutes(employee, 2026, 240));
     }
 
     @Test
     void approvingAnnualLeaveBeyondTheRemainingBalanceIsRejected() {
-        stubEntitlement(12 * DAY);
         stubCommitted(11 * DAY, 11 * DAY);
 
-        LeaveRequest request = annualRequest(2 * DAY);
-
         ConflictException thrown = assertThrows(
-            ConflictException.class, () -> service().requireSufficientBalance(request)
+            ConflictException.class, () -> service().requireSufficientBalance(annualRequest(2 * DAY))
         );
         assertEquals(true, thrown.getMessage().contains("not enough"));
     }
 
     @Test
     void pendingRequestsAreCountedSoConcurrentApprovalsCannotOverdraw() {
-        stubEntitlement(12 * DAY);
         // nothing approved yet, but 11 days already sit in PENDING
         stubCommitted(0, 11 * DAY);
 
@@ -152,7 +105,6 @@ class LeaveEntitlementServiceTest {
 
     @Test
     void approvingWithinTheRemainingBalanceIsAllowed() {
-        stubEntitlement(12 * DAY);
         stubCommitted(5 * DAY, 5 * DAY);
 
         assertDoesNotThrow(() -> service().requireSufficientBalance(annualRequest(2 * DAY)));
@@ -162,7 +114,7 @@ class LeaveEntitlementServiceTest {
     void otherLeaveTypesNeverTouchTheAnnualBalance() {
         LeaveRequest sickLeave = LeaveRequest.builder()
             .id(9L)
-            .employee(employee(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 1)))
+            .employee(employee(LocalDate.of(2020, 1, 1)))
             .leaveType(LeaveType.SICK)
             .requestedMinutes(100 * DAY)
             .startAt(Instant.parse("2026-03-02T01:00:00Z"))
@@ -171,125 +123,24 @@ class LeaveEntitlementServiceTest {
         assertDoesNotThrow(() -> service().requireSufficientBalance(sickLeave));
     }
 
-    @Test
-    void carriedOverDaysAreUsableBeforeTheyExpire() {
-        stubCarriedOverEntitlement();
-        stubConsuming(0, 0);
-
-        // 12 base days + 5 carried days, nothing used yet, leave starts in March.
-        assertDoesNotThrow(() -> service().requireSufficientBalance(annualRequest(17 * DAY)));
-    }
-
-    @Test
-    void unusedCarriedOverDaysLapseAfterTheExpiryDate() {
-        stubCarriedOverEntitlement();
-        // 2 days taken before 31 March, so 3 of the 5 carried days lapse.
-        stubConsuming(2 * DAY, 2 * DAY);
-        LeaveRequest april = annualRequest(13 * DAY);
-        april.setStartAt(Instant.parse("2026-04-06T01:00:00Z"));
-
-        assertThrows(ConflictException.class, () -> service().requireSufficientBalance(april));
-        april.setRequestedMinutes(12 * DAY);
-        assertDoesNotThrow(() -> service().requireSufficientBalance(april));
-    }
-
-    @Test
-    void closingTheYearCarriesUnusedDaysUpToTheRuleCap() {
-        LeaveEntitlementRule rule = rule();
-        rule.setMaxCarryOverDays(5);
-        rule.setCarryOverExpiryMonth((short) 3);
-        when(ruleRepository.findEffectiveAt(LocalDate.of(2027, 1, 1))).thenReturn(Optional.of(rule));
-        Employee many = Employee.builder().id(1L).employeeCode("NV001").fullName("A")
-            .hireDate(LocalDate.of(2020, 1, 1)).build();
-        Employee few = Employee.builder().id(2L).employeeCode("NV002").fullName("B")
-            .hireDate(LocalDate.of(2020, 1, 1)).build();
-        when(employeeRepository.findEmployedDuring(LocalDate.of(2027, 1, 1), LocalDate.of(2027, 1, 1)))
-            .thenReturn(List.of(few, many));
-        EmployeeLeaveEntitlement manyNext = entitlement(many, 2027, 0);
-        EmployeeLeaveEntitlement fewNext = entitlement(few, 2027, 0);
-        when(entitlementRepository.findByEmployeeIdAndYear(1L, (short) 2026))
-            .thenReturn(Optional.of(entitlement(many, 2026, 0)));
-        when(entitlementRepository.findByEmployeeIdAndYear(2L, (short) 2026))
-            .thenReturn(Optional.of(entitlement(few, 2026, 0)));
-        when(entitlementRepository.findByEmployeeIdAndYear(1L, (short) 2027)).thenReturn(Optional.of(manyNext));
-        when(entitlementRepository.findByEmployeeIdAndYear(2L, (short) 2027)).thenReturn(Optional.of(fewNext));
-        // NV001 used 4 of 12 days (8 left), NV002 used 9 (3 left).
-        when(leaveRequestRepository.sumMinutesByTypeAndStatuses(eq(1L), eq(LeaveType.ANNUAL), any(), any(), any(), any()))
-            .thenReturn((long) 4 * DAY);
-        when(leaveRequestRepository.sumMinutesByTypeAndStatuses(eq(2L), eq(LeaveType.ANNUAL), any(), any(), any(), any()))
-            .thenReturn((long) 9 * DAY);
-
-        var view = service().applyCarryOver(2026);
-
-        assertEquals(List.of("NV001", "NV002"), view.items().stream().map(item -> item.employeeCode()).toList());
-        assertEquals(5 * DAY, manyNext.getCarriedOverMinutes());
-        assertEquals(3 * DAY, fewNext.getCarriedOverMinutes());
-        assertEquals(LocalDate.of(2027, 3, 31), manyNext.getCarriedOverExpiresOn());
-    }
-
-    private EmployeeLeaveEntitlement entitlement(Employee employee, int year, int carriedOverMinutes) {
-        return EmployeeLeaveEntitlement.builder()
-            .employee(employee)
-            .year((short) year)
-            .baseMinutes(12 * DAY)
-            .carriedOverMinutes(carriedOverMinutes)
-            .adjustmentMinutes(0)
-            .standardDayMinutes(DAY)
-            .build();
-    }
-
-    private void stubCarriedOverEntitlement() {
-        EmployeeLeaveEntitlement entitlement = entitlement(
-            employee(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 1)), 2026, 5 * DAY);
-        entitlement.setCarriedOverExpiresOn(LocalDate.of(2026, 3, 31));
-        when(entitlementRepository.findByEmployeeIdAndYear(anyLong(), eq((short) 2026)))
-            .thenReturn(Optional.of(entitlement));
-    }
-
-    /** Stubs the minutes consumed before the 31 March expiry and over the whole year. */
-    private void stubConsuming(int beforeExpiry, int wholeYear) {
-        Instant expiryEnd = Instant.parse("2026-03-31T17:00:00Z");
-        when(leaveRequestRepository.sumMinutesByTypeAndStatuses(
-            anyLong(), eq(LeaveType.ANNUAL), any(), any(), any(), any()
-        )).thenAnswer(invocation -> expiryEnd.equals(invocation.getArgument(4))
-            ? (long) beforeExpiry : (long) wholeYear);
-    }
-
     private LeaveRequest annualRequest(int minutes) {
         return LeaveRequest.builder()
             .id(9L)
-            .employee(employee(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 1)))
+            .employee(employee(LocalDate.of(2020, 1, 1)))
             .leaveType(LeaveType.ANNUAL)
             .requestedMinutes(minutes)
             .startAt(Instant.parse("2026-03-02T01:00:00Z"))
             .build();
     }
 
-    private void stubEntitlement(int baseMinutes) {
-        EmployeeLeaveEntitlement entitlement = EmployeeLeaveEntitlement.builder()
-            .id(5L)
-            .employee(employee(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 1)))
-            .year((short) 2026)
-            .baseMinutes(baseMinutes)
-            .carriedOverMinutes(0)
-            .adjustmentMinutes(0)
-            .standardDayMinutes(DAY)
-            .build();
-        when(entitlementRepository.findByEmployeeIdAndYear(anyLong(), eq((short) 2026)))
-            .thenReturn(Optional.of(entitlement));
-    }
-
+    /** No primary assignment is stubbed, so a leave day is the 480-minute fallback. */
     private void stubCommitted(int approvedMinutes, int approvedPlusPendingMinutes) {
         when(leaveRequestRepository.sumMinutesByTypeAndStatuses(
-            anyLong(), eq(LeaveType.ANNUAL), eq(List.of(com.htttdn.hrm.entity.enums.LeaveRequestStatus.APPROVED)),
+            anyLong(), eq(LeaveType.ANNUAL), eq(List.of(LeaveRequestStatus.APPROVED)),
             any(), any(), any()
         )).thenReturn((long) approvedMinutes);
         when(leaveRequestRepository.sumMinutesByTypeAndStatuses(
-            anyLong(), eq(LeaveType.ANNUAL),
-            eq(List.of(
-                com.htttdn.hrm.entity.enums.LeaveRequestStatus.APPROVED,
-                com.htttdn.hrm.entity.enums.LeaveRequestStatus.PENDING
-            )),
+            anyLong(), eq(LeaveType.ANNUAL), eq(List.of(LeaveRequestStatus.APPROVED, LeaveRequestStatus.PENDING)),
             any(), any(), any()
         )).thenReturn((long) approvedPlusPendingMinutes);
     }
