@@ -20,8 +20,9 @@ import com.htttdn.hrm.repository.EmployeeRepository;
 
 /**
  * Prepares the current month's attendance (the same as {@code POST /api/attendance/prepare}) at
- * 00:05 on the 1st of every month, and once at startup in case the server was down at the turn
- * of the month. Re-running never creates duplicates.
+ * 00:05 every night, and once at startup in case the server was down at that time. Running daily
+ * picks up an employee hired or given an assignment during the month by the next morning;
+ * re-running never creates duplicates.
  */
 @Component
 @EnableScheduling
@@ -45,7 +46,7 @@ public class AttendanceAutoPrepareJob implements ApplicationRunner {
         prepareCurrentMonth();
     }
 
-    @Scheduled(cron = "0 5 0 1 * *", zone = ZONE)
+    @Scheduled(cron = "0 5 0 * * *", zone = ZONE)
     public void prepareCurrentMonth() {
         LocalDate today = LocalDate.now(ZoneId.of(ZONE));
         int year = today.getYear();
