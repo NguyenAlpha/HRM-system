@@ -45,6 +45,7 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "request.self.create",
             "request.self.cancel",
             "attendance.self.read",
+            "holiday.read",
             "payroll.self.read",
             "payroll.self.print"
         )),
@@ -64,6 +65,7 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "attendance.read",
             "attendance.manage",
             "attendance.overtime.approve",
+            "holiday.read",
             "compensation.read",
             "compensation.manage",
             "report.hr.read",
@@ -120,6 +122,7 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "employee.delete",
             "organization.read",
             "organization.manage",
+            "holiday.read",
             "account.read",
             "account.manage",
             "account.provision",

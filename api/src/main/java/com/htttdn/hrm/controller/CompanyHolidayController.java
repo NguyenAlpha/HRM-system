@@ -32,7 +32,7 @@ public class CompanyHolidayController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('organization.read')")
+    @PreAuthorize("hasAuthority('holiday.read')")
     public ApiResult<List<CompanyHolidayResponse>> list(@RequestParam LocalDate from, @RequestParam LocalDate to) {
         return ApiResult.ok(service.list(from, to));
     }

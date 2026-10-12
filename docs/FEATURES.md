@@ -164,7 +164,8 @@ ngày ngoài lịch như Chủ nhật) hoặc ghi vắng không phép.
 
 | Chức năng | Endpoint | Permission |
 |---|---|---|
-| Khai báo, xem, xóa ngày lễ | `/api/company-holidays` | `organization.manage` / `.read` |
+| Khai báo, xóa ngày lễ | `/api/company-holidays` | `organization.manage` |
+| Xem ngày lễ (mọi nhân viên) | `GET /api/company-holidays` | `holiday.read` |
 | Chuẩn bị bảng công tháng | `POST /api/attendance/prepare` | `attendance.manage` |
 | Nhập hoặc sửa giờ vào/ra | `POST /api/attendance/punches` | `attendance.manage` |
 | Ghi vắng không phép, sửa số phút | `PUT /api/attendance/{id}` | `attendance.manage` |

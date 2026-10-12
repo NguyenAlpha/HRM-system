@@ -19,7 +19,7 @@ Quy trình một tháng:
 
 | Endpoint | Permission | Mô tả |
 |:---------|:-----------|:------|
-| `GET /api/company-holidays` | `organization.read`, phạm vi `COMPANY` | Danh sách ngày lễ trong khoảng ngày |
+| `GET /api/company-holidays` | `holiday.read` (không kiểm tra scope) | Danh sách ngày lễ trong khoảng ngày |
 | `POST /api/company-holidays` | `organization.manage`, phạm vi `COMPANY` | Khai báo ngày lễ |
 | `DELETE /api/company-holidays/{id}` | `organization.manage`, phạm vi `COMPANY` | Xóa ngày lễ |
 | `POST /api/attendance/prepare` | `attendance.manage`, phạm vi `COMPANY` | Tạo bản ghi `MISSING_PUNCH` cho các ngày làm việc của tháng |
@@ -46,7 +46,7 @@ Từ khi kỳ lương chứa ngày đó ở `APPROVED`, `PAID` hoặc `LOCKED`, 
 
 ## GET `/api/company-holidays`
 
-Danh sách ngày lễ, sắp theo ngày.
+Danh sách ngày lễ, sắp theo ngày. Cần `holiday.read`; mọi nhân viên có quyền này qua role `EMPLOYEE` để thấy ngày lễ trên lịch chấm công. Lịch lễ chung cho cả công ty nên không kiểm tra scope.
 
 ```http
 GET /api/company-holidays?from=2026-01-01&to=2026-12-31

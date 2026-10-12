@@ -121,7 +121,7 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
   const canReadAttendance = permissions.has("attendance.self.read") || permissions.has("attendance.read")
   const canManage = permissions.has("attendance.manage")
   const canApproveOvertime = permissions.has("attendance.overtime.approve")
-  const canReadHolidays = permissions.has("organization.read")
+  const canReadHolidays = permissions.has("holiday.read")
   const canManageHolidays = permissions.has("organization.manage")
 
   const [rows, setRows] = useState<AttendanceRecord[]>([])

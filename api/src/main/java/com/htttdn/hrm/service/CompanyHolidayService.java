@@ -31,10 +31,10 @@ public class CompanyHolidayService {
         this.accessScopeService = accessScopeService;
     }
 
-    @PreAuthorize("hasAuthority('organization.read')")
+    /** The holiday calendar is the same for the whole company, so reading it has no scope. */
+    @PreAuthorize("hasAuthority('holiday.read')")
     @Transactional(readOnly = true)
     public List<CompanyHolidayResponse> list(LocalDate from, LocalDate to) {
-        accessScopeService.requireCompanyWide("organization.read");
         return holidayRepository.findByHolidayDateBetweenOrderByHolidayDate(from, to).stream()
             .map(this::toResponse).toList();
     }

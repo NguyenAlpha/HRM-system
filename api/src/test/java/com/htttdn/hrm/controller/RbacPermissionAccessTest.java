@@ -40,7 +40,9 @@ class RbacPermissionAccessTest {
         "COMPANY_OWNER, NONE, /api/roles, 403",
         "COMPANY_OWNER, NONE, /api/permissions, 403",
         "SYSTEM_ADMIN, organization.company_owner.bootstrap, /api/roles, 403",
-        "SYSTEM_ADMIN, organization.company_owner.bootstrap, /api/permissions, 403"
+        "SYSTEM_ADMIN, organization.company_owner.bootstrap, /api/permissions, 403",
+        "EMPLOYEE, holiday.read, /api/company-holidays?from=2026-01-01&to=2026-12-31, 200",
+        "HR_MANAGER, organization.read, /api/company-holidays?from=2026-01-01&to=2026-12-31, 403"
     })
     void rbacAccessDependsOnPermissionNotRole(
         String role,
