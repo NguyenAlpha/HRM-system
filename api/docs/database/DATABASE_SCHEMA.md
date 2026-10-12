@@ -805,9 +805,10 @@ request.self.cancel               request.read
 request.approve                   request.final_approve
 request.manage
 
-ATTENDANCE (4)
+ATTENDANCE (5)
 attendance.self.read              attendance.read
 attendance.manage                 attendance.overtime.approve
+holiday.read
 
 PAYROLL (8)
 payroll.self.read                 payroll.self.print

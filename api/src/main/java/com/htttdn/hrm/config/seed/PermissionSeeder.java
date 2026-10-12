@@ -125,6 +125,7 @@ public class PermissionSeeder implements ApplicationRunner {
         permission("attendance.self.read", "Xem chấm công cá nhân", PermissionModule.ATTENDANCE, "Xem dữ liệu chấm công của chính mình"),
         permission("attendance.read", "Xem dữ liệu chấm công", PermissionModule.ATTENDANCE, "Xem dữ liệu chấm công trong phạm vi được phân công"),
         permission("attendance.manage", "Quản lý chấm công", PermissionModule.ATTENDANCE, "Tạo và điều chỉnh dữ liệu chấm công"),
+        permission("holiday.read", "Xem lịch nghỉ lễ", PermissionModule.ATTENDANCE, "Xem các ngày nghỉ lễ, Tết của công ty"),
         permission(
             "attendance.overtime.approve",
             "Phê duyệt làm thêm giờ",

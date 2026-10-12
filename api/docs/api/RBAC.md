@@ -743,6 +743,7 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 | `attendance.read` | | ✓ | | | | | |
 | `attendance.manage` | | ✓ | | | | | |
 | `attendance.overtime.approve` | | ✓ | | | | | |
+| `holiday.read` | ✓ | ✓ | | | | ✓ | |
 
 ### Module `PAYROLL`
 
