@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { CalendarPlus, Clock, Loader2, LogIn, Trash2, UserX, Zap } from "lucide-react"
+import { CalendarDays, CalendarPlus, Clock, List, Loader2, LogIn, Trash2, UserX, Zap } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { apiErrorMessage } from "@/lib/api-helpers"
 import type { Page } from "@/lib/pagination"
@@ -32,6 +33,7 @@ import {
   SectionError,
   monthRange,
   time,
+  today,
   useWorkforceAction,
   workforceApi,
   type WorkforceContext,
@@ -51,6 +53,20 @@ const STATUS_TONE: Record<AttendanceStatus, "default" | "secondary" | "outline" 
 /** Set by an approved leave covering the whole day; HR changes these only through the leave workflow. */
 const FULL_DAY_LEAVE: ReadonlySet<AttendanceStatus> = new Set(["PAID_LEAVE", "UNPAID_LEAVE", "MATERNITY_LEAVE", "SICK_LEAVE"])
 
+/** Colour group of a calendar day; the legend lists them in this order. */
+type DayTone = "present" | "late" | "leave" | "absent" | "missing" | "holiday"
+
+const DAY_TONES: Record<DayTone, { label: string; cell: string; dot: string }> = {
+  present: { label: "Đủ công", cell: "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/40", dot: "bg-emerald-500" },
+  late: { label: "Muộn / về sớm", cell: "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40", dot: "bg-amber-500" },
+  leave: { label: "Nghỉ theo đơn", cell: "border-sky-200 bg-sky-50 dark:border-sky-900 dark:bg-sky-950/40", dot: "bg-sky-500" },
+  absent: { label: "Vắng không phép", cell: "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/40", dot: "bg-red-500" },
+  missing: { label: "Thiếu dữ liệu", cell: "border-dashed border-red-300 dark:border-red-800", dot: "border border-dashed border-red-500" },
+  holiday: { label: "Ngày lễ", cell: "border-violet-200 bg-violet-50 dark:border-violet-900 dark:bg-violet-950/40", dot: "bg-violet-500" },
+}
+
+const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"] as const
+
 const BUSINESS_TIME = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
 })
@@ -60,6 +76,46 @@ const businessTime = (instant: string) => BUSINESS_TIME.format(new Date(instant)
 
 /** Instant of a date + HH:mm in the business time zone (UTC+7, no daylight saving). */
 const businessInstant = (date: string, hhmm: string) => new Date(`${date}T${hhmm}:00+07:00`)
+
+/** 0 = Sunday … 6 = Saturday for a YYYY-MM-DD date. */
+const weekday = (date: string) => new Date(`${date}T00:00:00Z`).getUTCDay()
+
+/** Minutes as hours, e.g. 460 → "7h40", 480 → "8h", 25 → "25 phút". */
+const hours = (minutes: number) => {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  if (h === 0 && m > 0) return `${m} phút`
+  return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, "0")}`
+}
+
+/** One calendar day of the month with whatever is known about it. */
+type Day = { date: string; record?: AttendanceRecord; holiday?: CompanyHoliday }
+
+/** A Sunday or holiday: work then is overtime, so late and early-leave minutes mean nothing. */
+const isOffDay = (day: Day) => weekday(day.date) === 0 || day.holiday !== undefined
+
+/** A day that has not ended yet; missing punches there are not a problem yet. */
+const isUpcoming = (day: Day) => day.date >= today()
+
+/** Late or early-leave minutes that count; none on an off day. */
+const lateOrEarly = (day: Day) =>
+  !day.record || isOffDay(day) ? 0 : day.record.lateMinutes + day.record.earlyLeaveMinutes
+
+const decimal = (value: number) => value.toLocaleString("vi-VN", { maximumFractionDigits: 2 })
+
+function dayTone(day: Day): DayTone | null {
+  const { record, holiday } = day
+  if (!record) return holiday ? "holiday" : null
+  if (record.status === "MISSING_PUNCH") return isUpcoming(day) ? null : "missing"
+  if (record.status === "UNAUTHORIZED_ABSENCE") return "absent"
+  if (FULL_DAY_LEAVE.has(record.status)) return "leave"
+  if (record.status === "HOLIDAY") return "holiday"
+  return lateOrEarly(day) > 0 ? "late" : "present"
+}
+
+/** Status text of a record, with a not-yet-due day shown as such instead of missing. */
+const statusLabel = (day: Day, record: AttendanceRecord) =>
+  record.status === "MISSING_PUNCH" && isUpcoming(day) ? "Chưa tới" : ATTENDANCE_STATUS_LABELS[record.status]
 
 export function AttendanceSection({ employeeId, permissions, month }: WorkforceContext) {
   const canReadAttendance = permissions.has("attendance.self.read") || permissions.has("attendance.read")
@@ -72,6 +128,9 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
   const [holidays, setHolidays] = useState<CompanyHoliday[]>([])
   const [error, setError] = useState<string | null>(null)
   const [revision, setRevision] = useState(0)
+  // Employees look at their month as a calendar; HR works through the list, which carries the actions.
+  const [view, setView] = useState<"calendar" | "list">(canManage ? "list" : "calendar")
+  const [selected, setSelected] = useState<Day | null>(null)
   const [absent, setAbsent] = useState<AttendanceRecord | null>(null)
   // A record to fix, or {} to enter a day that has no record yet (a Sunday or holiday worked).
   const [punching, setPunching] = useState<{ record?: AttendanceRecord } | null>(null)
@@ -98,15 +157,37 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
     return () => { active = false }
   }, [employeeId, first, last, canReadAttendance, canReadHolidays, revision])
 
+  const days: Day[] = Array.from({ length: Number(last.slice(8, 10)) }, (_, index) => {
+    const date = `${month}-${String(index + 1).padStart(2, "0")}`
+    return {
+      date,
+      record: rows.find((row) => row.workDate === date),
+      holiday: holidays.find((holiday) => holiday.holidayDate === date),
+    }
+  })
+  const actions: DayActions = {
+    busy,
+    onPunch: canManage ? (record) => setPunching({ record }) : undefined,
+    onAbsent: canManage ? setAbsent : undefined,
+    onOvertime: canApproveOvertime ? setApproving : undefined,
+  }
+
   return (
     <div className="grid gap-6">
       <Card>
         <CardHeader>
           <CardTitle>Bảng công tháng {month.slice(5, 7)}/{month.slice(0, 4)}</CardTitle>
           <CardDescription>
-            Phút công tính lương không gồm giờ nghỉ giữa ca; ngày nghỉ phép được duyệt tự gắn vào bảng công.
+            Công tính lương không gồm giờ nghỉ giữa ca; ngày nghỉ phép được duyệt tự gắn vào bảng công.
+            Bảng công được tự chuẩn bị mỗi đêm.
           </CardDescription>
-          <CardAction className="flex flex-wrap gap-2">
+          <CardAction className="flex flex-wrap justify-end gap-2">
+            <Tabs value={view} onValueChange={(value) => setView(value as "calendar" | "list")}>
+              <TabsList>
+                <TabsTrigger value="calendar"><CalendarDays /> Lịch</TabsTrigger>
+                <TabsTrigger value="list"><List /> Danh sách</TabsTrigger>
+              </TabsList>
+            </Tabs>
             {canManage && employeeId > 0 && (
               <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => setPunching({})}>
                 <LogIn /> Nhập giờ ngày khác
@@ -116,68 +197,19 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
               <Button type="button" size="sm" variant="outline" disabled={busy}
                 onClick={() => void run("Đã chuẩn bị bảng công",
                   () => workforceApi(`attendance/prepare?year=${month.slice(0, 4)}&month=${Number(month.slice(5, 7))}`, "POST"))}>
-                <CalendarPlus /> Chuẩn bị bảng công tháng
+                <CalendarPlus /> Chuẩn bị ngay
               </Button>
             )}
           </CardAction>
         </CardHeader>
-        <CardContent className="grid gap-3">
+        <CardContent className="grid gap-4">
           <SectionError error={error} />
-          <div className="rounded-xl border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ngày</TableHead>
-                  <TableHead>Ca dự kiến</TableHead>
-                  <TableHead>Vào / Ra</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead className="text-right">Muộn / Sớm</TableHead>
-                  <TableHead className="text-right">Công tính lương</TableHead>
-                  <TableHead className="text-right">Tăng ca</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell className="font-medium">{row.workDate}</TableCell>
-                    <TableCell className="text-muted-foreground">{time(row.scheduledStartAt)}–{time(row.scheduledEndAt)}</TableCell>
-                    <TableCell>{time(row.checkInAt)} / {time(row.checkOutAt)}</TableCell>
-                    <TableCell><Badge variant={STATUS_TONE[row.status]}>{ATTENDANCE_STATUS_LABELS[row.status]}</Badge></TableCell>
-                    <TableCell className="text-right">{row.lateMinutes} / {row.earlyLeaveMinutes} phút</TableCell>
-                    <TableCell className="text-right">{row.payableMinutes}/{row.scheduledMinutes} phút</TableCell>
-                    <TableCell className="text-right">
-                      {row.overtimeMinutes > 0 ? `${row.overtimeMinutes} phút × ${row.overtimeMultiplier}` : "—"}
-                      {row.overtimeMinutes > 0 && row.overtimeTaxExempt && <span className="block text-xs text-muted-foreground">miễn thuế</span>}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex justify-end gap-1">
-                        {canApproveOvertime && row.checkOutAt && (
-                          <Button type="button" variant="ghost" size="icon-sm" aria-label={`Duyệt tăng ca ngày ${row.workDate}`}
-                            disabled={busy} onClick={() => setApproving(row)}>
-                            <Zap />
-                          </Button>
-                        )}
-                        {canManage && !FULL_DAY_LEAVE.has(row.status) && <>
-                          <Button type="button" variant="ghost" size="icon-sm" aria-label={`Nhập giờ vào/ra ngày ${row.workDate}`}
-                            disabled={busy} onClick={() => setPunching({ record: row })}>
-                            <LogIn />
-                          </Button>
-                          <Button type="button" variant="ghost" size="icon-sm" aria-label={`Ghi vắng không phép ngày ${row.workDate}`}
-                            disabled={busy} className="text-muted-foreground hover:text-destructive" onClick={() => setAbsent(row)}>
-                            <UserX />
-                          </Button>
-                        </>}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {rows.length === 0 && (
-                  <EmptyRow colSpan={8}>{employeeId ? "Chưa có dữ liệu công trong tháng." : "Nhập mã nhân viên để xem bảng công."}</EmptyRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          {employeeId > 0 && <MonthSummary days={days} />}
+          {view === "calendar"
+            ? <CalendarView days={days} onSelect={setSelected} />
+            : <ListView days={days} actions={actions}
+                emptyText={employeeId ? "Chưa có dữ liệu công trong tháng." : "Nhập mã nhân viên để xem bảng công."} />}
+          <Legend />
         </CardContent>
       </Card>
 
@@ -185,6 +217,9 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
         <HolidayCard holidays={holidays} canManage={canManageHolidays} busy={busy} run={run} />
       )}
 
+      {selected && (
+        <DayDialog day={selected} actions={actions} onClose={() => setSelected(null)} />
+      )}
       {punching && (
         <PunchDialog employeeId={employeeId} record={punching.record} month={month} busy={busy} onClose={() => setPunching(null)}
           onSubmit={(body) => run("Đã ghi giờ vào/ra", () => workforceApi("attendance/punches", "POST", body))} />
@@ -198,6 +233,227 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
           onSubmit={(body) => run("Đã duyệt tăng ca", () => workforceApi(`attendance/${approving.id}/overtime-approval`, "POST", body))} />
       )}
     </div>
+  )
+}
+
+/** Row actions; each is present only when the user may perform it. */
+type DayActions = {
+  busy: boolean
+  onPunch?: (record: AttendanceRecord) => void
+  onAbsent?: (record: AttendanceRecord) => void
+  onOvertime?: (record: AttendanceRecord) => void
+}
+
+function MonthSummary({ days }: { days: Day[] }) {
+  const rows = days.flatMap((day) => day.record ? [day.record] : [])
+  // A Sunday or holiday worked has a record but is not part of the standard month.
+  const standard = days.filter((day) => day.record && !isOffDay(day))
+  const payableDays = rows.reduce((sum, row) => sum + (row.scheduledMinutes > 0 ? row.payableMinutes / row.scheduledMinutes : 0), 0)
+  const lateDays = days.filter((day) => lateOrEarly(day) > 0)
+  const lateMinutes = lateDays.reduce((sum, day) => sum + lateOrEarly(day), 0)
+  const leaveDays = rows.filter((row) => FULL_DAY_LEAVE.has(row.status)).length
+  const overtime = rows.reduce((sum, row) => sum + row.overtimeMinutes, 0)
+  const missing = days.filter((day) => day.record?.status === "MISSING_PUNCH" && !isUpcoming(day)).length
+  const stats: { label: string; value: string; hint?: string; alert?: boolean }[] = [
+    { label: "Công tính lương", value: decimal(payableDays), hint: `/ ${standard.length} ngày` },
+    { label: "Muộn / về sớm", value: `${lateDays.length} lần`, hint: lateMinutes > 0 ? hours(lateMinutes) : undefined },
+    { label: "Nghỉ theo đơn", value: `${leaveDays} ngày` },
+    { label: "Tăng ca đã duyệt", value: hours(overtime) },
+    { label: "Cần xử lý", value: `${missing} ngày`, alert: missing > 0 },
+  ]
+
+  return (
+    <dl className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      {stats.map((stat) => (
+        <div key={stat.label} className={`rounded-xl border px-4 py-3 ${stat.alert ? "border-destructive/40 bg-destructive/5" : ""}`}>
+          <dt className="text-xs text-muted-foreground">{stat.label}</dt>
+          <dd className={`text-2xl font-semibold ${stat.alert ? "text-destructive" : ""}`}>
+            {stat.value} {stat.hint && <span className="text-sm font-normal text-muted-foreground">{stat.hint}</span>}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
+function CalendarView({ days, onSelect }: { days: Day[]; onSelect: (day: Day) => void }) {
+  // Weeks start on Monday; blank cells pad the first week.
+  const leading = (weekday(days[0].date) + 6) % 7
+
+  return (
+    <div className="grid grid-cols-7 gap-1.5 text-sm">
+      {[...WEEKDAYS.slice(1), WEEKDAYS[0]].map((label) => (
+        <div key={label} className="px-1 pb-1 text-center text-xs font-medium text-muted-foreground">{label}</div>
+      ))}
+      {Array.from({ length: leading }, (_, index) => <div key={`blank-${index}`} />)}
+      {days.map((day) => {
+        const tone = dayTone(day)
+        const { record, holiday } = day
+        const sunday = weekday(day.date) === 0
+        return (
+          <button key={day.date} type="button" disabled={!record && !holiday} onClick={() => onSelect(day)}
+            aria-label={`Ngày ${day.date}`}
+            className={`flex min-h-20 flex-col items-start gap-0.5 rounded-lg border p-1.5 text-left transition-colors enabled:hover:ring-2 enabled:hover:ring-ring/40 ${
+              tone ? DAY_TONES[tone].cell : sunday ? "bg-muted/50" : ""}`}>
+            <span className={`text-xs font-medium ${sunday ? "text-muted-foreground" : ""}`}>{Number(day.date.slice(8, 10))}</span>
+            {record?.checkInAt && (
+              <span className="text-xs tabular-nums">{time(record.checkInAt)}–{time(record.checkOutAt)}</span>
+            )}
+            {record && !record.checkInAt && (
+              <span className={`text-xs ${tone ? "" : "text-muted-foreground"}`}>{statusLabel(day, record)}</span>
+            )}
+            {!record && holiday && <span className="line-clamp-2 text-xs">{holiday.name}</span>}
+            {record && record.overtimeMinutes > 0 && (
+              <span className="text-xs text-muted-foreground">+{hours(record.overtimeMinutes)} tăng ca</span>
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function ListView({ days, actions, emptyText }: { days: Day[]; actions: DayActions; emptyText: string }) {
+  const shown = days.filter((day) => day.record || day.holiday)
+
+  return (
+    <div className="rounded-xl border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Ngày</TableHead>
+            <TableHead>Ca</TableHead>
+            <TableHead>Vào – Ra</TableHead>
+            <TableHead>Trạng thái</TableHead>
+            <TableHead className="text-right">Muộn / Sớm</TableHead>
+            <TableHead className="text-right">Công</TableHead>
+            <TableHead className="text-right">Tăng ca</TableHead>
+            <TableHead className="text-right">Thao tác</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {shown.map((day) => {
+            const { record, holiday } = day
+            const upcoming = record?.status === "MISSING_PUNCH" && isUpcoming(day)
+            return (
+              <TableRow key={day.date} className={isOffDay(day) ? "bg-muted/40" : undefined}>
+                <TableCell className="font-medium whitespace-nowrap">
+                  <span className="inline-block w-7 text-muted-foreground">{WEEKDAYS[weekday(day.date)]}</span>
+                  {day.date.slice(8, 10)}/{day.date.slice(5, 7)}
+                </TableCell>
+                {record ? <>
+                  <TableCell className="text-muted-foreground tabular-nums">{time(record.scheduledStartAt)}–{time(record.scheduledEndAt)}</TableCell>
+                  <TableCell className="tabular-nums">{time(record.checkInAt)} – {time(record.checkOutAt)}</TableCell>
+                  <TableCell>
+                    <Badge variant={upcoming ? "outline" : STATUS_TONE[record.status]}>{statusLabel(day, record)}</Badge>
+                    {holiday && <span className="block text-xs text-muted-foreground">{holiday.name}</span>}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {lateOrEarly(day) > 0 ? `${record.lateMinutes} / ${record.earlyLeaveMinutes} phút` : "—"}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">{hours(record.payableMinutes)} / {hours(record.scheduledMinutes)}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {record.overtimeMinutes > 0 ? `${hours(record.overtimeMinutes)} × ${record.overtimeMultiplier}` : "—"}
+                    {record.overtimeMinutes > 0 && record.overtimeTaxExempt && <span className="block text-xs text-muted-foreground">miễn thuế</span>}
+                  </TableCell>
+                  <TableCell><div className="flex justify-end gap-1"><RecordActions day={day} record={record} actions={actions} /></div></TableCell>
+                </> : (
+                  <TableCell colSpan={7} className="text-muted-foreground">Ngày lễ · {holiday?.name}</TableCell>
+                )}
+              </TableRow>
+            )
+          })}
+          {shown.length === 0 && <EmptyRow colSpan={8}>{emptyText}</EmptyRow>}
+        </TableBody>
+      </Table>
+    </div>
+  )
+}
+
+/** Icon buttons in the list; with `labelled`, text buttons for the day dialog. */
+function RecordActions({ day, record, actions, labelled = false }: {
+  day: Day
+  record: AttendanceRecord
+  actions: DayActions
+  labelled?: boolean
+}) {
+  const { busy, onPunch, onAbsent, onOvertime } = actions
+  // A future day cannot have punches yet, and a full day of approved leave belongs to the leave workflow.
+  const editable = !FULL_DAY_LEAVE.has(record.status) && day.date <= today()
+  const size = labelled ? "sm" : "icon-sm"
+  const variant = labelled ? "outline" : "ghost"
+  return <>
+    {onOvertime && record.checkOutAt && (
+      <Button type="button" variant={variant} size={size} aria-label={`Duyệt tăng ca ngày ${record.workDate}`}
+        disabled={busy} onClick={() => onOvertime(record)}>
+        <Zap />{labelled && "Duyệt tăng ca"}
+      </Button>
+    )}
+    {onPunch && editable && (
+      <Button type="button" variant={variant} size={size} aria-label={`Nhập giờ vào/ra ngày ${record.workDate}`}
+        disabled={busy} onClick={() => onPunch(record)}>
+        <LogIn />{labelled && "Nhập giờ vào/ra"}
+      </Button>
+    )}
+    {onAbsent && editable && (
+      <Button type="button" variant={variant} size={size} aria-label={`Ghi vắng không phép ngày ${record.workDate}`}
+        disabled={busy} className="text-muted-foreground hover:text-destructive" onClick={() => onAbsent(record)}>
+        <UserX />{labelled && "Ghi vắng"}
+      </Button>
+    )}
+  </>
+}
+
+/** Details of a calendar day, with the same actions as its list row. */
+function DayDialog({ day, actions, onClose }: { day: Day; actions: DayActions; onClose: () => void }) {
+  const { record, holiday } = day
+  const facts: [string, string][] = record ? [
+    ["Trạng thái", statusLabel(day, record)],
+    ["Ca", `${time(record.scheduledStartAt)}–${time(record.scheduledEndAt)}`],
+    ["Vào – Ra", `${time(record.checkInAt)} – ${time(record.checkOutAt)}`],
+    ["Công tính lương", `${hours(record.payableMinutes)} / ${hours(record.scheduledMinutes)}`],
+    ["Thực làm", hours(record.workedMinutes)],
+    ["Đi muộn / về sớm", lateOrEarly(day) > 0 ? `${record.lateMinutes} / ${record.earlyLeaveMinutes} phút` : "—"],
+    ["Tăng ca", record.overtimeMinutes > 0 ? `${hours(record.overtimeMinutes)} × ${record.overtimeMultiplier}` : "—"],
+  ] : []
+  // Close first so the action's own dialog is the only one open.
+  const wrap = (action?: (record: AttendanceRecord) => void) =>
+    action && ((target: AttendanceRecord) => { onClose(); action(target) })
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{WEEKDAYS[weekday(day.date)]}, {day.date.slice(8, 10)}/{day.date.slice(5, 7)}/{day.date.slice(0, 4)}</DialogTitle>
+          {holiday && <DialogDescription>Ngày lễ · {holiday.name}</DialogDescription>}
+        </DialogHeader>
+        {record && (
+          <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            {facts.map(([label, value]) => <div key={label} className="contents">
+              <dt className="text-muted-foreground">{label}</dt>
+              <dd className="tabular-nums">{value}</dd>
+            </div>)}
+          </dl>
+        )}
+        {record && (
+          <DialogFooter className="mt-4">
+            <RecordActions day={day} record={record} labelled actions={{
+              ...actions, onPunch: wrap(actions.onPunch), onAbsent: wrap(actions.onAbsent), onOvertime: wrap(actions.onOvertime),
+            }} />
+          </DialogFooter>
+        )}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function Legend() {
+  return (
+    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+      {Object.entries(DAY_TONES).map(([tone, { label, dot }]) => (
+        <li key={tone} className="flex items-center gap-1.5"><span className={`size-2.5 rounded-full ${dot}`} />{label}</li>
+      ))}
+    </ul>
   )
 }
 
