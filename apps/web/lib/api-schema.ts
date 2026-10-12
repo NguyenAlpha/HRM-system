@@ -2584,6 +2584,7 @@ export interface components {
             checkOutAt: string;
             /** Format: int64 */
             employeeId: number;
+            note?: string | null;
             /** Format: date */
             workDate: string;
         };

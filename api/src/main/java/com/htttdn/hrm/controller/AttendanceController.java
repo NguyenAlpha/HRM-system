@@ -44,8 +44,8 @@ public class AttendanceController {
         return ApiResult.ok(service.prepareMonth(year, month));
     }
 
-    // TEMPORARY: unauthenticated for creating test data, see SecurityConfig.
     @PostMapping("/punches")
+    @PreAuthorize("hasAuthority('attendance.manage')")
     public ApiResult<AttendanceRecordResponse> recordPunches(@Valid @RequestBody RecordPunchesRequest request) {
         return ApiResult.ok(service.recordPunches(request));
     }

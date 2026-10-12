@@ -157,14 +157,15 @@ Lịch làm việc chuẩn là thứ 2 đến thứ 7, trừ ngày trong `compan
 
 Giờ vào/ra được ghi qua `POST /api/attendance/punches` với thời điểm cụ thể; sau này máy chấm công
 của công ty sẽ gửi vào đây (tích hợp máy chưa triển khai). Nhân viên chỉ xem lịch sử chấm công trên
-web, không tự chấm.
+web, không tự chấm. HR đối soát bằng hai thao tác: nhập giờ vào/ra thực tế (ghi đè được, tạo được
+ngày ngoài lịch như Chủ nhật) hoặc ghi vắng không phép.
 
 | Chức năng | Endpoint | Permission |
 |---|---|---|
 | Khai báo, xem, xóa ngày lễ | `/api/company-holidays` | `organization.manage` / `.read` |
 | Chuẩn bị bảng công tháng | `POST /api/attendance/prepare` | `attendance.manage` |
-| Ghi giờ vào/ra (tạm thời để test) | `POST /api/attendance/punches` | Không cần xác thực |
-| Đối soát ngày thiếu dữ liệu | `PUT /api/attendance/{id}` | `attendance.manage` |
+| Nhập hoặc sửa giờ vào/ra | `POST /api/attendance/punches` | `attendance.manage` |
+| Ghi vắng không phép, sửa số phút | `PUT /api/attendance/{id}` | `attendance.manage` |
 | Duyệt tăng ca | `POST /api/attendance/{id}/overtime-approval` | `attendance.overtime.approve` |
 | Xem bản ghi công | `GET /api/attendance/{id}`, `/employees/{id}` | `attendance.self.read` / `attendance.read` |
 

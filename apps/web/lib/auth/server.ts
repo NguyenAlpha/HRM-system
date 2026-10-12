@@ -396,6 +396,7 @@ export async function handleWorkforceRequest(request: Request, segments: string[
   const path = segments.join("/")
   const routes = [
     { pattern: /^attendance\/prepare$/, methods: ["POST"] },
+    { pattern: /^attendance\/punches$/, methods: ["POST"] },
     { pattern: /^attendance\/employees\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^attendance\/[1-9]\d*$/, methods: ["GET", "PUT"] },
     { pattern: /^attendance\/[1-9]\d*\/overtime-approval$/, methods: ["POST"] },
@@ -438,7 +439,7 @@ export async function handleWorkforceRequest(request: Request, segments: string[
   if (request.method === "PUT" || (request.method === "POST" &&
       (/^(?:leave-requests|payroll\/periods|company-holidays)$/.test(path)
         || /^compensation\/employees\/[1-9]\d*\/(?:salary-history|payroll-profiles|tax-dependents)$/.test(path)
-        || /^attendance\/[1-9]\d*\/overtime-approval$/.test(path)
+        || /^attendance\/(?:punches|[1-9]\d*\/overtime-approval)$/.test(path)
         || /^payroll\/periods\/[1-9]\d*\/calculate$/.test(path)
         || /^payroll\/periods\/[1-9]\d*\/mark-paid$/.test(path)
         || /^payroll\/periods\/[1-9]\d*\/adjustments$/.test(path)

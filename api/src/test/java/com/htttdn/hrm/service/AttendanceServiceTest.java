@@ -206,9 +206,11 @@ class AttendanceServiceTest {
         when(attendanceCalendarService.companyWorkDates(date, date)).thenReturn(List.of(date));
         when(attendanceRecordRepository.save(org.mockito.ArgumentMatchers.any(AttendanceRecord.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
+        when(currentAccountProvider.accountId()).thenReturn(7L);
+        when(accountRepository.findById(7L)).thenReturn(Optional.of(Account.builder().id(7L).build()));
 
         var response = service().recordPunches(new RecordPunchesRequest(2L, date,
-            Instant.parse("2026-01-15T01:20:00Z"), Instant.parse("2026-01-15T10:00:00Z")));
+            Instant.parse("2026-01-15T01:20:00Z"), Instant.parse("2026-01-15T10:00:00Z"), null));
 
         assertEquals(AttendanceStatus.PRESENT, response.status());
         assertEquals(5, response.lateMinutes());
@@ -218,15 +220,42 @@ class AttendanceServiceTest {
     }
 
     @Test
-    void recordPunchesRejectsAnAlreadyRecordedDay() {
+    void recordPunchesOverwritesAnAdjustedDayAndClearsOvertime() {
         LocalDate date = LocalDate.of(2026, 1, 15);
-        AttendanceRecord record = officeDay(date, "2026-01-15T01:00:00Z", "2026-01-15T10:00:00Z");
+        AttendanceRecord record = officeDay(date, "2026-01-15T01:00:00Z", "2026-01-15T12:00:00Z");
+        record.setStatus(AttendanceStatus.UNAUTHORIZED_ABSENCE);
+        record.setOvertimeMinutes(120);
+        record.setOvertimeMultiplier(new java.math.BigDecimal("1.5"));
+        when(employeeRepository.findById(2L)).thenReturn(Optional.of(
+            Employee.builder().id(2L).hireDate(LocalDate.of(2024, 1, 1)).build()));
+        when(attendanceRecordRepository.findByEmployeeIdAndWorkDateForUpdate(2L, date)).thenReturn(Optional.of(record));
+        when(attendanceCalendarService.companyWorkDates(date, date)).thenReturn(List.of(date));
+        when(attendanceRecordRepository.save(record)).thenReturn(record);
+        when(currentAccountProvider.accountId()).thenReturn(7L);
+        when(accountRepository.findById(7L)).thenReturn(Optional.of(Account.builder().id(7L).build()));
+
+        var response = service().recordPunches(new RecordPunchesRequest(2L, date,
+            Instant.parse("2026-01-15T01:00:00Z"), Instant.parse("2026-01-15T10:00:00Z"), " Máy chấm gửi muộn "));
+
+        assertEquals(AttendanceStatus.PRESENT, response.status());
+        assertEquals(480, response.payableMinutes());
+        assertEquals(0, response.overtimeMinutes());
+        assertEquals("Máy chấm gửi muộn", record.getNote());
+        assertEquals(7L, record.getUpdatedByAccount().getId());
+    }
+
+    @Test
+    void recordPunchesRejectsAFullDayOfApprovedLeave() {
+        LocalDate date = LocalDate.of(2026, 1, 15);
+        AttendanceRecord record = record(date);
+        record.setCheckInAt(null);
+        record.setStatus(AttendanceStatus.PAID_LEAVE);
         when(employeeRepository.findById(2L)).thenReturn(Optional.of(
             Employee.builder().id(2L).hireDate(LocalDate.of(2024, 1, 1)).build()));
         when(attendanceRecordRepository.findByEmployeeIdAndWorkDateForUpdate(2L, date)).thenReturn(Optional.of(record));
 
         assertThrows(ConflictException.class, () -> service().recordPunches(new RecordPunchesRequest(2L, date,
-            Instant.parse("2026-01-15T01:00:00Z"), Instant.parse("2026-01-15T10:00:00Z"))));
+            Instant.parse("2026-01-15T01:00:00Z"), Instant.parse("2026-01-15T10:00:00Z"), null)));
     }
 
     @Test
@@ -234,7 +263,7 @@ class AttendanceServiceTest {
         LocalDate date = LocalDate.of(2026, 1, 15);
 
         assertThrows(BusinessException.class, () -> service().recordPunches(new RecordPunchesRequest(2L, date,
-            Instant.parse("2026-01-16T01:00:00Z"), Instant.parse("2026-01-16T10:00:00Z"))));
+            Instant.parse("2026-01-16T01:00:00Z"), Instant.parse("2026-01-16T10:00:00Z"), null)));
     }
 
     private AttendanceRecord officeDay(LocalDate date, String checkIn, String checkOut) {
