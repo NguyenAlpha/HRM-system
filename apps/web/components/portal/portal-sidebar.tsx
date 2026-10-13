@@ -46,80 +46,80 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
       <nav aria-label="Điều hướng chính">
         <span className="nav-caption">Workspace</span>
         <Link className={navClass(PORTAL_CONFIG[portal].homePath)} href={PORTAL_CONFIG[portal].homePath}>
-          <span>◫</span> Tổng quan
+          Tổng quan
         </Link>
         {admin ? (
           <>
             {canReadEmployees && (
               <Link className={navClass("/admin/employees")} href="/admin/employees">
-                <span>▤</span> Nhân sự
+                Nhân sự
               </Link>
             )}
             {canReadAccounts && (
               <Link className={navClass("/admin/accounts")} href="/admin/accounts">
-                <span>◎</span> Tài khoản
+                Tài khoản
               </Link>
             )}
             <Link className={navClass("/admin/rbac")} href="/admin/rbac">
-              <span>◇</span> Vai trò & quyền
+              Vai trò & quyền
             </Link>
             {canAssignRoleDirect && (
               <Link className={navClass("/admin/role-grant")} href="/admin/role-grant">
-                <span>▥</span> Cấp quyền trực tiếp
+                Cấp quyền trực tiếp
               </Link>
             )}
             {canReadOrganization && (
               <Link className={navClass("/admin/organization")} href="/admin/organization">
-                <span>▧</span> Danh mục tổ chức
+                Danh mục tổ chức
               </Link>
             )}
             {canBootstrapCompanyOwner && (
               <Link className={navClass("/admin/company-owner")} href="/admin/company-owner">
-                <span>◆</span> Company Owner
+                Company Owner
               </Link>
             )}
           </>
         ) : (
           <>
-            <span className="nav-item disabled"><span>◎</span> Hồ sơ</span>
+            <span className="nav-item disabled">Hồ sơ</span>
             {canReadEmployees && (
               <Link className={navClass("/employees")} href="/employees">
-                <span>▤</span> Nhân sự
+                Nhân sự
               </Link>
             )}
             {canReadAccounts && (
               <Link className={navClass("/accounts")} href="/accounts">
-                <span>◎</span> Tài khoản
+                Tài khoản
               </Link>
             )}
             {canUseRoleRequests && (
               <Link className={navClass("/role-requests")} href="/role-requests">
-                <span>◧</span> Đề xuất role
+                Đề xuất role
               </Link>
             )}
             {canAssignRoleDirect && (
               <Link className={navClass("/role-grant")} href="/role-grant">
-                <span>▥</span> Cấp quyền trực tiếp
+                Cấp quyền trực tiếp
               </Link>
             )}
             {canManageRbac && (
               <Link className={navClass("/rbac")} href="/rbac">
-                <span>◇</span> Vai trò & quyền
+                Vai trò & quyền
               </Link>
             )}
             {canReadOrganization && (
               <Link className={navClass("/organization")} href="/organization">
-                <span>▧</span> Danh mục tổ chức
+                Danh mục tổ chức
               </Link>
             )}
             {canReadReports && (
               <Link className={navClass("/reports/workforce")} href="/reports/workforce">
-                <span>▥</span> Báo cáo nhân sự
+                Báo cáo nhân sự
               </Link>
             )}
-            {canUseAttendance && <Link className={navClass("/attendance")} href="/attendance"><span>◷</span> Chấm công</Link>}
-            {canUseLeave && <Link className={navClass("/leave-requests")} href="/leave-requests"><span>▱</span> Đơn từ</Link>}
-            {canUsePayroll && <Link className={navClass("/payslips")} href="/payslips"><span>◈</span> Phiếu lương</Link>}
+            {canUseAttendance && <Link className={navClass("/attendance")} href="/attendance">Chấm công</Link>}
+            {canUseLeave && <Link className={navClass("/leave-requests")} href="/leave-requests">Đơn từ</Link>}
+            {canUsePayroll && <Link className={navClass("/payslips")} href="/payslips">Phiếu lương</Link>}
           </>
         )}
       </nav>
