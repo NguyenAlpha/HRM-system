@@ -3865,6 +3865,12 @@
             "type" : [ "string", "null" ],
             "format" : "date-time"
           },
+          "roleCodes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
           "status" : {
             "type" : "string",
             "enum" : [ "PENDING", "ACTIVE", "LOCKED", "DISABLED" ]
@@ -3877,7 +3883,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "createdAt", "email", "employeeCode", "employeeFullName", "employeeId", "failedLoginCount", "id", "lastLoginAt", "lockedUntil", "status", "updatedAt", "username" ]
+        "required" : [ "createdAt", "email", "employeeCode", "employeeFullName", "employeeId", "failedLoginCount", "id", "lastLoginAt", "lockedUntil", "roleCodes", "status", "updatedAt", "username" ]
       },
       "AccountRoleAssignmentResponse" : {
         "type" : "object",

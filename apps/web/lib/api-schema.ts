@@ -1436,6 +1436,7 @@ export interface components {
             lastLoginAt: string | null;
             /** Format: date-time */
             lockedUntil: string | null;
+            roleCodes: string[];
             /** @enum {string} */
             status: "PENDING" | "ACTIVE" | "LOCKED" | "DISABLED";
             /** Format: date-time */

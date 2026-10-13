@@ -108,6 +108,10 @@ class ListSearchIntegrationTest {
         assertEquals(java.util.Arrays.asList("Alpha " + marker, null, null),
             accountAdminService.list(new AccountSearchCriteria(marker, null, null), byUsername).getContent().stream()
                 .map(AccountResponse::employeeFullName).toList());
+        // Each row lists the roles the account holds, so the web can tell protected accounts apart.
+        assertEquals(List.of(List.of("HR_MANAGER"), List.of(), List.of()),
+            accountAdminService.list(new AccountSearchCriteria(marker, null, null), byUsername).getContent().stream()
+                .map(AccountResponse::roleCodes).toList());
         // LIKE wildcards in the keyword are matched literally.
         assertEquals(List.of(), usernames(new AccountSearchCriteria(marker + "%", null, null), byUsername));
         assertThrows(BusinessException.class, () -> accountAdminService.list(

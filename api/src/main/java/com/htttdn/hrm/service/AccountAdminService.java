@@ -1,8 +1,12 @@
 package com.htttdn.hrm.service;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.data.domain.Page;
@@ -24,6 +28,7 @@ import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
+import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.specification.AccountSpecifications;
 import com.htttdn.hrm.repository.specification.SearchPatterns;
 import com.htttdn.hrm.security.CurrentAccountProvider;
@@ -46,6 +51,7 @@ public class AccountAdminService {
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final CompanyOwnerAccountGuard companyOwnerAccountGuard;
     private final AccountAuthorizationService accountAuthorizationService;
+    private final AccountRoleAssignmentRepository roleAssignmentRepository;
 
     public AccountAdminService(
         AccountRepository accountRepository,
@@ -55,7 +61,8 @@ public class AccountAdminService {
         CurrentAccountProvider currentAccountProvider,
         EmployeeAccessScopeService employeeAccessScopeService,
         CompanyOwnerAccountGuard companyOwnerAccountGuard,
-        AccountAuthorizationService accountAuthorizationService
+        AccountAuthorizationService accountAuthorizationService,
+        AccountRoleAssignmentRepository roleAssignmentRepository
     ) {
         this.accountRepository = accountRepository;
         this.accountProvisioningService = accountProvisioningService;
@@ -65,6 +72,7 @@ public class AccountAdminService {
         this.employeeAccessScopeService = employeeAccessScopeService;
         this.companyOwnerAccountGuard = companyOwnerAccountGuard;
         this.accountAuthorizationService = accountAuthorizationService;
+        this.roleAssignmentRepository = roleAssignmentRepository;
     }
 
     @PreAuthorize("hasAuthority('account.provision')")
@@ -90,8 +98,10 @@ public class AccountAdminService {
                 specification = specification.and(filter);
             }
         }
-        return accountRepository.findAll(specification, SearchPatterns.requireSortable(pageable, SORTABLE_PROPERTIES))
-            .map(this::toResponse);
+        Page<Account> accounts =
+            accountRepository.findAll(specification, SearchPatterns.requireSortable(pageable, SORTABLE_PROPERTIES));
+        Map<Long, List<String>> roleCodes = heldRoleCodes(accounts.map(Account::getId).getContent());
+        return accounts.map(account -> toResponse(account, roleCodes.getOrDefault(account.getId(), List.of())));
     }
 
     @Transactional(readOnly = true)
@@ -212,7 +222,26 @@ public class AccountAdminService {
         );
     }
 
+    private Map<Long, List<String>> heldRoleCodes(List<Long> accountIds) {
+        if (accountIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, List<String>> result = new HashMap<>();
+        for (Object[] row : roleAssignmentRepository.findHeldRoleCodes(accountIds)) {
+            List<String> codes = result.computeIfAbsent((Long) row[0], ignored -> new ArrayList<>());
+            if (!codes.contains((String) row[1])) {
+                codes.add((String) row[1]);
+            }
+        }
+        result.values().forEach(Collections::sort);
+        return result;
+    }
+
     private AccountResponse toResponse(Account account) {
+        return toResponse(account, heldRoleCodes(List.of(account.getId())).getOrDefault(account.getId(), List.of()));
+    }
+
+    private AccountResponse toResponse(Account account, List<String> roleCodes) {
         return new AccountResponse(
             account.getId(),
             account.getEmployee() == null ? null : account.getEmployee().getId(),
@@ -221,6 +250,7 @@ public class AccountAdminService {
             account.getUsername(),
             account.getEmail(),
             account.getStatus(),
+            roleCodes,
             account.getFailedLoginCount(),
             account.getLockedUntil(),
             account.getLastLoginAt(),

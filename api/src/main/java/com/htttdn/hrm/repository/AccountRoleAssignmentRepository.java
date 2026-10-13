@@ -18,6 +18,14 @@ public interface AccountRoleAssignmentRepository extends JpaRepository<AccountRo
 
     List<AccountRoleAssignment> findByAccountIdOrderByCreatedAtDesc(Long accountId);
 
+    /** Pairs of (account id, role code) for roles not revoked, the same test the account guard uses. */
+    @Query("""
+        SELECT assignment.account.id, assignment.role.code
+        FROM AccountRoleAssignment assignment
+        WHERE assignment.account.id IN :accountIds AND assignment.revokedAt IS NULL
+        """)
+    List<Object[]> findHeldRoleCodes(@Param("accountIds") List<Long> accountIds);
+
     Optional<AccountRoleAssignment> findByIdAndAccountId(Long id, Long accountId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

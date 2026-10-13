@@ -100,6 +100,9 @@ const ACTIONS: Record<ActionKind, { label: string; title: string; description: s
   },
 }
 
+// Only a holder of the same role may change these accounts; the API's account guard enforces it.
+const PROTECTED_ROLES = ["COMPANY_OWNER", "SYSTEM_ADMIN"]
+
 const ICONS: Record<ActionKind, typeof Ban> = {
   "invitations/resend": MailPlus,
   "password-reset": KeyRound,
@@ -111,9 +114,10 @@ function formatDateTime(value: string | null) {
   return value ? new Date(value).toLocaleString("vi-VN") : "—"
 }
 
-export function AccountManager({ portal, currentAccountId, canManage, canManageActivation, onSessionExpired }: {
+export function AccountManager({ portal, currentAccountId, currentRoleCodes, canManage, canManageActivation, onSessionExpired }: {
   portal: Portal
   currentAccountId: number
+  currentRoleCodes: string[]
   canManage: boolean
   canManageActivation: boolean
   onSessionExpired: () => void
@@ -190,10 +194,12 @@ export function AccountManager({ portal, currentAccountId, canManage, canManageA
   function availableActions(account: Account): ActionKind[] {
     const self = account.id === currentAccountId
     const actions: ActionKind[] = []
-    if (canManageActivation && account.status === "PENDING") actions.push("invitations/resend")
-    if (canManageActivation && !self && (account.status === "ACTIVE" || account.status === "LOCKED")) actions.push("password-reset")
+    // Reactivating stays allowed on a protected account, so only the other actions are dropped.
+    const guarded = PROTECTED_ROLES.some((role) => account.roleCodes.includes(role) && !currentRoleCodes.includes(role))
+    if (canManageActivation && !guarded && account.status === "PENDING") actions.push("invitations/resend")
+    if (canManageActivation && !guarded && !self && (account.status === "ACTIVE" || account.status === "LOCKED")) actions.push("password-reset")
     if (canManage && (account.status === "DISABLED" || account.status === "LOCKED")) actions.push("activate")
-    if (canManage && !self && (account.status === "ACTIVE" || account.status === "LOCKED")) actions.push("suspend")
+    if (canManage && !guarded && !self && (account.status === "ACTIVE" || account.status === "LOCKED")) actions.push("suspend")
     return actions
   }
 

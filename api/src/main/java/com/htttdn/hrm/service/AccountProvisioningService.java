@@ -2,6 +2,7 @@ package com.htttdn.hrm.service;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -107,7 +108,7 @@ public class AccountProvisioningService {
         );
 
         return new AccountProvisioningResponse(
-            toResponse(account),
+            toResponse(account, List.of(DEFAULT_EMPLOYEE_ROLE)),
             new AccountInvitationResponse(account.getId(), issued.rawToken(), issued.expiresAt())
         );
     }
@@ -162,7 +163,7 @@ public class AccountProvisioningService {
             ));
     }
 
-    private AccountResponse toResponse(Account account) {
+    private AccountResponse toResponse(Account account, List<String> roleCodes) {
         return new AccountResponse(
             account.getId(),
             account.getEmployee() == null ? null : account.getEmployee().getId(),
@@ -171,6 +172,7 @@ public class AccountProvisioningService {
             account.getUsername(),
             account.getEmail(),
             account.getStatus(),
+            roleCodes,
             account.getFailedLoginCount(),
             account.getLockedUntil(),
             account.getLastLoginAt(),
