@@ -738,6 +738,8 @@ export async function handleRoleAssignmentRequest(request: Request, segments: st
   const routes = [
     { pattern: /^$/, methods: ["GET", "POST"] },
     { pattern: /^available-roles$/, methods: ["GET"] },
+    { pattern: /^revocable-assignments$/, methods: ["GET"] },
+    { pattern: /^revocations$/, methods: ["POST"] },
     { pattern: /^[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^[1-9]\d*\/approve$/, methods: ["POST"] },
     { pattern: /^[1-9]\d*\/reject$/, methods: ["POST"] },
@@ -773,7 +775,7 @@ export async function handleRoleAssignmentRequest(request: Request, segments: st
 
   const query = new URLSearchParams()
   new URL(request.url).searchParams.forEach((value, key) => {
-    if (["page", "size", "sort", "status"].includes(key)) query.append(key, value)
+    if (["page", "size", "sort", "status", "accountId"].includes(key)) query.append(key, value)
   })
   const result = await callApi<unknown>(`/api/role-assignment-requests${path ? `/${path}` : ""}?${query}`, {
     method: request.method,

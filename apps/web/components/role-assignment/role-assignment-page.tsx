@@ -12,8 +12,8 @@ export function RoleAssignmentPage() {
   return (
     <>
       <PageHeader
-        title="Đề xuất cấp role"
-        description="Đề xuất, theo dõi và phê duyệt việc cấp role nghiệp vụ cho tài khoản nhân sự."
+        title="Đề xuất role"
+        description="Đề xuất, theo dõi và phê duyệt việc cấp hoặc thu hồi role nghiệp vụ cho tài khoản nhân sự."
         backToOverview
       />
 

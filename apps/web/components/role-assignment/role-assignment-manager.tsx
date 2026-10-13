@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Check, Loader2, Plus, RefreshCw, Undo2, X } from "lucide-react"
+import { Check, Loader2, Plus, RefreshCw, ShieldMinus, Undo2, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { Pagination, ErrorAlert } from "@/components/common/list-controls"
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
+import { RoleRevocationRequestDialog } from "@/components/role-assignment/role-revocation-request-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -58,6 +59,7 @@ import {
   ROLE_ASSIGNMENT_STATUS_LABELS,
   ROLE_ASSIGNMENT_STATUSES,
   ROLE_SCOPE_LABELS,
+  type RoleAssignmentRequestType,
   type RoleAssignmentOption,
   type RoleAssignmentRequest,
   type RoleAssignmentRequestStatus,
@@ -111,6 +113,10 @@ const EMPTY_CREATE_VALUES: CreateRequestValues = {
 
 type ActionKind = "approve" | "reject" | "cancel"
 
+const ACTION_VERBS: Record<ActionKind, string> = { approve: "Duyệt", reject: "Từ chối", cancel: "Hủy" }
+
+const REQUEST_TYPE_LABELS: Record<RoleAssignmentRequestType, string> = { GRANT: "Cấp", REVOKE: "Thu hồi" }
+
 function statusBadgeVariant(status: RoleAssignmentRequestStatus): "default" | "secondary" | "outline" | "destructive" {
   if (status === "APPROVED") return "default"
   if (status === "PENDING") return "secondary"
@@ -132,6 +138,7 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
   const [error, setError] = useState<string | null>(null)
 
   const [createOpen, setCreateOpen] = useState(false)
+  const [revocationOpen, setRevocationOpen] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [loadingOptions, setLoadingOptions] = useState(true)
   const [roleOptions, setRoleOptions] = useState<RoleAssignmentOption[]>([])
@@ -299,11 +306,11 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
           <div>
-            <CardTitle>Đề xuất cấp role</CardTitle>
+            <CardTitle>Đề xuất cấp / thu hồi role</CardTitle>
             <CardDescription>
               {canApprove
-                ? "Xem và duyệt toàn bộ đề xuất cấp role trong doanh nghiệp."
-                : "Đề xuất cấp role cho nhân sự đã có tài khoản; role cao cấp cần Company Owner duyệt."}
+                ? "Xem và duyệt toàn bộ đề xuất cấp hoặc thu hồi role trong doanh nghiệp."
+                : "Đề xuất cấp hoặc thu hồi role cho nhân sự đã có tài khoản; role cao cấp cần Company Owner duyệt."}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -311,8 +318,13 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
               <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
             </Button>
             {canRequest && (
+              <Button type="button" variant="outline" size="sm" onClick={() => setRevocationOpen(true)}>
+                <ShieldMinus /> Đề xuất thu hồi
+              </Button>
+            )}
+            {canRequest && (
               <Button type="button" size="sm" onClick={openCreate}>
-                <Plus /> Tạo đề xuất
+                <Plus /> Đề xuất cấp role
               </Button>
             )}
           </div>
@@ -373,7 +385,12 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
                         <span className="block text-xs text-muted-foreground"><code>{request.employeeCode}</code></span>
                       </TableCell>
                       <TableCell>
-                        <span className="font-medium">{request.roleName}</span>
+                        <span className="flex items-center gap-1.5">
+                          <Badge variant={request.requestType === "REVOKE" ? "destructive" : "secondary"}>
+                            {REQUEST_TYPE_LABELS[request.requestType]}
+                          </Badge>
+                          <span className="font-medium">{request.roleName}</span>
+                        </span>
                         <span className="block text-xs text-muted-foreground">{request.roleCode}</span>
                       </TableCell>
                       <TableCell className="text-sm">
@@ -420,7 +437,7 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
         <DialogContent className="sm:max-w-lg">
           <form onSubmit={handleSubmit(onSubmit)}>
             <DialogHeader>
-              <DialogTitle>Tạo đề xuất cấp role</DialogTitle>
+              <DialogTitle>Đề xuất cấp role</DialogTitle>
               <DialogDescription>
                 Role có chính sách &ldquo;Chờ duyệt&rdquo; sẽ tạo yêu cầu PENDING chờ Company Owner phê duyệt; role tự động duyệt sẽ có hiệu lực ngay.
               </DialogDescription>
@@ -582,16 +599,24 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
         </DialogContent>
       </Dialog>
 
+      {revocationOpen && (
+        <RoleRevocationRequestDialog
+          onClose={() => setRevocationOpen(false)}
+          onCreated={() => { setPage(0); reload() }}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
+
       <Dialog open={actionTarget !== null} onOpenChange={(open) => { if (!open) setActionTarget(null) }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {actionTarget?.action === "approve" && `Duyệt đề xuất role ${actionTarget.request.roleName}?`}
-              {actionTarget?.action === "reject" && `Từ chối đề xuất role ${actionTarget.request.roleName}?`}
-              {actionTarget?.action === "cancel" && `Hủy đề xuất role ${actionTarget.request.roleName}?`}
+              {actionTarget && `${ACTION_VERBS[actionTarget.action]} đề xuất ${REQUEST_TYPE_LABELS[actionTarget.request.requestType].toLowerCase()} role ${actionTarget.request.roleName}?`}
             </DialogTitle>
             <DialogDescription>
-              Cho {actionTarget?.request.employeeName} ({actionTarget?.request.employeeCode})
+              {actionTarget?.request.requestType === "REVOKE" ? "Của" : "Cho"} {actionTarget?.request.employeeName} ({actionTarget?.request.employeeCode})
+              {actionTarget?.action === "approve" && actionTarget.request.requestType === "REVOKE"
+                && ". Role mất hiệu lực ngay và mọi phiên đăng nhập của tài khoản bị thu hồi."}
             </DialogDescription>
           </DialogHeader>
 
