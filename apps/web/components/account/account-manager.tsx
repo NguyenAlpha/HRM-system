@@ -15,6 +15,7 @@ import {
   type SortState,
 } from "@/components/common/list-filters"
 import { Pagination, ErrorAlert } from "@/components/common/list-controls"
+import { AccountDetailSheet } from "@/components/account/account-detail-sheet"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -128,6 +129,7 @@ export function AccountManager({ portal, currentAccountId, canManage, canManageA
   const hasActions = canManage || canManageActivation
   const columns = hasActions ? 5 : 4
   const [invitation, setInvitation] = useState<{ account: Account; invitation: AccountInvitation } | null>(null)
+  const [viewing, setViewing] = useState<Account | null>(null)
   const [filters, setFilters] = useState<AccountFilters>(EMPTY_FILTERS)
   const [sort, setSort] = useState<SortState>({ field: "id", direction: "desc" })
   const [roleOptions, setRoleOptions] = useState<{ value: string; label: string }[]>([])
@@ -225,8 +227,8 @@ export function AccountManager({ portal, currentAccountId, canManage, canManageA
             <CardTitle>Danh sách tài khoản</CardTitle>
             <CardDescription>
               {hasActions
-                ? "Gửi lại lời mời, đặt lại mật khẩu, vô hiệu hóa hoặc kích hoạt lại tài khoản đăng nhập."
-                : "Danh sách tài khoản đăng nhập (chỉ xem)."}
+                ? "Gửi lại lời mời, đặt lại mật khẩu, vô hiệu hóa hoặc kích hoạt lại tài khoản đăng nhập. Bấm tên tài khoản để xem role và permission."
+                : "Danh sách tài khoản đăng nhập (chỉ xem). Bấm tên tài khoản để xem role và permission."}
             </CardDescription>
           </div>
           <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
@@ -293,7 +295,9 @@ export function AccountManager({ portal, currentAccountId, canManage, canManageA
                 {!loading && data?.content.map((account) => (
                   <TableRow key={account.id}>
                     <TableCell>
-                      <span className="font-medium">{account.username}</span>
+                      <button type="button" className="font-medium underline-offset-4 hover:underline" onClick={() => setViewing(account)}>
+                        {account.username}
+                      </button>
                       {account.id === currentAccountId && <span className="ml-1.5 text-xs text-muted-foreground">(bạn)</span>}
                       <span className="block text-xs text-muted-foreground">{account.email}</span>
                     </TableCell>
@@ -379,6 +383,10 @@ export function AccountManager({ portal, currentAccountId, canManage, canManageA
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {viewing && (
+        <AccountDetailSheet portal={portal} account={viewing} onClose={() => setViewing(null)} onSessionExpired={onSessionExpired} />
+      )}
 
       {invitation && (
         <InvitationDialog

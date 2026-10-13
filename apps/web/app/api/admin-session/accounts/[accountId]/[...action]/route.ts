@@ -7,4 +7,4 @@ async function handle(request: Request, context: Context) {
   return handleAccountLifecycleRequest(request, [accountId, ...action], "admin")
 }
 
-export { handle as POST }
+export { handle as GET, handle as POST }
