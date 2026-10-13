@@ -75,7 +75,7 @@ export function EmployeeEmploymentEndDialog({ employee, onClose, onCompleted, on
         values.terminationReason.trim(),
       )
       toast.success(`Đã ghi nhận ${EMPLOYMENT_END_LABELS[values.endStatus].toLowerCase()} cho ${employee.fullName}`, {
-        description: "Phân công hiện tại đã đóng và tài khoản đăng nhập đã bị vô hiệu hóa.",
+        description: "Phân công hiện tại đã đóng, tài khoản đăng nhập đã bị vô hiệu hóa và role nghiệp vụ đã được thu hồi.",
       })
       onClose()
       onCompleted()
@@ -99,7 +99,7 @@ export function EmployeeEmploymentEndDialog({ employee, onClose, onCompleted, on
           <div className="grid gap-4 py-4">
             <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
               Thao tác này đóng phân công đang hiệu lực tại ngày kết thúc, chuyển tài khoản đăng nhập sang
-              trạng thái vô hiệu hóa và thu hồi toàn bộ phiên đăng nhập của nhân sự. Dữ liệu chấm công và
+              trạng thái vô hiệu hóa, thu hồi toàn bộ phiên đăng nhập và các role nghiệp vụ nhân sự đang giữ. Dữ liệu chấm công và
               phiếu lương đã có được giữ nguyên.
             </p>
 
