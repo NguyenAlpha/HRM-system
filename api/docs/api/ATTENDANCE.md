@@ -593,12 +593,12 @@ Số đã dùng và đang chờ được tính trực tiếp từ `leave_request
 
 1. Tạo phân công chính và chọn ca có hiệu lực từ **ngày làm việc đầu tiên** của nhân viên. `POST /api/attendance/prepare` báo mã nhân viên và ngày nếu thiếu phân công hoặc ca; sau khi sửa phân công, gọi lại để tạo các bản ghi `MISSING_PUNCH`.
 2. HR đối soát từng `MISSING_PUNCH`: có đi làm thì nhập giờ vào/ra thực tế (`POST /api/attendance/punches`), vắng không báo thì ghi `UNAUTHORIZED_ABSENCE` (`PUT /api/attendance/{id}`); cả hai cần lý do. Nghỉ có lương cần đi qua quy trình duyệt đơn nghỉ.
-3. Người có `compensation.manage` nhập mức lương tháng qua `POST /api/compensation/employees/{employeeId}/salary-history`, ví dụ `{"baseSalary":12000000,"effectiveFrom":"2026-01-01","reason":"Mức lương ban đầu"}`. Xem lịch sử bằng `GET` cùng đường dẫn với quyền `compensation.read`. Ngày hiệu lực phải phủ tất cả ngày làm việc cần tính lương. Sửa mức lương ảnh hưởng kỳ `CALCULATED` sẽ đưa kỳ về `DRAFT` và xóa phiếu cũ; kỳ đã duyệt, trả hoặc khóa thì bị chặn.
-   Vai trò `HR_MANAGER` có cả hai quyền này. Từ hồ sơ nhân viên, HR chọn **Nhập và xem lương** để mở màn hình lương với nhân viên và ngày vào làm được điền sẵn.
-4. HR nhập hồ sơ bảo hiểm/thuế và người phụ thuộc theo hướng dẫn trong [PAYROLL.md](PAYROLL.md). Nếu thiếu hồ sơ trong kỳ, hệ thống trả lỗi theo nhân viên thay vì giả định không tham gia bảo hiểm.
+3. Người có `compensation.manage` nhập mức lương tháng; ngày hiệu lực phải phủ tất cả ngày làm việc cần tính lương. Endpoint, ràng buộc và lỗi xem [Lịch sử lương cơ bản](PAYROLL.md#lịch-sử-lương-cơ-bản).
+   Vai trò `HR_MANAGER` có quyền này. Từ hồ sơ nhân viên, HR chọn **Nhập và xem lương** để mở màn hình lương với nhân viên và ngày vào làm được điền sẵn.
+4. HR nhập [hồ sơ bảo hiểm/thuế](PAYROLL.md#hồ-sơ-bảo-hiểm-và-thuế) và [người phụ thuộc](PAYROLL.md#người-phụ-thuộc). Nếu thiếu hồ sơ trong kỳ, hệ thống trả lỗi theo nhân viên thay vì giả định không tham gia bảo hiểm.
 5. Tính kỳ lương chỉ thành công khi **mọi nhân viên được tuyển dụng trong kỳ** có phân công, ca, công đã xử lý, lịch sử lương và hồ sơ khấu trừ. API trả lỗi kèm mã nhân viên và dữ liệu thiếu; kỳ vẫn ở trạng thái trước đó để sửa rồi tính lại.
 
-Endpoint kỳ lương: `POST /api/payroll/periods`, `GET /api/payroll/periods`, `GET /api/payroll/periods/{id}`, `POST /api/payroll/periods/{id}/calculate|approve|mark-paid|lock|cancel`; xem phiếu qua `GET /api/payroll/employees/{employeeId}/payslips` hoặc `GET /api/payroll/payslips/{id}`. Nhân viên chỉ xem phiếu từ kỳ đã duyệt trở đi. Chi tiết trong [PAYROLL.md](PAYROLL.md).
+Endpoint kỳ lương: `POST /api/payroll/periods`, `GET /api/payroll/periods`, `GET /api/payroll/periods/{id}`, `POST /api/payroll/periods/{id}/calculate|approve|mark-paid|lock|cancel`; xem phiếu qua `GET /api/payroll/employees/{employeeId}/payslips` hoặc `GET /api/payroll/payslips/{id}`. Nhân viên chỉ xem phiếu từ kỳ đã duyệt trở đi. Chi tiết trong [PAYROLL.md](PAYROLL.md#kỳ-lương).
 
 ---
 
