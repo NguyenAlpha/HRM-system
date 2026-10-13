@@ -9,10 +9,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htttdn.hrm.dto.response.account.AccountPermissionGrantResponse;
+import com.htttdn.hrm.dto.response.account.PermissionGrantSource;
 import com.htttdn.hrm.entity.AccountPermissionOverride;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.Permission;
@@ -83,6 +86,33 @@ public class AccountAuthorizationService {
             roleDetails,
             permissionDetails
         );
+    }
+
+    /** Today's permissions of the account, each with the role assignments that give it. */
+    @Transactional(readOnly = true)
+    public List<AccountPermissionGrantResponse> getPermissionGrants(Long accountId) {
+        AuthorizationContext context = loadContext(accountId, LocalDate.now());
+        Map<String, List<PermissionGrantSource>> sourcesByCode = new TreeMap<>();
+        for (AccountRoleAssignment assignment : context.assignments()) {
+            Set<String> rolePermissions =
+                context.permissionsByRole().getOrDefault(assignment.getRole().getId(), Set.of());
+            for (String code : effectivePermissions(assignment, context)) {
+                sourcesByCode.computeIfAbsent(code, ignored -> new ArrayList<>()).add(new PermissionGrantSource(
+                    assignment.getId(),
+                    assignment.getRole().getCode(),
+                    assignment.getRole().getName(),
+                    !rolePermissions.contains(code)
+                ));
+            }
+        }
+        return sourcesByCode.entrySet().stream()
+            .filter(entry -> context.permissionsByCode().containsKey(entry.getKey()))
+            .map(entry -> {
+                Permission permission = context.permissionsByCode().get(entry.getKey());
+                return new AccountPermissionGrantResponse(
+                    permission.getCode(), permission.getName(), permission.getModule(), entry.getValue());
+            })
+            .toList();
     }
 
     @Transactional(readOnly = true)

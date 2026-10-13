@@ -2,6 +2,7 @@ package com.htttdn.hrm.service;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.data.domain.Page;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.htttdn.hrm.dto.request.account.AccountSearchCriteria;
 import com.htttdn.hrm.dto.request.account.CreateAccountRequest;
 import com.htttdn.hrm.dto.response.account.AccountInvitationResponse;
+import com.htttdn.hrm.dto.response.account.AccountPermissionGrantResponse;
 import com.htttdn.hrm.dto.response.account.AccountProvisioningResponse;
 import com.htttdn.hrm.dto.response.account.AccountResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
@@ -43,6 +45,7 @@ public class AccountAdminService {
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final CompanyOwnerAccountGuard companyOwnerAccountGuard;
+    private final AccountAuthorizationService accountAuthorizationService;
 
     public AccountAdminService(
         AccountRepository accountRepository,
@@ -51,7 +54,8 @@ public class AccountAdminService {
         RefreshTokenService refreshTokenService,
         CurrentAccountProvider currentAccountProvider,
         EmployeeAccessScopeService employeeAccessScopeService,
-        CompanyOwnerAccountGuard companyOwnerAccountGuard
+        CompanyOwnerAccountGuard companyOwnerAccountGuard,
+        AccountAuthorizationService accountAuthorizationService
     ) {
         this.accountRepository = accountRepository;
         this.accountProvisioningService = accountProvisioningService;
@@ -60,6 +64,7 @@ public class AccountAdminService {
         this.currentAccountProvider = currentAccountProvider;
         this.employeeAccessScopeService = employeeAccessScopeService;
         this.companyOwnerAccountGuard = companyOwnerAccountGuard;
+        this.accountAuthorizationService = accountAuthorizationService;
     }
 
     @PreAuthorize("hasAuthority('account.provision')")
@@ -93,6 +98,12 @@ public class AccountAdminService {
     @PreAuthorize("hasAuthority('account.read')")
     public AccountResponse getById(Long accountId) {
         return toResponse(findAccount(accountId));
+    }
+
+    @PreAuthorize("hasAuthority('account.read')")
+    public List<AccountPermissionGrantResponse> getPermissionGrants(Long accountId) {
+        findAccount(accountId);
+        return accountAuthorizationService.getPermissionGrants(accountId);
     }
 
     @PreAuthorize("hasAuthority('account.activation.manage')")

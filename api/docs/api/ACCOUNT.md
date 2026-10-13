@@ -23,6 +23,7 @@ Company Owner tạo HR Manager đầu tiên và các HR Manager tiếp theo bằ
 | `POST /api/accounts` | `account.provision` | Tạo account `PENDING` cho employee đã có hồ sơ, tự gán role nền `EMPLOYEE/SELF` và phát token kích hoạt |
 | `GET /api/accounts` | `account.read` | Lấy danh sách account có phân trang |
 | `GET /api/accounts/{accountId}` | `account.read` | Lấy thông tin chi tiết của một account |
+| `GET /api/accounts/{accountId}/permissions` | `account.read` | Permission account đang có hôm nay và role assignment nào cấp |
 | `POST /api/accounts/{accountId}/invitations/resend` | `account.activation.manage` | Thu hồi lời mời cũ và phát lại token kích hoạt cho account `PENDING` |
 | `POST /api/accounts/{accountId}/password-reset` | `account.activation.manage` | Đưa account `ACTIVE` hoặc `LOCKED` về `PENDING` và phát token để người dùng tự đặt lại mật khẩu |
 | `POST /api/accounts/{accountId}/suspend` | `account.manage` | Vô hiệu hóa account và thu hồi toàn bộ refresh token |
@@ -129,6 +130,39 @@ Response `200 OK` dùng cấu trúc `Page<AccountResponse>` của Spring với c
 ## GET `/api/accounts/{accountId}`
 
 Lấy chi tiết một account.
+
+### Lỗi
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
+| 403 | `FORBIDDEN` | Không có `account.read` |
+| 404 | `ACCOUNT_NOT_FOUND` | Account không tồn tại |
+
+---
+
+## GET `/api/accounts/{accountId}/permissions`
+
+Permission account đang có hôm nay, sắp theo `code`. Mỗi permission kèm các role assignment đang hiệu lực cấp nó, tính giống lúc đăng nhập: permission mặc định của role, cộng `GRANT` và trừ `REVOKE` override trên từng assignment. `viaOverride = true` nghĩa là role không có permission này mà ngoại lệ `GRANT` trên assignment đó thêm vào. Permission bị `REVOKE` trên mọi assignment thì không có trong danh sách.
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "code": "attendance.overtime.approve",
+      "name": "Phê duyệt làm thêm giờ",
+      "module": "ATTENDANCE",
+      "grantedBy": [
+        { "assignmentId": 31, "roleCode": "EMPLOYEE", "roleName": "Nhân viên", "viaOverride": true }
+      ]
+    }
+  ],
+  "error": null
+}
+```
+
+Scope của permission là scope của assignment trong `grantedBy`; xem `GET /api/accounts/{accountId}/role-assignments`.
 
 ### Lỗi
 

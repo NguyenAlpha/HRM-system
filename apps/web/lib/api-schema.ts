@@ -100,6 +100,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/accounts/{accountId}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPermissions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/accounts/{accountId}/role-assignments": {
         parameters: {
             query?: never;
@@ -1359,6 +1375,13 @@ export interface components {
             /** Format: date-time */
             expiresAt: string;
         };
+        AccountPermissionGrantResponse: {
+            code: string;
+            grantedBy: components["schemas"]["PermissionGrantSource"][];
+            /** @enum {string} */
+            module: "EMPLOYEE" | "ACCOUNT" | "ORGANIZATION" | "REQUEST" | "ATTENDANCE" | "PAYROLL" | "RBAC" | "REPORT";
+            name: string;
+        };
         AccountPermissionOverrideResponse: {
             /** Format: int64 */
             accountId: number;
@@ -1553,6 +1576,11 @@ export interface components {
         };
         ApiResultLeaveRequestView: {
             data: components["schemas"]["LeaveRequestView"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListAccountPermissionGrantResponse: {
+            data: components["schemas"]["AccountPermissionGrantResponse"][] | null;
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
@@ -2526,6 +2554,13 @@ export interface components {
             unemploymentInsuranceBase: number;
             workLocationSnapshot: string;
         };
+        PermissionGrantSource: {
+            /** Format: int64 */
+            assignmentId: number;
+            roleCode: string;
+            roleName: string;
+            viaOverride: boolean;
+        };
         PermissionOverrideOptionResponse: {
             description: string;
             /** @enum {string} */
@@ -3001,6 +3036,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultAccountInvitationResponse"];
+                };
+            };
+        };
+    };
+    getPermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListAccountPermissionGrantResponse"];
                 };
             };
         };
