@@ -27,6 +27,7 @@ import {
   type AttendanceRecord,
   type AttendanceStatus,
   type CompanyHoliday,
+  type OvertimeApprovalItem,
   type WorkforceBody,
 } from "@/lib/workforce"
 import {
@@ -121,12 +122,14 @@ const statusLabel = (day: Day, record: AttendanceRecord) =>
 export function AttendanceSection({ employeeId, permissions, month }: WorkforceContext) {
   const canReadAttendance = permissions.has("attendance.self.read") || permissions.has("attendance.read")
   const canManage = permissions.has("attendance.manage")
-  const canApproveOvertime = permissions.has("attendance.overtime.approve")
   const canReadHolidays = permissions.has("holiday.read")
   const canManageHolidays = permissions.has("organization.manage")
 
   const [rows, setRows] = useState<AttendanceRecord[]>([])
   const [holidays, setHolidays] = useState<CompanyHoliday[]>([])
+  // Overtime waits for the employee's approver (direct manager, else Director, else Owner), not for a permission.
+  const [overtimeQueue, setOvertimeQueue] = useState<OvertimeApprovalItem[]>([])
+  const [queueHolidays, setQueueHolidays] = useState<CompanyHoliday[]>([])
   const [error, setError] = useState<string | null>(null)
   const [revision, setRevision] = useState(0)
   // Employees look at their month as a calendar; HR works through the list, which carries the actions.
@@ -158,6 +161,23 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
     return () => { active = false }
   }, [employeeId, first, last, canReadAttendance, canReadHolidays, revision])
 
+  useEffect(() => {
+    let active = true
+    workforceApi<OvertimeApprovalItem[]>("attendance/overtime/pending")
+      .then(async (items) => {
+        // The queue spans any month; its holidays set the minimum multiplier of each day.
+        const dates = items.map((item) => item.record.workDate).sort()
+        const loadedHolidays = canReadHolidays && dates.length > 0
+          ? await workforceApi<CompanyHoliday[]>(`company-holidays?from=${dates[0]}&to=${dates[dates.length - 1]}`)
+          : []
+        if (!active) return
+        setOvertimeQueue(items)
+        setQueueHolidays(loadedHolidays)
+      })
+      .catch((caught: unknown) => { if (active) setError(apiErrorMessage(caught)) })
+    return () => { active = false }
+  }, [canReadHolidays, revision])
+
   const days: Day[] = Array.from({ length: Number(last.slice(8, 10)) }, (_, index) => {
     const date = `${month}-${String(index + 1).padStart(2, "0")}`
     return {
@@ -170,11 +190,14 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
     busy,
     onPunch: canManage ? (record) => setPunching({ record }) : undefined,
     onAbsent: canManage ? setAbsent : undefined,
-    onOvertime: canApproveOvertime ? setApproving : undefined,
   }
 
   return (
     <div className="grid gap-6">
+      {overtimeQueue.length > 0 && (
+        <OvertimeQueueCard items={overtimeQueue} busy={busy} onDecide={setApproving} />
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Bảng công tháng {month.slice(5, 7)}/{month.slice(0, 4)}</CardTitle>
@@ -230,8 +253,8 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
           onSubmit={(body) => run("Đã ghi vắng không phép", () => workforceApi(`attendance/${absent.id}`, "PUT", body))} />
       )}
       {approving && (
-        <OvertimeDialog record={approving} holidays={holidays} busy={busy} onClose={() => setApproving(null)}
-          onSubmit={(body) => run("Đã duyệt tăng ca", () => workforceApi(`attendance/${approving.id}/overtime-approval`, "POST", body))} />
+        <OvertimeDialog record={approving} holidays={queueHolidays} busy={busy} onClose={() => setApproving(null)}
+          onSubmit={(body) => run("Đã lưu quyết định tăng ca", () => workforceApi(`attendance/${approving.id}/overtime-approval`, "POST", body))} />
       )}
     </div>
   )
@@ -242,7 +265,6 @@ type DayActions = {
   busy: boolean
   onPunch?: (record: AttendanceRecord) => void
   onAbsent?: (record: AttendanceRecord) => void
-  onOvertime?: (record: AttendanceRecord) => void
 }
 
 function MonthSummary({ days }: { days: Day[] }) {
@@ -377,11 +399,10 @@ function ListView({ days, actions, emptyText }: { days: Day[]; actions: DayActio
 
 /** The actions a record allows; the list shows them in its row menu, the day dialog as buttons. */
 function recordActions(day: Day, record: AttendanceRecord, actions: DayActions) {
-  const { onPunch, onAbsent, onOvertime } = actions
+  const { onPunch, onAbsent } = actions
   // A future day cannot have punches yet, and a full day of approved leave belongs to the leave workflow.
   const editable = !FULL_DAY_LEAVE.has(record.status) && day.date <= today()
   const items: { key: string; icon: LucideIcon; label: string; destructive?: boolean; onClick: () => void }[] = []
-  if (onOvertime && record.checkOutAt) items.push({ key: "overtime", icon: Zap, label: "Duyệt tăng ca", onClick: () => onOvertime(record) })
   if (onPunch && editable) items.push({ key: "punch", icon: LogIn, label: "Nhập giờ vào/ra", onClick: () => onPunch(record) })
   if (onAbsent && editable) items.push({ key: "absent", icon: UserX, label: "Ghi vắng", destructive: true, onClick: () => onAbsent(record) })
   return items
@@ -430,12 +451,66 @@ function DayDialog({ day, actions, onClose }: { day: Day; actions: DayActions; o
         {record && (
           <DialogFooter className="mt-4">
             <RecordActions day={day} record={record} actions={{
-              ...actions, onPunch: wrap(actions.onPunch), onAbsent: wrap(actions.onAbsent), onOvertime: wrap(actions.onOvertime),
+              ...actions, onPunch: wrap(actions.onPunch), onAbsent: wrap(actions.onAbsent),
             }} />
           </DialogFooter>
         )}
       </DialogContent>
     </Dialog>
+  )
+}
+
+/** Days of extra time waiting for the signed-in approver; each decision, even 0 minutes, clears the day. */
+function OvertimeQueueCard({ items, busy, onDecide }: {
+  items: OvertimeApprovalItem[]
+  busy: boolean
+  onDecide: (record: AttendanceRecord) => void
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Tăng ca chờ bạn quyết định</CardTitle>
+        <CardDescription>
+          Các ngày làm vượt công thường của nhân viên mà bạn là người duyệt (quản lý trực tiếp, hoặc cấp trên khi chưa có quản lý).
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-xl border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nhân viên</TableHead>
+                <TableHead>Ngày</TableHead>
+                <TableHead>Vào – Ra</TableHead>
+                <TableHead className="text-right">Thực làm</TableHead>
+                <TableHead className="text-right">Công thường</TableHead>
+                <TableHead className="text-right">Thao tác</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map(({ record, employeeCode, employeeName }) => (
+                <TableRow key={record.id}>
+                  <TableCell>
+                    <span className="font-medium">{employeeName}</span>
+                    <span className="block text-xs text-muted-foreground">{employeeCode}</span>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    <span className="inline-block w-7 text-muted-foreground">{WEEKDAYS[weekday(record.workDate)]}</span>
+                    {record.workDate.slice(8, 10)}/{record.workDate.slice(5, 7)}/{record.workDate.slice(0, 4)}
+                  </TableCell>
+                  <TableCell className="tabular-nums">{time(record.checkInAt)} – {time(record.checkOutAt)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{hours(record.workedMinutes)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{hours(record.payableMinutes)}</TableCell>
+                  <RowActionsCell label={`tăng ca ngày ${record.workDate}`}>
+                    <RowActionItem icon={Zap} disabled={busy} onClick={() => onDecide(record)}>Quyết định tăng ca</RowActionItem>
+                  </RowActionsCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -653,9 +728,9 @@ function OvertimeDialog({ record, holidays, busy, onClose, onSubmit }: {
       <DialogContent className="sm:max-w-md">
         <form onSubmit={submit}>
           <DialogHeader>
-            <DialogTitle>Duyệt tăng ca ngày {record.workDate}</DialogTitle>
+            <DialogTitle>Quyết định tăng ca ngày {record.workDate}</DialogTitle>
             <DialogDescription>
-              Đã làm {record.workedMinutes} phút, trong đó {record.payableMinutes} phút là công thường. Nhập 0 phút để bỏ duyệt.
+              Đã làm {record.workedMinutes} phút, trong đó {record.payableMinutes} phút là công thường. Nhập 0 phút nếu phần giờ dư không tính tăng ca.
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4 grid gap-4">
@@ -673,7 +748,7 @@ function OvertimeDialog({ record, holidays, busy, onClose, onSubmit }: {
           </div>
           <DialogFooter className="mt-4">
             <Button type="button" variant="outline" onClick={onClose}>Hủy</Button>
-            <Button type="submit" disabled={busy}>{busy && <Loader2 className="animate-spin" />}<Clock /> Duyệt</Button>
+            <Button type="submit" disabled={busy}>{busy && <Loader2 className="animate-spin" />}<Clock /> Lưu quyết định</Button>
           </DialogFooter>
         </form>
       </DialogContent>

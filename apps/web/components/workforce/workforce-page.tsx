@@ -53,7 +53,7 @@ export function WorkforcePage({ section }: { section: Section }) {
   const canUseSection = section === "attendance"
     ? ["attendance.self.read", "attendance.read", "attendance.manage"].some((code) => permissions.has(code))
     : section === "leave"
-      ? ["request.self.read", "request.read", "request.approve", "request.self.create"].some((code) => permissions.has(code))
+      ? ["request.self.read", "request.read", "request.self.create"].some((code) => permissions.has(code))
       : ["payroll.self.read", "report.payroll.read", "payroll.calculate", "compensation.read", "compensation.manage"]
         .some((code) => permissions.has(code))
   const canViewOthers = OTHERS_PERMISSIONS[section].some((code) => permissions.has(code))
