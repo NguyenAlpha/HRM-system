@@ -20,6 +20,7 @@ export type DirectRoleAssignmentInput = Schemas["AssignAccountRoleRequest"]
 export type RoleScopeType = AccountRoleAssignment["scopeType"]
 export type RoleGrantPolicy = RoleAssignmentRequest["grantPolicy"]
 export type RoleAssignmentRequestStatus = RoleAssignmentRequest["status"]
+export type RoleAssignmentRequestType = RoleAssignmentRequest["requestType"]
 export type PermissionOverrideEffect = AccountPermissionOverride["effect"]
 export type PermissionOverrideStatus = AccountPermissionOverride["status"]
 
@@ -74,6 +75,16 @@ export function getAvailableRoles(): Promise<RoleAssignmentOption[]> {
 
 export function createRoleAssignmentRequest(input: CreateRoleAssignmentRequestInput): Promise<RoleAssignmentRequest> {
   return roleAssignmentMutation<RoleAssignmentRequest>("", input)
+}
+
+/** The live assignments of an account that a revocation request may target; needs only role.assignment.request. */
+export function listRevocableAssignments(accountId: number): Promise<AccountRoleAssignment[]> {
+  return roleAssignmentRequestApi<AccountRoleAssignment[]>(`/revocable-assignments?accountId=${accountId}`)
+}
+
+/** Ask to take back one assignment: HR_ASSIGNABLE roles are revoked at once, OWNER_APPROVAL ones wait for the Owner. */
+export function createRoleRevocationRequest(assignmentId: number, reason: string): Promise<RoleAssignmentRequest> {
+  return roleAssignmentMutation<RoleAssignmentRequest>("/revocations", { assignmentId, reason } satisfies Schemas["CreateRoleRevocationRequest"])
 }
 
 export function listRoleAssignmentRequests(page: number, status?: RoleAssignmentRequestStatus | ""): Promise<Page<RoleAssignmentRequest>> {
