@@ -1,6 +1,6 @@
 # API Reference — Organization Company Owner Bootstrap
 
-Khởi tạo Chủ sở hữu doanh nghiệp đầu tiên từ tài khoản quản trị hệ thống. Đây là cầu nối từ lớp vận hành nền tảng sang lớp quản trị nội bộ doanh nghiệp; Ngoài workflow này, `SYSTEM_ADMIN` quản trị *truy cập* (tài khoản, role, permission override, danh mục tổ chức) và chỉ *xem* hồ sơ nhân sự; nghiệp vụ nhân sự, chấm công, lương, báo cáo và dữ liệu nhạy cảm thuộc các role nghiệp vụ. Tài khoản đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được khóa, phát mã kích hoạt, đổi role hoặc permission override (mở khóa vẫn được phép), nên người quản trị truy cập không chiếm được quyền chủ doanh nghiệp.
+Khởi tạo Chủ sở hữu doanh nghiệp đầu tiên từ tài khoản quản trị hệ thống. Đây là cầu nối từ lớp vận hành nền tảng sang lớp quản trị nội bộ doanh nghiệp; Ngoài workflow này, `SYSTEM_ADMIN` quản trị *truy cập* (tài khoản, role, permission override, danh mục tổ chức) và chỉ *xem* hồ sơ nhân sự; nghiệp vụ nhân sự, chấm công, lương, báo cáo và dữ liệu nhạy cảm thuộc các role nghiệp vụ. Tài khoản đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được khóa, phát mã kích hoạt, đổi role hoặc permission override, và tài khoản đang giữ `SYSTEM_ADMIN` cũng chỉ một System Admin khác được làm các việc đó (mở khóa vẫn được phép), nên người quản trị truy cập không chiếm được quyền chủ doanh nghiệp và ngược lại.
 
 ---
 

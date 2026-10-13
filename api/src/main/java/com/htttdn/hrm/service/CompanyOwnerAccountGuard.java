@@ -8,15 +8,17 @@ import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
 /**
- * Keeps holders of account-management permissions (for example the system administrator) from taking
- * over a Company Owner account: only another Company Owner may suspend it, issue it a new activation
- * token, or change its roles and permission overrides. Reactivating a locked or disabled owner stays
- * open because it cannot hand the account to someone else.
+ * Keeps holders of account-management permissions from taking over a Company Owner or System Admin
+ * account: only another Company Owner may suspend a Company Owner, issue it a new activation token, or
+ * change its roles and permission overrides, and likewise only another System Admin for a System Admin.
+ * So the system administrator cannot seize the owner, nor the owner the administrator. Reactivating a
+ * locked or disabled account stays open because it cannot hand the account to someone else.
  */
 @Component
 public class CompanyOwnerAccountGuard {
 
     static final String COMPANY_OWNER_ROLE = "COMPANY_OWNER";
+    static final String SYSTEM_ADMIN_ROLE = "SYSTEM_ADMIN";
 
     private final AccountRoleAssignmentRepository roleAssignmentRepository;
     private final CurrentAccountProvider currentAccountProvider;
@@ -30,16 +32,22 @@ public class CompanyOwnerAccountGuard {
     }
 
     public void requireCanManage(Long targetAccountId) {
-        if (!isCompanyOwner(targetAccountId) || isCompanyOwner(currentAccountProvider.accountId())) {
-            return;
+        Long actorAccountId = currentAccountProvider.accountId();
+        if (hasRole(targetAccountId, COMPANY_OWNER_ROLE) && !hasRole(actorAccountId, COMPANY_OWNER_ROLE)) {
+            throw new ForbiddenException(
+                ErrorCode.FORBIDDEN,
+                "Only a Company Owner can change the access of a Company Owner account"
+            );
         }
-        throw new ForbiddenException(
-            ErrorCode.FORBIDDEN,
-            "Only a Company Owner can change the access of a Company Owner account"
-        );
+        if (hasRole(targetAccountId, SYSTEM_ADMIN_ROLE) && !hasRole(actorAccountId, SYSTEM_ADMIN_ROLE)) {
+            throw new ForbiddenException(
+                ErrorCode.FORBIDDEN,
+                "Only a System Admin can change the access of a System Admin account"
+            );
+        }
     }
 
-    private boolean isCompanyOwner(Long accountId) {
-        return roleAssignmentRepository.existsByAccountIdAndRoleCodeAndRevokedAtIsNull(accountId, COMPANY_OWNER_ROLE);
+    private boolean hasRole(Long accountId, String roleCode) {
+        return roleAssignmentRepository.existsByAccountIdAndRoleCodeAndRevokedAtIsNull(accountId, roleCode);
     }
 }

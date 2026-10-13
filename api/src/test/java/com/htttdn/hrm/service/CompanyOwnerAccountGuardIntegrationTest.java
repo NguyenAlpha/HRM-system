@@ -25,7 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * An account-management administrator (the seeded SYSTEM_ADMIN permission set) manages ordinary
- * accounts but cannot take over a Company Owner account, and nobody overrides their own permissions.
+ * accounts but cannot take over a Company Owner account, a Company Owner cannot take over a
+ * System Admin account either, and nobody overrides their own permissions.
  * Uses its own Company Owner inside a rolled-back transaction, so it runs on an empty or seeded database.
  */
 @SpringBootTest
@@ -45,6 +46,8 @@ class CompanyOwnerAccountGuardIntegrationTest {
     private Long ownerId;
     private Long ownerAssignmentId;
     private Long staffId;
+    private Long systemAdminId;
+    private Long systemAdminAssignmentId;
 
     @BeforeEach
     void seedAccounts() {
@@ -56,6 +59,12 @@ class CompanyOwnerAccountGuardIntegrationTest {
             SELECT ?, id, 'COMPANY', '2026-01-01', ? FROM roles WHERE code = 'COMPANY_OWNER'
             RETURNING id
             """, Long.class, ownerId, adminId);
+        systemAdminId = insertAccount("guard_sysadmin");
+        systemAdminAssignmentId = jdbc.queryForObject("""
+            INSERT INTO account_role_assignments(account_id, role_id, scope_type, effective_from, granted_by_account_id)
+            SELECT ?, id, 'COMPANY', '2026-01-01', ? FROM roles WHERE code = 'SYSTEM_ADMIN'
+            RETURNING id
+            """, Long.class, systemAdminId, adminId);
     }
 
     @AfterEach
@@ -83,6 +92,28 @@ class CompanyOwnerAccountGuardIntegrationTest {
         authenticateAs(secondOwnerId, ADMIN_AUTHORITIES);
 
         assertEquals("DISABLED", accountAdminService.suspend(ownerId).status().name());
+    }
+
+    @Test
+    void companyOwnerCannotTakeOverSystemAdmin() {
+        authenticateAs(ownerId, ADMIN_AUTHORITIES);
+
+        assertThrows(ForbiddenException.class, () -> accountAdminService.suspend(systemAdminId));
+        assertThrows(ForbiddenException.class, () -> accountAdminService.initiatePasswordReset(systemAdminId));
+        assertThrows(ForbiddenException.class,
+            () -> overrideService.create(systemAdminId, systemAdminAssignmentId, revokeOverride()));
+    }
+
+    @Test
+    void systemAdminAccountCanBeManagedByAnotherSystemAdmin() {
+        Long secondAdminId = insertAccount("guard_sysadmin2");
+        jdbc.update("""
+            INSERT INTO account_role_assignments(account_id, role_id, scope_type, effective_from, granted_by_account_id)
+            SELECT ?, id, 'COMPANY', '2026-01-01', ? FROM roles WHERE code = 'SYSTEM_ADMIN'
+            """, secondAdminId, adminId);
+        authenticateAs(secondAdminId, ADMIN_AUTHORITIES);
+
+        assertEquals("DISABLED", accountAdminService.suspend(systemAdminId).status().name());
     }
 
     @Test

@@ -15,7 +15,7 @@ Quản lý ngoại lệ permission trên một lần gán role cụ thể. Ngo�
 
 `account.permission.override.manage` là permission `SYSTEM_ONLY` và được seed cho `COMPANY_OWNER` và `SYSTEM_ADMIN`. Actor luôn lấy từ JWT/Security Context.
 
-Không ai được tạo hoặc thu hồi ngoại lệ trên chính account của mình (`403 FORBIDDEN`), để người có permission này không tự nâng quyền. Account đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được đổi ngoại lệ.
+Không ai được tạo hoặc thu hồi ngoại lệ trên chính account của mình (`403 FORBIDDEN`), để người có permission này không tự nâng quyền. Account đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được đổi ngoại lệ, account đang giữ `SYSTEM_ADMIN` chỉ một System Admin khác.
 
 ## Ngữ nghĩa
 
