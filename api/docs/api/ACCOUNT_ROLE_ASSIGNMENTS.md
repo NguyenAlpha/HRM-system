@@ -11,10 +11,8 @@ Gán role nghiệp vụ cho account theo phạm vi và thời gian hiệu lực.
 | `GET /api/accounts/{accountId}/role-assignments` | `account.read` | Lấy toàn bộ lịch sử role assignment của một account |
 | `POST /api/accounts/{accountId}/role-assignments` | `account.role.assign` | Company Owner gán trực tiếp một role nghiệp vụ cho account theo scope và thời gian hiệu lực |
 | `POST /api/accounts/{accountId}/role-assignments/{assignmentId}/revoke` | `account.role.assign` | Thu hồi một role assignment, giữ lại đầy đủ lịch sử và thông tin audit |
-| `GET /api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides` | `account.permission.override.manage` | Lấy lịch sử ngoại lệ quyền của assignment |
-| `GET /api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides/available-permissions` | `account.permission.override.manage` | Lấy permission có thể tạo ngoại lệ và hiệu ứng hợp lệ |
-| `POST /api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides` | `account.permission.override.manage` | Tạo ngoại lệ cấp thêm hoặc thu hồi permission |
-| `POST /api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides/{overrideId}/revoke` | `account.permission.override.manage` | Thu hồi ngoại lệ và giữ audit |
+
+Các endpoint ngoại lệ quyền dưới `/role-assignments/{assignmentId}/permission-overrides` được mô tả tại [Account Permission Overrides](./ACCOUNT_PERMISSION_OVERRIDES.md).
 
 Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` và `SYSTEM_ADMIN` được seed sẵn các permission trên. Account của `SYSTEM_ADMIN` không liên kết employee nên không tự nhận được role nghiệp vụ. Role của account đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được gán hoặc thu hồi; account đang giữ `SYSTEM_ADMIN` chỉ một System Admin khác. Actor cấp hoặc thu hồi role luôn được lấy từ JWT/Security Context, không nhận từ request.
 
