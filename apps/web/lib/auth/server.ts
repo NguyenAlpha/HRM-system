@@ -603,6 +603,7 @@ export async function handleAccountLifecycleRequest(
   const path = segments.join("/")
   const routes = [
     { pattern: /^$/, methods: ["GET"] },
+    { pattern: /^[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^[1-9]\d*\/permissions$/, methods: ["GET"] },
     { pattern: /^[1-9]\d*\/(?:invitations\/resend|password-reset|suspend|activate)$/, methods: ["POST"] },
   ]
@@ -634,7 +635,7 @@ export async function handleAccountLifecycleRequest(
   })
 }
 
-// Only expose role assignment and its permission-override workflow for one account.
+// Only expose role assignment, its revocation and its permission-override workflow for one account.
 export async function handleAccountRoleAssignmentRequest(
   request: Request,
   accountId: string,
@@ -647,6 +648,7 @@ export async function handleAccountRoleAssignmentRequest(
   const path = segments.join("/")
   const routes = [
     { pattern: /^$/, methods: ["GET", "POST"] },
+    { pattern: /^[1-9]\d*\/revoke$/, methods: ["POST"] },
     { pattern: /^[1-9]\d*\/permission-overrides$/, methods: ["GET", "POST"] },
     { pattern: /^[1-9]\d*\/permission-overrides\/available-permissions$/, methods: ["GET"] },
     { pattern: /^[1-9]\d*\/permission-overrides\/[1-9]\d*\/revoke$/, methods: ["POST"] },

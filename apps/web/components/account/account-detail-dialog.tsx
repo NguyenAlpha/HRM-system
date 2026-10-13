@@ -1,7 +1,15 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 
+import {
+  AccountPermissionList,
+  ASSIGNMENT_STATES,
+  assignmentState,
+  scopeLabel,
+  todayIso,
+  validityLabel,
+} from "@/components/account/account-access"
 import { ErrorAlert } from "@/components/common/list-controls"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -10,38 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import { getAccountPermissions, type Account, type AccountPermissionGrant } from "@/lib/account"
 import type { Portal } from "@/lib/auth/types"
-import { listAccountRoleAssignments, ROLE_SCOPE_LABELS, type AccountRoleAssignment } from "@/lib/role-assignment"
-
-type AssignmentState = "active" | "scheduled" | "expired" | "revoked"
-
-const ASSIGNMENT_STATES: Record<AssignmentState, { label: string; variant: "default" | "secondary" | "outline" }> = {
-  active: { label: "Đang hiệu lực", variant: "default" },
-  scheduled: { label: "Chưa hiệu lực", variant: "secondary" },
-  expired: { label: "Đã hết hạn", variant: "outline" },
-  revoked: { label: "Đã thu hồi", variant: "outline" },
-}
-
-function todayIso() {
-  const date = new Date()
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, "0")
-  const day = String(date.getDate()).padStart(2, "0")
-  return `${year}-${month}-${day}`
-}
-
-function assignmentState(assignment: AccountRoleAssignment, today: string): AssignmentState {
-  if (assignment.revokedAt) return "revoked"
-  if (assignment.effectiveTo !== null && assignment.effectiveTo < today) return "expired"
-  if (assignment.effectiveFrom > today) return "scheduled"
-  return "active"
-}
-
-function scopeLabel(assignment: AccountRoleAssignment) {
-  const label = ROLE_SCOPE_LABELS[assignment.scopeType]
-  if (assignment.scopeType === "ORG_UNIT") return `${label} #${assignment.organizationUnitId}`
-  if (assignment.scopeType === "LOCATION") return `${label} #${assignment.workLocationId}`
-  return label
-}
+import { listAccountRoleAssignments, type AccountRoleAssignment } from "@/lib/role-assignment"
 
 /** Read-only view of what an account can do: its role assignments and today's permissions. */
 export function AccountDetailDialog({ portal, account, onClose, onSessionExpired }: {
@@ -74,13 +51,6 @@ export function AccountDetailDialog({ portal, account, onClose, onSessionExpired
 
   const current = assignments?.filter((item) => ["active", "scheduled"].includes(assignmentState(item, today))) ?? []
   const past = assignments?.filter((item) => ["expired", "revoked"].includes(assignmentState(item, today))) ?? []
-  const modules = useMemo(() => {
-    const groups = new Map<string, AccountPermissionGrant[]>()
-    for (const permission of permissions ?? []) {
-      groups.set(permission.module, [...(groups.get(permission.module) ?? []), permission])
-    }
-    return [...groups.entries()]
-  }, [permissions])
   const loading = !error && (assignments === null || permissions === null)
 
   return (
@@ -112,8 +82,7 @@ export function AccountDetailDialog({ portal, account, onClose, onSessionExpired
                     <Badge variant={state.variant}>{state.label}</Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {scopeLabel(assignment)} · từ {assignment.effectiveFrom}
-                    {assignment.effectiveTo ? ` đến ${assignment.effectiveTo}` : ", không thời hạn"}
+                    {scopeLabel(assignment)} · {validityLabel(assignment)}
                   </p>
                   {assignment.revokedAt && assignment.revocationReason && (
                     <p className="text-xs text-muted-foreground">Lý do thu hồi: {assignment.revocationReason}</p>
@@ -133,32 +102,7 @@ export function AccountDetailDialog({ portal, account, onClose, onSessionExpired
             <p className="text-xs text-muted-foreground">
               Quyền account có hôm nay: quyền của các role đang hiệu lực, cộng và trừ ngoại lệ quyền.
             </p>
-            {loading && <Skeleton className="h-32 w-full" />}
-            {!loading && permissions?.length === 0 && (
-              <p className="text-muted-foreground">Account không có permission nào.</p>
-            )}
-            {modules.map(([module, grants]) => (
-              <div key={module} className="rounded-lg border">
-                <div className="border-b px-3 py-2"><Badge variant="secondary">{module}</Badge></div>
-                <ul className="divide-y">
-                  {grants.map((permission) => (
-                    <li key={permission.code} className="flex flex-wrap items-start justify-between gap-2 px-3 py-2">
-                      <span>
-                        {permission.name}
-                        <code className="block text-xs text-muted-foreground">{permission.code}</code>
-                      </span>
-                      <span className="flex flex-wrap justify-end gap-1">
-                        {permission.grantedBy.map((source) => (
-                          <Badge key={source.assignmentId} variant={source.viaOverride ? "default" : "outline"}>
-                            {source.roleName}{source.viaOverride && " · ngoại lệ"}
-                          </Badge>
-                        ))}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+            <AccountPermissionList permissions={permissions} loading={loading} />
           </section>
         </div>
       </DialogContent>

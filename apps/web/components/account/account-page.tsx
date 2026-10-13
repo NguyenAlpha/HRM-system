@@ -1,5 +1,6 @@
 "use client"
 
+import { accountViewer } from "@/components/account/account-actions"
 import { AccountManager } from "@/components/account/account-manager"
 import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
@@ -19,10 +20,7 @@ export function AccountPage() {
         {has("account.read") ? (
           <AccountManager
             portal={portal}
-            currentAccountId={session.account.accountId}
-            currentRoleCodes={session.account.roles.map((role) => role.code)}
-            canManage={has("account.manage")}
-            canManageActivation={has("account.activation.manage")}
+            viewer={accountViewer(session.account)}
             onSessionExpired={onSessionExpired}
           />
         ) : (

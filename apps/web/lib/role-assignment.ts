@@ -170,3 +170,17 @@ export function revokePermissionOverride(
     },
   )
 }
+
+/** Revoke one role assignment; the history row stays and the account's refresh tokens are revoked. */
+export function revokeAccountRole(
+  portal: Portal,
+  accountId: number,
+  assignmentId: number,
+  reason: string,
+): Promise<AccountRoleAssignment> {
+  return accountRoleAssignmentApi<AccountRoleAssignment>(portal, accountId, `/${assignmentId}/revoke`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reason } satisfies Schemas["RevokeAccountRoleRequest"]),
+  })
+}

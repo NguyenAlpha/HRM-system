@@ -57,3 +57,7 @@ export function changeAccountStatus(portal: Portal, accountId: number, action: "
 export function getAccountPermissions(portal: Portal, accountId: number): Promise<AccountPermissionGrant[]> {
   return authorizedRequest<AccountPermissionGrant[]>(portal, `/accounts/${accountId}/permissions`, { cache: "no-store" })
 }
+
+export function getAccount(portal: Portal, accountId: number): Promise<Account> {
+  return authorizedRequest<Account>(portal, `/accounts/${accountId}`, { cache: "no-store" })
+}
