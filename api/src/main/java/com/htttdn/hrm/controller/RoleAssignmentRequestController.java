@@ -21,6 +21,7 @@ import com.htttdn.hrm.dto.request.roleassignment.CancelRoleAssignmentRequest;
 import com.htttdn.hrm.dto.request.roleassignment.CreateRoleAssignmentRequest;
 import com.htttdn.hrm.dto.request.roleassignment.CreateRoleRevocationRequest;
 import com.htttdn.hrm.dto.request.roleassignment.RejectRoleAssignmentRequest;
+import com.htttdn.hrm.dto.response.account.AccountRoleAssignmentResponse;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.dto.response.roleassignment.RoleAssignmentOptionResponse;
@@ -50,6 +51,12 @@ public class RoleAssignmentRequestController {
     @PreAuthorize("hasAuthority('role.assignment.request')")
     public ApiResult<List<RoleAssignmentOptionResponse>> listAvailableRoles() {
         return ApiResult.ok(optionService.listAvailableRoles());
+    }
+
+    @GetMapping("/revocable-assignments")
+    @PreAuthorize("hasAuthority('role.assignment.request')")
+    public ApiResult<List<AccountRoleAssignmentResponse>> listRevocableAssignments(@RequestParam Long accountId) {
+        return ApiResult.ok(requestService.listRevocableAssignments(accountId));
     }
 
     @PostMapping

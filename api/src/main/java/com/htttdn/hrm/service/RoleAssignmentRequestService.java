@@ -2,6 +2,7 @@ package com.htttdn.hrm.service;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -16,6 +17,7 @@ import com.htttdn.hrm.dto.request.roleassignment.CancelRoleAssignmentRequest;
 import com.htttdn.hrm.dto.request.roleassignment.CreateRoleAssignmentRequest;
 import com.htttdn.hrm.dto.request.roleassignment.CreateRoleRevocationRequest;
 import com.htttdn.hrm.dto.request.roleassignment.RejectRoleAssignmentRequest;
+import com.htttdn.hrm.dto.response.account.AccountRoleAssignmentResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.roleassignment.RoleAssignmentRequestResponse;
 import com.htttdn.hrm.entity.Account;
@@ -48,6 +50,7 @@ public class RoleAssignmentRequestService {
     private final AccountRoleAssignmentRepository roleAssignmentRepository;
     private final AccountRoleAssignmentCommandService roleAssignmentCommandService;
     private final RoleAssignmentRequestMapper requestMapper;
+    private final AccountRoleAssignmentMapper roleAssignmentMapper;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final CurrentAccountProvider currentAccountProvider;
     private final CompanyOwnerAccountGuard companyOwnerAccountGuard;
@@ -58,6 +61,7 @@ public class RoleAssignmentRequestService {
         AccountRoleAssignmentRepository roleAssignmentRepository,
         AccountRoleAssignmentCommandService roleAssignmentCommandService,
         RoleAssignmentRequestMapper requestMapper,
+        AccountRoleAssignmentMapper roleAssignmentMapper,
         EmployeeAccessScopeService employeeAccessScopeService,
         CurrentAccountProvider currentAccountProvider,
         CompanyOwnerAccountGuard companyOwnerAccountGuard
@@ -67,6 +71,7 @@ public class RoleAssignmentRequestService {
         this.roleAssignmentRepository = roleAssignmentRepository;
         this.roleAssignmentCommandService = roleAssignmentCommandService;
         this.requestMapper = requestMapper;
+        this.roleAssignmentMapper = roleAssignmentMapper;
         this.employeeAccessScopeService = employeeAccessScopeService;
         this.currentAccountProvider = currentAccountProvider;
         this.companyOwnerAccountGuard = companyOwnerAccountGuard;
@@ -126,6 +131,27 @@ public class RoleAssignmentRequestService {
             requestRepository.saveAndFlush(roleRequest);
         }
         return requestMapper.toResponse(roleRequest);
+    }
+
+    /**
+     * The assignments of an account that a revocation request may target: not revoked, not ended and of
+     * a role the workflow manages. Lets a requester without account.read pick what to take back.
+     */
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAuthority('role.assignment.request')")
+    public List<AccountRoleAssignmentResponse> listRevocableAssignments(Long accountId) {
+        Employee employee = findAccount(accountId).getEmployee();
+        if (employee == null) {
+            return List.of();
+        }
+        employeeAccessScopeService.requireEmployeeAccess(employee.getId(), REQUEST_PERMISSION);
+        LocalDate today = LocalDate.now();
+        return roleAssignmentRepository.findByAccountIdAndRevokedAtIsNull(accountId).stream()
+            .filter(assignment -> assignment.getEffectiveTo() == null || !assignment.getEffectiveTo().isBefore(today))
+            .filter(assignment -> assignment.getRole().getGrantPolicy() == RoleGrantPolicy.HR_ASSIGNABLE
+                || assignment.getRole().getGrantPolicy() == RoleGrantPolicy.OWNER_APPROVAL)
+            .map(roleAssignmentMapper::toResponse)
+            .toList();
     }
 
     /**

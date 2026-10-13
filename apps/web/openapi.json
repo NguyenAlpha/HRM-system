@@ -2916,6 +2916,33 @@
         "tags" : [ "role-assignment-request-controller" ]
       }
     },
+    "/api/role-assignment-requests/revocable-assignments" : {
+      "get" : {
+        "operationId" : "listRevocableAssignments",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "accountId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultListAccountRoleAssignmentResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "role-assignment-request-controller" ]
+      }
+    },
     "/api/role-assignment-requests/revocations" : {
       "post" : {
         "operationId" : "createRevocation",
