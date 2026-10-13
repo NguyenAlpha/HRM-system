@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { ArrowLeft, KeyRound, RefreshCw, ShieldCheck, ShieldMinus, UsersRound } from "lucide-react"
+import { ArrowLeft, KeyRound, RefreshCw, ShieldCheck, ShieldMinus, UserRound, UsersRound } from "lucide-react"
 
 import {
   AccountPermissionList,
@@ -52,6 +52,8 @@ export function AccountDetailPage({ accountId: rawAccountId }: { accountId: stri
   const { portal, session, onSessionExpired } = usePortalSession()
   const viewer = accountViewer(session.account)
   const canRead = session.account.permissions.some((permission) => permission.code === "account.read")
+  // The employee profile page needs employee.read; without it the shortcut is hidden.
+  const canReadEmployee = session.account.permissions.some((permission) => permission.code === "employee.read")
   const accountId = /^[1-9]\d*$/.test(rawAccountId) ? Number(rawAccountId) : null
   const listHref = `${PORTAL_CONFIG[portal].pagePrefix}/accounts`
 
@@ -135,6 +137,12 @@ export function AccountDetailPage({ accountId: rawAccountId }: { accountId: stri
               </Button>
             )
           })}
+          {account?.employeeId != null && canReadEmployee && (
+            <Button variant="outline" nativeButton={false}
+              render={<Link href={`${PORTAL_CONFIG[portal].pagePrefix}/employees/${account.employeeId}`} />}>
+              <UserRound /> Hồ sơ nhân sự
+            </Button>
+          )}
           <Button type="button" variant="outline" onClick={reload} disabled={loading}>
             <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
           </Button>
