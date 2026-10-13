@@ -16,7 +16,7 @@ Gán role nghiệp vụ cho account theo phạm vi và thời gian hiệu lực.
 | `POST /api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides` | `account.permission.override.manage` | Tạo ngoại lệ cấp thêm hoặc thu hồi permission |
 | `POST /api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides/{overrideId}/revoke` | `account.permission.override.manage` | Thu hồi ngoại lệ và giữ audit |
 
-Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` và `SYSTEM_ADMIN` được seed sẵn các permission trên. Account của `SYSTEM_ADMIN` không liên kết employee nên không tự nhận được role nghiệp vụ. Role của account đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được gán hoặc thu hồi. Actor cấp hoặc thu hồi role luôn được lấy từ JWT/Security Context, không nhận từ request.
+Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` và `SYSTEM_ADMIN` được seed sẵn các permission trên. Account của `SYSTEM_ADMIN` không liên kết employee nên không tự nhận được role nghiệp vụ. Role của account đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được gán hoặc thu hồi; account đang giữ `SYSTEM_ADMIN` chỉ một System Admin khác. Actor cấp hoặc thu hồi role luôn được lấy từ JWT/Security Context, không nhận từ request.
 
 API gán trực tiếp chỉ chấp nhận role có `grantPolicy=HR_ASSIGNABLE` hoặc `OWNER_APPROVAL`. Vì người gọi có `account.role.assign` là Company Owner, thao tác này được xem là quyết định cấp role trực tiếp của Owner. Role `AUTO` và `SYSTEM_ONLY` luôn bị từ chối tại command component ngay cả khi caller có permission endpoint.
 
