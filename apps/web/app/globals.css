@@ -88,12 +88,17 @@ button:disabled { cursor: wait; opacity: 0.64; }
 }
 .admin-shell .portal-sidebar { border-color: #d8deea; background: #f7f9fc; }
 .sidebar-brand { padding: 0 0.45rem; }
-.portal-sidebar nav { display: grid; gap: 0.3rem; margin-top: 3rem; }
-.nav-caption { margin: 0 0.7rem 0.45rem; color: #98a29d; font-size: 0.64rem; font-weight: 800; letter-spacing: 0.13em; text-transform: uppercase; }
-.nav-item { display: flex; align-items: center; gap: 0.75rem; border-radius: 0.65rem; padding: 0.7rem 0.75rem; color: #617069; font-size: 0.84rem; font-weight: 650; text-decoration: none; }
-.nav-item.active { color: var(--green-dark); background: var(--green-soft); }
+.portal-sidebar nav { display: grid; align-content: start; gap: 1.4rem; margin: 2.25rem -0.5rem 1rem; padding: 0 0.5rem; overflow-y: auto; }
+.nav-section { display: grid; gap: 0.125rem; }
+.nav-caption { margin: 0 0.75rem 0.4rem; color: #8b9690; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.nav-item { position: relative; display: flex; align-items: center; border-radius: 0.5rem; padding: 0.5rem 0.75rem; color: #4f5d56; font-size: 0.875rem; font-weight: 500; text-decoration: none; transition: background-color 120ms ease, color 120ms ease; }
+.nav-item:not(.disabled):hover { color: var(--ink); background: #edf2ef; }
+.nav-item.active { color: var(--green-dark); background: var(--green-soft); font-weight: 600; }
+.nav-item.active::before { position: absolute; top: 0.45rem; bottom: 0.45rem; left: 0; width: 3px; border-radius: 3px; background: var(--green); content: ""; }
+.admin-shell .nav-item:not(.disabled):hover { background: #eef2f8; }
 .admin-shell .nav-item.active { color: #263f69; background: var(--navy-soft); }
-.nav-item.disabled { cursor: not-allowed; opacity: 0.7; }
+.admin-shell .nav-item.active::before { background: #4e6fa9; }
+.nav-item.disabled { color: #a3ada8; cursor: not-allowed; }
 .sidebar-account { display: flex; align-items: center; gap: 0.7rem; border-top: 1px solid var(--line); margin-top: auto; padding: 1.2rem 0.4rem 0; overflow: hidden; }
 .avatar { display: grid; width: 2.25rem; height: 2.25rem; flex: 0 0 auto; place-items: center; border-radius: 50%; color: white; background: var(--green); font-size: 0.8rem; font-weight: 800; }
 .admin-shell .avatar { background: #4e6fa9; }

@@ -6,6 +6,9 @@ import { usePathname } from "next/navigation"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import type { AccountSummary, Portal } from "@/lib/auth/types"
 
+/** A null href is a menu entry that is not available yet. */
+type NavSection = { title: string | null; links: { label: string; href: string | null }[] }
+
 export function PortalSidebar({ portal, account }: { portal: Portal; account: AccountSummary }) {
   const admin = portal === "admin"
   const pathname = usePathname()
@@ -37,6 +40,46 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
   const canUsePayroll = account.permissions.some((permission) =>
     ["payroll.self.read", "report.payroll.read", "payroll.calculate", "compensation.read", "compensation.manage"].includes(permission.code))
 
+  const home = PORTAL_CONFIG[portal].homePath
+  // Grouped menu; a link is listed only when its condition holds, and an empty group is hidden.
+  const group = (title: string | null, links: [boolean, string, string | null][]): NavSection => ({
+    title,
+    links: links.filter(([visible]) => visible).map(([, label, href]) => ({ label, href })),
+  })
+  const sections: NavSection[] = admin
+    ? [
+      group(null, [[true, "Tổng quan", home]]),
+      group("Quản trị truy cập", [
+        [canReadAccounts, "Tài khoản", "/admin/accounts"],
+        [true, "Vai trò & quyền", "/admin/rbac"],
+        [canAssignRoleDirect, "Cấp quyền trực tiếp", "/admin/role-grant"],
+        [canBootstrapCompanyOwner, "Company Owner", "/admin/company-owner"],
+      ]),
+      group("Dữ liệu tổ chức", [
+        [canReadEmployees, "Nhân sự", "/admin/employees"],
+        [canReadOrganization, "Danh mục tổ chức", "/admin/organization"],
+      ]),
+    ]
+    : [
+      group(null, [[true, "Tổng quan", home], [true, "Hồ sơ", null]]),
+      group("Chấm công & lương", [
+        [canUseAttendance, "Chấm công", "/attendance"],
+        [canUseLeave, "Đơn từ", "/leave-requests"],
+        [canUsePayroll, "Phiếu lương", "/payslips"],
+      ]),
+      group("Nhân sự", [
+        [canReadEmployees, "Nhân sự", "/employees"],
+        [canReadOrganization, "Danh mục tổ chức", "/organization"],
+        [canReadReports, "Báo cáo nhân sự", "/reports/workforce"],
+      ]),
+      group("Quản trị truy cập", [
+        [canReadAccounts, "Tài khoản", "/accounts"],
+        [canUseRoleRequests, "Đề xuất role", "/role-requests"],
+        [canAssignRoleDirect, "Cấp quyền trực tiếp", "/role-grant"],
+        [canManageRbac, "Vai trò & quyền", "/rbac"],
+      ]),
+    ]
+
   return (
     <aside className="portal-sidebar">
       <div className="brand sidebar-brand">
@@ -44,84 +87,14 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
         <span><strong>HRM</strong><small>{admin ? "Admin Console" : "People Workspace"}</small></span>
       </div>
       <nav aria-label="Điều hướng chính">
-        <span className="nav-caption">Workspace</span>
-        <Link className={navClass(PORTAL_CONFIG[portal].homePath)} href={PORTAL_CONFIG[portal].homePath}>
-          Tổng quan
-        </Link>
-        {admin ? (
-          <>
-            {canReadEmployees && (
-              <Link className={navClass("/admin/employees")} href="/admin/employees">
-                Nhân sự
-              </Link>
-            )}
-            {canReadAccounts && (
-              <Link className={navClass("/admin/accounts")} href="/admin/accounts">
-                Tài khoản
-              </Link>
-            )}
-            <Link className={navClass("/admin/rbac")} href="/admin/rbac">
-              Vai trò & quyền
-            </Link>
-            {canAssignRoleDirect && (
-              <Link className={navClass("/admin/role-grant")} href="/admin/role-grant">
-                Cấp quyền trực tiếp
-              </Link>
-            )}
-            {canReadOrganization && (
-              <Link className={navClass("/admin/organization")} href="/admin/organization">
-                Danh mục tổ chức
-              </Link>
-            )}
-            {canBootstrapCompanyOwner && (
-              <Link className={navClass("/admin/company-owner")} href="/admin/company-owner">
-                Company Owner
-              </Link>
-            )}
-          </>
-        ) : (
-          <>
-            <span className="nav-item disabled">Hồ sơ</span>
-            {canReadEmployees && (
-              <Link className={navClass("/employees")} href="/employees">
-                Nhân sự
-              </Link>
-            )}
-            {canReadAccounts && (
-              <Link className={navClass("/accounts")} href="/accounts">
-                Tài khoản
-              </Link>
-            )}
-            {canUseRoleRequests && (
-              <Link className={navClass("/role-requests")} href="/role-requests">
-                Đề xuất role
-              </Link>
-            )}
-            {canAssignRoleDirect && (
-              <Link className={navClass("/role-grant")} href="/role-grant">
-                Cấp quyền trực tiếp
-              </Link>
-            )}
-            {canManageRbac && (
-              <Link className={navClass("/rbac")} href="/rbac">
-                Vai trò & quyền
-              </Link>
-            )}
-            {canReadOrganization && (
-              <Link className={navClass("/organization")} href="/organization">
-                Danh mục tổ chức
-              </Link>
-            )}
-            {canReadReports && (
-              <Link className={navClass("/reports/workforce")} href="/reports/workforce">
-                Báo cáo nhân sự
-              </Link>
-            )}
-            {canUseAttendance && <Link className={navClass("/attendance")} href="/attendance">Chấm công</Link>}
-            {canUseLeave && <Link className={navClass("/leave-requests")} href="/leave-requests">Đơn từ</Link>}
-            {canUsePayroll && <Link className={navClass("/payslips")} href="/payslips">Phiếu lương</Link>}
-          </>
-        )}
+        {sections.map((section) => section.links.length > 0 && (
+          <div key={section.title ?? "home"} className="nav-section">
+            {section.title && <span className="nav-caption">{section.title}</span>}
+            {section.links.map((link) => link.href === null
+              ? <span key={link.label} className="nav-item disabled" aria-disabled="true">{link.label}</span>
+              : <Link key={link.href} className={navClass(link.href)} href={link.href}>{link.label}</Link>)}
+          </div>
+        ))}
       </nav>
       <div className="sidebar-account">
         <span className="avatar">{(account.employee?.fullName ?? account.username).slice(0, 1).toUpperCase()}</span>
