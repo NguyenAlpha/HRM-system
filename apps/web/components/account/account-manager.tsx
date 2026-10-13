@@ -51,7 +51,7 @@ export function AccountManager({ portal, viewer, onSessionExpired }: {
   const [data, setData] = useState<AccountPage | null>(null)
   const [page, setPage] = useState(0)
   const [revision, setRevision] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const [loadedQuery, setLoadedQuery] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState<{ account: Account; kind: AccountActionKind } | null>(null)
   const [revoking, setRevoking] = useState<Account | null>(null)
@@ -74,6 +74,11 @@ export function AccountManager({ portal, viewer, onSessionExpired }: {
     return () => { active = false }
   }, [portal])
 
+  const requestKey = JSON.stringify([page, revision, keyword, filters.status, filters.roleCode, sortParam(sort)])
+  // Each response records the request it answered, so picking the value already selected or typing
+  // back to the same keyword cannot leave the table loading; a keyword still settling counts too.
+  const loading = loadedQuery !== requestKey || keyword !== filters.keyword
+
   useEffect(() => {
     let active = true
     // The keyword goes through its debounced copy so typing does not fire a request per key.
@@ -85,31 +90,28 @@ export function AccountManager({ portal, viewer, onSessionExpired }: {
           return
         }
         setData(result)
-        setLoading(false)
+        setLoadedQuery(requestKey)
       })
       .catch((caught: unknown) => {
         if (!active) return
         if (isPortalSessionExpired(caught)) onSessionExpired()
         setError(apiErrorMessage(caught))
-        setLoading(false)
+        setLoadedQuery(requestKey)
       })
     return () => { active = false }
-  }, [portal, page, revision, keyword, filters.status, filters.roleCode, sort, onSessionExpired])
+  }, [portal, page, revision, keyword, filters.status, filters.roleCode, sort, requestKey, onSessionExpired])
 
   function changeFilters(next: Partial<AccountFilters>) {
-    setLoading(true)
     setPage(0)
     setFilters((current) => ({ ...current, ...next }))
   }
 
   function changeSort(next: SortState) {
-    setLoading(true)
     setPage(0)
     setSort(next)
   }
 
   function reload() {
-    setLoading(true)
     setError(null)
     setRevision((value) => value + 1)
   }
@@ -242,7 +244,7 @@ export function AccountManager({ portal, viewer, onSessionExpired }: {
               totalPages={data.totalPages}
               totalElements={data.totalElements}
               disabled={loading}
-              onChange={(next) => { setLoading(true); setPage(next) }}
+              onChange={(next) => setPage(next)}
             />
           )}
         </CardContent>

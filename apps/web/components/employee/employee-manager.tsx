@@ -104,7 +104,7 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
   const [data, setData] = useState<Page<EmployeeSummary> | null>(null)
   const [page, setPage] = useState(0)
   const [revision, setRevision] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const [loadedQuery, setLoadedQuery] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [sheetRevision, setSheetRevision] = useState(0)
@@ -133,15 +133,20 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
     return () => { active = false }
   }, [portal])
 
+  // The keyword goes through its debounced copy so typing does not fire a request per key.
+  const query = employeeListQuery(page, 10, {
+    keyword,
+    employmentStatus: filters.employmentStatus,
+    organizationUnitId: filters.organizationUnitId,
+    positionId: filters.positionId,
+  }, sortParam(sort))
+  const requestKey = `${query}#${revision}`
+  // Each response records the query it answered, so picking the value already selected or typing
+  // back to the same keyword cannot leave the table loading; a keyword still settling counts too.
+  const loading = loadedQuery !== requestKey || keyword !== filters.keyword
+
   useEffect(() => {
     let active = true
-    // The keyword goes through its debounced copy so typing does not fire a request per key.
-    const query = employeeListQuery(page, 10, {
-      keyword,
-      employmentStatus: filters.employmentStatus,
-      organizationUnitId: filters.organizationUnitId,
-      positionId: filters.positionId,
-    }, sortParam(sort))
     employeeRequest<Page<EmployeeSummary>>(portal, query)
       .then((result) => {
         if (!active) return
@@ -150,31 +155,28 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
           return
         }
         setData(result)
-        setLoading(false)
+        setLoadedQuery(requestKey)
       })
       .catch((caught: unknown) => {
         if (!active) return
         if (isSessionExpired(caught)) onSessionExpired()
         setError(employeeErrorMessage(caught))
-        setLoading(false)
+        setLoadedQuery(requestKey)
       })
     return () => { active = false }
-  }, [portal, page, revision, keyword, filters.employmentStatus, filters.organizationUnitId, filters.positionId, sort, onSessionExpired])
+  }, [portal, page, query, requestKey, onSessionExpired])
 
   function changeFilters(next: Partial<EmployeeFilters>) {
-    setLoading(true)
     setPage(0)
     setFilters((current) => ({ ...current, ...next }))
   }
 
   function changeSort(next: SortState) {
-    setLoading(true)
     setPage(0)
     setSort(next)
   }
 
   function reload() {
-    setLoading(true)
     setError(null)
     setRevision((value) => value + 1)
   }
@@ -384,7 +386,7 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
           </div>
 
           <Pagination page={page} totalPages={data?.totalPages ?? 0} totalElements={data?.totalElements ?? 0} disabled={loading}
-            onChange={(next) => { setLoading(true); setError(null); setPage(next) }} />
+            onChange={(next) => { setError(null); setPage(next) }} />
         </CardContent>
       </Card>
 

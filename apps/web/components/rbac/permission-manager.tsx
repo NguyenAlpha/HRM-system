@@ -97,7 +97,10 @@ export function PermissionManager({ portal, onSessionExpired }: { portal: Portal
           items={{ [ALL_MODULES]: "Tất cả module", ...Object.fromEntries(PERMISSION_MODULES.map((module) => [module, module])) }}
           disabled={loading}
           onValueChange={(value) => {
-            setModuleFilter(!value || value === ALL_MODULES ? "" : value)
+            const next = !value || value === ALL_MODULES ? "" : value
+            // The same value starts no request, so nothing would clear the loading state.
+            if (next === moduleFilter) return
+            setModuleFilter(next)
             setPage(0)
             setLoading(true)
             setError(null)

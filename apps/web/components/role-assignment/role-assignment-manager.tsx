@@ -337,7 +337,10 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
             items={{ [ALL_STATUSES]: "Tất cả trạng thái", ...ROLE_ASSIGNMENT_STATUS_LABELS }}
             disabled={loading}
             onValueChange={(value) => {
-              setStatusFilter(value === ALL_STATUSES ? "" : (value as RoleAssignmentRequestStatus))
+              const next = value === ALL_STATUSES ? "" : (value as RoleAssignmentRequestStatus)
+              // The same value starts no request, so nothing would clear the loading state.
+              if (next === statusFilter) return
+              setStatusFilter(next)
               setPage(0)
               setLoading(true)
               setError(null)
