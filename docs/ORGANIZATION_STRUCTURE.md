@@ -192,6 +192,11 @@ Dữ liệu seed được chia theo trách nhiệm và chạy theo `@Order`. M�
 
 Ngoài Company Owner và nhân sự trong file seed, mọi người dùng HRM được tạo qua API.
 
+Chấm công seed (Owner và nhân sự trong file) phần lớn đúng giờ, có ngày đi muộn/về sớm 30 phút và
+ngày tăng ca ngẫu nhiên (về muộn 1–3 giờ, khoảng 1/12 số ngày, 1/3 trong tháng hiện tại). Tăng ca
+trước tháng hiện tại đã được người duyệt lúc đó quyết định (hệ số 150%); tăng ca tháng hiện tại để
+chờ, nên thẻ "Tăng ca chờ bạn quyết định" có sẵn vài ngày để thử.
+
 `StaffSeeder` đọc một mảng JSON; mỗi phần tử tạo nhân viên `ACTIVE`, account `ACTIVE`, role, lịch
 sử phân công chính và chấm công `PRESENT` từ ngày vào làm đến hôm qua. Username đã tồn tại thì bỏ
 qua, nên thêm người vào file rồi khởi động lại chỉ tạo người mới.

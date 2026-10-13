@@ -44,7 +44,8 @@ import com.htttdn.hrm.service.EmployeeCodeGenerator;
  * làm, ngày cấp role và ngày bắt đầu phân công đều là 2 năm trước ngày chạy seed.
  *
  * <p>Owner có sẵn chấm công {@code PRESENT} cho mọi ngày làm việc từ ngày vào làm đến hôm qua:
- * phần lớn đúng giờ, cứ 10 ngày công có một ngày đi muộn 30 phút và một ngày về sớm 30 phút.
+ * phần lớn đúng giờ, cứ 10 ngày công có một ngày đi muộn 30 phút và một ngày về sớm 30 phút,
+ * thỉnh thoảng có tăng ca (xem {@link SeedAttendanceWriter}); Owner tự xác nhận tăng ca của mình.
  * Từ hôm nay trở đi do job chuẩn bị chấm công tạo như mọi nhân viên khác.
  *
  * <p>Seeder chạy sau các seeder doanh nghiệp và RBAC (order 500). Nếu đã có Company Owner đang
@@ -160,7 +161,8 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
         assignRole(account, directorRole, RoleScopeType.COMPANY, startDate, createdAt);
         assignRole(account, employeeRole, RoleScopeType.SELF, startDate, createdAt);
         createPrimaryAssignment(employee, account, startDate, createdAt);
-        int attendanceDays = seedAttendanceWriter.write(employee, startDate, LocalDate.now(ZONE).minusDays(1));
+        // The Company Owner, with nobody above, confirms their own overtime.
+        int attendanceDays = seedAttendanceWriter.write(employee, startDate, LocalDate.now(ZONE).minusDays(1), date -> account);
 
         log.info("Company owner seed completed: '{}' created as {} with {} attendance days",
             USERNAME, employee.getEmployeeCode(), attendanceDays);
