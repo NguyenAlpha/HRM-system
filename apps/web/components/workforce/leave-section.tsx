@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Ban, Check, Loader2, Send, X } from "lucide-react"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
+import { usePortalSession } from "@/components/portal/portal-shell"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -78,10 +79,13 @@ const vietnamInstant = (date: string, hhmm: string) => new Date(`${date}T${hhmm}
 type Review = { leave: LeaveRequest; approve: boolean }
 
 export function LeaveSection({ employeeId, permissions, month }: WorkforceContext) {
+  const { session } = usePortalSession()
   const canReadLeave = permissions.has("request.self.read") || permissions.has("request.read")
   const canCreate = permissions.has("request.self.create")
-  const canApprove = permissions.has("request.approve")
   const canManage = permissions.has("request.manage")
+  // Approval follows the reporting line, not a permission: only the approver fixed on submit reviews.
+  const selfEmployeeId = session.account.employee?.id
+  const isApprover = (leave: LeaveRequest) => selfEmployeeId !== undefined && leave.approverEmployeeId === selfEmployeeId
   const year = Number(month.slice(0, 4))
 
   const [leaves, setLeaves] = useState<LeaveRequest[]>([])
@@ -100,9 +104,7 @@ export function LeaveSection({ employeeId, permissions, month }: WorkforceContex
         ? workforceApi<Page<LeaveRequest>>(`leave-requests/employees/${employeeId}?size=100`).then((page) => page.content)
         : Promise.resolve([]),
       showEmployee ? workforceApi<LeaveBalance>(`leave-entitlements/employees/${employeeId}?year=${year}`) : Promise.resolve(null),
-      canApprove
-        ? workforceApi<Page<LeaveRequest>>("leave-requests/pending?size=100").then((page) => page.content)
-        : Promise.resolve([]),
+      workforceApi<Page<LeaveRequest>>("leave-requests/pending?size=100").then((page) => page.content),
     ])
       .then(([employeeLeaves, loadedBalance, pendingLeaves]) => {
         if (!active) return
@@ -113,7 +115,7 @@ export function LeaveSection({ employeeId, permissions, month }: WorkforceContex
       })
       .catch((caught: unknown) => { if (active) setError(apiErrorMessage(caught)) })
     return () => { active = false }
-  }, [employeeId, year, canReadLeave, canApprove, revision])
+  }, [employeeId, year, canReadLeave, revision])
 
   const reviewActions = (leave: LeaveRequest) => [
     <RowActionItem key="approve" icon={Check} disabled={busy} onClick={() => setReview({ leave, approve: true })}>Duyệt</RowActionItem>,
@@ -126,11 +128,11 @@ export function LeaveSection({ employeeId, permissions, month }: WorkforceContex
 
       {balance && <BalanceCard balance={balance} />}
 
-      {canApprove && (
+      {pending.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Đơn chờ duyệt</CardTitle>
-            <CardDescription>Các đơn trong phạm vi bạn được giao duyệt.</CardDescription>
+            <CardDescription>Đơn của các nhân viên mà bạn là người duyệt (quản lý trực tiếp, hoặc cấp trên khi chưa có quản lý).</CardDescription>
           </CardHeader>
           <CardContent>
             <LeaveTable leaves={pending} showEmployee emptyText="Không có đơn chờ duyệt." actions={reviewActions} />
@@ -158,7 +160,7 @@ export function LeaveSection({ employeeId, permissions, month }: WorkforceContex
                     Gửi duyệt
                   </RowActionItem>
                 ),
-                ...(canApprove && leave.status === "PENDING" ? reviewActions(leave) : []),
+                ...(isApprover(leave) && leave.status === "PENDING" ? reviewActions(leave) : []),
                 (leave.status === "DRAFT" || leave.status === "PENDING") && (
                   <RowActionItem key="cancel" icon={Ban} destructive disabled={busy}
                     onClick={() => void run("Đã hủy đơn", () => workforceApi(`leave-requests/${leave.id}/cancel`, "POST"))}>
@@ -187,7 +189,7 @@ function LeaveTable({ leaves, showEmployee = false, emptyText, actions }: {
   /** The row's menu items; false entries are skipped. */
   actions: (leave: LeaveRequest) => React.ReactNode[]
 }) {
-  const columns = showEmployee ? 7 : 6
+  const columns = showEmployee ? 8 : 7
   return (
     <div className="rounded-xl border">
       <Table>
@@ -199,6 +201,7 @@ function LeaveTable({ leaves, showEmployee = false, emptyText, actions }: {
             <TableHead>Thời gian</TableHead>
             <TableHead className="text-right">Số phút</TableHead>
             <TableHead>Trạng thái</TableHead>
+            <TableHead>Người duyệt</TableHead>
             <TableHead className="text-right">Thao tác</TableHead>
           </TableRow>
         </TableHeader>
@@ -220,6 +223,7 @@ function LeaveTable({ leaves, showEmployee = false, emptyText, actions }: {
                 <Badge variant={STATUS_TONE[leave.status]}>{LEAVE_STATUS_LABELS[leave.status]}</Badge>
                 {leave.reviewComment && <span className="block text-xs text-muted-foreground">{leave.reviewComment}</span>}
               </TableCell>
+              <TableCell className="text-sm">{leave.approverEmployeeName ?? "—"}</TableCell>
               <RowActionsCell label={`đơn #${leave.id}`}>{actions(leave)}</RowActionsCell>
             </TableRow>
           ))}

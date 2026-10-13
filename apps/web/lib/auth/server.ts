@@ -400,6 +400,7 @@ export async function handleWorkforceRequest(request: Request, segments: string[
     { pattern: /^attendance\/employees\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^attendance\/[1-9]\d*$/, methods: ["GET", "PUT"] },
     { pattern: /^attendance\/[1-9]\d*\/overtime-approval$/, methods: ["POST"] },
+    { pattern: /^attendance\/overtime\/pending$/, methods: ["GET"] },
     { pattern: /^company-holidays$/, methods: ["GET", "POST"] },
     { pattern: /^company-holidays\/[1-9]\d*$/, methods: ["DELETE"] },
     { pattern: /^leave-requests$/, methods: ["POST"] },

@@ -36,7 +36,7 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
   const canUseAttendance = account.permissions.some((permission) =>
     ["attendance.self.read", "attendance.read", "attendance.manage"].includes(permission.code))
   const canUseLeave = account.permissions.some((permission) =>
-    ["request.self.read", "request.read", "request.self.create", "request.approve"].includes(permission.code))
+    ["request.self.read", "request.read", "request.self.create"].includes(permission.code))
   const canUsePayroll = account.permissions.some((permission) =>
     ["payroll.self.read", "report.payroll.read", "payroll.calculate", "compensation.read", "compensation.manage"].includes(permission.code))
 
