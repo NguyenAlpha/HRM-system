@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Ban, Check, CircleCheck, Copy, KeyRound, Link2, Loader2, MailPlus, RefreshCw } from "lucide-react"
+import { Ban, Check, CircleCheck, Copy, Eye, KeyRound, Link2, Loader2, MailPlus, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -15,6 +15,7 @@ import {
   type SortState,
 } from "@/components/common/list-filters"
 import { Pagination, ErrorAlert } from "@/components/common/list-controls"
+import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { AccountDetailDialog } from "@/components/account/account-detail-dialog"
 import {
   AlertDialog,
@@ -39,7 +40,6 @@ import {
 } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import {
   changeAccountStatus,
@@ -129,9 +129,8 @@ export function AccountManager({ portal, currentAccountId, currentRoleCodes, can
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState<{ account: Account; kind: ActionKind } | null>(null)
   const [running, setRunning] = useState(false)
-  // Without either lifecycle permission the list is read-only and the actions column is hidden.
+  // Without either lifecycle permission the list is read-only; the row menu then only opens the detail view.
   const hasActions = canManage || canManageActivation
-  const columns = hasActions ? 5 : 4
   const [invitation, setInvitation] = useState<{ account: Account; invitation: AccountInvitation } | null>(null)
   const [viewing, setViewing] = useState<Account | null>(null)
   const [filters, setFilters] = useState<AccountFilters>(EMPTY_FILTERS)
@@ -233,8 +232,8 @@ export function AccountManager({ portal, currentAccountId, currentRoleCodes, can
             <CardTitle>Danh sách tài khoản</CardTitle>
             <CardDescription>
               {hasActions
-                ? "Gửi lại lời mời, đặt lại mật khẩu, vô hiệu hóa hoặc kích hoạt lại tài khoản đăng nhập. Bấm tên tài khoản để xem role và permission."
-                : "Danh sách tài khoản đăng nhập (chỉ xem). Bấm tên tài khoản để xem role và permission."}
+                ? "Gửi lại lời mời, đặt lại mật khẩu, vô hiệu hóa hoặc kích hoạt lại tài khoản đăng nhập. Bấm vào một dòng để xem role và permission."
+                : "Danh sách tài khoản đăng nhập (chỉ xem). Bấm vào một dòng để xem role và permission."}
             </CardDescription>
           </div>
           <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
@@ -277,14 +276,14 @@ export function AccountManager({ portal, currentAccountId, currentRoleCodes, can
                   <TableHead>Nhân viên</TableHead>
                   <SortableHead label="Trạng thái" field="status" sort={sort} onSort={changeSort} />
                   <SortableHead label="Đăng nhập gần nhất" field="lastLoginAt" sort={sort} onSort={changeSort} />
-                  {hasActions && <TableHead className="text-right">Thao tác</TableHead>}
+                  <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading &&
                   Array.from({ length: 5 }).map((_, index) => (
                     <TableRow key={index}>
-                      {Array.from({ length: columns }).map((__, cell) => (
+                      {Array.from({ length: 5 }).map((__, cell) => (
                         <TableCell key={cell}><Skeleton className="h-4 w-full" /></TableCell>
                       ))}
                     </TableRow>
@@ -292,18 +291,16 @@ export function AccountManager({ portal, currentAccountId, currentRoleCodes, can
 
                 {!loading && data?.content.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={columns} className="py-8 text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                       {filters.keyword || filters.status || filters.roleCode ? "Không có tài khoản phù hợp với bộ lọc." : "Chưa có tài khoản nào."}
                     </TableCell>
                   </TableRow>
                 )}
 
                 {!loading && data?.content.map((account) => (
-                  <TableRow key={account.id}>
+                  <TableRow key={account.id} className="cursor-pointer" onClick={() => setViewing(account)}>
                     <TableCell>
-                      <button type="button" className="font-medium underline-offset-4 hover:underline" onClick={() => setViewing(account)}>
-                        {account.username}
-                      </button>
+                      <span className="font-medium">{account.username}</span>
                       {account.id === currentAccountId && <span className="ml-1.5 text-xs text-muted-foreground">(bạn)</span>}
                       <span className="block text-xs text-muted-foreground">{account.email}</span>
                     </TableCell>
@@ -311,7 +308,7 @@ export function AccountManager({ portal, currentAccountId, currentRoleCodes, can
                       {account.employeeId === null
                         ? <span className="text-muted-foreground">—</span>
                         : (
-                          <Link className="text-sm underline-offset-4 hover:underline" href={`${PORTAL_CONFIG[portal].pagePrefix}/employees/${account.employeeId}`}>
+                          <Link className="text-sm underline-offset-4 hover:underline" onClick={(event) => event.stopPropagation()} href={`${PORTAL_CONFIG[portal].pagePrefix}/employees/${account.employeeId}`}>
                             {account.employeeFullName}
                             <span className="block text-xs text-muted-foreground">{account.employeeCode}</span>
                           </Link>
@@ -324,32 +321,15 @@ export function AccountManager({ portal, currentAccountId, currentRoleCodes, can
                       )}
                     </TableCell>
                     <TableCell className="text-sm">{formatDateTime(account.lastLoginAt)}</TableCell>
-                    {hasActions && <TableCell>
-                      <div className="flex justify-end gap-1">
-                        {availableActions(account).map((kind) => {
-                          const Icon = ICONS[kind]
-                          return (
-                            <Tooltip key={kind}>
-                              <TooltipTrigger
-                                render={
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    className={ACTIONS[kind].destructive ? "text-muted-foreground hover:text-destructive" : undefined}
-                                    onClick={() => setPending({ account, kind })}
-                                    aria-label={`${ACTIONS[kind].label} ${account.username}`}
-                                  />
-                                }
-                              >
-                                <Icon />
-                              </TooltipTrigger>
-                              <TooltipContent>{ACTIONS[kind].label}</TooltipContent>
-                            </Tooltip>
-                          )
-                        })}
-                      </div>
-                    </TableCell>}
+                    <RowActionsCell label={account.username}>
+                      <RowActionItem icon={Eye} onClick={() => setViewing(account)}>Xem chi tiết</RowActionItem>
+                      {availableActions(account).map((kind) => (
+                        <RowActionItem key={kind} icon={ICONS[kind]} destructive={ACTIONS[kind].destructive}
+                          onClick={() => setPending({ account, kind })}>
+                          {ACTIONS[kind].label}
+                        </RowActionItem>
+                      ))}
+                    </RowActionsCell>
                   </TableRow>
                 ))}
               </TableBody>
