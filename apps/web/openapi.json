@@ -2916,6 +2916,34 @@
         "tags" : [ "role-assignment-request-controller" ]
       }
     },
+    "/api/role-assignment-requests/revocations" : {
+      "post" : {
+        "operationId" : "createRevocation",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateRoleRevocationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultRoleAssignmentRequestResponse"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "role-assignment-request-controller" ]
+      }
+    },
     "/api/role-assignment-requests/{requestId}" : {
       "get" : {
         "operationId" : "getById_7",
@@ -6129,6 +6157,21 @@
         },
         "required" : [ "code", "grantPolicy", "name" ]
       },
+      "CreateRoleRevocationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "assignmentId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "reason" : {
+            "type" : "string",
+            "maxLength" : 500,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "assignmentId", "reason" ]
+      },
       "CreateWorkLocationRequest" : {
         "type" : "object",
         "properties" : {
@@ -7721,6 +7764,10 @@
           "reason" : {
             "type" : "string"
           },
+          "requestType" : {
+            "type" : "string",
+            "enum" : [ "GRANT", "REVOKE" ]
+          },
           "requestedAt" : {
             "type" : "string",
             "format" : "date-time"
@@ -7764,6 +7811,13 @@
             "type" : "string",
             "enum" : [ "PENDING", "APPROVED", "REJECTED", "CANCELLED" ]
           },
+          "targetAssignment" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/AccountRoleAssignmentResponse"
+            }, {
+              "type" : "null"
+            } ]
+          },
           "updatedAt" : {
             "type" : "string",
             "format" : "date-time"
@@ -7776,7 +7830,7 @@
             "type" : [ "string", "null" ]
           }
         },
-        "required" : [ "accountId", "assignment", "cancellationReason", "cancelledAt", "cancelledByAccountId", "cancelledByUsername", "effectiveFrom", "effectiveTo", "employeeCode", "employeeId", "employeeName", "grantPolicy", "id", "organizationUnitId", "organizationUnitName", "reason", "requestedAt", "requestedByAccountId", "requestedByUsername", "reviewNote", "reviewedAt", "reviewedByAccountId", "reviewedByUsername", "roleCode", "roleId", "roleName", "scopeType", "status", "updatedAt", "workLocationId", "workLocationName" ]
+        "required" : [ "accountId", "assignment", "cancellationReason", "cancelledAt", "cancelledByAccountId", "cancelledByUsername", "effectiveFrom", "effectiveTo", "employeeCode", "employeeId", "employeeName", "grantPolicy", "id", "organizationUnitId", "organizationUnitName", "reason", "requestType", "requestedAt", "requestedByAccountId", "requestedByUsername", "reviewNote", "reviewedAt", "reviewedByAccountId", "reviewedByUsername", "roleCode", "roleId", "roleName", "scopeType", "status", "targetAssignment", "updatedAt", "workLocationId", "workLocationName" ]
       },
       "RoleResponse" : {
         "type" : "object",

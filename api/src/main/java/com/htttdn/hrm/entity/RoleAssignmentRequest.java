@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
+import com.htttdn.hrm.entity.enums.RoleAssignmentRequestType;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 
 import jakarta.persistence.Column;
@@ -37,6 +38,11 @@ public class RoleAssignmentRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "request_type", nullable = false, length = 20)
+    @Builder.Default
+    private RoleAssignmentRequestType requestType = RoleAssignmentRequestType.GRANT;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)
@@ -101,6 +107,11 @@ public class RoleAssignmentRequest {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_role_assignment_id", unique = true)
     private AccountRoleAssignment accountRoleAssignment;
+
+    /** The assignment a REVOKE request takes back; null for GRANT. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "target_assignment_id")
+    private AccountRoleAssignment targetAssignment;
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;

@@ -1124,6 +1124,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/role-assignment-requests/revocations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createRevocation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/role-assignment-requests/{requestId}": {
         parameters: {
             query?: never;
@@ -2076,6 +2092,11 @@ export interface components {
             grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
             name: string;
         };
+        CreateRoleRevocationRequest: {
+            /** Format: int64 */
+            assignmentId: number;
+            reason: string;
+        };
         CreateWorkLocationRequest: {
             address: string;
             code: string;
@@ -2681,6 +2702,8 @@ export interface components {
             organizationUnitId: number | null;
             organizationUnitName: string | null;
             reason: string;
+            /** @enum {string} */
+            requestType: "GRANT" | "REVOKE";
             /** Format: date-time */
             requestedAt: string;
             /** Format: int64 */
@@ -2700,6 +2723,7 @@ export interface components {
             scopeType: "SELF" | "COMPANY" | "ORG_UNIT" | "LOCATION";
             /** @enum {string} */
             status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+            targetAssignment: components["schemas"]["AccountRoleAssignmentResponse"] | null;
             /** Format: date-time */
             updatedAt: string;
             /** Format: int64 */
@@ -5032,6 +5056,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultListRoleAssignmentOptionResponse"];
+                };
+            };
+        };
+    };
+    createRevocation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRoleRevocationRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultRoleAssignmentRequestResponse"];
                 };
             };
         };

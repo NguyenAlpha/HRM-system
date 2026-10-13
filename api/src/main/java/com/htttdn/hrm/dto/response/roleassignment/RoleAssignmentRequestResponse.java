@@ -5,6 +5,7 @@ import java.time.LocalDate;
 
 import com.htttdn.hrm.dto.response.account.AccountRoleAssignmentResponse;
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
+import com.htttdn.hrm.entity.enums.RoleAssignmentRequestType;
 import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 
@@ -12,6 +13,7 @@ import jakarta.annotation.Nullable;
 
 public record RoleAssignmentRequestResponse(
     Long id,
+    RoleAssignmentRequestType requestType,
     Long accountId,
     @Nullable Long employeeId,
     @Nullable String employeeCode,
@@ -41,6 +43,9 @@ public record RoleAssignmentRequestResponse(
     @Nullable Instant cancelledAt,
     @Nullable String cancellationReason,
     Instant updatedAt,
-    @Nullable AccountRoleAssignmentResponse assignment
+    /** The assignment an approved GRANT created. */
+    @Nullable AccountRoleAssignmentResponse assignment,
+    /** The assignment a REVOKE request takes back. */
+    @Nullable AccountRoleAssignmentResponse targetAssignment
 ) {
 }

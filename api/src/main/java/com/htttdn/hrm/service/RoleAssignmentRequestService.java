@@ -1,6 +1,7 @@
 package com.htttdn.hrm.service;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,7 @@ import com.htttdn.hrm.dto.request.account.AssignAccountRoleRequest;
 import com.htttdn.hrm.dto.request.roleassignment.ApproveRoleAssignmentRequest;
 import com.htttdn.hrm.dto.request.roleassignment.CancelRoleAssignmentRequest;
 import com.htttdn.hrm.dto.request.roleassignment.CreateRoleAssignmentRequest;
+import com.htttdn.hrm.dto.request.roleassignment.CreateRoleRevocationRequest;
 import com.htttdn.hrm.dto.request.roleassignment.RejectRoleAssignmentRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.roleassignment.RoleAssignmentRequestResponse;
@@ -21,12 +23,14 @@ import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.RoleAssignmentRequest;
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
+import com.htttdn.hrm.entity.enums.RoleAssignmentRequestType;
 import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
+import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.RoleAssignmentRequestRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
@@ -41,25 +45,31 @@ public class RoleAssignmentRequestService {
 
     private final RoleAssignmentRequestRepository requestRepository;
     private final AccountRepository accountRepository;
+    private final AccountRoleAssignmentRepository roleAssignmentRepository;
     private final AccountRoleAssignmentCommandService roleAssignmentCommandService;
     private final RoleAssignmentRequestMapper requestMapper;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final CurrentAccountProvider currentAccountProvider;
+    private final CompanyOwnerAccountGuard companyOwnerAccountGuard;
 
     public RoleAssignmentRequestService(
         RoleAssignmentRequestRepository requestRepository,
         AccountRepository accountRepository,
+        AccountRoleAssignmentRepository roleAssignmentRepository,
         AccountRoleAssignmentCommandService roleAssignmentCommandService,
         RoleAssignmentRequestMapper requestMapper,
         EmployeeAccessScopeService employeeAccessScopeService,
-        CurrentAccountProvider currentAccountProvider
+        CurrentAccountProvider currentAccountProvider,
+        CompanyOwnerAccountGuard companyOwnerAccountGuard
     ) {
         this.requestRepository = requestRepository;
         this.accountRepository = accountRepository;
+        this.roleAssignmentRepository = roleAssignmentRepository;
         this.roleAssignmentCommandService = roleAssignmentCommandService;
         this.requestMapper = requestMapper;
         this.employeeAccessScopeService = employeeAccessScopeService;
         this.currentAccountProvider = currentAccountProvider;
+        this.companyOwnerAccountGuard = companyOwnerAccountGuard;
     }
 
     @PreAuthorize("hasAuthority('role.assignment.request')")
@@ -118,6 +128,68 @@ public class RoleAssignmentRequestService {
         return requestMapper.toResponse(roleRequest);
     }
 
+    /**
+     * Asks to take back one role assignment. Like a grant, an HR_ASSIGNABLE role is revoked at once and
+     * the request is recorded as approved; an OWNER_APPROVAL role waits for the Company Owner.
+     */
+    @PreAuthorize("hasAuthority('role.assignment.request')")
+    public RoleAssignmentRequestResponse createRevocation(CreateRoleRevocationRequest request) {
+        AccountRoleAssignment target = roleAssignmentRepository.findByIdForUpdate(request.assignmentId())
+            .orElseThrow(() -> new ResourceNotFoundException(
+                ErrorCode.ROLE_ASSIGNMENT_NOT_FOUND,
+                "Role assignment not found: " + request.assignmentId()
+            ));
+        Account account = target.getAccount();
+        companyOwnerAccountGuard.requireCanManage(account.getId());
+        roleAssignmentCommandService.validateRevocable(target.getRole());
+        requireStillHeld(target);
+        Employee employee = account.getEmployee();
+        if (employee == null) {
+            throw new ConflictException(
+                ErrorCode.ROLE_ASSIGNMENT_NOT_ALLOWED,
+                "Business roles require an account linked to an employee"
+            );
+        }
+        employeeAccessScopeService.requireEmployeeAccess(employee.getId(), REQUEST_PERMISSION);
+        employeeAccessScopeService.requireDestinationAccess(
+            target.getOrganizationUnit() == null ? null : target.getOrganizationUnit().getId(),
+            target.getWorkLocation() == null ? null : target.getWorkLocation().getId(),
+            REQUEST_PERMISSION
+        );
+
+        Long actorAccountId = currentAccountProvider.accountId();
+        Account actor = findAccount(actorAccountId);
+        Instant now = Instant.now();
+        RoleAssignmentRequest roleRequest = RoleAssignmentRequest.builder()
+            .requestType(RoleAssignmentRequestType.REVOKE)
+            .targetAssignment(target)
+            .account(account)
+            .role(target.getRole())
+            .scopeType(target.getScopeType())
+            .organizationUnit(target.getOrganizationUnit())
+            .workLocation(target.getWorkLocation())
+            .effectiveFrom(target.getEffectiveFrom())
+            .effectiveTo(target.getEffectiveTo())
+            .reason(request.reason().trim())
+            .status(RoleAssignmentRequestStatus.PENDING)
+            .requestedByAccount(actor)
+            .requestedAt(now)
+            .updatedAt(now)
+            .build();
+
+        savePending(roleRequest);
+        if (target.getRole().getGrantPolicy() == RoleGrantPolicy.HR_ASSIGNABLE) {
+            roleAssignmentCommandService.revoke(target, actor, roleRequest.getReason());
+            roleRequest.setStatus(RoleAssignmentRequestStatus.APPROVED);
+            roleRequest.setReviewedByAccount(actor);
+            roleRequest.setReviewedAt(now);
+            roleRequest.setReviewNote(AUTO_APPROVAL_NOTE);
+            roleRequest.setUpdatedAt(now);
+            requestRepository.saveAndFlush(roleRequest);
+        }
+        return requestMapper.toResponse(roleRequest);
+    }
+
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyAuthority('role.assignment.request', 'role.assignment.approve')")
     public Page<RoleAssignmentRequestResponse> list(
@@ -161,16 +233,24 @@ public class RoleAssignmentRequestService {
 
         Long actorAccountId = currentAccountProvider.accountId();
         Account actor = findAccount(actorAccountId);
-        AccountRoleAssignment assignment = roleAssignmentCommandService.assignOwnerApprovedRequest(
-            roleRequest,
-            actorAccountId
-        );
+        if (roleRequest.getRequestType() == RoleAssignmentRequestType.REVOKE) {
+            // Recheck the target: it may have been revoked or have expired while the request waited.
+            AccountRoleAssignment target = roleAssignmentRepository
+                .findByIdForUpdate(roleRequest.getTargetAssignment().getId())
+                .orElseThrow();
+            requireStillHeld(target);
+            roleAssignmentCommandService.revoke(target, actor, roleRequest.getReason());
+        } else {
+            roleRequest.setAccountRoleAssignment(roleAssignmentCommandService.assignOwnerApprovedRequest(
+                roleRequest,
+                actorAccountId
+            ));
+        }
         Instant now = Instant.now();
         roleRequest.setStatus(RoleAssignmentRequestStatus.APPROVED);
         roleRequest.setReviewedByAccount(actor);
         roleRequest.setReviewedAt(now);
         roleRequest.setReviewNote(trimToNull(request.note()));
-        roleRequest.setAccountRoleAssignment(assignment);
         roleRequest.setUpdatedAt(now);
         requestRepository.saveAndFlush(roleRequest);
         return requestMapper.toResponse(roleRequest);
@@ -239,7 +319,20 @@ public class RoleAssignmentRequestService {
         } catch (DataIntegrityViolationException exception) {
             throw new ConflictException(
                 ErrorCode.ROLE_ASSIGNMENT_REQUEST_EXISTS,
-                "An overlapping pending role assignment request already exists"
+                roleRequest.getRequestType() == RoleAssignmentRequestType.REVOKE
+                    ? "A pending revocation request for this role assignment already exists"
+                    : "An overlapping pending role assignment request already exists"
+            );
+        }
+    }
+
+    /** Only an assignment that is not revoked and has not ended can be revoked by a request. */
+    private void requireStillHeld(AccountRoleAssignment assignment) {
+        if (assignment.getRevokedAt() != null
+            || (assignment.getEffectiveTo() != null && assignment.getEffectiveTo().isBefore(LocalDate.now()))) {
+            throw new ConflictException(
+                ErrorCode.ROLE_ASSIGNMENT_NOT_ALLOWED,
+                "Role assignment is already revoked or has ended"
             );
         }
     }

@@ -136,6 +136,8 @@ CREATE INDEX idx_permission_overrides_permission
 -- Đề xuất cấp role được lưu riêng với assignment đã có hiệu lực.
 CREATE TABLE role_assignment_requests (
     id BIGSERIAL PRIMARY KEY,
+    -- GRANT tạo assignment mới khi được duyệt; REVOKE thu hồi target_assignment_id khi được duyệt.
+    request_type VARCHAR(20) NOT NULL DEFAULT 'GRANT',
     account_id BIGINT NOT NULL REFERENCES accounts (id),
     role_id BIGINT NOT NULL REFERENCES roles (id),
     scope_type VARCHAR(20) NOT NULL,
@@ -154,7 +156,13 @@ CREATE TABLE role_assignment_requests (
     cancelled_at TIMESTAMPTZ,
     cancellation_reason TEXT,
     account_role_assignment_id BIGINT UNIQUE REFERENCES account_role_assignments (id),
+    -- Assignment cần thu hồi; role, scope và thời gian của request được sao từ assignment này.
+    target_assignment_id BIGINT REFERENCES account_role_assignments (id),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT chk_role_assignment_requests_type CHECK (
+        (request_type = 'GRANT' AND target_assignment_id IS NULL)
+        OR (request_type = 'REVOKE' AND target_assignment_id IS NOT NULL)
+    ),
     CONSTRAINT chk_role_assignment_requests_scope CHECK (
         (scope_type IN ('SELF', 'COMPANY') AND organization_unit_id IS NULL AND work_location_id IS NULL)
         OR (scope_type = 'ORG_UNIT' AND organization_unit_id IS NOT NULL AND work_location_id IS NULL)
@@ -184,7 +192,8 @@ CREATE TABLE role_assignment_requests (
             AND cancelled_by_account_id IS NULL
             AND cancelled_at IS NULL
             AND cancellation_reason IS NULL
-            AND account_role_assignment_id IS NOT NULL
+            -- Chỉ request GRANT tạo assignment mới.
+            AND (account_role_assignment_id IS NOT NULL) = (request_type = 'GRANT')
         )
         OR (
             status = 'REJECTED'
@@ -209,7 +218,7 @@ CREATE TABLE role_assignment_requests (
             AND account_role_assignment_id IS NULL
         )
     ),
-    -- Không cho hai request PENDING cùng account, role và scope có thời gian hiệu lực chồng lấn.
+    -- Không cho hai request GRANT PENDING cùng account, role và scope có thời gian hiệu lực chồng lấn.
     CONSTRAINT excl_pending_role_assignment_request_overlap
         EXCLUDE USING GIST (
             account_id WITH =,
@@ -218,8 +227,13 @@ CREATE TABLE role_assignment_requests (
             (COALESCE(organization_unit_id, 0::BIGINT)) WITH =,
             (COALESCE(work_location_id, 0::BIGINT)) WITH =,
             (DATERANGE(effective_from, effective_to + 1, '[)')) WITH &&
-        ) WHERE (status = 'PENDING')
+        ) WHERE (status = 'PENDING' AND request_type = 'GRANT')
 );
+
+-- Mỗi assignment chỉ có tối đa một request thu hồi đang chờ duyệt.
+CREATE UNIQUE INDEX uq_role_assignment_requests_pending_revoke
+    ON role_assignment_requests (target_assignment_id)
+    WHERE status = 'PENDING' AND request_type = 'REVOKE';
 
 CREATE INDEX idx_role_assignment_requests_status_requested
     ON role_assignment_requests (status, requested_at DESC);
