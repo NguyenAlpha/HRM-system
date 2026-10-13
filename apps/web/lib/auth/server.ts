@@ -603,6 +603,7 @@ export async function handleAccountLifecycleRequest(
   const path = segments.join("/")
   const routes = [
     { pattern: /^$/, methods: ["GET"] },
+    { pattern: /^[1-9]\d*\/permissions$/, methods: ["GET"] },
     { pattern: /^[1-9]\d*\/(?:invitations\/resend|password-reset|suspend|activate)$/, methods: ["POST"] },
   ]
   const route = routes.find((candidate) => candidate.pattern.test(path))

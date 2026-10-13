@@ -22,6 +22,7 @@ export function provisionAccount(portal: Portal, employeeId: number, username: s
 }
 
 export type Account = ProvisionedAccount
+export type AccountPermissionGrant = Schemas["AccountPermissionGrantResponse"]
 export type AccountPage = Schemas["PagedResultAccountResponse"]
 
 /** Filters of the account list; an empty string means "no filter". */
@@ -50,4 +51,9 @@ export function issueAccountInvitation(
 
 export function changeAccountStatus(portal: Portal, accountId: number, action: "suspend" | "activate"): Promise<Account> {
   return authorizedRequest<Account>(portal, `/accounts/${accountId}/${action}`, { method: "POST", cache: "no-store" })
+}
+
+/** Today's permissions of the account, each with the role assignments that give it. */
+export function getAccountPermissions(portal: Portal, accountId: number): Promise<AccountPermissionGrant[]> {
+  return authorizedRequest<AccountPermissionGrant[]>(portal, `/accounts/${accountId}/permissions`, { cache: "no-store" })
 }
