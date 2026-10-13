@@ -7,7 +7,7 @@ import { PORTAL_CONFIG } from "@/lib/auth/config"
 import type { AccountSummary, Portal } from "@/lib/auth/types"
 
 /** A null href is a menu entry that is not available yet. */
-type NavSection = { title: string | null; links: { label: string; href: string | null }[] }
+type NavLink = { label: string; href: string | null }
 
 export function PortalSidebar({ portal, account }: { portal: Portal; account: AccountSummary }) {
   const admin = portal === "admin"
@@ -41,44 +41,33 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
     ["payroll.self.read", "report.payroll.read", "payroll.calculate", "compensation.read", "compensation.manage"].includes(permission.code))
 
   const home = PORTAL_CONFIG[portal].homePath
-  // Grouped menu; a link is listed only when its condition holds, and an empty group is hidden.
-  const group = (title: string | null, links: [boolean, string, string | null][]): NavSection => ({
-    title,
-    links: links.filter(([visible]) => visible).map(([, label, href]) => ({ label, href })),
-  })
-  const sections: NavSection[] = admin
-    ? [
-      group(null, [[true, "Tổng quan", home]]),
-      group("Quản trị truy cập", [
-        [canReadAccounts, "Tài khoản", "/admin/accounts"],
-        [true, "Vai trò & quyền", "/admin/rbac"],
-        [canAssignRoleDirect, "Cấp quyền trực tiếp", "/admin/role-grant"],
-        [canBootstrapCompanyOwner, "Company Owner", "/admin/company-owner"],
-      ]),
-      group("Dữ liệu tổ chức", [
-        [canReadEmployees, "Nhân sự", "/admin/employees"],
-        [canReadOrganization, "Danh mục tổ chức", "/admin/organization"],
-      ]),
-    ]
-    : [
-      group(null, [[true, "Tổng quan", home], [true, "Hồ sơ", null]]),
-      group("Chấm công & lương", [
-        [canUseAttendance, "Chấm công", "/attendance"],
-        [canUseLeave, "Đơn từ", "/leave-requests"],
-        [canUsePayroll, "Phiếu lương", "/payslips"],
-      ]),
-      group("Nhân sự", [
-        [canReadEmployees, "Nhân sự", "/employees"],
-        [canReadOrganization, "Danh mục tổ chức", "/organization"],
-        [canReadReports, "Báo cáo nhân sự", "/reports/workforce"],
-      ]),
-      group("Quản trị truy cập", [
-        [canReadAccounts, "Tài khoản", "/accounts"],
-        [canUseRoleRequests, "Đề xuất role", "/role-requests"],
-        [canAssignRoleDirect, "Cấp quyền trực tiếp", "/role-grant"],
-        [canManageRbac, "Vai trò & quyền", "/rbac"],
-      ]),
-    ]
+  // A link is listed only when its condition holds.
+  const visible = (links: [boolean, string, string | null][]): NavLink[] =>
+    links.filter(([show]) => show).map(([, label, href]) => ({ label, href }))
+  const links = admin
+    ? visible([
+      [true, "Tổng quan", home],
+      [canReadEmployees, "Nhân sự", "/admin/employees"],
+      [canReadAccounts, "Tài khoản", "/admin/accounts"],
+      [true, "Vai trò & quyền", "/admin/rbac"],
+      [canAssignRoleDirect, "Cấp quyền trực tiếp", "/admin/role-grant"],
+      [canReadOrganization, "Danh mục tổ chức", "/admin/organization"],
+      [canBootstrapCompanyOwner, "Company Owner", "/admin/company-owner"],
+    ])
+    : visible([
+      [true, "Tổng quan", home],
+      [true, "Hồ sơ", null],
+      [canReadEmployees, "Nhân sự", "/employees"],
+      [canReadAccounts, "Tài khoản", "/accounts"],
+      [canUseRoleRequests, "Đề xuất role", "/role-requests"],
+      [canAssignRoleDirect, "Cấp quyền trực tiếp", "/role-grant"],
+      [canManageRbac, "Vai trò & quyền", "/rbac"],
+      [canReadOrganization, "Danh mục tổ chức", "/organization"],
+      [canReadReports, "Báo cáo nhân sự", "/reports/workforce"],
+      [canUseAttendance, "Chấm công", "/attendance"],
+      [canUseLeave, "Đơn từ", "/leave-requests"],
+      [canUsePayroll, "Phiếu lương", "/payslips"],
+    ])
 
   return (
     <aside className="portal-sidebar">
@@ -87,14 +76,9 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
         <span><strong>HRM</strong><small>{admin ? "Admin Console" : "People Workspace"}</small></span>
       </div>
       <nav aria-label="Điều hướng chính">
-        {sections.map((section) => section.links.length > 0 && (
-          <div key={section.title ?? "home"} className="nav-section">
-            {section.title && <span className="nav-caption">{section.title}</span>}
-            {section.links.map((link) => link.href === null
-              ? <span key={link.label} className="nav-item disabled" aria-disabled="true">{link.label}</span>
-              : <Link key={link.href} className={navClass(link.href)} href={link.href}>{link.label}</Link>)}
-          </div>
-        ))}
+        {links.map((link) => link.href === null
+          ? <span key={link.label} className="nav-item disabled" aria-disabled="true">{link.label}</span>
+          : <Link key={link.href} className={navClass(link.href)} href={link.href}>{link.label}</Link>)}
       </nav>
       <div className="sidebar-account">
         <span className="avatar">{(account.employee?.fullName ?? account.username).slice(0, 1).toUpperCase()}</span>

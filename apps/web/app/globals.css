@@ -88,9 +88,7 @@ button:disabled { cursor: wait; opacity: 0.64; }
 }
 .admin-shell .portal-sidebar { border-color: #d8deea; background: #f7f9fc; }
 .sidebar-brand { padding: 0 0.45rem; }
-.portal-sidebar nav { display: grid; align-content: start; gap: 1.4rem; margin: 2.25rem -0.5rem 1rem; padding: 0 0.5rem; overflow-y: auto; }
-.nav-section { display: grid; gap: 0.125rem; }
-.nav-caption { margin: 0 0.75rem 0.4rem; color: #8b9690; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.portal-sidebar nav { display: grid; align-content: start; gap: 0.125rem; margin: 2.25rem -0.5rem 1rem; padding: 0 0.5rem; overflow-y: auto; }
 .nav-item { position: relative; display: flex; align-items: center; border-radius: 0.5rem; padding: 0.5rem 0.75rem; color: #4f5d56; font-size: 0.875rem; font-weight: 500; text-decoration: none; transition: background-color 120ms ease, color 120ms ease; }
 .nav-item:not(.disabled):hover { color: var(--ink); background: #edf2ef; }
 .nav-item.active { color: var(--green-dark); background: var(--green-soft); font-weight: 600; }
