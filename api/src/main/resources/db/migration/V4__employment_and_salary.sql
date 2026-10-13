@@ -1,10 +1,4 @@
--- Mã nhân viên, lịch sử phân công, lương cơ bản và chính sách phụ cấp.
-
--- Allocate employee codes independently for each position prefix.
-CREATE TABLE employee_code_counters (
-    prefix VARCHAR(10) PRIMARY KEY,
-    next_number BIGINT NOT NULL CHECK (next_number > 0)
-);
+-- Lịch sử phân công, lương cơ bản và chính sách phụ cấp.
 
 -- Bảo vệ lịch sử phân công chính của nhân sự khỏi kỳ ngày sai hoặc chồng lấn.
 CREATE TABLE employee_assignments (

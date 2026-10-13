@@ -135,7 +135,7 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
         LocalDate startDate = seededAt.toLocalDate();
 
         Employee employee = employeeRepository.save(Employee.builder()
-            .employeeCode(employeeCodeGenerator.forDirector())
+            .employeeCode(employeeCodeGenerator.next())
             .fullName(FULL_NAME)
             .workEmail(EMAIL)
             .hireDate(startDate)

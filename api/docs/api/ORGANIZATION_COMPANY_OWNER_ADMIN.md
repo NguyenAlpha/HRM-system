@@ -51,7 +51,7 @@ Tạo đồng thời hồ sơ employee tối thiểu, account đăng nhập và 
 | `directorAppointmentReason` | string | ✅ | Lý do bổ nhiệm Director, tối đa 500 ký tự; lưu audit tách biệt với quyền sở hữu |
 
 Employee được tạo ở trạng thái `ACTIVE`; account ở trạng thái `PENDING` và chưa có mật khẩu. Email account lấy từ `employee.workEmail`, được trim và chuyển thành chữ thường.
-Mã nhân viên được server cấp với tiền tố `GD` vì workflow này đồng thời bổ nhiệm Director; mã được trả trong response và giữ nguyên về sau.
+Mã nhân viên được server cấp theo dãy chung `NV0001`, `NV0002`… như mọi nhân viên; mã được trả trong response và giữ nguyên về sau.
 
 ### Transaction và invariant
 
@@ -79,7 +79,7 @@ Hai role được lưu thành hai assignment riêng. Sau này doanh nghiệp có
   "success": true,
   "data": {
     "employeeId": 125,
-    "employeeCode": "GD0001",
+    "employeeCode": "NV0001",
     "fullName": "Nguyen Van Chu",
     "accountProvisioning": {
       "account": {

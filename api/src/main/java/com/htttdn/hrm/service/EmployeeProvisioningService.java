@@ -45,7 +45,7 @@ public class EmployeeProvisioningService {
 
         Instant now = Instant.now();
         return employeeRepository.save(Employee.builder()
-            .employeeCode(employeeCodeGenerator.forDirector())
+            .employeeCode(employeeCodeGenerator.next())
             .fullName(command.fullName().trim())
             .workEmail(workEmail)
             .phone(normalizeNullable(command.phone()))

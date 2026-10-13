@@ -121,7 +121,7 @@ public class EmployeeService {
 
         Instant now = Instant.now();
         Employee employee = Employee.builder()
-            .employeeCode(employeeCodeGenerator.forPosition(assignmentRequest.positionId()))
+            .employeeCode(employeeCodeGenerator.next())
             .fullName(profile.fullName().trim())
             .dateOfBirth(profile.dateOfBirth())
             .gender(profile.gender())

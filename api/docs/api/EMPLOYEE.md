@@ -97,7 +97,7 @@ Endpoint này chỉ tạo `Employee` và `EmployeeAssignment`:
 
 Các dữ liệu nhạy cảm như CCCD, email cá nhân, địa chỉ, mã số thuế và thông tin ngân hàng không được nhận tại endpoint này. Chúng được nhập qua `PUT /api/employees/{employeeId}/sensitive` với permission `employee.sensitive.manage`.
 
-`employeeCode` do server tạo theo vị trí trong `initialAssignment`: `GD` (Giám đốc), `NS` (Nhân sự), `KT` (Kế toán tiền lương), `VH` (Quản lý vận hành), `CN` (Quản lý chi nhánh), `KHO` (Giám sát kho), `TN` (Trưởng nhóm), `NV` (Nhân viên hoặc vị trí chưa cấu hình). Số thứ tự tăng riêng theo tiền tố, tối thiểu bốn chữ số. Mã không đổi khi nhân viên chuyển vị trí và không được tái sử dụng.
+`employeeCode` do server cấp theo một dãy chung cho mọi nhân viên: `NV0001`, `NV0002`…, là số lớn nhất đang có cộng một, tối thiểu bốn chữ số. Mã không đổi khi nhân viên chuyển vị trí và không được tái sử dụng, kể cả khi nhân viên bị xóa mềm.
 
 #### Phân công ban đầu
 
@@ -122,7 +122,7 @@ Client lấy `organizationUnitId`, `workLocationId` và `positionId` từ [Organ
   "data": {
     "employee": {
       "id": 125,
-      "employeeCode": "NS0001",
+      "employeeCode": "NV0001",
       "fullName": "Nguyễn Văn An",
       "dateOfBirth": "1998-05-20",
       "gender": "MALE",

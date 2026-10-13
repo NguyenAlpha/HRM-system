@@ -1,6 +1,5 @@
 package com.htttdn.hrm.service;
 
-import java.util.Map;
 import java.util.Locale;
 
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -8,61 +7,37 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.htttdn.hrm.dto.response.common.ErrorCode;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
-import com.htttdn.hrm.repository.JobPositionRepository;
-
+/**
+ * Cấp mã nhân viên theo một dãy chung {@code NV0001}, {@code NV0002}…: số lớn nhất đang có cộng một.
+ * Nhân viên đã xóa mềm vẫn giữ mã nên mã không bị tái sử dụng.
+ */
 @Service
 @Transactional(propagation = Propagation.MANDATORY)
 public class EmployeeCodeGenerator {
 
-    private static final Map<String, String> PREFIX_BY_POSITION = Map.of(
-        "DIRECTOR", "GD",
-        "HR_SPECIALIST", "NS",
-        "PAYROLL_ACCOUNTANT", "KT",
-        "OPERATIONS_MANAGER", "VH",
-        "BRANCH_MANAGER", "CN",
-        "WAREHOUSE_SUPERVISOR", "KHO",
-        "TEAM_LEAD", "TN",
-        "GENERAL_STAFF", "NV"
-    );
+    static final String PREFIX = "NV";
+
+    // Held until the transaction ends, so two employees created at once cannot read the same maximum.
+    private static final String LOCK_SQL = "SELECT pg_advisory_xact_lock(hashtext('employee_code'))";
 
     private static final String NEXT_NUMBER_SQL = """
-        INSERT INTO employee_code_counters (prefix, next_number)
-        VALUES (?, 2)
-        ON CONFLICT (prefix)
-        DO UPDATE SET next_number = employee_code_counters.next_number + 1
-        RETURNING next_number - 1
+        SELECT COALESCE(MAX(CAST(SUBSTRING(employee_code FROM 3) AS BIGINT)), 0) + 1
+        FROM employees
+        WHERE employee_code ~ '^NV[0-9]+$'
         """;
 
     private final JdbcTemplate jdbcTemplate;
-    private final JobPositionRepository jobPositionRepository;
 
-    public EmployeeCodeGenerator(JdbcTemplate jdbcTemplate, JobPositionRepository jobPositionRepository) {
+    public EmployeeCodeGenerator(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
-        this.jobPositionRepository = jobPositionRepository;
     }
 
-    public String forPosition(Long positionId) {
-        String positionCode = jobPositionRepository.findByIdAndDeletedAtIsNull(positionId)
-            .filter(position -> Boolean.TRUE.equals(position.getIsActive()))
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.JOB_POSITION_NOT_FOUND,
-                "Active job position not found: " + positionId
-            ))
-            .getCode();
-        return nextCode(PREFIX_BY_POSITION.getOrDefault(positionCode, "NV"));
-    }
-
-    public String forDirector() {
-        return nextCode(PREFIX_BY_POSITION.get("DIRECTOR"));
-    }
-
-    private String nextCode(String prefix) {
-        Long number = jdbcTemplate.queryForObject(NEXT_NUMBER_SQL, Long.class, prefix);
+    public String next() {
+        jdbcTemplate.queryForList(LOCK_SQL);
+        Long number = jdbcTemplate.queryForObject(NEXT_NUMBER_SQL, Long.class);
         if (number == null) {
-            throw new IllegalStateException("Employee code counter did not return a number");
+            throw new IllegalStateException("Employee code query did not return a number");
         }
-        return prefix + String.format(Locale.ROOT, "%04d", number);
+        return PREFIX + String.format(Locale.ROOT, "%04d", number);
     }
 }

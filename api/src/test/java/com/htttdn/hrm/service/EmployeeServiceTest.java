@@ -75,7 +75,7 @@ class EmployeeServiceTest {
             1L, 1L, 7L, null, null, EmploymentType.FULL_TIME,
             LocalDate.of(2026, 10, 5), null
         );
-        when(employeeCodeGenerator.forPosition(7L)).thenReturn("NV0001");
+        when(employeeCodeGenerator.next()).thenReturn("NV0001");
         when(employeeRepository.save(any(Employee.class))).thenAnswer(invocation -> {
             Employee employee = invocation.getArgument(0);
             employee.setId(42L);

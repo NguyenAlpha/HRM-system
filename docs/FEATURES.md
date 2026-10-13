@@ -93,7 +93,7 @@ Ma trận đầy đủ role → permission: [api/docs/api/RBAC.md](../api/docs/a
 
 | Chức năng | Endpoint | Permission |
 |---|---|---|
-| Tạo hồ sơ, mã nhân viên tự sinh theo tiền tố vị trí | `POST /api/employees` | `employee.create` |
+| Tạo hồ sơ, mã nhân viên tự sinh (`NV0001`, `NV0002`…) | `POST /api/employees` | `employee.create` |
 | Danh sách theo phạm vi được phân công | `GET /api/employees` | `employee.list.read` |
 | Xem chi tiết | `GET /api/employees/{id}` | `employee.read` |
 | Cập nhật hồ sơ | `PUT /api/employees/{id}` | `employee.update` |
