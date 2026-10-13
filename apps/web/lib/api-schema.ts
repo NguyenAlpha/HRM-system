@@ -1424,6 +1424,8 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
             email: string;
+            employeeCode: string | null;
+            employeeFullName: string | null;
             /** Format: int64 */
             employeeId: number | null;
             /** Format: int32 */

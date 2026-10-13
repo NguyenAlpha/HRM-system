@@ -104,6 +104,10 @@ class ListSearchIntegrationTest {
         assertEquals(List.of(marker + "_hr"), usernames(new AccountSearchCriteria(marker, null, "HR_MANAGER"), byUsername));
         // The linked employee's name is searchable too.
         assertEquals(List.of(marker + "_hr"), usernames(new AccountSearchCriteria("alpha " + marker, null, null), byUsername));
+        // Each row carries the linked employee's name so the list can show who the account belongs to.
+        assertEquals(java.util.Arrays.asList("Alpha " + marker, null, null),
+            accountAdminService.list(new AccountSearchCriteria(marker, null, null), byUsername).getContent().stream()
+                .map(AccountResponse::employeeFullName).toList());
         // LIKE wildcards in the keyword are matched literally.
         assertEquals(List.of(), usernames(new AccountSearchCriteria(marker + "%", null, null), byUsername));
         assertThrows(BusinessException.class, () -> accountAdminService.list(

@@ -66,6 +66,8 @@ Employee phải nằm trong scope `account.provision` của account đang đăng
     "account": {
       "id": 208,
       "employeeId": 125,
+      "employeeCode": "NV0125",
+      "employeeFullName": "Nguyễn Văn An",
       "username": "an.nguyen",
       "email": "an.nguyen@company.com",
       "status": "PENDING",
@@ -122,6 +124,8 @@ GET /api/accounts?page=0&size=20&sort=username,asc&keyword=an&status=ACTIVE&role
 | `keyword` | string | Tìm không phân biệt hoa thường trong username, email, họ tên và mã của employee liên kết |
 | `status` | enum | `PENDING`, `ACTIVE`, `LOCKED` hoặc `DISABLED` |
 | `roleCode` | string | Chỉ account đang giữ assignment chưa thu hồi của role này |
+
+`employeeCode` và `employeeFullName` là mã và họ tên nhân viên gắn với account, `null` khi account không gắn nhân viên (ví dụ `SYSTEM_ADMIN`).
 
 Response `200 OK` dùng cấu trúc `Page<AccountResponse>` của Spring với các field `content`, `totalElements`, `totalPages`, `number` và `size`.
 

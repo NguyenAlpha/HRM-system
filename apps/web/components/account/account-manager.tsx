@@ -300,7 +300,12 @@ export function AccountManager({ portal, currentAccountId, canManage, canManageA
                     <TableCell>
                       {account.employeeId === null
                         ? <span className="text-muted-foreground">—</span>
-                        : <Link className="text-sm underline-offset-4 hover:underline" href={`${PORTAL_CONFIG[portal].pagePrefix}/employees/${account.employeeId}`}>Hồ sơ #{account.employeeId}</Link>}
+                        : (
+                          <Link className="text-sm underline-offset-4 hover:underline" href={`${PORTAL_CONFIG[portal].pagePrefix}/employees/${account.employeeId}`}>
+                            {account.employeeFullName}
+                            <span className="block text-xs text-muted-foreground">{account.employeeCode}</span>
+                          </Link>
+                        )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={STATUS_VARIANTS[account.status]}>{STATUS_LABELS[account.status]}</Badge>

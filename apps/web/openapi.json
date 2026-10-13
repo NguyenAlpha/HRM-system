@@ -3839,6 +3839,12 @@
           "email" : {
             "type" : "string"
           },
+          "employeeCode" : {
+            "type" : [ "string", "null" ]
+          },
+          "employeeFullName" : {
+            "type" : [ "string", "null" ]
+          },
           "employeeId" : {
             "type" : [ "integer", "null" ],
             "format" : "int64"
@@ -3871,7 +3877,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "createdAt", "email", "employeeId", "failedLoginCount", "id", "lastLoginAt", "lockedUntil", "status", "updatedAt", "username" ]
+        "required" : [ "createdAt", "email", "employeeCode", "employeeFullName", "employeeId", "failedLoginCount", "id", "lastLoginAt", "lockedUntil", "status", "updatedAt", "username" ]
       },
       "AccountRoleAssignmentResponse" : {
         "type" : "object",
