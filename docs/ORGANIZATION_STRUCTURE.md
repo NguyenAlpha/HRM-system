@@ -192,9 +192,9 @@ Dữ liệu seed được chia theo trách nhiệm và chạy theo `@Order`. M�
 
 Ngoài Company Owner và nhân sự trong file seed, mọi người dùng HRM được tạo qua API.
 
-`StaffSeeder` đọc một mảng JSON; mỗi phần tử tạo nhân viên `ACTIVE`, account `ACTIVE`, role, phân
-công chính và chấm công `PRESENT` từ ngày vào làm đến hôm qua. Username đã tồn tại thì bỏ qua,
-nên thêm người vào file rồi khởi động lại chỉ tạo người mới.
+`StaffSeeder` đọc một mảng JSON; mỗi phần tử tạo nhân viên `ACTIVE`, account `ACTIVE`, role, lịch
+sử phân công chính và chấm công `PRESENT` từ ngày vào làm đến hôm qua. Username đã tồn tại thì bỏ
+qua, nên thêm người vào file rồi khởi động lại chỉ tạo người mới.
 
 ```json
 {
@@ -203,25 +203,27 @@ nên thêm người vào file rồi khởi động lại chỉ tạo người m�
   "fullName": "Lê Văn Cường",
   "email": "employee@hrm.local",
   "roles": { "EMPLOYEE": "SELF" },
-  "organizationUnit": "HR",
-  "position": "GENERAL_STAFF",
-  "workLocation": "HO",
-  "shift": "OFFICE_DAY",
-  "manager": "hr",
-  "monthsAgo": 6
+  "assignments": [
+    { "monthsAgo": 10, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-01", "position": "GENERAL_STAFF", "manager": "owner" },
+    { "monthsAgo": 4, "organizationUnit": "HR", "position": "GENERAL_STAFF", "manager": "hr" }
+  ]
 }
 ```
 
-- `roles`: mã role → scope (`SELF`, `COMPANY`, `ORG_UNIT`, `LOCATION`). `ORG_UNIT`/`LOCATION` lấy
-  đơn vị/địa điểm của phân công chính.
+- `roles`: mã role → scope (`SELF`, `COMPANY`, `ORG_UNIT`, `LOCATION`), hiệu lực từ ngày vào làm.
+  `ORG_UNIT`/`LOCATION` lấy đơn vị/địa điểm của phân công hiện hành.
+- `assignments`: các giai đoạn phân công chính, **từ cũ đến mới**. Mỗi giai đoạn bắt đầu `monthsAgo`
+  tháng trước ngày chạy seed và kết thúc ngay trước giai đoạn sau; giai đoạn cuối là phân công hiện
+  hành. Ngày vào làm là ngày bắt đầu giai đoạn đầu; mã nhân viên sinh theo chức danh lúc đó.
 - `organizationUnit`, `position`, `workLocation`, `shift`: mã đã seed; `workLocation` mặc định `HO`,
-  `shift` mặc định `OFFICE_DAY`.
-- `manager`: username của quản lý trực tiếp (người duyệt đơn nghỉ và tăng ca); phải là `owner` hoặc
-  người đứng trước trong file. Bỏ trống thì người duyệt là Giám đốc.
-- `monthsAgo`: ngày vào làm tính lùi từ ngày chạy seed. Mã nhân viên sinh theo chức danh.
+  `shift` mặc định `OFFICE_DAY`. Chấm công mỗi ngày theo ca của giai đoạn chứa ngày đó.
+- `manager`: username của quản lý trực tiếp trong giai đoạn đó (người duyệt đơn nghỉ và tăng ca theo
+  phân công hiện hành); phải là `owner` hoặc người đứng trước trong file. Bỏ trống thì người duyệt
+  là Giám đốc.
 
-File mặc định có `hr` (HR_MANAGER, quản lý là `owner`) và `employee` (quản lý là `hr`), cùng mật
-khẩu `password`.
+File mặc định có `hr` (Nhân viên rồi Chuyên viên nhân sự, HR_MANAGER, quản lý là `owner`) và
+`employee` (chuyển từ Vận hành ở `BRANCH-01` sang phòng Nhân sự, quản lý là `hr`), cùng mật khẩu
+`password`.
 
 Đây là dữ liệu thật đang có, khác với bộ dữ liệu đề xuất ở mục 6: seeder chưa tạo các nhóm cấp
 `TEAM`, các chức danh `HR_HEAD`/`HR_INTERN`, role `DEPARTMENT_MANAGER` hay các account theo phòng
