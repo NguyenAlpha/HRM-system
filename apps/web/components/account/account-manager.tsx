@@ -2,8 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Ban, Check, CircleCheck, Copy, Eye, KeyRound, Link2, Loader2, MailPlus, RefreshCw } from "lucide-react"
-import { toast } from "sonner"
+import { Eye, RefreshCw, ShieldMinus } from "lucide-react"
 
 import {
   ALL_OPTION,
@@ -15,111 +14,38 @@ import {
   type SortState,
 } from "@/components/common/list-filters"
 import { Pagination, ErrorAlert } from "@/components/common/list-controls"
-import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
-import { AccountDetailDialog } from "@/components/account/account-detail-dialog"
+import { RowActionItem, RowActionLink, RowActionsCell } from "@/components/common/row-actions"
+import { holdsRevocableRole } from "@/components/account/account-access"
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+  ACCOUNT_ACTIONS,
+  ACCOUNT_STATUS_LABELS,
+  ACCOUNT_STATUS_VARIANTS,
+  AccountActionDialog,
+  availableAccountActions,
+  formatDateTime,
+  isGuardedAccount,
+  type AccountActionKind,
+  type AccountViewer,
+} from "@/components/account/account-actions"
+import { AccountDetailDialog } from "@/components/account/account-detail-dialog"
+import { RevokeRoleDialog } from "@/components/account/revoke-role-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
-import {
-  changeAccountStatus,
-  issueAccountInvitation,
-  listAccounts,
-  type Account,
-  type AccountInvitation,
-  type AccountFilters,
-  type AccountPage,
-} from "@/lib/account"
+import { listAccounts, type Account, type AccountFilters, type AccountPage } from "@/lib/account"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import type { Page } from "@/lib/pagination"
 import { rbacRequest, type Role } from "@/lib/rbac"
 import type { Portal } from "@/lib/auth/types"
 
-const STATUS_LABELS: Record<Account["status"], string> = {
-  PENDING: "Chờ kích hoạt",
-  ACTIVE: "Đang hoạt động",
-  LOCKED: "Đang khóa",
-  DISABLED: "Đã vô hiệu hóa",
-}
-
 const EMPTY_FILTERS: AccountFilters = { keyword: "", status: "", roleCode: "" }
 
-const STATUS_VARIANTS: Record<Account["status"], "default" | "secondary" | "destructive" | "outline"> = {
-  PENDING: "secondary",
-  ACTIVE: "default",
-  LOCKED: "destructive",
-  DISABLED: "outline",
-}
-
-type ActionKind = "invitations/resend" | "password-reset" | "suspend" | "activate"
-
-const ACTIONS: Record<ActionKind, { label: string; title: string; description: string; destructive: boolean }> = {
-  "invitations/resend": {
-    label: "Gửi lại lời mời",
-    title: "Gửi lại lời mời kích hoạt?",
-    description: "Mã kích hoạt cũ chưa dùng sẽ bị thu hồi và hệ thống phát mã mới.",
-    destructive: false,
-  },
-  "password-reset": {
-    label: "Đặt lại mật khẩu",
-    title: "Đặt lại mật khẩu?",
-    description: "Tài khoản về trạng thái chờ kích hoạt, mật khẩu cũ bị xóa và mọi phiên đăng nhập bị thu hồi. Người dùng tự đặt mật khẩu mới bằng mã kích hoạt.",
-    destructive: true,
-  },
-  suspend: {
-    label: "Vô hiệu hóa",
-    title: "Vô hiệu hóa tài khoản?",
-    description: "Người dùng không thể đăng nhập và mọi phiên đăng nhập bị thu hồi. Có thể kích hoạt lại sau.",
-    destructive: true,
-  },
-  activate: {
-    label: "Kích hoạt lại",
-    title: "Kích hoạt lại tài khoản?",
-    description: "Tài khoản được mở lại, xóa trạng thái khóa và bộ đếm đăng nhập sai.",
-    destructive: false,
-  },
-}
-
-// Only a holder of the same role may change these accounts; the API's account guard enforces it.
-const PROTECTED_ROLES = ["COMPANY_OWNER", "SYSTEM_ADMIN"]
-
-const ICONS: Record<ActionKind, typeof Ban> = {
-  "invitations/resend": MailPlus,
-  "password-reset": KeyRound,
-  suspend: Ban,
-  activate: CircleCheck,
-}
-
-function formatDateTime(value: string | null) {
-  return value ? new Date(value).toLocaleString("vi-VN") : "—"
-}
-
-export function AccountManager({ portal, currentAccountId, currentRoleCodes, canManage, canManageActivation, onSessionExpired }: {
+export function AccountManager({ portal, viewer, onSessionExpired }: {
   portal: Portal
-  currentAccountId: number
-  currentRoleCodes: string[]
-  canManage: boolean
-  canManageActivation: boolean
+  viewer: AccountViewer
   onSessionExpired: () => void
 }) {
   const [data, setData] = useState<AccountPage | null>(null)
@@ -127,11 +53,10 @@ export function AccountManager({ portal, currentAccountId, currentRoleCodes, can
   const [revision, setRevision] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [pending, setPending] = useState<{ account: Account; kind: ActionKind } | null>(null)
-  const [running, setRunning] = useState(false)
+  const [pending, setPending] = useState<{ account: Account; kind: AccountActionKind } | null>(null)
+  const [revoking, setRevoking] = useState<Account | null>(null)
   // Without either lifecycle permission the list is read-only; the row menu then only opens the detail view.
-  const hasActions = canManage || canManageActivation
-  const [invitation, setInvitation] = useState<{ account: Account; invitation: AccountInvitation } | null>(null)
+  const hasActions = viewer.canManage || viewer.canManageActivation
   const [viewing, setViewing] = useState<Account | null>(null)
   const [filters, setFilters] = useState<AccountFilters>(EMPTY_FILTERS)
   const [sort, setSort] = useState<SortState>({ field: "id", direction: "desc" })
@@ -189,39 +114,9 @@ export function AccountManager({ portal, currentAccountId, currentRoleCodes, can
     setRevision((value) => value + 1)
   }
 
-  // Mirrors the API's status rules; the API still rejects anything not allowed.
-  function availableActions(account: Account): ActionKind[] {
-    const self = account.id === currentAccountId
-    const actions: ActionKind[] = []
-    // Reactivating stays allowed on a protected account, so only the other actions are dropped.
-    const guarded = PROTECTED_ROLES.some((role) => account.roleCodes.includes(role) && !currentRoleCodes.includes(role))
-    if (canManageActivation && !guarded && account.status === "PENDING") actions.push("invitations/resend")
-    if (canManageActivation && !guarded && !self && (account.status === "ACTIVE" || account.status === "LOCKED")) actions.push("password-reset")
-    if (canManage && (account.status === "DISABLED" || account.status === "LOCKED")) actions.push("activate")
-    if (canManage && !guarded && !self && (account.status === "ACTIVE" || account.status === "LOCKED")) actions.push("suspend")
-    return actions
-  }
-
-  async function confirmAction() {
-    if (!pending) return
-    const { account, kind } = pending
-    setRunning(true)
-    try {
-      if (kind === "invitations/resend" || kind === "password-reset") {
-        const issued = await issueAccountInvitation(portal, account.id, kind)
-        setInvitation({ account, invitation: issued })
-      } else {
-        await changeAccountStatus(portal, account.id, kind)
-        toast.success(`${ACTIONS[kind].label}: ${account.username}`)
-      }
-      setPending(null)
-      reload()
-    } catch (caught) {
-      if (isPortalSessionExpired(caught)) onSessionExpired()
-      toast.error(apiErrorMessage(caught))
-    } finally {
-      setRunning(false)
-    }
+  // Revoking needs account.role.assign, and the account guard rules apply as for the other actions.
+  function canRevokeRole(account: Account) {
+    return viewer.canAssignRole && !isGuardedAccount(account, viewer) && holdsRevocableRole(account.roleCodes)
   }
 
   return (
@@ -255,7 +150,7 @@ export function AccountManager({ portal, currentAccountId, currentRoleCodes, can
               label="Trạng thái"
               value={filters.status || ALL_OPTION}
               onChange={(value) => changeFilters({ status: value === ALL_OPTION ? "" : value as Account["status"] })}
-              options={Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label }))}
+              options={Object.entries(ACCOUNT_STATUS_LABELS).map(([value, label]) => ({ value, label }))}
             />
             {roleOptions.length > 0 && (
               <FilterSelect
@@ -301,7 +196,7 @@ export function AccountManager({ portal, currentAccountId, currentRoleCodes, can
                   <TableRow key={account.id} className="cursor-pointer" onClick={() => setViewing(account)}>
                     <TableCell>
                       <span className="font-medium">{account.username}</span>
-                      {account.id === currentAccountId && <span className="ml-1.5 text-xs text-muted-foreground">(bạn)</span>}
+                      {account.id === viewer.accountId && <span className="ml-1.5 text-xs text-muted-foreground">(bạn)</span>}
                       <span className="block text-xs text-muted-foreground">{account.email}</span>
                     </TableCell>
                     <TableCell>
@@ -315,20 +210,25 @@ export function AccountManager({ portal, currentAccountId, currentRoleCodes, can
                         )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={STATUS_VARIANTS[account.status]}>{STATUS_LABELS[account.status]}</Badge>
+                      <Badge variant={ACCOUNT_STATUS_VARIANTS[account.status]}>{ACCOUNT_STATUS_LABELS[account.status]}</Badge>
                       {account.lockedUntil && (
                         <span className="mt-1 block text-xs text-muted-foreground">Khóa đến {formatDateTime(account.lockedUntil)}</span>
                       )}
                     </TableCell>
                     <TableCell className="text-sm">{formatDateTime(account.lastLoginAt)}</TableCell>
                     <RowActionsCell label={account.username}>
-                      <RowActionItem icon={Eye} onClick={() => setViewing(account)}>Xem chi tiết</RowActionItem>
-                      {availableActions(account).map((kind) => (
-                        <RowActionItem key={kind} icon={ICONS[kind]} destructive={ACTIONS[kind].destructive}
+                      <RowActionLink icon={Eye} href={`${PORTAL_CONFIG[portal].pagePrefix}/accounts/${account.id}`}>
+                        Xem chi tiết
+                      </RowActionLink>
+                      {availableAccountActions(account, viewer).map((kind) => (
+                        <RowActionItem key={kind} icon={ACCOUNT_ACTIONS[kind].icon} destructive={ACCOUNT_ACTIONS[kind].destructive}
                           onClick={() => setPending({ account, kind })}>
-                          {ACTIONS[kind].label}
+                          {ACCOUNT_ACTIONS[kind].label}
                         </RowActionItem>
                       ))}
+                      {canRevokeRole(account) && (
+                        <RowActionItem icon={ShieldMinus} destructive onClick={() => setRevoking(account)}>Thu hồi role</RowActionItem>
+                      )}
                     </RowActionsCell>
                   </TableRow>
                 ))}
@@ -348,100 +248,31 @@ export function AccountManager({ portal, currentAccountId, currentRoleCodes, can
         </CardContent>
       </Card>
 
-      <AlertDialog open={pending !== null} onOpenChange={(open) => { if (!open && !running) setPending(null) }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{pending && ACTIONS[pending.kind].title}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {pending && <>Tài khoản <strong>{pending.account.username}</strong>. {ACTIONS[pending.kind].description}</>}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={running}>Hủy</AlertDialogCancel>
-            <AlertDialogAction
-              className={pending && ACTIONS[pending.kind].destructive ? "bg-destructive text-white hover:bg-destructive/90" : undefined}
-              disabled={running}
-              onClick={(event) => { event.preventDefault(); void confirmAction() }}
-            >
-              {running && <Loader2 className="animate-spin" />}
-              {pending && ACTIONS[pending.kind].label}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {pending && (
+        <AccountActionDialog
+          portal={portal}
+          account={pending.account}
+          kind={pending.kind}
+          onClose={() => setPending(null)}
+          onDone={reload}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
+
+      {revoking && (
+        <RevokeRoleDialog
+          portal={portal}
+          accountId={revoking.id}
+          username={revoking.username}
+          onClose={() => setRevoking(null)}
+          onRevoked={reload}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
 
       {viewing && (
         <AccountDetailDialog portal={portal} account={viewing} onClose={() => setViewing(null)} onSessionExpired={onSessionExpired} />
       )}
-
-      {invitation && (
-        <InvitationDialog
-          username={invitation.account.username}
-          invitation={invitation.invitation}
-          onClose={() => setInvitation(null)}
-        />
-      )}
     </>
-  )
-}
-
-function InvitationDialog({ username, invitation, onClose }: {
-  username: string
-  invitation: AccountInvitation
-  onClose: () => void
-}) {
-  const [copied, setCopied] = useState<"link" | "token" | null>(null)
-  const link = `/activate/${invitation.activationToken}`
-
-  async function copy(kind: "link" | "token") {
-    try {
-      await navigator.clipboard.writeText(kind === "link" ? `${window.location.origin}${link}` : invitation.activationToken)
-      setCopied(kind)
-      toast.success(kind === "link" ? "Đã sao chép link kích hoạt" : "Đã sao chép mã kích hoạt")
-      setTimeout(() => setCopied(null), 1500)
-    } catch {
-      toast.error("Không thể sao chép, hãy tự copy thủ công")
-    }
-  }
-
-  return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Mã kích hoạt mới cho {username}</DialogTitle>
-          <DialogDescription>
-            Gửi link hoặc mã bên dưới cho người dùng để họ tự đặt mật khẩu. Mã chỉ hiển thị một lần duy nhất.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="mt-4 grid min-w-0 gap-3">
-          <div className="flex min-w-0 items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm">
-            <Link2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground">Link kích hoạt — gửi trực tiếp cho người dùng</p>
-              <code className="mt-0.5 block truncate font-semibold">{link}</code>
-            </div>
-            <Button type="button" variant="ghost" size="icon-sm" onClick={() => void copy("link")} aria-label="Sao chép link kích hoạt">
-              {copied === "link" ? <Check /> : <Copy />}
-            </Button>
-          </div>
-          <div className="flex min-w-0 items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm">
-            <KeyRound className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground">Mã kích hoạt (dùng một lần)</p>
-              <code className="mt-0.5 block truncate font-semibold">{invitation.activationToken}</code>
-            </div>
-            <Button type="button" variant="ghost" size="icon-sm" onClick={() => void copy("token")} aria-label="Sao chép mã kích hoạt">
-              {copied === "token" ? <Check /> : <Copy />}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">Hết hạn lúc {formatDateTime(invitation.expiresAt)}.</p>
-        </div>
-
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>Đóng</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   )
 }
