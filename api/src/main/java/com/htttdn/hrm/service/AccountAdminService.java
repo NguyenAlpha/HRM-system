@@ -216,6 +216,8 @@ public class AccountAdminService {
         return new AccountResponse(
             account.getId(),
             account.getEmployee() == null ? null : account.getEmployee().getId(),
+            account.getEmployee() == null ? null : account.getEmployee().getEmployeeCode(),
+            account.getEmployee() == null ? null : account.getEmployee().getFullName(),
             account.getUsername(),
             account.getEmail(),
             account.getStatus(),

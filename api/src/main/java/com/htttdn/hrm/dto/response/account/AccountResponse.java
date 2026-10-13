@@ -9,6 +9,8 @@ import jakarta.annotation.Nullable;
 public record AccountResponse(
     Long id,
     @Nullable Long employeeId,
+    @Nullable String employeeCode,
+    @Nullable String employeeFullName,
     String username,
     String email,
     AccountStatus status,
