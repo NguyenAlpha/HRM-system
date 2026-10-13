@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Loader2, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
+import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -87,36 +88,38 @@ export function PayrollAdjustmentsPanel({ periodId, editable, onChanged }: {
 
   return (
     <div className="w-full space-y-3 rounded-lg border bg-muted/30 p-3">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nhân viên</TableHead>
-            <TableHead>Loại</TableHead>
-            <TableHead>Nội dung</TableHead>
-            <TableHead className="text-right">Số tiền</TableHead>
-            {editable && <TableHead className="w-10" />}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.id}>
-              <TableCell>{row.employeeCode} · {row.employeeName}</TableCell>
-              <TableCell>{PAYROLL_ADJUSTMENT_LABELS[row.type]}</TableCell>
-              <TableCell>{row.description}</TableCell>
-              <TableCell className="text-right">{row.type === "DEDUCTION" ? "−" : ""}{money(row.amount)}</TableCell>
-              {editable && <TableCell>
-                <Button type="button" size="icon" variant="ghost" aria-label="Xóa khoản điều chỉnh" disabled={busy}
-                  onClick={() => void act(() => request(`payroll/periods/${periodId}/adjustments/${row.id}`, "DELETE"), "Đã xóa khoản điều chỉnh")}>
-                  <Trash2 />
-                </Button>
-              </TableCell>}
+      <div className="rounded-xl border bg-background">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nhân viên</TableHead>
+              <TableHead>Loại</TableHead>
+              <TableHead>Nội dung</TableHead>
+              <TableHead className="text-right">Số tiền</TableHead>
+              {editable && <TableHead className="text-right">Thao tác</TableHead>}
             </TableRow>
-          ))}
-          {rows.length === 0 && (
-            <TableRow><TableCell colSpan={editable ? 5 : 4} className="text-center text-muted-foreground">Chưa có khoản điều chỉnh.</TableCell></TableRow>
-          )}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell>{row.employeeCode} · {row.employeeName}</TableCell>
+                <TableCell>{PAYROLL_ADJUSTMENT_LABELS[row.type]}</TableCell>
+                <TableCell>{row.description}</TableCell>
+                <TableCell className="text-right">{row.type === "DEDUCTION" ? "−" : ""}{money(row.amount)}</TableCell>
+                {editable && <RowActionsCell label={row.description}>
+                  <RowActionItem icon={Trash2} destructive disabled={busy}
+                    onClick={() => void act(() => request(`payroll/periods/${periodId}/adjustments/${row.id}`, "DELETE"), "Đã xóa khoản điều chỉnh")}>
+                    Xóa
+                  </RowActionItem>
+                </RowActionsCell>}
+              </TableRow>
+            ))}
+            {rows.length === 0 && (
+              <TableRow><TableCell colSpan={editable ? 5 : 4} className="h-24 text-center text-muted-foreground">Chưa có khoản điều chỉnh.</TableCell></TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       {editable && <form className="grid gap-2 sm:grid-cols-[8rem_14rem_1fr_9rem_auto] sm:items-end" onSubmit={add}>
         <div className="grid gap-1.5">

@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { CalendarDays, CalendarPlus, Clock, List, Loader2, LogIn, Trash2, UserX, Zap } from "lucide-react"
+import { CalendarDays, CalendarPlus, Clock, List, Loader2, LogIn, Trash2, UserX, Zap, type LucideIcon } from "lucide-react"
 
+import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -356,7 +357,11 @@ function ListView({ days, actions, emptyText }: { days: Day[]; actions: DayActio
                     {record.overtimeMinutes > 0 ? `${hours(record.overtimeMinutes)} × ${record.overtimeMultiplier}` : "—"}
                     {record.overtimeMinutes > 0 && record.overtimeTaxExempt && <span className="block text-xs text-muted-foreground">miễn thuế</span>}
                   </TableCell>
-                  <TableCell><div className="flex justify-end gap-1"><RecordActions day={day} record={record} actions={actions} /></div></TableCell>
+                  <RowActionsCell label={`ngày ${record.workDate}`}>
+                    {recordActions(day, record, actions).map(({ key, icon, label, destructive, onClick }) => (
+                      <RowActionItem key={key} icon={icon} destructive={destructive} disabled={actions.busy} onClick={onClick}>{label}</RowActionItem>
+                    ))}
+                  </RowActionsCell>
                 </> : (
                   <TableCell colSpan={7} className="text-muted-foreground">Ngày lễ · {holiday?.name}</TableCell>
                 )}
@@ -370,38 +375,25 @@ function ListView({ days, actions, emptyText }: { days: Day[]; actions: DayActio
   )
 }
 
-/** Icon buttons in the list; with `labelled`, text buttons for the day dialog. */
-function RecordActions({ day, record, actions, labelled = false }: {
-  day: Day
-  record: AttendanceRecord
-  actions: DayActions
-  labelled?: boolean
-}) {
-  const { busy, onPunch, onAbsent, onOvertime } = actions
+/** The actions a record allows; the list shows them in its row menu, the day dialog as buttons. */
+function recordActions(day: Day, record: AttendanceRecord, actions: DayActions) {
+  const { onPunch, onAbsent, onOvertime } = actions
   // A future day cannot have punches yet, and a full day of approved leave belongs to the leave workflow.
   const editable = !FULL_DAY_LEAVE.has(record.status) && day.date <= today()
-  const size = labelled ? "sm" : "icon-sm"
-  const variant = labelled ? "outline" : "ghost"
-  return <>
-    {onOvertime && record.checkOutAt && (
-      <Button type="button" variant={variant} size={size} aria-label={`Duyệt tăng ca ngày ${record.workDate}`}
-        disabled={busy} onClick={() => onOvertime(record)}>
-        <Zap />{labelled && "Duyệt tăng ca"}
-      </Button>
-    )}
-    {onPunch && editable && (
-      <Button type="button" variant={variant} size={size} aria-label={`Nhập giờ vào/ra ngày ${record.workDate}`}
-        disabled={busy} onClick={() => onPunch(record)}>
-        <LogIn />{labelled && "Nhập giờ vào/ra"}
-      </Button>
-    )}
-    {onAbsent && editable && (
-      <Button type="button" variant={variant} size={size} aria-label={`Ghi vắng không phép ngày ${record.workDate}`}
-        disabled={busy} className="text-muted-foreground hover:text-destructive" onClick={() => onAbsent(record)}>
-        <UserX />{labelled && "Ghi vắng"}
-      </Button>
-    )}
-  </>
+  const items: { key: string; icon: LucideIcon; label: string; destructive?: boolean; onClick: () => void }[] = []
+  if (onOvertime && record.checkOutAt) items.push({ key: "overtime", icon: Zap, label: "Duyệt tăng ca", onClick: () => onOvertime(record) })
+  if (onPunch && editable) items.push({ key: "punch", icon: LogIn, label: "Nhập giờ vào/ra", onClick: () => onPunch(record) })
+  if (onAbsent && editable) items.push({ key: "absent", icon: UserX, label: "Ghi vắng", destructive: true, onClick: () => onAbsent(record) })
+  return items
+}
+
+function RecordActions({ day, record, actions }: { day: Day; record: AttendanceRecord; actions: DayActions }) {
+  return recordActions(day, record, actions).map(({ key, icon: Icon, label, destructive, onClick }) => (
+    <Button key={key} type="button" variant="outline" size="sm" disabled={actions.busy}
+      className={destructive ? "text-muted-foreground hover:text-destructive" : undefined} onClick={onClick}>
+      <Icon />{label}
+    </Button>
+  ))
 }
 
 /** Details of a calendar day, with the same actions as its list row. */
@@ -437,7 +429,7 @@ function DayDialog({ day, actions, onClose }: { day: Day; actions: DayActions; o
         )}
         {record && (
           <DialogFooter className="mt-4">
-            <RecordActions day={day} record={record} labelled actions={{
+            <RecordActions day={day} record={record} actions={{
               ...actions, onPunch: wrap(actions.onPunch), onAbsent: wrap(actions.onAbsent), onOvertime: wrap(actions.onOvertime),
             }} />
           </DialogFooter>

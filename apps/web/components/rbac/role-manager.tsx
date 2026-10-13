@@ -8,6 +8,7 @@ import { Loader2, Pencil, Plus, RefreshCw, ShieldCheck, Trash2 } from "lucide-re
 import { toast } from "sonner"
 
 import { Pagination, ErrorAlert } from "@/components/common/list-controls"
+import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { RolePermissions } from "@/components/rbac/role-permissions"
 import {
   AlertDialog,
@@ -55,11 +56,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import type { Portal } from "@/lib/auth/types"
 import type { Page } from "@/lib/pagination"
 import {
@@ -278,65 +274,15 @@ export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSe
                         {ROLE_GRANT_POLICY_LABELS[role.grantPolicy]}
                       </span>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex justify-end gap-1" onClick={(event) => event.stopPropagation()}>
-                        {!role.isSystem && (
-                          <Tooltip>
-                            <TooltipTrigger
-                              render={
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  onClick={() => openEdit(role)}
-                                  aria-label={`Sửa ${role.code}`}
-                                />
-                              }
-                            >
-                              <Pencil />
-                            </TooltipTrigger>
-                            <TooltipContent>Sửa vai trò</TooltipContent>
-                          </Tooltip>
-                        )}
-
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                onClick={() => setSelected(role)}
-                                aria-label={`Quyền của ${role.code}`}
-                              />
-                            }
-                          >
-                            <ShieldCheck />
-                          </TooltipTrigger>
-                          <TooltipContent>{role.isSystem ? "Xem quyền" : "Phân quyền"}</TooltipContent>
-                        </Tooltip>
-
-                        {!role.isSystem && (
-                          <Tooltip>
-                            <TooltipTrigger
-                              render={
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  className="text-muted-foreground hover:text-destructive"
-                                  onClick={() => setRoleToDelete(role)}
-                                  aria-label={`Xóa ${role.code}`}
-                                />
-                              }
-                            >
-                              <Trash2 />
-                            </TooltipTrigger>
-                            <TooltipContent>Xóa vai trò</TooltipContent>
-                          </Tooltip>
-                        )}
-                      </div>
-                    </TableCell>
+                    <RowActionsCell label={role.code}>
+                      {!role.isSystem && <RowActionItem icon={Pencil} onClick={() => openEdit(role)}>Sửa vai trò</RowActionItem>}
+                      <RowActionItem icon={ShieldCheck} onClick={() => setSelected(role)}>
+                        {role.isSystem ? "Xem quyền" : "Phân quyền"}
+                      </RowActionItem>
+                      {!role.isSystem && (
+                        <RowActionItem icon={Trash2} destructive onClick={() => setRoleToDelete(role)}>Xóa vai trò</RowActionItem>
+                      )}
+                    </RowActionsCell>
                   </TableRow>
                 ))}
 

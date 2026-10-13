@@ -4,10 +4,11 @@ import { useEffect, useMemo, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Check, Loader2, Plus, RefreshCw, X } from "lucide-react"
+import { Check, Loader2, Plus, RefreshCw, Undo2, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { Pagination, ErrorAlert } from "@/components/common/list-controls"
+import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -384,25 +385,17 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
                         <Badge variant={statusBadgeVariant(request.status)}>{ROLE_ASSIGNMENT_STATUS_LABELS[request.status]}</Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{request.requestedByUsername}</TableCell>
-                      <TableCell>
-                        <div className="flex justify-end gap-1.5">
-                          {canApprove && request.status === "PENDING" && (
-                            <>
-                              <Button type="button" size="sm" onClick={() => openAction(request, "approve")}>
-                                <Check /> Duyệt
-                              </Button>
-                              <Button type="button" variant="outline" size="sm" onClick={() => openAction(request, "reject")}>
-                                <X /> Từ chối
-                              </Button>
-                            </>
-                          )}
-                          {!canApprove && isOwnRequest && request.status === "PENDING" && (
-                            <Button type="button" variant="outline" size="sm" onClick={() => openAction(request, "cancel")}>
-                              Hủy đề xuất
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
+                      <RowActionsCell label={`${request.employeeName} – ${request.roleCode}`}>
+                        {canApprove && request.status === "PENDING" && (
+                          <RowActionItem icon={Check} onClick={() => openAction(request, "approve")}>Duyệt</RowActionItem>
+                        )}
+                        {canApprove && request.status === "PENDING" && (
+                          <RowActionItem icon={X} destructive onClick={() => openAction(request, "reject")}>Từ chối</RowActionItem>
+                        )}
+                        {!canApprove && isOwnRequest && request.status === "PENDING" && (
+                          <RowActionItem icon={Undo2} onClick={() => openAction(request, "cancel")}>Hủy đề xuất</RowActionItem>
+                        )}
+                      </RowActionsCell>
                     </TableRow>
                   )
                 })}

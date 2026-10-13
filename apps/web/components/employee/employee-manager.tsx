@@ -1,12 +1,10 @@
 "use client"
 
-import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Menu } from "@base-ui/react/menu"
 import { z } from "zod"
-import { BadgeCheck, BriefcaseBusiness, Ellipsis, Eye, KeyRound, Loader2, Pencil, Plus, RefreshCw } from "lucide-react"
+import { BadgeCheck, BriefcaseBusiness, Eye, KeyRound, Loader2, Pencil, Plus, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 
 import { EmployeeAssignmentDialog } from "@/components/employee/employee-assignment-dialog"
@@ -24,6 +22,7 @@ import {
   type SortState,
 } from "@/components/common/list-filters"
 import { Pagination, ErrorAlert } from "@/components/common/list-controls"
+import { RowActionItem, RowActionLink, RowActionsCell } from "@/components/common/row-actions"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -322,11 +321,6 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
     }
   }
 
-  function hasRowActions(employee: EmployeeSummary) {
-    return canReadDetail
-      || (canAssign && (employee.employmentStatus === "ACTIVE" || employee.employmentStatus === "PROBATION"))
-      || (canConfirmProbation && employee.employmentStatus === "PROBATION")
-  }
 
   return (
     <>
@@ -468,56 +462,22 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
                         <span className="text-sm text-muted-foreground">Chưa có tài khoản</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
-                      {hasRowActions(employee) ? <Menu.Root>
-                        <Menu.Trigger
-                          aria-label={`Mở menu thao tác cho ${employee.fullName}`}
-                          title="Thao tác"
-                          render={<Button type="button" variant="ghost" size="icon-sm" />}
-                        >
-                          <Ellipsis />
-                        </Menu.Trigger>
-                        <Menu.Portal>
-                          <Menu.Positioner side="bottom" align="end" sideOffset={4} className="isolate z-50">
-                            <Menu.Popup className="min-w-44 origin-(--transform-origin) rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95">
-                              {canReadDetail && (
-                                <Menu.LinkItem
-                                  closeOnClick
-                                  render={<Link href={`${PORTAL_CONFIG[portal].pagePrefix}/employees/${employee.id}`} />}
-                                  className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
-                                >
-                                  <Eye className="size-4" /> Xem chi tiết
-                                </Menu.LinkItem>
-                              )}
-                              {canEdit && (
-                                <Menu.Item
-                                  onClick={() => { void openEditFromList(employee.id) }}
-                                  className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
-                                >
-                                  <Pencil className="size-4" /> Sửa hồ sơ
-                                </Menu.Item>
-                              )}
-                              {canAssign && (employee.employmentStatus === "ACTIVE" || employee.employmentStatus === "PROBATION") && (
-                                <Menu.Item
-                                  onClick={() => setAssigning(employee)}
-                                  className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
-                                >
-                                  <BriefcaseBusiness className="size-4" /> Thay đổi phân công
-                                </Menu.Item>
-                              )}
-                              {canConfirmProbation && employee.employmentStatus === "PROBATION" && (
-                                <Menu.Item
-                                  onClick={() => setConfirming(employee)}
-                                  className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
-                                >
-                                  <BadgeCheck className="size-4" /> Xác nhận chính thức
-                                </Menu.Item>
-                              )}
-                            </Menu.Popup>
-                          </Menu.Positioner>
-                        </Menu.Portal>
-                      </Menu.Root> : <span className="text-muted-foreground">—</span>}
-                    </TableCell>
+                    <RowActionsCell label={employee.fullName}>
+                      {canReadDetail && (
+                        <RowActionLink icon={Eye} href={`${PORTAL_CONFIG[portal].pagePrefix}/employees/${employee.id}`}>
+                          Xem chi tiết
+                        </RowActionLink>
+                      )}
+                      {canEdit && (
+                        <RowActionItem icon={Pencil} onClick={() => { void openEditFromList(employee.id) }}>Sửa hồ sơ</RowActionItem>
+                      )}
+                      {canAssign && (employee.employmentStatus === "ACTIVE" || employee.employmentStatus === "PROBATION") && (
+                        <RowActionItem icon={BriefcaseBusiness} onClick={() => setAssigning(employee)}>Thay đổi phân công</RowActionItem>
+                      )}
+                      {canConfirmProbation && employee.employmentStatus === "PROBATION" && (
+                        <RowActionItem icon={BadgeCheck} onClick={() => setConfirming(employee)}>Xác nhận chính thức</RowActionItem>
+                      )}
+                    </RowActionsCell>
                   </TableRow>
                 ))}
 

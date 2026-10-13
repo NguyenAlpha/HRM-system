@@ -8,6 +8,7 @@ import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { ErrorAlert } from "@/components/common/list-controls"
+import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -259,23 +260,10 @@ export function WorkShiftManager({ portal, onSessionExpired }: { portal: Portal;
                 <TableCell>
                   <Badge variant={shift.isActive ? "default" : "outline"}>{shift.isActive ? "Hoạt động" : "Tạm tắt"}</Badge>
                 </TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-1">
-                    <Button type="button" variant="ghost" size="icon-sm" onClick={() => openEdit(shift)} aria-label={`Sửa ${shift.code}`}>
-                      <Pencil />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className="text-muted-foreground hover:text-destructive"
-                      onClick={() => setShiftToDelete(shift)}
-                      aria-label={`Xóa ${shift.code}`}
-                    >
-                      <Trash2 />
-                    </Button>
-                  </div>
-                </TableCell>
+                <RowActionsCell label={shift.code}>
+                  <RowActionItem icon={Pencil} onClick={() => openEdit(shift)}>Sửa</RowActionItem>
+                  <RowActionItem icon={Trash2} destructive onClick={() => setShiftToDelete(shift)}>Xóa</RowActionItem>
+                </RowActionsCell>
               </TableRow>
             ))}
 
