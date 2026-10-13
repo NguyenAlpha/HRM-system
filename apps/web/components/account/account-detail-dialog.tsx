@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import { ErrorAlert } from "@/components/common/list-controls"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import { getAccountPermissions, type Account, type AccountPermissionGrant } from "@/lib/account"
@@ -44,7 +44,7 @@ function scopeLabel(assignment: AccountRoleAssignment) {
 }
 
 /** Read-only view of what an account can do: its role assignments and today's permissions. */
-export function AccountDetailSheet({ portal, account, onClose, onSessionExpired }: {
+export function AccountDetailDialog({ portal, account, onClose, onSessionExpired }: {
   portal: Portal
   account: Account
   onClose: () => void
@@ -84,17 +84,17 @@ export function AccountDetailSheet({ portal, account, onClose, onSessionExpired 
   const loading = !error && (assignments === null || permissions === null)
 
   return (
-    <Sheet open onOpenChange={(open) => { if (!open) onClose() }}>
-      <SheetContent className="w-full overflow-y-auto data-[side=right]:sm:max-w-xl">
-        <SheetHeader className="pr-12">
-          <SheetTitle>{account.username}</SheetTitle>
-          <SheetDescription>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader className="pr-6">
+          <DialogTitle>{account.username}</DialogTitle>
+          <DialogDescription>
             {account.email}
             {account.employeeFullName && <> · {account.employeeFullName} ({account.employeeCode})</>}
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="grid gap-6 px-4 pb-6">
+        <div className="grid max-h-[65vh] gap-6 overflow-y-auto pr-1">
           <ErrorAlert error={error} />
 
           <section className="grid gap-3">
@@ -161,7 +161,7 @@ export function AccountDetailSheet({ portal, account, onClose, onSessionExpired 
             ))}
           </section>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   )
 }

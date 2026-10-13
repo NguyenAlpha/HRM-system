@@ -15,7 +15,7 @@ import {
   type SortState,
 } from "@/components/common/list-filters"
 import { Pagination, ErrorAlert } from "@/components/common/list-controls"
-import { AccountDetailSheet } from "@/components/account/account-detail-sheet"
+import { AccountDetailDialog } from "@/components/account/account-detail-dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -385,7 +385,7 @@ export function AccountManager({ portal, currentAccountId, canManage, canManageA
       </AlertDialog>
 
       {viewing && (
-        <AccountDetailSheet portal={portal} account={viewing} onClose={() => setViewing(null)} onSessionExpired={onSessionExpired} />
+        <AccountDetailDialog portal={portal} account={viewing} onClose={() => setViewing(null)} onSessionExpired={onSessionExpired} />
       )}
 
       {invitation && (
