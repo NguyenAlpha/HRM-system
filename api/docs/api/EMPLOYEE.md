@@ -437,11 +437,12 @@ Response `200 OK` trả `EmployeeDetailResponse` sau khi cập nhật.
 Kết thúc làm việc theo một trong ba hình thức: `RESIGNED` (nghỉ việc), `TERMINATED` (chấm dứt hợp
 đồng), `RETIRED` (nghỉ hưu). Ba hình thức có cùng hệ quả, chỉ khác trạng thái được ghi. Đây là bước **thực thi** một quyết định đã hợp lệ, không phải bước phê duyệt: endpoint không kiểm tra có đơn hay có người duyệt hay chưa.
 
-Một lần gọi thay đổi ba thứ trong cùng transaction:
+Một lần gọi thay đổi bốn thứ trong cùng transaction:
 
 1. `employmentStatus` chuyển sang `endStatus`, ghi `terminationDate` và `terminationReason`.
 2. Phân công chính đang mở được đóng lại tại `terminationDate`.
 3. Account liên kết chuyển sang `DISABLED` và toàn bộ refresh token của account bị thu hồi, nên các phiên đang đăng nhập không refresh được nữa.
+4. Các role nghiệp vụ account còn giữ bị thu hồi như khi gọi [API thu hồi role](./ACCOUNT_ROLE_ASSIGNMENTS.md#post-apiaccountsaccountidrole-assignmentsassignmentidrevoke): ghi `revokedAt`, người thu hồi là người gọi, `revocationReason` là `Kết thúc làm việc: <terminationReason>`. Assignment đã bắt đầu được đóng `effectiveTo` tại `terminationDate`; assignment chưa bắt đầu giữ nguyên ngày. Assignment đã kết thúc trước `terminationDate` giữ nguyên làm lịch sử. Role `AUTO` (`EMPLOYEE`) và `SYSTEM_ONLY` (`COMPANY_OWNER`, `SYSTEM_ADMIN`) không bị đụng tới. Nhờ vậy assignment `DIRECTOR` của người nghỉ không còn chặn việc bổ nhiệm Giám đốc mới.
 
 ### Request
 

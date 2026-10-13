@@ -30,14 +30,17 @@ import com.htttdn.hrm.dto.response.employee.EmployeeCreationResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeDetailResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeSummaryResponse;
 import com.htttdn.hrm.entity.Account;
+import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeAssignment;
 import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
+import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
+import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
@@ -69,6 +72,7 @@ public class EmployeeService {
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final PayslipRepository payslipRepository;
     private final AccountRepository accountRepository;
+    private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final RefreshTokenService refreshTokenService;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
@@ -83,6 +87,7 @@ public class EmployeeService {
         AttendanceRecordRepository attendanceRecordRepository,
         PayslipRepository payslipRepository,
         AccountRepository accountRepository,
+        AccountRoleAssignmentRepository accountRoleAssignmentRepository,
         RefreshTokenService refreshTokenService,
         CurrentAccountProvider currentAccountProvider,
         EmployeeAccessScopeService employeeAccessScopeService,
@@ -96,6 +101,7 @@ public class EmployeeService {
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.payslipRepository = payslipRepository;
         this.accountRepository = accountRepository;
+        this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
         this.refreshTokenService = refreshTokenService;
         this.currentAccountProvider = currentAccountProvider;
         this.employeeAccessScopeService = employeeAccessScopeService;
@@ -284,8 +290,35 @@ public class EmployeeService {
             account.setStatus(AccountStatus.DISABLED);
             account.setUpdatedAt(Instant.now());
             refreshTokenService.revokeAll(account.getId());
+            revokeRolesAtTermination(account.getId(), terminationDate, terminationReason);
         });
         return toDetailResponse(employee);
+    }
+
+    /**
+     * Revokes the business roles a leaving employee still holds, so they no longer count as held (a
+     * DIRECTOR assignment would otherwise block appointing the next director). Roles that already ended
+     * before the termination date stay as history. AUTO and SYSTEM_ONLY roles are left to their own
+     * workflows, as the role revoke API does.
+     */
+    private void revokeRolesAtTermination(Long accountId, LocalDate terminationDate, String terminationReason) {
+        Account actor = findCurrentAccount();
+        Instant now = Instant.now();
+        for (AccountRoleAssignment assignment : accountRoleAssignmentRepository.findByAccountIdAndRevokedAtIsNull(accountId)) {
+            RoleGrantPolicy policy = assignment.getRole().getGrantPolicy();
+            if (policy == RoleGrantPolicy.AUTO || policy == RoleGrantPolicy.SYSTEM_ONLY) {
+                continue;
+            }
+            if (assignment.getEffectiveTo() != null && assignment.getEffectiveTo().isBefore(terminationDate)) {
+                continue;
+            }
+            assignment.setRevokedByAccount(actor);
+            assignment.setRevokedAt(now);
+            assignment.setRevocationReason("Kết thúc làm việc: " + terminationReason.trim());
+            if (!assignment.getEffectiveFrom().isAfter(terminationDate)) {
+                assignment.setEffectiveTo(terminationDate);
+            }
+        }
     }
 
     @PreAuthorize("hasAuthority('employee.delete')")

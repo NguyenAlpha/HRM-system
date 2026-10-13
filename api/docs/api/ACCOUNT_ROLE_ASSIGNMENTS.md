@@ -180,6 +180,8 @@ Thu hồi role mà không xóa lịch sử assignment.
 
 Role `EMPLOYEE` và `SYSTEM_ADMIN` không được thu hồi qua API này.
 
+Khi nhân sự [kết thúc làm việc](./EMPLOYEE.md#post-apiemployeesemployeeidemployment-end), hệ thống tự thu hồi các role nghiệp vụ còn giữ theo cùng cách trên, với lý do `Kết thúc làm việc: <terminationReason>`.
+
 ### Lỗi
 
 | HTTP | `error.code` | Nguyên nhân |

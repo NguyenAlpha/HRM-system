@@ -41,6 +41,8 @@ public interface AccountRoleAssignmentRepository extends JpaRepository<AccountRo
 
     List<AccountRoleAssignment> findByAccountIdAndRoleIdAndRevokedAtIsNull(Long accountId, Long roleId);
 
+    List<AccountRoleAssignment> findByAccountIdAndRevokedAtIsNull(Long accountId);
+
     boolean existsByAccountIdAndRoleCodeAndRevokedAtIsNull(Long accountId, String roleCode);
 
     List<AccountRoleAssignment> findByRoleIdAndRevokedAtIsNull(Long roleId);
