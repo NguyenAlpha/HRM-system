@@ -22,7 +22,6 @@ import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.InvalidTokenException;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.exception.UnauthorizedException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.security.JwtService;
@@ -177,10 +176,14 @@ public class AuthService {
         );
     }
 
+    /**
+     * The account behind a still-valid access token can be gone, for example after the database
+     * is reset; that session is over, so answer 401 and let the client refresh or log in again.
+     */
     private Account findAccount(Long accountId) {
         return accountRepository.findById(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND,
+            .orElseThrow(() -> new UnauthorizedException(
+                ErrorCode.UNAUTHORIZED,
                 "Account not found: " + accountId
             ));
     }

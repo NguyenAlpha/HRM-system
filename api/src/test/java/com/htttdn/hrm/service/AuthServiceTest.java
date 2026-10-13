@@ -124,6 +124,15 @@ class AuthServiceTest {
     }
 
     @Test
+    void meRejectsTokenWhoseAccountNoLongerExists() {
+        when(accountRepository.findById(4L)).thenReturn(Optional.empty());
+
+        UnauthorizedException exception = assertThrows(UnauthorizedException.class, () -> service().me(4L));
+
+        assertEquals(ErrorCode.UNAUTHORIZED, exception.getErrorCode());
+    }
+
+    @Test
     void changePasswordRevokesAllRefreshTokens() {
         Account account = activeAccount();
         account.setPasswordHash("old-hash");

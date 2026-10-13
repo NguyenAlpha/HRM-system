@@ -422,8 +422,7 @@ Danh sách trong ví dụ được rút gọn. `roles` và `permissions` đượ
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
-| 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
-| 404 | `RESOURCE_NOT_FOUND` | Account trong JWT không còn tồn tại |
+| 401 | `UNAUTHORIZED` | Thiếu access token, access token không hợp lệ, hoặc account trong JWT không còn tồn tại (ví dụ sau khi reset database) |
 
 ---
 
@@ -467,7 +466,7 @@ Sau khi đổi mật khẩu:
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Field không hợp lệ hoặc mật khẩu mới giống mật khẩu hiện tại |
 | 401 | `INVALID_CREDENTIALS` | Mật khẩu hiện tại không đúng |
-| 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
+| 401 | `UNAUTHORIZED` | Thiếu access token, access token không hợp lệ, hoặc account trong JWT không còn tồn tại |
 
 ---
 
