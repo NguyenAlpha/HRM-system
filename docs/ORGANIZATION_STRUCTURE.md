@@ -187,9 +187,41 @@ Dữ liệu seed được chia theo trách nhiệm và chạy theo `@Order`. M�
 | 200 | `PermissionSeeder` | `RBAC_SEED_ENABLED` | Danh mục 47 permission |
 | 300 | `RolePermissionSeeder` | `RBAC_SEED_ENABLED` | Permission mặc định của từng system role |
 | 400 | `SystemAdminSeeder` | `ADMIN_SEED_ENABLED` (mặc định bật) | Account bootstrap và gán role `SYSTEM_ADMIN` đã có sẵn |
+| 500 | `CompanyOwnerSeeder` | `OWNER_SEED_ENABLED` (mặc định bật) | Company Owner `owner`/`password` (role `COMPANY_OWNER`, `DIRECTOR`, `EMPLOYEE`), phân công tại `BOARD`, chấm công 2 năm |
+| 510 | `StaffSeeder` | `STAFF_SEED_ENABLED` (mặc định bật), file `STAFF_SEED_FILE` | Nhân sự khai báo trong file JSON, mặc định `api/src/main/resources/seed/staff.json` |
 
-Không seeder nào tạo nhân viên hay tài khoản nghiệp vụ; mọi người dùng HRM đi qua chuỗi bootstrap
-Company Owner rồi được tạo qua API.
+Ngoài Company Owner và nhân sự trong file seed, mọi người dùng HRM được tạo qua API.
+
+`StaffSeeder` đọc một mảng JSON; mỗi phần tử tạo nhân viên `ACTIVE`, account `ACTIVE`, role, phân
+công chính và chấm công `PRESENT` từ ngày vào làm đến hôm qua. Username đã tồn tại thì bỏ qua,
+nên thêm người vào file rồi khởi động lại chỉ tạo người mới.
+
+```json
+{
+  "username": "employee",
+  "password": "password",
+  "fullName": "Lê Văn Cường",
+  "email": "employee@hrm.local",
+  "roles": { "EMPLOYEE": "SELF" },
+  "organizationUnit": "HR",
+  "position": "GENERAL_STAFF",
+  "workLocation": "HO",
+  "shift": "OFFICE_DAY",
+  "manager": "hr",
+  "monthsAgo": 6
+}
+```
+
+- `roles`: mã role → scope (`SELF`, `COMPANY`, `ORG_UNIT`, `LOCATION`). `ORG_UNIT`/`LOCATION` lấy
+  đơn vị/địa điểm của phân công chính.
+- `organizationUnit`, `position`, `workLocation`, `shift`: mã đã seed; `workLocation` mặc định `HO`,
+  `shift` mặc định `OFFICE_DAY`.
+- `manager`: username của quản lý trực tiếp (người duyệt đơn nghỉ và tăng ca); phải là `owner` hoặc
+  người đứng trước trong file. Bỏ trống thì người duyệt là Giám đốc.
+- `monthsAgo`: ngày vào làm tính lùi từ ngày chạy seed. Mã nhân viên sinh theo chức danh.
+
+File mặc định có `hr` (HR_MANAGER, quản lý là `owner`) và `employee` (quản lý là `hr`), cùng mật
+khẩu `password`.
 
 Đây là dữ liệu thật đang có, khác với bộ dữ liệu đề xuất ở mục 6: seeder chưa tạo các nhóm cấp
 `TEAM`, các chức danh `HR_HEAD`/`HR_INTERN`, role `DEPARTMENT_MANAGER` hay các account theo phòng

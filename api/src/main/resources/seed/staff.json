@@ -1,0 +1,24 @@
+[
+  {
+    "username": "hr",
+    "password": "password",
+    "fullName": "Trần Thị Bình",
+    "email": "hr@hrm.local",
+    "roles": { "HR_MANAGER": "COMPANY", "EMPLOYEE": "SELF" },
+    "organizationUnit": "HR",
+    "position": "HR_SPECIALIST",
+    "manager": "owner",
+    "monthsAgo": 18
+  },
+  {
+    "username": "employee",
+    "password": "password",
+    "fullName": "Lê Văn Cường",
+    "email": "employee@hrm.local",
+    "roles": { "EMPLOYEE": "SELF" },
+    "organizationUnit": "HR",
+    "position": "GENERAL_STAFF",
+    "manager": "hr",
+    "monthsAgo": 6
+  }
+]
