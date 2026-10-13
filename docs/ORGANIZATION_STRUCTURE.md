@@ -214,7 +214,7 @@ qua, nên thêm người vào file rồi khởi động lại chỉ tạo ngư�
   `ORG_UNIT`/`LOCATION` lấy đơn vị/địa điểm của phân công hiện hành.
 - `assignments`: các giai đoạn phân công chính, **từ cũ đến mới**. Mỗi giai đoạn bắt đầu `monthsAgo`
   tháng trước ngày chạy seed và kết thúc ngay trước giai đoạn sau; giai đoạn cuối là phân công hiện
-  hành. Ngày vào làm là ngày bắt đầu giai đoạn đầu; mã nhân viên sinh theo chức danh lúc đó.
+  hành. Ngày vào làm là ngày bắt đầu giai đoạn đầu.
 - `organizationUnit`, `position`, `workLocation`, `shift`: mã đã seed; `workLocation` mặc định `HO`,
   `shift` mặc định `OFFICE_DAY`. Chấm công mỗi ngày theo ca của giai đoạn chứa ngày đó.
 - `manager`: username của quản lý trực tiếp trong giai đoạn đó (người duyệt đơn nghỉ và tăng ca theo

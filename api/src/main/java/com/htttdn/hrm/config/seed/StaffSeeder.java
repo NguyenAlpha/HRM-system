@@ -184,9 +184,8 @@ public class StaffSeeder implements ApplicationRunner {
         LocalDate startDate = first.effectiveFrom();
         Instant createdAt = startOf(startDate);
 
-        // The code is issued on hire, from the position held then.
         Employee employee = employeeRepository.save(Employee.builder()
-            .employeeCode(employeeCodeGenerator.forPosition(first.position().getId()))
+            .employeeCode(employeeCodeGenerator.next())
             .fullName(entry.fullName())
             .workEmail(entry.email())
             .hireDate(startDate)

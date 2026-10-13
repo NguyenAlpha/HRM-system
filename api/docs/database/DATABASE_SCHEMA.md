@@ -54,8 +54,7 @@ Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 | Quy tắc thuế và bảo hiểm | `payroll_tax_rules`, `payroll_tax_brackets`, `payroll_insurance_rules` |
 | Tính lương | `payroll_periods`, `payroll_adjustments`, `payslips`, `payslip_items` |
 
-Bảng kỹ thuật `employee_code_counters` không nằm trong con số 31 này. Tính cả nó, database
-runtime có 32 bảng (chưa kể bảng `flyway_schema_history` của Flyway).
+Database runtime có đúng 31 bảng này (chưa kể bảng `flyway_schema_history` của Flyway).
 
 ### 1.3. Sơ đồ quan hệ tổng quát
 
@@ -494,21 +493,12 @@ erDiagram
 
 ## 3. Hồ sơ, phân công và lương cơ bản
 
-### `employee_code_counters` — Bộ đếm cấp mã nhân viên
-
-| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
-|---|---|---|---|
-| `prefix` | VARCHAR(10) | PK | Tiền tố mã theo vị trí ban đầu |
-| `next_number` | BIGINT | NOT NULL, CHECK > 0 | Số tiếp theo được cấp cho tiền tố |
-
-Bộ đếm bắt đầu rỗng; mỗi tiền tố (`GD`, `NS`, `KT`, `VH`, `CN`, `KHO`, `TN`, `NV`) được tạo ở lần cấp mã đầu tiên. Việc lấy số và tạo employee nằm trong cùng transaction; bảng này là dữ liệu kỹ thuật, không thuộc 24 bảng nghiệp vụ trong sơ đồ.
-
 ### `employees` — Hồ sơ nhân sự
 
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
-| `employee_code` | VARCHAR(30) | NOT NULL, UNIQUE theo `LOWER` | Mã nhân viên do server cấp, không tái sử dụng |
+| `employee_code` | VARCHAR(30) | NOT NULL, UNIQUE theo `LOWER` | Mã nhân viên do server cấp theo một dãy chung `NV0001`, `NV0002`…: số lớn nhất đang có (kể cả nhân viên đã xóa mềm) cộng một, nên không tái sử dụng |
 | `full_name` | VARCHAR(200) | NOT NULL | Họ tên |
 | `date_of_birth` | DATE | | Ngày sinh |
 | `gender` | VARCHAR(20) | | `MALE` / `FEMALE` / `OTHER` / `UNDISCLOSED` |
@@ -1536,7 +1526,7 @@ vào file của domain tương ứng thay vì thêm file vá. Mỗi khi file bas
 | `V1__organization.sql` | Extension `btree_gist`; `company_profile`, `work_locations`, `organization_units`, `job_positions`, `work_shifts` | 2, 7 |
 | `V2__employees_and_accounts.sql` | `employees` và trigger thâm niên, `accounts`, `refresh_tokens`, `account_activation_tokens` | 3, 5 |
 | `V3__rbac.sql` | `permissions`, `roles`, `role_permissions`, `account_role_assignments`, `account_permission_overrides`, `role_assignment_requests` | 5 |
-| `V4__employment_and_salary.sql` | `employee_code_counters`, `employee_assignments`, `employee_salary_history`, `position_allowance_rules`, `seniority_allowance_rules` | 3, 4 |
+| `V4__employment_and_salary.sql` | `employee_assignments`, `employee_salary_history`, `position_allowance_rules`, `seniority_allowance_rules` | 3, 4 |
 | `V5__leave.sql` | `leave_requests` | 6 |
 | `V6__attendance.sql` | `company_holidays`, `attendance_records` và trigger số phút theo lịch | 7 |
 | `V7__payroll.sql` | Hồ sơ khấu trừ, quy tắc thuế/bảo hiểm, `payroll_periods`, `payroll_adjustments`, `payslips`, `payslip_items` | 8 |
