@@ -1,6 +1,7 @@
 package com.htttdn.hrm.service;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.htttdn.hrm.dto.request.roleassignment.ApproveRoleAssignmentRequest;
 import com.htttdn.hrm.dto.request.roleassignment.CreateRoleRevocationRequest;
 import com.htttdn.hrm.dto.request.roleassignment.RejectRoleAssignmentRequest;
+import com.htttdn.hrm.dto.response.account.AccountRoleAssignmentResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.roleassignment.RoleAssignmentRequestResponse;
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
@@ -67,6 +69,19 @@ class RoleRevocationRequestIntegrationTest {
     @AfterEach
     void clearAuthentication() {
         SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void listsOnlyAssignmentsARevocationCanTarget() {
+        Long ownerApprovalId = insertAssignment(targetAccountId, insertRole("OWNER_APPROVAL"));
+        insertAssignment(targetAccountId, insertRole("AUTO"));
+        Long endedId = insertAssignment(targetAccountId, insertRole("HR_ASSIGNABLE"));
+        jdbc.update("UPDATE account_role_assignments SET effective_to = '2026-01-31' WHERE id = ?", endedId);
+        authenticateAs(requesterId, "role.assignment.request");
+
+        assertEquals(List.of(ownerApprovalId), requestService.listRevocableAssignments(targetAccountId).stream()
+            .map(AccountRoleAssignmentResponse::id)
+            .toList());
     }
 
     @Test

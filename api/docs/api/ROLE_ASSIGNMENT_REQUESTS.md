@@ -13,6 +13,7 @@ Workflow đề xuất và phê duyệt cấp hoặc thu hồi role nghiệp vụ
 |:---------|:-----------|:------|
 | `GET /api/role-assignment-requests/available-roles` | `role.assignment.request` | Lấy danh sách role HR được phép đề xuất cùng chính sách duyệt và scope hợp lệ |
 | `POST /api/role-assignment-requests` | `role.assignment.request` | Gửi đề xuất cấp role; tự duyệt role `HR_ASSIGNABLE` hoặc tạo `PENDING` với `OWNER_APPROVAL` |
+| `GET /api/role-assignment-requests/revocable-assignments?accountId=` | `role.assignment.request` | Lấy các role assignment của một account mà đề xuất thu hồi có thể chọn |
 | `POST /api/role-assignment-requests/revocations` | `role.assignment.request` | Gửi đề xuất thu hồi một role assignment; tự thu hồi role `HR_ASSIGNABLE` hoặc tạo `PENDING` với `OWNER_APPROVAL` |
 | `GET /api/role-assignment-requests` | `role.assignment.request` hoặc `role.assignment.approve` | Lấy danh sách đề xuất có phân trang và có thể lọc theo trạng thái |
 | `GET /api/role-assignment-requests/{requestId}` | `role.assignment.request` hoặc `role.assignment.approve` | Lấy chi tiết một đề xuất cấp role trong phạm vi được phép xem |
@@ -191,6 +192,20 @@ Mọi response request đều có thêm `requestType` (`GRANT`/`REVOKE`) và `ta
 
 ---
 
+## GET `/api/role-assignment-requests/revocable-assignments?accountId=`
+
+Trả các assignment của account mà đề xuất thu hồi có thể chọn: chưa bị thu hồi, chưa hết hạn và thuộc role `HR_ASSIGNABLE` hoặc `OWNER_APPROVAL`. Người gửi đề xuất không cần `account.read`; employee của account phải nằm trong scope `role.assignment.request` của họ. Account không liên kết employee trả danh sách rỗng.
+
+Response `200 OK` có `data` là mảng `AccountRoleAssignmentResponse` như trong [Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md#get-apiaccountsaccountidrole-assignments).
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
+| 403 | `FORBIDDEN` | Không có `role.assignment.request` hoặc employee nằm ngoài scope được giao |
+| 404 | `ACCOUNT_NOT_FOUND` | Account không tồn tại |
+
+---
+
 ## POST `/api/role-assignment-requests/revocations`
 
 Gửi đề xuất thu hồi một role assignment, ví dụ khi nhân sự thôi kiêm nhiệm hoặc chuyển vị trí. Khi nhân sự nghỉ việc thì không cần đề xuất: [kết thúc làm việc](./EMPLOYEE.md#post-apiemployeesemployeeidemployment-end) tự thu hồi role.
@@ -206,7 +221,7 @@ Gửi đề xuất thu hồi một role assignment, ví dụ khi nhân sự thô
 
 | Field | Type | Bắt buộc | Ràng buộc |
 |:------|:-----|:--------:|:----------|
-| `assignmentId` | long | ✅ | Lấy từ `GET /api/accounts/{accountId}/role-assignments`; assignment chưa bị thu hồi và chưa hết hạn |
+| `assignmentId` | long | ✅ | Lấy từ `GET /api/role-assignment-requests/revocable-assignments`; assignment chưa bị thu hồi và chưa hết hạn |
 | `reason` | string | ✅ | Không rỗng, tối đa 500 ký tự; khi role bị thu hồi, đây là `revocationReason` của assignment |
 
 Request sao role, scope và thời gian hiệu lực từ assignment đích. Employee của account và phạm vi của assignment phải nằm trong scope `role.assignment.request` của người gửi. Account đang giữ `COMPANY_OWNER` hoặc `SYSTEM_ADMIN` chỉ người giữ cùng role mới được đề xuất thu hồi.
