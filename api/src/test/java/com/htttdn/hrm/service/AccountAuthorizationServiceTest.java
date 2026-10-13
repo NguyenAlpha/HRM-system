@@ -8,6 +8,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.htttdn.hrm.dto.response.account.AccountPermissionGrantResponse;
+import com.htttdn.hrm.dto.response.account.PermissionGrantSource;
 import com.htttdn.hrm.entity.AccountPermissionOverride;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.Permission;
@@ -111,6 +113,48 @@ class AccountAuthorizationServiceTest {
         assertEquals(1, scopes.size());
         assertEquals(RoleScopeType.LOCATION, scopes.getFirst().scopeType());
         assertEquals(50L, scopes.getFirst().workLocationId());
+    }
+
+    @Test
+    void listsWhichAssignmentGrantsEachPermissionAndWhetherAnOverrideDoes() {
+        Role employeeRole = Role.builder().id(1L).code("EMPLOYEE").name("Employee").build();
+        Role managerRole = Role.builder().id(2L).code("BRANCH_MANAGER").name("Branch Manager").build();
+        AccountRoleAssignment employeeAssignment = AccountRoleAssignment.builder()
+            .id(11L)
+            .role(employeeRole)
+            .scopeType(RoleScopeType.SELF)
+            .build();
+        AccountRoleAssignment managerAssignment = AccountRoleAssignment.builder()
+            .id(12L)
+            .role(managerRole)
+            .scopeType(RoleScopeType.COMPANY)
+            .build();
+        Permission read = Permission.builder().id(21L).code("employee.read")
+            .name("View employees").module(com.htttdn.hrm.entity.enums.PermissionModule.EMPLOYEE).build();
+        Permission manage = Permission.builder().id(22L).code("employee.update")
+            .name("Update employees").module(com.htttdn.hrm.entity.enums.PermissionModule.EMPLOYEE).build();
+
+        when(assignmentRepository.findActiveWithRoleByAccountId(eq(7L), any()))
+            .thenReturn(List.of(employeeAssignment, managerAssignment));
+        when(rolePermissionRepository.findActiveByRoleIds(List.of(1L, 2L))).thenReturn(List.of(
+            rolePermission(employeeRole, read),
+            rolePermission(managerRole, read)
+        ));
+        when(overrideRepository.findActiveByAssignmentIds(eq(List.of(11L, 12L)), any()))
+            .thenReturn(List.of(
+                permissionOverride(31L, employeeAssignment, read, PermissionOverrideEffect.REVOKE),
+                permissionOverride(32L, managerAssignment, manage, PermissionOverrideEffect.GRANT)
+            ));
+
+        var grants = service().getPermissionGrants(7L);
+
+        assertEquals(List.of("employee.read", "employee.update"),
+            grants.stream().map(AccountPermissionGrantResponse::code).toList());
+        assertEquals(List.of(new PermissionGrantSource(12L, "BRANCH_MANAGER", "Branch Manager", false)),
+            grants.get(0).grantedBy());
+        assertEquals(List.of(new PermissionGrantSource(12L, "BRANCH_MANAGER", "Branch Manager", true)),
+            grants.get(1).grantedBy());
+        assertEquals("Update employees", grants.get(1).name());
     }
 
     private RolePermission rolePermission(Role role, Permission permission) {

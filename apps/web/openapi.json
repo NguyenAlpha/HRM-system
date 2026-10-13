@@ -229,6 +229,33 @@
         "tags" : [ "account-admin-controller" ]
       }
     },
+    "/api/accounts/{accountId}/permissions" : {
+      "get" : {
+        "operationId" : "getPermissions",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "accountId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultListAccountPermissionGrantResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "account-admin-controller" ]
+      }
+    },
     "/api/accounts/{accountId}/role-assignments" : {
       "get" : {
         "operationId" : "list_13",
@@ -3692,6 +3719,28 @@
         },
         "required" : [ "accountId", "activationToken", "expiresAt" ]
       },
+      "AccountPermissionGrantResponse" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "grantedBy" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PermissionGrantSource"
+            }
+          },
+          "module" : {
+            "type" : "string",
+            "enum" : [ "EMPLOYEE", "ACCOUNT", "ORGANIZATION", "REQUEST", "ATTENDANCE", "PAYROLL", "RBAC", "REPORT" ]
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "grantedBy", "module", "name" ]
+      },
       "AccountPermissionOverrideResponse" : {
         "type" : "object",
         "properties" : {
@@ -4340,6 +4389,28 @@
             }, {
               "type" : "null"
             } ]
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
+      "ApiResultListAccountPermissionGrantResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "$ref" : "#/components/schemas/AccountPermissionGrantResponse"
+            }
           },
           "error" : {
             "anyOf" : [ {
@@ -7298,6 +7369,25 @@
           }
         },
         "required" : [ "allowancePay", "approvedOvertimeMinutes", "basicSalaryPay", "contractualBasicSalary", "employeeCodeSnapshot", "employeeHealthInsurance", "employeeId", "employeeNameSnapshot", "employeeSocialInsurance", "employeeUnemploymentInsurance", "grossPay", "id", "insuranceSalaryBase", "items", "netPay", "organizationUnitSnapshot", "otherDeductions", "otherEarningsPay", "overtimePay", "payableWorkMinutes", "payrollPeriodId", "personalIncomeTax", "scheduledWorkMinutes", "taxExemptOtherEarnings", "taxExemptOvertimePay", "taxableIncome", "unemploymentInsuranceBase", "workLocationSnapshot" ]
+      },
+      "PermissionGrantSource" : {
+        "type" : "object",
+        "properties" : {
+          "assignmentId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "roleCode" : {
+            "type" : "string"
+          },
+          "roleName" : {
+            "type" : "string"
+          },
+          "viaOverride" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "assignmentId", "roleCode", "roleName", "viaOverride" ]
       },
       "PermissionOverrideOptionResponse" : {
         "type" : "object",
