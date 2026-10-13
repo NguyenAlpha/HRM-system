@@ -132,8 +132,8 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
   const [queueHolidays, setQueueHolidays] = useState<CompanyHoliday[]>([])
   const [error, setError] = useState<string | null>(null)
   const [revision, setRevision] = useState(0)
-  // Employees look at their month as a calendar; HR works through the list, which carries the actions.
-  const [view, setView] = useState<"calendar" | "list">(canManage ? "list" : "calendar")
+  // Everyone starts on the calendar; HR switches to the list, whose rows carry the actions.
+  const [view, setView] = useState<"calendar" | "list">("calendar")
   const [selected, setSelected] = useState<Day | null>(null)
   const [absent, setAbsent] = useState<AttendanceRecord | null>(null)
   // A record to fix, or {} to enter a day that has no record yet (a Sunday or holiday worked).
