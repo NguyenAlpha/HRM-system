@@ -239,9 +239,25 @@ public class StaffSeeder implements ApplicationRunner {
                 .build());
         }
 
-        int attendanceDays = seedAttendanceWriter.write(employee, startDate, LocalDate.now(ZONE).minusDays(1));
+        int attendanceDays = seedAttendanceWriter.write(employee, startDate, LocalDate.now(ZONE).minusDays(1),
+            date -> overtimeApproverOn(assignments, date));
         log.info("Staff seed: '{}' created as {} with {} attendance days",
             entry.username(), employee.getEmployeeCode(), attendanceDays);
+    }
+
+    /** The direct manager of the period holding {@code date}, else the Director, as ApproverResolver decides today. */
+    private Account overtimeApproverOn(List<ResolvedAssignment> assignments, LocalDate date) {
+        Employee manager = assignments.stream()
+            .filter(assignment -> !assignment.effectiveFrom().isAfter(date))
+            .reduce((earlier, later) -> later)
+            .map(ResolvedAssignment::manager)
+            .orElse(null);
+        if (manager != null) {
+            return accountRepository.findByEmployeeId(manager.getId())
+                .orElseThrow(() -> new IllegalStateException("Staff seed: manager " + manager.getEmployeeCode() + " has no account"));
+        }
+        return accountRoleAssignmentRepository.findAccountsHoldingRole("DIRECTOR", LocalDate.now(ZONE)).stream().findFirst()
+            .orElseThrow(() -> new IllegalStateException("Staff seed: no Director to approve overtime"));
     }
 
     private List<ResolvedAssignment> resolveAssignments(StaffEntry entry) {
