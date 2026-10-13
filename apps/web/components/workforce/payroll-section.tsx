@@ -1,8 +1,9 @@
 "use client"
 
 import { Fragment, useEffect, useState } from "react"
-import { Ban, Calculator, CheckCheck, FileSpreadsheet, ListPlus, Loader2, Lock, Plus, Wallet } from "lucide-react"
+import { Ban, CalendarX, Calculator, CheckCheck, Eye, FileSpreadsheet, ListPlus, Loader2, Lock, Plus, Wallet } from "lucide-react"
 
+import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -135,7 +136,7 @@ export function PayrollSection({ employeeId, permissions, month }: WorkforceCont
                     <TableHead className="text-right">Bảo hiểm</TableHead>
                     <TableHead className="text-right">Thuế TNCN</TableHead>
                     <TableHead className="text-right">Thực nhận</TableHead>
-                    <TableHead className="text-right" />
+                    <TableHead className="text-right">Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -150,9 +151,9 @@ export function PayrollSection({ employeeId, permissions, month }: WorkforceCont
                         </TableCell>
                         <TableCell className="text-right">{money(slip.personalIncomeTax)}</TableCell>
                         <TableCell className="text-right font-semibold">{money(slip.netPay)}</TableCell>
-                        <TableCell className="text-right">
-                          <Button type="button" variant="outline" size="sm" onClick={() => setSelectedPayslip(slip)}>Chi tiết</Button>
-                        </TableCell>
+                        <RowActionsCell label={period ? periodLabel(period) : `kỳ #${slip.payrollPeriodId}`}>
+                          <RowActionItem icon={Eye} onClick={() => setSelectedPayslip(slip)}>Xem chi tiết</RowActionItem>
+                        </RowActionsCell>
                       </TableRow>
                     )
                   })}
@@ -244,55 +245,49 @@ function PeriodsCard({ periods, permissions, month, busy, run, onChanged }: {
                       <TableCell className="text-muted-foreground">{period.periodStart} → {period.periodEnd}</TableCell>
                       <TableCell>{period.taxPaymentDate ?? "—"}</TableCell>
                       <TableCell><Badge variant={PERIOD_TONE[period.status]}>{PAYROLL_PERIOD_STATUS_LABELS[period.status]}</Badge></TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap justify-end gap-1">
-                          {canCalculate && editable && (
-                            <Button type="button" size="sm" variant="outline" disabled={busy}
-                              onClick={() => void run("Đã tính kỳ lương", () => workforceApi(`payroll/periods/${period.id}/calculate`, "POST",
-                                { taxPaymentDate: period.taxPaymentDate ?? taxPaymentDate } satisfies WorkforceBody["PayrollActionRequest"]))}>
-                              <Calculator /> {period.status === "DRAFT" ? "Tính lương" : "Tính lại"}
-                            </Button>
-                          )}
-                          {period.status === "CALCULATED" && permissions.has("payroll.approve") && (
-                            <Button type="button" size="sm" disabled={busy}
-                              onClick={() => void run("Đã duyệt kỳ lương", () => workforceApi(`payroll/periods/${period.id}/approve`, "POST"))}>
-                              <CheckCheck /> Duyệt
-                            </Button>
-                          )}
-                          {period.status === "APPROVED" && permissions.has("payroll.mark_paid") && (
-                            <Button type="button" size="sm" disabled={busy}
-                              onClick={() => void run("Đã ghi nhận thanh toán", () => workforceApi(`payroll/periods/${period.id}/mark-paid`, "POST",
-                                { taxPaymentDate: today() } satisfies WorkforceBody["PayrollActionRequest"]))}>
-                              <Wallet /> Đã trả hôm nay
-                            </Button>
-                          )}
-                          {period.status === "PAID" && permissions.has("payroll.lock") && (
-                            <Button type="button" size="sm" variant="outline" disabled={busy}
-                              onClick={() => void run("Đã khóa kỳ lương", () => workforceApi(`payroll/periods/${period.id}/lock`, "POST"))}>
-                              <Lock /> Khóa
-                            </Button>
-                          )}
-                          {canCalculate && editable && (
-                            <Button type="button" size="sm" variant="ghost" className="text-muted-foreground hover:text-destructive"
-                              disabled={busy} onClick={() => setCancelling(period)}>
-                              <Ban /> Hủy kỳ
-                            </Button>
-                          )}
-                          {canCalculate && (
-                            <Button type="button" size="sm" variant={adjustingId === period.id ? "secondary" : "ghost"}
-                              onClick={() => setAdjustingId(adjustingId === period.id ? null : period.id)}>
-                              <ListPlus /> Khoản cộng/trừ
-                            </Button>
-                          )}
-                          {period.status !== "DRAFT" && period.status !== "CANCELLED" && (
-                            <Button type="button" size="sm" variant="ghost" disabled={busy}
-                              onClick={() => void run("Đã tải bảng lương",
-                                () => authorizedDownload("hrm", `/workforce/payroll/periods/${period.id}/export`))}>
-                              <FileSpreadsheet /> Xuất Excel
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
+                      <RowActionsCell label={periodLabel(period)}>
+                        {canCalculate && editable && (
+                          <RowActionItem icon={Calculator} disabled={busy}
+                            onClick={() => void run("Đã tính kỳ lương", () => workforceApi(`payroll/periods/${period.id}/calculate`, "POST",
+                              { taxPaymentDate: period.taxPaymentDate ?? taxPaymentDate } satisfies WorkforceBody["PayrollActionRequest"]))}>
+                            {period.status === "DRAFT" ? "Tính lương" : "Tính lại"}
+                          </RowActionItem>
+                        )}
+                        {period.status === "CALCULATED" && permissions.has("payroll.approve") && (
+                          <RowActionItem icon={CheckCheck} disabled={busy}
+                            onClick={() => void run("Đã duyệt kỳ lương", () => workforceApi(`payroll/periods/${period.id}/approve`, "POST"))}>
+                            Duyệt
+                          </RowActionItem>
+                        )}
+                        {period.status === "APPROVED" && permissions.has("payroll.mark_paid") && (
+                          <RowActionItem icon={Wallet} disabled={busy}
+                            onClick={() => void run("Đã ghi nhận thanh toán", () => workforceApi(`payroll/periods/${period.id}/mark-paid`, "POST",
+                              { taxPaymentDate: today() } satisfies WorkforceBody["PayrollActionRequest"]))}>
+                            Đã trả hôm nay
+                          </RowActionItem>
+                        )}
+                        {period.status === "PAID" && permissions.has("payroll.lock") && (
+                          <RowActionItem icon={Lock} disabled={busy}
+                            onClick={() => void run("Đã khóa kỳ lương", () => workforceApi(`payroll/periods/${period.id}/lock`, "POST"))}>
+                            Khóa
+                          </RowActionItem>
+                        )}
+                        {canCalculate && (
+                          <RowActionItem icon={ListPlus} onClick={() => setAdjustingId(adjustingId === period.id ? null : period.id)}>
+                            {adjustingId === period.id ? "Ẩn khoản cộng/trừ" : "Khoản cộng/trừ"}
+                          </RowActionItem>
+                        )}
+                        {period.status !== "DRAFT" && period.status !== "CANCELLED" && (
+                          <RowActionItem icon={FileSpreadsheet} disabled={busy}
+                            onClick={() => void run("Đã tải bảng lương",
+                              () => authorizedDownload("hrm", `/workforce/payroll/periods/${period.id}/export`))}>
+                            Xuất Excel
+                          </RowActionItem>
+                        )}
+                        {canCalculate && editable && (
+                          <RowActionItem icon={Ban} destructive disabled={busy} onClick={() => setCancelling(period)}>Hủy kỳ</RowActionItem>
+                        )}
+                      </RowActionsCell>
                     </TableRow>
                     {adjustingId === period.id && (
                       <TableRow>
@@ -520,11 +515,11 @@ function DeductionsCard({ employeeId, profiles, dependents, canManage, busy, run
                     <TableCell className="font-medium">{dependent.fullName}</TableCell>
                     <TableCell>{dependent.effectiveFrom} → {dependent.effectiveTo ?? "hiện tại"}</TableCell>
                     {canManage && (
-                      <TableCell className="text-right">
+                      <RowActionsCell label={dependent.fullName}>
                         {!dependent.effectiveTo && (
-                          <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => setEnding(dependent)}>Kết thúc</Button>
+                          <RowActionItem icon={CalendarX} destructive disabled={busy} onClick={() => setEnding(dependent)}>Kết thúc</RowActionItem>
                         )}
-                      </TableCell>
+                      </RowActionsCell>
                     )}
                   </TableRow>
                 ))}

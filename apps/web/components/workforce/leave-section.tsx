@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Check, Loader2, Send, X } from "lucide-react"
+import { Ban, Check, Loader2, Send, X } from "lucide-react"
 
+import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -114,12 +115,10 @@ export function LeaveSection({ employeeId, permissions, month }: WorkforceContex
     return () => { active = false }
   }, [employeeId, year, canReadLeave, canApprove, revision])
 
-  const reviewActions = (leave: LeaveRequest) => <>
-    <Button type="button" variant="ghost" size="icon-sm" aria-label={`Duyệt đơn #${leave.id}`} disabled={busy}
-      onClick={() => setReview({ leave, approve: true })}><Check /></Button>
-    <Button type="button" variant="ghost" size="icon-sm" aria-label={`Từ chối đơn #${leave.id}`} disabled={busy}
-      className="text-muted-foreground hover:text-destructive" onClick={() => setReview({ leave, approve: false })}><X /></Button>
-  </>
+  const reviewActions = (leave: LeaveRequest) => [
+    <RowActionItem key="approve" icon={Check} disabled={busy} onClick={() => setReview({ leave, approve: true })}>Duyệt</RowActionItem>,
+    <RowActionItem key="reject" icon={X} destructive disabled={busy} onClick={() => setReview({ leave, approve: false })}>Từ chối</RowActionItem>,
+  ]
 
   return (
     <div className="grid gap-6">
@@ -152,21 +151,21 @@ export function LeaveSection({ employeeId, permissions, month }: WorkforceContex
           </CardHeader>
           <CardContent>
             <LeaveTable leaves={leaves} emptyText={employeeId ? "Chưa có đơn nghỉ." : "Nhập mã nhân viên để xem đơn nghỉ."}
-              actions={(leave) => <>
-                {leave.status === "DRAFT" && (
-                  <Button type="button" variant="ghost" size="icon-sm" aria-label={`Gửi duyệt đơn #${leave.id}`} disabled={busy}
+              actions={(leave) => [
+                leave.status === "DRAFT" && (
+                  <RowActionItem key="submit" icon={Send} disabled={busy}
                     onClick={() => void run("Đã gửi đơn", () => workforceApi(`leave-requests/${leave.id}/submit`, "POST"))}>
-                    <Send />
-                  </Button>
-                )}
-                {canApprove && leave.status === "PENDING" && reviewActions(leave)}
-                {(leave.status === "DRAFT" || leave.status === "PENDING") && (
-                  <Button type="button" variant="outline" size="sm" disabled={busy}
+                    Gửi duyệt
+                  </RowActionItem>
+                ),
+                ...(canApprove && leave.status === "PENDING" ? reviewActions(leave) : []),
+                (leave.status === "DRAFT" || leave.status === "PENDING") && (
+                  <RowActionItem key="cancel" icon={Ban} destructive disabled={busy}
                     onClick={() => void run("Đã hủy đơn", () => workforceApi(`leave-requests/${leave.id}/cancel`, "POST"))}>
                     Hủy đơn
-                  </Button>
-                )}
-              </>} />
+                  </RowActionItem>
+                ),
+              ]} />
           </CardContent>
         </Card>
       )}
@@ -185,7 +184,8 @@ function LeaveTable({ leaves, showEmployee = false, emptyText, actions }: {
   leaves: LeaveRequest[]
   showEmployee?: boolean
   emptyText: string
-  actions: (leave: LeaveRequest) => React.ReactNode
+  /** The row's menu items; false entries are skipped. */
+  actions: (leave: LeaveRequest) => React.ReactNode[]
 }) {
   const columns = showEmployee ? 7 : 6
   return (
@@ -220,7 +220,7 @@ function LeaveTable({ leaves, showEmployee = false, emptyText, actions }: {
                 <Badge variant={STATUS_TONE[leave.status]}>{LEAVE_STATUS_LABELS[leave.status]}</Badge>
                 {leave.reviewComment && <span className="block text-xs text-muted-foreground">{leave.reviewComment}</span>}
               </TableCell>
-              <TableCell><div className="flex justify-end gap-1">{actions(leave)}</div></TableCell>
+              <RowActionsCell label={`đơn #${leave.id}`}>{actions(leave)}</RowActionsCell>
             </TableRow>
           ))}
           {leaves.length === 0 && <EmptyRow colSpan={columns}>{emptyText}</EmptyRow>}

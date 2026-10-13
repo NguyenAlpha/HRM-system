@@ -77,7 +77,7 @@ export function SectionError({ error }: { error: string | null }) {
 export function EmptyRow({ colSpan, children }: { colSpan: number; children: React.ReactNode }) {
   return (
     <TableRow>
-      <TableCell colSpan={colSpan} className="h-20 text-center text-muted-foreground">{children}</TableCell>
+      <TableCell colSpan={colSpan} className="h-24 text-center text-muted-foreground">{children}</TableCell>
     </TableRow>
   )
 }

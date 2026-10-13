@@ -8,6 +8,7 @@ import { Loader2, Plus, RefreshCw, ShieldMinus } from "lucide-react"
 import { toast } from "sonner"
 
 import { ErrorAlert } from "@/components/common/list-controls"
+import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -444,24 +445,19 @@ export function PermissionOverrideManager({ portal, onSessionExpired }: {
                             </>
                           )}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <RowActionsCell label={permissionOverride.permissionCode}>
                           {(permissionOverride.status === "ACTIVE" || permissionOverride.status === "SCHEDULED") && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-sm"
-                              aria-label={`Thu hồi ${permissionOverride.permissionCode}`}
-                              onClick={() => { setOverrideToRevoke(permissionOverride); setRevocationReason("") }}
-                            >
-                              <ShieldMinus />
-                            </Button>
+                            <RowActionItem icon={ShieldMinus} destructive
+                              onClick={() => { setOverrideToRevoke(permissionOverride); setRevocationReason("") }}>
+                              Thu hồi ngoại lệ
+                            </RowActionItem>
                           )}
-                        </TableCell>
+                        </RowActionsCell>
                       </TableRow>
                     ))}
                     {!loadingOverrides && overrides.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={6} className="h-20 text-center text-muted-foreground">Chưa có ngoại lệ quyền.</TableCell>
+                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">Chưa có ngoại lệ quyền.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>

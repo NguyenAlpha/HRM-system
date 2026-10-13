@@ -8,6 +8,7 @@ import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { ErrorAlert } from "@/components/common/list-controls"
+import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -252,23 +253,10 @@ export function WorkLocationManager({ portal, onSessionExpired }: { portal: Port
                 <TableCell>
                   <Badge variant={location.isActive ? "default" : "outline"}>{location.isActive ? "Hoạt động" : "Tạm tắt"}</Badge>
                 </TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-1">
-                    <Button type="button" variant="ghost" size="icon-sm" onClick={() => openEdit(location)} aria-label={`Sửa ${location.code}`}>
-                      <Pencil />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className="text-muted-foreground hover:text-destructive"
-                      onClick={() => setLocationToDelete(location)}
-                      aria-label={`Xóa ${location.code}`}
-                    >
-                      <Trash2 />
-                    </Button>
-                  </div>
-                </TableCell>
+                <RowActionsCell label={location.code}>
+                  <RowActionItem icon={Pencil} onClick={() => openEdit(location)}>Sửa</RowActionItem>
+                  <RowActionItem icon={Trash2} destructive onClick={() => setLocationToDelete(location)}>Xóa</RowActionItem>
+                </RowActionsCell>
               </TableRow>
             ))}
 
