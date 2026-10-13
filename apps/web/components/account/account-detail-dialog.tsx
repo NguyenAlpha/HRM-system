@@ -1,6 +1,8 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useState } from "react"
+import { ExternalLink } from "lucide-react"
 
 import {
   AccountPermissionList,
@@ -13,10 +15,19 @@ import {
 import { ErrorAlert } from "@/components/common/list-controls"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import { getAccountPermissions, type Account, type AccountPermissionGrant } from "@/lib/account"
+import { PORTAL_CONFIG } from "@/lib/auth/config"
 import type { Portal } from "@/lib/auth/types"
 import { listAccountRoleAssignments, type AccountRoleAssignment } from "@/lib/role-assignment"
 
@@ -105,6 +116,13 @@ export function AccountDetailDialog({ portal, account, onClose, onSessionExpired
             <AccountPermissionList permissions={permissions} loading={loading} />
           </section>
         </div>
+
+        <DialogFooter>
+          <DialogClose render={<Button type="button" variant="outline" />}>Đóng</DialogClose>
+          <Button nativeButton={false} render={<Link href={`${PORTAL_CONFIG[portal].pagePrefix}/accounts/${account.id}`} />}>
+            <ExternalLink /> Xem chi tiết tài khoản
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

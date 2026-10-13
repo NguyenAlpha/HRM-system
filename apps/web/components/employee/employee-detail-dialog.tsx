@@ -1,7 +1,8 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useState } from "react"
-import { KeyRound, Pencil } from "lucide-react"
+import { ExternalLink, KeyRound, Pencil } from "lucide-react"
 
 import { ErrorAlert } from "@/components/common/list-controls"
 import { Badge } from "@/components/ui/badge"
@@ -26,6 +27,7 @@ import {
   isSessionExpired,
   type EmployeeDetail,
 } from "@/lib/employee"
+import { PORTAL_CONFIG } from "@/lib/auth/config"
 import type { Portal } from "@/lib/auth/types"
 
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
@@ -170,6 +172,10 @@ export function EmployeeDetailDialog({ portal, employeeId, canUpdate, canProvisi
           <DialogClose render={<Button type="button" variant="outline" />}>Đóng</DialogClose>
           {detail && (
             <>
+              <Button variant="outline" nativeButton={false}
+                render={<Link href={`${PORTAL_CONFIG[portal].pagePrefix}/employees/${detail.id}`} />}>
+                <ExternalLink /> Xem chi tiết
+              </Button>
               {canUpdate && (
                 <Button type="button" variant="outline" onClick={() => onEdit(detail)}>
                   <Pencil /> Sửa hồ sơ
