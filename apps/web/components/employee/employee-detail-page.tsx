@@ -174,6 +174,8 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
     (permission) => permission.code === "employee.list.read",
   )
   const backHref = canReadEmployeeList ? `${PORTAL_CONFIG[portal].pagePrefix}/employees` : PORTAL_CONFIG[portal].homePath
+  // The account detail page needs account.read; without it the shortcut is hidden.
+  const canReadAccount = session.account.permissions.some((permission) => permission.code === "account.read")
   const canManageCompensation = session.account.permissions.some(
     (permission) => permission.code === "compensation.manage",
   )
@@ -223,6 +225,12 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
           {detail && canDeleteEmployee && (
             <Button type="button" variant="destructive" onClick={() => setDeleting(true)}>
               <Trash2 /> Xóa hồ sơ
+            </Button>
+          )}
+          {detail?.account && canReadAccount && (
+            <Button variant="outline" nativeButton={false}
+              render={<Link href={`${PORTAL_CONFIG[portal].pagePrefix}/accounts/${detail.account.id}`} />}>
+              <KeyRound /> Tài khoản
             </Button>
           )}
           <Button
