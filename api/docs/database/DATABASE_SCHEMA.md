@@ -776,7 +776,7 @@ Giá trị `grant_policy`: `AUTO` cấp ngay khi account được tạo, `HR_ASS
 ### 5.1. Danh mục permission code
 
 Danh mục quyền thuộc sở hữu của code: `PermissionSeeder` là nguồn chuẩn, không thêm permission
-qua API. Catalog hiện có 49 code trên 8 module của `PermissionModule`. Code đánh dấu `(S)` có
+qua API. Catalog hiện có 47 code trên 8 module của `PermissionModule`. Code đánh dấu `(S)` có
 `assignment_policy = SYSTEM_ONLY`, chỉ seeder gán cho system role; các code còn lại là `DELEGABLE`.
 
 ```text
@@ -799,16 +799,14 @@ ORGANIZATION (4)
 organization.read                 organization.manage
 organization.change.approve       organization.company_owner.bootstrap (S)
 
-REQUEST (7)
+REQUEST (6)
 request.self.read                 request.self.create
 request.self.cancel               request.read
-request.approve                   request.final_approve
-request.manage
+request.final_approve             request.manage
 
-ATTENDANCE (5)
+ATTENDANCE (4)
 attendance.self.read              attendance.read
-attendance.manage                 attendance.overtime.approve
-holiday.read
+attendance.manage                 holiday.read
 
 PAYROLL (8)
 payroll.self.read                 payroll.self.print
@@ -845,6 +843,7 @@ dùng `compensation.read` / `compensation.manage`, không phải `salary.*` / `a
 | `attachment_url` | TEXT | | Minh chứng nếu có |
 | `status` | VARCHAR(20) | NOT NULL | `DRAFT` / `PENDING` / `APPROVED` / `REJECTED` / `CANCELLED` |
 | `submitted_at` | TIMESTAMPTZ | | Thời điểm nộp |
+| `approver_employee_id` | BIGINT | FK → employees | Người được chốt để duyệt khi nộp: quản lý trực tiếp → Giám đốc → Chủ sở hữu; null với đơn nháp và đơn tự ghi nhận của Giám đốc/Chủ sở hữu |
 | `reviewed_by_account_id` | BIGINT | FK → accounts | Người duyệt |
 | `review_comment` | TEXT | | Nhận xét duyệt/từ chối |
 | `reviewed_at` | TIMESTAMPTZ | | Thời điểm duyệt |

@@ -25,6 +25,9 @@ import com.htttdn.hrm.repository.RoleRepository;
 /**
  * Gán bộ permission mặc định cho các system role sau khi role và permission đã được seed.
  *
+ * <p>Duyệt đơn nghỉ và tăng ca không dùng permission: người duyệt là quản lý trực tiếp, nếu không có
+ * thì Giám đốc, rồi Chủ sở hữu (xem {@code ApproverResolver}). HR chỉ kiểm tra và tổng hợp.
+ *
  * <p>Quyền self-service chỉ thuộc role {@code EMPLOYEE}; các role nghiệp vụ được gán thêm
  * và không lặp lại bộ quyền này. System role thuộc sở hữu của ứng dụng nên seeder đồng bộ
  * chính xác bộ permission chuẩn: thêm mapping còn thiếu và xóa mapping ngoài định nghĩa.
@@ -60,11 +63,9 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "employee.lifecycle.manage",
             "employee.delete",
             "request.read",
-            "request.approve",
             "request.manage",
             "attendance.read",
             "attendance.manage",
-            "attendance.overtime.approve",
             "holiday.read",
             "compensation.read",
             "compensation.manage",

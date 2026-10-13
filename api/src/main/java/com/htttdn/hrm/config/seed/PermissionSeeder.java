@@ -118,7 +118,6 @@ public class PermissionSeeder implements ApplicationRunner {
         permission("request.self.create", "Tạo đơn cá nhân", PermissionModule.REQUEST, "Tạo và gửi đơn từ của chính mình"),
         permission("request.self.cancel", "Hủy đơn cá nhân", PermissionModule.REQUEST, "Hủy các đơn của chính mình khi còn đủ điều kiện"),
         permission("request.read", "Xem đơn của nhân viên", PermissionModule.REQUEST, "Xem đơn từ của nhân viên trong phạm vi được phân công"),
-        permission("request.approve", "Duyệt đơn của nhân viên", PermissionModule.REQUEST, "Phê duyệt hoặc từ chối đơn từ của nhân viên"),
         permission("request.final_approve", "Phê duyệt cuối đơn từ", PermissionModule.REQUEST, "Phê duyệt cuối các đơn từ được trình lên cấp cao hơn"),
         permission("request.manage", "Quản lý đơn của nhân viên", PermissionModule.REQUEST, "Quản lý đơn từ của nhân viên trong phạm vi được phân công"),
 
@@ -126,12 +125,6 @@ public class PermissionSeeder implements ApplicationRunner {
         permission("attendance.read", "Xem dữ liệu chấm công", PermissionModule.ATTENDANCE, "Xem dữ liệu chấm công trong phạm vi được phân công"),
         permission("attendance.manage", "Quản lý chấm công", PermissionModule.ATTENDANCE, "Tạo và điều chỉnh dữ liệu chấm công"),
         permission("holiday.read", "Xem lịch nghỉ lễ", PermissionModule.ATTENDANCE, "Xem các ngày nghỉ lễ, Tết của công ty"),
-        permission(
-            "attendance.overtime.approve",
-            "Phê duyệt làm thêm giờ",
-            PermissionModule.ATTENDANCE,
-            "Phê duyệt hoặc từ chối làm thêm giờ trong phạm vi được phân công"
-        ),
 
         permission("payroll.self.read", "Xem phiếu lương cá nhân", PermissionModule.PAYROLL, "Xem phiếu lương của chính mình"),
         permission("payroll.self.print", "Tải phiếu lương cá nhân", PermissionModule.PAYROLL, "In hoặc tải phiếu lương của chính mình"),

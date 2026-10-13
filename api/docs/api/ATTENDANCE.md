@@ -9,8 +9,8 @@ Quy trình một tháng:
 1. Người có `organization.manage` khai báo ngày lễ qua `POST /api/company-holidays`.
 2. Bảng công tháng được chuẩn bị tự động (xem [Tự động chuẩn bị](#tự-động-chuẩn-bị)); nhân viên mới vào hoặc vừa được bổ sung phân công có bảng công chậm nhất vào sáng hôm sau. HR chỉ cần gọi `POST /api/attendance/prepare` khi cần ngay trong ngày hoặc để chuẩn bị tháng khác.
 3. Giờ vào/ra được ghi qua `POST /api/attendance/punches` với thời điểm cụ thể. Sau này máy chấm công của công ty sẽ gửi dữ liệu vào đây; phần tích hợp máy **chưa triển khai**, hiện HR nhập qua API này (cũng là cách tạo dữ liệu test cho ngày đã qua). Nhân viên chỉ xem lịch sử chấm công trên web.
-4. Nhân viên nộp đơn nghỉ qua `/api/leave-requests`; người duyệt duyệt đơn và hệ thống tự gắn đơn vào bảng công.
-5. HR đối soát các ngày `MISSING_PUNCH`: nhân viên có đi làm thì nhập giờ vào/ra thực tế qua `POST /api/attendance/punches`, vắng không báo thì ghi `UNAUTHORIZED_ABSENCE` qua `PUT /api/attendance/{id}`. Người có `attendance.overtime.approve` duyệt tăng ca.
+4. Nhân viên nộp đơn nghỉ qua `/api/leave-requests`; [người duyệt](#người-duyệt) duyệt đơn và hệ thống tự gắn đơn vào bảng công.
+5. HR đối soát các ngày `MISSING_PUNCH`: nhân viên có đi làm thì nhập giờ vào/ra thực tế qua `POST /api/attendance/punches`, vắng không báo thì ghi `UNAUTHORIZED_ABSENCE` qua `PUT /api/attendance/{id}`. Người duyệt của nhân viên quyết định tăng ca; HR kiểm tra và tổng hợp, không duyệt.
 6. Kế toán tính kỳ lương. Xem [Hoàn thiện dữ liệu trước khi tính lương](#hoàn-thiện-dữ-liệu-trước-khi-tính-lương).
 
 ---
@@ -25,22 +25,37 @@ Quy trình một tháng:
 | `POST /api/attendance/prepare` | `attendance.manage`, phạm vi `COMPANY` | Tạo bản ghi `MISSING_PUNCH` cho các ngày làm việc của tháng |
 | `POST /api/attendance/punches` | `attendance.manage` (trong scope) | Ghi hoặc sửa giờ vào/ra của một ngày công |
 | `PUT /api/attendance/{id}` | `attendance.manage` | Điều chỉnh / đối soát bản ghi công |
-| `POST /api/attendance/{id}/overtime-approval` | `attendance.overtime.approve` | Duyệt hoặc hủy duyệt tăng ca |
+| `POST /api/attendance/{id}/overtime-approval` | [Người duyệt](#người-duyệt) của nhân viên | Quyết định tăng ca của một ngày |
+| `GET /api/attendance/overtime/pending` | Đăng nhập | Các ngày có giờ làm vượt công thường đang chờ người gọi quyết định |
 | `GET /api/attendance/{id}` | `attendance.self.read` (chính mình) hoặc `attendance.read` (trong scope) | Chi tiết một bản ghi công |
 | `GET /api/attendance/employees/{employeeId}` | `attendance.self.read` (chính mình) hoặc `attendance.read` (trong scope) | Bảng công của nhân viên trong khoảng ngày, có phân trang |
 | `POST /api/leave-requests` | `request.self.create` (chính mình) hoặc `request.manage` (trong scope) | Tạo đơn nghỉ `DRAFT` |
 | `POST /api/leave-requests/{id}/submit` | `request.self.create` hoặc `request.manage` | Gửi đơn `DRAFT` → `PENDING` |
 | `POST /api/leave-requests/{id}/cancel` | `request.self.cancel` hoặc `request.manage` | Hủy đơn `DRAFT`/`PENDING` |
-| `POST /api/leave-requests/{id}/approve` | `request.approve` (trong scope) | Duyệt đơn `PENDING` và gắn vào bảng công |
-| `POST /api/leave-requests/{id}/reject` | `request.approve` (trong scope) | Từ chối đơn `PENDING` |
-| `GET /api/leave-requests/{id}` | `request.self.read` (chính mình) hoặc `request.read` (trong scope) | Chi tiết đơn nghỉ |
+| `POST /api/leave-requests/{id}/approve` | [Người duyệt](#người-duyệt) đã chốt của đơn | Duyệt đơn `PENDING` và gắn vào bảng công |
+| `POST /api/leave-requests/{id}/reject` | [Người duyệt](#người-duyệt) đã chốt của đơn | Từ chối đơn `PENDING` |
+| `GET /api/leave-requests/{id}` | `request.self.read` (chính mình), người duyệt của đơn, hoặc `request.read` (trong scope) | Chi tiết đơn nghỉ |
 | `GET /api/leave-requests/employees/{employeeId}` | `request.self.read` (chính mình) hoặc `request.read` (trong scope) | Đơn nghỉ của một nhân viên, có phân trang |
-| `GET /api/leave-requests/pending` | `request.approve` | Đơn `PENDING` trong phạm vi người duyệt |
+| `GET /api/leave-requests/pending` | Đăng nhập | Đơn `PENDING` đang chờ người gọi duyệt |
 | `GET /api/leave-entitlements/employees/{employeeId}` | Chính nhân viên đó, hoặc `request.read` (trong scope) | Xem số dư phép năm |
 
 Tất cả endpoint yêu cầu Bearer token. Permission `*.self.*` chỉ cho thao tác trên hồ sơ nhân viên gắn với account đang đăng nhập; permission còn lại được kiểm tra thêm theo scope của role (phân công hiện hành của nhân viên). Phần kiểm tra chính mình/scope nằm ở service, nên request ngoài scope trả `403 FORBIDDEN`.
 
 Từ khi kỳ lương chứa ngày đó ở `APPROVED`, `PAID` hoặc `LOCKED`, mọi thao tác sửa dữ liệu công và ngày lễ trả `409 PAYROLL_PERIOD_LOCKED`.
+
+### Người duyệt
+
+Đơn nghỉ và tăng ca không duyệt theo permission mà theo quan hệ quản lý. Người duyệt của một nhân viên là người đầu tiên đủ điều kiện trong chuỗi:
+
+1. **Quản lý trực tiếp**: `managerEmployeeId` của phân công chính hiện hành.
+2. **Giám đốc**: người đang giữ role `DIRECTOR`.
+3. **Chủ sở hữu**: người đang giữ role `COMPANY_OWNER`.
+
+Một người bị bỏ qua khi đó là chính nhân viên, đã nghỉ việc/bị xóa, hoặc không có tài khoản `ACTIVE`/`LOCKED`. Vì vậy không ai duyệt được đơn hoặc tăng ca của chính mình. Chủ sở hữu ở đỉnh sơ đồ nên không có người duyệt.
+
+- **Đơn nghỉ**: người duyệt được chốt khi gửi đơn (`approverEmployeeId`). Đơn của người giữ `DIRECTOR` hoặc `COMPANY_OWNER` không cần duyệt: khi gửi, đơn chuyển thẳng sang `APPROVED` với ghi chú `Tự ghi nhận…` và được gắn vào bảng công như đơn đã duyệt.
+- **Tăng ca**: người duyệt được xác định lúc quyết định. Tăng ca của Giám đốc do Chủ sở hữu quyết định; Chủ sở hữu tự xác nhận tăng ca của mình.
+- **HR** (`request.read`, `request.manage`, `attendance.read`, `attendance.manage`) xem, nhập đơn thay, đối soát và tổng hợp, nhưng không duyệt.
 
 ---
 
@@ -264,7 +279,7 @@ Trả `AttendanceRecordResponse` sau điều chỉnh.
 
 ## POST `/api/attendance/{id}/overtime-approval`
 
-Duyệt tăng ca cho một ngày đã chấm ra. Đặt `overtimeMinutes` bằng 0 để hủy duyệt.
+[Người duyệt](#người-duyệt) của nhân viên quyết định tăng ca cho một ngày đã chấm ra. `overtimeMinutes` bằng 0 nghĩa là phần giờ dư không tính tăng ca. Quyết định nào cũng ghi người và thời điểm quyết định, nên ngày đó rời khỏi danh sách chờ; sửa giờ vào/ra sau đó xóa quyết định và đưa ngày về danh sách chờ.
 
 ### Request
 
@@ -291,8 +306,30 @@ Trả `AttendanceRecordResponse` với `overtimeMinutes`, `overtimeMultiplier` v
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Ngày chưa chấm ra, số phút vượt phần làm ngoài công thường, hoặc hệ số dưới mức tối thiểu |
-| 403 | `FORBIDDEN` | Không có `attendance.overtime.approve` hoặc nhân viên ngoài scope |
+| 403 | `FORBIDDEN` | Người gọi không phải người duyệt của nhân viên |
 | 404 | `ATTENDANCE_NOT_FOUND` | Bản ghi công không tồn tại |
+
+---
+
+## GET `/api/attendance/overtime/pending`
+
+Các ngày đã chấm ra, có giờ làm vượt phần công được trả (`workedMinutes > payableMinutes`) và chưa có quyết định tăng ca, của những nhân viên mà người gọi là [người duyệt](#người-duyệt). Chủ sở hữu thấy cả ngày của chính mình. Ngày mới nhất trước.
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "record": { "id": 812, "employeeId": 25, "workDate": "2026-03-03", "workedMinutes": 600, "payableMinutes": 480, "overtimeMinutes": 0 },
+      "employeeCode": "NV0025",
+      "employeeName": "Nguyễn Văn A"
+    }
+  ],
+  "error": null
+}
+```
+
+`record` là `AttendanceRecordResponse` đầy đủ (ví dụ rút gọn).
 
 ---
 
@@ -406,6 +443,8 @@ Cách trả lương của đơn **do server suy ra từ loại nghỉ**, không 
     "attachmentUrl": null,
     "status": "DRAFT",
     "submittedAt": null,
+    "approverEmployeeId": null,
+    "approverEmployeeName": null,
     "reviewedByAccountId": null,
     "reviewComment": null,
     "reviewedAt": null,
@@ -428,7 +467,7 @@ Cách trả lương của đơn **do server suy ra từ loại nghỉ**, không 
 
 ## POST `/api/leave-requests/{id}/submit` và `/cancel`
 
-- `submit` chuyển đơn `DRAFT` sang `PENDING` và ghi `submittedAt`.
+- `submit` ghi `submittedAt`, chốt [người duyệt](#người-duyệt) vào `approverEmployeeId` và chuyển đơn `DRAFT` sang `PENDING`. Đơn của Giám đốc hoặc Chủ sở hữu chuyển thẳng sang `APPROVED` (tự ghi nhận, kiểm tra như khi duyệt). Không tìm được người duyệt trả `409 APPROVER_NOT_FOUND`.
 - `cancel` chuyển đơn `DRAFT` hoặc `PENDING` sang `CANCELLED`.
 
 Cả hai không có body và trả `LeaveRequestView`. Đơn ở trạng thái khác trả `409 REQUEST_ALREADY_PROCESSED`; đơn không tồn tại trả `404 REQUEST_NOT_FOUND`.
@@ -437,7 +476,7 @@ Cả hai không có body và trả `LeaveRequestView`. Đơn ở trạng thái k
 
 ## POST `/api/leave-requests/{id}/approve` và `/reject`
 
-Duyệt hoặc từ chối đơn `PENDING`. Body không bắt buộc:
+Chỉ người duyệt đã chốt của đơn (`approverEmployeeId`) duyệt hoặc từ chối đơn `PENDING`. Body không bắt buộc:
 
 ```json
 {
@@ -457,7 +496,7 @@ Nghỉ một phần ngày rồi chấm công phần còn lại không cần đ�
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
-| 403 | `FORBIDDEN` | Không có `request.approve` hoặc nhân viên ngoài scope |
+| 403 | `FORBIDDEN` | Người gọi không phải người duyệt của đơn |
 | 404 | `REQUEST_NOT_FOUND` | Đơn không tồn tại |
 | 409 | `REQUEST_ALREADY_PROCESSED` | Đơn không ở `PENDING` |
 | 409 | `CONFLICT` | Trùng đơn đã duyệt, vượt số dư phép năm, ngày đã gắn đơn khác, ngày đang chấm dở, hoặc đơn trùng giờ đã làm |
@@ -471,7 +510,7 @@ Nghỉ một phần ngày rồi chấm công phần còn lại không cần đ�
 |:---------|:--------|
 | `GET /api/leave-requests/{id}` | Chi tiết đơn; `404 REQUEST_NOT_FOUND` nếu không tồn tại |
 | `GET /api/leave-requests/employees/{employeeId}` | Đơn của một nhân viên, mới nhất trước; `404 EMPLOYEE_NOT_FOUND` nếu nhân viên không tồn tại |
-| `GET /api/leave-requests/pending` | Đơn `PENDING` của các nhân viên nằm trong scope `request.approve` của người gọi |
+| `GET /api/leave-requests/pending` | Đơn `PENDING` có `approverEmployeeId` là nhân viên của người gọi |
 
 Hai endpoint danh sách hỗ trợ `page`, `size` (mặc định 20) và trả `PagedResult<LeaveRequestView>`.
 

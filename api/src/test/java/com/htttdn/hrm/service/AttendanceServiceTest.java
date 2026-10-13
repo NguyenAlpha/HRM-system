@@ -48,6 +48,7 @@ class AttendanceServiceTest {
     @Mock private CurrentAccountProvider currentAccountProvider;
     @Mock private EmployeeAccessScopeService employeeAccessScopeService;
     @Mock private AttendanceCalendarService attendanceCalendarService;
+    @Mock private ApproverResolver approverResolver;
 
     @Test
     void approvedPaidLeaveUpdatesPayableMinutes() {
@@ -86,6 +87,7 @@ class AttendanceServiceTest {
         when(attendanceCalendarService.scheduleFor(2L, date, date)).thenReturn(List.of(
             new AttendanceCalendarService.ScheduledDay(date, record.getShift(),
                 record.getScheduledStartAt(), record.getScheduledEndAt(), 480)));
+        stubApproverOf(record);
 
         assertThrows(BusinessException.class, () -> service().approveOvertime(1L,
             new ApproveOvertimeRequest(60, new java.math.BigDecimal("1.5"))));
@@ -101,6 +103,7 @@ class AttendanceServiceTest {
         when(attendanceRecordRepository.findById(1L)).thenReturn(Optional.of(record));
         when(attendanceRecordRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(record));
         when(attendanceCalendarService.isCompanyHoliday(holiday)).thenReturn(true);
+        stubApproverOf(record);
 
         assertThrows(BusinessException.class, () -> service().approveOvertime(1L,
             new ApproveOvertimeRequest(120, new java.math.BigDecimal("2.0"))));
@@ -299,6 +302,14 @@ class AttendanceServiceTest {
         when(attendanceCalendarService.companyWorkDates(date, date)).thenReturn(List.of(date));
     }
 
+    /** The signed-in account is the approver of the record's employee. */
+    private void stubApproverOf(AttendanceRecord record) {
+        Employee manager = Employee.builder().id(5L).build();
+        when(currentAccountProvider.accountId()).thenReturn(9L);
+        when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).employee(manager).build()));
+        when(approverResolver.approverFor(record.getEmployee())).thenReturn(Optional.of(manager));
+    }
+
     private AttendanceRecord record(LocalDate date) {
         Instant now = Instant.now();
         return AttendanceRecord.builder()
@@ -318,6 +329,6 @@ class AttendanceServiceTest {
     private AttendanceService service() {
         return new AttendanceService(attendanceRecordRepository, employeeRepository,
             accountRepository, payrollPeriodRepository,
-            currentAccountProvider, employeeAccessScopeService, attendanceCalendarService);
+            currentAccountProvider, employeeAccessScopeService, attendanceCalendarService, approverResolver);
     }
 }

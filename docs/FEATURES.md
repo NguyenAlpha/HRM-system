@@ -25,7 +25,7 @@ Quy ước trạng thái:
 | Lương, bảo hiểm, thuế | Đủ | `/payslips` |
 | Báo cáo | Đủ | `/reports/workforce` |
 
-Toàn hệ thống có 25 controller, 49 permission trên 8 module, 7 system role và 32 bảng database.
+Toàn hệ thống có 25 controller, 47 permission trên 8 module, 7 system role và 32 bảng database.
 
 ---
 
@@ -169,7 +169,7 @@ ngày ngoài lịch như Chủ nhật) hoặc ghi vắng không phép.
 | Chuẩn bị bảng công tháng | `POST /api/attendance/prepare` | `attendance.manage` |
 | Nhập hoặc sửa giờ vào/ra | `POST /api/attendance/punches` | `attendance.manage` |
 | Ghi vắng không phép, sửa số phút | `PUT /api/attendance/{id}` | `attendance.manage` |
-| Duyệt tăng ca | `POST /api/attendance/{id}/overtime-approval` | `attendance.overtime.approve` |
+| Duyệt tăng ca | `POST /api/attendance/{id}/overtime-approval` | Người duyệt của nhân viên (quản lý trực tiếp → Giám đốc → Chủ sở hữu) |
 | Xem bản ghi công | `GET /api/attendance/{id}`, `/employees/{id}` | `attendance.self.read` / `attendance.read` |
 
 Trạng thái ngày công: `PRESENT`, `PAID_LEAVE`, `UNPAID_LEAVE`, `MATERNITY_LEAVE`, `SICK_LEAVE`,

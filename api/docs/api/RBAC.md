@@ -731,7 +731,6 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 | `request.self.create` | ✓ | | | | | | |
 | `request.self.cancel` | ✓ | | | | | | |
 | `request.read` | | ✓ | | | ✓ | | |
-| `request.approve` | | ✓ | | | | | |
 | `request.final_approve` | | | | | ✓ | | |
 | `request.manage` | | ✓ | | | | | |
 
@@ -742,7 +741,6 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 | `attendance.self.read` | ✓ | | | | | | |
 | `attendance.read` | | ✓ | | | | | |
 | `attendance.manage` | | ✓ | | | | | |
-| `attendance.overtime.approve` | | ✓ | | | | | |
 | `holiday.read` | ✓ | ✓ | | | | ✓ | |
 
 ### Module `PAYROLL`

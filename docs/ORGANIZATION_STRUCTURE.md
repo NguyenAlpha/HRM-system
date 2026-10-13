@@ -184,7 +184,7 @@ Dữ liệu seed được chia theo trách nhiệm và chạy theo `@Order`. M�
 | 70 | `JobPositionSeeder` | `COMPANY_SEED_ENABLED` | 7 chức danh |
 | 80 | `WorkShiftSeeder` | `COMPANY_SEED_ENABLED` | Ca hành chính `OFFICE_DAY` 08:00–17:00 |
 | 100 | `RoleSeeder` | `RBAC_SEED_ENABLED` (mặc định bật) | 7 system role |
-| 200 | `PermissionSeeder` | `RBAC_SEED_ENABLED` | Danh mục 49 permission |
+| 200 | `PermissionSeeder` | `RBAC_SEED_ENABLED` | Danh mục 47 permission |
 | 300 | `RolePermissionSeeder` | `RBAC_SEED_ENABLED` | Permission mặc định của từng system role |
 | 400 | `SystemAdminSeeder` | `ADMIN_SEED_ENABLED` (mặc định bật) | Account bootstrap và gán role `SYSTEM_ADMIN` đã có sẵn |
 

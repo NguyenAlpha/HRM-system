@@ -38,6 +38,7 @@ class LeaveRequestServiceTest {
     @Mock private EmployeeAccessScopeService employeeAccessScopeService;
     @Mock private AttendanceService attendanceService;
     @Mock private LeaveEntitlementService leaveEntitlementService;
+    @Mock private ApproverResolver approverResolver;
 
     @Test
     void employeeCreatesOwnDraftUsingMinuteBasedPeriod() {
@@ -73,14 +74,15 @@ class LeaveRequestServiceTest {
     @Test
     void approvingLeaveUpdatesAttendance() {
         Employee employee = Employee.builder().id(1L).build();
-        LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee)
+        Employee manager = Employee.builder().id(5L).build();
+        LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee).approverEmployee(manager)
             .status(LeaveRequestStatus.PENDING)
             .startAt(Instant.parse("2026-01-05T01:00:00Z"))
             .endAt(Instant.parse("2026-01-05T10:00:00Z"))
             .requestedMinutes(480).build();
         when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
         when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).build()));
+        when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).employee(manager).build()));
 
         service().approve(3L, "Approved");
 
@@ -91,14 +93,18 @@ class LeaveRequestServiceTest {
     @Test
     void approveRejectsOverlappingApprovedLeave() {
         Employee employee = Employee.builder().id(1L).build();
+        Employee manager = Employee.builder().id(5L).build();
         LeaveRequest request = LeaveRequest.builder()
             .id(3L)
             .employee(employee)
+            .approverEmployee(manager)
             .status(LeaveRequestStatus.PENDING)
             .startAt(Instant.parse("2026-01-05T01:00:00Z"))
             .endAt(Instant.parse("2026-01-05T05:00:00Z"))
             .build();
         when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
+        when(currentAccountProvider.accountId()).thenReturn(9L);
+        when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).employee(manager).build()));
         when(leaveRequestRepository.existsApprovedOverlap(
             1L, request.getStartAt(), request.getEndAt(), 3L
         )).thenReturn(true);
@@ -199,7 +205,8 @@ class LeaveRequestServiceTest {
             currentAccountProvider,
             employeeAccessScopeService,
             attendanceService,
-            leaveEntitlementService
+            leaveEntitlementService,
+            approverResolver
         );
     }
 }

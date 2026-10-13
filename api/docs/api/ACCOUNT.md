@@ -155,8 +155,8 @@ Permission account đang có hôm nay, sắp theo `code`. Mỗi permission kèm 
   "success": true,
   "data": [
     {
-      "code": "attendance.overtime.approve",
-      "name": "Phê duyệt làm thêm giờ",
+      "code": "attendance.read",
+      "name": "Xem dữ liệu chấm công",
       "module": "ATTENDANCE",
       "grantedBy": [
         { "assignmentId": 31, "roleCode": "EMPLOYEE", "roleName": "Nhân viên", "viaOverride": true }

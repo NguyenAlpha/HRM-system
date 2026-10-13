@@ -71,6 +71,11 @@ public class LeaveRequest {
     @Column(name = "submitted_at")
     private Instant submittedAt;
 
+    /** Fixed when the request is submitted; null for drafts and self-recorded leave. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approver_employee_id")
+    private Employee approverEmployee;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewed_by_account_id")
     private Account reviewedByAccount;

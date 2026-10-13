@@ -606,6 +606,24 @@
         "tags" : [ "attendance-controller" ]
       }
     },
+    "/api/attendance/overtime/pending" : {
+      "get" : {
+        "operationId" : "listOvertimeAwaitingDecision",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultListOvertimeApprovalItemResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-controller" ]
+      }
+    },
     "/api/attendance/prepare" : {
       "post" : {
         "operationId" : "prepare",
@@ -4668,6 +4686,28 @@
         },
         "required" : [ "data", "error", "success" ]
       },
+      "ApiResultListOvertimeApprovalItemResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "$ref" : "#/components/schemas/OvertimeApprovalItemResponse"
+            }
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
       "ApiResultListPayrollAdjustmentResponse" : {
         "type" : "object",
         "properties" : {
@@ -6715,6 +6755,13 @@
       "LeaveRequestView" : {
         "type" : "object",
         "properties" : {
+          "approverEmployeeId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "approverEmployeeName" : {
+            "type" : [ "string", "null" ]
+          },
           "attachmentUrl" : {
             "type" : [ "string", "null" ]
           },
@@ -6777,7 +6824,7 @@
             "format" : "date-time"
           }
         },
-        "required" : [ "attachmentUrl", "createdAt", "employeeId", "endAt", "id", "leaveType", "reason", "requestedMinutes", "reviewComment", "reviewedAt", "reviewedByAccountId", "salaryTreatment", "startAt", "status", "submittedAt", "updatedAt" ]
+        "required" : [ "approverEmployeeId", "approverEmployeeName", "attachmentUrl", "createdAt", "employeeId", "endAt", "id", "leaveType", "reason", "requestedMinutes", "reviewComment", "reviewedAt", "reviewedByAccountId", "salaryTreatment", "startAt", "status", "submittedAt", "updatedAt" ]
       },
       "LoginRequest" : {
         "type" : "object",
@@ -6897,6 +6944,21 @@
           }
         },
         "required" : [ "children", "code", "id", "isActive", "name", "unitType" ]
+      },
+      "OvertimeApprovalItemResponse" : {
+        "type" : "object",
+        "properties" : {
+          "employeeCode" : {
+            "type" : "string"
+          },
+          "employeeName" : {
+            "type" : "string"
+          },
+          "record" : {
+            "$ref" : "#/components/schemas/AttendanceRecordResponse"
+          }
+        },
+        "required" : [ "employeeCode", "employeeName", "record" ]
       },
       "Pageable" : {
         "type" : "object",

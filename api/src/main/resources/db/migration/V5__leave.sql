@@ -12,6 +12,8 @@ CREATE TABLE leave_requests (
     attachment_url TEXT,
     status VARCHAR(20) NOT NULL,
     submitted_at TIMESTAMPTZ,
+    -- Người duyệt được chốt khi gửi đơn: quản lý trực tiếp, nếu không có thì Giám đốc, rồi Chủ sở hữu.
+    approver_employee_id BIGINT REFERENCES employees (id),
     reviewed_by_account_id BIGINT REFERENCES accounts (id),
     review_comment TEXT,
     reviewed_at TIMESTAMPTZ,
@@ -34,3 +36,6 @@ CREATE TABLE leave_requests (
 
 CREATE INDEX idx_leave_requests_employee_status
     ON leave_requests (employee_id, status, start_at);
+
+CREATE INDEX idx_leave_requests_approver_status
+    ON leave_requests (approver_employee_id, status);
