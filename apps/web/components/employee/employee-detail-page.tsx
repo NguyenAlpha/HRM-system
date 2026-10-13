@@ -13,6 +13,7 @@ import {
   KeyRound,
   LogOut,
   MapPin,
+  Pencil,
   RefreshCw,
   Trash2,
   UserRound,
@@ -22,6 +23,7 @@ import {
 import { ErrorAlert } from "@/components/common/list-controls"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import { EmployeeDeleteDialog } from "@/components/employee/employee-delete-dialog"
+import { EmployeeEditDialog } from "@/components/employee/employee-edit-dialog"
 import { EmployeeEmploymentEndDialog } from "@/components/employee/employee-employment-end-dialog"
 import { EmployeeSensitiveCard } from "@/components/employee/employee-sensitive-card"
 import { Badge } from "@/components/ui/badge"
@@ -124,6 +126,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
   const [revision, setRevision] = useState(0)
   const [endingEmployment, setEndingEmployment] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [editing, setEditing] = useState(false)
 
   const numericEmployeeId = Number(employeeId)
   const hasValidEmployeeId = /^\d+$/.test(employeeId)
@@ -188,6 +191,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
   const canManageLifecycle = session.account.permissions.some(
     (permission) => permission.code === "employee.lifecycle.manage",
   )
+  const canUpdateEmployee = session.account.permissions.some((permission) => permission.code === "employee.update")
   const canDeleteEmployee = session.account.permissions.some(
     (permission) => permission.code === "employee.delete",
   )
@@ -217,6 +221,11 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {detail && canUpdateEmployee && (
+            <Button type="button" variant="outline" onClick={() => setEditing(true)}>
+              <Pencil /> Sửa hồ sơ
+            </Button>
+          )}
           {detail && canManageLifecycle && !isEmploymentEnded(detail.employmentStatus) && (
             <Button type="button" variant="outline" onClick={() => setEndingEmployment(true)}>
               <LogOut /> Kết thúc làm việc
@@ -471,6 +480,16 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
           employee={detail}
           onClose={() => setEndingEmployment(false)}
           onCompleted={reload}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
+
+      {editing && detail && (
+        <EmployeeEditDialog
+          portal={portal}
+          detail={detail}
+          onClose={() => setEditing(false)}
+          onSaved={reload}
           onSessionExpired={onSessionExpired}
         />
       )}
