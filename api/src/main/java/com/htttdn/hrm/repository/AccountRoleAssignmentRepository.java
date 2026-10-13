@@ -39,6 +39,10 @@ public interface AccountRoleAssignmentRepository extends JpaRepository<AccountRo
         @Param("accountId") Long accountId
     );
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT assignment FROM AccountRoleAssignment assignment WHERE assignment.id = :id")
+    Optional<AccountRoleAssignment> findByIdForUpdate(@Param("id") Long id);
+
     List<AccountRoleAssignment> findByAccountIdAndRoleIdAndRevokedAtIsNull(Long accountId, Long roleId);
 
     List<AccountRoleAssignment> findByAccountIdAndRevokedAtIsNull(Long accountId);

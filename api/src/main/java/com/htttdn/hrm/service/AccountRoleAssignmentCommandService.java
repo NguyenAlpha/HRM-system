@@ -31,7 +31,7 @@ import com.htttdn.hrm.repository.RoleRepository;
 import com.htttdn.hrm.repository.WorkLocationRepository;
 
 /**
- * Internal command component for creating effective role assignments.
+ * Internal command component for creating and revoking effective role assignments.
  * Authorization remains at the public workflow boundary; every entry point here
  * enforces the grant policy of the workflow that invoked it.
  */
@@ -53,6 +53,7 @@ public class AccountRoleAssignmentCommandService {
     private final OrganizationUnitRepository organizationUnitRepository;
     private final WorkLocationRepository workLocationRepository;
     private final RoleAssignmentPolicy roleAssignmentPolicy;
+    private final RefreshTokenService refreshTokenService;
 
     public AccountRoleAssignmentCommandService(
         AccountRepository accountRepository,
@@ -60,7 +61,8 @@ public class AccountRoleAssignmentCommandService {
         AccountRoleAssignmentRepository roleAssignmentRepository,
         OrganizationUnitRepository organizationUnitRepository,
         WorkLocationRepository workLocationRepository,
-        RoleAssignmentPolicy roleAssignmentPolicy
+        RoleAssignmentPolicy roleAssignmentPolicy,
+        RefreshTokenService refreshTokenService
     ) {
         this.accountRepository = accountRepository;
         this.roleRepository = roleRepository;
@@ -68,6 +70,44 @@ public class AccountRoleAssignmentCommandService {
         this.organizationUnitRepository = organizationUnitRepository;
         this.workLocationRepository = workLocationRepository;
         this.roleAssignmentPolicy = roleAssignmentPolicy;
+        this.refreshTokenService = refreshTokenService;
+    }
+
+    /**
+     * Revokes one assignment and keeps it as history: it stops counting at once, a period that has
+     * started closes today and the account's refresh tokens are revoked. An assignment that is already
+     * revoked is left as it is.
+     */
+    public void revoke(AccountRoleAssignment assignment, Account actor, String reason) {
+        validateRevocable(assignment.getRole());
+        if (assignment.getRevokedAt() != null) {
+            return;
+        }
+        LocalDate today = LocalDate.now();
+        assignment.setRevokedByAccount(actor);
+        assignment.setRevokedAt(Instant.now());
+        assignment.setRevocationReason(reason.trim());
+        if (!assignment.getEffectiveFrom().isAfter(today)
+            && (assignment.getEffectiveTo() == null || assignment.getEffectiveTo().isAfter(today))) {
+            assignment.setEffectiveTo(today);
+        }
+        refreshTokenService.revokeAll(assignment.getAccount().getId());
+    }
+
+    /** AUTO and SYSTEM_ONLY roles are managed by their own workflows, never by a revocation. */
+    public void validateRevocable(Role role) {
+        if (role.getGrantPolicy() == RoleGrantPolicy.AUTO) {
+            throw new ConflictException(
+                ErrorCode.ROLE_ASSIGNMENT_NOT_ALLOWED,
+                "Automatically assigned roles cannot be revoked through the general role assignment API"
+            );
+        }
+        if (role.getGrantPolicy() == RoleGrantPolicy.SYSTEM_ONLY) {
+            throw new ConflictException(
+                ErrorCode.ROLE_ASSIGNMENT_NOT_ALLOWED,
+                "System-only roles must be managed through their dedicated workflow"
+            );
+        }
     }
 
     public AccountRoleAssignment assignDirect(

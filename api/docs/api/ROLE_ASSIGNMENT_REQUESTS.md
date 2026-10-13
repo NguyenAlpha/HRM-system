@@ -1,6 +1,9 @@
 # API Reference — Role Assignment Requests
 
-Workflow đề xuất và phê duyệt cấp role nghiệp vụ cho account. Request chỉ tạo `AccountRoleAssignment` khi được phê duyệt; bản ghi `PENDING`, `REJECTED` hoặc `CANCELLED` không tham gia tính quyền.
+Workflow đề xuất và phê duyệt cấp hoặc thu hồi role nghiệp vụ cho account. Mỗi request có `requestType`:
+
+- `GRANT`: chỉ tạo `AccountRoleAssignment` khi được phê duyệt; bản ghi `PENDING`, `REJECTED` hoặc `CANCELLED` không tham gia tính quyền.
+- `REVOKE`: chỉ thu hồi assignment đích (`targetAssignment`) khi được phê duyệt; trước đó role vẫn có hiệu lực.
 
 ---
 
@@ -10,9 +13,10 @@ Workflow đề xuất và phê duyệt cấp role nghiệp vụ cho account. Req
 |:---------|:-----------|:------|
 | `GET /api/role-assignment-requests/available-roles` | `role.assignment.request` | Lấy danh sách role HR được phép đề xuất cùng chính sách duyệt và scope hợp lệ |
 | `POST /api/role-assignment-requests` | `role.assignment.request` | Gửi đề xuất cấp role; tự duyệt role `HR_ASSIGNABLE` hoặc tạo `PENDING` với `OWNER_APPROVAL` |
+| `POST /api/role-assignment-requests/revocations` | `role.assignment.request` | Gửi đề xuất thu hồi một role assignment; tự thu hồi role `HR_ASSIGNABLE` hoặc tạo `PENDING` với `OWNER_APPROVAL` |
 | `GET /api/role-assignment-requests` | `role.assignment.request` hoặc `role.assignment.approve` | Lấy danh sách đề xuất có phân trang và có thể lọc theo trạng thái |
 | `GET /api/role-assignment-requests/{requestId}` | `role.assignment.request` hoặc `role.assignment.approve` | Lấy chi tiết một đề xuất cấp role trong phạm vi được phép xem |
-| `POST /api/role-assignment-requests/{requestId}/approve` | `role.assignment.approve` | Phê duyệt đề xuất `PENDING` và tạo role assignment có hiệu lực theo yêu cầu |
+| `POST /api/role-assignment-requests/{requestId}/approve` | `role.assignment.approve` | Phê duyệt đề xuất `PENDING`: tạo role assignment (`GRANT`) hoặc thu hồi assignment đích (`REVOKE`) |
 | `POST /api/role-assignment-requests/{requestId}/reject` | `role.assignment.approve` | Từ chối đề xuất `PENDING` kèm ghi chú bắt buộc |
 | `POST /api/role-assignment-requests/{requestId}/cancel` | `role.assignment.request` | Người gửi hủy đề xuất của chính mình khi đề xuất còn `PENDING` |
 
@@ -77,12 +81,14 @@ Kết quả sắp xếp theo tên role, sau đó theo code. Đây là danh mục
 
 ## Luồng theo chính sách cấp role
 
-| `grantPolicy` của role | Kết quả khi gửi đề xuất |
-|:----------------------|:------------------------|
-| `HR_ASSIGNABLE` | Hệ thống tạo assignment ngay và trả request `APPROVED` để giữ audit thống nhất |
-| `OWNER_APPROVAL` | Tạo request `PENDING`; chỉ có assignment sau khi Company Owner duyệt |
-| `AUTO` | Từ chối; role chỉ do workflow hệ thống tự gán |
-| `SYSTEM_ONLY` | Từ chối; role chỉ được quản lý qua workflow chuyên biệt |
+| `grantPolicy` của role | Đề xuất cấp (`GRANT`) | Đề xuất thu hồi (`REVOKE`) |
+|:----------------------|:----------------------|:---------------------------|
+| `HR_ASSIGNABLE` | Hệ thống tạo assignment ngay và trả request `APPROVED` để giữ audit thống nhất | Hệ thống thu hồi assignment ngay và trả request `APPROVED` |
+| `OWNER_APPROVAL` | Tạo request `PENDING`; chỉ có assignment sau khi Company Owner duyệt | Tạo request `PENDING`; role chỉ bị thu hồi sau khi Company Owner duyệt |
+| `AUTO` | Từ chối; role chỉ do workflow hệ thống tự gán | Từ chối |
+| `SYSTEM_ONLY` | Từ chối; role chỉ được quản lý qua workflow chuyên biệt | Từ chối |
+
+Mọi system role nghiệp vụ được seed (`HR_MANAGER`, `PAYROLL_ACCOUNTANT`, `PAYROLL_APPROVER`, `DIRECTOR`) đều là `OWNER_APPROVAL`, nên đề xuất thu hồi các role này luôn chờ Company Owner duyệt.
 
 Việc phân nhánh nằm ở service theo `grantPolicy` được seed cho role, không dựa vào tên role do client tự suy đoán. Khi phê duyệt, hệ thống kiểm tra lại account, role, scope, thời gian và các assignment đang tồn tại để tránh dữ liệu đã thay đổi trong lúc request chờ xử lý.
 
@@ -166,6 +172,8 @@ Với role `OWNER_APPROVAL`, response có `status=PENDING` và `assignment=null`
 
 Với role `HR_ASSIGNABLE`, cùng response sẽ có `status=APPROVED`, thông tin người/thời điểm duyệt tự động và `assignment` là `AccountRoleAssignmentResponse` vừa được tạo.
 
+Mọi response request đều có thêm `requestType` (`GRANT`/`REVOKE`) và `targetAssignment` (assignment cần thu hồi, `null` với `GRANT`). Request `REVOKE` luôn có `assignment=null`.
+
 ### Lỗi
 
 | HTTP | `error.code` | Nguyên nhân |
@@ -180,6 +188,63 @@ Với role `HR_ASSIGNABLE`, cùng response sẽ có `status=APPROVED`, thông ti
 | 409 | `ROLE_ASSIGNMENT_EXISTS` | Đã có assignment chồng thời gian |
 | 409 | `ROLE_ASSIGNMENT_REQUEST_EXISTS` | Đã có request `PENDING` trùng account, role, scope và chồng thời gian |
 | 409 | `ROLE_ASSIGNMENT_NOT_ALLOWED` | Account đích hoặc chính sách role không cho phép workflow này |
+
+---
+
+## POST `/api/role-assignment-requests/revocations`
+
+Gửi đề xuất thu hồi một role assignment, ví dụ khi nhân sự thôi kiêm nhiệm hoặc chuyển vị trí. Khi nhân sự nghỉ việc thì không cần đề xuất: [kết thúc làm việc](./EMPLOYEE.md#post-apiemployeesemployeeidemployment-end) tự thu hồi role.
+
+### Request
+
+```json
+{
+  "assignmentId": 31,
+  "reason": "Thôi kiêm nhiệm Kế toán tiền lương từ tháng 11"
+}
+```
+
+| Field | Type | Bắt buộc | Ràng buộc |
+|:------|:-----|:--------:|:----------|
+| `assignmentId` | long | ✅ | Lấy từ `GET /api/accounts/{accountId}/role-assignments`; assignment chưa bị thu hồi và chưa hết hạn |
+| `reason` | string | ✅ | Không rỗng, tối đa 500 ký tự; khi role bị thu hồi, đây là `revocationReason` của assignment |
+
+Request sao role, scope và thời gian hiệu lực từ assignment đích. Employee của account và phạm vi của assignment phải nằm trong scope `role.assignment.request` của người gửi. Account đang giữ `COMPANY_OWNER` hoặc `SYSTEM_ADMIN` chỉ người giữ cùng role mới được đề xuất thu hồi.
+
+Khi role bị thu hồi (ngay với `HR_ASSIGNABLE`, hoặc khi Company Owner duyệt), hệ thống xử lý như [API thu hồi role](./ACCOUNT_ROLE_ASSIGNMENTS.md#post-apiaccountsaccountidrole-assignmentsassignmentidrevoke): ghi `revokedAt`, người thu hồi (người gửi khi tự duyệt, Company Owner khi duyệt), đóng `effectiveTo` về hôm nay nếu assignment đã bắt đầu và thu hồi toàn bộ refresh token của account. Khi duyệt, hệ thống kiểm tra lại assignment còn hiệu lực.
+
+### Response `201 Created`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 42,
+    "requestType": "REVOKE",
+    "accountId": 208,
+    "roleCode": "PAYROLL_ACCOUNTANT",
+    "grantPolicy": "OWNER_APPROVAL",
+    "status": "PENDING",
+    "reason": "Thôi kiêm nhiệm Kế toán tiền lương từ tháng 11",
+    "assignment": null,
+    "targetAssignment": { "id": 31, "roleCode": "PAYROLL_ACCOUNTANT", "revokedAt": null }
+  },
+  "error": null
+}
+```
+
+Ví dụ rút gọn; các field còn lại giống response tạo request ở trên.
+
+### Lỗi
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 400 | `VALIDATION_ERROR` | Thiếu `assignmentId`, thiếu lý do hoặc lý do quá dài |
+| 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
+| 403 | `FORBIDDEN` | Không có quyền đề xuất, employee/phạm vi nằm ngoài scope được giao, hoặc account được bảo vệ |
+| 404 | `ROLE_ASSIGNMENT_NOT_FOUND` | Assignment không tồn tại |
+| 409 | `ROLE_ASSIGNMENT_NOT_ALLOWED` | Role `AUTO`/`SYSTEM_ONLY`, account không liên kết employee, hoặc assignment đã bị thu hồi/hết hạn |
+| 409 | `ROLE_ASSIGNMENT_REQUEST_EXISTS` | Assignment đã có một đề xuất thu hồi đang `PENDING` |
 
 ---
 
@@ -222,7 +287,10 @@ Company Owner phê duyệt request `OWNER_APPROVAL` đang `PENDING`.
 }
 ```
 
-`note` không bắt buộc, tối đa 500 ký tự. Khi thành công, hệ thống tạo `AccountRoleAssignment`, chuyển request sang `APPROVED` và trả response có `assignment`.
+`note` không bắt buộc, tối đa 500 ký tự. Khi thành công, request chuyển sang `APPROVED`:
+
+- `GRANT`: hệ thống tạo `AccountRoleAssignment` và trả response có `assignment`.
+- `REVOKE`: hệ thống thu hồi `targetAssignment` với lý do của request; response có `targetAssignment` đã thu hồi.
 
 Ngoài lỗi xác thực/tài nguyên/validation giống endpoint tạo, endpoint có thể trả:
 
@@ -230,7 +298,7 @@ Ngoài lỗi xác thực/tài nguyên/validation giống endpoint tạo, endpoin
 |:----:|:-------------|:-----------|
 | 409 | `ROLE_ASSIGNMENT_REQUEST_ALREADY_PROCESSED` | Request không còn `PENDING` |
 | 409 | `ROLE_ASSIGNMENT_EXISTS` | Dữ liệu hiện tại đã có assignment xung đột |
-| 409 | `ROLE_ASSIGNMENT_NOT_ALLOWED` | Grant policy hiện tại không còn cho phép Owner phê duyệt |
+| 409 | `ROLE_ASSIGNMENT_NOT_ALLOWED` | Grant policy hiện tại không còn cho phép Owner phê duyệt, hoặc assignment đích của `REVOKE` đã bị thu hồi/hết hạn |
 
 ---
 
@@ -264,6 +332,6 @@ Người đã gửi hủy request của chính mình khi request còn `PENDING`.
 
 ## Đồng thời và hiệu lực quyền
 
-Request được khóa khi approve, reject hoặc cancel nên chỉ thao tác đầu tiên trên một request `PENDING` thành công. Database đồng thời chặn các request pending trùng phạm vi và chồng thời gian.
+Request được khóa khi approve, reject hoặc cancel nên chỉ thao tác đầu tiên trên một request `PENDING` thành công. Database đồng thời chặn các request `GRANT` pending trùng phạm vi và chồng thời gian, và chặn hai request `REVOKE` pending cho cùng một assignment.
 
 Role mới chỉ xuất hiện trong authorization snapshot khi assignment đã có hiệu lực theo ngày. JWT đã phát không tự đổi claims; account nhận role cần đăng nhập lại hoặc refresh token để nhận role và permission mới.

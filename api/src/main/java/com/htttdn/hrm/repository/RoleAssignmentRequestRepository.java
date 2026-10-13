@@ -30,20 +30,23 @@ public interface RoleAssignmentRequestRepository extends JpaRepository<RoleAssig
     @Override
     @EntityGraph(attributePaths = {
         "account.employee", "role", "organizationUnit", "workLocation",
-        "requestedByAccount", "reviewedByAccount", "cancelledByAccount", "accountRoleAssignment"
+        "requestedByAccount", "reviewedByAccount", "cancelledByAccount", "accountRoleAssignment",
+        "targetAssignment"
     })
     Page<RoleAssignmentRequest> findAll(Pageable pageable);
 
     @Override
     @EntityGraph(attributePaths = {
         "account.employee", "role", "organizationUnit", "workLocation",
-        "requestedByAccount", "reviewedByAccount", "cancelledByAccount", "accountRoleAssignment"
+        "requestedByAccount", "reviewedByAccount", "cancelledByAccount", "accountRoleAssignment",
+        "targetAssignment"
     })
     Optional<RoleAssignmentRequest> findById(Long id);
 
     @EntityGraph(attributePaths = {
         "account.employee", "role", "organizationUnit", "workLocation",
-        "requestedByAccount", "reviewedByAccount", "cancelledByAccount", "accountRoleAssignment"
+        "requestedByAccount", "reviewedByAccount", "cancelledByAccount", "accountRoleAssignment",
+        "targetAssignment"
     })
     Page<RoleAssignmentRequest> findByStatus(
         RoleAssignmentRequestStatus status,
@@ -52,7 +55,8 @@ public interface RoleAssignmentRequestRepository extends JpaRepository<RoleAssig
 
     @EntityGraph(attributePaths = {
         "account.employee", "role", "organizationUnit", "workLocation",
-        "requestedByAccount", "reviewedByAccount", "cancelledByAccount", "accountRoleAssignment"
+        "requestedByAccount", "reviewedByAccount", "cancelledByAccount", "accountRoleAssignment",
+        "targetAssignment"
     })
     Page<RoleAssignmentRequest> findByRequestedByAccountId(
         Long requestedByAccountId,
@@ -61,7 +65,8 @@ public interface RoleAssignmentRequestRepository extends JpaRepository<RoleAssig
 
     @EntityGraph(attributePaths = {
         "account.employee", "role", "organizationUnit", "workLocation",
-        "requestedByAccount", "reviewedByAccount", "cancelledByAccount", "accountRoleAssignment"
+        "requestedByAccount", "reviewedByAccount", "cancelledByAccount", "accountRoleAssignment",
+        "targetAssignment"
     })
     Page<RoleAssignmentRequest> findByRequestedByAccountIdAndStatus(
         Long requestedByAccountId,

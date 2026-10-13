@@ -22,6 +22,7 @@ public class RoleAssignmentRequestMapper {
         Account canceller = request.getCancelledByAccount();
         return new RoleAssignmentRequestResponse(
             request.getId(),
+            request.getRequestType(),
             request.getAccount().getId(),
             employee == null ? null : employee.getId(),
             employee == null ? null : employee.getEmployeeCode(),
@@ -53,7 +54,10 @@ public class RoleAssignmentRequestMapper {
             request.getUpdatedAt(),
             request.getAccountRoleAssignment() == null
                 ? null
-                : roleAssignmentMapper.toResponse(request.getAccountRoleAssignment())
+                : roleAssignmentMapper.toResponse(request.getAccountRoleAssignment()),
+            request.getTargetAssignment() == null
+                ? null
+                : roleAssignmentMapper.toResponse(request.getTargetAssignment())
         );
     }
 }

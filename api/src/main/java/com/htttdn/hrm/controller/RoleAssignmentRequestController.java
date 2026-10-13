@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.htttdn.hrm.dto.request.roleassignment.ApproveRoleAssignmentRequest;
 import com.htttdn.hrm.dto.request.roleassignment.CancelRoleAssignmentRequest;
 import com.htttdn.hrm.dto.request.roleassignment.CreateRoleAssignmentRequest;
+import com.htttdn.hrm.dto.request.roleassignment.CreateRoleRevocationRequest;
 import com.htttdn.hrm.dto.request.roleassignment.RejectRoleAssignmentRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
@@ -58,6 +59,15 @@ public class RoleAssignmentRequestController {
         @Valid @RequestBody CreateRoleAssignmentRequest request
     ) {
         return ApiResult.ok(requestService.create(request));
+    }
+
+    @PostMapping("/revocations")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('role.assignment.request')")
+    public ApiResult<RoleAssignmentRequestResponse> createRevocation(
+        @Valid @RequestBody CreateRoleRevocationRequest request
+    ) {
+        return ApiResult.ok(requestService.createRevocation(request));
     }
 
     @GetMapping
