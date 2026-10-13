@@ -312,6 +312,8 @@ public class LeaveRequestService {
         return new LeaveRequestView(
             request.getId(),
             request.getEmployee().getId(),
+            request.getEmployee().getEmployeeCode(),
+            request.getEmployee().getFullName(),
             request.getLeaveType(),
             request.getSalaryTreatment(),
             request.getStartAt(),
@@ -346,6 +348,8 @@ public class LeaveRequestService {
     public record LeaveRequestView(
         Long id,
         Long employeeId,
+        String employeeCode,
+        String employeeName,
         LeaveType leaveType,
         LeaveSalaryTreatment salaryTreatment,
         Instant startAt,

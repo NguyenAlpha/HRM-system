@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { apiErrorMessage } from "@/lib/api-helpers"
 import { authorizedRequest } from "@/lib/auth/client"
+import { findEmployeeByCode } from "@/lib/employee"
 import type { PayrollAdjustment, PayrollAdjustmentType, WorkforceBody } from "@/lib/workforce"
 
 export const PAYROLL_ADJUSTMENT_TYPES = [
@@ -44,7 +45,7 @@ export function PayrollAdjustmentsPanel({ periodId, editable, onChanged }: {
   onChanged: () => void
 }) {
   const [rows, setRows] = useState<PayrollAdjustment[]>([])
-  const [employeeId, setEmployeeId] = useState("")
+  const [employeeCode, setEmployeeCode] = useState("")
   const [type, setType] = useState<PayrollAdjustmentType>("BONUS")
   const [description, setDescription] = useState("")
   const [amount, setAmount] = useState("")
@@ -78,8 +79,10 @@ export function PayrollAdjustmentsPanel({ periodId, editable, onChanged }: {
   function add(event: React.FormEvent) {
     event.preventDefault()
     void act(async () => {
+      const employee = await findEmployeeByCode("hrm", employeeCode)
+      if (!employee) throw new Error(`Không tìm thấy nhân viên có mã ${employeeCode.trim()}.`)
       await request(`payroll/periods/${periodId}/adjustments`, "POST", {
-        employeeId: Number(employeeId), type, description: description.trim(), amount: Number(amount),
+        employeeId: employee.id, type, description: description.trim(), amount: Number(amount),
       } satisfies WorkforceBody["CreatePayrollAdjustmentRequest"])
       setDescription("")
       setAmount("")
@@ -123,9 +126,9 @@ export function PayrollAdjustmentsPanel({ periodId, editable, onChanged }: {
 
       {editable && <form className="grid gap-2 sm:grid-cols-[8rem_14rem_1fr_9rem_auto] sm:items-end" onSubmit={add}>
         <div className="grid gap-1.5">
-          <Label htmlFor={`adjustment-employee-${periodId}`}>Mã nhân viên (ID)</Label>
-          <Input id={`adjustment-employee-${periodId}`} required type="number" min="1" value={employeeId}
-            onChange={(event) => setEmployeeId(event.target.value)} />
+          <Label htmlFor={`adjustment-employee-${periodId}`}>Mã nhân viên</Label>
+          <Input id={`adjustment-employee-${periodId}`} required placeholder="NV0001" value={employeeCode}
+            onChange={(event) => setEmployeeCode(event.target.value)} />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor={`adjustment-type-${periodId}`}>Loại</Label>

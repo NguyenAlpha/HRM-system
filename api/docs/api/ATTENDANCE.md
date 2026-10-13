@@ -434,6 +434,8 @@ Cách trả lương của đơn **do server suy ra từ loại nghỉ**, không 
   "data": {
     "id": 31,
     "employeeId": 1,
+    "employeeCode": "NV0001",
+    "employeeName": "Nguyễn Văn An",
     "leaveType": "ANNUAL",
     "salaryTreatment": "EMPLOYER_PAID",
     "startAt": "2026-01-15T01:00:00Z",

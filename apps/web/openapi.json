@@ -6769,9 +6769,15 @@
             "type" : "string",
             "format" : "date-time"
           },
+          "employeeCode" : {
+            "type" : "string"
+          },
           "employeeId" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "employeeName" : {
+            "type" : "string"
           },
           "endAt" : {
             "type" : "string",
@@ -6824,7 +6830,7 @@
             "format" : "date-time"
           }
         },
-        "required" : [ "approverEmployeeId", "approverEmployeeName", "attachmentUrl", "createdAt", "employeeId", "endAt", "id", "leaveType", "reason", "requestedMinutes", "reviewComment", "reviewedAt", "reviewedByAccountId", "salaryTreatment", "startAt", "status", "submittedAt", "updatedAt" ]
+        "required" : [ "approverEmployeeId", "approverEmployeeName", "attachmentUrl", "createdAt", "employeeCode", "employeeId", "employeeName", "endAt", "id", "leaveType", "reason", "requestedMinutes", "reviewComment", "reviewedAt", "reviewedByAccountId", "salaryTreatment", "startAt", "status", "submittedAt", "updatedAt" ]
       },
       "LoginRequest" : {
         "type" : "object",

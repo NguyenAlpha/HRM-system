@@ -66,7 +66,7 @@ const PERIOD_TONE: Record<PayrollPeriodStatus, "default" | "secondary" | "outlin
 
 const periodLabel = (period: Pick<PayrollPeriod, "month" | "year">) => `${String(period.month).padStart(2, "0")}/${period.year}`
 
-export function PayrollSection({ employeeId, permissions, month }: WorkforceContext) {
+export function PayrollSection({ employeeId, employeeLabel, permissions, month }: WorkforceContext) {
   const canReadCompensation = permissions.has("compensation.read")
   const canManageCompensation = permissions.has("compensation.manage")
   const canReadPayslip = permissions.has("payroll.self.read") || permissions.has("report.payroll.read")
@@ -123,7 +123,7 @@ export function PayrollSection({ employeeId, permissions, month }: WorkforceCont
       {canReadPayslip && (
         <Card>
           <CardHeader>
-            <CardTitle>Phiếu lương của nhân viên #{employeeId || "—"}</CardTitle>
+            <CardTitle>Phiếu lương của {employeeLabel}</CardTitle>
             <CardDescription>Nhân viên chỉ thấy phiếu của kỳ đã duyệt; chọn một phiếu để xem chi tiết.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -166,7 +166,7 @@ export function PayrollSection({ employeeId, permissions, month }: WorkforceCont
       )}
 
       {(canReadCompensation || canManageCompensation) && (
-        <SalaryCard employeeId={employeeId} history={salaryHistory} canRead={canReadCompensation}
+        <SalaryCard employeeId={employeeId} employeeLabel={employeeLabel} history={salaryHistory} canRead={canReadCompensation}
           canManage={canManageCompensation} busy={busy} run={run} />
       )}
 
@@ -336,8 +336,9 @@ function PeriodsCard({ periods, permissions, month, busy, run, onChanged }: {
   )
 }
 
-function SalaryCard({ employeeId, history, canRead, canManage, busy, run }: {
+function SalaryCard({ employeeId, employeeLabel, history, canRead, canManage, busy, run }: {
   employeeId: number
+  employeeLabel: string
   history: SalaryHistory[]
   canRead: boolean
   canManage: boolean
@@ -355,7 +356,7 @@ function SalaryCard({ employeeId, history, canRead, canManage, busy, run }: {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Lương cơ bản của nhân viên #{employeeId || "—"}</CardTitle>
+        <CardTitle>Lương cơ bản của {employeeLabel}</CardTitle>
         <CardDescription>Mỗi mức có ngày hiệu lực; mức mới tự đóng mức đang áp dụng. Phải có mức lương trước khi tính kỳ.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">

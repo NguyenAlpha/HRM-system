@@ -325,7 +325,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
                   <CardDescription>Nhập mức lương ban đầu hoặc cập nhật lịch sử lương.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button nativeButton={false} render={<Link href={`/payslips?employeeId=${detail.id}&effectiveFrom=${detail.hireDate}`} />}>
+                  <Button nativeButton={false} render={<Link href={`/payslips?employeeCode=${detail.employeeCode}&effectiveFrom=${detail.hireDate}`} />}>
                     Nhập và xem lương
                   </Button>
                 </CardContent>

@@ -78,7 +78,7 @@ const vietnamInstant = (date: string, hhmm: string) => new Date(`${date}T${hhmm}
 
 type Review = { leave: LeaveRequest; approve: boolean }
 
-export function LeaveSection({ employeeId, permissions, month }: WorkforceContext) {
+export function LeaveSection({ employeeId, employeeLabel, permissions, month }: WorkforceContext) {
   const { session } = usePortalSession()
   const canReadLeave = permissions.has("request.self.read") || permissions.has("request.read")
   const canCreate = permissions.has("request.self.create")
@@ -148,7 +148,7 @@ export function LeaveSection({ employeeId, permissions, month }: WorkforceContex
       {canReadLeave && (
         <Card>
           <CardHeader>
-            <CardTitle>Đơn nghỉ của nhân viên #{employeeId || "—"}</CardTitle>
+            <CardTitle>Đơn nghỉ của {employeeLabel}</CardTitle>
             <CardDescription>Đơn nháp cần gửi duyệt; đơn nháp và đơn chờ duyệt có thể hủy.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -212,7 +212,12 @@ function LeaveTable({ leaves, showEmployee = false, emptyText, actions }: {
                 <span className="font-medium">#{leave.id}</span>
                 <span className="block max-w-56 truncate text-xs text-muted-foreground" title={leave.reason}>{leave.reason}</span>
               </TableCell>
-              {showEmployee && <TableCell>#{leave.employeeId}</TableCell>}
+              {showEmployee && (
+                <TableCell>
+                  <span className="font-medium">{leave.employeeName}</span>
+                  <span className="block text-xs text-muted-foreground">{leave.employeeCode}</span>
+                </TableCell>
+              )}
               <TableCell>
                 {LEAVE_TYPE_LABELS[leave.leaveType]}
                 <span className="block text-xs text-muted-foreground">{LEAVE_SALARY_TREATMENT_LABELS[leave.salaryTreatment]}</span>
@@ -392,7 +397,7 @@ function ReviewDialog({ review, busy, onClose, onSubmit }: {
           <DialogHeader>
             <DialogTitle>{approve ? "Duyệt" : "Từ chối"} đơn #{leave.id}</DialogTitle>
             <DialogDescription>
-              Nhân viên #{leave.employeeId} · {LEAVE_TYPE_LABELS[leave.leaveType]} · {dateTime(leave.startAt)} → {dateTime(leave.endAt)}
+              {leave.employeeCode} · {leave.employeeName} · {LEAVE_TYPE_LABELS[leave.leaveType]} · {dateTime(leave.startAt)} → {dateTime(leave.endAt)}
               {" "}· {leave.requestedMinutes} phút. {leave.reason}
             </DialogDescription>
           </DialogHeader>
