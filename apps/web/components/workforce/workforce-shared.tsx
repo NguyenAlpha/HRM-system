@@ -11,6 +11,8 @@ import { authorizedRequest } from "@/lib/auth/client"
 export type WorkforceContext = {
   /** Employee whose data is shown; 0 while none is selected. */
   employeeId: number
+  /** "NV0002 · Trần Thị Bình" for titles; "—" while none is selected. */
+  employeeLabel: string
   permissions: ReadonlySet<string>
   /** Selected month as YYYY-MM. */
   month: string

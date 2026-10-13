@@ -103,6 +103,17 @@ export function employeeRequest<T>(portal: Portal, path: string, init?: RequestI
   return authorizedRequest<T>(portal, `/employees${path}`, { ...init, cache: "no-store" })
 }
 
+/**
+ * The employee whose code is exactly `code` (any letter case), or null. Searches the list, so it
+ * needs `employee.list.read` and only finds employees in the caller's scope.
+ */
+export async function findEmployeeByCode(portal: Portal, code: string): Promise<EmployeeSummary | null> {
+  const wanted = code.trim().toLowerCase()
+  const page = await employeeRequest<{ content: EmployeeSummary[] }>(portal, employeeListQuery(0, 20,
+    { keyword: wanted, employmentStatus: "", organizationUnitId: "", positionId: "" }, "id,asc"))
+  return page.content.find((employee) => employee.employeeCode.toLowerCase() === wanted) ?? null
+}
+
 export function employeeMutation<T>(portal: Portal, path: string, method: "POST" | "PUT", body?: unknown): Promise<T> {
   return employeeRequest<T>(portal, path, {
     method,

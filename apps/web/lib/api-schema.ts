@@ -2329,8 +2329,10 @@ export interface components {
             attachmentUrl: string | null;
             /** Format: date-time */
             createdAt: string;
+            employeeCode: string;
             /** Format: int64 */
             employeeId: number;
+            employeeName: string;
             /** Format: date-time */
             endAt: string;
             /** Format: int64 */

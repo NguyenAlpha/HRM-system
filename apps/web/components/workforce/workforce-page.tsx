@@ -1,8 +1,9 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
+import { useDebouncedValue } from "@/components/common/list-filters"
 import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import { Button } from "@/components/ui/button"
@@ -12,6 +13,8 @@ import { AttendanceSection } from "@/components/workforce/attendance-section"
 import { LeaveSection } from "@/components/workforce/leave-section"
 import { PayrollSection } from "@/components/workforce/payroll-section"
 import { today, type WorkforceContext } from "@/components/workforce/workforce-shared"
+import { apiErrorMessage } from "@/lib/api-helpers"
+import { findEmployeeByCode } from "@/lib/employee"
 
 type Section = "attendance" | "leave" | "payroll"
 
@@ -34,15 +37,19 @@ function shiftMonth(month: string, by: number): string {
   return date.toISOString().slice(0, 7)
 }
 
+/** The employee a section shows, resolved from the code typed in the header. */
+type SelectedEmployee = { id: number; employeeCode: string; fullName: string }
+
 export function WorkforcePage({ section }: { section: Section }) {
   const { session } = usePortalSession()
-  // Employee pages link here with ?employeeId=; otherwise start with the signed-in employee.
+  const self = session.account.employee
+  // Employee pages link here with ?employeeCode=; otherwise start with the signed-in employee.
   // PortalShell only renders this page in the browser, after the session loads, so window is available.
-  const [employeeInput, setEmployeeInput] = useState(() => {
-    const requested = new URLSearchParams(window.location.search).get("employeeId")
-    if (requested && /^[1-9]\d*$/.test(requested)) return requested
-    return session.account.employee ? String(session.account.employee.id) : ""
-  })
+  const [codeInput, setCodeInput] = useState(() =>
+    new URLSearchParams(window.location.search).get("employeeCode")?.trim() || self?.employeeCode || "")
+  const code = useDebouncedValue(codeInput.trim())
+  // The last lookup: the code it was for, and the employee found (null when none matched).
+  const [lookup, setLookup] = useState<{ code: string; employee: SelectedEmployee | null; error?: string } | null>(null)
   const [month, setMonth] = useState(today().slice(0, 7))
 
   const permissions = useMemo(
@@ -57,8 +64,28 @@ export function WorkforcePage({ section }: { section: Section }) {
       : ["payroll.self.read", "report.payroll.read", "payroll.calculate", "compensation.read", "compensation.manage"]
         .some((code) => permissions.has(code))
   const canViewOthers = OTHERS_PERMISSIONS[section].some((code) => permissions.has(code))
-  const employeeId = /^[1-9]\d*$/.test(employeeInput) ? Number(employeeInput) : 0
-  const context: WorkforceContext = { employeeId, permissions, month }
+  // The signed-in employee needs no lookup; anyone else is found by code in the employee list.
+  const isSelf = !!self && code.toLowerCase() === self.employeeCode.toLowerCase()
+  const needsLookup = !isSelf && code !== "" && canViewOthers
+
+  useEffect(() => {
+    if (!needsLookup) return
+    let active = true
+    findEmployeeByCode("hrm", code)
+      .then((found) => { if (active) setLookup({ code, employee: found }) })
+      .catch((caught: unknown) => { if (active) setLookup({ code, employee: null, error: apiErrorMessage(caught) }) })
+    return () => { active = false }
+  }, [code, needsLookup])
+
+  const selected: SelectedEmployee | null = isSelf ? self
+    : needsLookup && lookup?.code === code ? lookup.employee
+    : null
+  const lookupMessage = needsLookup && lookup?.code === code && !lookup.employee
+    ? lookup.error ?? `Không tìm thấy nhân viên có mã ${code}.`
+    : null
+  const employeeId = selected?.id ?? 0
+  const employeeLabel = selected ? `${selected.employeeCode} · ${selected.fullName}` : "—"
+  const context: WorkforceContext = { employeeId, employeeLabel, permissions, month }
   const { title, description } = SECTION_TEXT[section]
 
   return (
@@ -66,9 +93,9 @@ export function WorkforcePage({ section }: { section: Section }) {
       <PageHeader title={title} description={description} alignActions="end" actions={canUseSection && (
         <div className="flex flex-wrap items-end gap-3">
           <div className="grid gap-1.5">
-            <Label htmlFor="workforce-employee">Mã nhân viên (ID)</Label>
-            <Input id="workforce-employee" type="number" min="1" className="w-36" value={employeeInput}
-              disabled={!canViewOthers} onChange={(event) => setEmployeeInput(event.target.value)} />
+            <Label htmlFor="workforce-employee">Mã nhân viên</Label>
+            <Input id="workforce-employee" className="w-36" placeholder="NV0001" value={codeInput}
+              disabled={!canViewOthers} onChange={(event) => setCodeInput(event.target.value)} />
           </div>
           {section !== "payroll" && (
             <div className="grid gap-1.5">
@@ -88,6 +115,7 @@ export function WorkforcePage({ section }: { section: Section }) {
 
       <div className="mt-6">
         {!canUseSection && <p role="alert">Tài khoản chưa có quyền truy cập mục này.</p>}
+        {canUseSection && lookupMessage && <p role="alert" className="mb-4 text-sm text-destructive">{lookupMessage}</p>}
         {canUseSection && section === "attendance" && <AttendanceSection {...context} />}
         {canUseSection && section === "leave" && <LeaveSection {...context} />}
         {canUseSection && section === "payroll" && <PayrollSection {...context} />}
