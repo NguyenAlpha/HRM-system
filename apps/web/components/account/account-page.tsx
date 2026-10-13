@@ -20,6 +20,7 @@ export function AccountPage() {
           <AccountManager
             portal={portal}
             currentAccountId={session.account.accountId}
+            currentRoleCodes={session.account.roles.map((role) => role.code)}
             canManage={has("account.manage")}
             canManageActivation={has("account.activation.manage")}
             onSessionExpired={onSessionExpired}
