@@ -71,6 +71,7 @@ Employee phải nằm trong scope `account.provision` của account đang đăng
       "username": "an.nguyen",
       "email": "an.nguyen@company.com",
       "status": "PENDING",
+      "roleCodes": ["EMPLOYEE"],
       "failedLoginCount": 0,
       "lockedUntil": null,
       "lastLoginAt": null,
@@ -125,7 +126,7 @@ GET /api/accounts?page=0&size=20&sort=username,asc&keyword=an&status=ACTIVE&role
 | `status` | enum | `PENDING`, `ACTIVE`, `LOCKED` hoặc `DISABLED` |
 | `roleCode` | string | Chỉ account đang giữ assignment chưa thu hồi của role này |
 
-`employeeCode` và `employeeFullName` là mã và họ tên nhân viên gắn với account, `null` khi account không gắn nhân viên (ví dụ `SYSTEM_ADMIN`).
+`roleCodes` là mã các role account đang giữ và chưa bị thu hồi, sắp theo bảng chữ cái; web dựa vào đó để ẩn thao tác trên account `COMPANY_OWNER` hoặc `SYSTEM_ADMIN` khi người xem không giữ cùng role. `employeeCode` và `employeeFullName` là mã và họ tên nhân viên gắn với account, `null` khi account không gắn nhân viên (ví dụ `SYSTEM_ADMIN`).
 
 Response `200 OK` dùng cấu trúc `Page<AccountResponse>` của Spring với các field `content`, `totalElements`, `totalPages`, `number` và `size`.
 
