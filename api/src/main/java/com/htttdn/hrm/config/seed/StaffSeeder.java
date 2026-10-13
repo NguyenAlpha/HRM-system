@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +27,7 @@ import com.htttdn.hrm.entity.EmployeeAssignment;
 import com.htttdn.hrm.entity.JobPosition;
 import com.htttdn.hrm.entity.OrganizationUnit;
 import com.htttdn.hrm.entity.WorkLocation;
+import com.htttdn.hrm.entity.WorkShift;
 import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.entity.enums.EmploymentType;
@@ -49,9 +50,13 @@ import tools.jackson.databind.json.JsonMapper;
  * Khởi tạo nhân sự mẫu từ file JSON ({@code staff.seed.file}, mặc định {@code classpath:seed/staff.json}).
  *
  * <p>Mỗi phần tử tạo một nhân viên đang làm việc, account đã kích hoạt, các role với scope khai báo,
- * phân công chính và chấm công {@code PRESENT} từ ngày vào làm đến hôm qua (như Company Owner mẫu).
- * Ngày vào làm là {@code monthsAgo} tháng trước ngày chạy seed. Scope {@code ORG_UNIT} và
- * {@code LOCATION} lấy đơn vị và địa điểm của phân công chính.
+ * lịch sử phân công chính và chấm công {@code PRESENT} từ ngày vào làm đến hôm qua (như Company
+ * Owner mẫu).
+ *
+ * <p>{@code assignments} liệt kê các giai đoạn phân công chính từ cũ đến mới; mỗi giai đoạn bắt đầu
+ * {@code monthsAgo} tháng trước ngày chạy seed và kết thúc ngay trước giai đoạn sau, giai đoạn cuối
+ * là phân công hiện hành. Ngày vào làm là ngày bắt đầu giai đoạn đầu tiên; role có hiệu lực từ ngày
+ * đó. Scope {@code ORG_UNIT} và {@code LOCATION} lấy đơn vị và địa điểm của phân công hiện hành.
  *
  * <p>{@code manager} là username của quản lý trực tiếp; người đó phải đã có (ví dụ {@code owner})
  * hoặc đứng trước trong file. Phần tử có username đã tồn tại được bỏ qua, nên chạy lại seed không
@@ -66,19 +71,36 @@ public class StaffSeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(StaffSeeder.class);
 
-    /** One person in the seed file; {@code workLocation} and {@code shift} default to the head office day shift. */
+    /** One person in the seed file, with their primary assignments oldest first. */
     record StaffEntry(
         String username,
         String password,
         String fullName,
         String email,
         Map<String, RoleScopeType> roles,
+        List<AssignmentEntry> assignments
+    ) {
+    }
+
+    /** One primary assignment period; {@code workLocation} and {@code shift} default to the head office day shift. */
+    record AssignmentEntry(
+        int monthsAgo,
         String organizationUnit,
         String position,
         String workLocation,
         String shift,
-        String manager,
-        int monthsAgo
+        String manager
+    ) {
+    }
+
+    /** An assignment period with its codes resolved and its start date. */
+    private record ResolvedAssignment(
+        LocalDate effectiveFrom,
+        OrganizationUnit unit,
+        WorkLocation location,
+        JobPosition position,
+        WorkShift shift,
+        Employee manager
     ) {
     }
 
@@ -156,24 +178,15 @@ public class StaffSeeder implements ApplicationRunner {
     }
 
     private void seed(StaffEntry entry) {
-        ZonedDateTime seededAt = ZonedDateTime.now(ZONE).minusMonths(entry.monthsAgo());
-        Instant createdAt = seededAt.toInstant();
-        LocalDate startDate = seededAt.toLocalDate();
+        List<ResolvedAssignment> assignments = resolveAssignments(entry);
+        ResolvedAssignment first = assignments.getFirst();
+        ResolvedAssignment current = assignments.getLast();
+        LocalDate startDate = first.effectiveFrom();
+        Instant createdAt = startOf(startDate);
 
-        OrganizationUnit unit = organizationUnitRepository.findByCodeAndDeletedAtIsNull(entry.organizationUnit())
-            .orElseThrow(() -> missing(entry, "organization unit", entry.organizationUnit()));
-        String locationCode = entry.workLocation() != null ? entry.workLocation() : "HO";
-        WorkLocation location = workLocationRepository.findByCodeAndDeletedAtIsNull(locationCode)
-            .orElseThrow(() -> missing(entry, "work location", locationCode));
-        JobPosition position = jobPositionRepository.findByCodeAndDeletedAtIsNull(entry.position())
-            .orElseThrow(() -> missing(entry, "job position", entry.position()));
-        String shiftCode = entry.shift() != null ? entry.shift() : "OFFICE_DAY";
-        Employee manager = entry.manager() == null ? null : accountRepository.findByUsername(entry.manager())
-            .map(Account::getEmployee)
-            .orElseThrow(() -> missing(entry, "manager", entry.manager()));
-
+        // The code is issued on hire, from the position held then.
         Employee employee = employeeRepository.save(Employee.builder()
-            .employeeCode(employeeCodeGenerator.forPosition(position.getId()))
+            .employeeCode(employeeCodeGenerator.forPosition(first.position().getId()))
             .fullName(entry.fullName())
             .workEmail(entry.email())
             .hireDate(startDate)
@@ -198,33 +211,74 @@ public class StaffSeeder implements ApplicationRunner {
             .account(account)
             .role(roleRepository.findByCodeAndDeletedAtIsNull(code).orElseThrow(() -> missing(entry, "role", code)))
             .scopeType(scope)
-            .organizationUnit(scope == RoleScopeType.ORG_UNIT ? unit : null)
-            .workLocation(scope == RoleScopeType.LOCATION ? location : null)
+            .organizationUnit(scope == RoleScopeType.ORG_UNIT ? current.unit() : null)
+            .workLocation(scope == RoleScopeType.LOCATION ? current.location() : null)
             .effectiveFrom(startDate)
             .grantedByAccount(account)
             .reason(SEED_REASON)
             .createdAt(createdAt)
             .build()));
 
-        employeeAssignmentRepository.save(EmployeeAssignment.builder()
-            .employee(employee)
-            .organizationUnit(unit)
-            .workLocation(location)
-            .position(position)
-            .shift(workShiftRepository.findByCodeAndDeletedAtIsNull(shiftCode)
-                .orElseThrow(() -> missing(entry, "work shift", shiftCode)))
-            .managerEmployee(manager)
-            .employmentType(EmploymentType.FULL_TIME)
-            .effectiveFrom(startDate)
-            .isPrimary(true)
-            .reason(SEED_REASON)
-            .createdByAccount(account)
-            .createdAt(createdAt)
-            .build());
+        // Each period ends the day before the next one starts; the last stays open.
+        for (int i = 0; i < assignments.size(); i++) {
+            ResolvedAssignment assignment = assignments.get(i);
+            LocalDate effectiveTo = i + 1 < assignments.size() ? assignments.get(i + 1).effectiveFrom().minusDays(1) : null;
+            employeeAssignmentRepository.save(EmployeeAssignment.builder()
+                .employee(employee)
+                .organizationUnit(assignment.unit())
+                .workLocation(assignment.location())
+                .position(assignment.position())
+                .shift(assignment.shift())
+                .managerEmployee(assignment.manager())
+                .employmentType(EmploymentType.FULL_TIME)
+                .effectiveFrom(assignment.effectiveFrom())
+                .effectiveTo(effectiveTo)
+                .isPrimary(true)
+                .reason(SEED_REASON)
+                .createdByAccount(account)
+                .createdAt(startOf(assignment.effectiveFrom()))
+                .build());
+        }
 
         int attendanceDays = seedAttendanceWriter.write(employee, startDate, LocalDate.now(ZONE).minusDays(1));
         log.info("Staff seed: '{}' created as {} with {} attendance days",
             entry.username(), employee.getEmployeeCode(), attendanceDays);
+    }
+
+    private List<ResolvedAssignment> resolveAssignments(StaffEntry entry) {
+        if (entry.assignments() == null || entry.assignments().isEmpty()) {
+            throw new IllegalStateException("Staff seed '" + entry.username() + "': at least one assignment is required");
+        }
+        LocalDate today = LocalDate.now(ZONE);
+        List<ResolvedAssignment> resolved = new ArrayList<>();
+        for (AssignmentEntry item : entry.assignments()) {
+            LocalDate effectiveFrom = today.minusMonths(item.monthsAgo());
+            if (!resolved.isEmpty() && !effectiveFrom.isAfter(resolved.getLast().effectiveFrom())) {
+                throw new IllegalStateException("Staff seed '" + entry.username()
+                    + "': assignments must go from oldest to newest (monthsAgo decreasing)");
+            }
+            String locationCode = item.workLocation() != null ? item.workLocation() : "HO";
+            String shiftCode = item.shift() != null ? item.shift() : "OFFICE_DAY";
+            resolved.add(new ResolvedAssignment(
+                effectiveFrom,
+                organizationUnitRepository.findByCodeAndDeletedAtIsNull(item.organizationUnit())
+                    .orElseThrow(() -> missing(entry, "organization unit", item.organizationUnit())),
+                workLocationRepository.findByCodeAndDeletedAtIsNull(locationCode)
+                    .orElseThrow(() -> missing(entry, "work location", locationCode)),
+                jobPositionRepository.findByCodeAndDeletedAtIsNull(item.position())
+                    .orElseThrow(() -> missing(entry, "job position", item.position())),
+                workShiftRepository.findByCodeAndDeletedAtIsNull(shiftCode)
+                    .orElseThrow(() -> missing(entry, "work shift", shiftCode)),
+                item.manager() == null ? null : accountRepository.findByUsername(item.manager())
+                    .map(Account::getEmployee)
+                    .orElseThrow(() -> missing(entry, "manager", item.manager()))
+            ));
+        }
+        return resolved;
+    }
+
+    private static Instant startOf(LocalDate date) {
+        return date.atStartOfDay(ZONE).toInstant();
     }
 
     private static IllegalStateException missing(StaffEntry entry, String what, String code) {
