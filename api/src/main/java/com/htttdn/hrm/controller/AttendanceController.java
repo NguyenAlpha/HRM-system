@@ -1,6 +1,7 @@
 package com.htttdn.hrm.controller;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import com.htttdn.hrm.dto.request.attendance.AdjustAttendanceRequest;
 import com.htttdn.hrm.dto.request.attendance.ApproveOvertimeRequest;
 import com.htttdn.hrm.dto.request.attendance.RecordPunchesRequest;
 import com.htttdn.hrm.dto.response.attendance.AttendanceRecordResponse;
+import com.htttdn.hrm.dto.response.attendance.OvertimeApprovalItemResponse;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.service.AttendanceService;
@@ -58,10 +60,16 @@ public class AttendanceController {
     }
 
     @PostMapping("/{id}/overtime-approval")
-    @PreAuthorize("hasAuthority('attendance.overtime.approve')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResult<AttendanceRecordResponse> approveOvertime(@PathVariable Long id,
         @Valid @RequestBody ApproveOvertimeRequest request) {
         return ApiResult.ok(service.approveOvertime(id, request));
+    }
+
+    @GetMapping("/overtime/pending")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResult<List<OvertimeApprovalItemResponse>> listOvertimeAwaitingDecision() {
+        return ApiResult.ok(service.listOvertimeAwaitingDecision());
     }
 
     @GetMapping("/{id}")

@@ -18,6 +18,19 @@ import com.htttdn.hrm.entity.AttendanceRecord;
 
 public interface AttendanceRecordRepository extends JpaRepository<AttendanceRecord, Long> {
 
+    /** Completed days with time beyond the payable minutes that nobody has decided on yet. */
+    @Query("""
+        SELECT record
+        FROM AttendanceRecord record
+        JOIN FETCH record.employee
+        WHERE record.employee.id IN :employeeIds
+          AND record.checkOutAt IS NOT NULL
+          AND record.overtimeApprovedAt IS NULL
+          AND record.workedMinutes > record.payableMinutes
+        ORDER BY record.workDate DESC
+        """)
+    List<AttendanceRecord> findOvertimeAwaitingDecision(@Param("employeeIds") List<Long> employeeIds);
+
     Optional<AttendanceRecord> findByEmployeeIdAndWorkDate(Long employeeId, LocalDate workDate);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

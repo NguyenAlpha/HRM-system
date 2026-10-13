@@ -6,7 +6,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.DayOfWeek;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,6 +23,7 @@ import com.htttdn.hrm.dto.request.attendance.AdjustAttendanceRequest;
 import com.htttdn.hrm.dto.request.attendance.ApproveOvertimeRequest;
 import com.htttdn.hrm.dto.request.attendance.RecordPunchesRequest;
 import com.htttdn.hrm.dto.response.attendance.AttendanceRecordResponse;
+import com.htttdn.hrm.dto.response.attendance.OvertimeApprovalItemResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AttendanceRecord;
@@ -28,6 +31,7 @@ import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.LeaveRequest;
 import com.htttdn.hrm.entity.WorkShift;
 import com.htttdn.hrm.entity.enums.AttendanceStatus;
+import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.entity.enums.LeaveSalaryTreatment;
 import com.htttdn.hrm.entity.enums.LeaveType;
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
@@ -57,6 +61,7 @@ public class AttendanceService {
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final AttendanceCalendarService attendanceCalendarService;
+    private final ApproverResolver approverResolver;
 
     public AttendanceService(
         AttendanceRecordRepository attendanceRecordRepository,
@@ -65,7 +70,8 @@ public class AttendanceService {
         PayrollPeriodRepository payrollPeriodRepository,
         CurrentAccountProvider currentAccountProvider,
         EmployeeAccessScopeService employeeAccessScopeService,
-        AttendanceCalendarService attendanceCalendarService
+        AttendanceCalendarService attendanceCalendarService,
+        ApproverResolver approverResolver
     ) {
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.employeeRepository = employeeRepository;
@@ -74,6 +80,7 @@ public class AttendanceService {
         this.currentAccountProvider = currentAccountProvider;
         this.employeeAccessScopeService = employeeAccessScopeService;
         this.attendanceCalendarService = attendanceCalendarService;
+        this.approverResolver = approverResolver;
     }
 
     @PreAuthorize("hasAuthority('attendance.manage')")
@@ -389,10 +396,15 @@ public class AttendanceService {
         return (int) Math.max(0, Duration.between(start, end).toMinutes());
     }
 
-    @PreAuthorize("hasAuthority('attendance.overtime.approve')")
+    /**
+     * The approver of the employee (direct manager, else Director, else Company Owner) decides the
+     * overtime of a day; zero minutes records that the extra time is not paid. Only the Company Owner,
+     * with nobody above, confirms their own overtime.
+     */
+    @PreAuthorize("isAuthenticated()")
     public AttendanceRecordResponse approveOvertime(Long attendanceId, ApproveOvertimeRequest request) {
         AttendanceRecord record = findRecordForUpdateOrThrow(attendanceId);
-        employeeAccessScopeService.requireEmployeeAccess(record.getEmployee().getId(), "attendance.overtime.approve");
+        requireOvertimeApprover(record.getEmployee());
         boolean scheduledDay = !attendanceCalendarService.scheduleFor(record.getEmployee().getId(),
             record.getWorkDate(), record.getWorkDate()).isEmpty();
         int paidLeaveMinutes = record.getLeaveRequest() != null
@@ -414,14 +426,13 @@ public class AttendanceService {
                 "Overtime multiplier must be at least " + minimumMultiplier + " on " + record.getWorkDate(),
                 "overtimeMultiplier");
         }
-        Account approver = request.overtimeMinutes() > 0 ? findCurrentAccount() : null;
-
+        // The decision is recorded even for zero minutes, so the day leaves the approver's queue.
         Instant now = Instant.now();
         record.setOvertimeMinutes(request.overtimeMinutes());
         record.setOvertimeMultiplier(request.overtimeMultiplier());
         record.setOvertimeTaxExempt(request.overtimeMinutes() > 0 && Boolean.TRUE.equals(request.taxExempt()));
-        record.setOvertimeApprovedByAccount(approver);
-        record.setOvertimeApprovedAt(approver != null ? now : null);
+        record.setOvertimeApprovedByAccount(findCurrentAccount());
+        record.setOvertimeApprovedAt(now);
         record.setUpdatedAt(now);
 
         return toResponse(record);
@@ -517,6 +528,46 @@ public class AttendanceService {
             throw new ForbiddenException(ErrorCode.FORBIDDEN, "Employee is outside the assigned scope");
         }
         employeeAccessScopeService.requireEmployeeAccess(employeeId, scopedPermission);
+    }
+
+    /** The days with extra time, of the employees whose overtime the signed-in employee decides. */
+    @PreAuthorize("isAuthenticated()")
+    @Transactional(readOnly = true)
+    public List<OvertimeApprovalItemResponse> listOvertimeAwaitingDecision() {
+        Employee self = findCurrentAccount().getEmployee();
+        if (self == null) {
+            return List.of();
+        }
+        List<Employee> employed = employeeRepository.findByEmploymentStatusInAndDeletedAtIsNull(
+            List.of(EmploymentStatus.PROBATION, EmploymentStatus.ACTIVE));
+        List<Long> employeeIds = new ArrayList<>(approverResolver.decidedBy(self, employed));
+        if (approverResolver.approverFor(self).isEmpty() && approverResolver.isTopManagement(self)) {
+            employeeIds.add(self.getId());
+        }
+        if (employeeIds.isEmpty()) {
+            return List.of();
+        }
+        return attendanceRecordRepository.findOvertimeAwaitingDecision(employeeIds).stream()
+            .map(record -> new OvertimeApprovalItemResponse(
+                toResponse(record),
+                record.getEmployee().getEmployeeCode(),
+                record.getEmployee().getFullName()
+            ))
+            .toList();
+    }
+
+    private void requireOvertimeApprover(Employee employee) {
+        Employee self = findCurrentAccount().getEmployee();
+        if (self == null) {
+            throw new ForbiddenException(ErrorCode.FORBIDDEN, "Only the employee's approver can decide overtime");
+        }
+        Optional<Employee> approver = approverResolver.approverFor(employee);
+        boolean allowed = approver.isPresent()
+            ? approver.get().getId().equals(self.getId())
+            : self.getId().equals(employee.getId()) && approverResolver.isTopManagement(employee);
+        if (!allowed) {
+            throw new ForbiddenException(ErrorCode.FORBIDDEN, "Only the employee's approver can decide overtime");
+        }
     }
 
     private AttendanceRecordResponse toResponse(AttendanceRecord record) {

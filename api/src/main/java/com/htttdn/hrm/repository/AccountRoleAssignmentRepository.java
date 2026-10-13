@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 
@@ -46,6 +47,21 @@ public interface AccountRoleAssignmentRepository extends JpaRepository<AccountRo
     List<AccountRoleAssignment> findByAccountIdAndRoleIdAndRevokedAtIsNull(Long accountId, Long roleId);
 
     List<AccountRoleAssignment> findByAccountIdAndRevokedAtIsNull(Long accountId);
+
+    /** Accounts holding the role on the date, earliest assignment first. */
+    @Query("""
+        SELECT assignment.account
+        FROM AccountRoleAssignment assignment
+        WHERE assignment.role.code = :roleCode
+          AND assignment.revokedAt IS NULL
+          AND assignment.effectiveFrom <= :date
+          AND (assignment.effectiveTo IS NULL OR assignment.effectiveTo >= :date)
+        ORDER BY assignment.effectiveFrom
+        """)
+    List<Account> findAccountsHoldingRole(
+        @Param("roleCode") String roleCode,
+        @Param("date") LocalDate date
+    );
 
     boolean existsByAccountIdAndRoleCodeAndRevokedAtIsNull(Long accountId, String roleCode);
 

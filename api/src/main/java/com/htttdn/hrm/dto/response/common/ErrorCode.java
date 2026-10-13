@@ -42,6 +42,7 @@ public enum ErrorCode {
     // Request / leave
     REQUEST_NOT_FOUND,
     REQUEST_ALREADY_PROCESSED,
+    APPROVER_NOT_FOUND,
     INSUFFICIENT_LEAVE_BALANCE,
 
     // Attendance

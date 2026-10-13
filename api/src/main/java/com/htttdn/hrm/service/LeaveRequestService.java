@@ -1,7 +1,6 @@
 package com.htttdn.hrm.service;
 
 import java.time.Instant;
-import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +17,7 @@ import com.htttdn.hrm.entity.enums.LeaveSalaryTreatment;
 import com.htttdn.hrm.entity.enums.LeaveType;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
+import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
@@ -35,7 +35,8 @@ public class LeaveRequestService {
 
     private static final String REQUEST_READ = "request.read";
     private static final String REQUEST_MANAGE = "request.manage";
-    private static final String REQUEST_APPROVE = "request.approve";
+    private static final String SELF_RECORDED_COMMENT =
+        "Tự ghi nhận: đơn nghỉ của Giám đốc hoặc Chủ sở hữu không cần duyệt";
 
     private final LeaveRequestRepository leaveRequestRepository;
     private final EmployeeRepository employeeRepository;
@@ -44,6 +45,7 @@ public class LeaveRequestService {
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final AttendanceService attendanceService;
     private final LeaveEntitlementService leaveEntitlementService;
+    private final ApproverResolver approverResolver;
 
     public LeaveRequestService(
         LeaveRequestRepository leaveRequestRepository,
@@ -52,7 +54,8 @@ public class LeaveRequestService {
         CurrentAccountProvider currentAccountProvider,
         EmployeeAccessScopeService employeeAccessScopeService,
         AttendanceService attendanceService,
-        LeaveEntitlementService leaveEntitlementService
+        LeaveEntitlementService leaveEntitlementService,
+        ApproverResolver approverResolver
     ) {
         this.leaveRequestRepository = leaveRequestRepository;
         this.employeeRepository = employeeRepository;
@@ -61,6 +64,7 @@ public class LeaveRequestService {
         this.employeeAccessScopeService = employeeAccessScopeService;
         this.attendanceService = attendanceService;
         this.leaveEntitlementService = leaveEntitlementService;
+        this.approverResolver = approverResolver;
     }
 
     @PreAuthorize("hasAnyAuthority('request.self.create', 'request.manage')")
@@ -87,6 +91,10 @@ public class LeaveRequestService {
         return toView(leaveRequestRepository.save(request));
     }
 
+    /**
+     * Sends a draft to its approver: the direct manager, else the Director, else the Company Owner.
+     * Leave of the Director or Company Owner needs no approval and is recorded as approved at once.
+     */
     @PreAuthorize("hasAnyAuthority('request.self.create', 'request.manage')")
     public LeaveRequestView submit(Long requestId) {
         LeaveRequest request = findForUpdate(requestId);
@@ -94,8 +102,18 @@ public class LeaveRequestService {
         requireStatus(request, LeaveRequestStatus.DRAFT);
 
         Instant now = Instant.now();
-        request.setStatus(LeaveRequestStatus.PENDING);
         request.setSubmittedAt(now);
+        if (approverResolver.isTopManagement(request.getEmployee())) {
+            applyApproval(request, SELF_RECORDED_COMMENT);
+            return toView(request);
+        }
+        Employee approver = approverResolver.approverFor(request.getEmployee())
+            .orElseThrow(() -> new ConflictException(
+                ErrorCode.APPROVER_NOT_FOUND,
+                "Nobody can approve this leave: set a manager, or appoint a Director or Company Owner"
+            ));
+        request.setApproverEmployee(approver);
+        request.setStatus(LeaveRequestStatus.PENDING);
         request.setUpdatedAt(now);
         return toView(request);
     }
@@ -113,13 +131,17 @@ public class LeaveRequestService {
         return toView(request);
     }
 
-    @PreAuthorize("hasAuthority('request.approve')")
+    /** Only the approver fixed at submission decides; nobody is ever the approver of their own leave. */
+    @PreAuthorize("isAuthenticated()")
     public LeaveRequestView approve(Long requestId, String reviewComment) {
         LeaveRequest request = findForUpdate(requestId);
-        employeeAccessScopeService.requireEmployeeAccess(
-            request.getEmployee().getId(), REQUEST_APPROVE
-        );
+        requireApprover(request);
         requireStatus(request, LeaveRequestStatus.PENDING);
+        applyApproval(request, reviewComment);
+        return toView(request);
+    }
+
+    private void applyApproval(LeaveRequest request, String reviewComment) {
         if (leaveRequestRepository.existsApprovedOverlap(
             request.getEmployee().getId(),
             request.getStartAt(),
@@ -135,15 +157,12 @@ public class LeaveRequestService {
         leaveEntitlementService.requireSufficientBalance(request);
         attendanceService.applyApprovedLeave(request);
         review(request, LeaveRequestStatus.APPROVED, reviewComment);
-        return toView(request);
     }
 
-    @PreAuthorize("hasAuthority('request.approve')")
+    @PreAuthorize("isAuthenticated()")
     public LeaveRequestView reject(Long requestId, String reviewComment) {
         LeaveRequest request = findForUpdate(requestId);
-        employeeAccessScopeService.requireEmployeeAccess(
-            request.getEmployee().getId(), REQUEST_APPROVE
-        );
+        requireApprover(request);
         requireStatus(request, LeaveRequestStatus.PENDING);
         review(request, LeaveRequestStatus.REJECTED, reviewComment);
         return toView(request);
@@ -154,7 +173,9 @@ public class LeaveRequestService {
     public LeaveRequestView getById(Long requestId) {
         LeaveRequest request = leaveRequestRepository.findById(requestId)
             .orElseThrow(() -> requestNotFound(requestId));
-        requireSelfOrScopedAccess(request.getEmployee().getId(), REQUEST_READ);
+        if (!isApprover(request)) {
+            requireSelfOrScopedAccess(request.getEmployee().getId(), REQUEST_READ);
+        }
         return toView(request);
     }
 
@@ -168,17 +189,16 @@ public class LeaveRequestService {
             .map(this::toView);
     }
 
-    @PreAuthorize("hasAuthority('request.approve')")
+    /** The pending requests waiting for the signed-in employee's decision. */
+    @PreAuthorize("isAuthenticated()")
     @Transactional(readOnly = true)
     public Page<LeaveRequestView> listPending(Pageable pageable) {
-        List<Long> employeeIds = employeeRepository.findAll(
-            employeeAccessScopeService.accessibleEmployees(REQUEST_APPROVE)).stream()
-            .map(Employee::getId).toList();
-        if (employeeIds.isEmpty()) {
+        Employee self = findCurrentAccount().getEmployee();
+        if (self == null) {
             return Page.empty(pageable);
         }
-        return leaveRequestRepository.findByEmployeeIdInAndStatusOrderByCreatedAtDesc(
-            employeeIds, LeaveRequestStatus.PENDING, pageable).map(this::toView);
+        return leaveRequestRepository.findByApproverEmployeeIdAndStatusOrderByCreatedAtDesc(
+            self.getId(), LeaveRequestStatus.PENDING, pageable).map(this::toView);
     }
 
     private void validateCommand(CreateLeaveCommand command) {
@@ -218,6 +238,18 @@ public class LeaveRequestService {
         request.setReviewComment(normalizeNullable(reviewComment));
         request.setReviewedAt(now);
         request.setUpdatedAt(now);
+    }
+
+    private boolean isApprover(LeaveRequest request) {
+        Employee self = findCurrentAccount().getEmployee();
+        return self != null && request.getApproverEmployee() != null
+            && request.getApproverEmployee().getId().equals(self.getId());
+    }
+
+    private void requireApprover(LeaveRequest request) {
+        if (!isApprover(request)) {
+            throw new ForbiddenException(ErrorCode.FORBIDDEN, "Only the approver of this leave request can decide it");
+        }
     }
 
     private void requireSelfOrScopedAccess(Long employeeId, String scopedPermission) {
@@ -289,6 +321,8 @@ public class LeaveRequestService {
             request.getAttachmentUrl(),
             request.getStatus(),
             request.getSubmittedAt(),
+            request.getApproverEmployee() == null ? null : request.getApproverEmployee().getId(),
+            request.getApproverEmployee() == null ? null : request.getApproverEmployee().getFullName(),
             request.getReviewedByAccount() == null ? null : request.getReviewedByAccount().getId(),
             request.getReviewComment(),
             request.getReviewedAt(),
@@ -321,6 +355,9 @@ public class LeaveRequestService {
         @Nullable String attachmentUrl,
         LeaveRequestStatus status,
         @Nullable Instant submittedAt,
+        /** Who decides the request; null for drafts and for the Director's or Company Owner's own leave. */
+        @Nullable Long approverEmployeeId,
+        @Nullable String approverEmployeeName,
         @Nullable Long reviewedByAccountId,
         @Nullable String reviewComment,
         @Nullable Instant reviewedAt,

@@ -228,6 +228,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/attendance/overtime/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listOvertimeAwaitingDecision"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/attendance/prepare": {
         parameters: {
             query?: never;
@@ -1659,6 +1675,11 @@ export interface components {
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
+        ApiResultListOvertimeApprovalItemResponse: {
+            data: components["schemas"]["OvertimeApprovalItemResponse"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
         ApiResultListPayrollAdjustmentResponse: {
             data: components["schemas"]["PayrollAdjustmentResponse"][] | null;
             error: components["schemas"]["ErrorDetail"] | null;
@@ -2302,6 +2323,9 @@ export interface components {
             updatedAt: string;
         };
         LeaveRequestView: {
+            /** Format: int64 */
+            approverEmployeeId: number | null;
+            approverEmployeeName: string | null;
             attachmentUrl: string | null;
             /** Format: date-time */
             createdAt: string;
@@ -2373,6 +2397,11 @@ export interface components {
             name: string;
             /** @enum {string} */
             unitType: "BOARD" | "DEPARTMENT" | "TEAM";
+        };
+        OvertimeApprovalItemResponse: {
+            employeeCode: string;
+            employeeName: string;
+            record: components["schemas"]["AttendanceRecordResponse"];
         };
         Pageable: {
             /** Format: int32 */
@@ -3325,6 +3354,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultPagedResultAttendanceRecordResponse"];
+                };
+            };
+        };
+    };
+    listOvertimeAwaitingDecision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListOvertimeApprovalItemResponse"];
                 };
             };
         };
