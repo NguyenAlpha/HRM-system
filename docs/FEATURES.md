@@ -22,7 +22,7 @@ Quy ước trạng thái:
 | Ca làm việc và ngày lễ | Đủ | `/organization`, `/attendance` |
 | Nghỉ phép | Đủ | `/leave-requests` |
 | Chấm công | Đủ | `/attendance` |
-| Lương, bảo hiểm, thuế | Đủ | `/payslips`, `/allowances` |
+| Lương, bảo hiểm, thuế | Đủ | `/payroll`, `/payslips`, `/allowances`, thẻ lương trong `/employees/{id}` |
 | Báo cáo | Đủ | `/reports/workforce` |
 
 Toàn hệ thống có 27 controller, 47 permission trên 8 module, 7 system role và 32 bảng database.
@@ -237,6 +237,7 @@ kỳ ngoài phạm vi sẽ dừng với lỗi yêu cầu bổ sung quy tắc.
 | Xác nhận đã trả | `POST .../mark-paid` | `payroll.mark_paid` |
 | Khóa kỳ | `POST .../lock` | `payroll.lock` |
 | Xuất bảng lương của kỳ ra Excel | `GET /api/payroll/periods/{id}/export` | `report.payroll.read` |
+| Xem bảng lương của kỳ | `GET /api/payroll/periods/{id}/payslips` | `report.payroll.read` |
 | Thưởng, phụ cấp khác, khấu trừ nhập tay theo kỳ | `/api/payroll/periods/{id}/adjustments` | `payroll.calculate` |
 | Xem phiếu lương | `/api/payroll/payslips/{id}`, `/employees/{id}/payslips` | `payroll.self.read` |
 

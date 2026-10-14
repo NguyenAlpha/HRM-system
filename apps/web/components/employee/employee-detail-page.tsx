@@ -22,6 +22,7 @@ import {
 
 import { ErrorAlert } from "@/components/common/list-controls"
 import { usePortalSession } from "@/components/portal/portal-shell"
+import { EmployeeCompensationCard } from "@/components/employee/employee-compensation-card"
 import { EmployeeDeleteDialog } from "@/components/employee/employee-delete-dialog"
 import { EmployeeEditDialog } from "@/components/employee/employee-edit-dialog"
 import { EmployeeEmploymentEndDialog } from "@/components/employee/employee-employment-end-dialog"
@@ -179,9 +180,9 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
   const backHref = canReadEmployeeList ? `${PORTAL_CONFIG[portal].pagePrefix}/employees` : PORTAL_CONFIG[portal].homePath
   // The account detail page needs account.read; without it the shortcut is hidden.
   const canReadAccount = session.account.permissions.some((permission) => permission.code === "account.read")
-  const canManageCompensation = session.account.permissions.some(
-    (permission) => permission.code === "compensation.manage",
-  )
+  const permissions = new Set(session.account.permissions.map((permission) => permission.code))
+  // Salary data goes through the HRM workforce proxy, so the Admin Console never shows it.
+  const canReadCompensation = portal === "hrm" && permissions.has("compensation.read")
   const canReadSensitive = session.account.permissions.some(
     (permission) => permission.code === "employee.sensitive.read",
   )
@@ -319,17 +320,6 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
             </Card>
 
             <div className="grid content-start gap-4">
-              {canManageCompensation && <Card>
-                <CardHeader>
-                  <CardTitle>Lương nhân viên</CardTitle>
-                  <CardDescription>Nhập mức lương ban đầu hoặc cập nhật lịch sử lương.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button nativeButton={false} render={<Link href={`/payslips?employeeCode=${detail.employeeCode}&effectiveFrom=${detail.hireDate}`} />}>
-                    Nhập và xem lương
-                  </Button>
-                </CardContent>
-              </Card>}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2"><KeyRound /> Tài khoản</CardTitle>
@@ -378,6 +368,12 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
                 </CardContent>
               </Card>
             </div>
+
+            {canReadCompensation && (
+              <div className="lg:col-span-3">
+                <EmployeeCompensationCard employeeId={detail.id} hireDate={detail.hireDate} permissions={permissions} />
+              </div>
+            )}
 
             {canReadSensitive && (
               <div className="lg:col-span-3">
