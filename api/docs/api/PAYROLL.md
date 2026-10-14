@@ -50,6 +50,7 @@ Role hệ thống mặc định:
 | `HR_MANAGER` | `compensation.read`, `compensation.manage`, `report.payroll.read` |
 | `PAYROLL_ACCOUNTANT` | `compensation.read`, `compensation.manage`, `payroll.calculate`, `report.payroll.read` |
 | `PAYROLL_APPROVER` | `payroll.approve`, `payroll.mark_paid`, `payroll.lock`, `report.payroll.read` |
+| `DIRECTOR`, `COMPANY_OWNER` | `compensation.read` (chỉ xem) |
 
 ### Vòng đời kỳ lương
 

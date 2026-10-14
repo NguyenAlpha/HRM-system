@@ -109,7 +109,8 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "request.read",
             "request.final_approve",
             "organization.read",
-            "organization.change.approve"
+            "organization.change.approve",
+            "compensation.read"
         )),
         role("COMPANY_OWNER", List.of(
             "employee.list.read",
@@ -124,6 +125,7 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "organization.read",
             "organization.manage",
             "holiday.read",
+            "compensation.read",
             "account.read",
             "account.manage",
             "account.provision",
