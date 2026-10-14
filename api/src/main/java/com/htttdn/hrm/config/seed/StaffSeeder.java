@@ -35,6 +35,9 @@ import com.htttdn.hrm.entity.WorkShift;
 import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.entity.enums.EmploymentType;
+import com.htttdn.hrm.entity.enums.LeaveRequestStatus;
+import com.htttdn.hrm.entity.enums.LeaveType;
+import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
@@ -73,6 +76,10 @@ import tools.jackson.databind.json.JsonMapper;
  * <p>{@code manager} là username của quản lý trực tiếp; người đó phải đã có (ví dụ {@code owner})
  * hoặc đứng trước trong file. Phần tử có username đã tồn tại được bỏ qua, nên chạy lại seed không
  * tạo trùng. Seeder chạy sau Company Owner (order 510).
+ *
+ * <p>{@code leaves}, {@code absences} và {@code missingPunches} là đơn nghỉ và các ngày công khác
+ * thường, ghi đè lên chấm công (xem {@link SeedLeaveWriter}); {@code roleRequests} là yêu cầu cấp
+ * role HR gửi cho account này (xem {@link SeedRoleRequestWriter}).
  */
 @Component
 @Order(510)
@@ -93,7 +100,44 @@ public class StaffSeeder implements ApplicationRunner {
         List<AssignmentEntry> assignments,
         List<SalaryEntry> salaries,
         List<PayrollProfileEntry> payrollProfiles,
-        List<DependentEntry> dependents
+        List<DependentEntry> dependents,
+        List<LeaveEntry> leaves,
+        List<AbsenceEntry> absences,
+        List<Integer> missingPunches,
+        List<RoleRequestEntry> roleRequests
+    ) {
+    }
+
+    /**
+     * A leave request of {@code days} work days (default 1) from {@code workDaysAgo}; {@code part} is
+     * {@code MORNING} or {@code AFTERNOON} for half a day. {@code comment} is the approver's.
+     */
+    record LeaveEntry(
+        int workDaysAgo,
+        Integer days,
+        String part,
+        LeaveType type,
+        LeaveRequestStatus status,
+        String reason,
+        String comment
+    ) {
+    }
+
+    /** A day the employee did not come and HR recorded as an unauthorized absence. */
+    record AbsenceEntry(int workDaysAgo, String note) {
+    }
+
+    /** A role HR asked for this account; {@code note} is the Owner's decision or the cancellation reason. */
+    record RoleRequestEntry(
+        String role,
+        RoleScopeType scope,
+        String requestedBy,
+        RoleAssignmentRequestStatus status,
+        int daysAgo,
+        int effectiveFromDaysAgo,
+        Integer effectiveToDaysAgo,
+        String reason,
+        String note
     ) {
     }
 
@@ -150,6 +194,8 @@ public class StaffSeeder implements ApplicationRunner {
     private final JobPositionRepository jobPositionRepository;
     private final WorkShiftRepository workShiftRepository;
     private final SeedAttendanceWriter seedAttendanceWriter;
+    private final SeedLeaveWriter seedLeaveWriter;
+    private final SeedRoleRequestWriter seedRoleRequestWriter;
     private final EmployeeCodeGenerator employeeCodeGenerator;
     private final PasswordEncoder passwordEncoder;
     private final JsonMapper jsonMapper;
@@ -170,6 +216,8 @@ public class StaffSeeder implements ApplicationRunner {
         JobPositionRepository jobPositionRepository,
         WorkShiftRepository workShiftRepository,
         SeedAttendanceWriter seedAttendanceWriter,
+        SeedLeaveWriter seedLeaveWriter,
+        SeedRoleRequestWriter seedRoleRequestWriter,
         EmployeeCodeGenerator employeeCodeGenerator,
         PasswordEncoder passwordEncoder,
         JsonMapper jsonMapper,
@@ -189,6 +237,8 @@ public class StaffSeeder implements ApplicationRunner {
         this.jobPositionRepository = jobPositionRepository;
         this.workShiftRepository = workShiftRepository;
         this.seedAttendanceWriter = seedAttendanceWriter;
+        this.seedLeaveWriter = seedLeaveWriter;
+        this.seedRoleRequestWriter = seedRoleRequestWriter;
         this.employeeCodeGenerator = employeeCodeGenerator;
         this.passwordEncoder = passwordEncoder;
         this.jsonMapper = jsonMapper;
@@ -290,8 +340,19 @@ public class StaffSeeder implements ApplicationRunner {
 
         int attendanceDays = seedAttendanceWriter.write(employee, startDate, LocalDate.now(ZONE).minusDays(1),
             date -> overtimeApproverOn(assignments, date));
-        log.info("Staff seed: '{}' created as {} with {} attendance days",
-            entry.username(), employee.getEmployeeCode(), attendanceDays);
+        int leaves = seedLeaveWriter.write(entry, employee, date -> overtimeApproverOn(assignments, date), reconciler(entry));
+        seedRoleRequestWriter.write(entry, account, current.unit(), current.location(), owner);
+        log.info("Staff seed: '{}' created as {} with {} attendance days and {} leave requests",
+            entry.username(), employee.getEmployeeCode(), attendanceDays, leaves);
+    }
+
+    /** The HR Manager who records unauthorized absences; only needed when the entry has some. */
+    private Account reconciler(StaffEntry entry) {
+        if (entry.absences() == null || entry.absences().isEmpty()) {
+            return null;
+        }
+        return accountRoleAssignmentRepository.findAccountsHoldingRole("HR_MANAGER", LocalDate.now(ZONE)).stream().findFirst()
+            .orElseThrow(() -> new IllegalStateException("Staff seed: no HR Manager to record absences of '" + entry.username() + "'"));
     }
 
     /** The direct manager of the period holding {@code date}, else the Director, as ApproverResolver decides today. */
