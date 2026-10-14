@@ -1,3 +1,7 @@
-import { WorkforcePage } from "@/components/workforce/workforce-page"
+import type { Metadata } from "next"
 
-export default function Page() { return <WorkforcePage section="attendance" /> }
+import { AttendancePage } from "@/components/workforce/attendance-page"
+
+export const metadata: Metadata = { title: "Chấm công" }
+
+export default function Page() { return <AttendancePage /> }

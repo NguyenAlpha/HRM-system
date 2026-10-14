@@ -33,7 +33,7 @@ Menu chia nhóm Nhân sự, Chấm công & nghỉ, Lương, Báo cáo, Hệ th�
 | `/employees`, `/employees/{employeeId}` | Hồ sơ, dữ liệu nhạy cảm, phân công, vòng đời nhân viên (nghỉ việc, xóa mềm hồ sơ tạo nhầm) và thẻ Lương & bảo hiểm (lương cơ bản, hồ sơ bảo hiểm/thuế, người phụ thuộc, phiếu lương) |
 | `/accounts` | Danh sách tài khoản; gửi lại lời mời, đặt lại mật khẩu, vô hiệu hóa và kích hoạt lại |
 | `/organization` | Đơn vị tổ chức, địa điểm, vị trí, ca làm và ngày lễ công ty theo năm (thêm bằng popup, xóa qua menu "…") |
-| `/attendance` | Vào/ra ca, bảng công tháng, dialog điều chỉnh công và duyệt tăng ca; ngày lễ tô màu trên lịch |
+| `/attendance` | Bảng công tổng hợp (`attendance.read`): lưới nhân viên × ngày có ký hiệu X/M/P/V/L…, cột tổng công, muộn, nghỉ, vắng, tăng ca, cần xử lý; lọc theo tên/mã và đơn vị; bấm một dòng để xem lịch công, nhập giờ vào/ra, ghi vắng, duyệt tăng ca của người đó. Bảng công của tôi cho mọi nhân viên |
 | `/leave-requests` | Tab Đơn của tôi (phép năm còn lại, đơn của mình), Chờ tôi duyệt (đơn mình là người duyệt), Tất cả đơn (`request.read`: tìm, lọc trạng thái/loại/đơn vị/tháng, phân trang). Tạo đơn bằng popup, chọn nhanh cả ngày/sáng/chiều, lưu nháp hoặc gửi duyệt ngay; HR tạo hộ theo mã nhân viên |
 | `/payroll` | Danh sách kỳ lương kèm số nhân viên, tổng thu nhập, tổng thực nhận; tạo kỳ mới |
 | `/payroll/{periodId}` | Bảng lương của kỳ: các bước quy trình, tổng hợp, bảng mọi nhân viên có dòng tổng, tính/duyệt/trả/khóa/hủy, khoản cộng/trừ, xuất Excel, phiếu từng người |
