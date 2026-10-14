@@ -8,6 +8,7 @@ import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,7 +33,9 @@ import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.enums.PayrollAdjustmentType;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
+import com.htttdn.hrm.repository.PayrollInsuranceRuleRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
+import com.htttdn.hrm.repository.PayrollTaxRuleRepository;
 import com.htttdn.hrm.service.PayrollAdjustmentService;
 import com.htttdn.hrm.service.PayrollService;
 
@@ -47,6 +50,9 @@ import jakarta.persistence.EntityManager;
  * <p>Tháng trước mới tính xong, chờ duyệt; tháng trước nữa đã trả, chưa khóa; các tháng còn lại đã
  * khóa. Lương tháng M được tính đầu tháng M+1 và trả ngày 10. Mốc thời gian được lùi về các ngày đó.
  * Kỳ đã duyệt khóa chấm công của tháng, như khi dùng thật.
+ *
+ * <p>Tháng chưa có quy tắc thuế hoặc bảo hiểm (trước 2020, hoặc sau năm cuối đã nạp trong
+ * {@code V8__reference_data.sql}) được bỏ qua kèm cảnh báo, nên seed không lỗi dù chạy nhiều năm sau.
  *
  * <p>Chỉ chạy khi chưa có kỳ lương nào, cần kế toán lương và người duyệt lương; thiếu thì bỏ qua.
  * Chạy sau nhân sự seed (order 520).
@@ -77,6 +83,8 @@ public class PayrollSeeder implements ApplicationRunner {
     private final PayrollService payrollService;
     private final PayrollAdjustmentService payrollAdjustmentService;
     private final PayrollPeriodRepository payrollPeriodRepository;
+    private final PayrollInsuranceRuleRepository insuranceRuleRepository;
+    private final PayrollTaxRuleRepository taxRuleRepository;
     private final AccountRepository accountRepository;
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final EntityManager entityManager;
@@ -87,6 +95,8 @@ public class PayrollSeeder implements ApplicationRunner {
         PayrollService payrollService,
         PayrollAdjustmentService payrollAdjustmentService,
         PayrollPeriodRepository payrollPeriodRepository,
+        PayrollInsuranceRuleRepository insuranceRuleRepository,
+        PayrollTaxRuleRepository taxRuleRepository,
         AccountRepository accountRepository,
         AccountRoleAssignmentRepository accountRoleAssignmentRepository,
         EntityManager entityManager,
@@ -96,6 +106,8 @@ public class PayrollSeeder implements ApplicationRunner {
         this.payrollService = payrollService;
         this.payrollAdjustmentService = payrollAdjustmentService;
         this.payrollPeriodRepository = payrollPeriodRepository;
+        this.insuranceRuleRepository = insuranceRuleRepository;
+        this.taxRuleRepository = taxRuleRepository;
         this.accountRepository = accountRepository;
         this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
         this.entityManager = entityManager;
@@ -121,14 +133,26 @@ public class PayrollSeeder implements ApplicationRunner {
         LocalDate firstHire = jdbc.queryForObject("SELECT min(hire_date) FROM employees WHERE deleted_at IS NULL", LocalDate.class);
         YearMonth firstMonth = YearMonth.from(firstHire);
         int months = (int) firstMonth.until(currentMonth, ChronoUnit.MONTHS);
+        List<YearMonth> uncovered = new ArrayList<>();
+        int seeded = 0;
         try {
             for (int monthsAgo = months; monthsAgo >= 1; monthsAgo--) {
-                seedPeriod(currentMonth.minusMonths(monthsAgo), monthsAgo, calculator.get(), approver.get());
+                YearMonth month = currentMonth.minusMonths(monthsAgo);
+                if (!rulesCover(month)) {
+                    uncovered.add(month);
+                    continue;
+                }
+                seedPeriod(month, monthsAgo, calculator.get(), approver.get());
+                seeded++;
             }
         } finally {
             SecurityContextHolder.clearContext();
         }
-        log.info("Payroll seed completed: {} periods from {}", months, firstMonth);
+        if (!uncovered.isEmpty()) {
+            log.warn("Payroll seed skipped {} months without tax or insurance rules ({} to {}); add the rules in"
+                + " V8__reference_data.sql to seed them", uncovered.size(), uncovered.getFirst(), uncovered.getLast());
+        }
+        log.info("Payroll seed completed: {} periods from {}", seeded, firstMonth);
     }
 
     private void seedPeriod(YearMonth month, int monthsAgo, Account calculator, Account approver) {
@@ -157,6 +181,15 @@ public class PayrollSeeder implements ApplicationRunner {
             }
         }
         backdate(periodId, paymentMonth, monthsAgo);
+    }
+
+    /**
+     * Whether payroll can be calculated for {@code month}: insurance follows the rule on the last day of
+     * the month, tax the rule on the payment date (the 10th of the next month).
+     */
+    private boolean rulesCover(YearMonth month) {
+        return insuranceRuleRepository.findEffective(month.atEndOfMonth()).isPresent()
+            && taxRuleRepository.findEffective(month.plusMonths(1).atDay(10)).isPresent();
     }
 
     /** Moves the period's timestamps to when that payroll was run: created on the 1st, calculated on the 2nd, paid on the 10th. */

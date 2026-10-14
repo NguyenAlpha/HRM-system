@@ -285,6 +285,7 @@ Báo cáo lương chỉ trả số liệu tổng hợp theo khoảng, không tr�
 - Chưa tính phần bảo hiểm doanh nghiệp đóng và tổng chi phí nhân sự; thiết kế để làm sau ở
   [Mở rộng: bảo hiểm doanh nghiệp đóng](extensions/EMPLOYER_INSURANCE.md).
 - Quy tắc thuế và bảo hiểm chỉ nạp từ 2020 đến hết 2026, phải thêm bằng migration khi chính sách đổi.
+  Seed lương bỏ qua (kèm cảnh báo trong log) các tháng chưa có quy tắc, nên vẫn chạy được sau 2026.
 - Phép năm không cộng theo thâm niên (Điều 114) và không chuyển phép dư sang năm sau.
 - Chưa tích hợp máy chấm công vật lý.
 - Chưa có nhật ký audit cho toàn bộ thay đổi dữ liệu.
