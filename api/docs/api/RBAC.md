@@ -749,7 +749,7 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 |:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
 | `payroll.self.read` | ✓ | | | | | | |
 | `payroll.self.print` | ✓ | | | | | | |
-| `compensation.read` | | ✓ | ✓ | | | | |
+| `compensation.read` | | ✓ | ✓ | | ✓ | ✓ | |
 | `compensation.manage` | | ✓ | ✓ | | | | |
 | `payroll.calculate` | | | ✓ | | | | |
 | `payroll.approve` | | | | ✓ | | | |
@@ -781,6 +781,8 @@ Một vài ranh giới dễ hiểu nhầm:
   dữ liệu đầu vào cho lương, kế toán tính và người khác duyệt.
 - `PAYROLL_ACCOUNTANT` tính lương nhưng không duyệt; `PAYROLL_APPROVER` duyệt, xác nhận trả và
   khóa kỳ nhưng không tính. Hai role này tách nhau có chủ đích.
+- `DIRECTOR` và `COMPANY_OWNER` có `compensation.read` để xem lương và chính sách phụ cấp, nhưng
+  không có `compensation.manage`: HR và kế toán nhập, ban giám đốc chỉ xem.
 - `DIRECTOR` phê duyệt `employee.lifecycle.approve`, `request.final_approve` và
   `organization.change.approve` nhưng không quản trị account hay RBAC.
 - `SYSTEM_ADMIN` quản trị *truy cập* (tài khoản, role, permission override, danh mục tổ chức) và chỉ *xem* hồ sơ nhân sự; nghiệp vụ nhân sự, chấm công, lương, báo cáo và dữ liệu nhạy cảm thuộc các role nghiệp vụ. Tài khoản đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được khóa, phát mã kích hoạt, đổi role hoặc permission override, và tài khoản đang giữ `SYSTEM_ADMIN` cũng chỉ một System Admin khác được làm các việc đó (mở khóa vẫn được phép), nên người quản trị truy cập không chiếm được quyền chủ doanh nghiệp và ngược lại. Không ai được đổi permission override trên chính account của mình.

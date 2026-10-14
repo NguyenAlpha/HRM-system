@@ -22,7 +22,7 @@ Phụ cấp chức vụ đặt theo chức danh, phụ cấp thâm niên đặt 
 | `GET /api/compensation/seniority-allowances` | `compensation.read` | Các bậc phụ cấp thâm niên |
 | `POST /api/compensation/seniority-allowances` | `compensation.manage` | Đặt bậc phụ cấp thâm niên mới |
 
-Chính sách áp dụng chung cho cả công ty nên chỉ xét permission, không xét scope. Role mặc định có `compensation.read` và `compensation.manage`: `HR_MANAGER`, `PAYROLL_ACCOUNTANT`. Thiếu token trả `401 UNAUTHORIZED`, thiếu permission trả `403 FORBIDDEN`.
+Chính sách áp dụng chung cho cả công ty nên chỉ xét permission, không xét scope. Role mặc định có cả `compensation.read` và `compensation.manage`: `HR_MANAGER`, `PAYROLL_ACCOUNTANT`; `DIRECTOR` và `COMPANY_OWNER` chỉ có `compensation.read` (xem). Thiếu token trả `401 UNAUTHORIZED`, thiếu permission trả `403 FORBIDDEN`.
 
 ---
 
