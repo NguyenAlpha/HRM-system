@@ -44,7 +44,8 @@ import com.htttdn.hrm.service.EmployeeCodeGenerator;
 
 /**
  * Khởi tạo Company Owner mẫu: nhân viên, account đã kích hoạt, role {@code COMPANY_OWNER},
- * {@code DIRECTOR} và {@code EMPLOYEE}, cùng phân công chính tại Ban giám đốc / Trụ sở chính.
+ * {@code DIRECTOR}, {@code PAYROLL_APPROVER} và {@code EMPLOYEE}, cùng phân công chính tại Ban giám
+ * đốc / Trụ sở chính. Owner duyệt, xác nhận trả và khóa kỳ lương do kế toán tính.
  *
  * <p>Dữ liệu giống kết quả của luồng bootstrap Company Owner trong Admin Console, nhưng account
  * được kích hoạt sẵn với mật khẩu cố định để dùng trong môi trường phát triển. Ngày tạo, ngày vào
@@ -71,6 +72,7 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
     private static final String FULL_NAME = "Nguyễn Văn An";
     private static final String COMPANY_OWNER_ROLE = "COMPANY_OWNER";
     private static final String DIRECTOR_ROLE = "DIRECTOR";
+    private static final String PAYROLL_APPROVER_ROLE = "PAYROLL_APPROVER";
     private static final String EMPLOYEE_ROLE = "EMPLOYEE";
     private static final String SEED_REASON = "Seeded company owner";
     private static final BigDecimal BASE_SALARY = new BigDecimal("50000000");
@@ -140,6 +142,7 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
 
         Role ownerRole = findRequiredRole(COMPANY_OWNER_ROLE);
         Role directorRole = findRequiredRole(DIRECTOR_ROLE);
+        Role payrollApproverRole = findRequiredRole(PAYROLL_APPROVER_ROLE);
         Role employeeRole = findRequiredRole(EMPLOYEE_ROLE);
         if (!accountRoleAssignmentRepository.findByRoleIdAndRevokedAtIsNull(ownerRole.getId()).isEmpty()) {
             log.info("Company owner seed completed: existing company owner retained");
@@ -179,6 +182,7 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
 
         assignRole(account, ownerRole, RoleScopeType.COMPANY, startDate, createdAt);
         assignRole(account, directorRole, RoleScopeType.COMPANY, startDate, createdAt);
+        assignRole(account, payrollApproverRole, RoleScopeType.COMPANY, startDate, createdAt);
         assignRole(account, employeeRole, RoleScopeType.SELF, startDate, createdAt);
         createPrimaryAssignment(employee, account, startDate, createdAt);
         employeeSalaryHistoryRepository.save(EmployeeSalaryHistory.builder()
