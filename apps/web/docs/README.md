@@ -24,9 +24,12 @@ Trang `/activate` nằm ngoài hai khu vực trên: không cần đăng nhập, 
 
 ### HRM Workspace
 
+Menu chia nhóm Nhân sự, Chấm công & nghỉ, Lương, Báo cáo, Hệ thống; mục và nhóm chỉ hiện khi tài khoản có quyền. Nút đăng xuất nằm ở chân menu.
+
 | Route | Nội dung |
 |:------|:---------|
-| `/dashboard` | Tổng quan phiên đăng nhập và lối tắt nghiệp vụ |
+| `/dashboard` | Tổng quan theo quyền: chấm công hôm nay, phép còn lại, đơn đang mở, lương gần nhất; việc chờ mình duyệt; kỳ lương gần nhất; quân số, nhân viên mới, người đang thử việc |
+| `/profile` | Hồ sơ của tôi (chỉ đọc, qua `GET /api/employees/me`), vai trò đang có và đổi mật khẩu |
 | `/employees`, `/employees/{employeeId}` | Hồ sơ, dữ liệu nhạy cảm, phân công, vòng đời nhân viên (nghỉ việc, xóa mềm hồ sơ tạo nhầm) và thẻ Lương & bảo hiểm (lương cơ bản, hồ sơ bảo hiểm/thuế, người phụ thuộc, phiếu lương) |
 | `/accounts` | Danh sách tài khoản; gửi lại lời mời, đặt lại mật khẩu, vô hiệu hóa và kích hoạt lại |
 | `/organization` | Đơn vị tổ chức, địa điểm, vị trí và ca làm |
