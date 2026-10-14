@@ -1,3 +1,9 @@
-import { WorkforcePage } from "@/components/workforce/workforce-page"
+import type { Metadata } from "next"
 
-export default function Page() { return <WorkforcePage section="payroll" /> }
+import { MyPayslipsPage } from "@/components/payroll/my-payslips-page"
+
+export const metadata: Metadata = { title: "Phiếu lương của tôi" }
+
+export default function Page() {
+  return <MyPayslipsPage />
+}

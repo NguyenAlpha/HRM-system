@@ -117,7 +117,7 @@ Dự án chưa cấu hình test runner tự động cho web. Trước khi bàn g
 5. Refresh phiên và kiểm tra thông tin tài khoản vẫn tải được.
 6. Logout và kiểm tra route được bảo vệ chuyển về đúng trang đăng nhập.
 7. Đổi mật khẩu và kiểm tra phiên bị xóa, người dùng được đưa về trang đăng nhập.
-8. Với tài khoản HR, mở `/employees`, `/organization`, `/attendance`, `/leave-requests` và `/payslips`; kiểm tra dữ liệu tải đúng theo permission.
+8. Với tài khoản HR, mở `/employees`, `/organization`, `/attendance`, `/leave-requests`, `/payroll` và `/payslips`; kiểm tra dữ liệu tải đúng theo permission.
 9. Chuẩn bị một tháng công, xử lý bản ghi `MISSING_PUNCH`, sau đó tính thử kỳ lương tương ứng.
 10. Với tài khoản không có quyền, kiểm tra thao tác bị chặn bởi API kể cả khi gọi trực tiếp BFF.
 
@@ -135,7 +135,8 @@ app/
 │   ├── organization/         # Tổ chức và ca làm
 │   ├── attendance/           # Chấm công
 │   ├── leave-requests/       # Đơn nghỉ
-│   ├── payslips/             # Bảo hiểm, thuế và lương
+│   ├── payroll/              # Kỳ lương và bảng lương của kỳ
+│   ├── payslips/             # Phiếu lương của tôi
 │   ├── reports/workforce/    # Báo cáo nhân sự
 │   └── rbac/, role-grant/, role-requests/
 ├── admin/login/              # Trang đăng nhập Admin, nằm ngoài khung Admin

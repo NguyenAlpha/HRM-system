@@ -27,12 +27,14 @@ Trang `/activate` nằm ngoài hai khu vực trên: không cần đăng nhập, 
 | Route | Nội dung |
 |:------|:---------|
 | `/dashboard` | Tổng quan phiên đăng nhập và lối tắt nghiệp vụ |
-| `/employees`, `/employees/{employeeId}` | Hồ sơ, dữ liệu nhạy cảm, phân công, lương và vòng đời nhân viên (nghỉ việc, xóa mềm hồ sơ tạo nhầm) |
+| `/employees`, `/employees/{employeeId}` | Hồ sơ, dữ liệu nhạy cảm, phân công, vòng đời nhân viên (nghỉ việc, xóa mềm hồ sơ tạo nhầm) và thẻ Lương & bảo hiểm (lương cơ bản, hồ sơ bảo hiểm/thuế, người phụ thuộc, phiếu lương) |
 | `/accounts` | Danh sách tài khoản; gửi lại lời mời, đặt lại mật khẩu, vô hiệu hóa và kích hoạt lại |
 | `/organization` | Đơn vị tổ chức, địa điểm, vị trí và ca làm |
 | `/attendance` | Vào/ra ca, bảng công tháng, dialog điều chỉnh công và duyệt tăng ca, ngày lễ công ty |
 | `/leave-requests` | Số dư phép năm, đơn nghỉ (chọn nhanh cả ngày/sáng/chiều), duyệt kèm ghi chú, điều chỉnh hạn mức và chốt phép năm |
-| `/payslips` | Kỳ lương (tính, duyệt, trả, khóa, hủy, khoản cộng/trừ, xuất Excel), phiếu lương chi tiết, lương cơ bản, bảo hiểm và người phụ thuộc |
+| `/payroll` | Danh sách kỳ lương kèm số nhân viên, tổng thu nhập, tổng thực nhận; tạo kỳ mới |
+| `/payroll/{periodId}` | Bảng lương của kỳ: các bước quy trình, tổng hợp, bảng mọi nhân viên có dòng tổng, tính/duyệt/trả/khóa/hủy, khoản cộng/trừ, xuất Excel, phiếu từng người |
+| `/payslips` | Phiếu lương của chính người đăng nhập (từ kỳ đã duyệt) |
 | `/allowances` | Chính sách phụ cấp chung: phụ cấp chức vụ theo chức danh (lịch sử, đổi mức) và các bậc phụ cấp thâm niên |
 | `/reports/workforce` | Báo cáo nhân sự, thâm niên và lương cơ bản |
 | `/rbac`, `/role-grant`, `/role-requests` | Quản lý quyền nghiệp vụ theo permission được cấp |

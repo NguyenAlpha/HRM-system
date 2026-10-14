@@ -412,6 +412,7 @@ export async function handleWorkforceRequest(request: Request, segments: string[
     { pattern: /^payroll\/periods$/, methods: ["GET", "POST"] },
     { pattern: /^payroll\/periods\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^payroll\/periods\/[1-9]\d*\/export$/, methods: ["GET"] },
+    { pattern: /^payroll\/periods\/[1-9]\d*\/payslips$/, methods: ["GET"] },
     { pattern: /^payroll\/periods\/[1-9]\d*\/adjustments$/, methods: ["GET", "POST"] },
     { pattern: /^payroll\/periods\/[1-9]\d*\/adjustments\/[1-9]\d*$/, methods: ["DELETE"] },
     { pattern: /^payroll\/periods\/[1-9]\d*\/(?:calculate|approve|mark-paid|lock|cancel)$/, methods: ["POST"] },

@@ -37,9 +37,9 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
     ["attendance.self.read", "attendance.read", "attendance.manage"].includes(permission.code))
   const canUseLeave = account.permissions.some((permission) =>
     ["request.self.read", "request.read", "request.self.create"].includes(permission.code))
-  const canUsePayroll = account.permissions.some((permission) =>
-    ["payroll.self.read", "report.payroll.read", "payroll.calculate", "compensation.read", "compensation.manage"].includes(permission.code))
-
+  const canReadPayrollPeriods = account.permissions.some((permission) => permission.code === "report.payroll.read")
+  const canReadOwnPayslips = !!account.employee
+    && account.permissions.some((permission) => permission.code === "payroll.self.read")
   const canReadCompensation = account.permissions.some((permission) => permission.code === "compensation.read")
 
   const home = PORTAL_CONFIG[portal].homePath
@@ -68,7 +68,8 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
       [canReadReports, "Báo cáo nhân sự", "/reports/workforce"],
       [canUseAttendance, "Chấm công", "/attendance"],
       [canUseLeave, "Đơn từ", "/leave-requests"],
-      [canUsePayroll, "Phiếu lương", "/payslips"],
+      [canReadPayrollPeriods, "Kỳ lương", "/payroll"],
+      [canReadOwnPayslips, "Phiếu lương", "/payslips"],
       [canReadCompensation, "Chính sách phụ cấp", "/allowances"],
     ])
 
