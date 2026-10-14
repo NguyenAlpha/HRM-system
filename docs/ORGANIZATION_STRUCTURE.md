@@ -302,7 +302,9 @@ duyệt, xác nhận đã trả và khóa kỳ; mỗi nhân viên xem phiếu c�
 
 `PayrollSeeder` chạy đúng vòng đó qua các service lương (đóng vai `accountant` rồi `owner`) cho mọi
 tháng từ tháng nhân viên đầu tiên vào làm (Company Owner, khoảng 2 năm trước) đến tháng trước, rồi lùi mốc thời gian về lúc làm lương thật: lương tháng M tạo ngày 1,
-tính ngày 2, duyệt ngày 4, trả và nộp thuế ngày 10, khóa ngày 20 của tháng M+1.
+tính ngày 2, duyệt ngày 4, trả và nộp thuế ngày 10, khóa ngày 20 của tháng M+1. Tháng chưa có quy
+tắc thuế hoặc bảo hiểm (trước 2020, hoặc sau năm cuối nạp trong `V8__reference_data.sql`) được bỏ
+qua kèm cảnh báo trong log, nên chạy seed nhiều năm sau vẫn không lỗi; muốn có các kỳ đó thì nạp thêm quy tắc.
 
 | Kỳ | Trạng thái |
 |---|---|
