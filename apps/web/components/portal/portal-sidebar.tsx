@@ -39,6 +39,9 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
   const canReadReports = account.permissions.some(
     (permission) => permission.code === "report.hr.read" || permission.code === "report.payroll.read",
   )
+  const canReadHrReports = account.permissions.some((permission) => permission.code === "report.hr.read")
+  const canReadPayrollReports = account.permissions.some((permission) => permission.code === "report.payroll.read")
+  const canReadAttendance = account.permissions.some((permission) => permission.code === "attendance.read")
   const canUseAttendance = account.permissions.some((permission) =>
     ["attendance.self.read", "attendance.read", "attendance.manage"].includes(permission.code))
   const canUseLeave = account.permissions.some((permission) =>
@@ -95,7 +98,11 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
         [canReadCompensation, "Chính sách phụ cấp", "/allowances"],
       ]),
       group("Báo cáo", [
-        [canReadReports, "Báo cáo nhân sự", "/reports/workforce"],
+        [canReadReports, "Cơ cấu nhân sự", "/reports/workforce"],
+        [canReadHrReports, "Biến động nhân sự", "/reports/turnover"],
+        [canReadAttendance, "Tổng hợp chấm công", "/reports/attendance"],
+        [canReadHrReports, "Phép năm", "/reports/leave"],
+        [canReadPayrollReports, "Quỹ lương & thuế", "/reports/payroll"],
       ]),
       group("Hệ thống", [
         [canReadAccounts, "Tài khoản", "/accounts"],

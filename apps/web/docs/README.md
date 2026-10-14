@@ -39,7 +39,13 @@ Menu chia nhóm Nhân sự, Chấm công & nghỉ, Lương, Báo cáo, Hệ th�
 | `/payroll/{periodId}` | Bảng lương của kỳ: các bước quy trình, tổng hợp, bảng mọi nhân viên có dòng tổng, tính/duyệt/trả/khóa/hủy, khoản cộng/trừ, xuất Excel, phiếu từng người |
 | `/payslips` | Phiếu lương của chính người đăng nhập (từ kỳ đã duyệt) |
 | `/allowances` | Chính sách phụ cấp chung: phụ cấp chức vụ theo chức danh (lịch sử, đổi mức) và các bậc phụ cấp thâm niên |
-| `/reports/workforce` | Báo cáo nhân sự, thâm niên và lương cơ bản |
+| `/reports/workforce` | Cơ cấu nhân sự: trình độ, thâm niên và phân bố lương cơ bản |
+| `/reports/turnover` | Biến động nhân sự theo năm (`report.hr.read`): quân số đầu/cuối, vào làm, nghỉ việc, tỷ lệ nghỉ việc theo tháng, biểu đồ quân số và danh sách vào/nghỉ |
+| `/reports/attendance` | Tổng hợp chấm công tháng (`attendance.read`): công tính lương, muộn/sớm, nghỉ, vắng, tăng ca, thiếu chấm công của từng người; sắp xếp theo vấn đề |
+| `/reports/leave` | Phép năm (`report.hr.read`): được cấp, đã dùng, chờ duyệt, còn lại của từng người |
+| `/reports/payroll` | Quỹ lương, bảo hiểm người lao động và thuế TNCN theo tháng và theo đơn vị (`report.payroll.read`, scope COMPANY) |
+
+Mọi bảng báo cáo có nút **Xuất CSV** (UTF-8 có BOM, mở thẳng bằng Excel).
 | `/rbac`, `/role-grant`, `/role-requests` | Quản lý quyền nghiệp vụ theo permission được cấp |
 
 ### Admin Console

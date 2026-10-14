@@ -19,7 +19,7 @@ export function WorkforceReportPage() {
   return (
     <>
       <PageHeader
-        title="Báo cáo nhân sự"
+        title="Cơ cấu nhân sự"
         description="Thống kê trình độ học vấn, mức lương cơ bản và thâm niên theo phạm vi được phân quyền."
         backToOverview
       />
