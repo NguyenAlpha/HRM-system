@@ -73,6 +73,9 @@ class ApprovalChainIntegrationTest {
 
     @BeforeEach
     void seed() {
+        // The payroll seed approves every past month, which freezes its attendance; this rolled-back
+        // transaction cancels the period holding the test day so leave and overtime can still change it.
+        jdbc.update("UPDATE payroll_periods SET status = 'CANCELLED' WHERE ? BETWEEN period_start AND period_end", LEAVE_DAY);
         String suffix = suffix();
         unitId = id("INSERT INTO organization_units(code, name, unit_type) VALUES (?, 'Approval unit', 'DEPARTMENT') RETURNING id",
             "APU_" + suffix);

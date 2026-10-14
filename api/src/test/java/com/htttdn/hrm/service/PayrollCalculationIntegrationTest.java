@@ -58,6 +58,9 @@ class PayrollCalculationIntegrationTest {
         // Payroll covers every employee employed in the period, including seeded ones such as the
         // company owner; hide them inside this rolled-back transaction so only the test employee counts.
         jdbc.update("UPDATE employees SET deleted_at = now() WHERE deleted_at IS NULL");
+        // The payroll seed may already hold a period for this month; cancelling it frees the month the same way.
+        jdbc.update("UPDATE payroll_periods SET status = 'CANCELLED' WHERE year = ? AND month = ?",
+            PERIOD_START.getYear(), PERIOD_START.getMonthValue());
 
         String suffix = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         accountantId = jdbc.queryForObject("""

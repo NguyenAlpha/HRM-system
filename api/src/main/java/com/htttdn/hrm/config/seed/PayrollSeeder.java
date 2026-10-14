@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,7 +39,8 @@ import com.htttdn.hrm.service.PayrollService;
 import jakarta.persistence.EntityManager;
 
 /**
- * Khởi tạo các kỳ lương của {@value #MONTHS} tháng trước tháng chạy seed, qua đúng engine tính lương:
+ * Khởi tạo kỳ lương mọi tháng từ tháng nhân viên đầu tiên vào làm đến tháng trước tháng chạy seed,
+ * qua đúng engine tính lương:
  * kế toán lương (role {@code PAYROLL_ACCOUNTANT}) tạo kỳ, nhập khoản điều chỉnh và tính; Company Owner
  * (giữ {@code PAYROLL_APPROVER}) duyệt, xác nhận đã trả và khóa.
  *
@@ -53,7 +55,6 @@ import jakarta.persistence.EntityManager;
 @Order(520)
 public class PayrollSeeder implements ApplicationRunner {
 
-    static final int MONTHS = 6;
     private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final List<String> CALCULATOR_AUTHORITIES = List.of("payroll.calculate");
     private static final List<String> APPROVER_AUTHORITIES = List.of("payroll.approve", "payroll.mark_paid", "payroll.lock");
@@ -117,14 +118,17 @@ public class PayrollSeeder implements ApplicationRunner {
         }
 
         YearMonth currentMonth = YearMonth.from(today);
+        LocalDate firstHire = jdbc.queryForObject("SELECT min(hire_date) FROM employees WHERE deleted_at IS NULL", LocalDate.class);
+        YearMonth firstMonth = YearMonth.from(firstHire);
+        int months = (int) firstMonth.until(currentMonth, ChronoUnit.MONTHS);
         try {
-            for (int monthsAgo = MONTHS; monthsAgo >= 1; monthsAgo--) {
+            for (int monthsAgo = months; monthsAgo >= 1; monthsAgo--) {
                 seedPeriod(currentMonth.minusMonths(monthsAgo), monthsAgo, calculator.get(), approver.get());
             }
         } finally {
             SecurityContextHolder.clearContext();
         }
-        log.info("Payroll seed completed: {} periods from {}", MONTHS, currentMonth.minusMonths(MONTHS));
+        log.info("Payroll seed completed: {} periods from {}", months, firstMonth);
     }
 
     private void seedPeriod(YearMonth month, int monthsAgo, Account calculator, Account approver) {
