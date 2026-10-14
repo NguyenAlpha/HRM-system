@@ -5,7 +5,7 @@ Các endpoint trả envelope `ApiResult`. Trừ đăng nhập, refresh và kích
 ## Danh mục hiện hành
 
 Cột thứ hai liệt kê đúng path prefix do tài liệu đó mô tả, dùng để tra ngược từ một endpoint về
-tài liệu tương ứng. Toàn bộ 26 controller đang chạy đều nằm trong bảng. Muốn xem bức tranh tính
+tài liệu tương ứng. Toàn bộ 27 controller đang chạy đều nằm trong bảng. Muốn xem bức tranh tính
 năng theo module thay vì theo endpoint, đọc [docs/FEATURES.md](../../../docs/FEATURES.md).
 
 | Tài liệu | Path prefix |
@@ -22,10 +22,12 @@ năng theo module thay vì theo endpoint, đọc [docs/FEATURES.md](../../../doc
 | [WORK_SHIFT.md](WORK_SHIFT.md) | `/api/work-shifts/*` |
 | [ATTENDANCE.md](ATTENDANCE.md) | `/api/attendance/*`, `/api/leave-requests/*`, `/api/company-holidays/*`, `/api/leave-entitlements/*` |
 | [PAYROLL.md](PAYROLL.md) | `/api/payroll/*`, `/api/compensation/employees/{employeeId}/*` |
+| [ALLOWANCE.md](ALLOWANCE.md) | `/api/compensation/job-positions/{jobPositionId}/allowances`, `/api/compensation/seniority-allowances` |
 | [REPORT.md](REPORT.md) | `/api/reports/hr/*`, `/api/reports/payroll/*` |
 
 Hai chỗ dễ tra nhầm: `role-assignments` và `permission-overrides` nằm dưới `/api/accounts` nhưng
-có tài liệu riêng, còn `/api/compensation/*` thuộc `PAYROLL.md` chứ không phải `EMPLOYEE.md`.
+có tài liệu riêng, còn `/api/compensation/employees/*` thuộc `PAYROLL.md` chứ không phải `EMPLOYEE.md`; chính sách
+phụ cấp chung của `/api/compensation/*` nằm ở `ALLOWANCE.md`.
 
 ## Quy ước chung
 
