@@ -42,5 +42,26 @@
       { "monthsAgo": 4, "insuranceSalary": 8000000, "wageRegion": 1 },
       { "monthsAgo": 1, "insuranceSalary": 8500000, "wageRegion": 1 }
     ]
+  },
+  {
+    "username": "accountant",
+    "password": "password",
+    "fullName": "Phạm Thu Hà",
+    "email": "accountant@hrm.local",
+    "roles": { "PAYROLL_ACCOUNTANT": "COMPANY", "EMPLOYEE": "SELF" },
+    "assignments": [
+      { "monthsAgo": 14, "organizationUnit": "ACCOUNTING", "position": "PAYROLL_ACCOUNTANT", "manager": "owner" }
+    ],
+    "salaries": [
+      { "monthsAgo": 14, "baseSalary": 11000000, "reason": "Mức lương ban đầu" },
+      { "monthsAgo": 3, "baseSalary": 12500000, "reason": "Điều chỉnh lương định kỳ" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 14, "insuranceSalary": 11000000, "wageRegion": 1 },
+      { "monthsAgo": 3, "insuranceSalary": 12500000, "wageRegion": 1 }
+    ],
+    "dependents": [
+      { "fullName": "Lý Minh An", "identifier": "001225000301", "monthsAgo": 6 }
+    ]
   }
 ]

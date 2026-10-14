@@ -187,7 +187,7 @@ Dữ liệu seed được chia theo trách nhiệm và chạy theo `@Order`. M�
 | 200 | `PermissionSeeder` | `RBAC_SEED_ENABLED` | Danh mục 47 permission |
 | 300 | `RolePermissionSeeder` | `RBAC_SEED_ENABLED` | Permission mặc định của từng system role |
 | 400 | `SystemAdminSeeder` | `ADMIN_SEED_ENABLED` (mặc định bật) | Account bootstrap và gán role `SYSTEM_ADMIN` đã có sẵn |
-| 500 | `CompanyOwnerSeeder` | `OWNER_SEED_ENABLED` (mặc định bật) | Company Owner `owner`/`password` (role `COMPANY_OWNER`, `DIRECTOR`, `EMPLOYEE`), phân công tại `BOARD`, lương cơ bản 50.000.000, hồ sơ bảo hiểm/thuế (đóng trên 50.000.000, vùng 1), 2 con phụ thuộc, chấm công 2 năm |
+| 500 | `CompanyOwnerSeeder` | `OWNER_SEED_ENABLED` (mặc định bật) | Company Owner `owner`/`password` (role `COMPANY_OWNER`, `DIRECTOR`, `PAYROLL_APPROVER`, `EMPLOYEE`), phân công tại `BOARD`, lương cơ bản 50.000.000, hồ sơ bảo hiểm/thuế (đóng trên 50.000.000, vùng 1), 2 con phụ thuộc, chấm công 2 năm |
 | 505 | `AllowancePolicySeeder` | `COMPANY_SEED_ENABLED` | Phụ cấp chức vụ theo tháng (`DIRECTOR` 10 tr, `OPERATIONS_MANAGER` 5 tr, `BRANCH_MANAGER` 4 tr, `WAREHOUSE_SUPERVISOR` 3 tr, `TEAM_LEAD` 2 tr, `PAYROLL_ACCOUNTANT` và `HR_SPECIALIST` 1 tr) và phụ cấp thâm niên (1–3 năm 3%, 3–5 năm 5%, từ 5 năm 7% lương cơ bản); Company Owner duyệt, hiệu lực từ ngày Owner vào làm. Không có Owner thì bỏ qua |
 | 510 | `StaffSeeder` | `STAFF_SEED_ENABLED` (mặc định bật), file `STAFF_SEED_FILE` | Nhân sự khai báo trong file JSON, mặc định `api/src/main/resources/seed/staff.json` |
 
@@ -248,10 +248,15 @@ qua, nên thêm người vào file rồi khởi động lại chỉ tạo ngư�
   `monthsAgo` bắt đầu (không trước ngày vào làm), còn hiệu lực đến nay.
 
 File mặc định có `hr` (Nhân viên rồi Chuyên viên nhân sự, HR_MANAGER, quản lý là `owner`; lương
-9 → 12 triệu khi lên Chuyên viên → 13,5 triệu; 1 người phụ thuộc từ 12 tháng trước) và `employee`
+9 → 12 triệu khi lên Chuyên viên → 13,5 triệu; 1 người phụ thuộc từ 12 tháng trước), `employee`
 (chuyển từ Vận hành ở `BRANCH-01`, vùng 2, sang phòng Nhân sự ở trụ sở, vùng 1, quản lý là `hr`; lương
-8 triệu giữ nguyên khi chuyển, 8,5 triệu từ 1 tháng trước; không có người phụ thuộc), cùng mật khẩu
+8 triệu giữ nguyên khi chuyển, 8,5 triệu từ 1 tháng trước; không có người phụ thuộc) và `accountant`
+(Kế toán tiền lương ở phòng Kế toán từ 14 tháng trước, role `PAYROLL_ACCOUNTANT`, quản lý là `owner`;
+lương 11 → 12,5 triệu từ 3 tháng trước; 1 con phụ thuộc từ 6 tháng trước), cùng mật khẩu
 `password`. Lương đóng bảo hiểm bằng lương cơ bản.
+
+Vòng lương trên dữ liệu seed: `accountant` tạo kỳ và tính lương, `owner` (giữ `PAYROLL_APPROVER`)
+duyệt, xác nhận đã trả và khóa kỳ; mỗi nhân viên xem phiếu của mình từ khi kỳ được duyệt.
 
 Đây là dữ liệu thật đang có, khác với bộ dữ liệu đề xuất ở mục 6: seeder chưa tạo các nhóm cấp
 `TEAM`, các chức danh `HR_HEAD`/`HR_INTERN`, role `DEPARTMENT_MANAGER` hay các account theo phòng
