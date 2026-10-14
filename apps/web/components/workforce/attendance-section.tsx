@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { CalendarDays, CalendarPlus, Clock, List, Loader2, LogIn, Trash2, UserX, Zap, type LucideIcon } from "lucide-react"
+import { CalendarDays, CalendarPlus, Clock, List, Loader2, LogIn, UserX, Zap, type LucideIcon } from "lucide-react"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { Badge } from "@/components/ui/badge"
@@ -123,7 +123,6 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
   const canReadAttendance = permissions.has("attendance.self.read") || permissions.has("attendance.read")
   const canManage = permissions.has("attendance.manage")
   const canReadHolidays = permissions.has("holiday.read")
-  const canManageHolidays = permissions.has("organization.manage")
 
   const [rows, setRows] = useState<AttendanceRecord[]>([])
   const [holidays, setHolidays] = useState<CompanyHoliday[]>([])
@@ -236,10 +235,6 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
           <Legend />
         </CardContent>
       </Card>
-
-      {canReadHolidays && (
-        <HolidayCard holidays={holidays} canManage={canManageHolidays} busy={busy} run={run} />
-      )}
 
       {selected && (
         <DayDialog day={selected} actions={actions} onClose={() => setSelected(null)} />
@@ -521,60 +516,6 @@ function Legend() {
         <li key={tone} className="flex items-center gap-1.5"><span className={`size-2.5 rounded-full ${dot}`} />{label}</li>
       ))}
     </ul>
-  )
-}
-
-function HolidayCard({ holidays, canManage, busy, run }: {
-  holidays: CompanyHoliday[]
-  canManage: boolean
-  busy: boolean
-  run: (success: string, action: () => Promise<unknown>) => Promise<boolean>
-}) {
-  const [date, setDate] = useState("")
-  const [name, setName] = useState("")
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Ngày lễ công ty trong tháng</CardTitle>
-        <CardDescription>Ngày lễ không tính là ngày làm việc; thêm hoặc xóa ngày lễ đưa kỳ lương đã tính về nháp.</CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-3">
-        {holidays.length === 0 && <p className="text-sm text-muted-foreground">Không có ngày lễ trong tháng.</p>}
-        <ul className="grid gap-2">
-          {holidays.map((holiday) => (
-            <li key={holiday.id} className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
-              <span><span className="font-medium">{holiday.holidayDate}</span> · {holiday.name}</span>
-              {canManage && (
-                <Button type="button" variant="ghost" size="icon-sm" aria-label={`Xóa ngày lễ ${holiday.name}`} disabled={busy}
-                  className="text-muted-foreground hover:text-destructive"
-                  onClick={() => void run("Đã xóa ngày lễ", () => workforceApi(`company-holidays/${holiday.id}`, "DELETE"))}>
-                  <Trash2 />
-                </Button>
-              )}
-            </li>
-          ))}
-        </ul>
-        {canManage && (
-          <form className="flex flex-wrap items-end gap-2" onSubmit={(event) => {
-            event.preventDefault()
-            void run("Đã thêm ngày lễ", () => workforceApi("company-holidays", "POST",
-              { date, name: name.trim() } satisfies WorkforceBody["CompanyHolidayRequest"]))
-              .then((ok) => { if (ok) { setDate(""); setName("") } })
-          }}>
-            <div className="grid gap-1.5">
-              <Label htmlFor="holiday-date">Ngày</Label>
-              <Input id="holiday-date" type="date" required value={date} onChange={(event) => setDate(event.target.value)} />
-            </div>
-            <div className="grid min-w-56 flex-1 gap-1.5">
-              <Label htmlFor="holiday-name">Tên ngày lễ</Label>
-              <Input id="holiday-name" required maxLength={150} value={name} onChange={(event) => setName(event.target.value)} />
-            </div>
-            <Button type="submit" disabled={busy || !date || !name.trim()}><CalendarPlus /> Thêm ngày lễ</Button>
-          </form>
-        )}
-      </CardContent>
-    </Card>
   )
 }
 

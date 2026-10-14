@@ -1,12 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Briefcase, Building2, CalendarClock, Clock, MapPin } from "lucide-react"
+import { Briefcase, Building2, CalendarClock, CalendarHeart, Clock, MapPin } from "lucide-react"
 
+import { CompanyHolidayManager } from "@/components/organization/company-holiday-manager"
 import { JobPositionManager } from "@/components/organization/job-position-manager"
 import { OrganizationUnitManager } from "@/components/organization/organization-unit-manager"
 import { WorkLocationManager } from "@/components/organization/work-location-manager"
 import { WorkShiftManager } from "@/components/organization/work-shift-manager"
+import { usePortalSession } from "@/components/portal/portal-shell"
 import {
   Card,
   CardContent,
@@ -20,12 +22,16 @@ import { EMPLOYMENT_TYPES, EMPLOYMENT_TYPE_LABELS } from "@/lib/employee"
 
 export function OrganizationReferenceManager({ portal, onSessionExpired }: { portal: Portal; onSessionExpired: () => void }) {
   const [tab, setTab] = useState("units")
+  const { session } = usePortalSession()
+  const has = (code: string) => session.account.permissions.some((permission) => permission.code === code)
+  // Holidays go through the HRM workforce proxy, so the Admin Console does not list them.
+  const canReadHolidays = portal === "hrm" && has("holiday.read")
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Danh mục tổ chức</CardTitle>
-        <CardDescription>Quản lý đơn vị tổ chức, địa điểm làm việc, vị trí công việc, ca làm việc và hình thức làm việc.</CardDescription>
+        <CardDescription>Quản lý đơn vị tổ chức, địa điểm làm việc, vị trí công việc, ca làm việc, ngày lễ và hình thức làm việc.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         <Tabs value={tab} onValueChange={setTab}>
@@ -34,6 +40,7 @@ export function OrganizationReferenceManager({ portal, onSessionExpired }: { por
             <TabsTrigger value="locations"><MapPin /> Địa điểm làm việc</TabsTrigger>
             <TabsTrigger value="positions"><Briefcase /> Vị trí công việc</TabsTrigger>
             <TabsTrigger value="shifts"><CalendarClock /> Ca làm việc</TabsTrigger>
+            {canReadHolidays && <TabsTrigger value="holidays"><CalendarHeart /> Ngày lễ</TabsTrigger>}
             <TabsTrigger value="employment-types"><Clock /> Hình thức làm việc</TabsTrigger>
           </TabsList>
 
@@ -52,6 +59,12 @@ export function OrganizationReferenceManager({ portal, onSessionExpired }: { por
           <TabsContent value="shifts" className="mt-4 grid gap-4">
             <WorkShiftManager portal={portal} onSessionExpired={onSessionExpired} />
           </TabsContent>
+
+          {canReadHolidays && (
+            <TabsContent value="holidays" className="mt-4 grid gap-4">
+              <CompanyHolidayManager canManage={has("organization.manage")} />
+            </TabsContent>
+          )}
 
           <TabsContent value="employment-types" className="mt-4">
             <p className="mb-3 text-xs text-muted-foreground">
