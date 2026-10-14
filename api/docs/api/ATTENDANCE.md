@@ -35,6 +35,7 @@ Quy trình một tháng:
 | `POST /api/leave-requests/{id}/approve` | [Người duyệt](#người-duyệt) đã chốt của đơn | Duyệt đơn `PENDING` và gắn vào bảng công |
 | `POST /api/leave-requests/{id}/reject` | [Người duyệt](#người-duyệt) đã chốt của đơn | Từ chối đơn `PENDING` |
 | `GET /api/leave-requests/{id}` | `request.self.read` (chính mình), người duyệt của đơn, hoặc `request.read` (trong scope) | Chi tiết đơn nghỉ |
+| `GET /api/leave-requests` | `request.read` (trong scope) | Đơn nghỉ của mọi nhân viên trong scope, có lọc và phân trang |
 | `GET /api/leave-requests/employees/{employeeId}` | `request.self.read` (chính mình) hoặc `request.read` (trong scope) | Đơn nghỉ của một nhân viên, có phân trang |
 | `GET /api/leave-requests/pending` | Đăng nhập | Đơn `PENDING` đang chờ người gọi duyệt |
 | `GET /api/leave-entitlements/employees/{employeeId}` | Chính nhân viên đó, hoặc `request.read` (trong scope) | Xem số dư phép năm |
@@ -510,11 +511,24 @@ Nghỉ một phần ngày rồi chấm công phần còn lại không cần đ�
 
 | Endpoint | Ý nghĩa |
 |:---------|:--------|
+| `GET /api/leave-requests` | Đơn của mọi nhân viên trong scope `request.read`, mặc định xếp `startAt` giảm dần |
 | `GET /api/leave-requests/{id}` | Chi tiết đơn; `404 REQUEST_NOT_FOUND` nếu không tồn tại |
 | `GET /api/leave-requests/employees/{employeeId}` | Đơn của một nhân viên, mới nhất trước; `404 EMPLOYEE_NOT_FOUND` nếu nhân viên không tồn tại |
 | `GET /api/leave-requests/pending` | Đơn `PENDING` có `approverEmployeeId` là nhân viên của người gọi |
 
-Hai endpoint danh sách hỗ trợ `page`, `size` (mặc định 20) và trả `PagedResult<LeaveRequestView>`.
+Các endpoint danh sách hỗ trợ `page`, `size` (mặc định 20) và trả `PagedResult<LeaveRequestView>`.
+
+Bộ lọc của `GET /api/leave-requests` (đều tùy chọn):
+
+| Query | Ý nghĩa |
+|:------|:--------|
+| `keyword` | Một phần mã nhân viên, họ tên hoặc email công việc |
+| `organizationUnitId` | Nhân viên có phân công chính hiện tại thuộc đơn vị này |
+| `status`, `leaveType` | Trạng thái và loại đơn |
+| `from`, `to` | Ngày (`YYYY-MM-DD`, giờ Việt Nam); giữ các đơn có giao với khoảng này |
+| `sort` | `startAt`, `createdAt`, `submittedAt` hoặc `status`; trường khác trả `400` |
+
+Đơn `DRAFT` là của riêng người tạo nên không có trong danh sách này.
 
 ---
 

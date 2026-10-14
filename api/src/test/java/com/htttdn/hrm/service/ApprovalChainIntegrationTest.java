@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
@@ -194,6 +195,44 @@ class ApprovalChainIntegrationTest {
         authenticateAs(owner, EMPLOYEE);
         attendanceService.approveOvertime(directorDay, noOvertime);
         attendanceService.approveOvertime(ownerDay, noOvertime);
+    }
+
+    @Test
+    void leaveListShowsSubmittedRequestsInsideTheReadersScopeOnly() {
+        LeaveRequestView pending = submitLeave(staff);
+        authenticateAs(staff, EMPLOYEE);
+        Instant start = calendarService.scheduleFor(staff.employeeId(), LEAVE_DAY.plusDays(1), LEAVE_DAY.plusDays(1))
+            .getFirst().startAt();
+        leaveRequestService.createDraft(new LeaveRequestService.CreateLeaveCommand(
+            staff.employeeId(), LeaveType.UNPAID, null, start, start.plusSeconds(4 * 3600), 240, "Nháp", null));
+
+        Long otherUnitId = id("INSERT INTO organization_units(code, name, unit_type) VALUES (?, 'Other unit', 'DEPARTMENT') RETURNING id",
+            "APO_" + suffix());
+        jdbc.update("""
+            INSERT INTO account_role_assignments(account_id, role_id, scope_type, organization_unit_id, effective_from, granted_by_account_id)
+            SELECT ?, id, 'ORG_UNIT', ?, '2025-01-01', ? FROM roles WHERE code = 'HR_MANAGER'
+            """, hr.accountId(), unitId, creatorAccountId);
+        jdbc.update("""
+            INSERT INTO account_role_assignments(account_id, role_id, scope_type, organization_unit_id, effective_from, granted_by_account_id)
+            SELECT ?, id, 'ORG_UNIT', ?, '2025-01-01', ? FROM roles WHERE code = 'HR_MANAGER'
+            """, manager.accountId(), otherUnitId, creatorAccountId);
+
+        authenticateAs(hr, "request.read");
+        // The draft is the employee's own and stays hidden.
+        assertEquals(List.of(pending.id()), searchIds(null, null, null));
+        assertEquals(List.of(pending.id()), searchIds("approval staff", LeaveRequestStatus.PENDING, LEAVE_DAY));
+        assertEquals(List.of(), searchIds(null, LeaveRequestStatus.APPROVED, null));
+        assertEquals(List.of(), searchIds(null, null, LEAVE_DAY.plusDays(1)));
+
+        authenticateAs(manager, "request.read");
+        assertEquals(List.of(), searchIds(null, null, null));
+    }
+
+    private List<Long> searchIds(String keyword, LeaveRequestStatus status, LocalDate day) {
+        return leaveRequestService.search(
+                new LeaveRequestService.LeaveRequestSearch(keyword, null, status, null, day, day),
+                org.springframework.data.domain.Pageable.unpaged())
+            .map(LeaveRequestView::id).getContent();
     }
 
     private LeaveRequestView submitLeave(Person person) {

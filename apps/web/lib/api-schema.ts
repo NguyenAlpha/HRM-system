@@ -747,7 +747,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["search"];
         put?: never;
         post: operations["create_7"];
         delete?: never;
@@ -4619,6 +4619,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultBalanceView"];
+                };
+            };
+        };
+    };
+    search: {
+        parameters: {
+            query: {
+                keyword?: string;
+                organizationUnitId?: number;
+                status?: "DRAFT" | "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+                leaveType?: "ANNUAL" | "SICK" | "MATERNITY" | "UNPAID" | "OTHER";
+                from?: string;
+                to?: string;
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPagedResultLeaveRequestView"];
                 };
             };
         };
