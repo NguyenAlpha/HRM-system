@@ -4,8 +4,9 @@ import { LeaveRequestsPage } from "@/components/workforce/leave-requests-page"
 
 export const metadata: Metadata = { title: "Đơn nghỉ phép" }
 
-// The dashboard's "Tạo đơn nghỉ" links here with ?new=1 to open the form straight away.
-export default async function Page({ searchParams }: { searchParams: Promise<{ new?: string }> }) {
-  const { new: openCreate } = await searchParams
-  return <LeaveRequestsPage openCreate={openCreate !== undefined} />
+// The dashboard links here with ?new=1 to open the form straight away, or ?tab=approvals for the
+// requests waiting for the signed-in approver.
+export default async function Page({ searchParams }: { searchParams: Promise<{ new?: string; tab?: string }> }) {
+  const { new: openCreate, tab } = await searchParams
+  return <LeaveRequestsPage openCreate={openCreate !== undefined} initialTab={tab === "approvals" ? "approvals" : undefined} />
 }

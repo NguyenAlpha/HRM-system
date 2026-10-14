@@ -126,9 +126,6 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
 
   const [rows, setRows] = useState<AttendanceRecord[]>([])
   const [holidays, setHolidays] = useState<CompanyHoliday[]>([])
-  // Overtime waits for the employee's approver (direct manager, else Director, else Owner), not for a permission.
-  const [overtimeQueue, setOvertimeQueue] = useState<OvertimeApprovalItem[]>([])
-  const [queueHolidays, setQueueHolidays] = useState<CompanyHoliday[]>([])
   const [error, setError] = useState<string | null>(null)
   const [revision, setRevision] = useState(0)
   // Everyone starts on the calendar; HR switches to the list, whose rows carry the actions.
@@ -137,7 +134,6 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
   const [absent, setAbsent] = useState<AttendanceRecord | null>(null)
   // A record to fix, or {} to enter a day that has no record yet (a Sunday or holiday worked).
   const [punching, setPunching] = useState<{ record?: AttendanceRecord } | null>(null)
-  const [approving, setApproving] = useState<AttendanceRecord | null>(null)
   const { busy, run } = useWorkforceAction(() => setRevision((value) => value + 1))
   const { first, last } = monthRange(month)
 
@@ -160,23 +156,6 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
     return () => { active = false }
   }, [employeeId, first, last, canReadAttendance, canReadHolidays, revision])
 
-  useEffect(() => {
-    let active = true
-    workforceApi<OvertimeApprovalItem[]>("attendance/overtime/pending")
-      .then(async (items) => {
-        // The queue spans any month; its holidays set the minimum multiplier of each day.
-        const dates = items.map((item) => item.record.workDate).sort()
-        const loadedHolidays = canReadHolidays && dates.length > 0
-          ? await workforceApi<CompanyHoliday[]>(`company-holidays?from=${dates[0]}&to=${dates[dates.length - 1]}`)
-          : []
-        if (!active) return
-        setOvertimeQueue(items)
-        setQueueHolidays(loadedHolidays)
-      })
-      .catch((caught: unknown) => { if (active) setError(apiErrorMessage(caught)) })
-    return () => { active = false }
-  }, [canReadHolidays, revision])
-
   const days: Day[] = Array.from({ length: Number(last.slice(8, 10)) }, (_, index) => {
     const date = `${month}-${String(index + 1).padStart(2, "0")}`
     return {
@@ -193,10 +172,6 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
 
   return (
     <div className="grid gap-6">
-      {overtimeQueue.length > 0 && (
-        <OvertimeQueueCard items={overtimeQueue} busy={busy} onDecide={setApproving} />
-      )}
-
       <Card>
         <CardHeader>
           <CardTitle>Bảng công tháng {month.slice(5, 7)}/{month.slice(0, 4)}</CardTitle>
@@ -246,10 +221,6 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
       {absent && (
         <AbsenceDialog record={absent} busy={busy} onClose={() => setAbsent(null)}
           onSubmit={(body) => run("Đã ghi vắng không phép", () => workforceApi(`attendance/${absent.id}`, "PUT", body))} />
-      )}
-      {approving && (
-        <OvertimeDialog record={approving} holidays={queueHolidays} busy={busy} onClose={() => setApproving(null)}
-          onSubmit={(body) => run("Đã lưu quyết định tăng ca", () => workforceApi(`attendance/${approving.id}/overtime-approval`, "POST", body))} />
       )}
     </div>
   )
@@ -464,6 +435,29 @@ function DayDialog({ day, actions, onClose }: { day: Day; actions: DayActions; o
   )
 }
 
+/**
+ * Overtime waiting for the signed-in employee's decision, with the decision dialog. Overtime goes to
+ * the employee's approver (direct manager, else Director, else Owner), not to a permission holder.
+ * `holidays` covers the queued days; they set each day's minimum multiplier.
+ */
+export function OvertimeApprovals({ items, holidays, onDecided }: {
+  items: OvertimeApprovalItem[]
+  holidays: CompanyHoliday[]
+  onDecided: () => void
+}) {
+  const [approving, setApproving] = useState<AttendanceRecord | null>(null)
+  const { busy, run } = useWorkforceAction(onDecided)
+  return (
+    <>
+      <OvertimeQueueCard items={items} busy={busy} onDecide={setApproving} />
+      {approving && (
+        <OvertimeDialog record={approving} holidays={holidays} busy={busy} onClose={() => setApproving(null)}
+          onSubmit={(body) => run("Đã lưu quyết định tăng ca", () => workforceApi(`attendance/${approving.id}/overtime-approval`, "POST", body))} />
+      )}
+    </>
+  )
+}
+
 /** Days of extra time waiting for the signed-in approver; each decision, even 0 minutes, clears the day. */
 function OvertimeQueueCard({ items, busy, onDecide }: {
   items: OvertimeApprovalItem[]
@@ -473,7 +467,7 @@ function OvertimeQueueCard({ items, busy, onDecide }: {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Tăng ca chờ bạn quyết định</CardTitle>
+        <CardTitle>Tăng ca chờ bạn duyệt</CardTitle>
         <CardDescription>
           Các ngày làm vượt công thường của nhân viên mà bạn là người duyệt (quản lý trực tiếp, hoặc cấp trên khi chưa có quản lý).
         </CardDescription>
