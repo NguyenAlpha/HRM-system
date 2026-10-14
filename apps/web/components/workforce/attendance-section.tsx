@@ -53,12 +53,12 @@ const STATUS_TONE: Record<AttendanceStatus, "default" | "secondary" | "outline" 
 }
 
 /** Set by an approved leave covering the whole day; HR changes these only through the leave workflow. */
-const FULL_DAY_LEAVE: ReadonlySet<AttendanceStatus> = new Set(["PAID_LEAVE", "UNPAID_LEAVE", "MATERNITY_LEAVE", "SICK_LEAVE"])
+export const FULL_DAY_LEAVE: ReadonlySet<AttendanceStatus> = new Set(["PAID_LEAVE", "UNPAID_LEAVE", "MATERNITY_LEAVE", "SICK_LEAVE"])
 
 /** Colour group of a calendar day; the legend lists them in this order. */
-type DayTone = "present" | "late" | "leave" | "absent" | "missing" | "holiday"
+export type DayTone = "present" | "late" | "leave" | "absent" | "missing" | "holiday"
 
-const DAY_TONES: Record<DayTone, { label: string; cell: string; dot: string }> = {
+export const DAY_TONES: Record<DayTone, { label: string; cell: string; dot: string }> = {
   present: { label: "Đủ công", cell: "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/40", dot: "bg-emerald-500" },
   late: { label: "Muộn / về sớm", cell: "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40", dot: "bg-amber-500" },
   leave: { label: "Nghỉ theo đơn", cell: "border-sky-200 bg-sky-50 dark:border-sky-900 dark:bg-sky-950/40", dot: "bg-sky-500" },
@@ -67,7 +67,7 @@ const DAY_TONES: Record<DayTone, { label: string; cell: string; dot: string }> =
   holiday: { label: "Ngày lễ", cell: "border-violet-200 bg-violet-50 dark:border-violet-900 dark:bg-violet-950/40", dot: "bg-violet-500" },
 }
 
-const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"] as const
+export const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"] as const
 
 const BUSINESS_TIME = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
@@ -80,10 +80,10 @@ const businessTime = (instant: string) => BUSINESS_TIME.format(new Date(instant)
 const businessInstant = (date: string, hhmm: string) => new Date(`${date}T${hhmm}:00+07:00`)
 
 /** 0 = Sunday … 6 = Saturday for a YYYY-MM-DD date. */
-const weekday = (date: string) => new Date(`${date}T00:00:00Z`).getUTCDay()
+export const weekday = (date: string) => new Date(`${date}T00:00:00Z`).getUTCDay()
 
 /** Minutes as hours, e.g. 460 → "7h40", 480 → "8h", 25 → "25 phút". */
-const hours = (minutes: number) => {
+export const hours = (minutes: number) => {
   const h = Math.floor(minutes / 60)
   const m = minutes % 60
   if (h === 0 && m > 0) return `${m} phút`
@@ -91,21 +91,21 @@ const hours = (minutes: number) => {
 }
 
 /** One calendar day of the month with whatever is known about it. */
-type Day = { date: string; record?: AttendanceRecord; holiday?: CompanyHoliday }
+export type Day = { date: string; record?: AttendanceRecord; holiday?: CompanyHoliday }
 
 /** A Sunday or holiday: work then is overtime, so late and early-leave minutes mean nothing. */
-const isOffDay = (day: Day) => weekday(day.date) === 0 || day.holiday !== undefined
+export const isOffDay = (day: Day) => weekday(day.date) === 0 || day.holiday !== undefined
 
 /** A day that has not ended yet; missing punches there are not a problem yet. */
-const isUpcoming = (day: Day) => day.date >= today()
+export const isUpcoming = (day: Day) => day.date >= today()
 
 /** Late or early-leave minutes that count; none on an off day. */
-const lateOrEarly = (day: Day) =>
+export const lateOrEarly = (day: Day) =>
   !day.record || isOffDay(day) ? 0 : day.record.lateMinutes + day.record.earlyLeaveMinutes
 
-const decimal = (value: number) => value.toLocaleString("vi-VN", { maximumFractionDigits: 2 })
+export const decimal = (value: number) => value.toLocaleString("vi-VN", { maximumFractionDigits: 2 })
 
-function dayTone(day: Day): DayTone | null {
+export function dayTone(day: Day): DayTone | null {
   const { record, holiday } = day
   if (!record) return holiday ? "holiday" : null
   if (record.status === "MISSING_PUNCH") return isUpcoming(day) ? null : "missing"
@@ -231,7 +231,7 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
           {view === "calendar"
             ? <CalendarView days={days} onSelect={setSelected} />
             : <ListView days={days} actions={actions}
-                emptyText={employeeId ? "Chưa có dữ liệu công trong tháng." : "Nhập mã nhân viên để xem bảng công."} />}
+                emptyText="Chưa có dữ liệu công trong tháng." />}
           <Legend />
         </CardContent>
       </Card>
@@ -262,22 +262,31 @@ type DayActions = {
   onAbsent?: (record: AttendanceRecord) => void
 }
 
-function MonthSummary({ days }: { days: Day[] }) {
+/** The month's figures of one employee, shared by the summary tiles and the company timesheet. */
+export function monthTotals(days: Day[]) {
   const rows = days.flatMap((day) => day.record ? [day.record] : [])
-  // A Sunday or holiday worked has a record but is not part of the standard month.
-  const standard = days.filter((day) => day.record && !isOffDay(day))
-  const payableDays = rows.reduce((sum, row) => sum + (row.scheduledMinutes > 0 ? row.payableMinutes / row.scheduledMinutes : 0), 0)
   const lateDays = days.filter((day) => lateOrEarly(day) > 0)
-  const lateMinutes = lateDays.reduce((sum, day) => sum + lateOrEarly(day), 0)
-  const leaveDays = rows.filter((row) => FULL_DAY_LEAVE.has(row.status)).length
-  const overtime = rows.reduce((sum, row) => sum + row.overtimeMinutes, 0)
-  const missing = days.filter((day) => day.record?.status === "MISSING_PUNCH" && !isUpcoming(day)).length
+  return {
+    payableDays: rows.reduce((sum, row) => sum + (row.scheduledMinutes > 0 ? row.payableMinutes / row.scheduledMinutes : 0), 0),
+    // A Sunday or holiday worked has a record but is not part of the standard month.
+    standardDays: days.filter((day) => day.record && !isOffDay(day)).length,
+    lateCount: lateDays.length,
+    lateMinutes: lateDays.reduce((sum, day) => sum + lateOrEarly(day), 0),
+    leaveDays: rows.filter((row) => FULL_DAY_LEAVE.has(row.status)).length,
+    absentDays: rows.filter((row) => row.status === "UNAUTHORIZED_ABSENCE").length,
+    overtimeMinutes: rows.reduce((sum, row) => sum + row.overtimeMinutes, 0),
+    missingDays: days.filter((day) => day.record?.status === "MISSING_PUNCH" && !isUpcoming(day)).length,
+  }
+}
+
+function MonthSummary({ days }: { days: Day[] }) {
+  const totals = monthTotals(days)
   const stats: { label: string; value: string; hint?: string; alert?: boolean }[] = [
-    { label: "Công tính lương", value: decimal(payableDays), hint: `/ ${standard.length} ngày` },
-    { label: "Muộn / về sớm", value: `${lateDays.length} lần`, hint: lateMinutes > 0 ? hours(lateMinutes) : undefined },
-    { label: "Nghỉ theo đơn", value: `${leaveDays} ngày` },
-    { label: "Tăng ca đã duyệt", value: hours(overtime) },
-    { label: "Cần xử lý", value: `${missing} ngày`, alert: missing > 0 },
+    { label: "Công tính lương", value: decimal(totals.payableDays), hint: `/ ${totals.standardDays} ngày` },
+    { label: "Muộn / về sớm", value: `${totals.lateCount} lần`, hint: totals.lateMinutes > 0 ? hours(totals.lateMinutes) : undefined },
+    { label: "Nghỉ theo đơn", value: `${totals.leaveDays} ngày` },
+    { label: "Tăng ca đã duyệt", value: hours(totals.overtimeMinutes) },
+    { label: "Cần xử lý", value: `${totals.missingDays} ngày`, alert: totals.missingDays > 0 },
   ]
 
   return (
@@ -509,7 +518,7 @@ function OvertimeQueueCard({ items, busy, onDecide }: {
   )
 }
 
-function Legend() {
+export function Legend() {
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
       {Object.entries(DAY_TONES).map(([tone, { label, dot }]) => (
