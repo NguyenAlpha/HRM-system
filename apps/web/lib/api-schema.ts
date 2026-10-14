@@ -500,6 +500,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/compensation/job-positions/{jobPositionId}/allowances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["positionAllowances"];
+        put?: never;
+        post: operations["setPositionAllowance"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/compensation/seniority-allowances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["seniorityAllowances"];
+        put?: never;
+        post: operations["setSeniorityAllowance"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/employees": {
         parameters: {
             query?: never;
@@ -1695,6 +1727,11 @@ export interface components {
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
+        ApiResultListPositionAllowanceView: {
+            data: components["schemas"]["PositionAllowanceView"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
         ApiResultListProfile: {
             data: components["schemas"]["Profile"][] | null;
             error: components["schemas"]["ErrorDetail"] | null;
@@ -1712,6 +1749,11 @@ export interface components {
         };
         ApiResultListSalaryHistoryView: {
             data: components["schemas"]["SalaryHistoryView"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListSeniorityAllowanceView: {
+            data: components["schemas"]["SeniorityAllowanceView"][] | null;
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
@@ -1810,6 +1852,11 @@ export interface components {
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
+        ApiResultPositionAllowanceView: {
+            data: components["schemas"]["PositionAllowanceView"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
         ApiResultProfile: {
             data: components["schemas"]["Profile"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
@@ -1827,6 +1874,11 @@ export interface components {
         };
         ApiResultSalaryHistoryView: {
             data: components["schemas"]["SalaryHistoryView"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultSeniorityAllowanceView: {
+            data: components["schemas"]["SeniorityAllowanceView"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
@@ -2655,6 +2707,22 @@ export interface components {
             module: "EMPLOYEE" | "ACCOUNT" | "ORGANIZATION" | "REQUEST" | "ATTENDANCE" | "PAYROLL" | "RBAC" | "REPORT";
             name: string;
         };
+        PositionAllowanceView: {
+            /** Format: int64 */
+            approvedByAccountId: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date */
+            effectiveFrom: string;
+            /** Format: date */
+            effectiveTo: string;
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            jobPositionId: number;
+            monthlyAmount: number;
+            note: string;
+        };
         Profile: {
             /** Format: date */
             effectiveFrom: string;
@@ -2815,12 +2883,46 @@ export interface components {
             note: string | null;
             reason: string | null;
         };
+        SeniorityAllowanceView: {
+            /** Format: int64 */
+            approvedByAccountId: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date */
+            effectiveFrom: string;
+            /** Format: date */
+            effectiveTo: string;
+            /** Format: int64 */
+            id: number;
+            /** Format: int32 */
+            maxYears: number;
+            /** Format: int32 */
+            minYears: number;
+            note: string;
+            percentage: number;
+        };
+        SetPositionAllowanceCommand: {
+            /** Format: date */
+            effectiveFrom?: string;
+            monthlyAmount?: number;
+            note?: string;
+        };
         SetSalaryCommand: {
             baseSalary: number;
             /** Format: date */
             effectiveFrom: string;
             note?: string | null;
             reason?: string | null;
+        };
+        SetSeniorityAllowanceCommand: {
+            /** Format: date */
+            effectiveFrom?: string;
+            /** Format: int32 */
+            maxYears?: number;
+            /** Format: int32 */
+            minYears?: number;
+            note?: string;
+            percentage?: number;
         };
         SoftDeleteEmployeeRequest: {
             deletionReason: string;
@@ -3877,6 +3979,98 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultDependent"];
+                };
+            };
+        };
+    };
+    positionAllowances: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobPositionId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListPositionAllowanceView"];
+                };
+            };
+        };
+    };
+    setPositionAllowance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobPositionId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetPositionAllowanceCommand"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPositionAllowanceView"];
+                };
+            };
+        };
+    };
+    seniorityAllowances: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListSeniorityAllowanceView"];
+                };
+            };
+        };
+    };
+    setSeniorityAllowance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetSeniorityAllowanceCommand"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultSeniorityAllowanceView"];
                 };
             };
         };
