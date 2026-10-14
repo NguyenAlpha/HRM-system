@@ -21,11 +21,12 @@ Quy ước trạng thái:
 | Cơ cấu tổ chức | Đủ | `/organization`, `/admin/organization` |
 | Ca làm việc và ngày lễ | Đủ | `/organization` |
 | Nghỉ phép | Đủ | `/leave-requests` |
+| Đơn nghỉ việc | Đủ | `/resignations` |
 | Chấm công | Đủ | `/attendance` |
 | Lương, bảo hiểm, thuế | Đủ | `/payroll`, `/payslips`, `/allowances`, thẻ lương trong `/employees/{id}` |
 | Báo cáo | Đủ | `/reports/workforce`, `/reports/turnover`, `/reports/attendance`, `/reports/leave`, `/reports/payroll` |
 
-Toàn hệ thống có 27 controller, 47 permission trên 8 module, 7 system role và 32 bảng database.
+Toàn hệ thống có 28 controller, 47 permission trên 8 module, 7 system role và 33 bảng database.
 
 ---
 
@@ -99,6 +100,8 @@ Ma trận đầy đủ role → permission: [api/docs/api/RBAC.md](../api/docs/a
 | Cập nhật hồ sơ | `PUT /api/employees/{id}` | `employee.update` |
 | Xác nhận hết thử việc | `POST /api/employees/{id}/confirm` | `employee.probation.confirm` |
 | Kết thúc làm việc: nghỉ việc, chấm dứt hợp đồng, nghỉ hưu | `POST /api/employees/{id}/employment-end` | `employee.lifecycle.manage` |
+| Nộp đơn nghỉ việc, rút đơn chờ duyệt | `POST /api/resignation-requests`, `/{id}/cancel` | `request.self.create`, `request.self.cancel` |
+| Duyệt (có thể đổi ngày làm việc cuối), từ chối đơn nghỉ việc | `POST /api/resignation-requests/{id}/approve`, `/reject` | Người duyệt theo tuyến quản lý |
 | Xóa mềm hồ sơ tạo nhầm | `POST /api/employees/{id}/soft-delete` | `employee.delete` |
 | Xem phân công và lịch sử | `GET /api/employees/{id}/assignments` | `employee.assignment.read` |
 | Điều chuyển, bổ nhiệm | `POST /api/employees/{id}/assignments` | `employee.assignment.manage` |
@@ -108,6 +111,8 @@ Ma trận đầy đủ role → permission: [api/docs/api/RBAC.md](../api/docs/a
 Trạng thái lao động: `PROBATION`, `ACTIVE`, `RESIGNED`, `TERMINATED`, `RETIRED`. Loại hợp đồng:
 `FULL_TIME`, `PART_TIME`, `TEMPORARY`. `PROBATION` → `ACTIVE` qua `confirm`; từ `PROBATION` hoặc
 `ACTIVE` kết thúc sang một trong ba trạng thái `RESIGNED`, `TERMINATED`, `RETIRED` qua `employment-end`.
+Đơn nghỉ việc đã duyệt kết thúc hợp đồng (`RESIGNED`) tự động vào ngày sau ngày làm việc cuối, bằng
+job chạy lúc khởi động và 00:10 mỗi đêm; trước đó nhân viên vẫn đăng nhập và chấm công bình thường.
 
 Phân công giữ cả đơn vị, địa điểm, vị trí, ca làm và người quản lý trực tiếp, có thời gian hiệu
 lực để tính lại đúng dữ liệu lịch sử.

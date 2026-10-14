@@ -91,6 +91,7 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
       group("Chấm công & nghỉ", [
         [canUseAttendance, "Chấm công", "/attendance"],
         [canUseLeave, "Đơn từ", "/leave-requests"],
+        [canUseLeave, "Đơn nghỉ việc", "/resignations"],
       ]),
       group("Lương", [
         [canReadPayrollPeriods, "Kỳ lương", "/payroll"],

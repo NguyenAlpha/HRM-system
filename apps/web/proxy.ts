@@ -4,7 +4,7 @@ import { PORTAL_CONFIG } from "@/lib/auth/config"
 
 // HRM Workspace pages; keep in sync with config.matcher below.
 const HRM_PAGES = [
-  "/dashboard", "/employees", "/accounts", "/organization", "/attendance", "/leave-requests",
+  "/dashboard", "/employees", "/accounts", "/organization", "/attendance", "/leave-requests", "/resignations",
   "/payslips", "/payroll", "/allowances", "/profile", "/reports", "/rbac", "/role-grant", "/role-requests",
 ]
 
@@ -39,7 +39,7 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/login", "/dashboard/:path*", "/employees/:path*", "/accounts/:path*", "/organization/:path*",
-    "/attendance/:path*", "/leave-requests/:path*", "/payslips/:path*", "/payroll/:path*",
+    "/attendance/:path*", "/leave-requests/:path*", "/resignations/:path*", "/payslips/:path*", "/payroll/:path*",
     "/allowances/:path*", "/profile/:path*", "/reports/:path*", "/rbac/:path*",
     "/role-grant/:path*", "/role-requests/:path*", "/admin/:path*",
   ],
