@@ -3,6 +3,7 @@ package com.htttdn.hrm.service;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,9 +24,15 @@ import com.htttdn.hrm.repository.PositionAllowanceRuleRepository;
 import com.htttdn.hrm.repository.SeniorityAllowanceRuleRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
+
 @Service
 @Transactional
 public class AllowancePolicyService {
+
+    private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final PositionAllowanceRuleRepository positionRuleRepository;
     private final SeniorityAllowanceRuleRepository seniorityRuleRepository;
@@ -97,6 +104,26 @@ public class AllowancePolicyService {
         return positionRuleRepository.findByJobPositionIdOrderByEffectiveFromDesc(jobPositionId)
             .stream()
             .map(this::toView)
+            .toList();
+    }
+
+    /** Every job position with the allowance in effect today, for the allowance policy screen. */
+    @PreAuthorize("hasAuthority('compensation.read')")
+    @Transactional(readOnly = true)
+    public List<PositionAllowanceSummary> listPositionAllowanceSummaries() {
+        LocalDate today = LocalDate.now(ZONE);
+        return jobPositionRepository.findByDeletedAtIsNullOrderByTitleAsc().stream()
+            .map(position -> {
+                PositionAllowanceRule current = positionRuleRepository.findEffective(position.getId(), today).orElse(null);
+                return new PositionAllowanceSummary(
+                    position.getId(),
+                    position.getCode(),
+                    position.getTitle(),
+                    Boolean.TRUE.equals(position.getIsActive()),
+                    current == null ? null : current.getMonthlyAmount(),
+                    current == null ? null : current.getEffectiveFrom()
+                );
+            })
             .toList();
     }
 
@@ -230,18 +257,18 @@ public class AllowancePolicyService {
     }
 
     public record SetPositionAllowanceCommand(
-        BigDecimal monthlyAmount,
-        LocalDate effectiveFrom,
-        String note
+        @NotNull @PositiveOrZero BigDecimal monthlyAmount,
+        @NotNull LocalDate effectiveFrom,
+        @Nullable String note
     ) {
     }
 
     public record SetSeniorityAllowanceCommand(
-        Integer minYears,
-        Integer maxYears,
-        BigDecimal percentage,
-        LocalDate effectiveFrom,
-        String note
+        @NotNull @PositiveOrZero Integer minYears,
+        @Nullable Integer maxYears,
+        @NotNull @PositiveOrZero BigDecimal percentage,
+        @NotNull LocalDate effectiveFrom,
+        @Nullable String note
     ) {
     }
 
@@ -250,22 +277,33 @@ public class AllowancePolicyService {
         Long jobPositionId,
         BigDecimal monthlyAmount,
         LocalDate effectiveFrom,
-        LocalDate effectiveTo,
+        @Nullable LocalDate effectiveTo,
         Long approvedByAccountId,
-        String note,
+        @Nullable String note,
         Instant createdAt
+    ) {
+    }
+
+    /** A job position and its allowance today; both allowance fields are null when it has none. */
+    public record PositionAllowanceSummary(
+        Long jobPositionId,
+        String code,
+        String title,
+        boolean active,
+        @Nullable BigDecimal currentMonthlyAmount,
+        @Nullable LocalDate currentEffectiveFrom
     ) {
     }
 
     public record SeniorityAllowanceView(
         Long id,
         Integer minYears,
-        Integer maxYears,
+        @Nullable Integer maxYears,
         BigDecimal percentage,
         LocalDate effectiveFrom,
-        LocalDate effectiveTo,
+        @Nullable LocalDate effectiveTo,
         Long approvedByAccountId,
-        String note,
+        @Nullable String note,
         Instant createdAt
     ) {
     }

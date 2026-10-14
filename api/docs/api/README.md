@@ -22,7 +22,7 @@ năng theo module thay vì theo endpoint, đọc [docs/FEATURES.md](../../../doc
 | [WORK_SHIFT.md](WORK_SHIFT.md) | `/api/work-shifts/*` |
 | [ATTENDANCE.md](ATTENDANCE.md) | `/api/attendance/*`, `/api/leave-requests/*`, `/api/company-holidays/*`, `/api/leave-entitlements/*` |
 | [PAYROLL.md](PAYROLL.md) | `/api/payroll/*`, `/api/compensation/employees/{employeeId}/*` |
-| [ALLOWANCE.md](ALLOWANCE.md) | `/api/compensation/job-positions/{jobPositionId}/allowances`, `/api/compensation/seniority-allowances` |
+| [ALLOWANCE.md](ALLOWANCE.md) | `/api/compensation/position-allowances`, `/api/compensation/job-positions/{jobPositionId}/allowances`, `/api/compensation/seniority-allowances` |
 | [REPORT.md](REPORT.md) | `/api/reports/hr/*`, `/api/reports/payroll/*` |
 
 Hai chỗ dễ tra nhầm: `role-assignments` và `permission-overrides` nằm dưới `/api/accounts` nhưng
@@ -69,7 +69,7 @@ sinh từ spec, DTO phải khai báo đúng khả năng null:
 Mọi DTO mà web đang dùng đã được gắn đầy đủ, kể cả các record lồng trong service (ví dụ
 `LeaveRequestService.LeaveRequestView`) và envelope `ApiResult`/`ErrorDetail`. Các command record
 lồng trong service (`CreateLeaveCommand`, `SetSalaryCommand`, `ProfileCommand`, `DependentCommand`,
-`EndDependentCommand`) cũng dùng Bean Validation như request DTO thường: body sai trả
+`EndDependentCommand`, `SetPositionAllowanceCommand`, `SetSeniorityAllowanceCommand`) cũng dùng Bean Validation như request DTO thường: body sai trả
 `400 VALIDATION_ERROR` kèm `field` trước khi service kiểm tra quyền. Service chỉ giữ các quy tắc cần
 dữ liệu khác, như `endAt` sau `startAt` hay `effectiveFrom` không trước ngày vào làm.
 

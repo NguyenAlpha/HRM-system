@@ -16,6 +16,7 @@ Phụ cấp chức vụ đặt theo chức danh, phụ cấp thâm niên đặt 
 
 | Endpoint | Quyền | Mô tả |
 |:---------|:------|:------|
+| `GET /api/compensation/position-allowances` | `compensation.read` | Mọi chức danh kèm phụ cấp đang áp dụng hôm nay |
 | `GET /api/compensation/job-positions/{jobPositionId}/allowances` | `compensation.read` | Lịch sử phụ cấp chức vụ của một chức danh |
 | `POST /api/compensation/job-positions/{jobPositionId}/allowances` | `compensation.manage` | Đặt mức phụ cấp chức vụ mới |
 | `GET /api/compensation/seniority-allowances` | `compensation.read` | Các bậc phụ cấp thâm niên |
@@ -75,6 +76,38 @@ Tiền là số thập phân VND; ngày dạng `YYYY-MM-DD`; thời điểm là 
 ---
 
 ## Phụ cấp chức vụ
+
+### GET `/api/compensation/position-allowances`
+
+Mọi chức danh chưa bị xóa, sắp theo tên, kèm mức phụ cấp có hiệu lực **hôm nay** (giờ Việt Nam). Dùng cho màn hình chính sách phụ cấp; chỉ cần `compensation.read`, không cần `organization.read`.
+
+```json
+[
+  {
+    "jobPositionId": 2,
+    "code": "HR_SPECIALIST",
+    "title": "Chuyên viên nhân sự",
+    "active": true,
+    "currentMonthlyAmount": 1000000.00,
+    "currentEffectiveFrom": "2024-10-14"
+  },
+  {
+    "jobPositionId": 8,
+    "code": "GENERAL_STAFF",
+    "title": "Nhân viên",
+    "active": true,
+    "currentMonthlyAmount": null,
+    "currentEffectiveFrom": null
+  }
+]
+```
+
+| Field | Mô tả |
+|:------|:------|
+| `active` | Chức danh đang dùng; chức danh tạm tắt không đặt được mức mới |
+| `currentMonthlyAmount`, `currentEffectiveFrom` | Mức đang áp dụng và ngày bắt đầu; `null` khi hôm nay chức danh không có phụ cấp. Mức đã đặt cho ngày sau không hiện ở đây, xem lịch sử của chức danh |
+
+Lỗi: `403 FORBIDDEN` nếu không có `compensation.read`.
 
 ### GET `/api/compensation/job-positions/{jobPositionId}/allowances`
 
