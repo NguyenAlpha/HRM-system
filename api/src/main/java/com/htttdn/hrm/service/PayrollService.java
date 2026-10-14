@@ -583,6 +583,17 @@ public class PayrollService {
         return payrollPeriodRepository.findAll(pageable).map(this::toResponse);
     }
 
+    /** Every payslip of one period, by employee code: the payroll sheet reviewed before approval. */
+    @PreAuthorize("hasAuthority('report.payroll.read')")
+    @Transactional(readOnly = true)
+    public List<PayslipResponse> listPayslipsForPeriod(Long periodId) {
+        employeeAccessScopeService.requireCompanyWide("report.payroll.read");
+        findPeriodOrThrow(periodId);
+        return payslipRepository.findByPayrollPeriodIdOrderByEmployeeCodeSnapshotAsc(periodId).stream()
+            .map(this::toResponse)
+            .toList();
+    }
+
     @PreAuthorize("hasAnyAuthority('payroll.self.read', 'report.payroll.read')")
     @Transactional(readOnly = true)
     public PayslipResponse getPayslip(Long payslipId) {
@@ -649,6 +660,7 @@ public class PayrollService {
     }
 
     private PayrollPeriodResponse toResponse(PayrollPeriod period) {
+        PayslipRepository.PeriodTotals totals = payslipRepository.totalsForPeriod(period.getId());
         return new PayrollPeriodResponse(
             period.getId(),
             period.getYear(),
@@ -664,7 +676,10 @@ public class PayrollService {
             period.getPaidByAccount() != null ? period.getPaidByAccount().getId() : null,
             period.getPaidAt(),
             period.getLockedByAccount() != null ? period.getLockedByAccount().getId() : null,
-            period.getLockedAt()
+            period.getLockedAt(),
+            totals.getPayslipCount(),
+            totals.getTotalGrossPay(),
+            totals.getTotalNetPay()
         );
     }
 
@@ -684,9 +699,12 @@ public class PayrollService {
         return new PayslipResponse(
             payslip.getId(),
             payslip.getPayrollPeriod().getId(),
+            payslip.getPayrollPeriod().getYear(),
+            payslip.getPayrollPeriod().getMonth(),
             payslip.getEmployee().getId(),
             payslip.getEmployeeCodeSnapshot(),
             payslip.getEmployeeNameSnapshot(),
+            payslip.getPositionSnapshot(),
             payslip.getWorkLocationSnapshot(),
             payslip.getOrganizationUnitSnapshot(),
             payslip.getContractualBaseSalary(),

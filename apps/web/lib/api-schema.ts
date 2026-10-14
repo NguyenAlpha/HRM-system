@@ -1060,6 +1060,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payroll/periods/{id}/payslips": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["periodPayslips"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/payroll/periods/{periodId}/adjustments": {
         parameters: {
             query?: never;
@@ -1730,6 +1746,11 @@ export interface components {
         };
         ApiResultListPayrollAdjustmentResponse: {
             data: components["schemas"]["PayrollAdjustmentResponse"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListPayslipResponse: {
+            data: components["schemas"]["PayslipResponse"][] | null;
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
@@ -2625,6 +2646,8 @@ export interface components {
             paidAt: string | null;
             /** Format: int64 */
             paidByAccountId: number | null;
+            /** Format: int64 */
+            payslipCount: number;
             /** Format: date */
             periodEnd: string;
             /** Format: date */
@@ -2633,6 +2656,8 @@ export interface components {
             status: "DRAFT" | "CALCULATED" | "APPROVED" | "PAID" | "LOCKED" | "CANCELLED";
             /** Format: date */
             taxPaymentDate: string | null;
+            totalGrossPay: number;
+            totalNetPay: number;
             /** Format: int32 */
             year: number;
         };
@@ -2689,7 +2714,12 @@ export interface components {
             payableWorkMinutes: number;
             /** Format: int64 */
             payrollPeriodId: number;
+            /** Format: int32 */
+            periodMonth: number;
+            /** Format: int32 */
+            periodYear: number;
             personalIncomeTax: number;
+            positionSnapshot: string;
             /** Format: int32 */
             scheduledWorkMinutes: number;
             taxExemptOtherEarnings: number;
@@ -5135,6 +5165,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultPayrollPeriodResponse"];
+                };
+            };
+        };
+    };
+    periodPayslips: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListPayslipResponse"];
                 };
             };
         };
