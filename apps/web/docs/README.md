@@ -33,6 +33,7 @@ Trang `/activate` nằm ngoài hai khu vực trên: không cần đăng nhập, 
 | `/attendance` | Vào/ra ca, bảng công tháng, dialog điều chỉnh công và duyệt tăng ca, ngày lễ công ty |
 | `/leave-requests` | Số dư phép năm, đơn nghỉ (chọn nhanh cả ngày/sáng/chiều), duyệt kèm ghi chú, điều chỉnh hạn mức và chốt phép năm |
 | `/payslips` | Kỳ lương (tính, duyệt, trả, khóa, hủy, khoản cộng/trừ, xuất Excel), phiếu lương chi tiết, lương cơ bản, bảo hiểm và người phụ thuộc |
+| `/allowances` | Chính sách phụ cấp chung: phụ cấp chức vụ theo chức danh (lịch sử, đổi mức) và các bậc phụ cấp thâm niên |
 | `/reports/workforce` | Báo cáo nhân sự, thâm niên và lương cơ bản |
 | `/rbac`, `/role-grant`, `/role-requests` | Quản lý quyền nghiệp vụ theo permission được cấp |
 

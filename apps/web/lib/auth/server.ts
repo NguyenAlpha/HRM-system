@@ -422,6 +422,9 @@ export async function handleWorkforceRequest(request: Request, segments: string[
     { pattern: /^compensation\/employees\/[1-9]\d*\/payroll-profiles$/, methods: ["GET", "POST"] },
     { pattern: /^compensation\/employees\/[1-9]\d*\/tax-dependents$/, methods: ["GET", "POST"] },
     { pattern: /^compensation\/employees\/[1-9]\d*\/tax-dependents\/[1-9]\d*\/end$/, methods: ["PUT"] },
+    { pattern: /^compensation\/position-allowances$/, methods: ["GET"] },
+    { pattern: /^compensation\/job-positions\/[1-9]\d*\/allowances$/, methods: ["GET", "POST"] },
+    { pattern: /^compensation\/seniority-allowances$/, methods: ["GET", "POST"] },
   ]
   const route = routes.find((candidate) => candidate.pattern.test(path))
   if (!route) return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
@@ -440,6 +443,7 @@ export async function handleWorkforceRequest(request: Request, segments: string[
   if (request.method === "PUT" || (request.method === "POST" &&
       (/^(?:leave-requests|payroll\/periods|company-holidays)$/.test(path)
         || /^compensation\/employees\/[1-9]\d*\/(?:salary-history|payroll-profiles|tax-dependents)$/.test(path)
+        || /^compensation\/(?:job-positions\/[1-9]\d*\/allowances|seniority-allowances)$/.test(path)
         || /^attendance\/(?:punches|[1-9]\d*\/overtime-approval)$/.test(path)
         || /^payroll\/periods\/[1-9]\d*\/calculate$/.test(path)
         || /^payroll\/periods\/[1-9]\d*\/mark-paid$/.test(path)
