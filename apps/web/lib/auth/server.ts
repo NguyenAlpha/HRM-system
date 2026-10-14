@@ -411,6 +411,10 @@ export async function handleWorkforceRequest(request: Request, segments: string[
     { pattern: /^leave-requests\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^leave-requests\/[1-9]\d*\/(?:submit|cancel|approve|reject)$/, methods: ["POST"] },
     { pattern: /^leave-entitlements\/employees\/[1-9]\d*$/, methods: ["GET"] },
+    { pattern: /^resignation-requests$/, methods: ["GET", "POST"] },
+    { pattern: /^resignation-requests\/pending$/, methods: ["GET"] },
+    { pattern: /^resignation-requests\/employees\/[1-9]\d*$/, methods: ["GET"] },
+    { pattern: /^resignation-requests\/[1-9]\d*\/(?:cancel|approve|reject)$/, methods: ["POST"] },
     { pattern: /^payroll\/periods$/, methods: ["GET", "POST"] },
     { pattern: /^payroll\/periods\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^payroll\/periods\/[1-9]\d*\/export$/, methods: ["GET"] },
@@ -446,14 +450,14 @@ export async function handleWorkforceRequest(request: Request, segments: string[
 
   let body: string | undefined
   if (request.method === "PUT" || (request.method === "POST" &&
-      (/^(?:leave-requests|payroll\/periods|company-holidays)$/.test(path)
+      (/^(?:leave-requests|resignation-requests|payroll\/periods|company-holidays)$/.test(path)
         || /^compensation\/employees\/[1-9]\d*\/(?:salary-history|payroll-profiles|tax-dependents)$/.test(path)
         || /^compensation\/(?:job-positions\/[1-9]\d*\/allowances|seniority-allowances)$/.test(path)
         || /^attendance\/(?:punches|[1-9]\d*\/overtime-approval)$/.test(path)
         || /^payroll\/periods\/[1-9]\d*\/calculate$/.test(path)
         || /^payroll\/periods\/[1-9]\d*\/mark-paid$/.test(path)
         || /^payroll\/periods\/[1-9]\d*\/adjustments$/.test(path)
-        || /^leave-requests\/[1-9]\d*\/(?:approve|reject)$/.test(path)))) {
+        || /^(?:leave|resignation)-requests\/[1-9]\d*\/(?:approve|reject)$/.test(path)))) {
     try {
       body = JSON.stringify(await request.json())
     } catch {

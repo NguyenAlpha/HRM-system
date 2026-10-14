@@ -9,6 +9,7 @@ export type OvertimeApprovalItem = Schemas["OvertimeApprovalItemResponse"]
 export type TimesheetRow = Schemas["TimesheetRowResponse"]
 export type LeaveRequest = Schemas["LeaveRequestView"]
 export type LeaveBalance = Schemas["BalanceView"]
+export type ResignationRequest = Schemas["ResignationRequestView"]
 export type PayrollPeriod = Schemas["PayrollPeriodResponse"]
 export type Payslip = Schemas["PayslipResponse"]
 export type PayrollAdjustment = Schemas["PayrollAdjustmentResponse"]
@@ -24,12 +25,14 @@ export type AttendanceStatus = AttendanceRecord["status"]
 export type LeaveType = LeaveRequest["leaveType"]
 export type LeaveSalaryTreatment = LeaveRequest["salaryTreatment"]
 export type LeaveStatus = LeaveRequest["status"]
+export type ResignationStatus = ResignationRequest["status"]
 export type PayrollPeriodStatus = PayrollPeriod["status"]
 
 /** Request bodies, keyed by schema name, for `satisfies` checks at each call site. */
 export type WorkforceBody = Pick<Schemas,
   | "AdjustAttendanceRequest" | "RecordPunchesRequest" | "ApproveOvertimeRequest"
   | "CompanyHolidayRequest" | "CreateLeaveCommand" | "ReviewBody"
+  | "CreateResignationRequestRequest" | "ApproveResignationBody" | "RejectResignationBody"
   | "SetSalaryCommand" | "ProfileCommand" | "DependentCommand" | "EndDependentCommand"
   | "CreatePayrollPeriodRequest" | "PayrollActionRequest" | "CreatePayrollAdjustmentRequest"
   | "SetPositionAllowanceCommand" | "SetSeniorityAllowanceCommand"
@@ -83,6 +86,13 @@ export const LEAVE_STATUS_LABELS: Record<LeaveStatus, string> = {
   APPROVED: "Đã duyệt",
   REJECTED: "Từ chối",
   CANCELLED: "Đã hủy",
+}
+
+export const RESIGNATION_STATUS_LABELS: Record<ResignationStatus, string> = {
+  PENDING: "Chờ duyệt",
+  APPROVED: "Đã duyệt",
+  REJECTED: "Từ chối",
+  CANCELLED: "Đã rút",
 }
 
 export const PAYROLL_PERIOD_STATUS_LABELS: Record<PayrollPeriodStatus, string> = {

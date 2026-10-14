@@ -34,6 +34,7 @@ import {
   type OvertimeApprovalItem,
   type PayrollPeriod,
   type Payslip,
+  type ResignationRequest,
 } from "@/lib/workforce"
 
 /**
@@ -81,6 +82,8 @@ export function HrmDashboard() {
 
   // Work waiting for the signed-in user. The pending lists only return items this user decides.
   const pendingLeaves = useWidget(true, () => workforceApi<Page<LeaveRequest>>("leave-requests/pending?size=1"), "pending-leaves")
+  const pendingResignations = useWidget(true,
+    () => workforceApi<Page<ResignationRequest>>("resignation-requests/pending?size=1"), "pending-resignations")
   const pendingOvertime = useWidget(true, () => workforceApi<OvertimeApprovalItem[]>("attendance/overtime/pending"), "pending-ot")
   const pendingRoles = useWidget(has("role.assignment.approve"), () => listRoleAssignmentRequests(0, "PENDING"), "pending-roles")
   const periods = useWidget(has("report.payroll.read"),
@@ -95,7 +98,7 @@ export function HrmDashboard() {
   const newest = useWidget(canReadEmployees, () => employeeRequest<Page<EmployeeSummary>>("hrm",
     employeeListQuery(0, 5, { ...ALL, employmentStatus: "" }, "hireDate,desc")), "newest")
 
-  const tasks = buildTasks({ pendingLeaves, pendingOvertime, pendingRoles, periods, has })
+  const tasks = buildTasks({ pendingLeaves, pendingResignations, pendingOvertime, pendingRoles, periods, has })
   const latestPeriod = periods?.content.find((period) => period.status !== "CANCELLED")
   const myPending = myLeaves?.content.filter((leave) => leave.status === "PENDING" || leave.status === "DRAFT").length
   const hiredThisMonth = newest?.content.filter((employee) => employee.hireDate.startsWith(month)).length
@@ -220,14 +223,15 @@ export function HrmDashboard() {
 
 type Task = { label: string; count: number; href: string }
 
-function buildTasks({ pendingLeaves, pendingOvertime, pendingRoles, periods, has }: {
+function buildTasks({ pendingLeaves, pendingResignations, pendingOvertime, pendingRoles, periods, has }: {
   pendingLeaves: Page<LeaveRequest> | null | undefined
+  pendingResignations: Page<ResignationRequest> | null | undefined
   pendingOvertime: OvertimeApprovalItem[] | null | undefined
   pendingRoles: Page<unknown> | null | undefined
   periods: Page<PayrollPeriod> | null | undefined
   has: (code: string) => boolean
 }): Task[] | undefined {
-  if ([pendingLeaves, pendingOvertime, pendingRoles, periods].includes(undefined)) return undefined
+  if ([pendingLeaves, pendingResignations, pendingOvertime, pendingRoles, periods].includes(undefined)) return undefined
   const periodTask = (status: PayrollPeriod["status"], permission: string, verb: string): Task[] => {
     const waiting = has(permission) ? periods?.content.filter((period) => period.status === status) ?? [] : []
     return waiting.map((period) => ({
@@ -236,6 +240,7 @@ function buildTasks({ pendingLeaves, pendingOvertime, pendingRoles, periods, has
   }
   return [
     { label: "Đơn nghỉ chờ duyệt", count: pendingLeaves?.totalElements ?? 0, href: "/leave-requests?tab=approvals" },
+    { label: "Đơn nghỉ việc chờ duyệt", count: pendingResignations?.totalElements ?? 0, href: "/resignations?tab=approvals" },
     { label: "Tăng ca chờ duyệt", count: pendingOvertime?.length ?? 0, href: "/attendance?tab=overtime" },
     { label: "Đề xuất cấp/thu hồi role chờ duyệt", count: pendingRoles?.totalElements ?? 0, href: "/role-requests" },
     ...periodTask("DRAFT", "payroll.calculate", "Tính lương"),
