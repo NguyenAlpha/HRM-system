@@ -213,8 +213,8 @@ vào phút được trả lương, nghỉ không lương và nghỉ do bảo hi�
 
 ## 9. Lương, bảo hiểm và thuế
 
-Phạm vi hiện tại: nhân viên **cư trú tại Việt Nam**, trả bằng VND, kỳ lương tháng **trong năm
-2026**. Quy tắc thuế và bảo hiểm có ngày hiệu lực trong database và chỉ được nạp đến 31/12/2026;
+Phạm vi hiện tại: nhân viên **cư trú tại Việt Nam**, trả bằng VND, kỳ lương tháng **từ 01/2020
+đến 12/2026**. Quy tắc thuế và bảo hiểm có ngày hiệu lực trong database, nạp từ 01/01/2020 đến 31/12/2026;
 kỳ ngoài phạm vi sẽ dừng với lỗi yêu cầu bổ sung quy tắc.
 
 **Dữ liệu đầu vào do HR nhập**
@@ -251,7 +251,7 @@ trần, số tăng ca miễn thuế, thu nhập tính thuế và cả `id` của
 Hai vai trò tách nhau có chủ đích: `PAYROLL_ACCOUNTANT` tính nhưng không duyệt, `PAYROLL_APPROVER`
 duyệt nhưng không tính.
 
-Công thức, mức 2026 và nguồn pháp lý: [api/docs/api/PAYROLL.md](../api/docs/api/PAYROLL.md).
+Công thức, các mức 2020–2026 và nguồn pháp lý: [api/docs/api/PAYROLL.md](../api/docs/api/PAYROLL.md).
 
 ---
 
@@ -277,7 +277,7 @@ Báo cáo lương chỉ trả số liệu tổng hợp theo khoảng, không tr�
 - Chưa có phụ trội ca đêm, hoa hồng tính tự động, truy thu, hoàn thuế hay quyết toán năm; thưởng và
   khoản khác chỉ nhập tay theo kỳ.
 - Chưa hỗ trợ người không cư trú thuế.
-- Quy tắc thuế và bảo hiểm chỉ nạp đến hết 2026, phải thêm bằng migration khi chính sách đổi.
+- Quy tắc thuế và bảo hiểm chỉ nạp từ 2020 đến hết 2026, phải thêm bằng migration khi chính sách đổi.
 - Phép năm không cộng theo thâm niên (Điều 114) và không chuyển phép dư sang năm sau.
 - Chưa tích hợp máy chấm công vật lý.
 - Chưa có nhật ký audit cho toàn bộ thay đổi dữ liệu.

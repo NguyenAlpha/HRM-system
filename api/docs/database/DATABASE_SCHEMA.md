@@ -8,7 +8,7 @@
 > Hệ thống phục vụ một doanh nghiệp bán lẻ/phân phối có trụ sở, chi nhánh và kho. Kho được xem là địa điểm làm việc, không quản lý hàng hóa hoặc tồn kho.
 >
 > Phạm vi tính lương hiện tại gồm lương cơ bản, phụ cấp chức vụ, phụ cấp thâm niên, tăng ca,
-> bảo hiểm phần nhân viên và thuế TNCN cho người cư trú trong năm 2026. Thưởng, hoa hồng,
+> bảo hiểm phần nhân viên và thuế TNCN cho người cư trú từ năm 2020 đến 2026. Thưởng, hoa hồng,
 > quyết toán năm và các ngoại lệ ngoài phạm vi nêu trong [PAYROLL.md](../api/PAYROLL.md) chưa được tự động hóa.
 
 ---
@@ -1055,9 +1055,9 @@ có khoảng hiệu lực riêng; phiếu lương snapshot lại `id` của bộ
 | `dependent_deduction` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Giảm trừ mỗi người phụ thuộc mỗi tháng |
 | `source_reference` | TEXT | NOT NULL | Căn cứ pháp lý của bộ quy tắc |
 
-> `EXCLUDE USING GIST` chặn hai bộ quy tắc có khoảng hiệu lực chồng nhau. Bộ nạp sẵn áp dụng
-> từ 01/01/2026 và đóng hiệu lực tại 31/12/2026, nên kỳ lương ngoài năm 2026 sẽ dừng với
-> lỗi yêu cầu bổ sung quy tắc thay vì tính bằng số liệu cũ.
+> `EXCLUDE USING GIST` chặn hai bộ quy tắc có khoảng hiệu lực chồng nhau. Nạp sẵn hai bộ:
+> 01/01/2020–31/12/2025 (biểu 7 bậc) và 01/01/2026–31/12/2026 (biểu 5 bậc), nên kỳ lương có
+> ngày trả ngoài khoảng đó sẽ dừng với lỗi yêu cầu bổ sung quy tắc thay vì tính bằng số liệu cũ.
 
 #### `payroll_tax_brackets` — Biểu thuế lũy tiến từng phần
 
@@ -1089,12 +1089,12 @@ có khoảng hiệu lực riêng; phiếu lương snapshot lại `id` của bộ
 | `region_4_minimum` | NUMERIC(15,2) | NOT NULL, CHECK > 0 | Lương tối thiểu vùng IV |
 | `source_reference` | TEXT | NOT NULL | Căn cứ pháp lý của bộ quy tắc |
 
-> `EXCLUDE USING GIST` chặn khoảng hiệu lực chồng nhau. Trần BHXH/BHYT thay đổi giữa năm nên
-> năm 2026 được nạp thành hai bộ: 01/01–30/06 và 01/07–31/12. Trần BHTN được tính bằng
+> `EXCLUDE USING GIST` chặn khoảng hiệu lực chồng nhau. Mỗi lần lương cơ sở hoặc lương tối
+> thiểu vùng đổi là một bộ mới, nên từ 01/2020 đến 12/2026 có 6 bộ liền nhau. Trần BHTN được tính bằng
 > `unemployment_cap_multiplier × lương tối thiểu của vùng trong hồ sơ nhân viên`, nên hai căn cứ
 > đóng khác nhau và được snapshot riêng trên phiếu lương.
 
-Số liệu cụ thể của bộ quy tắc 2026 và nguồn tham chiếu nằm trong [PAYROLL.md](../api/PAYROLL.md).
+Số liệu cụ thể của từng bộ quy tắc và nguồn tham chiếu nằm trong [PAYROLL.md](../api/PAYROLL.md).
 
 ### `payroll_periods` — Kỳ lương tháng
 
@@ -1504,7 +1504,7 @@ ALTER TABLE payroll_adjustments ADD CONSTRAINT chk_payroll_adjustment_type
 - Khách hàng, nhà cung cấp, đơn bán và doanh thu.
 - Tuyển dụng ứng viên, phỏng vấn, KPI và đào tạo.
 - Cộng phép năm theo thâm niên, chuyển phép dư sang năm sau và điều chỉnh hạn mức phép bằng tay (phép năm chỉ gồm 12 ngày, chia theo tháng nếu vào làm giữa năm).
-- Hoa hồng, thưởng, quyết toán thuế năm và các trường hợp bảo hiểm/thuế ngoài phạm vi tự động hóa năm 2026.
+- Hoa hồng, thưởng, quyết toán thuế năm và các trường hợp bảo hiểm/thuế ngoài phạm vi tự động hóa 2020–2026.
 - Tự động làm hồ sơ/chi trả chế độ thai sản từ cơ quan BHXH.
 - Tích hợp máy chấm công vật lý.
 - Nhật ký audit chi tiết cho toàn bộ thay đổi dữ liệu.
@@ -1530,7 +1530,7 @@ vào file của domain tương ứng thay vì thêm file vá. Mỗi khi file bas
 | `V5__leave.sql` | `leave_requests` | 6 |
 | `V6__attendance.sql` | `company_holidays`, `attendance_records` và trigger số phút theo lịch | 7 |
 | `V7__payroll.sql` | Hồ sơ khấu trừ, quy tắc thuế/bảo hiểm, `payroll_periods`, `payroll_adjustments`, `payslips`, `payslip_items` | 8 |
-| `V8__reference_data.sql` | Quy tắc thuế TNCN, bảo hiểm năm 2026 và quy tắc phép năm | 6, 8.4 |
+| `V8__reference_data.sql` | Quy tắc thuế TNCN, bảo hiểm từ 2020 đến 2026 và quy tắc phép năm | 6, 8.4 |
 
 Migration chỉ chứa dữ liệu pháp lý dùng chung. Danh mục permission, role, mapping, cơ cấu tổ chức,
 ca làm việc và tài khoản mẫu do các seeder trong `api/src/main/java/com/htttdn/hrm/config/seed/` tạo.
