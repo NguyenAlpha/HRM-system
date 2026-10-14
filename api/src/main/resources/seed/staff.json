@@ -13,6 +13,14 @@
       { "monthsAgo": 20, "baseSalary": 9000000, "reason": "Mức lương ban đầu" },
       { "monthsAgo": 16, "baseSalary": 12000000, "reason": "Lên Chuyên viên nhân sự" },
       { "monthsAgo": 5, "baseSalary": 13500000, "reason": "Điều chỉnh lương định kỳ" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 20, "insuranceSalary": 9000000, "wageRegion": 1 },
+      { "monthsAgo": 16, "insuranceSalary": 12000000, "wageRegion": 1 },
+      { "monthsAgo": 5, "insuranceSalary": 13500000, "wageRegion": 1 }
+    ],
+    "dependents": [
+      { "fullName": "Trần Văn Hùng", "identifier": "001058000201", "monthsAgo": 12 }
     ]
   },
   {
@@ -28,6 +36,11 @@
     "salaries": [
       { "monthsAgo": 10, "baseSalary": 8000000, "reason": "Mức lương ban đầu" },
       { "monthsAgo": 1, "baseSalary": 8500000, "reason": "Điều chỉnh lương" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 10, "insuranceSalary": 8000000, "wageRegion": 2 },
+      { "monthsAgo": 4, "insuranceSalary": 8000000, "wageRegion": 1 },
+      { "monthsAgo": 1, "insuranceSalary": 8500000, "wageRegion": 1 }
     ]
   }
 ]
