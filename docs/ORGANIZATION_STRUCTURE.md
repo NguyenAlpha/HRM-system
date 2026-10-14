@@ -187,7 +187,7 @@ Dữ liệu seed được chia theo trách nhiệm và chạy theo `@Order`. M�
 | 200 | `PermissionSeeder` | `RBAC_SEED_ENABLED` | Danh mục 47 permission |
 | 300 | `RolePermissionSeeder` | `RBAC_SEED_ENABLED` | Permission mặc định của từng system role |
 | 400 | `SystemAdminSeeder` | `ADMIN_SEED_ENABLED` (mặc định bật) | Account bootstrap và gán role `SYSTEM_ADMIN` đã có sẵn |
-| 500 | `CompanyOwnerSeeder` | `OWNER_SEED_ENABLED` (mặc định bật) | Company Owner `owner`/`password` (role `COMPANY_OWNER`, `DIRECTOR`, `EMPLOYEE`), phân công tại `BOARD`, lương cơ bản 50.000.000, chấm công 2 năm |
+| 500 | `CompanyOwnerSeeder` | `OWNER_SEED_ENABLED` (mặc định bật) | Company Owner `owner`/`password` (role `COMPANY_OWNER`, `DIRECTOR`, `EMPLOYEE`), phân công tại `BOARD`, lương cơ bản 50.000.000, hồ sơ bảo hiểm/thuế (đóng trên 50.000.000, vùng 1), 2 con phụ thuộc, chấm công 2 năm |
 | 505 | `AllowancePolicySeeder` | `COMPANY_SEED_ENABLED` | Phụ cấp chức vụ theo tháng (`DIRECTOR` 10 tr, `OPERATIONS_MANAGER` 5 tr, `BRANCH_MANAGER` 4 tr, `WAREHOUSE_SUPERVISOR` 3 tr, `TEAM_LEAD` 2 tr, `PAYROLL_ACCOUNTANT` và `HR_SPECIALIST` 1 tr) và phụ cấp thâm niên (1–3 năm 3%, 3–5 năm 5%, từ 5 năm 7% lương cơ bản); Company Owner duyệt, hiệu lực từ ngày Owner vào làm. Không có Owner thì bỏ qua |
 | 510 | `StaffSeeder` | `STAFF_SEED_ENABLED` (mặc định bật), file `STAFF_SEED_FILE` | Nhân sự khai báo trong file JSON, mặc định `api/src/main/resources/seed/staff.json` |
 
@@ -199,7 +199,7 @@ trước tháng hiện tại đã được người duyệt lúc đó quyết đ
 chờ, nên thẻ "Tăng ca chờ bạn quyết định" có sẵn vài ngày để thử.
 
 `StaffSeeder` đọc một mảng JSON; mỗi phần tử tạo nhân viên `ACTIVE`, account `ACTIVE`, role, lịch
-sử phân công chính, lịch sử lương cơ bản và chấm công `PRESENT` từ ngày vào làm đến hôm qua. Username đã tồn tại thì bỏ
+sử phân công chính, lịch sử lương cơ bản, hồ sơ bảo hiểm/thuế, người phụ thuộc và chấm công `PRESENT` từ ngày vào làm đến hôm qua. Username đã tồn tại thì bỏ
 qua, nên thêm người vào file rồi khởi động lại chỉ tạo người mới.
 
 ```json
@@ -216,7 +216,13 @@ qua, nên thêm người vào file rồi khởi động lại chỉ tạo ngư�
   "salaries": [
     { "monthsAgo": 10, "baseSalary": 8000000, "reason": "Mức lương ban đầu" },
     { "monthsAgo": 1, "baseSalary": 8500000, "reason": "Điều chỉnh lương" }
-  ]
+  ],
+  "payrollProfiles": [
+    { "monthsAgo": 10, "insuranceSalary": 8000000, "wageRegion": 2 },
+    { "monthsAgo": 4, "insuranceSalary": 8000000, "wageRegion": 1 },
+    { "monthsAgo": 1, "insuranceSalary": 8500000, "wageRegion": 1 }
+  ],
+  "dependents": []
 }
 ```
 
@@ -234,11 +240,18 @@ qua, nên thêm người vào file rồi khởi động lại chỉ tạo ngư�
   phải cùng `monthsAgo` với phân công đầu (lương bắt đầu từ ngày vào làm). Điều chuyển kèm đổi lương
   thì dùng cùng `monthsAgo` với phân công; điều chỉnh lương không điều chuyển thì chỉ thêm mức lương;
   điều chuyển giữ nguyên lương thì không thêm gì. Người ghi nhận là Company Owner.
+- `payrollProfiles`: hồ sơ bảo hiểm/thuế, cùng quy tắc thời gian như `salaries` và **bắt buộc** (thiếu
+  thì tính lương báo lỗi). Mỗi hồ sơ có lương đóng bảo hiểm `insuranceSalary` và vùng lương tối thiểu
+  `wageRegion` 1–4; nhân viên luôn là người cư trú và đóng đủ BHXH/BHYT/BHTN. Đổi lương hay chuyển địa
+  điểm sang vùng khác thì thêm hồ sơ mới cùng `monthsAgo`.
+- `dependents` (tùy chọn): người phụ thuộc giảm trừ thuế, mỗi người có `fullName`, `identifier` và
+  `monthsAgo` bắt đầu (không trước ngày vào làm), còn hiệu lực đến nay.
 
 File mặc định có `hr` (Nhân viên rồi Chuyên viên nhân sự, HR_MANAGER, quản lý là `owner`; lương
-9 → 12 triệu khi lên Chuyên viên → 13,5 triệu) và `employee` (chuyển từ Vận hành ở `BRANCH-01` sang
-phòng Nhân sự, quản lý là `hr`; lương 8 triệu giữ nguyên khi chuyển, 8,5 triệu từ 1 tháng trước), cùng
-mật khẩu `password`.
+9 → 12 triệu khi lên Chuyên viên → 13,5 triệu; 1 người phụ thuộc từ 12 tháng trước) và `employee`
+(chuyển từ Vận hành ở `BRANCH-01`, vùng 2, sang phòng Nhân sự ở trụ sở, vùng 1, quản lý là `hr`; lương
+8 triệu giữ nguyên khi chuyển, 8,5 triệu từ 1 tháng trước; không có người phụ thuộc), cùng mật khẩu
+`password`. Lương đóng bảo hiểm bằng lương cơ bản.
 
 Đây là dữ liệu thật đang có, khác với bộ dữ liệu đề xuất ở mục 6: seeder chưa tạo các nhóm cấp
 `TEAM`, các chức danh `HR_HEAD`/`HR_INTERN`, role `DEPARTMENT_MANAGER` hay các account theo phòng

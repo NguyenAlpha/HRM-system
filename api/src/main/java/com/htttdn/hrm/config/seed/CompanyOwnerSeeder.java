@@ -20,7 +20,9 @@ import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeAssignment;
+import com.htttdn.hrm.entity.EmployeePayrollProfile;
 import com.htttdn.hrm.entity.EmployeeSalaryHistory;
+import com.htttdn.hrm.entity.EmployeeTaxDependent;
 import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
@@ -29,8 +31,10 @@ import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
+import com.htttdn.hrm.repository.EmployeePayrollProfileRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
+import com.htttdn.hrm.repository.EmployeeTaxDependentRepository;
 import com.htttdn.hrm.repository.JobPositionRepository;
 import com.htttdn.hrm.repository.OrganizationUnitRepository;
 import com.htttdn.hrm.repository.RoleRepository;
@@ -45,6 +49,9 @@ import com.htttdn.hrm.service.EmployeeCodeGenerator;
  * <p>Dữ liệu giống kết quả của luồng bootstrap Company Owner trong Admin Console, nhưng account
  * được kích hoạt sẵn với mật khẩu cố định để dùng trong môi trường phát triển. Ngày tạo, ngày vào
  * làm, ngày cấp role và ngày bắt đầu phân công đều là 2 năm trước ngày chạy seed.
+ *
+ * <p>Owner có lương cơ bản 50.000.000 và hồ sơ bảo hiểm/thuế (đóng đủ BHXH/BHYT/BHTN trên 50.000.000,
+ * vùng 1) từ ngày vào làm, cùng 2 người con phụ thuộc giảm trừ: một từ ngày vào làm, một từ 8 tháng trước.
  *
  * <p>Owner có sẵn chấm công {@code PRESENT} cho mọi ngày làm việc từ ngày vào làm đến hôm qua:
  * phần lớn đúng giờ, cứ 10 ngày công có một ngày đi muộn 30 phút và một ngày về sớm 30 phút,
@@ -75,6 +82,8 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
     private final EmployeeRepository employeeRepository;
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
     private final EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository;
+    private final EmployeePayrollProfileRepository employeePayrollProfileRepository;
+    private final EmployeeTaxDependentRepository employeeTaxDependentRepository;
     private final RoleRepository roleRepository;
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final OrganizationUnitRepository organizationUnitRepository;
@@ -91,6 +100,8 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
         EmployeeRepository employeeRepository,
         EmployeeAssignmentRepository employeeAssignmentRepository,
         EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository,
+        EmployeePayrollProfileRepository employeePayrollProfileRepository,
+        EmployeeTaxDependentRepository employeeTaxDependentRepository,
         RoleRepository roleRepository,
         AccountRoleAssignmentRepository accountRoleAssignmentRepository,
         OrganizationUnitRepository organizationUnitRepository,
@@ -106,6 +117,8 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
         this.employeeRepository = employeeRepository;
         this.employeeAssignmentRepository = employeeAssignmentRepository;
         this.employeeSalaryHistoryRepository = employeeSalaryHistoryRepository;
+        this.employeePayrollProfileRepository = employeePayrollProfileRepository;
+        this.employeeTaxDependentRepository = employeeTaxDependentRepository;
         this.roleRepository = roleRepository;
         this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
         this.organizationUnitRepository = organizationUnitRepository;
@@ -176,11 +189,36 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
             .reason("Mức lương ban đầu")
             .createdAt(createdAt)
             .build());
+        employeePayrollProfileRepository.save(EmployeePayrollProfile.builder()
+            .employee(employee)
+            .effectiveFrom(startDate)
+            .taxResident(true)
+            .socialInsurance(true)
+            .healthInsurance(true)
+            .unemploymentInsurance(true)
+            .insuranceSalary(BASE_SALARY)
+            .wageRegion((short) 1)
+            .createdByAccount(account)
+            .createdAt(createdAt)
+            .build());
+        addDependent(employee, account, "Nguyễn Minh Khang", "001224000101", startDate);
+        addDependent(employee, account, "Nguyễn Bảo Ngọc", "001325000102", LocalDate.now(ZONE).minusMonths(8));
         // The Company Owner, with nobody above, confirms their own overtime.
         int attendanceDays = seedAttendanceWriter.write(employee, startDate, LocalDate.now(ZONE).minusDays(1), date -> account);
 
         log.info("Company owner seed completed: '{}' created as {} with {} attendance days",
             USERNAME, employee.getEmployeeCode(), attendanceDays);
+    }
+
+    private void addDependent(Employee employee, Account account, String fullName, String identifier, LocalDate effectiveFrom) {
+        employeeTaxDependentRepository.save(EmployeeTaxDependent.builder()
+            .employee(employee)
+            .fullName(fullName)
+            .identifier(identifier)
+            .effectiveFrom(effectiveFrom)
+            .createdByAccount(account)
+            .createdAt(effectiveFrom.atStartOfDay(ZONE).toInstant())
+            .build());
     }
 
     private Role findRequiredRole(String code) {
