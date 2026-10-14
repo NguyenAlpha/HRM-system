@@ -95,7 +95,7 @@
         "tags" : [ "account-admin-controller" ]
       },
       "post" : {
-        "operationId" : "create_11",
+        "operationId" : "create_12",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -353,7 +353,7 @@
         "tags" : [ "account-permission-override-controller" ]
       },
       "post" : {
-        "operationId" : "create_12",
+        "operationId" : "create_13",
         "parameters" : [ {
           "in" : "path",
           "name" : "accountId",
@@ -1009,7 +1009,7 @@
         "tags" : [ "company-holiday-controller" ]
       },
       "post" : {
-        "operationId" : "create_10",
+        "operationId" : "create_11",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1509,7 +1509,7 @@
         "tags" : [ "employee-controller" ]
       },
       "post" : {
-        "operationId" : "create_9",
+        "operationId" : "create_10",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1900,7 +1900,7 @@
         "tags" : [ "job-position-controller" ]
       },
       "post" : {
-        "operationId" : "create_8",
+        "operationId" : "create_9",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2050,7 +2050,7 @@
     },
     "/api/leave-requests" : {
       "get" : {
-        "operationId" : "search",
+        "operationId" : "search_1",
         "parameters" : [ {
           "in" : "query",
           "name" : "keyword",
@@ -2121,7 +2121,7 @@
         "tags" : [ "leave-request-controller" ]
       },
       "post" : {
-        "operationId" : "create_7",
+        "operationId" : "create_8",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2149,7 +2149,7 @@
     },
     "/api/leave-requests/employees/{employeeId}" : {
       "get" : {
-        "operationId" : "list_16",
+        "operationId" : "list_17",
         "parameters" : [ {
           "in" : "path",
           "name" : "employeeId",
@@ -2183,7 +2183,7 @@
     },
     "/api/leave-requests/pending" : {
       "get" : {
-        "operationId" : "pending",
+        "operationId" : "pending_1",
         "parameters" : [ {
           "in" : "query",
           "name" : "pageable",
@@ -2209,7 +2209,7 @@
     },
     "/api/leave-requests/{id}" : {
       "get" : {
-        "operationId" : "get_2",
+        "operationId" : "get_3",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -2236,7 +2236,7 @@
     },
     "/api/leave-requests/{id}/approve" : {
       "post" : {
-        "operationId" : "approve_2",
+        "operationId" : "approve_3",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -2272,7 +2272,7 @@
     },
     "/api/leave-requests/{id}/cancel" : {
       "post" : {
-        "operationId" : "cancel_2",
+        "operationId" : "cancel_3",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -2299,7 +2299,7 @@
     },
     "/api/leave-requests/{id}/reject" : {
       "post" : {
-        "operationId" : "reject_1",
+        "operationId" : "reject_2",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -2402,7 +2402,7 @@
         "tags" : [ "organization-unit-controller" ]
       },
       "post" : {
-        "operationId" : "create_6",
+        "operationId" : "create_7",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2629,7 +2629,7 @@
         "tags" : [ "payroll-controller" ]
       },
       "post" : {
-        "operationId" : "create_4",
+        "operationId" : "create_5",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2657,7 +2657,7 @@
     },
     "/api/payroll/periods/{id}" : {
       "get" : {
-        "operationId" : "get_1",
+        "operationId" : "get_2",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -2684,7 +2684,7 @@
     },
     "/api/payroll/periods/{id}/approve" : {
       "post" : {
-        "operationId" : "approve_1",
+        "operationId" : "approve_2",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -2747,7 +2747,7 @@
     },
     "/api/payroll/periods/{id}/cancel" : {
       "post" : {
-        "operationId" : "cancel_1",
+        "operationId" : "cancel_2",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -2917,7 +2917,7 @@
         "tags" : [ "payroll-adjustment-controller" ]
       },
       "post" : {
-        "operationId" : "create_5",
+        "operationId" : "create_6",
         "parameters" : [ {
           "in" : "path",
           "name" : "periodId",
@@ -2989,7 +2989,7 @@
     },
     "/api/permissions" : {
       "get" : {
-        "operationId" : "list_15",
+        "operationId" : "list_16",
         "parameters" : [ {
           "in" : "query",
           "name" : "module",
@@ -3250,6 +3250,268 @@
           }
         },
         "tags" : [ "report-controller" ]
+      }
+    },
+    "/api/resignation-requests" : {
+      "get" : {
+        "operationId" : "search",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "keyword",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "organizationUnitId",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "PENDING", "APPROVED", "REJECTED", "CANCELLED" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "pageable",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/components/schemas/Pageable"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultPagedResultResignationRequestView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "resignation-request-controller" ]
+      },
+      "post" : {
+        "operationId" : "create_4",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateResignationRequestRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultResignationRequestView"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "resignation-request-controller" ]
+      }
+    },
+    "/api/resignation-requests/employees/{employeeId}" : {
+      "get" : {
+        "operationId" : "list_15",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "employeeId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "pageable",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/components/schemas/Pageable"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultPagedResultResignationRequestView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "resignation-request-controller" ]
+      }
+    },
+    "/api/resignation-requests/pending" : {
+      "get" : {
+        "operationId" : "pending",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "pageable",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/components/schemas/Pageable"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultPagedResultResignationRequestView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "resignation-request-controller" ]
+      }
+    },
+    "/api/resignation-requests/{id}" : {
+      "get" : {
+        "operationId" : "get_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultResignationRequestView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "resignation-request-controller" ]
+      }
+    },
+    "/api/resignation-requests/{id}/approve" : {
+      "post" : {
+        "operationId" : "approve_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ApproveResignationBody"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultResignationRequestView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "resignation-request-controller" ]
+      }
+    },
+    "/api/resignation-requests/{id}/cancel" : {
+      "post" : {
+        "operationId" : "cancel_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultResignationRequestView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "resignation-request-controller" ]
+      }
+    },
+    "/api/resignation-requests/{id}/reject" : {
+      "post" : {
+        "operationId" : "reject_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RejectResignationBody"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultResignationRequestView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "resignation-request-controller" ]
       }
     },
     "/api/role-assignment-requests" : {
@@ -5663,6 +5925,29 @@
         },
         "required" : [ "data", "error", "success" ]
       },
+      "ApiResultPagedResultResignationRequestView" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/PagedResultResignationRequestView"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
       "ApiResultPagedResultRoleAssignmentRequestResponse" : {
         "type" : "object",
         "properties" : {
@@ -5893,6 +6178,29 @@
         },
         "required" : [ "data", "error", "success" ]
       },
+      "ApiResultResignationRequestView" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ResignationRequestView"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
       "ApiResultRoleAssignmentRequestResponse" : {
         "type" : "object",
         "properties" : {
@@ -6088,6 +6396,18 @@
           }
         },
         "required" : [ "overtimeMinutes", "overtimeMultiplier" ]
+      },
+      "ApproveResignationBody" : {
+        "type" : "object",
+        "properties" : {
+          "comment" : {
+            "type" : [ "string", "null" ]
+          },
+          "lastWorkingDate" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          }
+        }
       },
       "ApproveRoleAssignmentRequest" : {
         "type" : "object",
@@ -6778,6 +7098,24 @@
           }
         },
         "required" : [ "effect", "effectiveFrom", "permissionId", "reason" ]
+      },
+      "CreateResignationRequestRequest" : {
+        "type" : "object",
+        "properties" : {
+          "employeeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "reason" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "requestedLastWorkingDate" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        },
+        "required" : [ "employeeId", "reason", "requestedLastWorkingDate" ]
       },
       "CreateRoleAssignmentRequest" : {
         "type" : "object",
@@ -7818,6 +8156,34 @@
         },
         "required" : [ "content", "number", "size", "totalElements", "totalPages" ]
       },
+      "PagedResultResignationRequestView" : {
+        "type" : "object",
+        "properties" : {
+          "content" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ResignationRequestView"
+            }
+          },
+          "number" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "totalElements" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "content", "number", "size", "totalElements", "totalPages" ]
+      },
       "PagedResultRoleAssignmentRequestResponse" : {
         "type" : "object",
         "properties" : {
@@ -8519,6 +8885,14 @@
         },
         "required" : [ "refreshToken" ]
       },
+      "RejectResignationBody" : {
+        "type" : "object",
+        "properties" : {
+          "comment" : {
+            "type" : "string"
+          }
+        }
+      },
       "RejectRoleAssignmentRequest" : {
         "type" : "object",
         "properties" : {
@@ -8544,6 +8918,59 @@
           }
         },
         "required" : [ "permissionIds" ]
+      },
+      "ResignationRequestView" : {
+        "type" : "object",
+        "properties" : {
+          "approverEmployeeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "approverEmployeeName" : {
+            "type" : "string"
+          },
+          "completedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "employeeCode" : {
+            "type" : "string"
+          },
+          "employeeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "employeeName" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "lastWorkingDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "reviewComment" : {
+            "type" : [ "string", "null" ]
+          },
+          "reviewedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "PENDING", "APPROVED", "REJECTED", "CANCELLED" ]
+          }
+        },
+        "required" : [ "approverEmployeeId", "approverEmployeeName", "completedAt", "createdAt", "employeeCode", "employeeId", "employeeName", "id", "lastWorkingDate", "reason", "reviewComment", "reviewedAt", "status" ]
       },
       "ReviewBody" : {
         "type" : "object",

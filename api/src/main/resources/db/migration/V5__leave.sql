@@ -39,3 +39,33 @@ CREATE INDEX idx_leave_requests_employee_status
 
 CREATE INDEX idx_leave_requests_approver_status
     ON leave_requests (approver_employee_id, status);
+
+-- Đơn nghỉ việc: nhân viên đề nghị ngày làm việc cuối, người duyệt (như đơn nghỉ) có thể đổi ngày đó
+-- khi duyệt. Hợp đồng chỉ kết thúc sau ngày làm việc cuối (completed_at), nên nhân viên vẫn đăng nhập
+-- và chấm công bình thường trong thời gian báo trước.
+CREATE TABLE resignation_requests (
+    id BIGSERIAL PRIMARY KEY,
+    employee_id BIGINT NOT NULL REFERENCES employees (id),
+    last_working_date DATE NOT NULL,
+    reason TEXT NOT NULL CHECK (btrim(reason) <> ''),
+    status VARCHAR(20) NOT NULL,
+    approver_employee_id BIGINT NOT NULL REFERENCES employees (id),
+    reviewed_by_account_id BIGINT REFERENCES accounts (id),
+    review_comment TEXT,
+    reviewed_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT chk_resignation_status
+        CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED')),
+    CONSTRAINT chk_resignation_completed
+        CHECK (completed_at IS NULL OR status = 'APPROVED')
+);
+
+-- Mỗi nhân viên chỉ có một đơn nghỉ việc còn mở: đang chờ, hoặc đã duyệt mà chưa tới ngày nghỉ.
+CREATE UNIQUE INDEX uq_resignation_requests_open
+    ON resignation_requests (employee_id)
+    WHERE status = 'PENDING' OR (status = 'APPROVED' AND completed_at IS NULL);
+
+CREATE INDEX idx_resignation_requests_approver_status
+    ON resignation_requests (approver_employee_id, status);

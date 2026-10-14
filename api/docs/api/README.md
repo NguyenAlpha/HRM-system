@@ -16,7 +16,7 @@ năng theo module thay vì theo endpoint, đọc [docs/FEATURES.md](../../../doc
 | [ACCOUNT_PERMISSION_OVERRIDES.md](ACCOUNT_PERMISSION_OVERRIDES.md) | `/api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides` |
 | [RBAC.md](RBAC.md) | `/api/roles/*`, `/api/permissions/*` |
 | [ROLE_ASSIGNMENT_REQUESTS.md](ROLE_ASSIGNMENT_REQUESTS.md) | `/api/role-assignment-requests/*` |
-| [EMPLOYEE.md](EMPLOYEE.md) | `/api/employees/*`, `/api/employees/{employeeId}/assignments`, `/api/employees/{employeeId}/sensitive` |
+| [EMPLOYEE.md](EMPLOYEE.md) | `/api/employees/*`, `/api/employees/{employeeId}/assignments`, `/api/employees/{employeeId}/sensitive`, `/api/resignation-requests/*` |
 | [ORGANIZATION.md](ORGANIZATION.md) | `/api/organization-units/*`, `/api/work-locations/*`, `/api/job-positions/*` |
 | [ORGANIZATION_COMPANY_OWNER_ADMIN.md](ORGANIZATION_COMPANY_OWNER_ADMIN.md) | `/api/system/organization/company-owner` |
 | [WORK_SHIFT.md](WORK_SHIFT.md) | `/api/work-shifts/*` |
