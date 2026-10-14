@@ -188,6 +188,7 @@ Dữ liệu seed được chia theo trách nhiệm và chạy theo `@Order`. M�
 | 300 | `RolePermissionSeeder` | `RBAC_SEED_ENABLED` | Permission mặc định của từng system role |
 | 400 | `SystemAdminSeeder` | `ADMIN_SEED_ENABLED` (mặc định bật) | Account bootstrap và gán role `SYSTEM_ADMIN` đã có sẵn |
 | 500 | `CompanyOwnerSeeder` | `OWNER_SEED_ENABLED` (mặc định bật) | Company Owner `owner`/`password` (role `COMPANY_OWNER`, `DIRECTOR`, `EMPLOYEE`), phân công tại `BOARD`, lương cơ bản 50.000.000, chấm công 2 năm |
+| 505 | `AllowancePolicySeeder` | `COMPANY_SEED_ENABLED` | Phụ cấp chức vụ theo tháng (`DIRECTOR` 10 tr, `OPERATIONS_MANAGER` 5 tr, `BRANCH_MANAGER` 4 tr, `WAREHOUSE_SUPERVISOR` 3 tr, `TEAM_LEAD` 2 tr, `PAYROLL_ACCOUNTANT` và `HR_SPECIALIST` 1 tr) và phụ cấp thâm niên (1–3 năm 3%, 3–5 năm 5%, từ 5 năm 7% lương cơ bản); Company Owner duyệt, hiệu lực từ ngày Owner vào làm. Không có Owner thì bỏ qua |
 | 510 | `StaffSeeder` | `STAFF_SEED_ENABLED` (mặc định bật), file `STAFF_SEED_FILE` | Nhân sự khai báo trong file JSON, mặc định `api/src/main/resources/seed/staff.json` |
 
 Ngoài Company Owner và nhân sự trong file seed, mọi người dùng HRM được tạo qua API.
