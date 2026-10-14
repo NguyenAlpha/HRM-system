@@ -58,6 +58,11 @@ public class EmployeeController {
         return ApiResult.ok(PagedResult.of(employeeService.list(criteria, pageable)));
     }
 
+    @GetMapping("/me")
+    public ApiResult<EmployeeDetailResponse> getSelf() {
+        return ApiResult.ok(employeeService.getSelf());
+    }
+
     @GetMapping("/{employeeId}")
     public ApiResult<EmployeeDetailResponse> getById(@PathVariable Long employeeId) {
         return ApiResult.ok(employeeService.getById(employeeId));

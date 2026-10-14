@@ -10,6 +10,7 @@ Tạo và tra cứu hồ sơ nhân sự trong phạm vi được phân công. AP
 |:---------|:--------------------:|:-------------------:|:------|
 | `POST /api/employees` | ✅ | `employee.create` | Tạo hồ sơ nhân sự và phân công chính ban đầu, chưa tạo account đăng nhập |
 | `GET /api/employees` | ✅ | `employee.list.read` | Lấy danh sách nhân sự có phân trang trong scope được giao |
+| `GET /api/employees/me` | ✅ | `profile.self.read` | Hồ sơ của chính người đăng nhập, cùng dạng với chi tiết nhân sự |
 | `GET /api/employees/{employeeId}` | ✅ | `employee.read` | Lấy chi tiết hồ sơ, phân công hiện tại và thông tin account nếu đã có |
 | `PUT /api/employees/{employeeId}` | ✅ | `employee.update` | Cập nhật các thông tin hồ sơ được phép thay đổi trong entity employee |
 | `POST /api/employees/{employeeId}/confirm` | ✅ | `employee.probation.confirm` | Xác nhận nhân sự thử việc trở thành nhân sự chính thức |
@@ -279,6 +280,17 @@ Các bộ lọc kết hợp theo AND và luôn nằm trong phạm vi dữ liệu
 | 400 | `VALIDATION_ERROR` | Tham số phân trang hoặc sắp xếp không hợp lệ |
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
 | 403 | `FORBIDDEN` | Account không có permission `employee.list.read` hoặc không có scope hợp lệ |
+
+---
+
+## GET `/api/employees/me`
+
+Trả hồ sơ của nhân sự gắn với account đang đăng nhập, cùng dạng response với `GET /api/employees/{employeeId}`. Chỉ cần `profile.self.read` (role `EMPLOYEE` có sẵn), không cần `employee.read` và không mở được hồ sơ người khác. Web dùng endpoint này cho trang "Hồ sơ của tôi".
+
+| HTTP | `error.code` | Khi nào |
+|---|---|---|
+| `403` | `FORBIDDEN` | Account không có `profile.self.read` |
+| `404` | `EMPLOYEE_NOT_FOUND` | Account chưa gắn nhân sự hoặc hồ sơ đã bị xóa mềm |
 
 ---
 
