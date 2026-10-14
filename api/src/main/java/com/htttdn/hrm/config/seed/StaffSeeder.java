@@ -2,6 +2,7 @@ package com.htttdn.hrm.config.seed;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -24,6 +25,7 @@ import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeAssignment;
+import com.htttdn.hrm.entity.EmployeeSalaryHistory;
 import com.htttdn.hrm.entity.JobPosition;
 import com.htttdn.hrm.entity.OrganizationUnit;
 import com.htttdn.hrm.entity.WorkLocation;
@@ -36,6 +38,7 @@ import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
+import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
 import com.htttdn.hrm.repository.JobPositionRepository;
 import com.htttdn.hrm.repository.OrganizationUnitRepository;
 import com.htttdn.hrm.repository.RoleRepository;
@@ -78,8 +81,16 @@ public class StaffSeeder implements ApplicationRunner {
         String fullName,
         String email,
         Map<String, RoleScopeType> roles,
-        List<AssignmentEntry> assignments
+        List<AssignmentEntry> assignments,
+        List<SalaryEntry> salaries
     ) {
+    }
+
+    /**
+     * One base salary, oldest first; it runs until the next one starts. A transfer with a new
+     * salary uses the assignment's {@code monthsAgo}; a renegotiated salary needs no assignment.
+     */
+    record SalaryEntry(int monthsAgo, BigDecimal baseSalary, String reason) {
     }
 
     /** One primary assignment period; {@code workLocation} and {@code shift} default to the head office day shift. */
@@ -107,6 +118,7 @@ public class StaffSeeder implements ApplicationRunner {
     private final AccountRepository accountRepository;
     private final EmployeeRepository employeeRepository;
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
+    private final EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository;
     private final RoleRepository roleRepository;
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final OrganizationUnitRepository organizationUnitRepository;
@@ -124,6 +136,7 @@ public class StaffSeeder implements ApplicationRunner {
         AccountRepository accountRepository,
         EmployeeRepository employeeRepository,
         EmployeeAssignmentRepository employeeAssignmentRepository,
+        EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository,
         RoleRepository roleRepository,
         AccountRoleAssignmentRepository accountRoleAssignmentRepository,
         OrganizationUnitRepository organizationUnitRepository,
@@ -140,6 +153,7 @@ public class StaffSeeder implements ApplicationRunner {
         this.accountRepository = accountRepository;
         this.employeeRepository = employeeRepository;
         this.employeeAssignmentRepository = employeeAssignmentRepository;
+        this.employeeSalaryHistoryRepository = employeeSalaryHistoryRepository;
         this.roleRepository = roleRepository;
         this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
         this.organizationUnitRepository = organizationUnitRepository;
@@ -239,6 +253,8 @@ public class StaffSeeder implements ApplicationRunner {
                 .build());
         }
 
+        seedSalaries(entry, employee, startDate);
+
         int attendanceDays = seedAttendanceWriter.write(employee, startDate, LocalDate.now(ZONE).minusDays(1),
             date -> overtimeApproverOn(assignments, date));
         log.info("Staff seed: '{}' created as {} with {} attendance days",
@@ -258,6 +274,44 @@ public class StaffSeeder implements ApplicationRunner {
         }
         return accountRoleAssignmentRepository.findAccountsHoldingRole("DIRECTOR", LocalDate.now(ZONE)).stream().findFirst()
             .orElseThrow(() -> new IllegalStateException("Staff seed: no Director to approve overtime"));
+    }
+
+    /**
+     * Saves the salary history, each salary closed the day before the next. The first one must start
+     * on the hire date, or payroll finds days without a salary. Entered by the Company Owner.
+     */
+    private void seedSalaries(StaffEntry entry, Employee employee, LocalDate hireDate) {
+        List<SalaryEntry> salaries = entry.salaries();
+        if (salaries == null || salaries.isEmpty()) {
+            throw new IllegalStateException("Staff seed '" + entry.username() + "': at least one salary is required");
+        }
+        LocalDate today = LocalDate.now(ZONE);
+        Account owner = accountRoleAssignmentRepository.findAccountsHoldingRole("COMPANY_OWNER", today).stream().findFirst()
+            .orElseThrow(() -> new IllegalStateException("Staff seed: no Company Owner to enter salaries"));
+        List<LocalDate> starts = salaries.stream().map(salary -> today.minusMonths(salary.monthsAgo())).toList();
+        if (!starts.getFirst().equals(hireDate)) {
+            throw new IllegalStateException("Staff seed '" + entry.username()
+                + "': the first salary must start on the hire date (same monthsAgo as the first assignment)");
+        }
+        for (int i = 0; i < salaries.size(); i++) {
+            SalaryEntry salary = salaries.get(i);
+            if (i > 0 && !starts.get(i).isAfter(starts.get(i - 1))) {
+                throw new IllegalStateException("Staff seed '" + entry.username()
+                    + "': salaries must go from oldest to newest (monthsAgo decreasing)");
+            }
+            if (salary.baseSalary() == null || salary.baseSalary().signum() <= 0) {
+                throw new IllegalStateException("Staff seed '" + entry.username() + "': baseSalary must be positive");
+            }
+            employeeSalaryHistoryRepository.save(EmployeeSalaryHistory.builder()
+                .employee(employee)
+                .baseSalary(salary.baseSalary())
+                .effectiveFrom(starts.get(i))
+                .effectiveTo(i + 1 < salaries.size() ? starts.get(i + 1).minusDays(1) : null)
+                .approvedByAccount(owner)
+                .reason(salary.reason())
+                .createdAt(startOf(starts.get(i)))
+                .build());
+        }
     }
 
     private List<ResolvedAssignment> resolveAssignments(StaffEntry entry) {

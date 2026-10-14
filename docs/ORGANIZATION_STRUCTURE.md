@@ -187,7 +187,7 @@ Dữ liệu seed được chia theo trách nhiệm và chạy theo `@Order`. M�
 | 200 | `PermissionSeeder` | `RBAC_SEED_ENABLED` | Danh mục 47 permission |
 | 300 | `RolePermissionSeeder` | `RBAC_SEED_ENABLED` | Permission mặc định của từng system role |
 | 400 | `SystemAdminSeeder` | `ADMIN_SEED_ENABLED` (mặc định bật) | Account bootstrap và gán role `SYSTEM_ADMIN` đã có sẵn |
-| 500 | `CompanyOwnerSeeder` | `OWNER_SEED_ENABLED` (mặc định bật) | Company Owner `owner`/`password` (role `COMPANY_OWNER`, `DIRECTOR`, `EMPLOYEE`), phân công tại `BOARD`, chấm công 2 năm |
+| 500 | `CompanyOwnerSeeder` | `OWNER_SEED_ENABLED` (mặc định bật) | Company Owner `owner`/`password` (role `COMPANY_OWNER`, `DIRECTOR`, `EMPLOYEE`), phân công tại `BOARD`, lương cơ bản 50.000.000, chấm công 2 năm |
 | 510 | `StaffSeeder` | `STAFF_SEED_ENABLED` (mặc định bật), file `STAFF_SEED_FILE` | Nhân sự khai báo trong file JSON, mặc định `api/src/main/resources/seed/staff.json` |
 
 Ngoài Company Owner và nhân sự trong file seed, mọi người dùng HRM được tạo qua API.
@@ -198,7 +198,7 @@ trước tháng hiện tại đã được người duyệt lúc đó quyết đ
 chờ, nên thẻ "Tăng ca chờ bạn quyết định" có sẵn vài ngày để thử.
 
 `StaffSeeder` đọc một mảng JSON; mỗi phần tử tạo nhân viên `ACTIVE`, account `ACTIVE`, role, lịch
-sử phân công chính và chấm công `PRESENT` từ ngày vào làm đến hôm qua. Username đã tồn tại thì bỏ
+sử phân công chính, lịch sử lương cơ bản và chấm công `PRESENT` từ ngày vào làm đến hôm qua. Username đã tồn tại thì bỏ
 qua, nên thêm người vào file rồi khởi động lại chỉ tạo người mới.
 
 ```json
@@ -211,6 +211,10 @@ qua, nên thêm người vào file rồi khởi động lại chỉ tạo ngư�
   "assignments": [
     { "monthsAgo": 10, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-01", "position": "GENERAL_STAFF", "manager": "owner" },
     { "monthsAgo": 4, "organizationUnit": "HR", "position": "GENERAL_STAFF", "manager": "hr" }
+  ],
+  "salaries": [
+    { "monthsAgo": 10, "baseSalary": 8000000, "reason": "Mức lương ban đầu" },
+    { "monthsAgo": 1, "baseSalary": 8500000, "reason": "Điều chỉnh lương" }
   ]
 }
 ```
@@ -225,10 +229,15 @@ qua, nên thêm người vào file rồi khởi động lại chỉ tạo ngư�
 - `manager`: username của quản lý trực tiếp trong giai đoạn đó (người duyệt đơn nghỉ và tăng ca theo
   phân công hiện hành); phải là `owner` hoặc người đứng trước trong file. Bỏ trống thì người duyệt
   là Giám đốc.
+- `salaries`: lịch sử lương cơ bản, **từ cũ đến mới**, mỗi mức kết thúc ngay trước mức sau. Mức đầu
+  phải cùng `monthsAgo` với phân công đầu (lương bắt đầu từ ngày vào làm). Điều chuyển kèm đổi lương
+  thì dùng cùng `monthsAgo` với phân công; điều chỉnh lương không điều chuyển thì chỉ thêm mức lương;
+  điều chuyển giữ nguyên lương thì không thêm gì. Người ghi nhận là Company Owner.
 
-File mặc định có `hr` (Nhân viên rồi Chuyên viên nhân sự, HR_MANAGER, quản lý là `owner`) và
-`employee` (chuyển từ Vận hành ở `BRANCH-01` sang phòng Nhân sự, quản lý là `hr`), cùng mật khẩu
-`password`.
+File mặc định có `hr` (Nhân viên rồi Chuyên viên nhân sự, HR_MANAGER, quản lý là `owner`; lương
+9 → 12 triệu khi lên Chuyên viên → 13,5 triệu) và `employee` (chuyển từ Vận hành ở `BRANCH-01` sang
+phòng Nhân sự, quản lý là `hr`; lương 8 triệu giữ nguyên khi chuyển, 8,5 triệu từ 1 tháng trước), cùng
+mật khẩu `password`.
 
 Đây là dữ liệu thật đang có, khác với bộ dữ liệu đề xuất ở mục 6: seeder chưa tạo các nhóm cấp
 `TEAM`, các chức danh `HR_HEAD`/`HR_INTERN`, role `DEPARTMENT_MANAGER` hay các account theo phòng
