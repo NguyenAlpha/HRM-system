@@ -199,7 +199,8 @@ trước tháng hiện tại đã được người duyệt lúc đó quyết đ
 chờ, nên thẻ "Tăng ca chờ bạn quyết định" có sẵn vài ngày để thử.
 
 `StaffSeeder` đọc một mảng JSON; mỗi phần tử tạo nhân viên `ACTIVE`, account `ACTIVE`, role, lịch
-sử phân công chính, lịch sử lương cơ bản, hồ sơ bảo hiểm/thuế, người phụ thuộc và chấm công `PRESENT` từ ngày vào làm đến hôm qua. Username đã tồn tại thì bỏ
+sử phân công chính, lịch sử lương cơ bản, hồ sơ bảo hiểm/thuế, người phụ thuộc và chấm công `PRESENT` từ ngày vào làm đến hôm qua,
+rồi ghi đơn nghỉ, ngày vắng, ngày thiếu chấm công và yêu cầu cấp role khai báo kèm. Username đã tồn tại thì bỏ
 qua, nên thêm người vào file rồi khởi động lại chỉ tạo người mới.
 
 ```json
@@ -222,7 +223,18 @@ qua, nên thêm người vào file rồi khởi động lại chỉ tạo ngư�
     { "monthsAgo": 4, "insuranceSalary": 8000000, "wageRegion": 1 },
     { "monthsAgo": 1, "insuranceSalary": 8500000, "wageRegion": 1 }
   ],
-  "dependents": []
+  "dependents": [],
+  "leaves": [
+    { "workDaysAgo": 150, "days": 3, "type": "UNPAID", "status": "APPROVED", "reason": "Về quê lo việc gia đình", "comment": "Đồng ý." },
+    { "workDaysAgo": 30, "part": "AFTERNOON", "type": "ANNUAL", "status": "APPROVED", "reason": "Họp phụ huynh cho con" },
+    { "workDaysAgo": -4, "type": "ANNUAL", "status": "PENDING", "reason": "Nghỉ phép giải quyết việc cá nhân" }
+  ],
+  "absences": [{ "workDaysAgo": 40, "note": "Không đến làm, gọi điện không liên lạc được" }],
+  "missingPunches": [2],
+  "roleRequests": [
+    { "role": "HR_MANAGER", "scope": "ORG_UNIT", "requestedBy": "hr", "status": "PENDING", "daysAgo": 2,
+      "effectiveFromDaysAgo": -14, "effectiveToDaysAgo": -30, "reason": "Phụ trách nhân sự phòng khi chị Bình nghỉ phép" }
+  ]
 }
 ```
 
@@ -246,6 +258,25 @@ qua, nên thêm người vào file rồi khởi động lại chỉ tạo ngư�
   điểm sang vùng khác thì thêm hồ sơ mới cùng `monthsAgo`.
 - `dependents` (tùy chọn): người phụ thuộc giảm trừ thuế, mỗi người có `fullName`, `identifier` và
   `monthsAgo` bắt đầu (không trước ngày vào làm), còn hiệu lực đến nay.
+- `workDaysAgo` (dùng trong `leaves`, `absences`, `missingPunches`): ngày làm việc thứ N tính lùi từ
+  hôm qua (1 là ngày làm việc gần nhất); số âm là ngày làm việc sắp tới (-1 là ngày làm việc đầu tiên
+  sau hôm nay, tối đa 90 ngày). Ngày luôn rơi vào ngày làm việc theo ca, không vào Chủ nhật hay ngày lễ.
+  Hai mục không được trùng ngày.
+- `leaves` (tùy chọn): đơn nghỉ `days` ngày làm việc liên tiếp (mặc định 1), hoặc nửa ngày với `part`
+  `MORNING`/`AFTERNOON` (nửa còn lại vẫn đi làm). `type` là `ANNUAL`, `SICK`, `MATERNITY`, `UNPAID`,
+  `OTHER`; cách trả lương theo loại đơn. `status` là `DRAFT`, `PENDING`, `APPROVED`, `REJECTED`,
+  `CANCELLED`; `comment` là ý kiến người duyệt, bắt buộc khi từ chối. Người duyệt là người duyệt của
+  ngày gửi đơn; đơn gửi 7 ngày trước ngày nghỉ, riêng nghỉ ốm gửi sáng hôm đó. Đơn đã duyệt đổi ngày
+  công như khi duyệt thật (`PAID_LEAVE`, `UNPAID_LEAVE`, `SICK_LEAVE`, `MATERNITY_LEAVE`); đơn phép năm
+  đã duyệt hoặc đang chờ phải còn đủ phép.
+- `absences` (tùy chọn): ngày vắng không phép HR đã đối soát (`UNAUTHORIZED_ABSENCE`, kèm `note`),
+  chỉ trong quá khứ; người ghi là HR Manager.
+- `missingPunches` (tùy chọn): ngày thiếu chấm công (`MISSING_PUNCH`) chờ HR đối soát. Chỉ ghi nếu
+  ngày đó thuộc tháng hiện tại, để các tháng trước vẫn tính lương được.
+- `roleRequests` (tùy chọn): yêu cầu cấp role (chỉ role cần Owner duyệt) cho account này, do
+  `requestedBy` gửi `daysAgo` ngày trước và Company Owner quyết định ngày hôm sau. `effectiveFromDaysAgo`
+  và `effectiveToDaysAgo` là hiệu lực (số âm là ngày tới); `note` là ghi chú của Owner, hoặc lý do
+  hủy, bắt buộc khi từ chối hoặc hủy. Yêu cầu đã duyệt tạo luôn phân quyền tương ứng.
 
 File mặc định có `hr` (Nhân viên rồi Chuyên viên nhân sự, HR_MANAGER, quản lý là `owner`; lương
 9 → 12 triệu khi lên Chuyên viên → 13,5 triệu; 1 người phụ thuộc từ 12 tháng trước), `employee`
@@ -254,6 +285,16 @@ File mặc định có `hr` (Nhân viên rồi Chuyên viên nhân sự, HR_MANA
 (Kế toán tiền lương ở phòng Kế toán từ 14 tháng trước, role `PAYROLL_ACCOUNTANT`, quản lý là `owner`;
 lương 11 → 12,5 triệu từ 3 tháng trước; 1 con phụ thuộc từ 6 tháng trước), cùng mật khẩu
 `password`. Lương đóng bảo hiểm bằng lương cơ bản.
+
+Đơn từ và ngày công khác thường trong file mặc định:
+
+| Người | Đơn nghỉ | Ngày công khác | Yêu cầu cấp role |
+|---|---|---|---|
+| `hr` | Phép năm 3 ngày, ốm 2 ngày, phép nửa buổi sáng (đã duyệt); không lương bị từ chối; phép 2 ngày sắp tới chờ `owner` duyệt | — | — |
+| `employee` | Không lương 3 ngày, phép 1 ngày, ốm 1 ngày, phép nửa buổi chiều (đã duyệt); phép sắp tới chờ `hr` duyệt; 1 đơn đã hủy; 1 đơn nháp | 2 ngày vắng không phép; 1 ngày thiếu chấm công tháng này | `HR_MANAGER` phòng Nhân sự: 1 đã duyệt (đã hết hạn), 1 đang chờ `owner`; `PAYROLL_ACCOUNTANT` đã hủy |
+| `accountant` | Phép 2 ngày, ốm 1 ngày, 2 lần khám thai (đã duyệt); phép sắp tới bị từ chối; phép sắp tới chờ `owner` duyệt | 1 ngày vắng không phép; 1 ngày thiếu chấm công tháng này | `PAYROLL_APPROVER` bị từ chối |
+
+Nhờ vậy `owner` và `hr` có sẵn đơn chờ duyệt trên trang Tổng quan, và Owner có yêu cầu cấp role chờ quyết định.
 
 Vòng lương trên dữ liệu seed: `accountant` tạo kỳ và tính lương, `owner` (giữ `PAYROLL_APPROVER`)
 duyệt, xác nhận đã trả và khóa kỳ; mỗi nhân viên xem phiếu của mình từ khi kỳ được duyệt.

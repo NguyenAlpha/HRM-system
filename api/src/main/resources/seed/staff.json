@@ -21,6 +21,13 @@
     ],
     "dependents": [
       { "fullName": "Trần Văn Hùng", "identifier": "001058000201", "monthsAgo": 12 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 150, "days": 3, "type": "ANNUAL", "status": "APPROVED", "reason": "Nghỉ phép đi du lịch cùng gia đình", "comment": "Đồng ý, nhớ bàn giao việc tuyển dụng." },
+      { "workDaysAgo": 80, "days": 2, "type": "SICK", "status": "APPROVED", "reason": "Sốt cao, bác sĩ cho nghỉ 2 ngày" },
+      { "workDaysAgo": 45, "type": "UNPAID", "status": "REJECTED", "reason": "Giải quyết việc riêng", "comment": "Tuần này chốt hồ sơ BHXH quý, em sắp xếp ngày khác nhé." },
+      { "workDaysAgo": 20, "part": "MORNING", "type": "ANNUAL", "status": "APPROVED", "reason": "Đưa con đi tiêm phòng" },
+      { "workDaysAgo": -12, "days": 2, "type": "ANNUAL", "status": "PENDING", "reason": "Về quê dự đám cưới em trai" }
     ]
   },
   {
@@ -41,6 +48,25 @@
       { "monthsAgo": 10, "insuranceSalary": 8000000, "wageRegion": 2 },
       { "monthsAgo": 4, "insuranceSalary": 8000000, "wageRegion": 1 },
       { "monthsAgo": 1, "insuranceSalary": 8500000, "wageRegion": 1 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 150, "days": 3, "type": "UNPAID", "status": "APPROVED", "reason": "Về quê lo việc gia đình", "comment": "Đồng ý." },
+      { "workDaysAgo": 110, "type": "ANNUAL", "status": "APPROVED", "reason": "Làm thủ tục giấy tờ nhà đất" },
+      { "workDaysAgo": 60, "type": "SICK", "status": "APPROVED", "reason": "Đau dạ dày, đi khám" },
+      { "workDaysAgo": 30, "part": "AFTERNOON", "type": "ANNUAL", "status": "APPROVED", "reason": "Họp phụ huynh cho con" },
+      { "workDaysAgo": -4, "type": "ANNUAL", "status": "PENDING", "reason": "Nghỉ phép giải quyết việc cá nhân" },
+      { "workDaysAgo": -8, "type": "ANNUAL", "status": "CANCELLED", "reason": "Đi khám sức khỏe định kỳ" },
+      { "workDaysAgo": -15, "type": "OTHER", "status": "DRAFT", "reason": "Nghỉ đi thi chứng chỉ tin học" }
+    ],
+    "absences": [
+      { "workDaysAgo": 95, "note": "Không đến làm, không báo trước" },
+      { "workDaysAgo": 40, "note": "Không đến làm, gọi điện không liên lạc được" }
+    ],
+    "missingPunches": [2],
+    "roleRequests": [
+      { "role": "HR_MANAGER", "scope": "ORG_UNIT", "requestedBy": "hr", "status": "APPROVED", "daysAgo": 100, "effectiveFromDaysAgo": 95, "effectiveToDaysAgo": 70, "reason": "Kiêm nhiệm quản lý nhân sự phòng trong thời gian tuyển dụng cao điểm", "note": "Đồng ý, chỉ trong phạm vi phòng Nhân sự." },
+      { "role": "PAYROLL_ACCOUNTANT", "scope": "COMPANY", "requestedBy": "hr", "status": "CANCELLED", "daysAgo": 60, "effectiveFromDaysAgo": 55, "reason": "Hỗ trợ tính lương mùa cao điểm", "note": "Đã sắp xếp được kế toán khác hỗ trợ." },
+      { "role": "HR_MANAGER", "scope": "ORG_UNIT", "requestedBy": "hr", "status": "PENDING", "daysAgo": 2, "effectiveFromDaysAgo": -14, "effectiveToDaysAgo": -30, "reason": "Phụ trách nhân sự phòng khi chị Bình nghỉ phép về quê" }
     ]
   },
   {
@@ -62,6 +88,21 @@
     ],
     "dependents": [
       { "fullName": "Lý Minh An", "identifier": "001225000301", "monthsAgo": 6 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 200, "days": 2, "type": "ANNUAL", "status": "APPROVED", "reason": "Về quê thăm bố mẹ" },
+      { "workDaysAgo": 90, "type": "SICK", "status": "APPROVED", "reason": "Cảm cúm, sốt cao" },
+      { "workDaysAgo": 55, "type": "MATERNITY", "status": "APPROVED", "reason": "Nghỉ khám thai định kỳ" },
+      { "workDaysAgo": 25, "type": "MATERNITY", "status": "APPROVED", "reason": "Nghỉ khám thai định kỳ" },
+      { "workDaysAgo": -3, "type": "ANNUAL", "status": "REJECTED", "reason": "Nghỉ phép việc gia đình", "comment": "Tuần này cần chốt số liệu lương tháng, em lùi sang tuần sau nhé." },
+      { "workDaysAgo": -20, "type": "ANNUAL", "status": "PENDING", "reason": "Nghỉ phép đi du lịch" }
+    ],
+    "absences": [
+      { "workDaysAgo": 130, "note": "Không đến làm, không báo trước" }
+    ],
+    "missingPunches": [1],
+    "roleRequests": [
+      { "role": "PAYROLL_APPROVER", "scope": "COMPANY", "requestedBy": "hr", "status": "REJECTED", "daysAgo": 40, "effectiveFromDaysAgo": 35, "reason": "Duyệt bảng lương khi Ban giám đốc đi công tác", "note": "Không để một người vừa tính vừa duyệt bảng lương." }
     ]
   }
 ]

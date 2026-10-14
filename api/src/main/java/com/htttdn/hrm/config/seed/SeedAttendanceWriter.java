@@ -27,6 +27,8 @@ import com.htttdn.hrm.service.AttendanceCalendarService;
  * đã được người duyệt của ngày đó quyết định (hệ số 150%, chịu thuế); tăng ca trong tháng hiện tại
  * chưa ai quyết định nên nằm trong danh sách chờ của người duyệt. Ngày tăng ca chọn ngẫu nhiên
  * nhưng cố định theo nhân viên, nên seed lại trên database trống cho cùng kết quả.
+ *
+ * <p>Ngày nghỉ theo đơn, vắng không phép và thiếu chấm công do {@link SeedLeaveWriter} ghi đè sau.
  */
 @Component
 class SeedAttendanceWriter {
