@@ -22,10 +22,10 @@ Quy ước trạng thái:
 | Ca làm việc và ngày lễ | Đủ | `/organization`, `/attendance` |
 | Nghỉ phép | Đủ | `/leave-requests` |
 | Chấm công | Đủ | `/attendance` |
-| Lương, bảo hiểm, thuế | Đủ | `/payslips` |
+| Lương, bảo hiểm, thuế | Đủ | `/payslips`, `/allowances` |
 | Báo cáo | Đủ | `/reports/workforce` |
 
-Toàn hệ thống có 25 controller, 47 permission trên 8 module, 7 system role và 32 bảng database.
+Toàn hệ thống có 27 controller, 47 permission trên 8 module, 7 system role và 32 bảng database.
 
 ---
 
@@ -224,6 +224,8 @@ kỳ ngoài phạm vi sẽ dừng với lỗi yêu cầu bổ sung quy tắc.
 | Lịch sử lương cơ bản | `/api/compensation/employees/{id}/salary-history` | `compensation.manage` / `.read` |
 | Hồ sơ bảo hiểm và thuế | `.../payroll-profiles` | `compensation.manage` / `.read` |
 | Người phụ thuộc giảm trừ | `.../tax-dependents` | `compensation.manage` / `.read` |
+| Phụ cấp chức vụ theo chức danh | `/api/compensation/position-allowances`, `/api/compensation/job-positions/{id}/allowances` | `compensation.manage` / `.read` |
+| Phụ cấp thâm niên theo bậc năm | `/api/compensation/seniority-allowances` | `compensation.manage` / `.read` |
 
 **Kỳ lương**
 

@@ -40,6 +40,8 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
   const canUsePayroll = account.permissions.some((permission) =>
     ["payroll.self.read", "report.payroll.read", "payroll.calculate", "compensation.read", "compensation.manage"].includes(permission.code))
 
+  const canReadCompensation = account.permissions.some((permission) => permission.code === "compensation.read")
+
   const home = PORTAL_CONFIG[portal].homePath
   // A link is listed only when its condition holds.
   const visible = (links: [boolean, string, string | null][]): NavLink[] =>
@@ -67,6 +69,7 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
       [canUseAttendance, "Chấm công", "/attendance"],
       [canUseLeave, "Đơn từ", "/leave-requests"],
       [canUsePayroll, "Phiếu lương", "/payslips"],
+      [canReadCompensation, "Chính sách phụ cấp", "/allowances"],
     ])
 
   return (

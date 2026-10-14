@@ -15,6 +15,9 @@ export type PayrollAdjustmentType = PayrollAdjustment["type"]
 export type SalaryHistory = Schemas["SalaryHistoryView"]
 export type PayrollProfile = Schemas["Profile"]
 export type TaxDependent = Schemas["Dependent"]
+export type PositionAllowanceSummary = Schemas["PositionAllowanceSummary"]
+export type PositionAllowance = Schemas["PositionAllowanceView"]
+export type SeniorityAllowance = Schemas["SeniorityAllowanceView"]
 
 export type AttendanceStatus = AttendanceRecord["status"]
 export type LeaveType = LeaveRequest["leaveType"]
@@ -28,6 +31,7 @@ export type WorkforceBody = Pick<Schemas,
   | "CompanyHolidayRequest" | "CreateLeaveCommand" | "ReviewBody"
   | "SetSalaryCommand" | "ProfileCommand" | "DependentCommand" | "EndDependentCommand"
   | "CreatePayrollPeriodRequest" | "PayrollActionRequest" | "CreatePayrollAdjustmentRequest"
+  | "SetPositionAllowanceCommand" | "SetSeniorityAllowanceCommand"
 >
 
 // The label records below must list every enum value, so a value added in the API fails typecheck.
