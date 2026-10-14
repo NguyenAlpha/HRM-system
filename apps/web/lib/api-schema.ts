@@ -1172,6 +1172,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reports/hr/leave-balances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["leaveBalances"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/hr/turnover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["turnover"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reports/hr/workforce-distribution": {
         parameters: {
             query?: never;
@@ -1196,6 +1228,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["salaryDistribution"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/payroll/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["payrollSummary"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1630,6 +1678,19 @@ export interface components {
             /** Format: int32 */
             workedMinutes: number;
         };
+        Amounts: {
+            allowancePay: number;
+            grossPay: number;
+            healthInsurance: number;
+            netPay: number;
+            otherDeductions: number;
+            overtimePay: number;
+            /** Format: int64 */
+            payslipCount: number;
+            personalIncomeTax: number;
+            socialInsurance: number;
+            unemploymentInsurance: number;
+        };
         ApiResultAccountInvitationResponse: {
             data: components["schemas"]["AccountInvitationResponse"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
@@ -1753,6 +1814,11 @@ export interface components {
         };
         ApiResultListEmployeeAssignmentResponse: {
             data: components["schemas"]["EmployeeAssignmentResponse"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultListEmployeeBalanceView: {
+            data: components["schemas"]["EmployeeBalanceView"][] | null;
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
@@ -1921,6 +1987,11 @@ export interface components {
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
+        ApiResultPayrollSummaryReportResponse: {
+            data: components["schemas"]["PayrollSummaryReportResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
         ApiResultPayslipResponse: {
             data: components["schemas"]["PayslipResponse"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
@@ -1958,6 +2029,11 @@ export interface components {
         };
         ApiResultSeniorityAllowanceView: {
             data: components["schemas"]["SeniorityAllowanceView"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultTurnoverReportResponse: {
+            data: components["schemas"]["TurnoverReportResponse"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
@@ -2352,6 +2428,11 @@ export interface components {
             workLocationId: number;
             workLocationName: string;
         };
+        EmployeeBalanceView: {
+            balance: components["schemas"]["BalanceView"];
+            employeeCode: string;
+            employeeName: string;
+        };
         EmployeeCreationResponse: {
             employee: components["schemas"]["EmployeeDetailResponse"];
             initialAssignment: components["schemas"]["EmployeeAssignmentResponse"];
@@ -2425,6 +2506,18 @@ export interface components {
             field: string | null;
             message: string;
         };
+        Event: {
+            /** Format: date */
+            date: string;
+            employeeCode: string;
+            /** Format: int64 */
+            employeeId: number;
+            /** @enum {string|null} */
+            endStatus: "PROBATION" | "ACTIVE" | "RESIGNED" | "TERMINATED" | "RETIRED" | null;
+            fullName: string;
+            reason: string | null;
+            type: string;
+        };
         GrantPermissionRequest: {
             /** Format: int64 */
             permissionId: number;
@@ -2495,6 +2588,15 @@ export interface components {
         };
         LogoutRequest: {
             refreshToken: string;
+        };
+        Month: {
+            amounts: components["schemas"]["Amounts"];
+            /** Format: int32 */
+            month: number;
+            /** Format: int64 */
+            periodId: number | null;
+            /** @enum {string|null} */
+            status: "DRAFT" | "CALCULATED" | "APPROVED" | "PAID" | "LOCKED" | "CANCELLED" | null;
         };
         OrganizationCompanyOwnerProvisioningResponse: {
             accountProvisioning: components["schemas"]["AccountProvisioningResponse"];
@@ -2712,6 +2814,13 @@ export interface components {
             salaryDistribution: components["schemas"]["DistributionItemResponse"][];
             /** Format: int64 */
             totalEmployees: number;
+        };
+        PayrollSummaryReportResponse: {
+            months: components["schemas"]["Month"][];
+            total: components["schemas"]["Amounts"];
+            units: components["schemas"]["Unit"][];
+            /** Format: int32 */
+            year: number;
         };
         PayslipItemResponse: {
             amount: number;
@@ -3031,6 +3140,25 @@ export interface components {
             employeeId: number;
             employeeName: string;
             records: components["schemas"]["AttendanceRecordResponse"][];
+        };
+        TurnoverReportResponse: {
+            events: components["schemas"]["Event"][];
+            /** Format: int64 */
+            headcountEnd: number;
+            /** Format: int64 */
+            headcountStart: number;
+            /** Format: int64 */
+            hires: number;
+            months: components["schemas"]["Month"][];
+            /** Format: int64 */
+            terminations: number;
+            turnoverRate: number;
+            /** Format: int32 */
+            year: number;
+        };
+        Unit: {
+            amounts: components["schemas"]["Amounts"];
+            organizationUnit: string;
         };
         UpdateEmployeeRequest: {
             /** Format: date */
@@ -5424,6 +5552,52 @@ export interface operations {
             };
         };
     };
+    leaveBalances: {
+        parameters: {
+            query: {
+                year: number;
+                keyword?: string;
+                organizationUnitId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListEmployeeBalanceView"];
+                };
+            };
+        };
+    };
+    turnover: {
+        parameters: {
+            query: {
+                year: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultTurnoverReportResponse"];
+                };
+            };
+        };
+    };
     workforceDistribution: {
         parameters: {
             query?: {
@@ -5470,6 +5644,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultPayrollSalaryReportResponse"];
+                };
+            };
+        };
+    };
+    payrollSummary: {
+        parameters: {
+            query: {
+                year: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPayrollSummaryReportResponse"];
                 };
             };
         };

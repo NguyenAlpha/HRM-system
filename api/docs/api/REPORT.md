@@ -45,3 +45,56 @@ Các khoảng lương MVP:
 - 15 đến dưới 20 triệu.
 - 20 đến dưới 30 triệu.
 - Từ 30 triệu.
+
+## Biến động nhân sự
+
+```http
+GET /api/reports/hr/turnover?year=2026
+Authorization: Bearer <access-token>
+```
+
+Yêu cầu `report.hr.read`. `year` bắt buộc (2000–9999) và không được ở tương lai; năm hiện tại chỉ tính
+đến tháng hiện tại. Response gồm:
+
+- `headcountStart`, `headcountEnd`: quân số cuối ngày trước kỳ và cuối ngày cuối kỳ.
+- `hires`, `terminations`, `turnoverRate`: số vào làm, số nghỉ việc và tỷ lệ nghỉ việc (%), bằng số
+  nghỉ việc chia quân số bình quân `(đầu kỳ + cuối kỳ) / 2`.
+- `months`: các chỉ số trên theo từng tháng.
+- `events`: danh sách từng lần vào làm (`HIRE`) và nghỉ việc (`TERMINATION`, kèm trạng thái kết thúc và lý do).
+
+Người nghỉ việc ngày *d* không còn tính vào quân số cuối ngày *d*, nên luôn có
+`đầu kỳ + vào − nghỉ = cuối kỳ`. Với role theo đơn vị hoặc địa điểm, phạm vi được xét vào ngày làm việc
+cuối cùng của từng người trong kỳ, vì phân công của người đã nghỉ đã đóng; nhờ vậy người rời đơn vị vẫn
+được đếm. Hồ sơ xóa mềm (tạo nhầm) không được tính.
+
+## Phép năm
+
+```http
+GET /api/reports/hr/leave-balances?year=2026&keyword=&organizationUnitId=
+Authorization: Bearer <access-token>
+```
+
+Yêu cầu `report.hr.read`. Trả mỗi nhân viên trong phạm vi có làm việc trong năm một dòng
+(`employeeCode`, `employeeName`, `balance`), xếp theo mã. `balance` cùng dạng với
+`GET /api/leave-entitlements/employees/{employeeId}`: phút được cấp, đã dùng, đang chờ duyệt, còn lại và
+số phút một ngày công. `keyword` lọc theo mã, họ tên hoặc email công việc; `organizationUnitId` theo đơn
+vị của phân công hiện tại. Phạm vi được xét như báo cáo biến động nhân sự.
+
+## Quỹ lương, bảo hiểm và thuế
+
+```http
+GET /api/reports/payroll/summary?year=2026
+Authorization: Bearer <access-token>
+```
+
+Yêu cầu `report.payroll.read` với scope `COMPANY`, giống bảng lương. Cộng từ phiếu lương của mọi kỳ chưa
+hủy trong năm:
+
+- `total`: cả năm.
+- `months`: 12 tháng; `periodId` và `status` là `null` khi tháng chưa có kỳ lương, kỳ chưa tính thì
+  `payslipCount = 0`.
+- `units`: theo đơn vị ghi trên phiếu lương lúc tính, đơn vị có tổng thu nhập lớn nhất trước.
+
+Mỗi nhóm có số phiếu lương, tổng thu nhập, phụ cấp, tăng ca, BHXH/BHYT/BHTN, thuế TNCN, khấu trừ khác và
+thực nhận. Bảo hiểm ở đây là phần **người lao động** đóng (bị khấu trừ vào lương); hệ thống chưa lưu tỷ lệ
+phần doanh nghiệp đóng nên báo cáo không có chi phí bảo hiểm của doanh nghiệp.

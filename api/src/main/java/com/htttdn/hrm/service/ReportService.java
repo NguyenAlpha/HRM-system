@@ -5,10 +5,14 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,6 +23,7 @@ import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.report.DistributionItemResponse;
 import com.htttdn.hrm.dto.response.report.HrWorkforceReportResponse;
 import com.htttdn.hrm.dto.response.report.PayrollSalaryReportResponse;
+import com.htttdn.hrm.dto.response.report.TurnoverReportResponse;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeAssignment;
 import com.htttdn.hrm.entity.EmployeeSalaryHistory;
@@ -186,6 +191,95 @@ public class ReportService {
             distribution,
             missingSalary
         );
+    }
+
+    /**
+     * Biến động nhân sự của một năm. Phạm vi được xét tại từng ngày cần đếm (cuối tháng, ngày nghỉ việc)
+     * vì phân công của người đã nghỉ đã đóng; nhờ vậy role theo đơn vị vẫn đếm được người rời đơn vị mình.
+     */
+    @PreAuthorize("hasAuthority('report.hr.read')")
+    public TurnoverReportResponse getTurnoverReport(int year) {
+        LocalDate today = LocalDate.now();
+        if (year > today.getYear()) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "year must not be in the future", "year");
+        }
+        int lastMonth = year == today.getYear() ? today.getMonthValue() : 12;
+        LocalDate yearStart = LocalDate.of(year, 1, 1);
+        LocalDate yearEnd = yearStart.withMonth(lastMonth).withDayOfMonth(yearStart.withMonth(lastMonth).lengthOfMonth());
+
+        EmployeeAccessScopeService.EmployeeAccessScope scope = employeeAccessScopeService.resolve(HR_REPORT_READ);
+        List<Employee> candidates = employeeRepository.findAll(notDeleted()
+            .and(hiredBy(yearEnd))
+            .and(notEndedBefore(yearStart.minusDays(1))));
+        Map<LocalDate, Set<Long>> visibleCache = new HashMap<>();
+        Function<LocalDate, Set<Long>> visibleAt = date -> scope.companyWide()
+            ? candidates.stream().map(Employee::getId).collect(Collectors.toSet())
+            : visibleCache.computeIfAbsent(date, at -> employeeRepository.findAll(notDeleted().and(scope.toSpecification(at)))
+                .stream().map(Employee::getId).collect(Collectors.toSet()));
+
+        List<TurnoverReportResponse.Month> months = new ArrayList<>();
+        List<TurnoverReportResponse.Event> events = new ArrayList<>();
+        for (int month = 1; month <= lastMonth; month++) {
+            LocalDate first = LocalDate.of(year, month, 1);
+            LocalDate last = first.withDayOfMonth(first.lengthOfMonth());
+            LocalDate previousEnd = first.minusDays(1);
+            long start = headcount(candidates, previousEnd, visibleAt.apply(previousEnd));
+            long end = headcount(candidates, last, visibleAt.apply(last));
+            long hires = 0;
+            long terminations = 0;
+            for (Employee employee : candidates) {
+                LocalDate hired = employee.getHireDate();
+                LocalDate ended = employee.getTerminationDate();
+                if (!hired.isBefore(first) && !hired.isAfter(last)) {
+                    LocalDate seenOn = ended != null && ended.isBefore(last) ? ended : last;
+                    if (visibleAt.apply(seenOn).contains(employee.getId())) {
+                        hires++;
+                        events.add(event(employee, "HIRE", hired));
+                    }
+                }
+                if (ended != null && !ended.isBefore(first) && !ended.isAfter(last)
+                    && visibleAt.apply(ended).contains(employee.getId())) {
+                    terminations++;
+                    events.add(event(employee, "TERMINATION", ended));
+                }
+            }
+            months.add(new TurnoverReportResponse.Month(month, start, hires, terminations, end, rate(terminations, start, end)));
+        }
+
+        long headcountStart = months.getFirst().headcountStart();
+        long headcountEnd = months.getLast().headcountEnd();
+        long hires = months.stream().mapToLong(TurnoverReportResponse.Month::hires).sum();
+        long terminations = months.stream().mapToLong(TurnoverReportResponse.Month::terminations).sum();
+        events.sort(Comparator.comparing(TurnoverReportResponse.Event::date).thenComparing(TurnoverReportResponse.Event::employeeCode));
+        return new TurnoverReportResponse(year, headcountStart, headcountEnd, hires, terminations,
+            rate(terminations, headcountStart, headcountEnd), months, events);
+    }
+
+    /**
+     * Quân số cuối ngày {@code date}: đã vào làm và chưa nghỉ; người nghỉ đúng ngày đó không còn tính,
+     * nên quân số đầu kỳ + vào − nghỉ luôn bằng quân số cuối kỳ.
+     */
+    private long headcount(List<Employee> employees, LocalDate date, Set<Long> visible) {
+        return employees.stream()
+            .filter(employee -> !employee.getHireDate().isAfter(date))
+            .filter(employee -> employee.getTerminationDate() == null || employee.getTerminationDate().isAfter(date))
+            .filter(employee -> visible.contains(employee.getId()))
+            .count();
+    }
+
+    /** Số nghỉ việc chia quân số bình quân (đầu + cuối) / 2, tính theo phần trăm. */
+    private BigDecimal rate(long terminations, long start, long end) {
+        if (start + end == 0) {
+            return BigDecimal.ZERO.setScale(2);
+        }
+        return BigDecimal.valueOf(terminations * 200)
+            .divide(BigDecimal.valueOf(start + end), 2, RoundingMode.HALF_UP);
+    }
+
+    private TurnoverReportResponse.Event event(Employee employee, String type, LocalDate date) {
+        boolean termination = "TERMINATION".equals(type);
+        return new TurnoverReportResponse.Event(employee.getId(), employee.getEmployeeCode(), employee.getFullName(), type, date,
+            termination ? employee.getEmploymentStatus() : null, termination ? employee.getTerminationReason() : null);
     }
 
     private List<Employee> findEligibleEmployees(

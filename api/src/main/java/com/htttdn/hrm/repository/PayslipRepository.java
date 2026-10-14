@@ -46,4 +46,14 @@ public interface PayslipRepository extends JpaRepository<Payslip, Long> {
         Collection<PayrollPeriodStatus> statuses, Pageable pageable);
 
     boolean existsByEmployeeId(Long employeeId);
+
+    /** Phiếu lương của các kỳ chưa hủy trong năm, kèm kỳ lương. */
+    @Query("""
+        SELECT payslip
+        FROM Payslip payslip
+        JOIN FETCH payslip.payrollPeriod period
+        WHERE period.year = :year
+          AND period.status <> com.htttdn.hrm.entity.enums.PayrollPeriodStatus.CANCELLED
+        """)
+    List<Payslip> findForReportYear(@Param("year") short year);
 }

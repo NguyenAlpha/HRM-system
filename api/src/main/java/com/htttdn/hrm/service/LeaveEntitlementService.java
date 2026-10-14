@@ -3,8 +3,13 @@ package com.htttdn.hrm.service;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +25,7 @@ import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
+import com.htttdn.hrm.repository.specification.EmployeeSpecifications;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
 /**
@@ -70,6 +76,41 @@ public class LeaveEntitlementService {
     public BalanceView getBalance(Long employeeId, int year) {
         requireSelfOrScopedAccess(employeeId);
         return buildBalance(findEmployeeOrThrow(employeeId), year, null);
+    }
+
+    /**
+     * Phép năm của mọi nhân viên trong scope {@code report.hr.read} có làm việc trong năm, xếp theo mã.
+     * Lọc thêm theo từ khóa (mã, tên, email) và đơn vị của phân công hiện tại.
+     */
+    @PreAuthorize("hasAuthority('report.hr.read')")
+    @Transactional(readOnly = true)
+    public List<EmployeeBalanceView> balancesForReport(int year, String keyword, Long organizationUnitId) {
+        LocalDate first = LocalDate.of(year, 1, 1);
+        LocalDate last = LocalDate.of(year, 12, 31);
+        // Scope is checked afterwards, on each person's last day of the year, so leavers stay listed.
+        Specification<Employee> notDeleted = (root, query, builder) -> builder.isNull(root.get("deletedAt"));
+        Specification<Employee> specification = notDeleted
+            .and((root, query, builder) -> builder.and(
+                builder.lessThanOrEqualTo(root.get("hireDate"), last),
+                builder.or(builder.isNull(root.get("terminationDate")),
+                    builder.greaterThanOrEqualTo(root.get("terminationDate"), first))));
+        for (Specification<Employee> filter : Arrays.asList(
+            EmployeeSpecifications.matchesKeyword(keyword),
+            EmployeeSpecifications.currentlyAssignedTo(organizationUnitId, null, LocalDate.now(BUSINESS_ZONE))
+        )) {
+            if (filter != null) {
+                specification = specification.and(filter);
+            }
+        }
+        List<Employee> employees = employeeRepository.findAll(specification, Sort.by("employeeCode"));
+        LocalDate today = LocalDate.now(BUSINESS_ZONE);
+        Set<Long> visible = employeeAccessScopeService.visibleOnLastDay("report.hr.read", employees,
+            last.isBefore(today) ? last : today);
+        return employees.stream()
+            .filter(employee -> visible.contains(employee.getId()))
+            .map(employee -> new EmployeeBalanceView(employee.getEmployeeCode(), employee.getFullName(),
+                buildBalance(employee, year, null)))
+            .toList();
     }
 
     /**
@@ -164,6 +205,13 @@ public class LeaveEntitlementService {
                 ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + accountId
             ));
     }
+
+    /** Một dòng của báo cáo phép năm: nhân viên và số phép của năm đó. */
+    public record EmployeeBalanceView(
+        String employeeCode,
+        String employeeName,
+        BalanceView balance
+    ) { }
 
     public record BalanceView(
         Long employeeId,

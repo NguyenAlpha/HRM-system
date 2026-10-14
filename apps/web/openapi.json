@@ -3048,6 +3048,79 @@
         "tags" : [ "permission-controller" ]
       }
     },
+    "/api/reports/hr/leave-balances" : {
+      "get" : {
+        "operationId" : "leaveBalances",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "year",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 9999,
+            "minimum" : 2000
+          }
+        }, {
+          "in" : "query",
+          "name" : "keyword",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "organizationUnitId",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultListEmployeeBalanceView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "report-controller" ]
+      }
+    },
+    "/api/reports/hr/turnover" : {
+      "get" : {
+        "operationId" : "turnover",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "year",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 9999,
+            "minimum" : 2000
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultTurnoverReportResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "report-controller" ]
+      }
+    },
     "/api/reports/hr/workforce-distribution" : {
       "get" : {
         "operationId" : "workforceDistribution",
@@ -3141,6 +3214,35 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ApiResultPayrollSalaryReportResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "report-controller" ]
+      }
+    },
+    "/api/reports/payroll/summary" : {
+      "get" : {
+        "operationId" : "payrollSummary",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "year",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 9999,
+            "minimum" : 2000
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultPayrollSummaryReportResponse"
                 }
               }
             },
@@ -4348,6 +4450,43 @@
         },
         "required" : [ "earlyLeaveMinutes", "lateMinutes", "note", "payableMinutes", "status", "workedMinutes" ]
       },
+      "Amounts" : {
+        "type" : "object",
+        "properties" : {
+          "allowancePay" : {
+            "type" : "number"
+          },
+          "grossPay" : {
+            "type" : "number"
+          },
+          "healthInsurance" : {
+            "type" : "number"
+          },
+          "netPay" : {
+            "type" : "number"
+          },
+          "otherDeductions" : {
+            "type" : "number"
+          },
+          "overtimePay" : {
+            "type" : "number"
+          },
+          "payslipCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "personalIncomeTax" : {
+            "type" : "number"
+          },
+          "socialInsurance" : {
+            "type" : "number"
+          },
+          "unemploymentInsurance" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "allowancePay", "grossPay", "healthInsurance", "netPay", "otherDeductions", "overtimePay", "payslipCount", "personalIncomeTax", "socialInsurance", "unemploymentInsurance" ]
+      },
       "ApiResultAccountInvitationResponse" : {
         "type" : "object",
         "properties" : {
@@ -4899,6 +5038,28 @@
             "type" : [ "array", "null" ],
             "items" : {
               "$ref" : "#/components/schemas/EmployeeAssignmentResponse"
+            }
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
+      "ApiResultListEmployeeBalanceView" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "$ref" : "#/components/schemas/EmployeeBalanceView"
             }
           },
           "error" : {
@@ -5654,6 +5815,29 @@
         },
         "required" : [ "data", "error", "success" ]
       },
+      "ApiResultPayrollSummaryReportResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/PayrollSummaryReportResponse"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
       "ApiResultPayslipResponse" : {
         "type" : "object",
         "properties" : {
@@ -5821,6 +6005,29 @@
           "data" : {
             "anyOf" : [ {
               "$ref" : "#/components/schemas/SeniorityAllowanceView"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
+      "ApiResultTurnoverReportResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/TurnoverReportResponse"
             }, {
               "type" : "null"
             } ]
@@ -6922,6 +7129,21 @@
         },
         "required" : [ "effectiveFrom", "effectiveTo", "employeeId", "employmentType", "id", "isPrimary", "managerEmployeeId", "managerEmployeeName", "organizationUnitId", "organizationUnitName", "positionId", "positionTitle", "shiftId", "shiftName", "workLocationId", "workLocationName" ]
       },
+      "EmployeeBalanceView" : {
+        "type" : "object",
+        "properties" : {
+          "balance" : {
+            "$ref" : "#/components/schemas/BalanceView"
+          },
+          "employeeCode" : {
+            "type" : "string"
+          },
+          "employeeName" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "balance", "employeeCode", "employeeName" ]
+      },
       "EmployeeCreationResponse" : {
         "type" : "object",
         "properties" : {
@@ -7126,6 +7348,36 @@
         },
         "required" : [ "code", "field", "message" ]
       },
+      "Event" : {
+        "type" : "object",
+        "properties" : {
+          "date" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "employeeCode" : {
+            "type" : "string"
+          },
+          "employeeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "endStatus" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "PROBATION", "ACTIVE", "RESIGNED", "TERMINATED", "RETIRED", null ]
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : [ "string", "null" ]
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "date", "employeeCode", "employeeId", "endStatus", "fullName", "reason", "type" ]
+      },
       "GrantPermissionRequest" : {
         "type" : "object",
         "properties" : {
@@ -7308,6 +7560,27 @@
           }
         },
         "required" : [ "refreshToken" ]
+      },
+      "Month" : {
+        "type" : "object",
+        "properties" : {
+          "amounts" : {
+            "$ref" : "#/components/schemas/Amounts"
+          },
+          "month" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "periodId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "status" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "DRAFT", "CALCULATED", "APPROVED", "PAID", "LOCKED", "CANCELLED", null ]
+          }
+        },
+        "required" : [ "amounts", "month", "periodId", "status" ]
       },
       "OrganizationCompanyOwnerProvisioningResponse" : {
         "type" : "object",
@@ -7851,6 +8124,31 @@
           }
         },
         "required" : [ "asOfDate", "averageBasicSalary", "currency", "employeesWithBasicSalary", "maximumBasicSalary", "minimumBasicSalary", "missingBasicSalary", "salaryDistribution", "totalEmployees" ]
+      },
+      "PayrollSummaryReportResponse" : {
+        "type" : "object",
+        "properties" : {
+          "months" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Month"
+            }
+          },
+          "total" : {
+            "$ref" : "#/components/schemas/Amounts"
+          },
+          "units" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Unit"
+            }
+          },
+          "year" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "months", "total", "units", "year" ]
       },
       "PayslipItemResponse" : {
         "type" : "object",
@@ -8687,6 +8985,59 @@
           }
         },
         "required" : [ "employeeCode", "employeeId", "employeeName", "records" ]
+      },
+      "TurnoverReportResponse" : {
+        "type" : "object",
+        "properties" : {
+          "events" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Event"
+            }
+          },
+          "headcountEnd" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "headcountStart" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "hires" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "months" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Month"
+            }
+          },
+          "terminations" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "turnoverRate" : {
+            "type" : "number"
+          },
+          "year" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "events", "headcountEnd", "headcountStart", "hires", "months", "terminations", "turnoverRate", "year" ]
+      },
+      "Unit" : {
+        "type" : "object",
+        "properties" : {
+          "amounts" : {
+            "$ref" : "#/components/schemas/Amounts"
+          },
+          "organizationUnit" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "amounts", "organizationUnit" ]
       },
       "UpdateEmployeeRequest" : {
         "type" : "object",

@@ -64,4 +64,6 @@ public interface PayrollPeriodRepository extends JpaRepository<PayrollPeriod, Lo
         @Param("from") LocalDate from,
         @Param("to") LocalDate to,
         @Param("statuses") List<PayrollPeriodStatus> statuses);
+
+    List<PayrollPeriod> findByYearAndStatusNot(Short year, PayrollPeriodStatus status);
 }

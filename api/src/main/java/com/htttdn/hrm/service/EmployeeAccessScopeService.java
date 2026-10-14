@@ -2,9 +2,12 @@ package com.htttdn.hrm.service;
 
 import java.time.LocalDate;
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -111,6 +114,32 @@ public class EmployeeAccessScopeService {
 
     public Specification<Employee> accessibleEmployees(String permissionCode) {
         return notDeleted().and(resolve(permissionCode).toSpecification(LocalDate.now()));
+    }
+
+    /**
+     * Ids of the given employees that were in the caller's scope on their last day up to {@code date}:
+     * the termination date for someone who left earlier, the hire date for someone not yet started.
+     * A scope by unit or location follows assignments, which close when an employee leaves, so
+     * reports that cover past periods check each person on a day they were still assigned.
+     */
+    public Set<Long> visibleOnLastDay(String permissionCode, Collection<Employee> employees, LocalDate date) {
+        EmployeeAccessScope scope = resolve(permissionCode);
+        if (scope.companyWide()) {
+            return employees.stream().map(Employee::getId).collect(Collectors.toSet());
+        }
+        Map<LocalDate, List<Long>> idsByDay = employees.stream().collect(Collectors.groupingBy(employee -> {
+            LocalDate day = date;
+            if (employee.getTerminationDate() != null && employee.getTerminationDate().isBefore(day)) {
+                day = employee.getTerminationDate();
+            }
+            return employee.getHireDate().isAfter(day) ? employee.getHireDate() : day;
+        }, Collectors.mapping(Employee::getId, Collectors.toList())));
+        Set<Long> visible = new LinkedHashSet<>();
+        idsByDay.forEach((day, ids) -> employeeRepository.findAll(notDeleted()
+                .and(scope.toSpecification(day))
+                .and((root, query, builder) -> root.get("id").in(ids)))
+            .forEach(employee -> visible.add(employee.getId())));
+        return visible;
     }
 
     private Set<Long> descendantOrganizationUnitIds(Long rootId) {
