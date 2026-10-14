@@ -730,7 +730,7 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 | `request.self.read` | ✓ | | | | | | |
 | `request.self.create` | ✓ | | | | | | |
 | `request.self.cancel` | ✓ | | | | | | |
-| `request.read` | | ✓ | | | ✓ | | |
+| `request.read` | | ✓ | | | ✓ | ✓ | |
 | `request.final_approve` | | | | | ✓ | | |
 | `request.manage` | | ✓ | | | | | |
 
@@ -739,7 +739,7 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 | Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
 |:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
 | `attendance.self.read` | ✓ | | | | | | |
-| `attendance.read` | | ✓ | | | | | |
+| `attendance.read` | | ✓ | | | | ✓ | |
 | `attendance.manage` | | ✓ | | | | | |
 | `holiday.read` | ✓ | ✓ | | | | ✓ | |
 
@@ -760,8 +760,8 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 
 | Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
 |:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
-| `report.hr.read` | | ✓ | | | | | |
-| `report.payroll.read` | | ✓ | ✓ | ✓ | | | |
+| `report.hr.read` | | ✓ | | | | ✓ | |
+| `report.payroll.read` | | ✓ | ✓ | ✓ | | ✓ | |
 
 ### Module `RBAC`
 
@@ -773,7 +773,7 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 
 | EMP | HRM | PAC | PAP | DIR | CO | SA |
 |:---:|:---:|:---:|:---:|:---:|:--:|:--:|
-| 9 | 24 | 7 | 7 | 14 | 19 | 10 |
+| 9 | 23 | 7 | 7 | 15 | 25 | 13 |
 
 Một vài ranh giới dễ hiểu nhầm:
 
@@ -783,6 +783,9 @@ Một vài ranh giới dễ hiểu nhầm:
   khóa kỳ nhưng không tính. Hai role này tách nhau có chủ đích.
 - `DIRECTOR` và `COMPANY_OWNER` có `compensation.read` để xem lương và chính sách phụ cấp, nhưng
   không có `compensation.manage`: HR và kế toán nhập, ban giám đốc chỉ xem.
+- `COMPANY_OWNER` có thêm `report.hr.read`, `report.payroll.read`, `attendance.read` và `request.read`
+  để theo dõi báo cáo, bảng công và đơn nghỉ toàn công ty, nhưng không có `attendance.manage`,
+  `request.manage` hay quyền tính/duyệt lương: chủ doanh nghiệp xem, việc nghiệp vụ thuộc HR và kế toán.
 - `DIRECTOR` phê duyệt `employee.lifecycle.approve`, `request.final_approve` và
   `organization.change.approve` nhưng không quản trị account hay RBAC.
 - `SYSTEM_ADMIN` quản trị *truy cập* (tài khoản, role, permission override, danh mục tổ chức) và chỉ *xem* hồ sơ nhân sự; nghiệp vụ nhân sự, chấm công, lương, báo cáo và dữ liệu nhạy cảm thuộc các role nghiệp vụ. Tài khoản đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được khóa, phát mã kích hoạt, đổi role hoặc permission override, và tài khoản đang giữ `SYSTEM_ADMIN` cũng chỉ một System Admin khác được làm các việc đó (mở khóa vẫn được phép), nên người quản trị truy cập không chiếm được quyền chủ doanh nghiệp và ngược lại. Không ai được đổi permission override trên chính account của mình.
