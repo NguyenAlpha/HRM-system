@@ -79,8 +79,8 @@ class HrReportIntegrationTest {
         assertEquals(12, report.months().size());
         // Start of each month = end of the month before; leavers drop out on their last day.
         assertEquals(List.of(1L, 2L, 1L, 2L, 2L, 2L), report.months().subList(0, 6).stream()
-            .map(TurnoverReportResponse.Month::headcountStart).toList());
-        TurnoverReportResponse.Month february = report.months().get(1);
+            .map(TurnoverReportResponse.TurnoverMonth::headcountStart).toList());
+        TurnoverReportResponse.TurnoverMonth february = report.months().get(1);
         assertEquals(2, february.headcountStart());
         assertEquals(1, february.terminations());
         assertEquals(1, february.headcountEnd());
@@ -93,7 +93,7 @@ class HrReportIntegrationTest {
         assertEquals(2, report.hires());
         assertEquals(2, report.terminations());
         assertEquals(List.of("HIRE", "TERMINATION", "HIRE", "TERMINATION"),
-            report.events().stream().map(TurnoverReportResponse.Event::type).toList());
+            report.events().stream().map(TurnoverReportResponse.TurnoverEvent::type).toList());
     }
 
     @Test

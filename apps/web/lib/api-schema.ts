@@ -1678,19 +1678,6 @@ export interface components {
             /** Format: int32 */
             workedMinutes: number;
         };
-        Amounts: {
-            allowancePay: number;
-            grossPay: number;
-            healthInsurance: number;
-            netPay: number;
-            otherDeductions: number;
-            overtimePay: number;
-            /** Format: int64 */
-            payslipCount: number;
-            personalIncomeTax: number;
-            socialInsurance: number;
-            unemploymentInsurance: number;
-        };
         ApiResultAccountInvitationResponse: {
             data: components["schemas"]["AccountInvitationResponse"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
@@ -2506,18 +2493,6 @@ export interface components {
             field: string | null;
             message: string;
         };
-        Event: {
-            /** Format: date */
-            date: string;
-            employeeCode: string;
-            /** Format: int64 */
-            employeeId: number;
-            /** @enum {string|null} */
-            endStatus: "PROBATION" | "ACTIVE" | "RESIGNED" | "TERMINATED" | "RETIRED" | null;
-            fullName: string;
-            reason: string | null;
-            type: string;
-        };
         GrantPermissionRequest: {
             /** Format: int64 */
             permissionId: number;
@@ -2588,15 +2563,6 @@ export interface components {
         };
         LogoutRequest: {
             refreshToken: string;
-        };
-        Month: {
-            amounts: components["schemas"]["Amounts"];
-            /** Format: int32 */
-            month: number;
-            /** Format: int64 */
-            periodId: number | null;
-            /** @enum {string|null} */
-            status: "DRAFT" | "CALCULATED" | "APPROVED" | "PAID" | "LOCKED" | "CANCELLED" | null;
         };
         OrganizationCompanyOwnerProvisioningResponse: {
             accountProvisioning: components["schemas"]["AccountProvisioningResponse"];
@@ -2764,6 +2730,28 @@ export interface components {
             /** @enum {string} */
             type: "BONUS" | "TAXABLE_ALLOWANCE" | "NON_TAXABLE_ALLOWANCE" | "DEDUCTION";
         };
+        PayrollAmounts: {
+            allowancePay: number;
+            grossPay: number;
+            healthInsurance: number;
+            netPay: number;
+            otherDeductions: number;
+            overtimePay: number;
+            /** Format: int64 */
+            payslipCount: number;
+            personalIncomeTax: number;
+            socialInsurance: number;
+            unemploymentInsurance: number;
+        };
+        PayrollMonth: {
+            amounts: components["schemas"]["PayrollAmounts"];
+            /** Format: int32 */
+            month: number;
+            /** Format: int64 */
+            periodId: number | null;
+            /** @enum {string|null} */
+            status: "DRAFT" | "CALCULATED" | "APPROVED" | "PAID" | "LOCKED" | "CANCELLED" | null;
+        };
         PayrollPeriodResponse: {
             /** Format: date-time */
             approvedAt: string | null;
@@ -2816,11 +2804,15 @@ export interface components {
             totalEmployees: number;
         };
         PayrollSummaryReportResponse: {
-            months: components["schemas"]["Month"][];
-            total: components["schemas"]["Amounts"];
-            units: components["schemas"]["Unit"][];
+            months: components["schemas"]["PayrollMonth"][];
+            total: components["schemas"]["PayrollAmounts"];
+            units: components["schemas"]["PayrollUnit"][];
             /** Format: int32 */
             year: number;
+        };
+        PayrollUnit: {
+            amounts: components["schemas"]["PayrollAmounts"];
+            organizationUnit: string;
         };
         PayslipItemResponse: {
             amount: number;
@@ -3141,24 +3133,45 @@ export interface components {
             employeeName: string;
             records: components["schemas"]["AttendanceRecordResponse"][];
         };
-        TurnoverReportResponse: {
-            events: components["schemas"]["Event"][];
+        TurnoverEvent: {
+            /** Format: date */
+            date: string;
+            employeeCode: string;
+            /** Format: int64 */
+            employeeId: number;
+            /** @enum {string|null} */
+            endStatus: "PROBATION" | "ACTIVE" | "RESIGNED" | "TERMINATED" | "RETIRED" | null;
+            fullName: string;
+            reason: string | null;
+            type: string;
+        };
+        TurnoverMonth: {
             /** Format: int64 */
             headcountEnd: number;
             /** Format: int64 */
             headcountStart: number;
             /** Format: int64 */
             hires: number;
-            months: components["schemas"]["Month"][];
+            /** Format: int32 */
+            month: number;
+            /** Format: int64 */
+            terminations: number;
+            turnoverRate: number;
+        };
+        TurnoverReportResponse: {
+            events: components["schemas"]["TurnoverEvent"][];
+            /** Format: int64 */
+            headcountEnd: number;
+            /** Format: int64 */
+            headcountStart: number;
+            /** Format: int64 */
+            hires: number;
+            months: components["schemas"]["TurnoverMonth"][];
             /** Format: int64 */
             terminations: number;
             turnoverRate: number;
             /** Format: int32 */
             year: number;
-        };
-        Unit: {
-            amounts: components["schemas"]["Amounts"];
-            organizationUnit: string;
         };
         UpdateEmployeeRequest: {
             /** Format: date */
