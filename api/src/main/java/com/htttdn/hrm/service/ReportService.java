@@ -217,8 +217,8 @@ public class ReportService {
             : visibleCache.computeIfAbsent(date, at -> employeeRepository.findAll(notDeleted().and(scope.toSpecification(at)))
                 .stream().map(Employee::getId).collect(Collectors.toSet()));
 
-        List<TurnoverReportResponse.Month> months = new ArrayList<>();
-        List<TurnoverReportResponse.Event> events = new ArrayList<>();
+        List<TurnoverReportResponse.TurnoverMonth> months = new ArrayList<>();
+        List<TurnoverReportResponse.TurnoverEvent> events = new ArrayList<>();
         for (int month = 1; month <= lastMonth; month++) {
             LocalDate first = LocalDate.of(year, month, 1);
             LocalDate last = first.withDayOfMonth(first.lengthOfMonth());
@@ -243,14 +243,14 @@ public class ReportService {
                     events.add(event(employee, "TERMINATION", ended));
                 }
             }
-            months.add(new TurnoverReportResponse.Month(month, start, hires, terminations, end, rate(terminations, start, end)));
+            months.add(new TurnoverReportResponse.TurnoverMonth(month, start, hires, terminations, end, rate(terminations, start, end)));
         }
 
         long headcountStart = months.getFirst().headcountStart();
         long headcountEnd = months.getLast().headcountEnd();
-        long hires = months.stream().mapToLong(TurnoverReportResponse.Month::hires).sum();
-        long terminations = months.stream().mapToLong(TurnoverReportResponse.Month::terminations).sum();
-        events.sort(Comparator.comparing(TurnoverReportResponse.Event::date).thenComparing(TurnoverReportResponse.Event::employeeCode));
+        long hires = months.stream().mapToLong(TurnoverReportResponse.TurnoverMonth::hires).sum();
+        long terminations = months.stream().mapToLong(TurnoverReportResponse.TurnoverMonth::terminations).sum();
+        events.sort(Comparator.comparing(TurnoverReportResponse.TurnoverEvent::date).thenComparing(TurnoverReportResponse.TurnoverEvent::employeeCode));
         return new TurnoverReportResponse(year, headcountStart, headcountEnd, hires, terminations,
             rate(terminations, headcountStart, headcountEnd), months, events);
     }
@@ -276,9 +276,9 @@ public class ReportService {
             .divide(BigDecimal.valueOf(start + end), 2, RoundingMode.HALF_UP);
     }
 
-    private TurnoverReportResponse.Event event(Employee employee, String type, LocalDate date) {
+    private TurnoverReportResponse.TurnoverEvent event(Employee employee, String type, LocalDate date) {
         boolean termination = "TERMINATION".equals(type);
-        return new TurnoverReportResponse.Event(employee.getId(), employee.getEmployeeCode(), employee.getFullName(), type, date,
+        return new TurnoverReportResponse.TurnoverEvent(employee.getId(), employee.getEmployeeCode(), employee.getFullName(), type, date,
             termination ? employee.getEmploymentStatus() : null, termination ? employee.getTerminationReason() : null);
     }
 

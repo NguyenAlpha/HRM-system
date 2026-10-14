@@ -19,12 +19,12 @@ public record TurnoverReportResponse(
     long hires,
     long terminations,
     BigDecimal turnoverRate,
-    List<Month> months,
-    List<Event> events
+    List<TurnoverMonth> months,
+    List<TurnoverEvent> events
 ) {
 
     /** Một tháng: quân số ngày cuối tháng trước, vào, nghỉ, quân số ngày cuối tháng. */
-    public record Month(
+    public record TurnoverMonth(
         int month,
         long headcountStart,
         long hires,
@@ -35,7 +35,7 @@ public record TurnoverReportResponse(
     }
 
     /** Một lần vào làm ({@code HIRE}) hoặc nghỉ việc ({@code TERMINATION}) trong năm. */
-    public record Event(
+    public record TurnoverEvent(
         Long employeeId,
         String employeeCode,
         String fullName,

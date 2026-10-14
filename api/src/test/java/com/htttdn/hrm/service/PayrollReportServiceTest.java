@@ -57,7 +57,7 @@ class PayrollReportServiceTest {
         assertNull(report.months().get(2).periodId());
 
         // Largest gross first.
-        assertEquals(List.of("Nhân sự", "Kế toán"), report.units().stream().map(PayrollSummaryReportResponse.Unit::organizationUnit).toList());
+        assertEquals(List.of("Nhân sự", "Kế toán"), report.units().stream().map(PayrollSummaryReportResponse.PayrollUnit::organizationUnit).toList());
         assertEquals(2, report.units().getFirst().amounts().payslipCount());
     }
 

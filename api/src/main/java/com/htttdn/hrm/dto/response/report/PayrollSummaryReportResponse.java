@@ -13,12 +13,12 @@ import jakarta.annotation.Nullable;
  */
 public record PayrollSummaryReportResponse(
     int year,
-    Amounts total,
-    List<Month> months,
-    List<Unit> units
+    PayrollAmounts total,
+    List<PayrollMonth> months,
+    List<PayrollUnit> units
 ) {
 
-    public record Amounts(
+    public record PayrollAmounts(
         long payslipCount,
         BigDecimal grossPay,
         BigDecimal allowancePay,
@@ -33,17 +33,17 @@ public record PayrollSummaryReportResponse(
     }
 
     /** Một tháng; {@code periodId} và {@code status} là null khi tháng đó chưa có kỳ lương. */
-    public record Month(
+    public record PayrollMonth(
         int month,
         @Nullable Long periodId,
         @Nullable PayrollPeriodStatus status,
-        Amounts amounts
+        PayrollAmounts amounts
     ) {
     }
 
-    public record Unit(
+    public record PayrollUnit(
         String organizationUnit,
-        Amounts amounts
+        PayrollAmounts amounts
     ) {
     }
 }

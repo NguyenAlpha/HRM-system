@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.response.report.PayrollSummaryReportResponse;
-import com.htttdn.hrm.dto.response.report.PayrollSummaryReportResponse.Amounts;
+import com.htttdn.hrm.dto.response.report.PayrollSummaryReportResponse.PayrollAmounts;
 import com.htttdn.hrm.entity.PayrollPeriod;
 import com.htttdn.hrm.entity.Payslip;
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
@@ -53,10 +53,10 @@ public class PayrollReportService {
         Map<Integer, List<Payslip>> byMonth = payslips.stream()
             .collect(Collectors.groupingBy(payslip -> payslip.getPayrollPeriod().getMonth().intValue()));
 
-        List<PayrollSummaryReportResponse.Month> months = new ArrayList<>();
+        List<PayrollSummaryReportResponse.PayrollMonth> months = new ArrayList<>();
         for (int month = 1; month <= 12; month++) {
             PayrollPeriod period = periods.get(month);
-            months.add(new PayrollSummaryReportResponse.Month(month,
+            months.add(new PayrollSummaryReportResponse.PayrollMonth(month,
                 period == null ? null : period.getId(),
                 period == null ? null : period.getStatus(),
                 sum(byMonth.getOrDefault(month, List.of()))));
@@ -65,16 +65,16 @@ public class PayrollReportService {
         Map<String, List<Payslip>> byUnit = payslips.stream().collect(Collectors.groupingBy(
             payslip -> Objects.requireNonNullElse(payslip.getOrganizationUnitSnapshot(), "Chưa có đơn vị"),
             TreeMap::new, Collectors.toList()));
-        List<PayrollSummaryReportResponse.Unit> units = byUnit.entrySet().stream()
-            .map(entry -> new PayrollSummaryReportResponse.Unit(entry.getKey(), sum(entry.getValue())))
-            .sorted(Comparator.comparing((PayrollSummaryReportResponse.Unit unit) -> unit.amounts().grossPay()).reversed())
+        List<PayrollSummaryReportResponse.PayrollUnit> units = byUnit.entrySet().stream()
+            .map(entry -> new PayrollSummaryReportResponse.PayrollUnit(entry.getKey(), sum(entry.getValue())))
+            .sorted(Comparator.comparing((PayrollSummaryReportResponse.PayrollUnit unit) -> unit.amounts().grossPay()).reversed())
             .toList();
 
         return new PayrollSummaryReportResponse(year, sum(payslips), months, units);
     }
 
-    private Amounts sum(List<Payslip> payslips) {
-        return new Amounts(
+    private PayrollAmounts sum(List<Payslip> payslips) {
+        return new PayrollAmounts(
             payslips.size(),
             total(payslips, Payslip::getGrossPay),
             total(payslips, Payslip::getAllowancePay),

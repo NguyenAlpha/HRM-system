@@ -4450,43 +4450,6 @@
         },
         "required" : [ "earlyLeaveMinutes", "lateMinutes", "note", "payableMinutes", "status", "workedMinutes" ]
       },
-      "Amounts" : {
-        "type" : "object",
-        "properties" : {
-          "allowancePay" : {
-            "type" : "number"
-          },
-          "grossPay" : {
-            "type" : "number"
-          },
-          "healthInsurance" : {
-            "type" : "number"
-          },
-          "netPay" : {
-            "type" : "number"
-          },
-          "otherDeductions" : {
-            "type" : "number"
-          },
-          "overtimePay" : {
-            "type" : "number"
-          },
-          "payslipCount" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "personalIncomeTax" : {
-            "type" : "number"
-          },
-          "socialInsurance" : {
-            "type" : "number"
-          },
-          "unemploymentInsurance" : {
-            "type" : "number"
-          }
-        },
-        "required" : [ "allowancePay", "grossPay", "healthInsurance", "netPay", "otherDeductions", "overtimePay", "payslipCount", "personalIncomeTax", "socialInsurance", "unemploymentInsurance" ]
-      },
       "ApiResultAccountInvitationResponse" : {
         "type" : "object",
         "properties" : {
@@ -7348,36 +7311,6 @@
         },
         "required" : [ "code", "field", "message" ]
       },
-      "Event" : {
-        "type" : "object",
-        "properties" : {
-          "date" : {
-            "type" : "string",
-            "format" : "date"
-          },
-          "employeeCode" : {
-            "type" : "string"
-          },
-          "employeeId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "endStatus" : {
-            "type" : [ "string", "null" ],
-            "enum" : [ "PROBATION", "ACTIVE", "RESIGNED", "TERMINATED", "RETIRED", null ]
-          },
-          "fullName" : {
-            "type" : "string"
-          },
-          "reason" : {
-            "type" : [ "string", "null" ]
-          },
-          "type" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "date", "employeeCode", "employeeId", "endStatus", "fullName", "reason", "type" ]
-      },
       "GrantPermissionRequest" : {
         "type" : "object",
         "properties" : {
@@ -7560,27 +7493,6 @@
           }
         },
         "required" : [ "refreshToken" ]
-      },
-      "Month" : {
-        "type" : "object",
-        "properties" : {
-          "amounts" : {
-            "$ref" : "#/components/schemas/Amounts"
-          },
-          "month" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "periodId" : {
-            "type" : [ "integer", "null" ],
-            "format" : "int64"
-          },
-          "status" : {
-            "type" : [ "string", "null" ],
-            "enum" : [ "DRAFT", "CALCULATED", "APPROVED", "PAID", "LOCKED", "CANCELLED", null ]
-          }
-        },
-        "required" : [ "amounts", "month", "periodId", "status" ]
       },
       "OrganizationCompanyOwnerProvisioningResponse" : {
         "type" : "object",
@@ -8009,6 +7921,64 @@
         },
         "required" : [ "amount", "createdAt", "description", "employeeCode", "employeeId", "employeeName", "id", "payrollPeriodId", "type" ]
       },
+      "PayrollAmounts" : {
+        "type" : "object",
+        "properties" : {
+          "allowancePay" : {
+            "type" : "number"
+          },
+          "grossPay" : {
+            "type" : "number"
+          },
+          "healthInsurance" : {
+            "type" : "number"
+          },
+          "netPay" : {
+            "type" : "number"
+          },
+          "otherDeductions" : {
+            "type" : "number"
+          },
+          "overtimePay" : {
+            "type" : "number"
+          },
+          "payslipCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "personalIncomeTax" : {
+            "type" : "number"
+          },
+          "socialInsurance" : {
+            "type" : "number"
+          },
+          "unemploymentInsurance" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "allowancePay", "grossPay", "healthInsurance", "netPay", "otherDeductions", "overtimePay", "payslipCount", "personalIncomeTax", "socialInsurance", "unemploymentInsurance" ]
+      },
+      "PayrollMonth" : {
+        "type" : "object",
+        "properties" : {
+          "amounts" : {
+            "$ref" : "#/components/schemas/PayrollAmounts"
+          },
+          "month" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "periodId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
+          "status" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "DRAFT", "CALCULATED", "APPROVED", "PAID", "LOCKED", "CANCELLED", null ]
+          }
+        },
+        "required" : [ "amounts", "month", "periodId", "status" ]
+      },
       "PayrollPeriodResponse" : {
         "type" : "object",
         "properties" : {
@@ -8131,16 +8101,16 @@
           "months" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Month"
+              "$ref" : "#/components/schemas/PayrollMonth"
             }
           },
           "total" : {
-            "$ref" : "#/components/schemas/Amounts"
+            "$ref" : "#/components/schemas/PayrollAmounts"
           },
           "units" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Unit"
+              "$ref" : "#/components/schemas/PayrollUnit"
             }
           },
           "year" : {
@@ -8149,6 +8119,18 @@
           }
         },
         "required" : [ "months", "total", "units", "year" ]
+      },
+      "PayrollUnit" : {
+        "type" : "object",
+        "properties" : {
+          "amounts" : {
+            "$ref" : "#/components/schemas/PayrollAmounts"
+          },
+          "organizationUnit" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "amounts", "organizationUnit" ]
       },
       "PayslipItemResponse" : {
         "type" : "object",
@@ -8986,13 +8968,72 @@
         },
         "required" : [ "employeeCode", "employeeId", "employeeName", "records" ]
       },
+      "TurnoverEvent" : {
+        "type" : "object",
+        "properties" : {
+          "date" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "employeeCode" : {
+            "type" : "string"
+          },
+          "employeeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "endStatus" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "PROBATION", "ACTIVE", "RESIGNED", "TERMINATED", "RETIRED", null ]
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : [ "string", "null" ]
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "date", "employeeCode", "employeeId", "endStatus", "fullName", "reason", "type" ]
+      },
+      "TurnoverMonth" : {
+        "type" : "object",
+        "properties" : {
+          "headcountEnd" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "headcountStart" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "hires" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "month" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "terminations" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "turnoverRate" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "headcountEnd", "headcountStart", "hires", "month", "terminations", "turnoverRate" ]
+      },
       "TurnoverReportResponse" : {
         "type" : "object",
         "properties" : {
           "events" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Event"
+              "$ref" : "#/components/schemas/TurnoverEvent"
             }
           },
           "headcountEnd" : {
@@ -9010,7 +9051,7 @@
           "months" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Month"
+              "$ref" : "#/components/schemas/TurnoverMonth"
             }
           },
           "terminations" : {
@@ -9026,18 +9067,6 @@
           }
         },
         "required" : [ "events", "headcountEnd", "headcountStart", "hires", "months", "terminations", "turnoverRate", "year" ]
-      },
-      "Unit" : {
-        "type" : "object",
-        "properties" : {
-          "amounts" : {
-            "$ref" : "#/components/schemas/Amounts"
-          },
-          "organizationUnit" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "amounts", "organizationUnit" ]
       },
       "UpdateEmployeeRequest" : {
         "type" : "object",
