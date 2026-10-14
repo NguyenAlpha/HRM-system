@@ -190,7 +190,7 @@ Dữ liệu seed được chia theo trách nhiệm và chạy theo `@Order`. M�
 | 500 | `CompanyOwnerSeeder` | `OWNER_SEED_ENABLED` (mặc định bật) | Company Owner `owner`/`password` (role `COMPANY_OWNER`, `DIRECTOR`, `PAYROLL_APPROVER`, `EMPLOYEE`), phân công tại `BOARD`, lương cơ bản 50.000.000, hồ sơ bảo hiểm/thuế (đóng trên 50.000.000, vùng 1), 2 con phụ thuộc, chấm công 2 năm |
 | 505 | `AllowancePolicySeeder` | `COMPANY_SEED_ENABLED` | Phụ cấp chức vụ theo tháng (`DIRECTOR` 10 tr, `OPERATIONS_MANAGER` 5 tr, `BRANCH_MANAGER` 4 tr, `WAREHOUSE_SUPERVISOR` 3 tr, `TEAM_LEAD` 2 tr, `PAYROLL_ACCOUNTANT` và `HR_SPECIALIST` 1 tr) và phụ cấp thâm niên (1–3 năm 3%, 3–5 năm 5%, từ 5 năm 7% lương cơ bản); Company Owner duyệt, hiệu lực từ ngày Owner vào làm. Không có Owner thì bỏ qua |
 | 510 | `StaffSeeder` | `STAFF_SEED_ENABLED` (mặc định bật), file `STAFF_SEED_FILE` | Nhân sự khai báo trong file JSON, mặc định `api/src/main/resources/seed/staff.json` |
-| 520 | `PayrollSeeder` | `PAYROLL_SEED_ENABLED` (mặc định bật) | Kỳ lương 6 tháng trước tháng chạy seed, tính bằng engine lương thật; chỉ chạy khi chưa có kỳ lương nào |
+| 520 | `PayrollSeeder` | `PAYROLL_SEED_ENABLED` (mặc định bật) | Kỳ lương mọi tháng từ tháng nhân viên đầu tiên vào làm đến tháng trước, tính bằng engine lương thật; chỉ chạy khi chưa có kỳ lương nào |
 
 Ngoài Company Owner và nhân sự trong file seed, mọi người dùng HRM được tạo qua API.
 
@@ -300,13 +300,13 @@ Nhờ vậy `owner` và `hr` có sẵn đơn chờ duyệt trên trang Tổng qu
 Vòng lương trên dữ liệu seed: `accountant` tạo kỳ và tính lương, `owner` (giữ `PAYROLL_APPROVER`)
 duyệt, xác nhận đã trả và khóa kỳ; mỗi nhân viên xem phiếu của mình từ khi kỳ được duyệt.
 
-`PayrollSeeder` chạy đúng vòng đó qua các service lương (đóng vai `accountant` rồi `owner`) cho 6
-tháng trước tháng chạy seed, rồi lùi mốc thời gian về lúc làm lương thật: lương tháng M tạo ngày 1,
+`PayrollSeeder` chạy đúng vòng đó qua các service lương (đóng vai `accountant` rồi `owner`) cho mọi
+tháng từ tháng nhân viên đầu tiên vào làm (Company Owner, khoảng 2 năm trước) đến tháng trước, rồi lùi mốc thời gian về lúc làm lương thật: lương tháng M tạo ngày 1,
 tính ngày 2, duyệt ngày 4, trả và nộp thuế ngày 10, khóa ngày 20 của tháng M+1.
 
 | Kỳ | Trạng thái |
 |---|---|
-| 6 → 3 tháng trước | Đã khóa |
+| Từ tháng đầu tiên đến 3 tháng trước | Đã khóa |
 | 2 tháng trước | Đã trả, chưa khóa |
 | Tháng trước | Đã tính, chờ `owner` duyệt (có trên trang Tổng quan) |
 
