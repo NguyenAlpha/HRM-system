@@ -19,7 +19,7 @@ Quy ước trạng thái:
 | Phân quyền RBAC | Đủ | `/rbac`, `/admin/rbac`, `/role-grant`, `/role-requests` |
 | Hồ sơ nhân viên | Đủ | `/employees`, `/employees/{id}`, `/admin/employees` (chỉ xem) |
 | Cơ cấu tổ chức | Đủ | `/organization`, `/admin/organization` |
-| Ca làm việc và ngày lễ | Đủ | `/organization`, `/attendance` |
+| Ca làm việc và ngày lễ | Đủ | `/organization` |
 | Nghỉ phép | Đủ | `/leave-requests` |
 | Chấm công | Đủ | `/attendance` |
 | Lương, bảo hiểm, thuế | Đủ | `/payroll`, `/payslips`, `/allowances`, thẻ lương trong `/employees/{id}` |

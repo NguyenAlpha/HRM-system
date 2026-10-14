@@ -12,7 +12,7 @@ export function OrganizationPage() {
     <>
       <PageHeader
         title="Danh mục tổ chức"
-        description="Đơn vị tổ chức, địa điểm làm việc, vị trí công việc và hình thức làm việc trong doanh nghiệp."
+        description="Đơn vị tổ chức, địa điểm làm việc, vị trí công việc, ca làm việc, ngày lễ và hình thức làm việc trong doanh nghiệp."
         backToOverview
       />
 
