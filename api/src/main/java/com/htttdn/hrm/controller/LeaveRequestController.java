@@ -1,6 +1,9 @@
 package com.htttdn.hrm.controller;
 
+import java.time.LocalDate;
+
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,7 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.service.LeaveRequestService;
+import com.htttdn.hrm.entity.enums.LeaveRequestStatus;
+import com.htttdn.hrm.entity.enums.LeaveType;
 import com.htttdn.hrm.service.LeaveRequestService.CreateLeaveCommand;
+import com.htttdn.hrm.service.LeaveRequestService.LeaveRequestSearch;
 import com.htttdn.hrm.service.LeaveRequestService.LeaveRequestView;
 
 import jakarta.annotation.Nullable;
@@ -34,6 +40,20 @@ public class LeaveRequestController {
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResult<LeaveRequestView> create(@Valid @RequestBody CreateLeaveCommand command) {
         return ApiResult.ok(service.createDraft(command));
+    }
+
+    @GetMapping
+    public ApiResult<PagedResult<LeaveRequestView>> search(
+        @RequestParam(required = false) String keyword,
+        @RequestParam(required = false) Long organizationUnitId,
+        @RequestParam(required = false) LeaveRequestStatus status,
+        @RequestParam(required = false) LeaveType leaveType,
+        @RequestParam(required = false) LocalDate from,
+        @RequestParam(required = false) LocalDate to,
+        @PageableDefault(size = 20, sort = "startAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        LeaveRequestSearch search = new LeaveRequestSearch(keyword, organizationUnitId, status, leaveType, from, to);
+        return ApiResult.ok(PagedResult.of(service.search(search, pageable)));
     }
 
     @GetMapping("/employees/{employeeId}")

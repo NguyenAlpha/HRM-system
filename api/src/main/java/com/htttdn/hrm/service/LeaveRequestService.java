@@ -1,9 +1,15 @@
 package com.htttdn.hrm.service;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +28,8 @@ import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
+import com.htttdn.hrm.repository.specification.EmployeeSpecifications;
+import com.htttdn.hrm.repository.specification.SearchPatterns;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
 import jakarta.annotation.Nullable;
@@ -35,6 +43,8 @@ public class LeaveRequestService {
 
     private static final String REQUEST_READ = "request.read";
     private static final String REQUEST_MANAGE = "request.manage";
+    private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+    private static final Set<String> SORTABLE_PROPERTIES = Set.of("startAt", "createdAt", "submittedAt", "status");
     private static final String SELF_RECORDED_COMMENT =
         "Tự ghi nhận: đơn nghỉ của Giám đốc hoặc Chủ sở hữu không cần duyệt";
 
@@ -189,6 +199,52 @@ public class LeaveRequestService {
             .map(this::toView);
     }
 
+    /**
+     * Đơn nghỉ của mọi nhân viên trong scope {@code request.read}. Đơn nháp là của riêng người tạo
+     * nên không bao giờ xuất hiện. {@code from}/{@code to} giữ các đơn có giao với khoảng ngày đó.
+     */
+    @PreAuthorize("hasAuthority('request.read')")
+    @Transactional(readOnly = true)
+    public Page<LeaveRequestView> search(LeaveRequestSearch search, Pageable pageable) {
+        Specification<LeaveRequest> specification = (root, query, builder) ->
+            builder.notEqual(root.get("status"), LeaveRequestStatus.DRAFT);
+
+        boolean companyWide = employeeAccessScopeService.resolve(REQUEST_READ).companyWide();
+        Specification<Employee> keyword = EmployeeSpecifications.matchesKeyword(search.keyword());
+        Specification<Employee> unit = EmployeeSpecifications.currentlyAssignedTo(
+            search.organizationUnitId(), null, LocalDate.now(BUSINESS_ZONE));
+        if (!companyWide || keyword != null || unit != null) {
+            // Scope and employee filters resolve to employee ids first; the scope rules are written for Employee roots.
+            Specification<Employee> employees = employeeAccessScopeService.accessibleEmployees(REQUEST_READ);
+            for (Specification<Employee> filter : Arrays.asList(keyword, unit)) {
+                if (filter != null) {
+                    employees = employees.and(filter);
+                }
+            }
+            List<Long> employeeIds = employeeRepository.findAll(employees).stream().map(Employee::getId).toList();
+            if (employeeIds.isEmpty()) {
+                return Page.empty(pageable);
+            }
+            specification = specification.and((root, query, builder) -> root.get("employee").get("id").in(employeeIds));
+        }
+        if (search.status() != null) {
+            specification = specification.and((root, query, builder) -> builder.equal(root.get("status"), search.status()));
+        }
+        if (search.leaveType() != null) {
+            specification = specification.and((root, query, builder) -> builder.equal(root.get("leaveType"), search.leaveType()));
+        }
+        if (search.from() != null) {
+            Instant fromStart = search.from().atStartOfDay(BUSINESS_ZONE).toInstant();
+            specification = specification.and((root, query, builder) -> builder.greaterThan(root.get("endAt"), fromStart));
+        }
+        if (search.to() != null) {
+            Instant toEnd = search.to().plusDays(1).atStartOfDay(BUSINESS_ZONE).toInstant();
+            specification = specification.and((root, query, builder) -> builder.lessThan(root.get("startAt"), toEnd));
+        }
+        return leaveRequestRepository.findAll(specification, SearchPatterns.requireSortable(pageable, SORTABLE_PROPERTIES))
+            .map(this::toView);
+    }
+
     /** The pending requests waiting for the signed-in employee's decision. */
     @PreAuthorize("isAuthenticated()")
     @Transactional(readOnly = true)
@@ -332,6 +388,16 @@ public class LeaveRequestService {
             request.getUpdatedAt()
         );
     }
+
+    /** Bộ lọc danh sách đơn nghỉ; trường null là không lọc. */
+    public record LeaveRequestSearch(
+        @Nullable String keyword,
+        @Nullable Long organizationUnitId,
+        @Nullable LeaveRequestStatus status,
+        @Nullable LeaveType leaveType,
+        @Nullable LocalDate from,
+        @Nullable LocalDate to
+    ) { }
 
     public record CreateLeaveCommand(
         @NotNull Long employeeId,
