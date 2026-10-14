@@ -20,7 +20,7 @@ function formatExpiry(value: string): string {
   }).format(new Date(value))
 }
 
-function roleScope(role: SessionData["account"]["roles"][number]): string {
+export function roleScope(role: SessionData["account"]["roles"][number]): string {
   if (role.scopeType === "ORG_UNIT") return role.organizationUnitName ?? `Đơn vị #${role.organizationUnitId}`
   if (role.scopeType === "LOCATION") return role.workLocationName ?? `Địa điểm #${role.workLocationId}`
   if (role.scopeType === "SELF") return "Bản thân"

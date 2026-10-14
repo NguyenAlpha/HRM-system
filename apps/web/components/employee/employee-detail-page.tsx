@@ -67,7 +67,7 @@ const ACCOUNT_STATUS_LABELS: Record<string, string> = {
   DISABLED: "Đã vô hiệu hóa",
 }
 
-function formatDate(value: string | null | undefined) {
+export function formatDate(value: string | null | undefined) {
   if (!value) return "—"
   const [year, month, day] = value.split("-")
   return year && month && day ? `${day}/${month}/${year}` : value
@@ -81,7 +81,7 @@ function todayIsoDate() {
   return `${year}-${month}-${day}`
 }
 
-function InfoField({ label, value }: { label: string; value: string | null | undefined }) {
+export function InfoField({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div className="min-w-0">
       <dt className="text-xs text-muted-foreground">{label}</dt>

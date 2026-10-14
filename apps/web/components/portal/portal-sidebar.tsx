@@ -1,17 +1,23 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useState } from "react"
+import { LogOut } from "lucide-react"
 
+import { logout } from "@/lib/auth/client"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import type { AccountSummary, Portal } from "@/lib/auth/types"
 
-/** A null href is a menu entry that is not available yet. */
-type NavLink = { label: string; href: string | null }
+type NavLink = { label: string; href: string }
+/** A titled block of the menu; a null title is the untitled block at the top. */
+type NavGroup = { title: string | null; links: NavLink[] }
 
 export function PortalSidebar({ portal, account }: { portal: Portal; account: AccountSummary }) {
   const admin = portal === "admin"
   const pathname = usePathname()
+  const router = useRouter()
+  const [signingOut, setSigningOut] = useState(false)
   // The home link only matches itself; every other link also covers its sub-pages.
   const navClass = (href: string) => {
     const active = href === PORTAL_CONFIG[portal].homePath
@@ -41,13 +47,27 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
   const canReadOwnPayslips = !!account.employee
     && account.permissions.some((permission) => permission.code === "payroll.self.read")
   const canReadCompensation = account.permissions.some((permission) => permission.code === "compensation.read")
+  const canReadOwnProfile = !!account.employee
+    && account.permissions.some((permission) => permission.code === "profile.self.read")
+
+  async function handleLogout() {
+    setSigningOut(true)
+    try {
+      await logout(portal)
+    } finally {
+      router.replace(PORTAL_CONFIG[portal].loginPath)
+      router.refresh()
+    }
+  }
 
   const home = PORTAL_CONFIG[portal].homePath
-  // A link is listed only when its condition holds.
-  const visible = (links: [boolean, string, string | null][]): NavLink[] =>
-    links.filter(([show]) => show).map(([, label, href]) => ({ label, href }))
-  const links = admin
-    ? visible([
+  // A link is listed only when its condition holds; a group with no visible link is dropped.
+  const group = (title: string | null, links: [boolean, string, string][]): NavGroup => ({
+    title,
+    links: links.filter(([show]) => show).map(([, label, href]) => ({ label, href })),
+  })
+  const groups = (admin
+    ? [group(null, [
       [true, "Tổng quan", home],
       [canReadEmployees, "Nhân sự", "/admin/employees"],
       [canReadAccounts, "Tài khoản", "/admin/accounts"],
@@ -55,23 +75,35 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
       [canAssignRoleDirect, "Cấp quyền trực tiếp", "/admin/role-grant"],
       [canReadOrganization, "Danh mục tổ chức", "/admin/organization"],
       [canBootstrapCompanyOwner, "Company Owner", "/admin/company-owner"],
-    ])
-    : visible([
-      [true, "Tổng quan", home],
-      [true, "Hồ sơ", null],
-      [canReadEmployees, "Nhân sự", "/employees"],
-      [canReadAccounts, "Tài khoản", "/accounts"],
-      [canUseRoleRequests, "Đề xuất role", "/role-requests"],
-      [canAssignRoleDirect, "Cấp quyền trực tiếp", "/role-grant"],
-      [canManageRbac, "Vai trò & quyền", "/rbac"],
-      [canReadOrganization, "Danh mục tổ chức", "/organization"],
-      [canReadReports, "Báo cáo nhân sự", "/reports/workforce"],
-      [canUseAttendance, "Chấm công", "/attendance"],
-      [canUseLeave, "Đơn từ", "/leave-requests"],
-      [canReadPayrollPeriods, "Kỳ lương", "/payroll"],
-      [canReadOwnPayslips, "Phiếu lương", "/payslips"],
-      [canReadCompensation, "Chính sách phụ cấp", "/allowances"],
-    ])
+    ])]
+    : [
+      group(null, [
+        [true, "Tổng quan", home],
+        [canReadOwnProfile, "Hồ sơ của tôi", "/profile"],
+      ]),
+      group("Nhân sự", [
+        [canReadEmployees, "Danh sách nhân sự", "/employees"],
+        [canReadOrganization, "Danh mục tổ chức", "/organization"],
+      ]),
+      group("Chấm công & nghỉ", [
+        [canUseAttendance, "Chấm công", "/attendance"],
+        [canUseLeave, "Đơn từ", "/leave-requests"],
+      ]),
+      group("Lương", [
+        [canReadPayrollPeriods, "Kỳ lương", "/payroll"],
+        [canReadOwnPayslips, "Phiếu lương của tôi", "/payslips"],
+        [canReadCompensation, "Chính sách phụ cấp", "/allowances"],
+      ]),
+      group("Báo cáo", [
+        [canReadReports, "Báo cáo nhân sự", "/reports/workforce"],
+      ]),
+      group("Hệ thống", [
+        [canReadAccounts, "Tài khoản", "/accounts"],
+        [canUseRoleRequests, "Đề xuất role", "/role-requests"],
+        [canAssignRoleDirect, "Cấp quyền trực tiếp", "/role-grant"],
+        [canManageRbac, "Vai trò & quyền", "/rbac"],
+      ]),
+    ]).filter((navGroup) => navGroup.links.length > 0)
 
   return (
     <aside className="portal-sidebar">
@@ -80,13 +112,20 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
         <span><strong>HRM</strong><small>{admin ? "Admin Console" : "People Workspace"}</small></span>
       </div>
       <nav aria-label="Điều hướng chính">
-        {links.map((link) => link.href === null
-          ? <span key={link.label} className="nav-item disabled" aria-disabled="true">{link.label}</span>
-          : <Link key={link.href} className={navClass(link.href)} href={link.href}>{link.label}</Link>)}
+        {groups.map((navGroup) => (
+          <div key={navGroup.title ?? "main"} className="nav-group">
+            {navGroup.title && <p className="nav-group-title">{navGroup.title}</p>}
+            {navGroup.links.map((link) => (
+              <Link key={link.href} className={navClass(link.href)} href={link.href}>{link.label}</Link>
+            ))}
+          </div>
+        ))}
       </nav>
       <div className="sidebar-account">
         <span className="avatar">{(account.employee?.fullName ?? account.username).slice(0, 1).toUpperCase()}</span>
         <span><strong>{account.employee?.fullName ?? account.username}</strong><small>{account.email}</small></span>
+        <button type="button" className="sidebar-logout" onClick={handleLogout} disabled={signingOut}
+          aria-label="Đăng xuất" title="Đăng xuất"><LogOut /></button>
       </div>
     </aside>
   )

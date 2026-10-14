@@ -5,7 +5,7 @@ import { PORTAL_CONFIG } from "@/lib/auth/config"
 // HRM Workspace pages; keep in sync with config.matcher below.
 const HRM_PAGES = [
   "/dashboard", "/employees", "/accounts", "/organization", "/attendance", "/leave-requests",
-  "/payslips", "/reports", "/rbac", "/role-grant", "/role-requests",
+  "/payslips", "/payroll", "/allowances", "/profile", "/reports", "/rbac", "/role-grant", "/role-requests",
 ]
 
 function hasSession(request: NextRequest, portal: "hrm" | "admin"): boolean {
@@ -39,7 +39,8 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/login", "/dashboard/:path*", "/employees/:path*", "/accounts/:path*", "/organization/:path*",
-    "/attendance/:path*", "/leave-requests/:path*", "/payslips/:path*", "/reports/:path*", "/rbac/:path*",
+    "/attendance/:path*", "/leave-requests/:path*", "/payslips/:path*", "/payroll/:path*",
+    "/allowances/:path*", "/profile/:path*", "/reports/:path*", "/rbac/:path*",
     "/role-grant/:path*", "/role-requests/:path*", "/admin/:path*",
   ],
 }
