@@ -404,7 +404,7 @@ export async function handleWorkforceRequest(request: Request, segments: string[
     { pattern: /^attendance\/overtime\/pending$/, methods: ["GET"] },
     { pattern: /^company-holidays$/, methods: ["GET", "POST"] },
     { pattern: /^company-holidays\/[1-9]\d*$/, methods: ["DELETE"] },
-    { pattern: /^leave-requests$/, methods: ["POST"] },
+    { pattern: /^leave-requests$/, methods: ["GET", "POST"] },
     { pattern: /^leave-requests\/pending$/, methods: ["GET"] },
     { pattern: /^leave-requests\/employees\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^leave-requests\/[1-9]\d*$/, methods: ["GET"] },
@@ -459,7 +459,8 @@ export async function handleWorkforceRequest(request: Request, segments: string[
   }
   const query = new URLSearchParams()
   new URL(request.url).searchParams.forEach((value, key) => {
-    if (["from", "to", "year", "fromYear", "month", "page", "size", "sort", "date"].includes(key)) query.append(key, value)
+    if (["from", "to", "year", "fromYear", "month", "page", "size", "sort", "date",
+      "keyword", "organizationUnitId", "status", "leaveType"].includes(key)) query.append(key, value)
   })
   const result = await callApi<unknown>(`/api/${path}${query.size ? `?${query}` : ""}`, {
     method: request.method,

@@ -106,7 +106,7 @@ export function HrmDashboard() {
         title={`Xin chào, ${self?.fullName ?? account.username}`}
         description={new Intl.DateTimeFormat("vi-VN", { dateStyle: "full", timeZone: "Asia/Ho_Chi_Minh" }).format(new Date())}
         actions={self && has("request.self.create") && (
-          <Button nativeButton={false} render={<Link href="/leave-requests" />}><FilePlus2 /> Tạo đơn nghỉ</Button>
+          <Button nativeButton={false} render={<Link href="/leave-requests?new=1" />}><FilePlus2 /> Tạo đơn nghỉ</Button>
         )}
       />
 
