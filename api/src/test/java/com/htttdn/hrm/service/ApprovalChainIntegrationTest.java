@@ -6,7 +6,9 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.request.attendance.ApproveOvertimeRequest;
 import com.htttdn.hrm.dto.response.attendance.OvertimeApprovalItemResponse;
+import com.htttdn.hrm.dto.response.attendance.TimesheetRowResponse;
 import com.htttdn.hrm.entity.WorkShift;
 import com.htttdn.hrm.entity.enums.LeaveRequestStatus;
 import com.htttdn.hrm.entity.enums.LeaveType;
@@ -226,6 +229,28 @@ class ApprovalChainIntegrationTest {
 
         authenticateAs(manager, "request.read");
         assertEquals(List.of(), searchIds(null, null, null));
+    }
+
+    @Test
+    void timesheetListsEveryEmployeeInTheReadersScopeWithTheirRecordsOfTheMonth() {
+        Long staffDay = overtimeDay(staff);
+        jdbc.update("""
+            INSERT INTO account_role_assignments(account_id, role_id, scope_type, organization_unit_id, effective_from, granted_by_account_id)
+            SELECT ?, id, 'ORG_UNIT', ?, '2025-01-01', ? FROM roles WHERE code = 'HR_MANAGER'
+            """, hr.accountId(), unitId, creatorAccountId);
+        authenticateAs(hr, "attendance.read");
+
+        List<TimesheetRowResponse> rows = attendanceService.timesheet(2026, 3, null, null);
+        assertEquals(Set.of(owner.employeeId(), director.employeeId(), manager.employeeId(), staff.employeeId(), hr.employeeId()),
+            rows.stream().map(TimesheetRowResponse::employeeId).collect(Collectors.toSet()));
+        assertEquals(List.of(staffDay), rows.stream().filter(row -> row.employeeId().equals(staff.employeeId()))
+            .findFirst().orElseThrow().records().stream().map(record -> record.id()).toList());
+
+        assertEquals(List.of(staff.employeeId()),
+            attendanceService.timesheet(2026, 3, "approval staff", null).stream().map(TimesheetRowResponse::employeeId).toList());
+        assertTrue(attendanceService.timesheet(2026, 4, "approval staff", null).getFirst().records().isEmpty());
+        // Hired in 2025-01: not on the timesheet of an earlier month.
+        assertTrue(attendanceService.timesheet(2024, 12, null, null).isEmpty());
     }
 
     private List<Long> searchIds(String keyword, LeaveRequestStatus status, LocalDate day) {

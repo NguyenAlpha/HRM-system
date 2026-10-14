@@ -276,6 +276,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/attendance/timesheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["timesheet"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/attendance/{id}": {
         parameters: {
             query?: never;
@@ -1815,6 +1831,11 @@ export interface components {
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
+        ApiResultListTimesheetRowResponse: {
+            data: components["schemas"]["TimesheetRowResponse"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
         ApiResultListWorkLocationResponse: {
             data: components["schemas"]["WorkLocationResponse"][] | null;
             error: components["schemas"]["ErrorDetail"] | null;
@@ -3004,6 +3025,13 @@ export interface components {
         SoftDeleteEmployeeRequest: {
             deletionReason: string;
         };
+        TimesheetRowResponse: {
+            employeeCode: string;
+            /** Format: int64 */
+            employeeId: number;
+            employeeName: string;
+            records: components["schemas"]["AttendanceRecordResponse"][];
+        };
         UpdateEmployeeRequest: {
             /** Format: date */
             dateOfBirth?: string | null;
@@ -3602,6 +3630,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultAttendanceRecordResponse"];
+                };
+            };
+        };
+    };
+    timesheet: {
+        parameters: {
+            query: {
+                year: number;
+                month: number;
+                keyword?: string;
+                organizationUnitId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListTimesheetRowResponse"];
                 };
             };
         };

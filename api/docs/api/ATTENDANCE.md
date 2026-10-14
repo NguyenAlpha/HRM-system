@@ -29,6 +29,7 @@ Quy trình một tháng:
 | `GET /api/attendance/overtime/pending` | Đăng nhập | Các ngày có giờ làm vượt công thường đang chờ người gọi quyết định |
 | `GET /api/attendance/{id}` | `attendance.self.read` (chính mình) hoặc `attendance.read` (trong scope) | Chi tiết một bản ghi công |
 | `GET /api/attendance/employees/{employeeId}` | `attendance.self.read` (chính mình) hoặc `attendance.read` (trong scope) | Bảng công của nhân viên trong khoảng ngày, có phân trang |
+| `GET /api/attendance/timesheet` | `attendance.read` (trong scope) | Bảng công tháng của mọi nhân viên trong scope |
 | `POST /api/leave-requests` | `request.self.create` (chính mình) hoặc `request.manage` (trong scope) | Tạo đơn nghỉ `DRAFT` |
 | `POST /api/leave-requests/{id}/submit` | `request.self.create` hoặc `request.manage` | Gửi đơn `DRAFT` → `PENDING` |
 | `POST /api/leave-requests/{id}/cancel` | `request.self.cancel` hoặc `request.manage` | Hủy đơn `DRAFT`/`PENDING` |
@@ -392,6 +393,40 @@ GET /api/attendance/employees/1?from=2026-01-01&to=2026-01-31&page=0&size=20
 | `page`, `size`, `sort` | | | Phân trang; mặc định `size=20`, sắp theo `workDate` |
 
 Response `200 OK` dùng `PagedResult<AttendanceRecordResponse>` với các field `content`, `number`, `totalElements`, `totalPages` và `size`.
+
+---
+
+## GET `/api/attendance/timesheet`
+
+Bảng công tổng hợp một tháng: mỗi nhân viên trong scope `attendance.read` có làm việc trong tháng (vào làm
+trước cuối tháng, chưa nghỉ việc trước đầu tháng) là một dòng, xếp theo mã nhân viên, kèm mọi bản ghi công
+của tháng đó. Web dựng lưới nhân viên × ngày và tính tổng công, muộn/sớm, nghỉ, tăng ca từ các bản ghi này.
+
+| Query | Bắt buộc | Ý nghĩa |
+|:------|:--------:|:--------|
+| `year`, `month` | ✅ | Tháng cần xem (`year` 2000–9999, `month` 1–12) |
+| `keyword` | | Một phần mã nhân viên, họ tên hoặc email công việc |
+| `organizationUnitId` | | Nhân viên có phân công chính hiện tại thuộc đơn vị này |
+
+Response `200 OK`:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "employeeId": 3,
+      "employeeCode": "NV0003",
+      "employeeName": "Lê Văn Cường",
+      "records": [ { "id": 120, "workDate": "2026-10-01", "status": "PRESENT", "payableMinutes": 480, "...": "..." } ]
+    }
+  ],
+  "error": null
+}
+```
+
+Mỗi phần tử của `records` có cùng dạng với `GET /api/attendance/{id}`. Ngày chưa được chuẩn bị bảng công
+thì không có bản ghi.
 
 ---
 

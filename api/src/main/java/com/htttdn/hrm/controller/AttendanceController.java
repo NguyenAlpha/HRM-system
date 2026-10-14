@@ -21,6 +21,7 @@ import com.htttdn.hrm.dto.request.attendance.ApproveOvertimeRequest;
 import com.htttdn.hrm.dto.request.attendance.RecordPunchesRequest;
 import com.htttdn.hrm.dto.response.attendance.AttendanceRecordResponse;
 import com.htttdn.hrm.dto.response.attendance.OvertimeApprovalItemResponse;
+import com.htttdn.hrm.dto.response.attendance.TimesheetRowResponse;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.service.AttendanceService;
@@ -64,6 +65,14 @@ public class AttendanceController {
     public ApiResult<AttendanceRecordResponse> approveOvertime(@PathVariable Long id,
         @Valid @RequestBody ApproveOvertimeRequest request) {
         return ApiResult.ok(service.approveOvertime(id, request));
+    }
+
+    @GetMapping("/timesheet")
+    @PreAuthorize("hasAuthority('attendance.read')")
+    public ApiResult<List<TimesheetRowResponse>> timesheet(@RequestParam @Min(2000) @Max(9999) int year,
+        @RequestParam @Min(1) @Max(12) int month,
+        @RequestParam(required = false) String keyword, @RequestParam(required = false) Long organizationUnitId) {
+        return ApiResult.ok(service.timesheet(year, month, keyword, organizationUnitId));
     }
 
     @GetMapping("/overtime/pending")
