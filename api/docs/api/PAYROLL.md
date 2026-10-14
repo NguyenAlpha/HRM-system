@@ -2,7 +2,7 @@
 
 Lương cơ bản, hồ sơ bảo hiểm/thuế, người phụ thuộc, kỳ lương, phiếu lương, khoản cộng/trừ nhập tay và xuất bảng lương. Dữ liệu công (chấm công, đơn nghỉ, tăng ca) là đầu vào của kỳ lương và nằm trong [ATTENDANCE.md](ATTENDANCE.md).
 
-Phạm vi đang triển khai: nhân viên **cư trú tại Việt Nam**, nhận lương bằng VND, kỳ lương tháng trong năm 2026. Ngày làm việc chuẩn là thứ 2–thứ 7 trừ ngày lễ do công ty khai báo. Quy tắc thuế và bảo hiểm có ngày hiệu lực trong database; khi sang năm hoặc có thay đổi pháp luật phải thêm quy tắc mới rồi kiểm thử trước khi tính kỳ đó. Hệ thống báo lỗi nếu không tìm thấy quy tắc phù hợp.
+Phạm vi đang triển khai: nhân viên **cư trú tại Việt Nam**, nhận lương bằng VND, kỳ lương tháng từ 01/2020 đến 12/2026. Ngày làm việc chuẩn là thứ 2–thứ 7 trừ ngày lễ do công ty khai báo. Quy tắc thuế và bảo hiểm có ngày hiệu lực trong database; khi sang năm hoặc có thay đổi pháp luật phải thêm quy tắc mới rồi kiểm thử trước khi tính kỳ đó. Hệ thống báo lỗi nếu không tìm thấy quy tắc phù hợp.
 
 Quy trình một tháng:
 
@@ -726,10 +726,13 @@ Xóa một khoản. Trả `200 OK` với `data: null`.
 
 ---
 
-## Quy tắc 2026 đã nạp
+## Quy tắc đã nạp (2020–2026)
 
+Thuế TNCN chọn theo **ngày trả lương** (`taxPaymentDate`), bảo hiểm theo ngày cuối tháng làm việc, nên kỳ 12/2025 trả lương tháng 1/2026 dùng mức thuế 2026.
+
+- 01/01/2020–31/12/2025: giảm trừ bản thân 11.000.000 đồng/tháng và mỗi người phụ thuộc 4.400.000 đồng/tháng (Nghị quyết 954/2020/UBTVQH14, áp dụng từ kỳ tính thuế 2020); biểu thuế lũy tiến 7 bậc theo tháng: 0–5 triệu 5%, 5–10 triệu 10%, 10–18 triệu 15%, 18–32 triệu 20%, 32–52 triệu 25%, 52–80 triệu 30%, trên 80 triệu 35% (Luật Thuế TNCN 2007 sửa đổi 2012). Nửa đầu năm 2020 thực tế đã khấu trừ theo mức 9.000.000/3.600.000 rồi quyết toán lại theo mức mới; hệ thống dùng thẳng mức của kỳ tính thuế 2020.
 - Từ 01/01/2026, giảm trừ bản thân 15.500.000 đồng/tháng và mỗi người phụ thuộc 6.200.000 đồng/tháng; biểu thuế lũy tiến theo tháng: 0–10 triệu 5%, 10–30 triệu 10%, 30–60 triệu 20%, 60–100 triệu 30%, trên 100 triệu 35%. Áp dụng đến 31/12/2026 trong bộ quy tắc hiện tại. Nguồn: [Luật 109/2025/QH15](https://vanban.chinhphu.vn/?classid=1&docid=216495&pageid=27160), [giới thiệu và mức giảm trừ](https://xaydungchinhsach.chinhphu.vn/gioi-thieu-luat-thue-thu-nhap-ca-nhan-so-109-2025-qh15-119260123145437408.htm), [biểu thuế](https://xaydungchinhsach.chinhphu.vn/chi-tiet-bieu-thue-thu-nhap-ca-nhan-luy-tien-tung-phan-119260327091407544.htm).
-- BHXH 8%, BHYT 1,5%, BHTN 1% phần nhân viên theo trạng thái tham gia; trần BHXH/BHYT 46,8 triệu đến 30/06/2026 và 50,6 triệu từ 01/07/2026. Trần BHTN = 20 lần lương tối thiểu vùng (vùng I/II/III/IV: 5,31/4,73/4,14/3,70 triệu từ 01/01/2026). Nguồn: [BHXH Việt Nam về tỷ lệ](https://baohiemxahoi.gov.vn/congkhai/Pages/lich-lam-viec-cua-lanh-dao-nganh.aspx?CateID=0&ItemID=24900), [trần BHXH/BHYT từ tháng 7](https://baohiemxahoi.gov.vn/chidaodieuhanh/Pages/thong-tin-bao-chi.aspx?CateID=0&ItemID=26780), [trần BHTN](https://baohiemxahoi.gov.vn/tintuc/Pages/kinh-te-xa-hoi.aspx?CateID=0&ItemID=25535&OtItem=date), [mức vùng](https://baohiemxahoi.gov.vn/tintuc/pages/linh-vuc-bao-hiem-xa-hoi.aspx?CateID=168&ItemID=26630).
+- BHXH 8%, BHYT 1,5%, BHTN 1% phần nhân viên theo trạng thái tham gia, không đổi từ 2020. Trần BHXH/BHYT = 20 lần lương cơ sở: 29,8 triệu (lương cơ sở 1,49 triệu, 01/2020–06/2023), 36 triệu (1,8 triệu, 07/2023–06/2024), 46,8 triệu (2,34 triệu, 07/2024–06/2026) và 50,6 triệu từ 01/07/2026. Lương tối thiểu vùng I/II/III/IV trước 2026: 4,42/3,92/3,43/3,07 triệu (Nghị định 90/2019, 01/2020–06/2022), 4,68/4,16/3,64/3,25 triệu (Nghị định 38/2022, 07/2022–06/2024), 4,96/4,41/3,86/3,45 triệu (Nghị định 74/2024, 07/2024–12/2025). Trần BHTN = 20 lần lương tối thiểu vùng (vùng I/II/III/IV: 5,31/4,73/4,14/3,70 triệu từ 01/01/2026). Nguồn: [BHXH Việt Nam về tỷ lệ](https://baohiemxahoi.gov.vn/congkhai/Pages/lich-lam-viec-cua-lanh-dao-nganh.aspx?CateID=0&ItemID=24900), [trần BHXH/BHYT từ tháng 7](https://baohiemxahoi.gov.vn/chidaodieuhanh/Pages/thong-tin-bao-chi.aspx?CateID=0&ItemID=26780), [trần BHTN](https://baohiemxahoi.gov.vn/tintuc/Pages/kinh-te-xa-hoi.aspx?CateID=0&ItemID=25535&OtItem=date), [mức vùng](https://baohiemxahoi.gov.vn/tintuc/pages/linh-vuc-bao-hiem-xa-hoi.aspx?CateID=168&ItemID=26630).
 - Nếu bảng công có từ 14 ngày làm việc nghỉ không lương hoặc vắng không phép, chương trình dừng tính khi hồ sơ vẫn bật tham gia bảo hiểm để HR đối soát trạng thái của tháng. Không âm thầm khấu trừ sai. Nguồn: [BHXH Việt Nam về 14 ngày nghỉ không lương](https://baohiemxahoi.gov.vn/tintuc/pages/linh-vuc-bao-hiem-xa-hoi.aspx?CateID=168&ItemID=26671&OtItem=date).
 
 ## Giới hạn cần xử lý thủ công
@@ -737,5 +740,5 @@ Xóa một khoản. Trả `200 OK` với `data: null`.
 - Chưa hỗ trợ người không cư trú, hoa hồng tính tự động, khoản giảm trừ tự nguyện khác, truy thu, hoàn thuế và quyết toán năm. Không tự động gửi tờ khai thuế hay bảo hiểm.
 - Chưa tách giờ làm đêm để cộng hệ số riêng. Tăng ca Chủ nhật/ngày lễ cần chấm vào/ra và duyệt, không tự duyệt. Việc kiểm tra trần giờ làm thêm trong ngày/năm và chứng từ miễn thuế vẫn do người duyệt tăng ca thực hiện trước khi chọn `taxExempt`.
 - Tính thuế theo một lần trả lương trong một tháng. Nếu ngày trả thực tế đổi tháng hoặc có thêm đợt trả/thưởng cùng tháng, kế toán phải đối soát. Kỳ đã `APPROVED` hiện không có luồng mở lại tự động; cần xử lý điều chỉnh có kiểm soát trước khi ghi nhận `PAID`.
-- Hồ sơ bảo hiểm được chọn theo ngày cuối nhân viên làm việc trong kỳ; trường hợp thay đổi chế độ trong cùng tháng và các ngoại lệ luật định cần đối soát bằng tay. Dữ liệu quy tắc nạp sẵn chỉ đến hết năm 2026.
+- Hồ sơ bảo hiểm được chọn theo ngày cuối nhân viên làm việc trong kỳ; trường hợp thay đổi chế độ trong cùng tháng và các ngoại lệ luật định cần đối soát bằng tay. Dữ liệu quy tắc nạp sẵn từ 01/01/2020 đến hết năm 2026.
 - Nếu một nhân viên thuộc kỳ nhưng toàn bộ khoảng làm việc rơi vào ngày lễ/Chủ nhật, hệ thống báo lỗi yêu cầu đối soát thủ công thay vì bỏ qua nhân viên hoặc tiền tăng ca của họ.
