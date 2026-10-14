@@ -11,6 +11,8 @@ Tạo và tra cứu hồ sơ nhân sự trong phạm vi được phân công. AP
 | `POST /api/employees` | ✅ | `employee.create` | Tạo hồ sơ nhân sự và phân công chính ban đầu, chưa tạo account đăng nhập |
 | `GET /api/employees` | ✅ | `employee.list.read` | Lấy danh sách nhân sự có phân trang trong scope được giao |
 | `GET /api/employees/me` | ✅ | `profile.self.read` | Hồ sơ của chính người đăng nhập, cùng dạng với chi tiết nhân sự |
+| `GET /api/employees/me/profile` | ✅ | `profile.self.read` | Các trường nhân viên tự sửa được, kèm giá trị hiện tại |
+| `PUT /api/employees/me/profile` | ✅ | `profile.self.update` | Nhân viên tự cập nhật liên lạc và học vấn |
 | `GET /api/employees/{employeeId}` | ✅ | `employee.read` | Lấy chi tiết hồ sơ, phân công hiện tại và thông tin account nếu đã có |
 | `PUT /api/employees/{employeeId}` | ✅ | `employee.update` | Cập nhật các thông tin hồ sơ được phép thay đổi trong entity employee |
 | `POST /api/employees/{employeeId}/confirm` | ✅ | `employee.probation.confirm` | Xác nhận nhân sự thử việc trở thành nhân sự chính thức |
@@ -290,6 +292,36 @@ Trả hồ sơ của nhân sự gắn với account đang đăng nhập, cùng d
 | HTTP | `error.code` | Khi nào |
 |---|---|---|
 | `403` | `FORBIDDEN` | Account không có `profile.self.read` |
+| `404` | `EMPLOYEE_NOT_FOUND` | Account chưa gắn nhân sự hoặc hồ sơ đã bị xóa mềm |
+
+---
+
+## GET / PUT `/api/employees/me/profile`
+
+Nhân viên tự giữ cập nhật **liên lạc và học vấn** của mình. Họ tên, ngày sinh, giới tính, CCCD, mã số
+thuế, tài khoản ngân hàng và email công việc ảnh hưởng hợp đồng, bảo hiểm và lương nên chỉ HR sửa
+(`PUT /api/employees/{employeeId}` và `/sensitive`). Role `EMPLOYEE` có sẵn `profile.self.read` và
+`profile.self.update`.
+
+```json
+{
+  "phone": "0912345678",
+  "personalEmail": "ca.nhan@mail.com",
+  "address": "12 Lê Lợi, Quận 1, TP.HCM",
+  "highestEducationLevel": "BACHELOR",
+  "major": "Kế toán",
+  "institution": "Đại học Sài Gòn",
+  "graduationYear": 2018
+}
+```
+
+`PUT` thay toàn bộ các trường trên (null hoặc chuỗi trống là xóa) và trả lại cùng dạng. `personalEmail`
+được chuẩn hóa chữ thường; `graduationYear` từ 1950 đến năm hiện tại.
+
+| HTTP | `error.code` | Khi nào |
+|---|---|---|
+| `400` | `VALIDATION_ERROR` | Email sai định dạng, trường quá dài, hoặc năm tốt nghiệp ngoài khoảng |
+| `403` | `FORBIDDEN` | Thiếu `profile.self.read` / `profile.self.update` |
 | `404` | `EMPLOYEE_NOT_FOUND` | Account chưa gắn nhân sự hoặc hồ sơ đã bị xóa mềm |
 
 ---

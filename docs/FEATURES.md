@@ -98,6 +98,7 @@ Ma trận đầy đủ role → permission: [api/docs/api/RBAC.md](../api/docs/a
 | Danh sách theo phạm vi được phân công | `GET /api/employees` | `employee.list.read` |
 | Xem chi tiết | `GET /api/employees/{id}` | `employee.read` |
 | Cập nhật hồ sơ | `PUT /api/employees/{id}` | `employee.update` |
+| Nhân viên tự sửa liên lạc và học vấn của mình | `PUT /api/employees/me/profile` | `profile.self.update` |
 | Xác nhận hết thử việc | `POST /api/employees/{id}/confirm` | `employee.probation.confirm` |
 | Kết thúc làm việc: nghỉ việc, chấm dứt hợp đồng, nghỉ hưu | `POST /api/employees/{id}/employment-end` | `employee.lifecycle.manage` |
 | Nộp đơn nghỉ việc, rút đơn chờ duyệt | `POST /api/resignation-requests`, `/{id}/cancel` | `request.self.create`, `request.self.cancel` |
