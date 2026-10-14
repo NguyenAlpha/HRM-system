@@ -488,6 +488,56 @@ Trả `EmployeeDetailResponse` sau khi cập nhật, cùng cấu trúc với `PO
 
 ---
 
+## Đơn nghỉ việc `/api/resignation-requests`
+
+Nhân viên tự nộp đơn nghỉ việc; [người duyệt](ATTENDANCE.md#người-duyệt) như đơn nghỉ phép (quản lý
+trực tiếp → Giám đốc → Chủ sở hữu, chốt lúc nộp) duyệt hoặc từ chối. Đơn đã duyệt **chưa kết thúc
+hợp đồng ngay**: nhân viên vẫn đăng nhập, chấm công đến hết ngày làm việc cuối. Từ ngày hôm sau,
+job chạy lúc khởi động và 00:10 mỗi đêm kết thúc hợp đồng với `RESIGNED`, đúng các bước của
+[`employment-end`](#post-apiemployeesemployeeidemployment-end) (người thu hồi role là người đã duyệt
+đơn), và ghi `completedAt` vào đơn. HR vẫn có thể kết thúc hợp đồng trực tiếp; đơn đến hạn của người
+đã nghỉ chỉ được đánh dấu hoàn tất.
+
+| Endpoint | Permission | Mô tả |
+|:---------|:-----------|:------|
+| `POST /api/resignation-requests` | `request.self.create` (chính mình) hoặc `request.manage` (trong scope) | Nộp đơn, đơn vào `PENDING` ngay |
+| `POST /api/resignation-requests/{id}/cancel` | `request.self.cancel` hoặc `request.manage` | Rút đơn `PENDING` |
+| `POST /api/resignation-requests/{id}/approve` | Người duyệt đã chốt của đơn | Duyệt; body tùy chọn `{ "comment", "lastWorkingDate" }` để đổi ngày làm việc cuối |
+| `POST /api/resignation-requests/{id}/reject` | Người duyệt đã chốt của đơn | Từ chối; body `{ "comment" }` bắt buộc |
+| `GET /api/resignation-requests/{id}` | `request.self.read` (chính mình), người duyệt, hoặc `request.read` (trong scope) | Chi tiết đơn |
+| `GET /api/resignation-requests` | `request.read` (trong scope) | Đơn của mọi nhân viên trong scope; lọc `keyword`, `organizationUnitId`, `status`; sort `createdAt`, `lastWorkingDate`, `status` |
+| `GET /api/resignation-requests/employees/{employeeId}` | `request.self.read` (chính mình) hoặc `request.read` (trong scope) | Đơn của một nhân viên, mới nhất trước |
+| `GET /api/resignation-requests/pending` | Đăng nhập | Đơn `PENDING` đang chờ người gọi duyệt |
+
+### Request nộp đơn
+
+```json
+{
+  "employeeId": 3,
+  "requestedLastWorkingDate": "2026-11-30",
+  "reason": "Chuyển công tác"
+}
+```
+
+Quy tắc:
+
+- `requestedLastWorkingDate` (và ngày người duyệt đổi khi duyệt) không được trước hôm nay hay trước
+  `hireDate`. Đơn duyệt muộn hơn ngày nhân viên xin phải chọn lại ngày.
+- Mỗi nhân viên chỉ có một đơn **còn mở**: đang chờ, hoặc đã duyệt mà chưa qua ngày làm việc cuối.
+- Không có ai duyệt (Chủ sở hữu tự nộp) trả `409 APPROVER_NOT_FOUND`.
+- Trạng thái: `PENDING` → `APPROVED` / `REJECTED` / `CANCELLED`. `completedAt` khác null khi hợp đồng đã kết thúc.
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 400 | `VALIDATION_ERROR` | Ngày làm việc cuối trong quá khứ, hoặc từ chối không có lý do |
+| 403 | `FORBIDDEN` | Nộp/xem đơn ngoài scope, hoặc người gọi không phải người duyệt của đơn |
+| 404 | `REQUEST_NOT_FOUND` / `EMPLOYEE_NOT_FOUND` | Đơn hoặc nhân viên không tồn tại |
+| 409 | `CONFLICT` | Đã có đơn còn mở, hoặc nhân viên đã nghỉ |
+| 409 | `REQUEST_ALREADY_PROCESSED` | Duyệt, từ chối hoặc rút đơn không còn `PENDING` |
+| 409 | `APPROVER_NOT_FOUND` | Không có người duyệt |
+
+---
+
 ## POST `/api/employees/{employeeId}/soft-delete`
 
 Xóa mềm một hồ sơ **được tạo nhầm**. Đây không phải cách cho nhân sự nghỉ việc: nhân sự đã đi làm luôn có dữ liệu nghiệp vụ và sẽ bị endpoint này từ chối, trường hợp đó dùng `POST /{employeeId}/employment-end`.

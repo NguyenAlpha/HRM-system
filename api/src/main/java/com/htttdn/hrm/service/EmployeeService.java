@@ -293,6 +293,19 @@ public class EmployeeService {
             throw new ConflictException(ErrorCode.CONFLICT, "Employee employment has already ended");
         }
 
+        endEmploymentAs(employee, endStatus, terminationDate, terminationReason, findCurrentAccount());
+        return toDetailResponse(employee);
+    }
+
+    /**
+     * Ends the employment without the caller's permission checks: closes the primary assignment,
+     * disables the account and revokes its business roles. Used by {@link #endEmployment} and by an
+     * approved resignation once its last working day has passed, where {@code actor} is the approver.
+     */
+    public void endEmploymentAs(
+        Employee employee, EmploymentStatus endStatus, LocalDate terminationDate, String terminationReason, Account actor
+    ) {
+        Long employeeId = employee.getId();
         employee.setEmploymentStatus(endStatus);
         employee.setTerminationDate(terminationDate);
         employee.setTerminationReason(terminationReason);
@@ -304,9 +317,8 @@ public class EmployeeService {
             account.setStatus(AccountStatus.DISABLED);
             account.setUpdatedAt(Instant.now());
             refreshTokenService.revokeAll(account.getId());
-            revokeRolesAtTermination(account.getId(), terminationDate, terminationReason);
+            revokeRolesAtTermination(account.getId(), terminationDate, terminationReason, actor);
         });
-        return toDetailResponse(employee);
     }
 
     /**
@@ -315,8 +327,7 @@ public class EmployeeService {
      * before the termination date stay as history. AUTO and SYSTEM_ONLY roles are left to their own
      * workflows, as the role revoke API does.
      */
-    private void revokeRolesAtTermination(Long accountId, LocalDate terminationDate, String terminationReason) {
-        Account actor = findCurrentAccount();
+    private void revokeRolesAtTermination(Long accountId, LocalDate terminationDate, String terminationReason, Account actor) {
         Instant now = Instant.now();
         for (AccountRoleAssignment assignment : accountRoleAssignmentRepository.findByAccountIdAndRevokedAtIsNull(accountId)) {
             RoleGrantPolicy policy = assignment.getRole().getGrantPolicy();

@@ -48,7 +48,7 @@ Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 | Nhân sự và lương thỏa thuận | `employees`, `employee_assignments`, `employee_salary_history` |
 | Chính sách phụ cấp | `position_allowance_rules`, `seniority_allowance_rules` |
 | Tài khoản và RBAC | `accounts`, `account_activation_tokens`, `refresh_tokens`, `permissions`, `roles`, `role_permissions`, `role_assignment_requests`, `account_role_assignments`, `account_permission_overrides` |
-| Nghỉ phép | `leave_requests` |
+| Nghỉ phép và nghỉ việc | `leave_requests`, `resignation_requests` |
 | Lịch và chấm công | `company_holidays`, `work_shifts`, `attendance_records` |
 | Hồ sơ khấu trừ | `employee_payroll_profiles`, `employee_tax_dependents` |
 | Quy tắc thuế và bảo hiểm | `payroll_tax_rules`, `payroll_tax_brackets`, `payroll_insurance_rules` |
@@ -840,7 +840,7 @@ dùng `compensation.read` / `compensation.manage`, không phải `salary.*` / `a
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-> Nghỉ việc được HR cập nhật trực tiếp vào vòng đời nhân viên; bảng này chỉ quản lý nghỉ phép.
+> Đơn nghỉ việc nằm ở `resignation_requests`; bảng này chỉ quản lý nghỉ phép.
 >
 > `salary_treatment` **do server suy ra từ `leave_type`**, không nhận từ client. Người chỉ có
 > `request.self.create` gửi giá trị khác sẽ bị từ chối; chỉ `request.manage` mới ghi đè được.
@@ -853,6 +853,26 @@ dùng `compensation.read` / `compensation.manage`, không phải `salary.*` / `a
 > - Nghỉ không phép không tạo `leave_requests` được duyệt; ngày công được đánh dấu `UNAUTHORIZED_ABSENCE`.
 
 Hạn mức phép năm **không có bảng riêng**: 12 ngày mỗi năm, vào làm giữa năm thì chia theo số tháng làm việc, tính mỗi lần từ `employees.hire_date`. Số đã dùng và đang chờ duyệt lấy trực tiếp từ `leave_requests` có `leave_type = ANNUAL`.
+
+### `resignation_requests` — Đơn nghỉ việc
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `employee_id` | BIGINT | FK → employees, NOT NULL | Người nộp đơn |
+| `last_working_date` | DATE | NOT NULL | Ngày làm việc cuối; người duyệt có thể đổi khi duyệt |
+| `reason` | TEXT | NOT NULL, không rỗng | Lý do nghỉ việc |
+| `status` | VARCHAR(20) | NOT NULL | `PENDING` / `APPROVED` / `REJECTED` / `CANCELLED` |
+| `approver_employee_id` | BIGINT | FK → employees, NOT NULL | Người duyệt chốt khi nộp, như đơn nghỉ |
+| `reviewed_by_account_id` | BIGINT | FK → accounts | Người đã duyệt/từ chối |
+| `review_comment` | TEXT | | Ghi chú duyệt, lý do từ chối |
+| `reviewed_at` | TIMESTAMPTZ | | Thời điểm duyệt/từ chối |
+| `completed_at` | TIMESTAMPTZ | CHECK chỉ khi `APPROVED` | Thời điểm hợp đồng kết thúc (ngày sau ngày làm việc cuối) |
+| `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm nộp |
+| `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
+
+> Unique index một phần `uq_resignation_requests_open` giữ mỗi nhân viên tối đa một đơn còn mở
+> (`PENDING`, hoặc `APPROVED` chưa có `completed_at`).
 
 ---
 
