@@ -1,5 +1,6 @@
 package com.htttdn.hrm.dto.response.payroll;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 
@@ -22,6 +23,10 @@ public record PayrollPeriodResponse(
     @Nullable Long paidByAccountId,
     @Nullable Instant paidAt,
     @Nullable Long lockedByAccountId,
-    @Nullable Instant lockedAt
+    @Nullable Instant lockedAt,
+    /** Payslips currently attached to the period; 0 until it is calculated. */
+    long payslipCount,
+    BigDecimal totalGrossPay,
+    BigDecimal totalNetPay
 ) {
 }

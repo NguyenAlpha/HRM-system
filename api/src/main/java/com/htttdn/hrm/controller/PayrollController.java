@@ -1,5 +1,7 @@
 package com.htttdn.hrm.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ContentDisposition;
@@ -86,6 +88,11 @@ public class PayrollController {
     @PostMapping("/periods/{id}/cancel")
     public ApiResult<PayrollPeriodResponse> cancel(@PathVariable Long id) {
         return ApiResult.ok(service.cancel(id));
+    }
+
+    @GetMapping("/periods/{id}/payslips")
+    public ApiResult<List<PayslipResponse>> periodPayslips(@PathVariable Long id) {
+        return ApiResult.ok(service.listPayslipsForPeriod(id));
     }
 
     @GetMapping("/payslips/{id}")

@@ -258,6 +258,7 @@ class PayrollServiceTest {
             saved.setId(10L);
             return saved;
         });
+        when(payslipRepository.totalsForPeriod(anyLong())).thenReturn(noTotals());
 
         when(payrollAdjustmentRepository.findByPayrollPeriodIdAndEmployeeIdOrderByIdAsc(1L, 2L)).thenReturn(List.of(
             adjustment(21L, PayrollAdjustmentType.BONUS, "500000"),
@@ -336,6 +337,7 @@ class PayrollServiceTest {
             saved.setId(10L);
             return saved;
         });
+        when(payslipRepository.totalsForPeriod(anyLong())).thenReturn(noTotals());
 
         stubNoDeductions();
 
@@ -346,6 +348,15 @@ class PayrollServiceTest {
         assertEquals(new BigDecimal("769230.77"), captor.getValue().getBaseSalaryPay());
         assertEquals(new BigDecimal("57692.31"), captor.getValue().getPositionAllowancePay());
         assertEquals(new BigDecimal("20000000"), captor.getValue().getContractualBaseSalary());
+    }
+
+    /** The period response sums the payslips; these tests read only the period status. */
+    private static PayslipRepository.PeriodTotals noTotals() {
+        return new PayslipRepository.PeriodTotals() {
+            @Override public long getPayslipCount() { return 0; }
+            @Override public BigDecimal getTotalGrossPay() { return BigDecimal.ZERO; }
+            @Override public BigDecimal getTotalNetPay() { return BigDecimal.ZERO; }
+        };
     }
 
     private PayrollService service() {

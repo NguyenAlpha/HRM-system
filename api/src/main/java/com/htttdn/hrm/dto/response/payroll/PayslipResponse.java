@@ -6,9 +6,12 @@ import java.util.List;
 public record PayslipResponse(
     Long id,
     Long payrollPeriodId,
+    Short periodYear,
+    Short periodMonth,
     Long employeeId,
     String employeeCodeSnapshot,
     String employeeNameSnapshot,
+    String positionSnapshot,
     String workLocationSnapshot,
     String organizationUnitSnapshot,
     BigDecimal contractualBasicSalary,

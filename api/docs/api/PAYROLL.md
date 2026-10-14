@@ -34,6 +34,7 @@ Quy trình một tháng:
 | `POST /api/payroll/periods/{id}/lock` | `payroll.lock`, phạm vi `COMPANY` | Khóa kỳ |
 | `POST /api/payroll/periods/{id}/cancel` | `payroll.calculate`, phạm vi `COMPANY` | Hủy kỳ chưa duyệt |
 | `GET /api/payroll/periods/{id}/export` | `report.payroll.read`, phạm vi `COMPANY` | Tải bảng lương Excel |
+| `GET /api/payroll/periods/{id}/payslips` | `report.payroll.read`, phạm vi `COMPANY` | Bảng lương: mọi phiếu của kỳ |
 | `GET /api/payroll/periods/{periodId}/adjustments` | `payroll.calculate`, phạm vi `COMPANY` | Khoản cộng/trừ của kỳ |
 | `POST /api/payroll/periods/{periodId}/adjustments` | `payroll.calculate`, phạm vi `COMPANY` | Thêm khoản cộng/trừ |
 | `DELETE /api/payroll/periods/{periodId}/adjustments/{adjustmentId}` | `payroll.calculate`, phạm vi `COMPANY` | Xóa khoản cộng/trừ |
@@ -165,7 +166,10 @@ Tiền là số thập phân VND (`BigDecimal`, 2 chữ số thập phân). Ngà
   "paidByAccountId": null,
   "paidAt": null,
   "lockedByAccountId": null,
-  "lockedAt": null
+  "lockedAt": null,
+  "payslipCount": 4,
+  "totalGrossPay": 98348372.00,
+  "totalNetPay": 87204935.00
 }
 ```
 
@@ -175,6 +179,7 @@ Tiền là số thập phân VND (`BigDecimal`, 2 chữ số thập phân). Ngà
 | `taxPaymentDate` | Ngày trả lương dự kiến (sau `mark-paid` là ngày trả thực tế); quyết định quy tắc thuế và số người phụ thuộc |
 | `status` | `DRAFT`, `CALCULATED`, `APPROVED`, `PAID`, `LOCKED`, `CANCELLED` (xem [Vòng đời kỳ lương](#vòng-đời-kỳ-lương)) |
 | `*ByAccountId`, `*At` | Ai và khi nào tính, duyệt, ghi nhận trả, khóa; `null` khi chưa xảy ra. Tính lại sau khi dữ liệu đổi xóa thông tin tính trước đó |
+| `payslipCount`, `totalGrossPay`, `totalNetPay` | Số phiếu lương hiện có của kỳ và tổng thu nhập, tổng thực nhận của các phiếu đó; `0` khi kỳ chưa tính |
 
 ### `PayslipResponse`
 
@@ -182,9 +187,12 @@ Tiền là số thập phân VND (`BigDecimal`, 2 chữ số thập phân). Ngà
 {
   "id": 301,
   "payrollPeriodId": 12,
+  "periodYear": 2026,
+  "periodMonth": 10,
   "employeeId": 2,
   "employeeCodeSnapshot": "NV0002",
   "employeeNameSnapshot": "Trần Thị Bình",
+  "positionSnapshot": "Chuyên viên nhân sự",
   "workLocationSnapshot": "Trụ sở chính",
   "organizationUnitSnapshot": "Phòng Nhân sự",
   "contractualBasicSalary": 15000000.00,
@@ -223,7 +231,8 @@ Tiền là số thập phân VND (`BigDecimal`, 2 chữ số thập phân). Ngà
 
 | Field | Mô tả |
 |:------|:------|
-| `*Snapshot` | Mã, họ tên, địa điểm, đơn vị của nhân viên lúc tính |
+| `periodYear`, `periodMonth` | Tháng của kỳ, để hiển thị phiếu mà không cần quyền đọc kỳ lương |
+| `*Snapshot` | Mã, họ tên, chức danh, địa điểm, đơn vị của nhân viên lúc tính |
 | `contractualBasicSalary` | Mức lương có hiệu lực vào ngày làm việc cuối của nhân viên trong kỳ |
 | `scheduledWorkMinutes` / `payableWorkMinutes` | Phút công chuẩn theo lịch / phút được trả lương thường |
 | `approvedOvertimeMinutes` | Tổng phút tăng ca đã duyệt |
@@ -625,7 +634,16 @@ Trả [`PayrollPeriodResponse`](#payrollperiodresponse) với `status: "CANCELLE
 
 Tải bảng lương của kỳ dạng `bang-luong-<năm>-<tháng>.xlsx` (`Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, `Content-Disposition: attachment`). Client nên gửi `Accept` gồm cả kiểu xlsx và `application/json`, vì lỗi vẫn trả envelope JSON như các endpoint khác.
 
-File có một sheet, mỗi dòng một phiếu lương của kỳ, sắp theo mã nhân viên: mã, họ tên, đơn vị, địa điểm, lương hợp đồng, phút công chuẩn/được trả/tăng ca, lương theo công, phụ cấp, tiền tăng ca, tăng ca miễn thuế, thưởng và phụ cấp khác, phụ cấp khác miễn thuế, tổng thu nhập, BHXH, BHYT, BHTN, thu nhập tính thuế, thuế TNCN, khấu trừ khác và thực nhận. Dòng cuối là công thức `SUM` cho các cột tiền. Dữ liệu lấy từ snapshot trên phiếu lương, nên file của kỳ đã duyệt không đổi theo hồ sơ hiện tại. Trên web, nút **Xuất Excel** hiện ở mỗi kỳ đã tính trở đi trong `/payslips`.
+File có một sheet, mỗi dòng một phiếu lương của kỳ, sắp theo mã nhân viên: mã, họ tên, đơn vị, địa điểm, lương hợp đồng, phút công chuẩn/được trả/tăng ca, lương theo công, phụ cấp, tiền tăng ca, tăng ca miễn thuế, thưởng và phụ cấp khác, phụ cấp khác miễn thuế, tổng thu nhập, BHXH, BHYT, BHTN, thu nhập tính thuế, thuế TNCN, khấu trừ khác và thực nhận. Dòng cuối là công thức `SUM` cho các cột tiền. Dữ liệu lấy từ snapshot trên phiếu lương, nên file của kỳ đã duyệt không đổi theo hồ sơ hiện tại. Trên web, nút **Xuất Excel** nằm trên trang bảng lương `/payroll/{id}` của mỗi kỳ đã tính trở đi.
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 403 | `FORBIDDEN` | Không có `report.payroll.read` phạm vi `COMPANY` |
+| 404 | `PAYROLL_PERIOD_NOT_FOUND` | Kỳ không tồn tại |
+
+### GET `/api/payroll/periods/{id}/payslips`
+
+Bảng lương của kỳ: mọi phiếu lương, sắp theo mã nhân viên, mỗi phần tử là [`PayslipResponse`](#payslipresponse). Người duyệt dùng để kiểm tra trước khi duyệt; kỳ `DRAFT` chưa tính trả mảng rỗng.
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
@@ -659,7 +677,7 @@ Phiếu lương của một nhân viên, có phân trang (`page`, `size` mặc �
 
 ## Khoản cộng/trừ nhập tay
 
-Kế toán nhập thêm khoản cho từng nhân viên trong kỳ. Khoản chỉ đi vào phiếu lương ở lần **tính lương** tiếp theo: thêm hoặc xóa khi kỳ đang `CALCULATED` đưa kỳ về `DRAFT`; từ `APPROVED` trở đi bị chặn. Không khoản nào làm đổi căn cứ đóng bảo hiểm. Trên web, nút **Khoản cộng/trừ** ở mỗi kỳ trong `/payslips` mở danh sách và form nhập (nhập theo mã nhân viên).
+Kế toán nhập thêm khoản cho từng nhân viên trong kỳ. Khoản chỉ đi vào phiếu lương ở lần **tính lương** tiếp theo: thêm hoặc xóa khi kỳ đang `CALCULATED` đưa kỳ về `DRAFT`; từ `APPROVED` trở đi bị chặn. Không khoản nào làm đổi căn cứ đóng bảo hiểm. Trên web, tab **Khoản cộng/trừ** của trang bảng lương `/payroll/{id}` mở danh sách và form nhập (nhập theo mã nhân viên).
 
 | `type` | Ý nghĩa | Tổng thu nhập | Thu nhập tính thuế | Thực nhận |
 |:-------|:--------|:-------------:|:------------------:|:---------:|
