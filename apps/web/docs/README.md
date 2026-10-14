@@ -34,7 +34,7 @@ Menu chia nhóm Nhân sự, Chấm công & nghỉ, Lương, Báo cáo, Hệ th�
 | `/accounts` | Danh sách tài khoản; gửi lại lời mời, đặt lại mật khẩu, vô hiệu hóa và kích hoạt lại |
 | `/organization` | Đơn vị tổ chức, địa điểm, vị trí, ca làm và ngày lễ công ty theo năm (thêm bằng popup, xóa qua menu "…") |
 | `/attendance` | Vào/ra ca, bảng công tháng, dialog điều chỉnh công và duyệt tăng ca; ngày lễ tô màu trên lịch |
-| `/leave-requests` | Số dư phép năm, đơn nghỉ (chọn nhanh cả ngày/sáng/chiều), duyệt kèm ghi chú, điều chỉnh hạn mức và chốt phép năm |
+| `/leave-requests` | Tab Đơn của tôi (phép năm còn lại, đơn của mình), Chờ tôi duyệt (đơn mình là người duyệt), Tất cả đơn (`request.read`: tìm, lọc trạng thái/loại/đơn vị/tháng, phân trang). Tạo đơn bằng popup, chọn nhanh cả ngày/sáng/chiều, lưu nháp hoặc gửi duyệt ngay; HR tạo hộ theo mã nhân viên |
 | `/payroll` | Danh sách kỳ lương kèm số nhân viên, tổng thu nhập, tổng thực nhận; tạo kỳ mới |
 | `/payroll/{periodId}` | Bảng lương của kỳ: các bước quy trình, tổng hợp, bảng mọi nhân viên có dòng tổng, tính/duyệt/trả/khóa/hủy, khoản cộng/trừ, xuất Excel, phiếu từng người |
 | `/payslips` | Phiếu lương của chính người đăng nhập (từ kỳ đã duyệt) |

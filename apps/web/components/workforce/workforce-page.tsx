@@ -10,22 +10,19 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AttendanceSection } from "@/components/workforce/attendance-section"
-import { LeaveSection } from "@/components/workforce/leave-section"
 import { today, type WorkforceContext } from "@/components/workforce/workforce-shared"
 import { apiErrorMessage } from "@/lib/api-helpers"
 import { findEmployeeByCode } from "@/lib/employee"
 
-type Section = "attendance" | "leave"
+type Section = "attendance"
 
 const SECTION_TEXT: Record<Section, { title: string; description: string }> = {
   attendance: { title: "Chấm công", description: "Lịch sử chấm công từ máy chấm công, bảng công tháng, tăng ca và ngày lễ công ty." },
-  leave: { title: "Đơn nghỉ phép", description: "Số dư phép năm, tạo và duyệt đơn nghỉ." },
 }
 
 /** Permissions that let the user look at someone other than themselves in each section. */
 const OTHERS_PERMISSIONS: Record<Section, string[]> = {
   attendance: ["attendance.read", "attendance.manage"],
-  leave: ["request.read", "request.manage"],
 }
 
 /** YYYY-MM shifted by a number of months. */
@@ -54,9 +51,7 @@ export function WorkforcePage({ section }: { section: Section }) {
     [session],
   )
 
-  const canUseSection = section === "attendance"
-    ? ["attendance.self.read", "attendance.read", "attendance.manage"].some((code) => permissions.has(code))
-    : ["request.self.read", "request.read", "request.self.create"].some((code) => permissions.has(code))
+  const canUseSection = ["attendance.self.read", "attendance.read", "attendance.manage"].some((code) => permissions.has(code))
   const canViewOthers = OTHERS_PERMISSIONS[section].some((code) => permissions.has(code))
   // The signed-in employee needs no lookup; anyone else is found by code in the employee list.
   const isSelf = !!self && code.toLowerCase() === self.employeeCode.toLowerCase()
@@ -92,7 +87,7 @@ export function WorkforcePage({ section }: { section: Section }) {
               disabled={!canViewOthers} onChange={(event) => setCodeInput(event.target.value)} />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="workforce-month">{section === "leave" ? "Năm phép (theo tháng)" : "Tháng"}</Label>
+            <Label htmlFor="workforce-month">Tháng</Label>
             <div className="flex items-center gap-1">
               <Button type="button" variant="outline" size="icon" aria-label="Tháng trước"
                 onClick={() => setMonth(shiftMonth(month, -1))}><ChevronLeft /></Button>
@@ -108,8 +103,7 @@ export function WorkforcePage({ section }: { section: Section }) {
       <div className="mt-6">
         {!canUseSection && <p role="alert">Tài khoản chưa có quyền truy cập mục này.</p>}
         {canUseSection && lookupMessage && <p role="alert" className="mb-4 text-sm text-destructive">{lookupMessage}</p>}
-        {canUseSection && section === "attendance" && <AttendanceSection {...context} />}
-        {canUseSection && section === "leave" && <LeaveSection {...context} />}
+        {canUseSection && <AttendanceSection {...context} />}
       </div>
     </>
   )
