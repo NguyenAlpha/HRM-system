@@ -596,6 +596,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/employees/me/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSelfProfile"];
+        put: operations["updateSelfProfile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/employees/{employeeId}": {
         parameters: {
             query?: never;
@@ -2136,6 +2152,11 @@ export interface components {
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
+        ApiResultSelfProfileResponse: {
+            data: components["schemas"]["SelfProfileResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
         ApiResultSeniorityAllowanceView: {
             data: components["schemas"]["SeniorityAllowanceView"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
@@ -3253,6 +3274,17 @@ export interface components {
             note: string | null;
             reason: string | null;
         };
+        SelfProfileResponse: {
+            address: string | null;
+            /** Format: int32 */
+            graduationYear: number | null;
+            /** @enum {string|null} */
+            highestEducationLevel: "HIGH_SCHOOL" | "COLLEGE" | "BACHELOR" | "MASTER" | "DOCTORATE" | null;
+            institution: string | null;
+            major: string | null;
+            personalEmail: string | null;
+            phone: string | null;
+        };
         SeniorityAllowanceView: {
             /** Format: int64 */
             approvedByAccountId: number;
@@ -3387,6 +3419,18 @@ export interface components {
             /** @enum {string} */
             grantPolicy: "AUTO" | "HR_ASSIGNABLE" | "OWNER_APPROVAL" | "SYSTEM_ONLY";
             name: string;
+        };
+        UpdateSelfProfileRequest: {
+            address?: string | null;
+            /** Format: int32 */
+            graduationYear?: number | null;
+            /** @enum {string|null} */
+            highestEducationLevel?: "HIGH_SCHOOL" | "COLLEGE" | "BACHELOR" | "MASTER" | "DOCTORATE" | null;
+            institution?: string | null;
+            major?: string | null;
+            /** Format: email */
+            personalEmail?: string | null;
+            phone?: string | null;
         };
         UpdateWorkLocationRequest: {
             address: string;
@@ -4603,6 +4647,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultEmployeeDetailResponse"];
+                };
+            };
+        };
+    };
+    getSelfProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultSelfProfileResponse"];
+                };
+            };
+        };
+    };
+    updateSelfProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateSelfProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultSelfProfileResponse"];
                 };
             };
         };

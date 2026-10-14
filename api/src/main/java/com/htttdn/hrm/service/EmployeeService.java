@@ -23,12 +23,14 @@ import com.htttdn.hrm.dto.request.employee.CreateEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.EmployeeSearchCriteria;
 import com.htttdn.hrm.dto.request.employee.SoftDeleteEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
+import com.htttdn.hrm.dto.request.employee.UpdateSelfProfileRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.employee.EmployeeAccountSummaryResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeAssignmentResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeCreationResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeDetailResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeSummaryResponse;
+import com.htttdn.hrm.dto.response.employee.SelfProfileResponse;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.Employee;
@@ -161,14 +163,53 @@ public class EmployeeService {
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('profile.self.read')")
     public EmployeeDetailResponse getSelf() {
+        return toDetailResponse(findSelf());
+    }
+
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAuthority('profile.self.read')")
+    public SelfProfileResponse getSelfProfile() {
+        return toSelfProfile(findSelf());
+    }
+
+    /** The employee updates their own contact details and education; everything else stays with HR. */
+    @PreAuthorize("hasAuthority('profile.self.update')")
+    public SelfProfileResponse updateSelfProfile(UpdateSelfProfileRequest request) {
+        Employee employee = findSelf();
+        int currentYear = LocalDate.now().getYear();
+        if (request.graduationYear() != null
+            && (request.graduationYear() < 1950 || request.graduationYear() > currentYear)) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+                "graduationYear must be between 1950 and " + currentYear, "graduationYear");
+        }
+        employee.setPhone(trimToNull(request.phone()));
+        employee.setPersonalEmail(normalizeEmail(request.personalEmail()));
+        employee.setAddress(trimToNull(request.address()));
+        employee.setHighestEducationLevel(request.highestEducationLevel());
+        employee.setMajor(trimToNull(request.major()));
+        employee.setInstitution(trimToNull(request.institution()));
+        employee.setGraduationYear(request.graduationYear());
+        employee.setUpdatedAt(Instant.now());
+        return toSelfProfile(employee);
+    }
+
+    private Employee findSelf() {
         Long accountId = currentAccountProvider.accountId();
-        Employee employee = accountRepository.findById(accountId)
+        return accountRepository.findById(accountId)
             .map(Account::getEmployee)
             .filter(linked -> linked.getDeletedAt() == null)
             .orElseThrow(() -> new ResourceNotFoundException(
                 ErrorCode.EMPLOYEE_NOT_FOUND, "No employee is linked to account " + accountId
             ));
-        return toDetailResponse(employee);
+    }
+
+    private static SelfProfileResponse toSelfProfile(Employee employee) {
+        return new SelfProfileResponse(employee.getPhone(), employee.getPersonalEmail(), employee.getAddress(),
+            employee.getHighestEducationLevel(), employee.getMajor(), employee.getInstitution(), employee.getGraduationYear());
+    }
+
+    private static String trimToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     @Transactional(readOnly = true)

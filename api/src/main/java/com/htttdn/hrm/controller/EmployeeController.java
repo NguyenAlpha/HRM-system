@@ -18,11 +18,13 @@ import com.htttdn.hrm.dto.request.employee.EmployeeSearchCriteria;
 import com.htttdn.hrm.dto.request.employee.EndEmploymentRequest;
 import com.htttdn.hrm.dto.request.employee.SoftDeleteEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
+import com.htttdn.hrm.dto.request.employee.UpdateSelfProfileRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.dto.response.employee.EmployeeCreationResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeDetailResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeSummaryResponse;
+import com.htttdn.hrm.dto.response.employee.SelfProfileResponse;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.service.EmployeeService;
 
@@ -61,6 +63,16 @@ public class EmployeeController {
     @GetMapping("/me")
     public ApiResult<EmployeeDetailResponse> getSelf() {
         return ApiResult.ok(employeeService.getSelf());
+    }
+
+    @GetMapping("/me/profile")
+    public ApiResult<SelfProfileResponse> getSelfProfile() {
+        return ApiResult.ok(employeeService.getSelfProfile());
+    }
+
+    @PutMapping("/me/profile")
+    public ApiResult<SelfProfileResponse> updateSelfProfile(@Valid @RequestBody UpdateSelfProfileRequest request) {
+        return ApiResult.ok(employeeService.updateSelfProfile(request));
     }
 
     @GetMapping("/{employeeId}")

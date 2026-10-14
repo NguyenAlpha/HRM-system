@@ -1553,6 +1553,50 @@
         "tags" : [ "employee-controller" ]
       }
     },
+    "/api/employees/me/profile" : {
+      "get" : {
+        "operationId" : "getSelfProfile",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultSelfProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "employee-controller" ]
+      },
+      "put" : {
+        "operationId" : "updateSelfProfile",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateSelfProfileRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultSelfProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "employee-controller" ]
+      }
+    },
     "/api/employees/{employeeId}" : {
       "get" : {
         "operationId" : "getById_5",
@@ -6270,6 +6314,29 @@
         },
         "required" : [ "data", "error", "success" ]
       },
+      "ApiResultSelfProfileResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/SelfProfileResponse"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
       "ApiResultSeniorityAllowanceView" : {
         "type" : "object",
         "properties" : {
@@ -9264,6 +9331,35 @@
         },
         "required" : [ "approvedByAccountId", "baseSalary", "createdAt", "effectiveFrom", "effectiveTo", "employeeId", "id", "note", "reason" ]
       },
+      "SelfProfileResponse" : {
+        "type" : "object",
+        "properties" : {
+          "address" : {
+            "type" : [ "string", "null" ]
+          },
+          "graduationYear" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "highestEducationLevel" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "HIGH_SCHOOL", "COLLEGE", "BACHELOR", "MASTER", "DOCTORATE", null ]
+          },
+          "institution" : {
+            "type" : [ "string", "null" ]
+          },
+          "major" : {
+            "type" : [ "string", "null" ]
+          },
+          "personalEmail" : {
+            "type" : [ "string", "null" ]
+          },
+          "phone" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "address", "graduationYear", "highestEducationLevel", "institution", "major", "personalEmail", "phone" ]
+      },
       "SeniorityAllowanceView" : {
         "type" : "object",
         "properties" : {
@@ -9637,6 +9733,43 @@
           }
         },
         "required" : [ "grantPolicy", "name" ]
+      },
+      "UpdateSelfProfileRequest" : {
+        "type" : "object",
+        "properties" : {
+          "address" : {
+            "type" : [ "string", "null" ]
+          },
+          "graduationYear" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "highestEducationLevel" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "HIGH_SCHOOL", "COLLEGE", "BACHELOR", "MASTER", "DOCTORATE", null ]
+          },
+          "institution" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "major" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "personalEmail" : {
+            "type" : [ "string", "null" ],
+            "format" : "email",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "phone" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 20,
+            "minLength" : 0
+          }
+        }
       },
       "UpdateWorkLocationRequest" : {
         "type" : "object",
