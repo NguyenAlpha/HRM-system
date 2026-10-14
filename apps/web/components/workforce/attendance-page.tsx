@@ -1,17 +1,19 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react"
 
 import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AttendanceSection } from "@/components/workforce/attendance-section"
+import { AttendanceSection, OvertimeApprovals } from "@/components/workforce/attendance-section"
 import { AttendanceTimesheet, type TimesheetEmployee } from "@/components/workforce/attendance-timesheet"
-import { today } from "@/components/workforce/workforce-shared"
+import { today, workforceApi } from "@/components/workforce/workforce-shared"
+import type { CompanyHoliday, OvertimeApprovalItem } from "@/lib/workforce"
 
 /** YYYY-MM shifted by a number of months. */
 function shiftMonth(month: string, by: number): string {
@@ -19,13 +21,14 @@ function shiftMonth(month: string, by: number): string {
   return date.toISOString().slice(0, 7)
 }
 
-type Tab = "mine" | "sheet"
+type Tab = "mine" | "sheet" | "overtime"
 
 /**
- * Attendance: the signed-in employee's own month, and for attendance.read the company timesheet,
- * from which one employee's month opens for review and corrections.
+ * Attendance: the signed-in employee's own month; for attendance.read the company timesheet, from
+ * which one employee's month opens for review and corrections; and for whoever approves someone's
+ * overtime, the days waiting for that decision.
  */
-export function AttendancePage() {
+export function AttendancePage({ initialTab }: { initialTab?: Tab }) {
   const { session } = usePortalSession()
   const self = session.account.employee
   const permissions = useMemo(
@@ -35,8 +38,33 @@ export function AttendancePage() {
   const canReadOwn = !!self && permissions.has("attendance.self.read")
   const canReadAll = permissions.has("attendance.read")
   const [month, setMonth] = useState(today().slice(0, 7))
-  const [tab, setTab] = useState<Tab>(canReadAll ? "sheet" : "mine")
+  const defaultTab: Tab = canReadAll ? "sheet" : "mine"
+  const [selectedTab, setTab] = useState<Tab>(initialTab ?? defaultTab)
   const [viewing, setViewing] = useState<TimesheetEmployee | null>(null)
+  const [overtime, setOvertime] = useState<{ items: OvertimeApprovalItem[]; holidays: CompanyHoliday[] } | null>(null)
+  const [overtimeRevision, setOvertimeRevision] = useState(0)
+  const canReadHolidays = permissions.has("holiday.read")
+
+  // Approval follows the reporting line, so anyone may have overtime to decide, whatever their permissions.
+  useEffect(() => {
+    let active = true
+    workforceApi<OvertimeApprovalItem[]>("attendance/overtime/pending")
+      .then(async (items) => {
+        // The queue spans any month; its holidays set the minimum multiplier of each day.
+        const dates = items.map((item) => item.record.workDate).sort()
+        const holidays = canReadHolidays && dates.length > 0
+          ? await workforceApi<CompanyHoliday[]>(`company-holidays?from=${dates[0]}&to=${dates[dates.length - 1]}`)
+          : []
+        if (active) setOvertime({ items, holidays })
+      })
+      .catch(() => { if (active) setOvertime({ items: [], holidays: [] }) })
+    return () => { active = false }
+  }, [canReadHolidays, overtimeRevision])
+
+  const showOvertime = (overtime?.items.length ?? 0) > 0
+  // The overtime tab disappears once its last day is decided (or when a link asked for it and nothing waits).
+  const tab = selectedTab === "overtime" && overtime && !showOvertime ? defaultTab : selectedTab
+  const tabCount = [canReadAll, canReadOwn, showOvertime].filter(Boolean).length
 
   return (
     <>
@@ -44,7 +72,7 @@ export function AttendancePage() {
         title="Chấm công"
         description="Dữ liệu từ máy chấm công, bảng công tháng và tăng ca."
         alignActions="end"
-        actions={(canReadOwn || canReadAll) && (
+        actions={(canReadOwn || canReadAll) && tab !== "overtime" && (
           <div className="grid gap-1.5">
             <Label htmlFor="attendance-month">Tháng</Label>
             <div className="flex items-center gap-1">
@@ -60,15 +88,23 @@ export function AttendancePage() {
       />
 
       <div className="mt-6 grid gap-4">
-        {!canReadOwn && !canReadAll && <p role="alert">Tài khoản chưa có quyền truy cập mục này.</p>}
+        {!canReadOwn && !canReadAll && !showOvertime && <p role="alert">Tài khoản chưa có quyền truy cập mục này.</p>}
 
-        {canReadOwn && canReadAll && (
+        {tabCount > 1 && (
           <Tabs value={tab} onValueChange={(value) => setTab(value as Tab)}>
             <TabsList>
-              <TabsTrigger value="sheet">Bảng công tổng hợp</TabsTrigger>
-              <TabsTrigger value="mine">Bảng công của tôi</TabsTrigger>
+              {canReadAll && <TabsTrigger value="sheet">Bảng công tổng hợp</TabsTrigger>}
+              {canReadOwn && <TabsTrigger value="mine">Bảng công của tôi</TabsTrigger>}
+              {showOvertime && (
+                <TabsTrigger value="overtime">Tăng ca chờ duyệt <Badge className="ml-1">{overtime?.items.length}</Badge></TabsTrigger>
+              )}
             </TabsList>
           </Tabs>
+        )}
+
+        {(tab === "overtime" || (!canReadOwn && !canReadAll)) && showOvertime && overtime && (
+          <OvertimeApprovals items={overtime.items} holidays={overtime.holidays}
+            onDecided={() => setOvertimeRevision((value) => value + 1)} />
         )}
 
         {tab === "mine" && canReadOwn && self && (

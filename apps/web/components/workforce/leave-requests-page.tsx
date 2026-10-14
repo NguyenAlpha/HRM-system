@@ -90,7 +90,7 @@ type Tab = "mine" | "approvals" | "all"
 type Review = { leave: LeaveRequest; approve: boolean }
 type Run = (success: string, action: () => Promise<unknown>) => Promise<boolean>
 
-export function LeaveRequestsPage({ openCreate = false }: { openCreate?: boolean }) {
+export function LeaveRequestsPage({ openCreate = false, initialTab }: { openCreate?: boolean; initialTab?: Tab }) {
   const { session } = usePortalSession()
   const self = session.account.employee
   const permissions = new Set(session.account.permissions.map((permission) => permission.code))
@@ -102,7 +102,7 @@ export function LeaveRequestsPage({ openCreate = false }: { openCreate?: boolean
   const [revision, setRevision] = useState(0)
   const { busy, run } = useWorkforceAction(() => setRevision((value) => value + 1))
   const [pending, setPending] = useState<LeaveRequest[] | null>(null)
-  const [selectedTab, setTab] = useState<Tab>(canReadOwn ? "mine" : "all")
+  const [selectedTab, setTab] = useState<Tab>(initialTab ?? (canReadOwn ? "mine" : "all"))
   const [creating, setCreating] = useState(canCreate && openCreate)
   const [review, setReview] = useState<Review | null>(null)
 

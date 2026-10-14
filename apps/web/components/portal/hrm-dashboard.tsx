@@ -235,8 +235,8 @@ function buildTasks({ pendingLeaves, pendingOvertime, pendingRoles, periods, has
     }))
   }
   return [
-    { label: "Đơn nghỉ chờ duyệt", count: pendingLeaves?.totalElements ?? 0, href: "/leave-requests" },
-    { label: "Tăng ca chờ duyệt", count: pendingOvertime?.length ?? 0, href: "/attendance" },
+    { label: "Đơn nghỉ chờ duyệt", count: pendingLeaves?.totalElements ?? 0, href: "/leave-requests?tab=approvals" },
+    { label: "Tăng ca chờ duyệt", count: pendingOvertime?.length ?? 0, href: "/attendance?tab=overtime" },
     { label: "Đề xuất cấp/thu hồi role chờ duyệt", count: pendingRoles?.totalElements ?? 0, href: "/role-requests" },
     ...periodTask("DRAFT", "payroll.calculate", "Tính lương"),
     ...periodTask("CALCULATED", "payroll.approve", "Duyệt"),
