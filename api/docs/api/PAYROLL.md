@@ -1,12 +1,12 @@
 # API Reference — Payroll
 
-Lương cơ bản, hồ sơ bảo hiểm/thuế, người phụ thuộc, chính sách phụ cấp, kỳ lương, phiếu lương, khoản cộng/trừ nhập tay và xuất bảng lương. Dữ liệu công (chấm công, đơn nghỉ, tăng ca) là đầu vào của kỳ lương và nằm trong [ATTENDANCE.md](ATTENDANCE.md).
+Lương cơ bản, hồ sơ bảo hiểm/thuế, người phụ thuộc, kỳ lương, phiếu lương, khoản cộng/trừ nhập tay và xuất bảng lương. Dữ liệu công (chấm công, đơn nghỉ, tăng ca) là đầu vào của kỳ lương và nằm trong [ATTENDANCE.md](ATTENDANCE.md).
 
 Phạm vi đang triển khai: nhân viên **cư trú tại Việt Nam**, nhận lương bằng VND, kỳ lương tháng trong năm 2026. Ngày làm việc chuẩn là thứ 2–thứ 7 trừ ngày lễ do công ty khai báo. Quy tắc thuế và bảo hiểm có ngày hiệu lực trong database; khi sang năm hoặc có thay đổi pháp luật phải thêm quy tắc mới rồi kiểm thử trước khi tính kỳ đó. Hệ thống báo lỗi nếu không tìm thấy quy tắc phù hợp.
 
 Quy trình một tháng:
 
-1. HR (`compensation.manage`) đặt [chính sách phụ cấp](#chính-sách-phụ-cấp) chung, nhập [mức lương](#lịch-sử-lương-cơ-bản), [hồ sơ bảo hiểm/thuế](#hồ-sơ-bảo-hiểm-và-thuế) và [người phụ thuộc](#người-phụ-thuộc) cho từng nhân viên; dữ liệu công được hoàn thiện theo [ATTENDANCE.md](ATTENDANCE.md#hoàn-thiện-dữ-liệu-trước-khi-tính-lương).
+1. HR (`compensation.manage`) đặt [chính sách phụ cấp](ALLOWANCE.md) chung, nhập [mức lương](#lịch-sử-lương-cơ-bản), [hồ sơ bảo hiểm/thuế](#hồ-sơ-bảo-hiểm-và-thuế) và [người phụ thuộc](#người-phụ-thuộc) cho từng nhân viên; dữ liệu công được hoàn thiện theo [ATTENDANCE.md](ATTENDANCE.md#hoàn-thiện-dữ-liệu-trước-khi-tính-lương).
 2. Kế toán (`payroll.calculate`) [tạo kỳ](#post-apipayrollperiods), nhập [khoản cộng/trừ](#khoản-cộngtrừ-nhập-tay) nếu có, rồi [tính lương](#post-apipayrollperiodsidcalculate).
 3. Người duyệt lương (`payroll.approve`, khác người tính) [duyệt](#post-apipayrollperiodsidapprove), sau khi trả thì [ghi nhận đã trả](#post-apipayrollperiodsidmark-paid) và [khóa kỳ](#post-apipayrollperiodsidlock).
 4. Nhân viên xem [phiếu lương](#phiếu-lương) của mình từ khi kỳ được duyệt.
@@ -25,10 +25,6 @@ Quy trình một tháng:
 | `GET /api/compensation/employees/{employeeId}/tax-dependents` | `compensation.read` (trong scope) | Người phụ thuộc |
 | `POST /api/compensation/employees/{employeeId}/tax-dependents` | `compensation.manage` (trong scope) | Đăng ký người phụ thuộc |
 | `PUT /api/compensation/employees/{employeeId}/tax-dependents/{dependentId}/end` | `compensation.manage` (trong scope) | Kết thúc người phụ thuộc |
-| `GET /api/compensation/job-positions/{jobPositionId}/allowances` | `compensation.read` | Lịch sử phụ cấp chức vụ của một chức danh |
-| `POST /api/compensation/job-positions/{jobPositionId}/allowances` | `compensation.manage` | Đặt mức phụ cấp chức vụ mới |
-| `GET /api/compensation/seniority-allowances` | `compensation.read` | Các bậc phụ cấp thâm niên |
-| `POST /api/compensation/seniority-allowances` | `compensation.manage` | Đặt bậc phụ cấp thâm niên mới |
 | `POST /api/payroll/periods` | `payroll.calculate`, phạm vi `COMPANY` | Tạo kỳ lương |
 | `GET /api/payroll/periods` | `report.payroll.read`, phạm vi `COMPANY` | Danh sách kỳ lương |
 | `GET /api/payroll/periods/{id}` | `report.payroll.read`, phạm vi `COMPANY` | Chi tiết kỳ lương |
@@ -43,8 +39,6 @@ Quy trình một tháng:
 | `DELETE /api/payroll/periods/{periodId}/adjustments/{adjustmentId}` | `payroll.calculate`, phạm vi `COMPANY` | Xóa khoản cộng/trừ |
 | `GET /api/payroll/payslips/{id}` | `payroll.self.read` (chính mình) hoặc `report.payroll.read` (trong scope) | Chi tiết phiếu lương |
 | `GET /api/payroll/employees/{employeeId}/payslips` | `payroll.self.read` (chính mình) hoặc `report.payroll.read` (trong scope) | Phiếu lương của một nhân viên |
-
-Chính sách phụ cấp áp dụng chung cho cả công ty nên chỉ xét permission, không xét scope.
 
 Tất cả endpoint yêu cầu Bearer token; thiếu hoặc hết hạn trả `401 UNAUTHORIZED`. Không có permission trả `403 FORBIDDEN`. "Trong scope" nghĩa là nhân viên nằm trong phạm vi của role cấp permission đó (theo phân công hiện hành); "phạm vi `COMPANY`" nghĩa là role phải có scope toàn công ty, scope hẹp hơn trả `403 FORBIDDEN`.
 
@@ -75,7 +69,7 @@ DRAFT ──calculate──▶ CALCULATED ──approve──▶ APPROVED ──
 ## Công thức
 
 - Lương cơ bản từng ngày = lương tháng có hiệu lực × `payableMinutes` / (số ngày làm việc chuẩn của tháng × phút chuẩn của ca ngày đó). Cộng các ngày được `basicSalaryPay`.
-- Phụ cấp chức vụ = mức tháng của chức danh trong phân công chính ngày đó; phụ cấp thâm niên = lương tháng × % của bậc ứng với số năm tròn tính từ ngày bắt đầu thâm niên (xem [Chính sách phụ cấp](#chính-sách-phụ-cấp)). Không có quy tắc thì khoản đó bằng 0. Cả hai áp dụng cùng tỷ lệ phút công được trả lương; tổng hai khoản là `allowancePay`. Nghỉ có lương giữ phần phụ cấp tương ứng; nghỉ không lương, nghỉ do bảo hiểm chi trả hoặc vắng không phép không được trả phần đó.
+- Phụ cấp chức vụ = mức tháng của chức danh trong phân công chính ngày đó; phụ cấp thâm niên = lương tháng × % của bậc ứng với số năm tròn tính từ ngày bắt đầu thâm niên (xem [ALLOWANCE.md](ALLOWANCE.md)). Không có quy tắc thì khoản đó bằng 0. Cả hai áp dụng cùng tỷ lệ phút công được trả lương; tổng hai khoản là `allowancePay`. Nghỉ có lương giữ phần phụ cấp tương ứng; nghỉ không lương, nghỉ do bảo hiểm chi trả hoặc vắng không phép không được trả phần đó.
 - Tăng ca (`overtimePay`) = giờ tăng ca **đã duyệt** × đơn giá giờ × hệ số đã duyệt, cộng theo từng ngày; đơn giá giờ = lương tháng có hiệu lực ngày đó ÷ (số ngày làm việc chuẩn của tháng × phút chuẩn của ca ngày đó) × 60. Phút công thường và phút tăng ca được tách riêng, nên tăng ca không làm tăng công tính lương. Hệ số tối thiểu: 150% ngày thường, 200% Chủ nhật, 300% ngày lễ công ty. Chưa tính cộng thêm cho ca đêm.
 - `grossPay = basicSalaryPay + allowancePay + overtimePay + otherEarningsPay`, trong đó `otherEarningsPay` là tổng thưởng và phụ cấp khác nhập tay (xem [Khoản cộng/trừ nhập tay](#khoản-cộngtrừ-nhập-tay)).
 - BHXH/BHYT/BHTN phần nhân viên dùng **lương đóng bảo hiểm do HR nhập** (`insuranceSalary` của hồ sơ), theo trạng thái tham gia và trần có hiệu lực trong tháng làm việc. Căn cứ này tách khỏi `grossPay`; tăng ca không tự động trở thành căn cứ đóng.
@@ -151,49 +145,6 @@ Tiền là số thập phân VND (`BigDecimal`, 2 chữ số thập phân). Ngà
 ```
 
 `identifier` là số định danh, `null` nếu chưa có. `effectiveTo` là `null` khi còn giảm trừ.
-
-### `PositionAllowanceView` — phụ cấp chức vụ
-
-```json
-{
-  "id": 2,
-  "jobPositionId": 2,
-  "monthlyAmount": 1000000.00,
-  "effectiveFrom": "2024-10-14",
-  "effectiveTo": null,
-  "approvedByAccountId": 4,
-  "note": "Chính sách mẫu",
-  "createdAt": "2024-10-13T17:00:00Z"
-}
-```
-
-| Field | Mô tả |
-|:------|:------|
-| `monthlyAmount` | Phụ cấp tháng cho người giữ chức danh, trả theo tỷ lệ công như lương cơ bản |
-| `effectiveFrom` / `effectiveTo` | Khoảng hiệu lực; `effectiveTo` là `null` với mức đang áp dụng |
-| `approvedByAccountId` | Account đã đặt mức phụ cấp |
-
-### `SeniorityAllowanceView` — bậc phụ cấp thâm niên
-
-```json
-{
-  "id": 1,
-  "minYears": 1,
-  "maxYears": 3,
-  "percentage": 3.0000,
-  "effectiveFrom": "2024-10-14",
-  "effectiveTo": null,
-  "approvedByAccountId": 4,
-  "note": "Chính sách mẫu",
-  "createdAt": "2024-10-13T17:00:00Z"
-}
-```
-
-| Field | Mô tả |
-|:------|:------|
-| `minYears` / `maxYears` | Áp dụng khi số năm thâm niên tròn `≥ minYears` và `< maxYears`; `maxYears` là `null` nghĩa là không giới hạn trên |
-| `percentage` | % lương cơ bản tháng, ví dụ `3` là 3% |
-| `effectiveFrom` / `effectiveTo` | Khoảng hiệu lực; `effectiveTo` là `null` với bậc đang áp dụng |
 
 ### `PayrollPeriodResponse`
 
@@ -519,96 +470,6 @@ Trả [`Dependent`](#dependent--người-phụ-thuộc) sau khi cập nhật. K�
 | 404 | `EMPLOYEE_NOT_FOUND` | Nhân viên không tồn tại hoặc đã xóa |
 | 404 | `RESOURCE_NOT_FOUND` | Người phụ thuộc không tồn tại hoặc không thuộc nhân viên này |
 | 409 | `PAYROLL_PERIOD_LOCKED` | Một kỳ bị ảnh hưởng đã `APPROVED`, `PAID` hoặc `LOCKED` |
-
----
-
-## Chính sách phụ cấp
-
-Phụ cấp chức vụ đặt theo chức danh, phụ cấp thâm niên đặt theo bậc số năm; cả hai dùng chung cho mọi nhân viên. Dữ liệu seed tạo sẵn chính sách mẫu (xem [ORGANIZATION_STRUCTURE.md](../../../docs/ORGANIZATION_STRUCTURE.md#7-seeder-hiện-có)).
-
-Đổi chính sách **không** đưa kỳ `CALCULATED` về `DRAFT` và không bị chặn bởi kỳ đã duyệt; nếu ngày hiệu lực rơi vào kỳ đã tính thì kế toán phải tính lại kỳ đó. Phiếu đã duyệt giữ nguyên số tiền đã tính.
-
-### GET `/api/compensation/job-positions/{jobPositionId}/allowances`
-
-Lịch sử phụ cấp của chức danh, mới nhất trước. Mỗi phần tử là [`PositionAllowanceView`](#positionallowanceview--phụ-cấp-chức-vụ); chức danh chưa có phụ cấp trả mảng rỗng.
-
-| HTTP | `error.code` | Nguyên nhân |
-|:----:|:-------------|:-----------|
-| 403 | `FORBIDDEN` | Không có `compensation.read` |
-| 404 | `JOB_POSITION_NOT_FOUND` | Chức danh không tồn tại |
-
-### POST `/api/compensation/job-positions/{jobPositionId}/allowances`
-
-Đặt mức phụ cấp mới cho chức danh. Mức đang áp dụng (nếu có) tự kết thúc vào ngày trước `effectiveFrom`.
-
-#### Request
-
-```json
-{
-  "monthlyAmount": 1500000,
-  "effectiveFrom": "2026-11-01",
-  "note": "Tăng phụ cấp"
-}
-```
-
-| Field | Type | Bắt buộc | Ràng buộc |
-|:------|:-----|:--------:|:----------|
-| `monthlyAmount` | number | ✅ | `≥ 0`; đặt `0` để bỏ phụ cấp từ ngày đó |
-| `effectiveFrom` | date | ✅ | Sau ngày bắt đầu của mức đang áp dụng |
-| `note` | string | | Chuỗi trắng lưu `null` |
-
-#### Response `201 Created`
-
-Trả [`PositionAllowanceView`](#positionallowanceview--phụ-cấp-chức-vụ) vừa tạo.
-
-#### Lỗi
-
-| HTTP | `error.code` | Nguyên nhân |
-|:----:|:-------------|:-----------|
-| 400 | `VALIDATION_ERROR` | Thiếu hoặc âm `monthlyAmount`, thiếu `effectiveFrom`, hoặc `effectiveFrom` không sau ngày bắt đầu của mức hiện tại |
-| 403 | `FORBIDDEN` | Không có `compensation.manage` |
-| 404 | `JOB_POSITION_NOT_FOUND` | Chức danh không tồn tại hoặc đã ngừng dùng |
-
-### GET `/api/compensation/seniority-allowances`
-
-Mọi bậc thâm niên, mới nhất trước rồi theo `minYears` tăng dần. Mỗi phần tử là [`SeniorityAllowanceView`](#seniorityallowanceview--bậc-phụ-cấp-thâm-niên). Lỗi: `403 FORBIDDEN` nếu không có `compensation.read`.
-
-### POST `/api/compensation/seniority-allowances`
-
-Đặt bậc thâm niên mới. Mọi bậc đang áp dụng có khoảng năm chồng với bậc mới tự kết thúc vào ngày trước `effectiveFrom`.
-
-#### Request
-
-```json
-{
-  "minYears": 5,
-  "maxYears": null,
-  "percentage": 8,
-  "effectiveFrom": "2027-01-01",
-  "note": null
-}
-```
-
-| Field | Type | Bắt buộc | Ràng buộc |
-|:------|:-----|:--------:|:----------|
-| `minYears` | integer | ✅ | `≥ 0` |
-| `maxYears` | integer | | `> minYears`; bỏ trống nếu không giới hạn trên |
-| `percentage` | number | ✅ | `≥ 0` |
-| `effectiveFrom` | date | ✅ | Sau ngày bắt đầu của mọi bậc đang áp dụng bị chồng |
-| `note` | string | | Chuỗi trắng lưu `null` |
-
-Bậc mới chỉ đóng các bậc chồng khoảng năm; muốn đổi cách chia bậc (ví dụ gộp `1–3` và `3–5`) thì gửi một bậc phủ cả hai khoảng.
-
-#### Response `201 Created`
-
-Trả [`SeniorityAllowanceView`](#seniorityallowanceview--bậc-phụ-cấp-thâm-niên) vừa tạo.
-
-#### Lỗi
-
-| HTTP | `error.code` | Nguyên nhân |
-|:----:|:-------------|:-----------|
-| 400 | `VALIDATION_ERROR` | Thiếu/âm `minYears` hoặc `percentage`, `maxYears ≤ minYears`, thiếu `effectiveFrom`, hoặc `effectiveFrom` không sau ngày bắt đầu của bậc bị chồng |
-| 403 | `FORBIDDEN` | Không có `compensation.manage` |
 
 ---
 
