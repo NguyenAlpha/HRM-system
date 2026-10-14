@@ -23,7 +23,7 @@ Quy ước trạng thái:
 | Nghỉ phép | Đủ | `/leave-requests` |
 | Chấm công | Đủ | `/attendance` |
 | Lương, bảo hiểm, thuế | Đủ | `/payroll`, `/payslips`, `/allowances`, thẻ lương trong `/employees/{id}` |
-| Báo cáo | Đủ | `/reports/workforce` |
+| Báo cáo | Đủ | `/reports/workforce`, `/reports/turnover`, `/reports/attendance`, `/reports/leave`, `/reports/payroll` |
 
 Toàn hệ thống có 27 controller, 47 permission trên 8 module, 7 system role và 32 bảng database.
 
@@ -265,6 +265,10 @@ Hai báo cáo tổng hợp, đều áp phạm vi của role assignment đang hi�
 |---|---|---|
 | Phân bố trình độ và thâm niên | `GET /api/reports/hr/workforce-distribution` | `report.hr.read` |
 | Phân bố lương cơ bản | `GET /api/reports/payroll/salary-distribution` | `report.payroll.read` |
+| Biến động nhân sự theo năm | `GET /api/reports/hr/turnover` | `report.hr.read` |
+| Phép năm của từng nhân viên | `GET /api/reports/hr/leave-balances` | `report.hr.read` |
+| Quỹ lương, bảo hiểm, thuế theo tháng và đơn vị | `GET /api/reports/payroll/summary` | `report.payroll.read` (scope COMPANY) |
+| Tổng hợp chấm công tháng | `GET /api/attendance/timesheet` | `attendance.read` |
 
 Báo cáo lương chỉ trả số liệu tổng hợp theo khoảng, không trả lương của từng cá nhân.
 
