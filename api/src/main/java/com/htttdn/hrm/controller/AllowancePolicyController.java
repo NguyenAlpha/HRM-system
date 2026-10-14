@@ -13,10 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.service.AllowancePolicyService;
+import com.htttdn.hrm.service.AllowancePolicyService.PositionAllowanceSummary;
 import com.htttdn.hrm.service.AllowancePolicyService.PositionAllowanceView;
 import com.htttdn.hrm.service.AllowancePolicyService.SeniorityAllowanceView;
 import com.htttdn.hrm.service.AllowancePolicyService.SetPositionAllowanceCommand;
 import com.htttdn.hrm.service.AllowancePolicyService.SetSeniorityAllowanceCommand;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/compensation")
@@ -27,6 +30,11 @@ public class AllowancePolicyController {
         this.service = service;
     }
 
+    @GetMapping("/position-allowances")
+    public ApiResult<List<PositionAllowanceSummary>> positionAllowanceSummaries() {
+        return ApiResult.ok(service.listPositionAllowanceSummaries());
+    }
+
     @GetMapping("/job-positions/{jobPositionId}/allowances")
     public ApiResult<List<PositionAllowanceView>> positionAllowances(@PathVariable Long jobPositionId) {
         return ApiResult.ok(service.listPositionAllowances(jobPositionId));
@@ -35,7 +43,7 @@ public class AllowancePolicyController {
     @PostMapping("/job-positions/{jobPositionId}/allowances")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResult<PositionAllowanceView> setPositionAllowance(@PathVariable Long jobPositionId,
-        @RequestBody SetPositionAllowanceCommand command) {
+        @Valid @RequestBody SetPositionAllowanceCommand command) {
         return ApiResult.ok(service.setPositionAllowance(jobPositionId, command));
     }
 
@@ -46,7 +54,7 @@ public class AllowancePolicyController {
 
     @PostMapping("/seniority-allowances")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResult<SeniorityAllowanceView> setSeniorityAllowance(@RequestBody SetSeniorityAllowanceCommand command) {
+    public ApiResult<SeniorityAllowanceView> setSeniorityAllowance(@Valid @RequestBody SetSeniorityAllowanceCommand command) {
         return ApiResult.ok(service.setSeniorityAllowance(command));
     }
 }

@@ -516,6 +516,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/compensation/position-allowances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["positionAllowanceSummaries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/compensation/seniority-allowances": {
         parameters: {
             query?: never;
@@ -1727,6 +1743,11 @@ export interface components {
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
+        ApiResultListPositionAllowanceSummary: {
+            data: components["schemas"]["PositionAllowanceSummary"][] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
         ApiResultListPositionAllowanceView: {
             data: components["schemas"]["PositionAllowanceView"][] | null;
             error: components["schemas"]["ErrorDetail"] | null;
@@ -2707,6 +2728,16 @@ export interface components {
             module: "EMPLOYEE" | "ACCOUNT" | "ORGANIZATION" | "REQUEST" | "ATTENDANCE" | "PAYROLL" | "RBAC" | "REPORT";
             name: string;
         };
+        PositionAllowanceSummary: {
+            active: boolean;
+            code: string;
+            /** Format: date */
+            currentEffectiveFrom: string | null;
+            currentMonthlyAmount: number | null;
+            /** Format: int64 */
+            jobPositionId: number;
+            title: string;
+        };
         PositionAllowanceView: {
             /** Format: int64 */
             approvedByAccountId: number;
@@ -2715,13 +2746,13 @@ export interface components {
             /** Format: date */
             effectiveFrom: string;
             /** Format: date */
-            effectiveTo: string;
+            effectiveTo: string | null;
             /** Format: int64 */
             id: number;
             /** Format: int64 */
             jobPositionId: number;
             monthlyAmount: number;
-            note: string;
+            note: string | null;
         };
         Profile: {
             /** Format: date */
@@ -2891,21 +2922,21 @@ export interface components {
             /** Format: date */
             effectiveFrom: string;
             /** Format: date */
-            effectiveTo: string;
+            effectiveTo: string | null;
             /** Format: int64 */
             id: number;
             /** Format: int32 */
-            maxYears: number;
+            maxYears: number | null;
             /** Format: int32 */
             minYears: number;
-            note: string;
+            note: string | null;
             percentage: number;
         };
         SetPositionAllowanceCommand: {
             /** Format: date */
-            effectiveFrom?: string;
-            monthlyAmount?: number;
-            note?: string;
+            effectiveFrom: string;
+            monthlyAmount: number;
+            note?: string | null;
         };
         SetSalaryCommand: {
             baseSalary: number;
@@ -2916,13 +2947,13 @@ export interface components {
         };
         SetSeniorityAllowanceCommand: {
             /** Format: date */
-            effectiveFrom?: string;
+            effectiveFrom: string;
             /** Format: int32 */
-            maxYears?: number;
+            maxYears?: number | null;
             /** Format: int32 */
-            minYears?: number;
-            note?: string;
-            percentage?: number;
+            minYears: number;
+            note?: string | null;
+            percentage: number;
         };
         SoftDeleteEmployeeRequest: {
             deletionReason: string;
@@ -4027,6 +4058,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultPositionAllowanceView"];
+                };
+            };
+        };
+    };
+    positionAllowanceSummaries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultListPositionAllowanceSummary"];
                 };
             };
         };

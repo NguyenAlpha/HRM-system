@@ -1336,6 +1336,24 @@
         "tags" : [ "allowance-policy-controller" ]
       }
     },
+    "/api/compensation/position-allowances" : {
+      "get" : {
+        "operationId" : "positionAllowanceSummaries",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultListPositionAllowanceSummary"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "allowance-policy-controller" ]
+      }
+    },
     "/api/compensation/seniority-allowances" : {
       "get" : {
         "operationId" : "seniorityAllowances",
@@ -4880,6 +4898,28 @@
         },
         "required" : [ "data", "error", "success" ]
       },
+      "ApiResultListPositionAllowanceSummary" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "$ref" : "#/components/schemas/PositionAllowanceSummary"
+            }
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
       "ApiResultListPositionAllowanceView" : {
         "type" : "object",
         "properties" : {
@@ -7792,6 +7832,32 @@
         },
         "required" : [ "assignmentPolicy", "code", "description", "id", "isActive", "module", "name" ]
       },
+      "PositionAllowanceSummary" : {
+        "type" : "object",
+        "properties" : {
+          "active" : {
+            "type" : "boolean"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "currentEffectiveFrom" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          },
+          "currentMonthlyAmount" : {
+            "type" : [ "number", "null" ]
+          },
+          "jobPositionId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "active", "code", "currentEffectiveFrom", "currentMonthlyAmount", "jobPositionId", "title" ]
+      },
       "PositionAllowanceView" : {
         "type" : "object",
         "properties" : {
@@ -7808,7 +7874,7 @@
             "format" : "date"
           },
           "effectiveTo" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date"
           },
           "id" : {
@@ -7823,7 +7889,7 @@
             "type" : "number"
           },
           "note" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
         },
         "required" : [ "approvedByAccountId", "createdAt", "effectiveFrom", "effectiveTo", "id", "jobPositionId", "monthlyAmount", "note" ]
@@ -8272,7 +8338,7 @@
             "format" : "date"
           },
           "effectiveTo" : {
-            "type" : "string",
+            "type" : [ "string", "null" ],
             "format" : "date"
           },
           "id" : {
@@ -8280,7 +8346,7 @@
             "format" : "int64"
           },
           "maxYears" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int32"
           },
           "minYears" : {
@@ -8288,7 +8354,7 @@
             "format" : "int32"
           },
           "note" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "percentage" : {
             "type" : "number"
@@ -8307,9 +8373,10 @@
             "type" : "number"
           },
           "note" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           }
-        }
+        },
+        "required" : [ "effectiveFrom", "monthlyAmount" ]
       },
       "SetSalaryCommand" : {
         "type" : "object",
@@ -8338,7 +8405,7 @@
             "format" : "date"
           },
           "maxYears" : {
-            "type" : "integer",
+            "type" : [ "integer", "null" ],
             "format" : "int32"
           },
           "minYears" : {
@@ -8346,12 +8413,13 @@
             "format" : "int32"
           },
           "note" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "percentage" : {
             "type" : "number"
           }
-        }
+        },
+        "required" : [ "effectiveFrom", "minYears", "percentage" ]
       },
       "SoftDeleteEmployeeRequest" : {
         "type" : "object",
