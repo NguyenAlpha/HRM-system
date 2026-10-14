@@ -1,5 +1,6 @@
 package com.htttdn.hrm.config.seed;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -19,6 +20,7 @@ import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeAssignment;
+import com.htttdn.hrm.entity.EmployeeSalaryHistory;
 import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
@@ -28,6 +30,7 @@ import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
+import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
 import com.htttdn.hrm.repository.JobPositionRepository;
 import com.htttdn.hrm.repository.OrganizationUnitRepository;
 import com.htttdn.hrm.repository.RoleRepository;
@@ -63,6 +66,7 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
     private static final String DIRECTOR_ROLE = "DIRECTOR";
     private static final String EMPLOYEE_ROLE = "EMPLOYEE";
     private static final String SEED_REASON = "Seeded company owner";
+    private static final BigDecimal BASE_SALARY = new BigDecimal("50000000");
     private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private static final Logger log = LoggerFactory.getLogger(CompanyOwnerSeeder.class);
@@ -70,6 +74,7 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
     private final AccountRepository accountRepository;
     private final EmployeeRepository employeeRepository;
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
+    private final EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository;
     private final RoleRepository roleRepository;
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final OrganizationUnitRepository organizationUnitRepository;
@@ -85,6 +90,7 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
         AccountRepository accountRepository,
         EmployeeRepository employeeRepository,
         EmployeeAssignmentRepository employeeAssignmentRepository,
+        EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository,
         RoleRepository roleRepository,
         AccountRoleAssignmentRepository accountRoleAssignmentRepository,
         OrganizationUnitRepository organizationUnitRepository,
@@ -99,6 +105,7 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
         this.accountRepository = accountRepository;
         this.employeeRepository = employeeRepository;
         this.employeeAssignmentRepository = employeeAssignmentRepository;
+        this.employeeSalaryHistoryRepository = employeeSalaryHistoryRepository;
         this.roleRepository = roleRepository;
         this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
         this.organizationUnitRepository = organizationUnitRepository;
@@ -161,6 +168,14 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
         assignRole(account, directorRole, RoleScopeType.COMPANY, startDate, createdAt);
         assignRole(account, employeeRole, RoleScopeType.SELF, startDate, createdAt);
         createPrimaryAssignment(employee, account, startDate, createdAt);
+        employeeSalaryHistoryRepository.save(EmployeeSalaryHistory.builder()
+            .employee(employee)
+            .baseSalary(BASE_SALARY)
+            .effectiveFrom(startDate)
+            .approvedByAccount(account)
+            .reason("Mức lương ban đầu")
+            .createdAt(createdAt)
+            .build());
         // The Company Owner, with nobody above, confirms their own overtime.
         int attendanceDays = seedAttendanceWriter.write(employee, startDate, LocalDate.now(ZONE).minusDays(1), date -> account);
 

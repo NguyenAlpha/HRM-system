@@ -8,6 +8,11 @@
     "assignments": [
       { "monthsAgo": 20, "organizationUnit": "HR", "position": "GENERAL_STAFF", "manager": "owner" },
       { "monthsAgo": 16, "organizationUnit": "HR", "position": "HR_SPECIALIST", "manager": "owner" }
+    ],
+    "salaries": [
+      { "monthsAgo": 20, "baseSalary": 9000000, "reason": "Mức lương ban đầu" },
+      { "monthsAgo": 16, "baseSalary": 12000000, "reason": "Lên Chuyên viên nhân sự" },
+      { "monthsAgo": 5, "baseSalary": 13500000, "reason": "Điều chỉnh lương định kỳ" }
     ]
   },
   {
@@ -19,6 +24,10 @@
     "assignments": [
       { "monthsAgo": 10, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-01", "position": "GENERAL_STAFF", "manager": "owner" },
       { "monthsAgo": 4, "organizationUnit": "HR", "position": "GENERAL_STAFF", "manager": "hr" }
+    ],
+    "salaries": [
+      { "monthsAgo": 10, "baseSalary": 8000000, "reason": "Mức lương ban đầu" },
+      { "monthsAgo": 1, "baseSalary": 8500000, "reason": "Điều chỉnh lương" }
     ]
   }
 ]
