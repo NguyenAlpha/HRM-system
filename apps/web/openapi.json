@@ -1481,6 +1481,24 @@
         "tags" : [ "employee-controller" ]
       }
     },
+    "/api/employees/me" : {
+      "get" : {
+        "operationId" : "getSelf",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultEmployeeDetailResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "employee-controller" ]
+      }
+    },
     "/api/employees/{employeeId}" : {
       "get" : {
         "operationId" : "getById_5",

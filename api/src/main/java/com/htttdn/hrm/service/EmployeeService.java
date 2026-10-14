@@ -157,6 +157,20 @@ public class EmployeeService {
         return toDetailResponse(employee);
     }
 
+    /** Hồ sơ của chính người đăng nhập; không cần employee.read vì không đọc hồ sơ người khác. */
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAuthority('profile.self.read')")
+    public EmployeeDetailResponse getSelf() {
+        Long accountId = currentAccountProvider.accountId();
+        Employee employee = accountRepository.findById(accountId)
+            .map(Account::getEmployee)
+            .filter(linked -> linked.getDeletedAt() == null)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                ErrorCode.EMPLOYEE_NOT_FOUND, "No employee is linked to account " + accountId
+            ));
+        return toDetailResponse(employee);
+    }
+
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('employee.list.read')")
     public Page<EmployeeSummaryResponse> list(EmployeeSearchCriteria criteria, Pageable pageable) {
