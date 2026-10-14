@@ -1274,6 +1274,112 @@
         "tags" : [ "payroll-deductions-controller" ]
       }
     },
+    "/api/compensation/job-positions/{jobPositionId}/allowances" : {
+      "get" : {
+        "operationId" : "positionAllowances",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "jobPositionId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultListPositionAllowanceView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "allowance-policy-controller" ]
+      },
+      "post" : {
+        "operationId" : "setPositionAllowance",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "jobPositionId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SetPositionAllowanceCommand"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultPositionAllowanceView"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "allowance-policy-controller" ]
+      }
+    },
+    "/api/compensation/seniority-allowances" : {
+      "get" : {
+        "operationId" : "seniorityAllowances",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultListSeniorityAllowanceView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "allowance-policy-controller" ]
+      },
+      "post" : {
+        "operationId" : "setSeniorityAllowance",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SetSeniorityAllowanceCommand"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultSeniorityAllowanceView"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "allowance-policy-controller" ]
+      }
+    },
     "/api/employees" : {
       "get" : {
         "operationId" : "list_8",
@@ -4774,6 +4880,28 @@
         },
         "required" : [ "data", "error", "success" ]
       },
+      "ApiResultListPositionAllowanceView" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "$ref" : "#/components/schemas/PositionAllowanceView"
+            }
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
       "ApiResultListProfile" : {
         "type" : "object",
         "properties" : {
@@ -4847,6 +4975,28 @@
             "type" : [ "array", "null" ],
             "items" : {
               "$ref" : "#/components/schemas/SalaryHistoryView"
+            }
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
+      "ApiResultListSeniorityAllowanceView" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "$ref" : "#/components/schemas/SeniorityAllowanceView"
             }
           },
           "error" : {
@@ -5296,6 +5446,29 @@
         },
         "required" : [ "data", "error", "success" ]
       },
+      "ApiResultPositionAllowanceView" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/PositionAllowanceView"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
       "ApiResultProfile" : {
         "type" : "object",
         "properties" : {
@@ -5371,6 +5544,29 @@
           "data" : {
             "anyOf" : [ {
               "$ref" : "#/components/schemas/SalaryHistoryView"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
+      "ApiResultSeniorityAllowanceView" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/SeniorityAllowanceView"
             }, {
               "type" : "null"
             } ]
@@ -7596,6 +7792,42 @@
         },
         "required" : [ "assignmentPolicy", "code", "description", "id", "isActive", "module", "name" ]
       },
+      "PositionAllowanceView" : {
+        "type" : "object",
+        "properties" : {
+          "approvedByAccountId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "effectiveFrom" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "effectiveTo" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "jobPositionId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "monthlyAmount" : {
+            "type" : "number"
+          },
+          "note" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "approvedByAccountId", "createdAt", "effectiveFrom", "effectiveTo", "id", "jobPositionId", "monthlyAmount", "note" ]
+      },
       "Profile" : {
         "type" : "object",
         "properties" : {
@@ -8024,6 +8256,61 @@
         },
         "required" : [ "approvedByAccountId", "baseSalary", "createdAt", "effectiveFrom", "effectiveTo", "employeeId", "id", "note", "reason" ]
       },
+      "SeniorityAllowanceView" : {
+        "type" : "object",
+        "properties" : {
+          "approvedByAccountId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "effectiveFrom" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "effectiveTo" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "maxYears" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "minYears" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "percentage" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "approvedByAccountId", "createdAt", "effectiveFrom", "effectiveTo", "id", "maxYears", "minYears", "note", "percentage" ]
+      },
+      "SetPositionAllowanceCommand" : {
+        "type" : "object",
+        "properties" : {
+          "effectiveFrom" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "monthlyAmount" : {
+            "type" : "number"
+          },
+          "note" : {
+            "type" : "string"
+          }
+        }
+      },
       "SetSalaryCommand" : {
         "type" : "object",
         "properties" : {
@@ -8042,6 +8329,29 @@
           }
         },
         "required" : [ "baseSalary", "effectiveFrom" ]
+      },
+      "SetSeniorityAllowanceCommand" : {
+        "type" : "object",
+        "properties" : {
+          "effectiveFrom" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "maxYears" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "minYears" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "percentage" : {
+            "type" : "number"
+          }
+        }
       },
       "SoftDeleteEmployeeRequest" : {
         "type" : "object",
