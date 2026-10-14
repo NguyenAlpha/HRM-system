@@ -691,6 +691,60 @@
         "tags" : [ "attendance-controller" ]
       }
     },
+    "/api/attendance/timesheet" : {
+      "get" : {
+        "operationId" : "timesheet",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "year",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 9999,
+            "minimum" : 2000
+          }
+        }, {
+          "in" : "query",
+          "name" : "month",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 12,
+            "minimum" : 1
+          }
+        }, {
+          "in" : "query",
+          "name" : "keyword",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "organizationUnitId",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultListTimesheetRowResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-controller" ]
+      }
+    },
     "/api/attendance/{id}" : {
       "get" : {
         "operationId" : "getById_6",
@@ -5190,6 +5244,28 @@
         },
         "required" : [ "data", "error", "success" ]
       },
+      "ApiResultListTimesheetRowResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "$ref" : "#/components/schemas/TimesheetRowResponse"
+            }
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
       "ApiResultListWorkLocationResponse" : {
         "type" : "object",
         "properties" : {
@@ -8589,6 +8665,28 @@
           }
         },
         "required" : [ "deletionReason" ]
+      },
+      "TimesheetRowResponse" : {
+        "type" : "object",
+        "properties" : {
+          "employeeCode" : {
+            "type" : "string"
+          },
+          "employeeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "employeeName" : {
+            "type" : "string"
+          },
+          "records" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AttendanceRecordResponse"
+            }
+          }
+        },
+        "required" : [ "employeeCode", "employeeId", "employeeName", "records" ]
       },
       "UpdateEmployeeRequest" : {
         "type" : "object",
