@@ -2,3 +2,6 @@
 # regardless of core.autocrlf.
 apps/web/openapi.json text eol=lf
 apps/web/lib/api-schema.ts text eol=lf
+
+# Shell scripts run in sh/bash, which reject CRLF line endings.
+*.sh text eol=lf
