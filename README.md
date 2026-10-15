@@ -27,6 +27,7 @@ Flyway tự áp dụng migration khi API khởi động. Database local tạo tr
 ## Tài liệu
 
 - [Cài đặt và kiểm tra](docs/SETUP.md)
+- [Sao lưu và phục hồi database](docs/BACKUP.md)
 - [Danh sách tính năng hiện có](docs/FEATURES.md)
 - [Tổng quan chức năng và kiến trúc](docs/OVERVIEW.md)
 - [Cấu trúc source](docs/PROJECT_STRUCTURE.md)
