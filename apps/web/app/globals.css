@@ -274,3 +274,35 @@ button:disabled { cursor: wait; opacity: 0.64; }
     @apply font-sans;
   }
 }
+/*
+ * Printing a part of a page (a payslip, a yearly payroll sheet): mark it `print-area` and call
+ * window.print(). Everything that neither holds nor sits inside that part is left out, and a dialog
+ * marked so prints as a plain block at the top of the page.
+ */
+@media print {
+  body:has(.print-area) *:not(:has(.print-area), .print-area, .print-area *) {
+    display: none !important;
+  }
+  body:has(.print-area) *:has(.print-area) {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  .print-area {
+    position: static !important;
+    inset: auto !important;
+    animation: none !important;
+    --tw-translate-x: 0 !important;
+    --tw-translate-y: 0 !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+  }
+  .print-area [data-slot="dialog-close"] {
+    display: none !important;
+  }
+}

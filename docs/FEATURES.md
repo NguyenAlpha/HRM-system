@@ -246,6 +246,7 @@ kỳ ngoài phạm vi sẽ dừng với lỗi yêu cầu bổ sung quy tắc.
 | Xem bảng lương của kỳ | `GET /api/payroll/periods/{id}/payslips` | `report.payroll.read` |
 | Thưởng, phụ cấp khác, khấu trừ nhập tay theo kỳ | `/api/payroll/periods/{id}/adjustments` | `payroll.calculate` |
 | Xem phiếu lương | `/api/payroll/payslips/{id}`, `/employees/{id}/payslips` | `payroll.self.read` |
+| In phiếu lương tháng và bảng lương năm của mình (in qua trình duyệt, lưu PDF được) | Trang `/payslips`, cùng API trên | `payroll.self.read` |
 
 Vòng đời kỳ: `DRAFT` → `CALCULATED` → `APPROVED` → `PAID` → `LOCKED`, có thể `CANCELLED` trước
 khi duyệt. Từ `APPROVED` trở đi mọi đường sửa dữ liệu công đều bị chặn và phiếu lương là snapshot
