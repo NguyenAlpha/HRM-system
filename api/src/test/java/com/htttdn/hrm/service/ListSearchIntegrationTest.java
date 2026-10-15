@@ -99,23 +99,23 @@ class ListSearchIntegrationTest {
         PageRequest byUsername = PageRequest.of(0, 20, Sort.by("username"));
 
         assertEquals(List.of(marker + "_hr", marker + "_new", marker + "_off"),
-            usernames(new AccountSearchCriteria(marker, null, null), byUsername));
-        assertEquals(List.of(marker + "_off"), usernames(new AccountSearchCriteria(marker, AccountStatus.DISABLED, null), byUsername));
-        assertEquals(List.of(marker + "_hr"), usernames(new AccountSearchCriteria(marker, null, "HR_MANAGER"), byUsername));
+            usernames(new AccountSearchCriteria(marker, null, null, false), byUsername));
+        assertEquals(List.of(marker + "_off"), usernames(new AccountSearchCriteria(marker, AccountStatus.DISABLED, null, false), byUsername));
+        assertEquals(List.of(marker + "_hr"), usernames(new AccountSearchCriteria(marker, null, "HR_MANAGER", false), byUsername));
         // The linked employee's name is searchable too.
-        assertEquals(List.of(marker + "_hr"), usernames(new AccountSearchCriteria("alpha " + marker, null, null), byUsername));
+        assertEquals(List.of(marker + "_hr"), usernames(new AccountSearchCriteria("alpha " + marker, null, null, false), byUsername));
         // Each row carries the linked employee's name so the list can show who the account belongs to.
         assertEquals(java.util.Arrays.asList("Alpha " + marker, null, null),
-            accountAdminService.list(new AccountSearchCriteria(marker, null, null), byUsername).getContent().stream()
+            accountAdminService.list(new AccountSearchCriteria(marker, null, null, false), byUsername).getContent().stream()
                 .map(AccountResponse::employeeFullName).toList());
         // Each row lists the roles the account holds, so the web can tell protected accounts apart.
         assertEquals(List.of(List.of("HR_MANAGER"), List.of(), List.of()),
-            accountAdminService.list(new AccountSearchCriteria(marker, null, null), byUsername).getContent().stream()
+            accountAdminService.list(new AccountSearchCriteria(marker, null, null, false), byUsername).getContent().stream()
                 .map(AccountResponse::roleCodes).toList());
         // LIKE wildcards in the keyword are matched literally.
-        assertEquals(List.of(), usernames(new AccountSearchCriteria(marker + "%", null, null), byUsername));
+        assertEquals(List.of(), usernames(new AccountSearchCriteria(marker + "%", null, null, false), byUsername));
         assertThrows(BusinessException.class, () -> accountAdminService.list(
-            new AccountSearchCriteria(marker, null, null), PageRequest.of(0, 20, Sort.by("passwordHash"))));
+            new AccountSearchCriteria(marker, null, null, false), PageRequest.of(0, 20, Sort.by("passwordHash"))));
     }
 
     private List<EmployeeSummaryResponse> employees(EmployeeSearchCriteria criteria, PageRequest page) {

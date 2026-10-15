@@ -35,13 +35,18 @@ public interface AccountRepository extends JpaRepository<Account, Long>, JpaSpec
         """)
     Optional<Account> findByLogin(@Param("login") String login);
 
-    Optional<Account> findByEmployeeId(Long employeeId);
+    /** The employee's account that is not deleted, if any. */
+    @Query("SELECT account FROM Account account WHERE account.employee.id = :employeeId AND account.deletedAt IS NULL")
+    Optional<Account> findByEmployeeId(@Param("employeeId") Long employeeId);
+
+    /** Whether the employee ever had an account, deleted ones included. */
+    boolean existsByEmployeeId(Long employeeId);
 
     @Query("""
         SELECT account
         FROM Account account
         JOIN FETCH account.employee employee
-        WHERE employee.id IN :employeeIds
+        WHERE employee.id IN :employeeIds AND account.deletedAt IS NULL
         """)
     List<Account> findAllByEmployeeIds(@Param("employeeIds") List<Long> employeeIds);
 

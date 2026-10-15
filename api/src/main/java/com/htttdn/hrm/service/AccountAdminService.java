@@ -24,7 +24,9 @@ import com.htttdn.hrm.dto.response.account.AccountProvisioningResponse;
 import com.htttdn.hrm.dto.response.account.AccountResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
+import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.enums.AccountStatus;
+import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
@@ -90,6 +92,7 @@ public class AccountAdminService {
     public Page<AccountResponse> list(AccountSearchCriteria criteria, Pageable pageable) {
         Specification<Account> specification = (root, query, builder) -> builder.conjunction();
         for (Specification<Account> filter : Arrays.asList(
+            AccountSpecifications.isDeleted(criteria.deleted()),
             AccountSpecifications.matchesKeyword(criteria.keyword()),
             AccountSpecifications.hasStatus(criteria.status()),
             AccountSpecifications.hasRole(criteria.roleCode())
@@ -168,6 +171,9 @@ public class AccountAdminService {
     @PreAuthorize("hasAuthority('account.manage')")
     public AccountResponse activate(Long accountId) {
         Account account = findAccountForUpdate(accountId);
+        if (account.getDeletedAt() != null) {
+            throw invalidTransition(account, "A deleted account cannot be reactivated");
+        }
         if (account.getStatus() == AccountStatus.ACTIVE) {
             return toResponse(account);
         }
@@ -182,6 +188,45 @@ public class AccountAdminService {
         account.setFailedLoginCount(0);
         account.setLockedUntil(null);
         account.setUpdatedAt(Instant.now());
+        return toResponse(account);
+    }
+
+    /**
+     * Soft-deletes an account: it is disabled for good, its sessions, activation tokens and business roles
+     * are revoked, and it leaves the account list. The row stays, so everything it approved or recorded
+     * still names it, and its username and email are not reused. The employee may get a new account.
+     */
+    @PreAuthorize("hasAuthority('account.manage')")
+    public AccountResponse delete(Long accountId, String reason) {
+        Long actorAccountId = currentAccountProvider.accountId();
+        ensureNotSelf(accountId, actorAccountId, "Administrators cannot delete their own account");
+        companyOwnerAccountGuard.requireCanManage(accountId);
+
+        Account account = findAccountForUpdate(accountId);
+        if (account.getDeletedAt() != null) {
+            throw new ConflictException(ErrorCode.ACCOUNT_STATUS_TRANSITION_NOT_ALLOWED, "Account is already deleted");
+        }
+        Instant now = Instant.now();
+        Account actor = accountRepository.getReferenceById(actorAccountId);
+        String trimmed = reason.trim();
+        account.setStatus(AccountStatus.DISABLED);
+        account.setLockedUntil(null);
+        account.setDeletedAt(now);
+        account.setDeletedByAccount(actor);
+        account.setDeletionReason(trimmed);
+        account.setUpdatedAt(now);
+        refreshTokenService.revokeAll(accountId);
+        accountActivationService.revokeAll(accountId);
+        // As at termination, AUTO and SYSTEM_ONLY roles are left to their own workflows.
+        for (AccountRoleAssignment assignment : roleAssignmentRepository.findByAccountIdAndRevokedAtIsNull(accountId)) {
+            RoleGrantPolicy policy = assignment.getRole().getGrantPolicy();
+            if (policy == RoleGrantPolicy.AUTO || policy == RoleGrantPolicy.SYSTEM_ONLY) {
+                continue;
+            }
+            assignment.setRevokedByAccount(actor);
+            assignment.setRevokedAt(now);
+            assignment.setRevocationReason("Xóa tài khoản: " + trimmed);
+        }
         return toResponse(account);
     }
 
@@ -255,7 +300,9 @@ public class AccountAdminService {
             account.getLockedUntil(),
             account.getLastLoginAt(),
             account.getCreatedAt(),
-            account.getUpdatedAt()
+            account.getUpdatedAt(),
+            account.getDeletedAt(),
+            account.getDeletionReason()
         );
     }
 }

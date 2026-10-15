@@ -68,6 +68,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/accounts/{accountId}/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["delete_5"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/accounts/{accountId}/invitations/resend": {
         parameters: {
             query?: never;
@@ -430,7 +446,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_6"];
+        delete: operations["delete_7"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1150,7 +1166,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_5"];
+        delete: operations["delete_6"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1759,6 +1775,9 @@ export interface components {
         AccountResponse: {
             /** Format: date-time */
             createdAt: string;
+            /** Format: date-time */
+            deletedAt: string | null;
+            deletionReason: string | null;
             email: string;
             employeeCode: string | null;
             employeeFullName: string | null;
@@ -2527,6 +2546,9 @@ export interface components {
             /** Format: int32 */
             standardWorkMinutes: number;
             startTime: string;
+        };
+        DeleteAccountRequest: {
+            reason: string;
         };
         Dependent: {
             /** Format: date */
@@ -3610,6 +3632,7 @@ export interface operations {
                 keyword?: string;
                 status?: "PENDING" | "ACTIVE" | "LOCKED" | "DISABLED";
                 roleCode?: string;
+                deleted?: boolean;
                 pageable: components["schemas"]["Pageable"];
             };
             header?: never;
@@ -3685,6 +3708,32 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAccountResponse"];
+                };
+            };
+        };
+    };
+    delete_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteAccountRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -4316,7 +4365,7 @@ export interface operations {
             };
         };
     };
-    delete_6: {
+    delete_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -5820,7 +5869,7 @@ export interface operations {
             };
         };
     };
-    delete_5: {
+    delete_6: {
         parameters: {
             query?: never;
             header?: never;

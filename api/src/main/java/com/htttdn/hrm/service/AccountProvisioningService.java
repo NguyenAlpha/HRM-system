@@ -177,7 +177,9 @@ public class AccountProvisioningService {
             account.getLockedUntil(),
             account.getLastLoginAt(),
             account.getCreatedAt(),
-            account.getUpdatedAt()
+            account.getUpdatedAt(),
+            account.getDeletedAt(),
+            account.getDeletionReason()
         );
     }
 }

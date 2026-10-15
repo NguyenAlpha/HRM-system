@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.htttdn.hrm.dto.request.account.AccountSearchCriteria;
 import com.htttdn.hrm.dto.request.account.CreateAccountRequest;
+import com.htttdn.hrm.dto.request.account.DeleteAccountRequest;
 import com.htttdn.hrm.dto.response.account.AccountInvitationResponse;
 import com.htttdn.hrm.dto.response.account.AccountPermissionGrantResponse;
 import com.htttdn.hrm.dto.response.account.AccountProvisioningResponse;
@@ -51,9 +52,10 @@ public class AccountAdminController {
         @RequestParam(required = false) String keyword,
         @RequestParam(required = false) AccountStatus status,
         @RequestParam(required = false) String roleCode,
+        @RequestParam(defaultValue = "false") boolean deleted,
         @PageableDefault(sort = "id", size = 20) Pageable pageable
     ) {
-        AccountSearchCriteria criteria = new AccountSearchCriteria(keyword, status, roleCode);
+        AccountSearchCriteria criteria = new AccountSearchCriteria(keyword, status, roleCode, deleted);
         return ApiResult.ok(PagedResult.of(accountAdminService.list(criteria, pageable)));
     }
 
@@ -91,5 +93,11 @@ public class AccountAdminController {
     @PreAuthorize("hasAuthority('account.manage')")
     public ApiResult<AccountResponse> activate(@PathVariable Long accountId) {
         return ApiResult.ok(accountAdminService.activate(accountId));
+    }
+
+    @PostMapping("/{accountId}/delete")
+    @PreAuthorize("hasAuthority('account.manage')")
+    public ApiResult<AccountResponse> delete(@PathVariable Long accountId, @Valid @RequestBody DeleteAccountRequest request) {
+        return ApiResult.ok(accountAdminService.delete(accountId, request.reason()));
     }
 }
