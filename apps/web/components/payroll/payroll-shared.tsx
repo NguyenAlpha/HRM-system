@@ -1,8 +1,9 @@
 "use client"
 
-import { Check } from "lucide-react"
+import { Check, Printer } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -75,16 +76,19 @@ function Line({ label, amount, sign = "", strong = false }: { label: string; amo
   )
 }
 
-/** One employee's payslip laid out like a printed slip: who, earnings, deductions, net pay. */
+/** One employee's payslip laid out like a printed slip: who, earnings, deductions, net pay; "In" prints just the slip. */
 export function PayslipDialog({ payslip, onClose }: { payslip: Payslip; onClose: () => void }) {
   const earnings = payslip.items.filter((item) => item.componentType !== "DEDUCTION")
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="print-area max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Phiếu lương tháng {periodLabel(payslip.periodYear, payslip.periodMonth)}</DialogTitle>
           <DialogDescription>Số liệu chốt tại thời điểm tính lương; hồ sơ thay đổi sau đó không làm đổi phiếu.</DialogDescription>
         </DialogHeader>
+        <Button type="button" variant="outline" size="sm" className="justify-self-start print:hidden" onClick={() => window.print()}>
+          <Printer /> In phiếu lương
+        </Button>
 
         <dl className="grid gap-x-6 gap-y-2 rounded-xl border p-4 text-sm sm:grid-cols-2">
           <div><dt className="text-xs text-muted-foreground">Nhân viên</dt><dd className="font-medium">{payslip.employeeNameSnapshot}</dd></div>

@@ -1,19 +1,21 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Eye } from "lucide-react"
+import { Eye, Printer } from "lucide-react"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
   PayslipDialog,
   hours,
   payslipDeductions,
+  payslipInsurance,
   periodLabel,
 } from "@/components/payroll/payroll-shared"
 import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
+import { YearPicker } from "@/components/report/report-shared"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { EmptyRow, SectionError, money, workforceApi } from "@/components/workforce/workforce-shared"
@@ -83,6 +85,8 @@ export function MyPayslipsPage() {
           </Card>
         )}
 
+        {latest && <YearlyPayrollCard payslips={payslips} printable={!selected} />}
+
         {canRead && payslips !== null && (
           <Card>
             <CardHeader>
@@ -126,5 +130,85 @@ export function MyPayslipsPage() {
 
       {selected && <PayslipDialog payslip={selected} onClose={() => setSelected(null)} />}
     </>
+  )
+}
+
+const YEAR_COLUMNS: [string, (slip: Payslip) => number][] = [
+  ["Lương theo công", (slip) => slip.basicSalaryPay],
+  ["Phụ cấp", (slip) => slip.allowancePay],
+  ["Tăng ca", (slip) => slip.overtimePay],
+  ["Thu nhập khác", (slip) => slip.otherEarningsPay],
+  ["Tổng thu nhập", (slip) => slip.grossPay],
+  ["Bảo hiểm", payslipInsurance],
+  ["Thuế TNCN", (slip) => slip.personalIncomeTax],
+  ["Khấu trừ khác", (slip) => slip.otherDeductions],
+  ["Thực nhận", (slip) => slip.netPay],
+]
+
+/**
+ * A year of released payslips as one sheet: a line per month, the year's total under it, printable.
+ * `printable` is off while a payslip is open so printing then gives just that slip.
+ */
+function YearlyPayrollCard({ payslips, printable }: { payslips: Payslip[]; printable: boolean }) {
+  const lastYear = Math.max(...payslips.map((slip) => slip.periodYear))
+  const [year, setYear] = useState(lastYear)
+  const slips = payslips.filter((slip) => slip.periodYear === year)
+  const months = Array.from({ length: 12 }, (_, index) => ({
+    month: index + 1,
+    slip: slips.find((slip) => slip.periodMonth === index + 1),
+  }))
+  const first = slips[0]
+
+  return (
+    <Card className={printable ? "print-area" : undefined}>
+      <CardHeader>
+        <CardTitle>Bảng lương năm {year}</CardTitle>
+        <CardDescription>
+          {first ? `${first.employeeNameSnapshot} · ${first.employeeCodeSnapshot} · ` : ""}
+          Tổng hợp các phiếu lương đã phát hành trong năm.
+        </CardDescription>
+        <CardAction className="flex items-center gap-2 print:hidden">
+          <YearPicker year={year} maxYear={lastYear} onChange={setYear} />
+          <Button type="button" variant="outline" size="sm" onClick={() => window.print()} disabled={slips.length === 0}>
+            <Printer /> In bảng lương năm
+          </Button>
+        </CardAction>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-xl border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tháng</TableHead>
+                <TableHead className="text-right">Công</TableHead>
+                {YEAR_COLUMNS.map(([label]) => <TableHead key={label} className="text-right">{label}</TableHead>)}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {months.map(({ month, slip }) => (
+                <TableRow key={month}>
+                  <TableCell className="font-medium">{periodLabel(year, month)}</TableCell>
+                  <TableCell className="text-right">{slip ? hours(slip.payableWorkMinutes) : "—"}</TableCell>
+                  {YEAR_COLUMNS.map(([label, pick]) => (
+                    <TableCell key={label} className={`text-right tabular-nums ${label === "Thực nhận" ? "font-semibold" : ""}`}>
+                      {slip ? money(pick(slip)) : "—"}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+              <TableRow className="bg-muted/40 font-semibold hover:bg-muted/40">
+                <TableCell>Cả năm</TableCell>
+                <TableCell className="text-right">{hours(slips.reduce((sum, slip) => sum + slip.payableWorkMinutes, 0))}</TableCell>
+                {YEAR_COLUMNS.map(([label, pick]) => (
+                  <TableCell key={label} className="text-right tabular-nums">
+                    {money(slips.reduce((sum, slip) => sum + pick(slip), 0))}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
