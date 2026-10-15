@@ -627,16 +627,19 @@ Ví dụ dữ liệu:
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
-| `employee_id` | BIGINT | FK → employees, UNIQUE | Hồ sơ liên kết; null chỉ dành cho bootstrap admin |
+| `employee_id` | BIGINT | FK → employees, UNIQUE trong các account chưa xóa | Hồ sơ liên kết; null chỉ dành cho bootstrap admin |
 | `username` | VARCHAR(50) | NOT NULL, UNIQUE | Tên đăng nhập |
 | `email` | VARCHAR(100) | NOT NULL, UNIQUE theo `LOWER` | Email đăng nhập |
-| `password_hash` | VARCHAR(255) | nullable khi `PENDING` | Mật khẩu đã hash |
+| `password_hash` | VARCHAR(255) | nullable khi `PENDING` hoặc đã xóa | Mật khẩu đã hash |
 | `status` | VARCHAR(20) | NOT NULL | `PENDING` / `ACTIVE` / `LOCKED` / `DISABLED` |
 | `failed_login_count` | INTEGER | NOT NULL, DEFAULT 0 | Số lần đăng nhập sai liên tiếp |
 | `locked_until` | TIMESTAMPTZ | | Khóa tạm đến thời điểm |
 | `last_login_at` | TIMESTAMPTZ | | Lần đăng nhập gần nhất |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
+| `deleted_at` | TIMESTAMPTZ | | Thời điểm xóa mềm; khi có thì `status = DISABLED` |
+| `deleted_by_account_id` | BIGINT | FK → accounts | Người xóa mềm |
+| `deletion_reason` | TEXT | | Lý do xóa |
 
 ### `account_activation_tokens` — Token kích hoạt tài khoản
 

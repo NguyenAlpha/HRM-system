@@ -63,6 +63,7 @@ mật khẩu. Không ai đặt mật khẩu hộ người khác.
 | Gửi lại thư mời | `POST /api/accounts/{id}/invitations/resend` | `account.activation.manage` |
 | Đặt lại mật khẩu | `POST /api/accounts/{id}/password-reset` | `account.activation.manage` |
 | Khóa, mở khóa | `POST /api/accounts/{id}/suspend`, `/activate` | `account.manage` |
+| Xóa mềm tài khoản (kèm lý do, cả tài khoản chưa kích hoạt) | `POST /api/accounts/{id}/delete` | `account.manage` |
 
 ---
 

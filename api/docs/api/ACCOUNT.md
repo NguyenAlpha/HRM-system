@@ -28,6 +28,7 @@ Company Owner tạo HR Manager đầu tiên và các HR Manager tiếp theo bằ
 | `POST /api/accounts/{accountId}/password-reset` | `account.activation.manage` | Đưa account `ACTIVE` hoặc `LOCKED` về `PENDING` và phát token để người dùng tự đặt lại mật khẩu |
 | `POST /api/accounts/{accountId}/suspend` | `account.manage` | Vô hiệu hóa account và thu hồi toàn bộ refresh token |
 | `POST /api/accounts/{accountId}/activate` | `account.manage` | Kích hoạt lại account `DISABLED` hoặc mở khóa account `LOCKED` đã có mật khẩu |
+| `POST /api/accounts/{accountId}/delete` | `account.manage` | Xóa mềm account (kể cả `PENDING`) kèm lý do |
 
 Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` và `SYSTEM_ADMIN` được seed sẵn toàn bộ permission trên. `HR_MANAGER` chỉ được seed `account.provision` trong nhóm API này. `SYSTEM_ADMIN` quản trị *truy cập* (tài khoản, role, permission override, danh mục tổ chức) và chỉ *xem* hồ sơ nhân sự; nghiệp vụ nhân sự, chấm công, lương, báo cáo và dữ liệu nhạy cảm thuộc các role nghiệp vụ. Tài khoản đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được khóa, phát mã kích hoạt, đổi role hoặc permission override, và tài khoản đang giữ `SYSTEM_ADMIN` cũng chỉ một System Admin khác được làm các việc đó (mở khóa vẫn được phép), nên người quản trị truy cập không chiếm được quyền chủ doanh nghiệp và ngược lại.
 
@@ -125,8 +126,9 @@ GET /api/accounts?page=0&size=20&sort=username,asc&keyword=an&status=ACTIVE&role
 | `keyword` | string | Tìm không phân biệt hoa thường trong username, email, họ tên và mã của employee liên kết |
 | `status` | enum | `PENDING`, `ACTIVE`, `LOCKED` hoặc `DISABLED` |
 | `roleCode` | string | Chỉ account đang giữ assignment chưa thu hồi của role này |
+| `deleted` | boolean | `true`: chỉ account đã xóa mềm; mặc định `false`: chỉ account chưa xóa |
 
-`roleCodes` là mã các role account đang giữ và chưa bị thu hồi, sắp theo bảng chữ cái; web dựa vào đó để ẩn thao tác trên account `COMPANY_OWNER` hoặc `SYSTEM_ADMIN` khi người xem không giữ cùng role. `employeeCode` và `employeeFullName` là mã và họ tên nhân viên gắn với account, `null` khi account không gắn nhân viên (ví dụ `SYSTEM_ADMIN`).
+`roleCodes` là mã các role account đang giữ và chưa bị thu hồi, sắp theo bảng chữ cái; web dựa vào đó để ẩn thao tác trên account `COMPANY_OWNER` hoặc `SYSTEM_ADMIN` khi người xem không giữ cùng role. `employeeCode` và `employeeFullName` là mã và họ tên nhân viên gắn với account, `null` khi account không gắn nhân viên (ví dụ `SYSTEM_ADMIN`). `deletedAt` và `deletionReason` khác `null` khi account đã bị xóa mềm.
 
 Response `200 OK` dùng cấu trúc `Page<AccountResponse>` của Spring với các field `content`, `totalElements`, `totalPages`, `number` và `size`.
 
@@ -229,13 +231,32 @@ Trả `AccountResponse` với `status = DISABLED`.
 
 ## POST `/api/accounts/{accountId}/activate`
 
-Kích hoạt lại account `DISABLED` hoặc `LOCKED` đã có mật khẩu, đồng thời xóa trạng thái khóa và bộ đếm đăng nhập sai. Nếu account đã `ACTIVE`, endpoint trả thành công mà không thay đổi dữ liệu.
+Kích hoạt lại account `DISABLED` hoặc `LOCKED` đã có mật khẩu, đồng thời xóa trạng thái khóa và bộ đếm đăng nhập sai. Account đã xóa mềm không kích hoạt lại được. Nếu account đã `ACTIVE`, endpoint trả thành công mà không thay đổi dữ liệu.
 
 Endpoint không được bỏ qua bước đặt mật khẩu của account `PENDING`. Account `PENDING` chỉ có thể chuyển sang `ACTIVE` qua:
 
 ```http
 POST /api/account-activations/{token}/complete
 ```
+
+---
+
+## POST `/api/accounts/{accountId}/delete`
+
+Xóa mềm account, dùng cho account tạo nhầm (kể cả `PENDING` chưa kích hoạt) hoặc không còn dùng nữa:
+
+```json
+{ "reason": "Gõ sai email khi tạo" }
+```
+
+`reason` bắt buộc, tối đa 500 ký tự. Account chuyển `DISABLED` vĩnh viễn với `deletedAt`, người xóa và lý do;
+mọi refresh token và mã kích hoạt bị thu hồi; các role nghiệp vụ còn giữ bị thu hồi với lý do
+`Xóa tài khoản: …` (role `AUTO`/`SYSTEM_ONLY` giữ nguyên như khi nghỉ việc). Dòng dữ liệu vẫn còn nên mọi
+bản ghi account đã duyệt hay ghi nhận vẫn trỏ đúng người, và username/email không được dùng lại.
+Nhân viên của account được cấp account mới.
+
+Không được tự xóa account đang đăng nhập; account `COMPANY_OWNER`/`SYSTEM_ADMIN` chỉ người giữ cùng role xóa
+được. Xóa lần nữa trả `409 ACCOUNT_STATUS_TRANSITION_NOT_ALLOWED`. Response là `AccountResponse` sau khi xóa.
 
 ### Lỗi trạng thái
 

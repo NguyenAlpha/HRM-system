@@ -74,6 +74,14 @@
           }
         }, {
           "in" : "query",
+          "name" : "deleted",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        }, {
+          "in" : "query",
           "name" : "pageable",
           "required" : true,
           "schema" : {
@@ -160,6 +168,43 @@
             "format" : "int64"
           }
         } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultAccountResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "account-admin-controller" ]
+      }
+    },
+    "/api/accounts/{accountId}/delete" : {
+      "post" : {
+        "operationId" : "delete_5",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "accountId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DeleteAccountRequest"
+              }
+            }
+          },
+          "required" : true
+        },
         "responses" : {
           "200" : {
             "content" : {
@@ -1037,7 +1082,7 @@
     },
     "/api/company-holidays/{id}" : {
       "delete" : {
-        "operationId" : "delete_6",
+        "operationId" : "delete_7",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -2998,7 +3043,7 @@
     },
     "/api/payroll/periods/{periodId}/adjustments/{adjustmentId}" : {
       "delete" : {
-        "operationId" : "delete_5",
+        "operationId" : "delete_6",
         "parameters" : [ {
           "in" : "path",
           "name" : "periodId",
@@ -4650,6 +4695,13 @@
             "type" : "string",
             "format" : "date-time"
           },
+          "deletedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "deletionReason" : {
+            "type" : [ "string", "null" ]
+          },
           "email" : {
             "type" : "string"
           },
@@ -4697,7 +4749,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "createdAt", "email", "employeeCode", "employeeFullName", "employeeId", "failedLoginCount", "id", "lastLoginAt", "lockedUntil", "roleCodes", "status", "updatedAt", "username" ]
+        "required" : [ "createdAt", "deletedAt", "deletionReason", "email", "employeeCode", "employeeFullName", "employeeId", "failedLoginCount", "id", "lastLoginAt", "lockedUntil", "roleCodes", "status", "updatedAt", "username" ]
       },
       "AccountRoleAssignmentResponse" : {
         "type" : "object",
@@ -7406,6 +7458,17 @@
           }
         },
         "required" : [ "breakMinutes", "code", "crossesMidnight", "endTime", "graceLateMinutes", "name", "standardWorkMinutes", "startTime" ]
+      },
+      "DeleteAccountRequest" : {
+        "type" : "object",
+        "properties" : {
+          "reason" : {
+            "type" : "string",
+            "maxLength" : 500,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "reason" ]
       },
       "Dependent" : {
         "type" : "object",

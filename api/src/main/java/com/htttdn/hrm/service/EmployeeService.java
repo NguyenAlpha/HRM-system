@@ -420,7 +420,7 @@ public class EmployeeService {
     private void ensureEmployeeHasNoBusinessHistory(Long employeeId) {
         // The create endpoint always writes one assignment, so a single row proves nothing;
         // a second one means somebody deliberately transferred or promoted the employee.
-        boolean hasHistory = accountRepository.findByEmployeeId(employeeId).isPresent()
+        boolean hasHistory = accountRepository.existsByEmployeeId(employeeId)
             || employeeAssignmentRepository.countByEmployeeId(employeeId) > 1
             || employeeSalaryHistoryRepository.existsByEmployeeId(employeeId)
             || leaveRequestRepository.existsByEmployeeId(employeeId)

@@ -35,6 +35,10 @@ public final class AccountSpecifications {
         };
     }
 
+    public static Specification<Account> isDeleted(boolean deleted) {
+        return (root, query, builder) -> deleted ? builder.isNotNull(root.get("deletedAt")) : builder.isNull(root.get("deletedAt"));
+    }
+
     public static Specification<Account> hasStatus(AccountStatus status) {
         return status == null ? null : (root, query, builder) -> builder.equal(root.get("status"), status);
     }

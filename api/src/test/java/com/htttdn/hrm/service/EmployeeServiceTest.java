@@ -146,7 +146,7 @@ class EmployeeServiceTest {
     void softDeleteRejectsEmployeeReassignedAtLeastOnce() {
         Employee employee = employee(1L);
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
-        when(accountRepository.findByEmployeeId(1L)).thenReturn(Optional.empty());
+        when(accountRepository.existsByEmployeeId(1L)).thenReturn(false);
         when(employeeAssignmentRepository.countByEmployeeId(1L)).thenReturn(2L);
 
         assertThrows(
@@ -159,7 +159,7 @@ class EmployeeServiceTest {
     void softDeleteAcceptsEmployeeHoldingOnlyTheAssignmentMadeWithTheProfile() {
         Employee employee = employee(1L);
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
-        when(accountRepository.findByEmployeeId(1L)).thenReturn(Optional.empty());
+        when(accountRepository.existsByEmployeeId(1L)).thenReturn(false);
         when(employeeAssignmentRepository.countByEmployeeId(1L)).thenReturn(1L);
         when(currentAccountProvider.accountId()).thenReturn(9L);
         when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).build()));
@@ -174,7 +174,7 @@ class EmployeeServiceTest {
         Employee employee = employee(1L);
         Account actor = Account.builder().id(9L).build();
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
-        when(accountRepository.findByEmployeeId(1L)).thenReturn(Optional.empty());
+        when(accountRepository.existsByEmployeeId(1L)).thenReturn(false);
         when(currentAccountProvider.accountId()).thenReturn(9L);
         when(accountRepository.findById(9L)).thenReturn(Optional.of(actor));
 

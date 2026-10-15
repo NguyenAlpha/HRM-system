@@ -71,9 +71,11 @@ FOR EACH ROW
 EXECUTE FUNCTION set_employee_seniority_start_date();
 
 -- Pending accounts do not have a password until the invited user activates the account.
+-- Tài khoản xóa mềm (deleted_at) luôn ở trạng thái DISABLED và giữ nguyên username/email; nhân viên của
+-- nó được cấp tài khoản mới (unique employee_id chỉ tính tài khoản chưa xóa).
 CREATE TABLE accounts (
     id BIGSERIAL PRIMARY KEY,
-    employee_id BIGINT UNIQUE REFERENCES employees (id),
+    employee_id BIGINT REFERENCES employees (id),
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL,
     password_hash VARCHAR(255),
@@ -83,10 +85,18 @@ CREATE TABLE accounts (
     last_login_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    deleted_at TIMESTAMPTZ,
+    deleted_by_account_id BIGINT REFERENCES accounts (id),
+    deletion_reason TEXT,
     CONSTRAINT chk_accounts_status CHECK (status IN ('PENDING', 'ACTIVE', 'LOCKED', 'DISABLED')),
     CONSTRAINT chk_accounts_password_after_activation
-        CHECK (status = 'PENDING' OR password_hash IS NOT NULL)
+        CHECK (status = 'PENDING' OR password_hash IS NOT NULL OR deleted_at IS NOT NULL),
+    CONSTRAINT chk_accounts_deleted
+        CHECK (deleted_at IS NULL OR (status = 'DISABLED' AND deleted_by_account_id IS NOT NULL AND deletion_reason IS NOT NULL))
 );
+
+CREATE UNIQUE INDEX uq_accounts_employee_active
+    ON accounts (employee_id) WHERE deleted_at IS NULL;
 
 -- Unique theo LOWER(email), tương tự employee_code và work_email.
 CREATE UNIQUE INDEX uq_accounts_email_lower

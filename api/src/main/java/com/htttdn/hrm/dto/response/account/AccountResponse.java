@@ -21,6 +21,8 @@ public record AccountResponse(
     @Nullable Instant lockedUntil,
     @Nullable Instant lastLoginAt,
     Instant createdAt,
-    Instant updatedAt
+    Instant updatedAt,
+    @Nullable Instant deletedAt,
+    @Nullable String deletionReason
 ) {
 }
