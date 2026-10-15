@@ -8,6 +8,8 @@ param(
     [string]$User = "hrm-user"
 )
 $ErrorActionPreference = "Stop"
+# Thông báo tiếng Việt hiển thị đúng trong console.
+[Console]::OutputEncoding = [Text.Encoding]::UTF8
 $File = (Resolve-Path $File).Path
 Set-Location (Split-Path -Parent $PSScriptRoot)
 
