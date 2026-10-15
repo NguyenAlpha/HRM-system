@@ -80,7 +80,7 @@ for migration in migrations:
             fks.append({"child": child, "column": column, "parent": parent, "parent_column": parent_column})
 
 assert len(tables) == 33, f"Expected 33 Flyway tables, found {len(tables)}"
-assert len(fks) == 72, f"Expected 72 physical foreign keys, found {len(fks)}"
+assert len(fks) == 73, f"Expected 73 physical foreign keys, found {len(fks)}"
 for fk in fks:
     assert fk["child"] in tables and fk["parent"] in tables, fk
     assert fk["column"] in {column["name"] for column in tables[fk["child"]]["columns"]}, fk

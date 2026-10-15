@@ -57,7 +57,7 @@
   <p class="eyebrow">Hệ thống quản lý nhân sự · PostgreSQL</p>
   <h1>Sơ đồ ERD kiểu Chen</h1>
   <p class="lede">Sơ đồ đầy đủ từ migration Flyway: thực thể là hình chữ nhật, thuộc tính là hình oval, quan hệ khóa ngoại là hình thoi. Mô hình được chia thành các phần để đọc được từng tên bảng, cột và lực lượng quan hệ.</p>
-  <div class="stats"><div class="stat"><strong>33</strong>bảng</div><div class="stat"><strong>394</strong>cột</div><div class="stat"><strong>72</strong>khóa ngoại</div><div class="stat"><strong>43</strong>quan hệ nghiệp vụ</div></div>
+  <div class="stats"><div class="stat"><strong>33</strong>bảng</div><div class="stat"><strong>397</strong>cột</div><div class="stat"><strong>73</strong>khóa ngoại</div><div class="stat"><strong>43</strong>quan hệ nghiệp vụ</div></div>
   <div class="legend-bar"><span><span class="sample-entity">THỰC THỂ</span> bảng</span><span><span class="sample-attr">thuộc tính</span> cột</span><span><span class="sample-relation"></span> quan hệ</span><span><u>Gạch dưới</u> khóa chính</span><span><span class="sample-audit"></span> FK kiểm toán / quy trình</span></div>
   <h2>Ví dụ kết nối</h2>
   <p class="section-note">Ba thực thể cốt lõi được trình bày cùng thuộc tính và quan hệ như mẫu. Phần tiếp theo mở rộng ra toàn bộ bảng, cột và khóa ngoại.</p>
@@ -169,25 +169,33 @@
         <text x="690" y="478" class="legend">PHẢI: BẢNG CHỨA FK</text>
       </svg></div>
     </section><section class="panel" id="rel-3">
-      <div class="panel-head"><span class="section-no">03</span><h3>Nhân viên và tài khoản · 2/2</h3><span class="panel-count">1 quan hệ</span></div>
-      <div class="diagram-container"><svg viewBox="0 0 960 192" role="img" aria-labelledby="hrm-rel-03-title hrm-rel-03-desc" xmlns="http://www.w3.org/2000/svg">
+      <div class="panel-head"><span class="section-no">03</span><h3>Nhân viên và tài khoản · 2/2</h3><span class="panel-count">2 quan hệ</span></div>
+      <div class="diagram-container"><svg viewBox="0 0 960 292" role="img" aria-labelledby="hrm-rel-03-title hrm-rel-03-desc" xmlns="http://www.w3.org/2000/svg">
         <title id="hrm-rel-03-title">Nhân viên và tài khoản · 2/2</title>
-        <desc id="hrm-rel-03-desc">Sơ đồ Chen gồm 1 quan hệ khóa ngoại; thực thể là hình chữ nhật và quan hệ là hình thoi.</desc>
-        <rect width="960" height="192" fill="#f5f5f5"/>
+        <desc id="hrm-rel-03-desc">Sơ đồ Chen gồm 2 quan hệ khóa ngoại; thực thể là hình chữ nhật và quan hệ là hình thoi.</desc>
+        <rect width="960" height="292" fill="#f5f5f5"/>
         <line x1="300" y1="54" x2="348" y2="54" class="edge" stroke-dasharray="5 4"/>
-          <line x1="612" y1="54" x2="660" y2="54" class="edge" stroke-dasharray="5 4"/>
+          <line x1="612" y1="54" x2="660" y2="54" class="edge" stroke-dasharray="5 4"/><line x1="300" y1="154" x2="348" y2="154" class="edge" stroke-dasharray="5 4"/>
+          <line x1="612" y1="154" x2="660" y2="154" class="edge" stroke-dasharray="5 4"/>
         <rect x="40" y="28" width="260" height="52" class="entity"/>
           <text x="170" y="58" class="entity-text" text-anchor="middle">accounts</text>
           <polygon points="480,22 612,54 480,86 348,54" class="diamond"/>
           <text x="480" y="58" class="diamond-text" text-anchor="middle">deleted_by_account_id</text>
           <rect x="660" y="28" width="260" height="52" class="entity"/>
-          <text x="790" y="58" class="entity-text" text-anchor="middle">employees</text>
+          <text x="790" y="58" class="entity-text" text-anchor="middle">accounts</text>
           <text x="323" y="44" class="cardinality" text-anchor="middle">0..1</text>
-          <text x="637" y="44" class="cardinality" text-anchor="middle">0..N</text>
-        <line x1="40" y1="158" x2="920" y2="158" class="rule"/>
-        <text x="40" y="178" class="legend">TRÁI: BẢNG ĐƯỢC THAM CHIẾU</text>
-        <text x="390" y="178" class="legend">HÌNH THOI: CỘT FK</text>
-        <text x="690" y="178" class="legend">PHẢI: BẢNG CHỨA FK</text>
+          <text x="637" y="44" class="cardinality" text-anchor="middle">0..N</text><rect x="40" y="128" width="260" height="52" class="entity"/>
+          <text x="170" y="158" class="entity-text" text-anchor="middle">accounts</text>
+          <polygon points="480,122 612,154 480,186 348,154" class="diamond"/>
+          <text x="480" y="158" class="diamond-text" text-anchor="middle">deleted_by_account_id</text>
+          <rect x="660" y="128" width="260" height="52" class="entity"/>
+          <text x="790" y="158" class="entity-text" text-anchor="middle">employees</text>
+          <text x="323" y="144" class="cardinality" text-anchor="middle">0..1</text>
+          <text x="637" y="144" class="cardinality" text-anchor="middle">0..N</text>
+        <line x1="40" y1="258" x2="920" y2="258" class="rule"/>
+        <text x="40" y="278" class="legend">TRÁI: BẢNG ĐƯỢC THAM CHIẾU</text>
+        <text x="390" y="278" class="legend">HÌNH THOI: CỘT FK</text>
+        <text x="690" y="278" class="legend">PHẢI: BẢNG CHỨA FK</text>
       </svg></div>
     </section><section class="panel" id="rel-4">
       <div class="panel-head"><span class="section-no">04</span><h3>Phân quyền · 1/6</h3><span class="panel-count">4 quan hệ</span></div>
@@ -1062,19 +1070,19 @@
           <text x="806" y="415" class="attribute-type" text-anchor="middle">TEXT</text>
     </svg></div>
     </details><details class="table-panel" id="table-accounts">
-      <summary><span>accounts</span><small>11 cột · V2__employees_and_accounts.sql</small></summary>
-      <div class="diagram-container"><svg viewBox="0 0 960 424" role="img" aria-labelledby="hrm-attr-accounts-title hrm-attr-accounts-desc" xmlns="http://www.w3.org/2000/svg">
+      <summary><span>accounts</span><small>14 cột · V2__employees_and_accounts.sql</small></summary>
+      <div class="diagram-container"><svg viewBox="0 0 960 480" role="img" aria-labelledby="hrm-attr-accounts-title hrm-attr-accounts-desc" xmlns="http://www.w3.org/2000/svg">
       <title id="hrm-attr-accounts-title">Thuộc tính bảng accounts</title>
-      <desc id="hrm-attr-accounts-desc">Thực thể accounts với đầy đủ 11 cột từ Flyway; khóa chính gạch dưới và khóa ngoại có oval nét đứt.</desc>
-      <rect width="960" height="424" fill="#f5f5f5"/>
-      <line x1="370" y1="212" x2="284" y2="68" class="edge"/><line x1="590" y1="212" x2="676" y2="68" class="edge"/><line x1="370" y1="212" x2="284" y2="124" class="edge"/><line x1="590" y1="212" x2="676" y2="124" class="edge"/><line x1="370" y1="212" x2="284" y2="180" class="edge"/><line x1="590" y1="212" x2="676" y2="180" class="edge"/><line x1="370" y1="212" x2="284" y2="236" class="edge"/><line x1="590" y1="212" x2="676" y2="236" class="edge"/><line x1="370" y1="212" x2="284" y2="292" class="edge"/><line x1="590" y1="212" x2="676" y2="292" class="edge"/><line x1="370" y1="212" x2="284" y2="348" class="edge"/>
-      <rect x="370" y="179" width="220" height="66" class="entity"/>
-      <text x="480" y="216" class="entity-text" text-anchor="middle">accounts</text>
+      <desc id="hrm-attr-accounts-desc">Thực thể accounts với đầy đủ 14 cột từ Flyway; khóa chính gạch dưới và khóa ngoại có oval nét đứt.</desc>
+      <rect width="960" height="480" fill="#f5f5f5"/>
+      <line x1="370" y1="240" x2="284" y2="68" class="edge"/><line x1="590" y1="240" x2="676" y2="68" class="edge"/><line x1="370" y1="240" x2="284" y2="124" class="edge"/><line x1="590" y1="240" x2="676" y2="124" class="edge"/><line x1="370" y1="240" x2="284" y2="180" class="edge"/><line x1="590" y1="240" x2="676" y2="180" class="edge"/><line x1="370" y1="240" x2="284" y2="236" class="edge"/><line x1="590" y1="240" x2="676" y2="236" class="edge"/><line x1="370" y1="240" x2="284" y2="292" class="edge"/><line x1="590" y1="240" x2="676" y2="292" class="edge"/><line x1="370" y1="240" x2="284" y2="348" class="edge"/><line x1="590" y1="240" x2="676" y2="348" class="edge"/><line x1="370" y1="240" x2="284" y2="404" class="edge"/><line x1="590" y1="240" x2="676" y2="404" class="edge"/>
+      <rect x="370" y="207" width="220" height="66" class="entity"/>
+      <text x="480" y="244" class="entity-text" text-anchor="middle">accounts</text>
       <ellipse cx="154" cy="68" rx="130" ry="20" fill="#ffffff" stroke="#bf4520" stroke-width="1.1"/>
           <text x="154" y="66" class="attribute-name" text-anchor="middle" text-decoration="underline">id</text>
           <text x="154" y="79" class="attribute-type" text-anchor="middle">BIGSERIAL · PK</text><ellipse cx="806" cy="68" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1" stroke-dasharray="4 3"/>
           <text x="806" y="66" class="attribute-name" text-anchor="middle">employee_id</text>
-          <text x="806" y="79" class="attribute-type" text-anchor="middle">BIGINT · FK · UQ</text><ellipse cx="154" cy="124" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
+          <text x="806" y="79" class="attribute-type" text-anchor="middle">BIGINT · FK</text><ellipse cx="154" cy="124" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
           <text x="154" y="122" class="attribute-name" text-anchor="middle">username</text>
           <text x="154" y="135" class="attribute-type" text-anchor="middle">VARCHAR(50) · UQ · NN</text><ellipse cx="806" cy="124" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
           <text x="806" y="122" class="attribute-name" text-anchor="middle">email</text>
@@ -1092,7 +1100,13 @@
           <text x="806" y="290" class="attribute-name" text-anchor="middle">created_at</text>
           <text x="806" y="303" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text><ellipse cx="154" cy="348" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
           <text x="154" y="346" class="attribute-name" text-anchor="middle">updated_at</text>
-          <text x="154" y="359" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text>
+          <text x="154" y="359" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text><ellipse cx="806" cy="348" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
+          <text x="806" y="346" class="attribute-name" text-anchor="middle">deleted_at</text>
+          <text x="806" y="359" class="attribute-type" text-anchor="middle">TIMESTAMPTZ</text><ellipse cx="154" cy="404" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1" stroke-dasharray="4 3"/>
+          <text x="154" y="402" class="attribute-name" text-anchor="middle">deleted_by_account_id</text>
+          <text x="154" y="415" class="attribute-type" text-anchor="middle">BIGINT · FK</text><ellipse cx="806" cy="404" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
+          <text x="806" y="402" class="attribute-name" text-anchor="middle">deletion_reason</text>
+          <text x="806" y="415" class="attribute-type" text-anchor="middle">TEXT</text>
     </svg></div>
     </details><details class="table-panel" id="table-attendance_records">
       <summary><span>attendance_records</span><small>25 cột · V6__attendance.sql</small></summary>
@@ -2277,9 +2291,11 @@ FOR EACH ROW
 EXECUTE FUNCTION set_employee_seniority_start_date();
 
 -- Pending accounts do not have a password until the invited user activates the account.
+-- Tài khoản xóa mềm (deleted_at) luôn ở trạng thái DISABLED và giữ nguyên username/email; nhân viên của
+-- nó được cấp tài khoản mới (unique employee_id chỉ tính tài khoản chưa xóa).
 CREATE TABLE accounts (
     id BIGSERIAL PRIMARY KEY,
-    employee_id BIGINT UNIQUE REFERENCES employees (id),
+    employee_id BIGINT REFERENCES employees (id),
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL,
     password_hash VARCHAR(255),
@@ -2289,10 +2305,18 @@ CREATE TABLE accounts (
     last_login_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    deleted_at TIMESTAMPTZ,
+    deleted_by_account_id BIGINT REFERENCES accounts (id),
+    deletion_reason TEXT,
     CONSTRAINT chk_accounts_status CHECK (status IN (&#x27;PENDING&#x27;, &#x27;ACTIVE&#x27;, &#x27;LOCKED&#x27;, &#x27;DISABLED&#x27;)),
     CONSTRAINT chk_accounts_password_after_activation
-        CHECK (status = &#x27;PENDING&#x27; OR password_hash IS NOT NULL)
+        CHECK (status = &#x27;PENDING&#x27; OR password_hash IS NOT NULL OR deleted_at IS NOT NULL),
+    CONSTRAINT chk_accounts_deleted
+        CHECK (deleted_at IS NULL OR (status = &#x27;DISABLED&#x27; AND deleted_by_account_id IS NOT NULL AND deletion_reason IS NOT NULL))
 );
+
+CREATE UNIQUE INDEX uq_accounts_employee_active
+    ON accounts (employee_id) WHERE deleted_at IS NULL;
 
 -- Unique theo LOWER(email), tương tự employee_code và work_email.
 CREATE UNIQUE INDEX uq_accounts_email_lower
