@@ -272,6 +272,7 @@ Hai báo cáo tổng hợp, đều áp phạm vi của role assignment đang hi�
 | Phân bố trình độ và thâm niên | `GET /api/reports/hr/workforce-distribution` | `report.hr.read` |
 | Phân bố lương cơ bản | `GET /api/reports/payroll/salary-distribution` | `report.payroll.read` |
 | Biến động nhân sự theo năm | `GET /api/reports/hr/turnover` | `report.hr.read` |
+| Tình hình nhân sự theo tháng (từng người: vào, nghỉ việc, nghỉ phép, vắng) | `GET /api/reports/hr/monthly-status` | `report.hr.read` |
 | Phép năm của từng nhân viên | `GET /api/reports/hr/leave-balances` | `report.hr.read` |
 | Quỹ lương, bảo hiểm, thuế theo tháng và đơn vị | `GET /api/reports/payroll/summary` | `report.payroll.read` (scope COMPANY) |
 | Tổng hợp chấm công tháng | `GET /api/attendance/timesheet` | `attendance.read` |

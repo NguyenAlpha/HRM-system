@@ -15,6 +15,8 @@ import com.htttdn.hrm.entity.EmployeeSalaryHistory;
 import com.htttdn.hrm.entity.enums.EducationLevel;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.exception.BusinessException;
+import com.htttdn.hrm.repository.AttendanceRecordRepository;
+import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
 
@@ -32,6 +34,8 @@ class ReportServiceTest {
     @Mock private EmployeeRepository employeeRepository;
     @Mock private EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository;
     @Mock private EmployeeAccessScopeService employeeAccessScopeService;
+    @Mock private EmployeeAssignmentRepository employeeAssignmentRepository;
+    @Mock private AttendanceRecordRepository attendanceRecordRepository;
 
     @Test
     void workforceReportGroupsEducationSeniorityAndMissingData() {
@@ -151,7 +155,9 @@ class ReportServiceTest {
         return new ReportService(
             employeeRepository,
             employeeSalaryHistoryRepository,
-            employeeAccessScopeService
+            employeeAccessScopeService,
+            employeeAssignmentRepository,
+            attendanceRecordRepository
         );
     }
 }
