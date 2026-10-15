@@ -210,6 +210,8 @@ qua, nên thêm người vào file rồi khởi động lại chỉ tạo ngư�
   "password": "password",
   "fullName": "Lê Văn Cường",
   "email": "employee@hrm.local",
+  "profile": { "gender": "MALE", "dateOfBirth": "1998-09-02", "highestEducationLevel": "COLLEGE",
+    "major": "Công nghệ kỹ thuật điện", "institution": "Trường Cao đẳng Kỹ thuật Cao Thắng", "graduationYear": 2019 },
   "roles": { "EMPLOYEE": "SELF" },
   "assignments": [
     { "monthsAgo": 10, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-01", "position": "GENERAL_STAFF", "manager": "owner" },
@@ -239,6 +241,9 @@ qua, nên thêm người vào file rồi khởi động lại chỉ tạo ngư�
 }
 ```
 
+- `profile` (tùy chọn, từng trường cũng tùy chọn): giới tính (`MALE`, `FEMALE`, `OTHER`,
+  `UNDISCLOSED`), ngày sinh và học vấn (`highestEducationLevel` là `HIGH_SCHOOL`, `COLLEGE`, `BACHELOR`,
+  `MASTER`, `DOCTORATE`), để hồ sơ và báo cáo cơ cấu học vấn có dữ liệu. Owner được seed sẵn Thạc sĩ.
 - `roles`: mã role → scope (`SELF`, `COMPANY`, `ORG_UNIT`, `LOCATION`), hiệu lực từ ngày vào làm.
   `ORG_UNIT`/`LOCATION` lấy đơn vị/địa điểm của phân công hiện hành.
 - `assignments`: các giai đoạn phân công chính, **từ cũ đến mới**. Mỗi giai đoạn bắt đầu `monthsAgo`
