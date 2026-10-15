@@ -30,6 +30,8 @@ export interface AccountFilters {
   keyword: string
   status: "" | Account["status"]
   roleCode: string
+  /** Shows the soft-deleted accounts instead of the others. */
+  deleted: boolean
 }
 
 export function listAccounts(portal: Portal, page: number, filters: AccountFilters, sort: string): Promise<AccountPage> {
@@ -37,6 +39,7 @@ export function listAccounts(portal: Portal, page: number, filters: AccountFilte
   if (filters.keyword.trim()) params.set("keyword", filters.keyword.trim())
   if (filters.status) params.set("status", filters.status)
   if (filters.roleCode) params.set("roleCode", filters.roleCode)
+  if (filters.deleted) params.set("deleted", "true")
   return authorizedRequest<AccountPage>(portal, `/accounts?${params}`, { cache: "no-store" })
 }
 
@@ -51,6 +54,16 @@ export function issueAccountInvitation(
 
 export function changeAccountStatus(portal: Portal, accountId: number, action: "suspend" | "activate"): Promise<Account> {
   return authorizedRequest<Account>(portal, `/accounts/${accountId}/${action}`, { method: "POST", cache: "no-store" })
+}
+
+/** Soft-deletes an account for good; the reason is kept with it. */
+export function deleteAccount(portal: Portal, accountId: number, reason: string): Promise<Account> {
+  return authorizedRequest<Account>(portal, `/accounts/${accountId}/delete`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+    cache: "no-store",
+  })
 }
 
 /** Today's permissions of the account, each with the role assignments that give it. */

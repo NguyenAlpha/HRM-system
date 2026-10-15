@@ -19,7 +19,7 @@ import { holdsRevocableRole } from "@/components/account/account-access"
 import {
   ACCOUNT_ACTIONS,
   ACCOUNT_STATUS_LABELS,
-  ACCOUNT_STATUS_VARIANTS,
+  AccountStatusBadge,
   AccountActionDialog,
   availableAccountActions,
   formatDateTime,
@@ -29,7 +29,6 @@ import {
 } from "@/components/account/account-actions"
 import { AccountDetailDialog } from "@/components/account/account-detail-dialog"
 import { RevokeRoleDialog } from "@/components/account/revoke-role-dialog"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -41,7 +40,8 @@ import type { Page } from "@/lib/pagination"
 import { rbacRequest, type Role } from "@/lib/rbac"
 import type { Portal } from "@/lib/auth/types"
 
-const EMPTY_FILTERS: AccountFilters = { keyword: "", status: "", roleCode: "" }
+const EMPTY_FILTERS: AccountFilters = { keyword: "", status: "", roleCode: "", deleted: false }
+const DELETED_OPTION = "DELETED"
 
 export function AccountManager({ portal, viewer, onSessionExpired }: {
   portal: Portal
@@ -74,7 +74,7 @@ export function AccountManager({ portal, viewer, onSessionExpired }: {
     return () => { active = false }
   }, [portal])
 
-  const requestKey = JSON.stringify([page, revision, keyword, filters.status, filters.roleCode, sortParam(sort)])
+  const requestKey = JSON.stringify([page, revision, keyword, filters.status, filters.roleCode, filters.deleted, sortParam(sort)])
   // Each response records the request it answered, so picking the value already selected or typing
   // back to the same keyword cannot leave the table loading; a keyword still settling counts too.
   const loading = loadedQuery !== requestKey || keyword !== filters.keyword
@@ -82,7 +82,7 @@ export function AccountManager({ portal, viewer, onSessionExpired }: {
   useEffect(() => {
     let active = true
     // The keyword goes through its debounced copy so typing does not fire a request per key.
-    listAccounts(portal, page, { keyword, status: filters.status, roleCode: filters.roleCode }, sortParam(sort))
+    listAccounts(portal, page, { keyword, status: filters.status, roleCode: filters.roleCode, deleted: filters.deleted }, sortParam(sort))
       .then((result) => {
         if (!active) return
         if (page > 0 && page >= result.totalPages) {
@@ -99,7 +99,7 @@ export function AccountManager({ portal, viewer, onSessionExpired }: {
         setLoadedQuery(requestKey)
       })
     return () => { active = false }
-  }, [portal, page, revision, keyword, filters.status, filters.roleCode, sort, requestKey, onSessionExpired])
+  }, [portal, page, revision, keyword, filters.status, filters.roleCode, filters.deleted, sort, requestKey, onSessionExpired])
 
   function changeFilters(next: Partial<AccountFilters>) {
     setPage(0)
@@ -144,7 +144,7 @@ export function AccountManager({ portal, viewer, onSessionExpired }: {
             keyword={filters.keyword}
             onKeywordChange={(value) => changeFilters({ keyword: value })}
             placeholder="Tìm theo tên đăng nhập, email, tên hoặc mã nhân viên"
-            activeFilters={(filters.status ? 1 : 0) + (filters.roleCode ? 1 : 0)}
+            activeFilters={(filters.status ? 1 : 0) + (filters.roleCode ? 1 : 0) + (filters.deleted ? 1 : 0)}
             onReset={() => changeFilters(EMPTY_FILTERS)}
           >
             <FilterSelect
@@ -153,6 +153,14 @@ export function AccountManager({ portal, viewer, onSessionExpired }: {
               value={filters.status || ALL_OPTION}
               onChange={(value) => changeFilters({ status: value === ALL_OPTION ? "" : value as Account["status"] })}
               options={Object.entries(ACCOUNT_STATUS_LABELS).map(([value, label]) => ({ value, label }))}
+            />
+            <FilterSelect
+              id="account-deleted-filter"
+              label="Hiển thị"
+              value={filters.deleted ? DELETED_OPTION : ALL_OPTION}
+              allLabel="Tài khoản chưa xóa"
+              onChange={(value) => changeFilters({ deleted: value === DELETED_OPTION })}
+              options={[{ value: DELETED_OPTION, label: "Tài khoản đã xóa" }]}
             />
             {roleOptions.length > 0 && (
               <FilterSelect
@@ -189,7 +197,7 @@ export function AccountManager({ portal, viewer, onSessionExpired }: {
                 {!loading && data?.content.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                      {filters.keyword || filters.status || filters.roleCode ? "Không có tài khoản phù hợp với bộ lọc." : "Chưa có tài khoản nào."}
+                      {filters.keyword || filters.status || filters.roleCode || filters.deleted ? "Không có tài khoản phù hợp với bộ lọc." : "Chưa có tài khoản nào."}
                     </TableCell>
                   </TableRow>
                 )}
@@ -212,7 +220,12 @@ export function AccountManager({ portal, viewer, onSessionExpired }: {
                         )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={ACCOUNT_STATUS_VARIANTS[account.status]}>{ACCOUNT_STATUS_LABELS[account.status]}</Badge>
+                      <AccountStatusBadge account={account} />
+                      {account.deletedAt && (
+                        <span className="mt-1 block max-w-56 truncate text-xs text-muted-foreground" title={account.deletionReason ?? undefined}>
+                          {formatDateTime(account.deletedAt)} · {account.deletionReason}
+                        </span>
+                      )}
                       {account.lockedUntil && (
                         <span className="mt-1 block text-xs text-muted-foreground">Khóa đến {formatDateTime(account.lockedUntil)}</span>
                       )}
