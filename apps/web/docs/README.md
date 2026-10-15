@@ -31,7 +31,7 @@ Menu chia nhóm Nhân sự, Chấm công & nghỉ, Lương, Báo cáo, Hệ th�
 | `/dashboard` | Tổng quan theo quyền: chấm công hôm nay, phép còn lại, đơn đang mở, lương gần nhất; việc chờ mình duyệt; kỳ lương gần nhất; quân số, nhân viên mới, người đang thử việc |
 | `/profile` | Hồ sơ của tôi (`GET /api/employees/me`), tự sửa liên hệ và học vấn qua popup (`PUT /api/employees/me/profile`), vai trò đang có và đổi mật khẩu |
 | `/employees`, `/employees/{employeeId}` | Hồ sơ, dữ liệu nhạy cảm, phân công, vòng đời nhân viên (nghỉ việc, xóa mềm hồ sơ tạo nhầm) và thẻ Lương & bảo hiểm (lương cơ bản, hồ sơ bảo hiểm/thuế, người phụ thuộc, phiếu lương) |
-| `/accounts` | Danh sách tài khoản; gửi lại lời mời, đặt lại mật khẩu, vô hiệu hóa và kích hoạt lại |
+| `/accounts` | Danh sách tài khoản; gửi lại lời mời, đặt lại mật khẩu, vô hiệu hóa, kích hoạt lại và xóa mềm (kèm lý do); bộ lọc "Tài khoản đã xóa" |
 | `/organization` | Đơn vị tổ chức, địa điểm, vị trí, ca làm và ngày lễ công ty theo năm (thêm bằng popup, xóa qua menu "…") |
 | `/attendance` | Bảng công tổng hợp (`attendance.read`): lưới nhân viên × ngày có ký hiệu X/M/P/V/L…, cột tổng công, muộn, nghỉ, vắng, tăng ca, cần xử lý; lọc theo tên/mã và đơn vị; bấm một dòng để xem lịch công, nhập giờ vào/ra, ghi vắng, của người đó. Bảng công của tôi cho mọi nhân viên. Tab Tăng ca chờ duyệt hiện khi có ngày mình là người duyệt (theo tuyến quản lý, không theo permission); `?tab=overtime` mở thẳng tab này |
 | `/leave-requests` | Tab Đơn của tôi (phép năm còn lại, đơn của mình), Chờ tôi duyệt (đơn mình là người duyệt), Tất cả đơn (`request.read`: tìm, lọc trạng thái/loại/đơn vị/tháng, phân trang). `?tab=approvals` mở thẳng tab Chờ tôi duyệt. Tạo đơn bằng popup, chọn nhanh cả ngày/sáng/chiều, lưu nháp hoặc gửi duyệt ngay; HR tạo hộ theo mã nhân viên |
@@ -56,7 +56,7 @@ Mọi bảng báo cáo có nút **Xuất CSV** (UTF-8 có BOM, mở thẳng bằ
 |:------|:---------|
 | `/admin` | Tổng quan quản trị hệ thống |
 | `/admin/employees`, `/admin/employees/{employeeId}` | Xem danh sách, hồ sơ nhân viên và cấp tài khoản (chỉ đọc hồ sơ) |
-| `/admin/accounts` | Danh sách tài khoản; gửi lại lời mời, reset mật khẩu, vô hiệu hóa và kích hoạt lại (trừ tài khoản Company Owner) |
+| `/admin/accounts` | Danh sách tài khoản; gửi lại lời mời, reset mật khẩu, vô hiệu hóa, kích hoạt lại và xóa mềm (trừ tài khoản Company Owner) |
 | `/admin/company-owner` | Khởi tạo Company Owner đầu tiên |
 | `/admin/organization` | Dữ liệu tổ chức phục vụ bootstrap |
 | `/admin/rbac` | CRUD custom role, xem permission và đồng bộ quyền |

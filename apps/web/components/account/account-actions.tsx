@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Ban, Check, CircleCheck, Copy, KeyRound, Link2, Loader2, MailPlus } from "lucide-react"
+import { Ban, Check, CircleCheck, Copy, KeyRound, Link2, Loader2, MailPlus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -14,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -23,8 +24,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
-import { changeAccountStatus, issueAccountInvitation, type Account, type AccountInvitation } from "@/lib/account"
+import { changeAccountStatus, deleteAccount, issueAccountInvitation, type Account, type AccountInvitation } from "@/lib/account"
 import type { AccountSummary, Portal } from "@/lib/auth/types"
 
 export const ACCOUNT_STATUS_LABELS: Record<Account["status"], string> = {
@@ -41,7 +44,13 @@ export const ACCOUNT_STATUS_VARIANTS: Record<Account["status"], "default" | "sec
   DISABLED: "outline",
 }
 
-export type AccountActionKind = "invitations/resend" | "password-reset" | "suspend" | "activate"
+/** The status badge, or "Đã xóa" for a soft-deleted account (which is always DISABLED). */
+export function AccountStatusBadge({ account }: { account: Account }) {
+  if (account.deletedAt) return <Badge variant="destructive">Đã xóa</Badge>
+  return <Badge variant={ACCOUNT_STATUS_VARIANTS[account.status]}>{ACCOUNT_STATUS_LABELS[account.status]}</Badge>
+}
+
+export type AccountActionKind = "invitations/resend" | "password-reset" | "suspend" | "activate" | "delete"
 
 export const ACCOUNT_ACTIONS: Record<AccountActionKind, {
   label: string
@@ -78,6 +87,13 @@ export const ACCOUNT_ACTIONS: Record<AccountActionKind, {
     destructive: false,
     icon: CircleCheck,
   },
+  delete: {
+    label: "Xóa tài khoản",
+    title: "Xóa tài khoản?",
+    description: "Tài khoản bị vô hiệu hóa vĩnh viễn, không kích hoạt lại được; các role nghiệp vụ bị thu hồi. Lịch sử thao tác vẫn được giữ, tên đăng nhập và email không dùng lại được. Nhân viên có thể được cấp tài khoản mới.",
+    destructive: true,
+    icon: Trash2,
+  },
 }
 
 // Only a holder of the same role may change these accounts; the API's account guard enforces it.
@@ -112,12 +128,14 @@ export function isGuardedAccount(account: Account, viewer: AccountViewer) {
 export function availableAccountActions(account: Account, viewer: AccountViewer): AccountActionKind[] {
   const self = account.id === viewer.accountId
   const actions: AccountActionKind[] = []
+  if (account.deletedAt) return actions
   // Reactivating stays allowed on a protected account, so only the other actions are dropped.
   const guarded = isGuardedAccount(account, viewer)
   if (viewer.canManageActivation && !guarded && account.status === "PENDING") actions.push("invitations/resend")
   if (viewer.canManageActivation && !guarded && !self && (account.status === "ACTIVE" || account.status === "LOCKED")) actions.push("password-reset")
   if (viewer.canManage && (account.status === "DISABLED" || account.status === "LOCKED")) actions.push("activate")
   if (viewer.canManage && !guarded && !self && (account.status === "ACTIVE" || account.status === "LOCKED")) actions.push("suspend")
+  if (viewer.canManage && !guarded && !self) actions.push("delete")
   return actions
 }
 
@@ -136,12 +154,17 @@ export function AccountActionDialog({ portal, account, kind, onClose, onDone, on
 }) {
   const [running, setRunning] = useState(false)
   const [invitation, setInvitation] = useState<AccountInvitation | null>(null)
+  const [reason, setReason] = useState("")
   const action = ACCOUNT_ACTIONS[kind]
 
   async function confirm() {
     setRunning(true)
     try {
-      if (kind === "invitations/resend" || kind === "password-reset") {
+      if (kind === "delete") {
+        await deleteAccount(portal, account.id, reason.trim())
+        toast.success(`Đã xóa tài khoản ${account.username}`)
+        onClose()
+      } else if (kind === "invitations/resend" || kind === "password-reset") {
         setInvitation(await issueAccountInvitation(portal, account.id, kind))
       } else {
         await changeAccountStatus(portal, account.id, kind)
@@ -168,11 +191,18 @@ export function AccountActionDialog({ portal, account, kind, onClose, onDone, on
             Tài khoản <strong>{account.username}</strong>. {action.description}
           </AlertDialogDescription>
         </AlertDialogHeader>
+        {kind === "delete" && (
+          <div className="grid gap-1.5">
+            <Label htmlFor="account-delete-reason">Lý do xóa</Label>
+            <Textarea id="account-delete-reason" maxLength={500} value={reason} disabled={running}
+              placeholder="Ví dụ: tạo nhầm, gõ sai email" onChange={(event) => setReason(event.target.value)} />
+          </div>
+        )}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={running}>Hủy</AlertDialogCancel>
           <AlertDialogAction
             className={action.destructive ? "bg-destructive text-white hover:bg-destructive/90" : undefined}
-            disabled={running}
+            disabled={running || (kind === "delete" && !reason.trim())}
             onClick={(event) => { event.preventDefault(); void confirm() }}
           >
             {running && <Loader2 className="animate-spin" />}

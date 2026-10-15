@@ -15,8 +15,7 @@ import {
 } from "@/components/account/account-access"
 import {
   ACCOUNT_ACTIONS,
-  ACCOUNT_STATUS_LABELS,
-  ACCOUNT_STATUS_VARIANTS,
+  AccountStatusBadge,
   AccountActionDialog,
   accountViewer,
   availableAccountActions,
@@ -121,7 +120,7 @@ export function AccountDetailPage({ accountId: rawAccountId }: { accountId: stri
             {account && (
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <span className="text-sm text-muted-foreground">{account.email}</span>
-                <Badge variant={ACCOUNT_STATUS_VARIANTS[account.status]}>{ACCOUNT_STATUS_LABELS[account.status]}</Badge>
+                <AccountStatusBadge account={account} />
                 {account.id === viewer.accountId && <span className="text-xs text-muted-foreground">(bạn)</span>}
               </div>
             )}
@@ -198,6 +197,12 @@ export function AccountDetailPage({ accountId: rawAccountId }: { accountId: stri
                   {account.lockedUntil && <InfoField label="Khóa đến">{formatDateTime(account.lockedUntil)}</InfoField>}
                   <InfoField label="Ngày tạo">{formatDateTime(account.createdAt)}</InfoField>
                   <InfoField label="Cập nhật gần nhất">{formatDateTime(account.updatedAt)}</InfoField>
+                  {account.deletedAt && (
+                    <>
+                      <InfoField label="Đã xóa lúc">{formatDateTime(account.deletedAt)}</InfoField>
+                      <InfoField label="Lý do xóa">{account.deletionReason}</InfoField>
+                    </>
+                  )}
                 </dl>
               </CardContent>
             </Card>

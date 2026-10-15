@@ -622,6 +622,7 @@ export async function handleAccountLifecycleRequest(
     { pattern: /^[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^[1-9]\d*\/permissions$/, methods: ["GET"] },
     { pattern: /^[1-9]\d*\/(?:invitations\/resend|password-reset|suspend|activate)$/, methods: ["POST"] },
+    { pattern: /^[1-9]\d*\/delete$/, methods: ["POST"] },
   ]
   const route = routes.find((candidate) => candidate.pattern.test(path))
   if (!route) return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
@@ -637,11 +638,23 @@ export async function handleAccountLifecycleRequest(
 
   const query = new URLSearchParams()
   new URL(request.url).searchParams.forEach((value, key) => {
-    if (["page", "size", "sort", "keyword", "status", "roleCode"].includes(key)) query.append(key, value)
+    if (["page", "size", "sort", "keyword", "status", "roleCode", "deleted"].includes(key)) query.append(key, value)
   })
+  // Only deleting carries a body: the reason.
+  let body: string | undefined
+  if (path.endsWith("/delete")) {
+    try {
+      body = JSON.stringify(await request.json())
+    } catch {
+      return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
+    }
+  }
   const result = await callApi<unknown>(`/api/accounts${path ? `/${path}` : ""}${query.size ? `?${query}` : ""}`, {
     method: request.method,
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: body
+      ? { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }
+      : { Authorization: `Bearer ${accessToken}` },
+    body,
   })
   if (!result) return gatewayFailure()
 
