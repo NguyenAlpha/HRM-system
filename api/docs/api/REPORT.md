@@ -67,6 +67,28 @@ Người nghỉ việc ngày *d* không còn tính vào quân số cuối ngày 
 cuối cùng của từng người trong kỳ, vì phân công của người đã nghỉ đã đóng; nhờ vậy người rời đơn vị vẫn
 được đếm. Hồ sơ xóa mềm (tạo nhầm) không được tính.
 
+## Tình hình nhân sự theo tháng
+
+```http
+GET /api/reports/hr/monthly-status?year=2026&month=10
+Authorization: Bearer <access-token>
+```
+
+Yêu cầu `report.hr.read`. `year` (2000–9999) và `month` (1–12) bắt buộc, tháng không được ở tương lai.
+Response gồm:
+
+- `headcountStart`, `hires`, `terminations`, `headcountEnd`: như biến động nhân sự, cho một tháng.
+- `employeesOnLeave`, `leaveDays`: số người có nghỉ theo đơn đã duyệt và tổng ngày nghỉ.
+- `absentDays`: tổng ngày vắng không phép.
+- `rows`: từng người làm ít nhất một ngày trong tháng (sắp theo mã nhân viên), gồm đơn vị và chức danh
+  tại ngày cuối cùng họ làm trong tháng, `status` là `NEW_HIRE` (vào làm trong tháng), `TERMINATED`
+  (nghỉ việc trong tháng, kèm `terminationDate` và `endStatus`) hoặc `ACTIVE`; số ngày nghỉ theo loại
+  (`annualLeaveDays`, `sickLeaveDays`, `maternityLeaveDays`, `unpaidLeaveDays`, `otherLeaveDays`), tổng
+  `leaveDays` và `absentDays`.
+
+Ngày nghỉ lấy từ bảng công: phút nghỉ của đơn đã duyệt chia số phút của ca, nên nửa ngày là 0,5. Tháng
+hiện tại tính cả đơn đã duyệt cho những ngày sắp tới. Phạm vi được xét như biến động nhân sự.
+
 ## Phép năm
 
 ```http

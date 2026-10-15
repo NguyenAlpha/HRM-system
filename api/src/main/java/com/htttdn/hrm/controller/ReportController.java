@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.report.HrWorkforceReportResponse;
+import com.htttdn.hrm.dto.response.report.MonthlyHrStatusReportResponse;
 import com.htttdn.hrm.dto.response.report.PayrollSalaryReportResponse;
 import com.htttdn.hrm.dto.response.report.PayrollSummaryReportResponse;
 import com.htttdn.hrm.dto.response.report.TurnoverReportResponse;
@@ -60,6 +61,15 @@ public class ReportController {
     @PreAuthorize("hasAuthority('report.hr.read')")
     public ApiResult<TurnoverReportResponse> turnover(@RequestParam @Min(2000) @Max(9999) int year) {
         return ApiResult.ok(reportService.getTurnoverReport(year));
+    }
+
+    @GetMapping("/hr/monthly-status")
+    @PreAuthorize("hasAuthority('report.hr.read')")
+    public ApiResult<MonthlyHrStatusReportResponse> monthlyStatus(
+        @RequestParam @Min(2000) @Max(9999) int year,
+        @RequestParam @Min(1) @Max(12) int month
+    ) {
+        return ApiResult.ok(reportService.getMonthlyStatusReport(year, month));
     }
 
     @GetMapping("/hr/leave-balances")

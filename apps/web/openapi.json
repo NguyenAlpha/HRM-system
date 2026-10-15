@@ -3136,6 +3136,45 @@
         "tags" : [ "report-controller" ]
       }
     },
+    "/api/reports/hr/monthly-status" : {
+      "get" : {
+        "operationId" : "monthlyStatus",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "year",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 9999,
+            "minimum" : 2000
+          }
+        }, {
+          "in" : "query",
+          "name" : "month",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 12,
+            "minimum" : 1
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultMonthlyHrStatusReportResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "report-controller" ]
+      }
+    },
     "/api/reports/hr/turnover" : {
       "get" : {
         "operationId" : "turnover",
@@ -5762,6 +5801,29 @@
         },
         "required" : [ "data", "error", "success" ]
       },
+      "ApiResultMonthlyHrStatusReportResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/MonthlyHrStatusReportResponse"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
       "ApiResultOrganizationCompanyOwnerProvisioningResponse" : {
         "type" : "object",
         "properties" : {
@@ -7899,6 +7961,53 @@
         },
         "required" : [ "refreshToken" ]
       },
+      "MonthlyHrStatusReportResponse" : {
+        "type" : "object",
+        "properties" : {
+          "absentDays" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "employeesOnLeave" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "headcountEnd" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "headcountStart" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "hires" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "leaveDays" : {
+            "type" : "number"
+          },
+          "month" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "rows" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Row"
+            }
+          },
+          "terminations" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "year" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "absentDays", "employeesOnLeave", "headcountEnd", "headcountStart", "hires", "leaveDays", "month", "rows", "terminations", "year" ]
+      },
       "OrganizationCompanyOwnerProvisioningResponse" : {
         "type" : "object",
         "properties" : {
@@ -9291,6 +9400,65 @@
           }
         },
         "required" : [ "code", "description", "grantPolicy", "id", "isSystem", "name", "permissions" ]
+      },
+      "Row" : {
+        "type" : "object",
+        "properties" : {
+          "absentDays" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "annualLeaveDays" : {
+            "type" : "number"
+          },
+          "employeeCode" : {
+            "type" : "string"
+          },
+          "employeeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "endStatus" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "PROBATION", "ACTIVE", "RESIGNED", "TERMINATED", "RETIRED", null ]
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "hireDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "leaveDays" : {
+            "type" : "number"
+          },
+          "maternityLeaveDays" : {
+            "type" : "number"
+          },
+          "organizationUnitName" : {
+            "type" : [ "string", "null" ]
+          },
+          "otherLeaveDays" : {
+            "type" : "number"
+          },
+          "positionTitle" : {
+            "type" : [ "string", "null" ]
+          },
+          "sickLeaveDays" : {
+            "type" : "number"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "terminationDate" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          },
+          "unpaidLeaveDays" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "absentDays", "annualLeaveDays", "employeeCode", "employeeId", "endStatus", "fullName", "hireDate", "leaveDays", "maternityLeaveDays", "organizationUnitName", "otherLeaveDays", "positionTitle", "sickLeaveDays", "status", "terminationDate", "unpaidLeaveDays" ]
       },
       "SalaryHistoryView" : {
         "type" : "object",

@@ -16,6 +16,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htttdn.hrm.dto.response.report.MonthlyHrStatusReportResponse;
 import com.htttdn.hrm.dto.response.report.TurnoverReportResponse;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -37,6 +38,8 @@ class HrReportIntegrationTest {
     private Long locationId;
     private Long positionId;
     private Long creatorAccountId;
+    private Long stayingId;
+    private Long leavingId;
 
     @BeforeEach
     void seed() {
@@ -52,8 +55,8 @@ class HrReportIntegrationTest {
             "to_creator_" + suffix, "to_creator_" + suffix + "@hrm.local");
 
         employee(unitId, "2024-01-01", "2025-02-28", "RESIGNED");
-        employee(unitId, "2025-01-01", null, "ACTIVE");
-        employee(unitId, "2025-03-10", "2025-06-15", "TERMINATED");
+        stayingId = employee(unitId, "2025-01-01", null, "ACTIVE");
+        leavingId = employee(unitId, "2025-03-10", "2025-06-15", "TERMINATED");
         employee(otherUnitId, "2025-05-01", "2025-07-01", "RESIGNED");
 
         Long readerAccountId = id("INSERT INTO accounts(username, email, password_hash, status) VALUES (?, ?, 'x', 'ACTIVE') RETURNING id",
@@ -108,7 +111,66 @@ class HrReportIntegrationTest {
         assertEquals(0, leaveEntitlementService.balancesForReport(2023, null, null).size());
     }
 
-    private void employee(Long unit, String hired, String ended, String status) {
+    @Test
+    void theMonthlyStatusListsEachPersonWithTheirLeaveAndAbsences() {
+        Long shiftId = id("""
+            INSERT INTO work_shifts(code, name, start_time, end_time, break_minutes, break_start_time, standard_work_minutes)
+            VALUES (?, 'Ca hành chính', '08:00', '17:00', 60, '12:00', 480) RETURNING id
+            """, "TOS_" + UUID.randomUUID().toString().substring(0, 8));
+        Long annualId = leave(stayingId, "ANNUAL", "2025-06-02 08:00+07", "2025-06-03 12:00+07", 720);
+        attendance(stayingId, shiftId, "2025-06-02", annualId, 480, "PAID_LEAVE");
+        attendance(stayingId, shiftId, "2025-06-03", annualId, 240, "PRESENT");
+        Long sickId = leave(stayingId, "SICK", "2025-06-10 08:00+07", "2025-06-10 17:00+07", 480);
+        attendance(stayingId, shiftId, "2025-06-10", sickId, 480, "SICK_LEAVE");
+        attendance(leavingId, shiftId, "2025-06-04", null, 0, "UNAUTHORIZED_ABSENCE");
+
+        MonthlyHrStatusReportResponse report = reportService.getMonthlyStatusReport(2025, 6);
+
+        assertEquals(2, report.headcountStart());
+        assertEquals(0, report.hires());
+        assertEquals(1, report.terminations());
+        assertEquals(1, report.headcountEnd());
+        assertEquals(1, report.employeesOnLeave());
+        assertEquals(new BigDecimal("2.50"), report.leaveDays());
+        assertEquals(1, report.absentDays());
+        // The other unit's employee and the one who left in February are not listed.
+        assertEquals(List.of(stayingId, leavingId), report.rows().stream()
+            .sorted(java.util.Comparator.comparing(MonthlyHrStatusReportResponse.Row::employeeId))
+            .map(MonthlyHrStatusReportResponse.Row::employeeId).toList());
+        MonthlyHrStatusReportResponse.Row staying = row(report, stayingId);
+        assertEquals("ACTIVE", staying.status());
+        assertEquals("Turnover unit", staying.organizationUnitName());
+        assertEquals(new BigDecimal("1.50"), staying.annualLeaveDays());
+        assertEquals(new BigDecimal("1.00"), staying.sickLeaveDays());
+        MonthlyHrStatusReportResponse.Row leaving = row(report, leavingId);
+        assertEquals("TERMINATED", leaving.status());
+        assertEquals("Turnover unit", leaving.organizationUnitName());
+        assertEquals(1, leaving.absentDays());
+
+        assertEquals("NEW_HIRE", row(reportService.getMonthlyStatusReport(2025, 3), leavingId).status());
+    }
+
+    private static MonthlyHrStatusReportResponse.Row row(MonthlyHrStatusReportResponse report, Long employeeId) {
+        return report.rows().stream().filter(row -> row.employeeId().equals(employeeId)).findFirst().orElseThrow();
+    }
+
+    private Long leave(Long employeeId, String type, String start, String end, int minutes) {
+        return id("""
+            INSERT INTO leave_requests(employee_id, leave_type, salary_treatment, start_at, end_at, requested_minutes, reason, status)
+            VALUES (?, ?, 'EMPLOYER_PAID', ?::timestamptz, ?::timestamptz, ?, 'Nghỉ', 'APPROVED') RETURNING id
+            """, employeeId, type, start, end, minutes);
+    }
+
+    private void attendance(Long employeeId, Long shiftId, String date, Long leaveRequestId, int leaveMinutes, String status) {
+        jdbc.update("""
+            INSERT INTO attendance_records(employee_id, work_date, shift_id, leave_request_id, scheduled_start_at,
+                scheduled_end_at, scheduled_minutes, leave_minutes, status)
+            VALUES (?, ?::date, ?, ?, (?::date + time '08:00') AT TIME ZONE 'Asia/Ho_Chi_Minh',
+                (?::date + time '17:00') AT TIME ZONE 'Asia/Ho_Chi_Minh', 480, ?, ?)
+            """, employeeId, date, shiftId, leaveRequestId, date, date, leaveMinutes, status);
+    }
+
+    private Long employee(Long unit, String hired, String ended, String status) {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         Long employeeId = id("""
             INSERT INTO employees(employee_code, full_name, hire_date, seniority_start_date, employment_status, termination_date)
@@ -119,6 +181,7 @@ class HrReportIntegrationTest {
                 employment_type, effective_from, effective_to, created_by_account_id)
             VALUES (?, ?, ?, ?, 'FULL_TIME', ?::date, ?::date, ?)
             """, employeeId, unit, locationId, positionId, hired, ended, creatorAccountId);
+        return employeeId;
     }
 
     private Long id(String sql, Object... args) {

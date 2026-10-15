@@ -1204,6 +1204,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reports/hr/monthly-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["monthlyStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reports/hr/turnover": {
         parameters: {
             query?: never;
@@ -2032,6 +2048,11 @@ export interface components {
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
+        ApiResultMonthlyHrStatusReportResponse: {
+            data: components["schemas"]["MonthlyHrStatusReportResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
         ApiResultOrganizationCompanyOwnerProvisioningResponse: {
             data: components["schemas"]["OrganizationCompanyOwnerProvisioningResponse"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
@@ -2719,6 +2740,26 @@ export interface components {
         LogoutRequest: {
             refreshToken: string;
         };
+        MonthlyHrStatusReportResponse: {
+            /** Format: int64 */
+            absentDays: number;
+            /** Format: int64 */
+            employeesOnLeave: number;
+            /** Format: int64 */
+            headcountEnd: number;
+            /** Format: int64 */
+            headcountStart: number;
+            /** Format: int64 */
+            hires: number;
+            leaveDays: number;
+            /** Format: int32 */
+            month: number;
+            rows: components["schemas"]["Row"][];
+            /** Format: int64 */
+            terminations: number;
+            /** Format: int32 */
+            year: number;
+        };
         OrganizationCompanyOwnerProvisioningResponse: {
             accountProvisioning: components["schemas"]["AccountProvisioningResponse"];
             companyOwnerRoleAssignment: components["schemas"]["AccountRoleAssignmentResponse"];
@@ -3256,6 +3297,29 @@ export interface components {
             isSystem: boolean;
             name: string;
             permissions: components["schemas"]["PermissionResponse"][];
+        };
+        Row: {
+            /** Format: int64 */
+            absentDays: number;
+            annualLeaveDays: number;
+            employeeCode: string;
+            /** Format: int64 */
+            employeeId: number;
+            /** @enum {string|null} */
+            endStatus: "PROBATION" | "ACTIVE" | "RESIGNED" | "TERMINATED" | "RETIRED" | null;
+            fullName: string;
+            /** Format: date */
+            hireDate: string;
+            leaveDays: number;
+            maternityLeaveDays: number;
+            organizationUnitName: string | null;
+            otherLeaveDays: number;
+            positionTitle: string | null;
+            sickLeaveDays: number;
+            status: string;
+            /** Format: date */
+            terminationDate: string | null;
+            unpaidLeaveDays: number;
         };
         SalaryHistoryView: {
             /** Format: int64 */
@@ -5844,6 +5908,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultListEmployeeBalanceView"];
+                };
+            };
+        };
+    };
+    monthlyStatus: {
+        parameters: {
+            query: {
+                year: number;
+                month: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultMonthlyHrStatusReportResponse"];
                 };
             };
         };
