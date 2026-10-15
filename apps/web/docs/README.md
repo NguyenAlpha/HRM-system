@@ -42,6 +42,7 @@ Menu chia nhóm Nhân sự, Chấm công & nghỉ, Lương, Báo cáo, Hệ th�
 | `/reports/workforce` | Cơ cấu nhân sự: trình độ, thâm niên và phân bố lương cơ bản |
 | `/resignations` | Đơn nghỉ việc: tab Đơn của tôi (nộp đơn bằng popup, ngày làm việc cuối và lý do; rút đơn chờ duyệt), Chờ tôi duyệt (duyệt có thể đổi ngày làm việc cuối, từ chối bắt buộc lý do), Tất cả đơn (`request.read`: tìm, lọc trạng thái/đơn vị, phân trang). `?tab=approvals` mở thẳng tab Chờ tôi duyệt |
 | `/reports/turnover` | Biến động nhân sự theo năm (`report.hr.read`): quân số đầu/cuối, vào làm, nghỉ việc, tỷ lệ nghỉ việc theo tháng, biểu đồ quân số và danh sách vào/nghỉ |
+| `/reports/monthly` | Tình hình nhân sự theo tháng (`report.hr.read`): quân số đầu/cuối, vào làm, nghỉ việc, và từng người với trạng thái, ngày nghỉ phép theo loại, vắng không phép; lọc và xuất CSV |
 | `/reports/attendance` | Tổng hợp chấm công tháng (`attendance.read`): công tính lương, muộn/sớm, nghỉ, vắng, tăng ca, thiếu chấm công của từng người; sắp xếp theo vấn đề |
 | `/reports/leave` | Phép năm (`report.hr.read`): được cấp, đã dùng, chờ duyệt, còn lại của từng người |
 | `/reports/payroll` | Quỹ lương, bảo hiểm người lao động và thuế TNCN theo tháng và theo đơn vị (`report.payroll.read`, scope COMPANY) |

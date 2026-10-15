@@ -101,6 +101,7 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
       group("Báo cáo", [
         [canReadReports, "Cơ cấu nhân sự", "/reports/workforce"],
         [canReadHrReports, "Biến động nhân sự", "/reports/turnover"],
+        [canReadHrReports, "Tình hình nhân sự tháng", "/reports/monthly"],
         [canReadAttendance, "Tổng hợp chấm công", "/reports/attendance"],
         [canReadHrReports, "Phép năm", "/reports/leave"],
         [canReadPayrollReports, "Quỹ lương & thuế", "/reports/payroll"],

@@ -24,7 +24,7 @@ Quy ước trạng thái:
 | Đơn nghỉ việc | Đủ | `/resignations` |
 | Chấm công | Đủ | `/attendance` |
 | Lương, bảo hiểm, thuế | Đủ | `/payroll`, `/payslips`, `/allowances`, thẻ lương trong `/employees/{id}` |
-| Báo cáo | Đủ | `/reports/workforce`, `/reports/turnover`, `/reports/attendance`, `/reports/leave`, `/reports/payroll` |
+| Báo cáo | Đủ | `/reports/workforce`, `/reports/turnover`, `/reports/monthly`, `/reports/attendance`, `/reports/leave`, `/reports/payroll` |
 
 Toàn hệ thống có 28 controller, 47 permission trên 8 module, 7 system role và 33 bảng database.
 

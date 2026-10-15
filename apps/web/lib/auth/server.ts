@@ -433,7 +433,7 @@ export async function handleWorkforceRequest(request: Request, segments: string[
     { pattern: /^compensation\/position-allowances$/, methods: ["GET"] },
     { pattern: /^compensation\/job-positions\/[1-9]\d*\/allowances$/, methods: ["GET", "POST"] },
     { pattern: /^compensation\/seniority-allowances$/, methods: ["GET", "POST"] },
-    { pattern: /^reports\/hr\/(?:turnover|leave-balances)$/, methods: ["GET"] },
+    { pattern: /^reports\/hr\/(?:turnover|monthly-status|leave-balances)$/, methods: ["GET"] },
     { pattern: /^reports\/payroll\/summary$/, methods: ["GET"] },
   ]
   const route = routes.find((candidate) => candidate.pattern.test(path))
