@@ -30,9 +30,9 @@ Quy trình một tháng:
 | `GET /api/attendance/{id}` | `attendance.self.read` (chính mình) hoặc `attendance.read` (trong scope) | Chi tiết một bản ghi công |
 | `GET /api/attendance/employees/{employeeId}` | `attendance.self.read` (chính mình) hoặc `attendance.read` (trong scope) | Bảng công của nhân viên trong khoảng ngày, có phân trang |
 | `GET /api/attendance/timesheet` | `attendance.read` (trong scope) | Bảng công tháng của mọi nhân viên trong scope |
-| `POST /api/leave-requests` | `request.self.create` (chính mình) hoặc `request.manage` (trong scope) | Tạo đơn nghỉ `DRAFT` |
-| `POST /api/leave-requests/{id}/submit` | `request.self.create` hoặc `request.manage` | Gửi đơn `DRAFT` → `PENDING` |
-| `POST /api/leave-requests/{id}/cancel` | `request.self.cancel` hoặc `request.manage` | Hủy đơn `DRAFT`/`PENDING` |
+| `POST /api/leave-requests` | `request.self.create` (chính mình) | Tạo đơn nghỉ `DRAFT` |
+| `POST /api/leave-requests/{id}/submit` | `request.self.create` (chủ đơn) | Gửi đơn `DRAFT` → `PENDING` |
+| `POST /api/leave-requests/{id}/cancel` | `request.self.cancel` (chủ đơn) | Hủy đơn `DRAFT`/`PENDING` |
 | `POST /api/leave-requests/{id}/approve` | [Người duyệt](#người-duyệt) đã chốt của đơn | Duyệt đơn `PENDING` và gắn vào bảng công |
 | `POST /api/leave-requests/{id}/reject` | [Người duyệt](#người-duyệt) đã chốt của đơn | Từ chối đơn `PENDING` |
 | `GET /api/leave-requests/{id}` | `request.self.read` (chính mình), người duyệt của đơn, hoặc `request.read` (trong scope) | Chi tiết đơn nghỉ |
@@ -57,7 +57,7 @@ Một người bị bỏ qua khi đó là chính nhân viên, đã nghỉ việc
 
 - **Đơn nghỉ**: người duyệt được chốt khi gửi đơn (`approverEmployeeId`). Đơn của người giữ `DIRECTOR` hoặc `COMPANY_OWNER` không cần duyệt: khi gửi, đơn chuyển thẳng sang `APPROVED` với ghi chú `Tự ghi nhận…` và được gắn vào bảng công như đơn đã duyệt.
 - **Tăng ca**: người duyệt được xác định lúc quyết định. Tăng ca của Giám đốc do Chủ sở hữu quyết định; Chủ sở hữu tự xác nhận tăng ca của mình.
-- **HR** (`request.read`, `request.manage`, `attendance.read`, `attendance.manage`) xem, nhập đơn thay, đối soát và tổng hợp, nhưng không duyệt.
+- **HR** (`request.read`, `request.manage`, `attendance.read`, `attendance.manage`) xem, đối soát và tổng hợp đơn, nhưng không tạo/gửi/hủy đơn thay nhân viên hoặc duyệt thay người được chốt.
 
 ---
 
@@ -451,7 +451,7 @@ Tạo đơn nghỉ ở trạng thái `DRAFT`.
 
 | Field | Type | Bắt buộc | Ràng buộc |
 |:------|:-----|:--------:|:----------|
-| `employeeId` | long | ✅ | Chính mình với `request.self.create`, hoặc trong scope với `request.manage` |
+| `employeeId` | long | ✅ | Phải là ID nhân viên gắn với account đang đăng nhập; mã nhân viên không nhập trong form |
 | `leaveType` | enum | ✅ | `ANNUAL`, `SICK`, `MATERNITY`, `UNPAID` hoặc `OTHER` |
 | `salaryTreatment` | enum | | `EMPLOYER_PAID`, `SOCIAL_INSURANCE` hoặc `UNPAID`; xem bên dưới |
 | `startAt` | instant | ✅ | |
@@ -498,7 +498,7 @@ Cách trả lương của đơn **do server suy ra từ loại nghỉ**, không 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Request sai, `endAt` không sau `startAt`, hoặc `salaryTreatment` khác giá trị suy ra mà không có `request.manage` |
-| 403 | `FORBIDDEN` | Không phải chính mình và không có `request.manage` trong scope |
+| 403 | `FORBIDDEN` | `employeeId` không thuộc account đang đăng nhập |
 | 404 | `EMPLOYEE_NOT_FOUND` | Nhân viên không tồn tại hoặc đã bị xóa mềm |
 
 ---
@@ -508,7 +508,8 @@ Cách trả lương của đơn **do server suy ra từ loại nghỉ**, không 
 - `submit` ghi `submittedAt`, chốt [người duyệt](#người-duyệt) vào `approverEmployeeId` và chuyển đơn `DRAFT` sang `PENDING`. Đơn của Giám đốc hoặc Chủ sở hữu chuyển thẳng sang `APPROVED` (tự ghi nhận, kiểm tra như khi duyệt). Không tìm được người duyệt trả `409 APPROVER_NOT_FOUND`.
 - `cancel` chuyển đơn `DRAFT` hoặc `PENDING` sang `CANCELLED`.
 
-Cả hai không có body và trả `LeaveRequestView`. Đơn ở trạng thái khác trả `409 REQUEST_ALREADY_PROCESSED`; đơn không tồn tại trả `404 REQUEST_NOT_FOUND`.
+Cả hai không có body và trả `LeaveRequestView`. Chỉ chủ đơn được gửi hoặc hủy; quyền `request.manage`
+không cho phép làm thay. Đơn ở trạng thái khác trả `409 REQUEST_ALREADY_PROCESSED`; đơn không tồn tại trả `404 REQUEST_NOT_FOUND`.
 
 ---
 

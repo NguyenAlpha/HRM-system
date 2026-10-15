@@ -235,6 +235,25 @@ class ApprovalChainIntegrationTest {
     }
 
     @Test
+    void hrCannotCreateSubmitOrCancelAnotherEmployeesLeave() {
+        authenticateAs(staff, EMPLOYEE);
+        Instant start = calendarService.scheduleFor(staff.employeeId(), LEAVE_DAY, LEAVE_DAY)
+            .getFirst().startAt();
+        LeaveRequestView draft = leaveRequestService.createDraft(new LeaveRequestService.CreateLeaveCommand(
+            staff.employeeId(), LeaveType.UNPAID, null, start, start.plusSeconds(4 * 3600),
+            240, "Personal leave", null));
+
+        authenticateAs(hr, "request.self.create", "request.self.cancel", "request.manage");
+        assertThrows(ForbiddenException.class, () -> leaveRequestService.createDraft(
+            new LeaveRequestService.CreateLeaveCommand(staff.employeeId(), LeaveType.UNPAID,
+                null, start, start.plusSeconds(4 * 3600), 240, "On behalf", null)));
+        assertThrows(ForbiddenException.class, () -> leaveRequestService.submit(draft.id()));
+        assertThrows(ForbiddenException.class, () -> leaveRequestService.cancel(draft.id()));
+        assertEquals("DRAFT", jdbc.queryForObject(
+            "SELECT status FROM leave_requests WHERE id = ?", String.class, draft.id()));
+    }
+
+    @Test
     void timesheetListsEveryEmployeeInTheReadersScopeWithTheirRecordsOfTheMonth() {
         Long staffDay = overtimeDay(staff);
         jdbc.update("""
