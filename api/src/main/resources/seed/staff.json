@@ -4,6 +4,7 @@
     "password": "password",
     "fullName": "Trần Thị Bình",
     "email": "hr@hrm.local",
+    "profile": { "gender": "FEMALE", "dateOfBirth": "1992-03-14", "highestEducationLevel": "BACHELOR", "major": "Quản trị nhân lực", "institution": "Trường Đại học Lao động - Xã hội", "graduationYear": 2014 },
     "roles": { "HR_MANAGER": "COMPANY", "EMPLOYEE": "SELF" },
     "assignments": [
       { "monthsAgo": 20, "organizationUnit": "HR", "position": "GENERAL_STAFF", "manager": "owner" },
@@ -35,6 +36,7 @@
     "password": "password",
     "fullName": "Lê Văn Cường",
     "email": "employee@hrm.local",
+    "profile": { "gender": "MALE", "dateOfBirth": "1998-09-02", "highestEducationLevel": "COLLEGE", "major": "Công nghệ kỹ thuật điện", "institution": "Trường Cao đẳng Kỹ thuật Cao Thắng", "graduationYear": 2019 },
     "roles": { "EMPLOYEE": "SELF" },
     "assignments": [
       { "monthsAgo": 10, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-01", "position": "GENERAL_STAFF", "manager": "owner" },
@@ -74,6 +76,7 @@
     "password": "password",
     "fullName": "Phạm Thu Hà",
     "email": "accountant@hrm.local",
+    "profile": { "gender": "FEMALE", "dateOfBirth": "1995-11-21", "highestEducationLevel": "BACHELOR", "major": "Kế toán", "institution": "Trường Đại học Kinh tế TP.HCM", "graduationYear": 2017 },
     "roles": { "PAYROLL_ACCOUNTANT": "COMPANY", "EMPLOYEE": "SELF" },
     "assignments": [
       { "monthsAgo": 14, "organizationUnit": "ACCOUNTING", "position": "PAYROLL_ACCOUNTANT", "manager": "owner" }

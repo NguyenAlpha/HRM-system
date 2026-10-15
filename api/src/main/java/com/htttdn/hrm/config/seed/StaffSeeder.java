@@ -33,8 +33,10 @@ import com.htttdn.hrm.entity.OrganizationUnit;
 import com.htttdn.hrm.entity.WorkLocation;
 import com.htttdn.hrm.entity.WorkShift;
 import com.htttdn.hrm.entity.enums.AccountStatus;
+import com.htttdn.hrm.entity.enums.EducationLevel;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.entity.enums.EmploymentType;
+import com.htttdn.hrm.entity.enums.Gender;
 import com.htttdn.hrm.entity.enums.LeaveRequestStatus;
 import com.htttdn.hrm.entity.enums.LeaveType;
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
@@ -96,6 +98,7 @@ public class StaffSeeder implements ApplicationRunner {
         String password,
         String fullName,
         String email,
+        ProfileEntry profile,
         Map<String, RoleScopeType> roles,
         List<AssignmentEntry> assignments,
         List<SalaryEntry> salaries,
@@ -153,6 +156,18 @@ public class StaffSeeder implements ApplicationRunner {
      * pays social, health and unemployment insurance on {@code insuranceSalary}; {@code wageRegion} is 1-4.
      */
     record PayrollProfileEntry(int monthsAgo, BigDecimal insuranceSalary, short wageRegion) {
+    }
+
+    /** Personal details and education, so the profile and the education report are not empty. All optional. */
+    record ProfileEntry(
+        Gender gender,
+        LocalDate dateOfBirth,
+        EducationLevel highestEducationLevel,
+        String major,
+        String institution,
+        Short graduationYear
+    ) {
+        static final ProfileEntry EMPTY = new ProfileEntry(null, null, null, null, null, null);
     }
 
     /** A dependent claimed for tax from {@code monthsAgo}, no earlier than the hire date. */
@@ -275,10 +290,17 @@ public class StaffSeeder implements ApplicationRunner {
         ResolvedAssignment current = assignments.getLast();
         LocalDate startDate = first.effectiveFrom();
         Instant createdAt = startOf(startDate);
+        ProfileEntry profile = entry.profile() != null ? entry.profile() : ProfileEntry.EMPTY;
 
         Employee employee = employeeRepository.save(Employee.builder()
             .employeeCode(employeeCodeGenerator.next())
             .fullName(entry.fullName())
+            .gender(profile.gender())
+            .dateOfBirth(profile.dateOfBirth())
+            .highestEducationLevel(profile.highestEducationLevel())
+            .major(profile.major())
+            .institution(profile.institution())
+            .graduationYear(profile.graduationYear())
             .workEmail(entry.email())
             .hireDate(startDate)
             .seniorityStartDate(startDate)

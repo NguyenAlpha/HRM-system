@@ -25,8 +25,10 @@ import com.htttdn.hrm.entity.EmployeeSalaryHistory;
 import com.htttdn.hrm.entity.EmployeeTaxDependent;
 import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.enums.AccountStatus;
+import com.htttdn.hrm.entity.enums.EducationLevel;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.entity.enums.EmploymentType;
+import com.htttdn.hrm.entity.enums.Gender;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
@@ -161,6 +163,12 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
         Employee employee = employeeRepository.save(Employee.builder()
             .employeeCode(employeeCodeGenerator.next())
             .fullName(FULL_NAME)
+            .gender(Gender.MALE)
+            .dateOfBirth(LocalDate.of(1982, 6, 18))
+            .highestEducationLevel(EducationLevel.MASTER)
+            .major("Quản trị kinh doanh")
+            .institution("Trường Đại học Kinh tế Quốc dân")
+            .graduationYear((short) 2010)
             .workEmail(EMAIL)
             .hireDate(startDate)
             .seniorityStartDate(startDate)
