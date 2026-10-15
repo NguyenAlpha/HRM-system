@@ -19,7 +19,7 @@ Hệ thống đã có database PostgreSQL với schema do Flyway quản lý, xá
 | Nhân sự | Tạo hồ sơ, cập nhật, xác nhận tuyển dụng, thông tin nhạy cảm, phân công và vòng đời nhân viên |
 | Tổ chức | Hồ sơ công ty, địa điểm, đơn vị tổ chức, chức danh và ca làm việc |
 | RBAC | System/custom role, permission catalog chỉ đọc, gán quyền, role assignment, permission override và yêu cầu cấp role |
-| Nghỉ phép | Tạo, gửi, duyệt, từ chối, hủy đơn; đồng bộ số phút nghỉ sang chấm công |
+| Nghỉ phép | Tạo, gửi, duyệt, từ chối, hủy đơn; thông báo trong ứng dụng cho HR, người duyệt và nhân viên khi có kết quả; đồng bộ số phút nghỉ sang chấm công |
 | Chấm công | Chuẩn bị tháng, vào/ra ca, xử lý `MISSING_PUNCH`, ngày lễ và duyệt tăng ca |
 | Lương | Lịch sử lương, phụ cấp, kỳ lương, phiếu lương, BHXH/BHYT/BHTN nhân viên và thuế TNCN năm 2026 |
 | Báo cáo | Phân bố nhân sự, trình độ, thâm niên và lương cơ bản theo phạm vi |

@@ -40,7 +40,7 @@ Nhân viên nghỉ việc
 
 Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 
-### 1.2. Danh sách 31 bảng nghiệp vụ
+### 1.2. Danh sách 33 bảng nghiệp vụ
 
 | Nhóm | Các bảng |
 |---|---|
@@ -48,17 +48,17 @@ Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 | Nhân sự và lương thỏa thuận | `employees`, `employee_assignments`, `employee_salary_history` |
 | Chính sách phụ cấp | `position_allowance_rules`, `seniority_allowance_rules` |
 | Tài khoản và RBAC | `accounts`, `account_activation_tokens`, `refresh_tokens`, `permissions`, `roles`, `role_permissions`, `role_assignment_requests`, `account_role_assignments`, `account_permission_overrides` |
-| Nghỉ phép và nghỉ việc | `leave_requests`, `resignation_requests` |
+| Nghỉ phép, nghỉ việc và thông báo | `leave_requests`, `resignation_requests`, `notifications` |
 | Lịch và chấm công | `company_holidays`, `work_shifts`, `attendance_records` |
 | Hồ sơ khấu trừ | `employee_payroll_profiles`, `employee_tax_dependents` |
 | Quy tắc thuế và bảo hiểm | `payroll_tax_rules`, `payroll_tax_brackets`, `payroll_insurance_rules` |
 | Tính lương | `payroll_periods`, `payroll_adjustments`, `payslips`, `payslip_items` |
 
-Database runtime có đúng 31 bảng này (chưa kể bảng `flyway_schema_history` của Flyway).
+Database runtime có 33 bảng này (chưa kể bảng `flyway_schema_history` của Flyway).
 
 ### 1.3. Sơ đồ quan hệ tổng quát
 
-Sơ đồ có đủ 31 bảng nghiệp vụ và các thuộc tính nghiệp vụ chính. Các cột kỹ thuật, người tạo/người duyệt và quan hệ kiểm toán được trình bày trong phần định nghĩa bảng bên dưới để sơ đồ dễ đọc. Chính sách thâm niên được áp dụng bằng thuật toán theo số năm và thời gian hiệu lực, không có khóa ngoại trực tiếp từ nhân viên. `company_holidays` đứng độc lập trong sơ đồ vì nó sửa lịch làm việc chung chứ không tham chiếu bản ghi nào.
+Sơ đồ có đủ 33 bảng nghiệp vụ và các thuộc tính nghiệp vụ chính. Các cột kỹ thuật, người tạo/người duyệt và quan hệ kiểm toán được trình bày trong phần định nghĩa bảng bên dưới để sơ đồ dễ đọc. Chính sách thâm niên được áp dụng bằng thuật toán theo số năm và thời gian hiệu lực, không có khóa ngoại trực tiếp từ nhân viên. `company_holidays` đứng độc lập trong sơ đồ vì nó sửa lịch làm việc chung chứ không tham chiếu bản ghi nào.
 
 ```mermaid
 erDiagram
@@ -226,6 +226,23 @@ erDiagram
         timestamptz end_at
         integer requested_minutes
         varchar status
+    }
+
+    RESIGNATION_REQUESTS {
+        bigint id PK
+        bigint employee_id FK
+        bigint approver_employee_id FK
+        date last_working_date
+        varchar status
+    }
+
+    NOTIFICATIONS {
+        bigint id PK
+        bigint recipient_account_id FK
+        bigint leave_request_id FK
+        varchar type
+        timestamptz created_at
+        timestamptz read_at
     }
 
     WORK_SHIFTS {
@@ -404,6 +421,10 @@ erDiagram
     ACCOUNT_ROLE_ASSIGNMENTS ||--o{ ACCOUNT_PERMISSION_OVERRIDES : account_role_assignment_id
     PERMISSIONS ||--o{ ACCOUNT_PERMISSION_OVERRIDES : permission_id
     EMPLOYEES ||--o{ LEAVE_REQUESTS : employee_id
+    EMPLOYEES ||--o{ RESIGNATION_REQUESTS : employee_id
+    EMPLOYEES ||--o{ RESIGNATION_REQUESTS : approver_employee_id
+    ACCOUNTS ||--o{ NOTIFICATIONS : recipient_account_id
+    LEAVE_REQUESTS ||--o{ NOTIFICATIONS : leave_request_id
     EMPLOYEES ||--o{ ATTENDANCE_RECORDS : employee_id
     WORK_SHIFTS ||--o{ ATTENDANCE_RECORDS : shift_id
     LEAVE_REQUESTS |o--o{ ATTENDANCE_RECORDS : leave_request_id
@@ -856,6 +877,20 @@ dùng `compensation.read` / `compensation.manage`, không phải `salary.*` / `a
 > - Nghỉ không phép không tạo `leave_requests` được duyệt; ngày công được đánh dấu `UNAUTHORIZED_ABSENCE`.
 
 Hạn mức phép năm **không có bảng riêng**: 12 ngày mỗi năm, vào làm giữa năm thì chia theo số tháng làm việc, tính mỗi lần từ `employees.hire_date`. Số đã dùng và đang chờ duyệt lấy trực tiếp từ `leave_requests` có `leave_type = ANNUAL`.
+
+### `notifications` — Thông báo của account
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | Khóa chính |
+| `recipient_account_id` | BIGINT | FK → accounts, NOT NULL | Account nhận thông báo |
+| `leave_request_id` | BIGINT | FK → leave_requests, NOT NULL | Đơn nghỉ liên quan |
+| `type` | VARCHAR(40) | NOT NULL, CHECK | `LEAVE_SUBMITTED`, `LEAVE_APPROVED`, `LEAVE_REJECTED` |
+| `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm phát thông báo |
+| `read_at` | TIMESTAMPTZ | | Thời điểm account đọc; `NULL` là chưa đọc |
+
+Unique `(recipient_account_id, leave_request_id, type)` tránh gửi trùng cùng sự kiện.
+Index riêng cho thông báo chưa đọc hỗ trợ số đếm trên chuông.
 
 ### `resignation_requests` — Đơn nghỉ việc
 
@@ -1554,15 +1589,17 @@ vào file của domain tương ứng thay vì thêm file vá. Mỗi khi file bas
 | `V6__attendance.sql` | `company_holidays`, `attendance_records` và trigger số phút theo lịch | 7 |
 | `V7__payroll.sql` | Hồ sơ khấu trừ, quy tắc thuế/bảo hiểm, `payroll_periods`, `payroll_adjustments`, `payslips`, `payslip_items` | 8 |
 | `V8__reference_data.sql` | Quy tắc thuế TNCN, bảo hiểm từ 2020 đến 2026 và quy tắc phép năm | 6, 8.4 |
+| `V9__notifications.sql` | Bảng và index thông báo trong ứng dụng | 6 |
+| `V10__notification_decisions.sql` | Bổ sung loại thông báo duyệt và từ chối đơn nghỉ | 6 |
 
-Migration chỉ chứa dữ liệu pháp lý dùng chung. Danh mục permission, role, mapping, cơ cấu tổ chức,
-ca làm việc và tài khoản mẫu do các seeder trong `api/src/main/java/com/htttdn/hrm/config/seed/` tạo.
+`V8` nạp dữ liệu pháp lý dùng chung; `V9` bổ sung schema thông báo và `V10` mở rộng loại thông báo. Danh mục permission, role,
+mapping, cơ cấu tổ chức, ca làm việc và tài khoản mẫu do các seeder trong
+`api/src/main/java/com/htttdn/hrm/config/seed/` tạo.
 
 Quy ước khi thay đổi schema:
 
-- **Giai đoạn phát triển (hiện tại, đến lần deploy đầu tiên có dữ liệu thật):** sửa thẳng file
-  V1–V8 của domain tương ứng, viết bảng ở dạng cuối cùng; thứ bị bỏ thì xóa khỏi file như chưa từng
-  tồn tại, không thêm file `DROP`/`ALTER` vá. Báo cả nhóm chạy `docker compose down -v`.
+- Từ `V9` trở đi, thêm migration mới cho thay đổi schema để giữ dữ liệu của database đã chạy
+  `V1`–`V8`; không sửa checksum của migration cũ.
 - **Sau lần deploy đầu tiên:** không sửa migration đã chạy trên môi trường thật; mỗi thay đổi là
   một file `V<n+1>__<mô_tả>.sql` mới.
 - Cập nhật mục tương ứng trong tài liệu này và bảng trên trong cùng commit.
