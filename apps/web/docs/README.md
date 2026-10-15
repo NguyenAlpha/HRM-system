@@ -29,7 +29,7 @@ Menu chia nhóm Nhân sự, Chấm công & nghỉ, Lương, Báo cáo, Hệ th�
 | Route | Nội dung |
 |:------|:---------|
 | `/dashboard` | Tổng quan theo quyền: chấm công hôm nay, phép còn lại, đơn đang mở, lương gần nhất; việc chờ mình duyệt; kỳ lương gần nhất; quân số, nhân viên mới, người đang thử việc |
-| `/profile` | Hồ sơ của tôi (chỉ đọc, qua `GET /api/employees/me`), vai trò đang có và đổi mật khẩu |
+| `/profile` | Hồ sơ của tôi (`GET /api/employees/me`), tự sửa liên hệ và học vấn qua popup (`PUT /api/employees/me/profile`), vai trò đang có và đổi mật khẩu |
 | `/employees`, `/employees/{employeeId}` | Hồ sơ, dữ liệu nhạy cảm, phân công, vòng đời nhân viên (nghỉ việc, xóa mềm hồ sơ tạo nhầm) và thẻ Lương & bảo hiểm (lương cơ bản, hồ sơ bảo hiểm/thuế, người phụ thuộc, phiếu lương) |
 | `/accounts` | Danh sách tài khoản; gửi lại lời mời, đặt lại mật khẩu, vô hiệu hóa và kích hoạt lại |
 | `/organization` | Đơn vị tổ chức, địa điểm, vị trí, ca làm và ngày lễ công ty theo năm (thêm bằng popup, xóa qua menu "…") |

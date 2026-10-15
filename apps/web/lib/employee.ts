@@ -18,6 +18,8 @@ export type CreateEmployeeInput = Schemas["CreateEmployeeRequest"]
 export type UpdateEmployeeInput = Schemas["UpdateEmployeeRequest"]
 export type AssignEmployeeInput = Schemas["AssignEmployeeRequest"]
 export type EmployeeSensitiveInput = Schemas["UpdateEmployeeSensitiveRequest"]
+export type SelfProfile = Schemas["SelfProfileResponse"]
+export type SelfProfileInput = Schemas["UpdateSelfProfileRequest"]
 
 export type EmploymentStatus = EmployeeDetail["employmentStatus"]
 export type Gender = NonNullable<EmployeeDetail["gender"]>
