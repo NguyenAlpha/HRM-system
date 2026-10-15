@@ -411,6 +411,8 @@ export async function handleWorkforceRequest(request: Request, segments: string[
     { pattern: /^leave-requests\/employees\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^leave-requests\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^leave-requests\/[1-9]\d*\/(?:submit|cancel|approve|reject)$/, methods: ["POST"] },
+    { pattern: /^notifications$/, methods: ["GET"] },
+    { pattern: /^notifications\/[1-9]\d*\/read$/, methods: ["POST"] },
     { pattern: /^leave-entitlements\/employees\/[1-9]\d*$/, methods: ["GET"] },
     { pattern: /^resignation-requests$/, methods: ["GET", "POST"] },
     { pattern: /^resignation-requests\/pending$/, methods: ["GET"] },
