@@ -241,7 +241,7 @@ docker compose down -v
 docker compose up -d database
 ```
 
-Chỉ sử dụng khi chắc chắn không cần giữ dữ liệu. Sau khi database được tạo lại, restart API
+Chỉ sử dụng khi chắc chắn không cần giữ dữ liệu (hoặc sao lưu trước, xem [BACKUP.md](BACKUP.md)). Sau khi database được tạo lại, restart API
 để Flyway chạy migration và seeder từ đầu.
 
 ## 8. Lỗi thường gặp
@@ -296,6 +296,7 @@ hoặc reset database local nếu không cần giữ dữ liệu.
 
 ## 9. Tài liệu liên quan
 
+- Sao lưu và phục hồi database: [`BACKUP.md`](BACKUP.md)
 - Auth API: [`api/docs/api/AUTH.md`](../api/docs/api/AUTH.md)
 - Web development: [`apps/web/docs/DEVELOPMENT.md`](../apps/web/docs/DEVELOPMENT.md)
 - Web authentication: [`apps/web/docs/AUTH.md`](../apps/web/docs/AUTH.md)
