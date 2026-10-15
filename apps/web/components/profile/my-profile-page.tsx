@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation"
 import { FormEvent, useEffect, useState } from "react"
-import { BriefcaseBusiness, GraduationCap, KeyRound, Loader2, UserRound } from "lucide-react"
+import { BriefcaseBusiness, GraduationCap, KeyRound, Loader2, PencilLine, UserRound } from "lucide-react"
+import { toast } from "sonner"
 
 import { formatDate, InfoField } from "@/components/employee/employee-detail-page"
 import { PageHeader } from "@/components/portal/page-header"
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SectionError } from "@/components/workforce/workforce-shared"
@@ -29,30 +31,45 @@ import { changePassword } from "@/lib/auth/client"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import {
   EDUCATION_LEVEL_LABELS,
+  EDUCATION_LEVELS,
   EMPLOYMENT_STATUS_LABELS,
   EMPLOYMENT_TYPE_LABELS,
   GENDER_LABELS,
   employeeRequest,
+  type EducationLevel,
   type EmployeeDetail,
+  type SelfProfile,
+  type SelfProfileInput,
 } from "@/lib/employee"
 
-/** The signed-in employee's own record, read-only, plus their sign-in account and password change. */
+/** The signed-in employee's own record (contact details and education self-editable), plus their sign-in account and password change. */
 export function MyProfilePage() {
   const { session } = usePortalSession()
   const { account } = session
   const canRead = !!account.employee && account.permissions.some((permission) => permission.code === "profile.self.read")
+  const canEdit = account.permissions.some((permission) => permission.code === "profile.self.update")
   const [detail, setDetail] = useState<EmployeeDetail | null>(null)
+  const [profile, setProfile] = useState<SelfProfile | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [changingPassword, setChangingPassword] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [revision, setRevision] = useState(0)
 
   useEffect(() => {
     if (!canRead) return
     let active = true
-    employeeRequest<EmployeeDetail>("hrm", "/me")
-      .then((result) => { if (active) setDetail(result) })
+    Promise.all([
+      employeeRequest<EmployeeDetail>("hrm", "/me"),
+      employeeRequest<SelfProfile>("hrm", "/me/profile"),
+    ])
+      .then(([nextDetail, nextProfile]) => {
+        if (!active) return
+        setDetail(nextDetail)
+        setProfile(nextProfile)
+      })
       .catch((caught: unknown) => { if (active) setError(apiErrorMessage(caught)) })
     return () => { active = false }
-  }, [canRead])
+  }, [canRead, revision])
 
   const assignment = detail?.currentAssignment
 
@@ -60,8 +77,15 @@ export function MyProfilePage() {
     <>
       <PageHeader
         title="Hồ sơ của tôi"
-        description="Thông tin nhân sự công ty đang lưu về bạn. Cần sửa thông tin, hãy liên hệ phòng Nhân sự."
-        actions={<Button type="button" variant="outline" onClick={() => setChangingPassword(true)}><KeyRound /> Đổi mật khẩu</Button>}
+        description="Thông tin nhân sự công ty đang lưu về bạn. Bạn tự sửa được liên hệ và học vấn; thông tin khác hãy liên hệ phòng Nhân sự."
+        actions={(
+          <>
+            {canEdit && profile && (
+              <Button type="button" variant="outline" onClick={() => setEditing(true)}><PencilLine /> Sửa thông tin</Button>
+            )}
+            <Button type="button" variant="outline" onClick={() => setChangingPassword(true)}><KeyRound /> Đổi mật khẩu</Button>
+          </>
+        )}
       />
 
       <div className="mt-6 grid gap-4">
@@ -83,7 +107,11 @@ export function MyProfilePage() {
                   <InfoField label="Giới tính" value={detail.gender ? GENDER_LABELS[detail.gender] : null} />
                   <InfoField label="Điện thoại" value={detail.phone} />
                   <InfoField label="Email công việc" value={detail.workEmail} />
+                  <InfoField label="Email cá nhân" value={profile?.personalEmail} />
                   <InfoField label="Ngày vào làm" value={formatDate(detail.hireDate)} />
+                  <div className="sm:col-span-2 lg:col-span-3">
+                    <InfoField label="Địa chỉ" value={profile?.address} />
+                  </div>
                 </dl>
                 <Separator />
                 <div>
@@ -150,6 +178,10 @@ export function MyProfilePage() {
       </div>
 
       {changingPassword && <ChangePasswordDialog onClose={() => setChangingPassword(false)} />}
+      {editing && profile && (
+        <EditProfileDialog profile={profile} onClose={() => setEditing(false)}
+          onSaved={() => { setEditing(false); setRevision((value) => value + 1) }} />
+      )}
     </>
   )
 }
@@ -210,6 +242,110 @@ function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
           <DialogFooter className="mt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={busy}>Hủy</Button>
             <Button type="submit" disabled={busy}>{busy && <Loader2 className="animate-spin" />} Đổi mật khẩu</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+const EDUCATION_NONE = "NONE"
+const EDUCATION_ITEMS: Record<string, string> = { [EDUCATION_NONE]: "Không chọn", ...EDUCATION_LEVEL_LABELS }
+
+/** Only contact details and education; name, identity, tax, bank, pay and job stay with HR. */
+function EditProfileDialog({ profile, onClose, onSaved }: {
+  profile: SelfProfile
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const [phone, setPhone] = useState(profile.phone ?? "")
+  const [personalEmail, setPersonalEmail] = useState(profile.personalEmail ?? "")
+  const [address, setAddress] = useState(profile.address ?? "")
+  const [education, setEducation] = useState<string>(profile.highestEducationLevel ?? EDUCATION_NONE)
+  const [graduationYear, setGraduationYear] = useState(profile.graduationYear ? String(profile.graduationYear) : "")
+  const [major, setMajor] = useState(profile.major ?? "")
+  const [institution, setInstitution] = useState(profile.institution ?? "")
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setBusy(true)
+    setError(null)
+    const body = {
+      phone: phone.trim() || null,
+      personalEmail: personalEmail.trim() || null,
+      address: address.trim() || null,
+      highestEducationLevel: education === EDUCATION_NONE ? null : education as EducationLevel,
+      graduationYear: graduationYear ? Number(graduationYear) : null,
+      major: major.trim() || null,
+      institution: institution.trim() || null,
+    } satisfies SelfProfileInput
+    try {
+      await employeeRequest("hrm", "/me/profile", { method: "PUT", body: JSON.stringify(body) })
+      toast.success("Đã cập nhật hồ sơ")
+      onSaved()
+    } catch (caught) {
+      setError(apiErrorMessage(caught))
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open && !busy) onClose() }}>
+      <DialogContent className="sm:max-w-lg">
+        <form onSubmit={submit}>
+          <DialogHeader>
+            <DialogTitle>Sửa thông tin cá nhân</DialogTitle>
+            <DialogDescription>Họ tên, ngày sinh, giấy tờ, lương và chức danh do phòng Nhân sự cập nhật.</DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-1.5">
+              <Label htmlFor="self-phone">Điện thoại</Label>
+              <Input id="self-phone" type="tel" maxLength={20} value={phone} onChange={(event) => setPhone(event.target.value)} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="self-email">Email cá nhân</Label>
+              <Input id="self-email" type="email" maxLength={100} value={personalEmail}
+                onChange={(event) => setPersonalEmail(event.target.value)} />
+            </div>
+            <div className="grid gap-1.5 sm:col-span-2">
+              <Label htmlFor="self-address">Địa chỉ</Label>
+              <Input id="self-address" value={address} onChange={(event) => setAddress(event.target.value)} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="self-education">Trình độ cao nhất</Label>
+              <Select value={education} items={EDUCATION_ITEMS}
+                onValueChange={(value) => setEducation(String(value ?? EDUCATION_NONE))}>
+                <SelectTrigger id="self-education" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[EDUCATION_NONE, ...EDUCATION_LEVELS].map((level) => (
+                    <SelectItem key={level} value={level}>{EDUCATION_ITEMS[level]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="self-graduation">Năm tốt nghiệp</Label>
+              <Input id="self-graduation" type="number" min={1950} max={new Date().getFullYear()} value={graduationYear}
+                onChange={(event) => setGraduationYear(event.target.value)} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="self-major">Chuyên ngành</Label>
+              <Input id="self-major" maxLength={200} value={major} onChange={(event) => setMajor(event.target.value)} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="self-institution">Trường / đơn vị đào tạo</Label>
+              <Input id="self-institution" maxLength={200} value={institution}
+                onChange={(event) => setInstitution(event.target.value)} />
+            </div>
+            {error && <p role="alert" className="text-sm text-destructive sm:col-span-2">{error}</p>}
+          </div>
+          <DialogFooter className="mt-4">
+            <Button type="button" variant="outline" onClick={onClose} disabled={busy}>Hủy</Button>
+            <Button type="submit" disabled={busy}>{busy && <Loader2 className="animate-spin" />} Lưu</Button>
           </DialogFooter>
         </form>
       </DialogContent>

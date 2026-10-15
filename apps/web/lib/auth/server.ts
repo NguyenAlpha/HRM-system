@@ -338,6 +338,7 @@ export async function handleEmployeeRequest(request: Request, segments: string[]
   const routes = [
     { pattern: /^$/, methods: ["GET", "POST"] },
     { pattern: /^me$/, methods: ["GET"] },
+    { pattern: /^me\/profile$/, methods: ["GET", "PUT"] },
     { pattern: /^[1-9]\d*$/, methods: ["GET", "PUT"] },
     { pattern: /^[1-9]\d*\/assignments$/, methods: ["GET", "POST"] },
     { pattern: /^[1-9]\d*\/confirm$/, methods: ["POST"] },
