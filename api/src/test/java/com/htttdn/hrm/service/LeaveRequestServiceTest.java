@@ -16,6 +16,7 @@ import com.htttdn.hrm.entity.enums.LeaveSalaryTreatment;
 import com.htttdn.hrm.entity.enums.LeaveType;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
+import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
@@ -39,6 +40,7 @@ class LeaveRequestServiceTest {
     @Mock private AttendanceService attendanceService;
     @Mock private LeaveEntitlementService leaveEntitlementService;
     @Mock private ApproverResolver approverResolver;
+    @Mock private NotificationService notificationService;
 
     @Test
     void employeeCreatesOwnDraftUsingMinuteBasedPeriod() {
@@ -72,6 +74,56 @@ class LeaveRequestServiceTest {
     }
 
     @Test
+    void hrCannotCreateLeaveForAnotherEmployeeEvenWithManagePermission() {
+        Employee applicant = Employee.builder().id(1L).build();
+        Employee hr = Employee.builder().id(2L).build();
+        when(currentAccountProvider.accountId()).thenReturn(9L);
+        when(accountRepository.findById(9L)).thenReturn(Optional.of(
+            Account.builder().id(9L).employee(hr).build()));
+
+        assertThrows(ForbiddenException.class, () -> service().createDraft(
+            new LeaveRequestService.CreateLeaveCommand(
+                applicant.getId(), LeaveType.ANNUAL, null,
+                Instant.parse("2026-01-05T01:00:00Z"), Instant.parse("2026-01-05T05:00:00Z"),
+                240, "Personal", null)));
+    }
+
+    @Test
+    void hrCannotSubmitOrCancelAnotherEmployeesDraft() {
+        Employee applicant = Employee.builder().id(1L).build();
+        Employee hr = Employee.builder().id(2L).build();
+        LeaveRequest request = LeaveRequest.builder().id(3L).employee(applicant)
+            .status(LeaveRequestStatus.DRAFT).build();
+        when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
+        when(currentAccountProvider.accountId()).thenReturn(9L);
+        when(accountRepository.findById(9L)).thenReturn(Optional.of(
+            Account.builder().id(9L).employee(hr).build()));
+
+        assertThrows(ForbiddenException.class, () -> service().submit(3L));
+        assertThrows(ForbiddenException.class, () -> service().cancel(3L));
+        assertEquals(LeaveRequestStatus.DRAFT, request.getStatus());
+    }
+
+    @Test
+    void submittingLeaveNotifiesHrAndApprover() {
+        Employee employee = Employee.builder().id(1L).fullName("Employee").build();
+        Employee manager = Employee.builder().id(5L).fullName("Manager").build();
+        LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee)
+            .status(LeaveRequestStatus.DRAFT).build();
+        when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
+        when(currentAccountProvider.accountId()).thenReturn(9L);
+        when(accountRepository.findById(9L))
+            .thenReturn(Optional.of(Account.builder().id(9L).employee(employee).build()));
+        when(approverResolver.approverFor(employee)).thenReturn(Optional.of(manager));
+
+        var result = service().submit(3L);
+
+        assertEquals(LeaveRequestStatus.PENDING, result.status());
+        assertEquals(5L, result.approverEmployeeId());
+        verify(notificationService).notifyLeaveSubmitted(request);
+    }
+
+    @Test
     void approvingLeaveUpdatesAttendance() {
         Employee employee = Employee.builder().id(1L).build();
         Employee manager = Employee.builder().id(5L).build();
@@ -87,7 +139,25 @@ class LeaveRequestServiceTest {
         service().approve(3L, "Approved");
 
         verify(attendanceService).applyApprovedLeave(request);
+        verify(notificationService).notifyLeaveDecision(request);
         assertEquals(LeaveRequestStatus.APPROVED, request.getStatus());
+    }
+
+    @Test
+    void rejectingLeaveNotifiesApplicant() {
+        Employee employee = Employee.builder().id(1L).build();
+        Employee manager = Employee.builder().id(5L).build();
+        LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee).approverEmployee(manager)
+            .status(LeaveRequestStatus.PENDING).build();
+        when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
+        when(currentAccountProvider.accountId()).thenReturn(9L);
+        when(accountRepository.findById(9L)).thenReturn(Optional.of(
+            Account.builder().id(9L).employee(manager).build()));
+
+        service().reject(3L, "Not approved");
+
+        assertEquals(LeaveRequestStatus.REJECTED, request.getStatus());
+        verify(notificationService).notifyLeaveDecision(request);
     }
 
     @Test
@@ -206,7 +276,8 @@ class LeaveRequestServiceTest {
             employeeAccessScopeService,
             attendanceService,
             leaveEntitlementService,
-            approverResolver
+            approverResolver,
+            notificationService
         );
     }
 }

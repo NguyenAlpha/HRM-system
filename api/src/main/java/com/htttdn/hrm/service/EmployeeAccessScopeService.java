@@ -60,7 +60,17 @@ public class EmployeeAccessScopeService {
     }
 
     public EmployeeAccessScope resolve(String permissionCode) {
-        Long accountId = currentAccountProvider.accountId();
+        return resolve(currentAccountProvider.accountId(), permissionCode);
+    }
+
+    public boolean canAccountAccessEmployee(Long accountId, Long employeeId, String permissionCode) {
+        EmployeeAccessScope scope = resolve(accountId, permissionCode);
+        return employeeRepository.exists(notDeleted()
+            .and(scope.toSpecification(LocalDate.now()))
+            .and(hasId(employeeId)));
+    }
+
+    private EmployeeAccessScope resolve(Long accountId, String permissionCode) {
         List<AuthorizationScope> assignedScopes = accountAuthorizationService.getScopes(accountId, permissionCode);
 
         boolean companyWide = assignedScopes.stream()

@@ -35,7 +35,9 @@ Các port mặc định cần còn trống:
 | `8080` | Spring Boot API |
 | `3000` | Next.js Web |
 
-Tất cả lệnh bên dưới được chạy từ thư mục gốc của repository, trừ khi có ghi chú khác.
+Mỗi khối lệnh bên dưới bắt đầu từ thư mục gốc `HRM-system` trong terminal riêng, trừ khi có ghi
+chú khác. Nếu terminal đang ở `api` hoặc `apps/web`, quay về thư mục gốc trước khi chạy khối mới
+hoặc bỏ qua lệnh `Set-Location` đã thực hiện.
 
 ## 2. Khởi động PostgreSQL
 
@@ -49,7 +51,12 @@ Kiểm tra container:
 
 ```powershell
 docker compose ps
+docker compose exec -T database pg_isready -U hrm-user -d hrm
 ```
+
+Chỉ khởi động API khi `pg_isready` trả `accepting connections`. Nếu database vừa mới khởi tạo và
+chưa sẵn sàng, đợi vài giây rồi chạy lại lệnh kiểm tra. Giữ container database ở trạng thái `Up`
+trong suốt lúc chạy API.
 
 Cấu hình database mặc định trong `docker-compose.yaml`:
 
@@ -194,7 +201,7 @@ Ngày 2026-10-11 chuỗi migration được gộp lại thành baseline mới. D
 Thực hiện lần lượt:
 
 1. Mở `/admin/login`, đăng nhập bằng `admin` và kiểm tra được chuyển tới `/admin`.
-2. Tạo Company Owner tại `/admin/company-owner`, kích hoạt qua link mời, đăng nhập `/login` và kiểm tra được chuyển tới `/dashboard`.
+2. Tạo Company Owner tại `/admin/company-owner`, kích hoạt qua link mời, đăng nhập `/login` và kiểm tra được chuyển tới `/dashboard` theo [workflow khởi tạo](../api/docs/api/ORGANIZATION_COMPANY_OWNER_ADMIN.md).
 3. Kiểm tra dashboard hiển thị account, role và permission.
 4. Thử refresh session và đăng xuất để kiểm tra cookie/session hoạt động.
 
@@ -253,9 +260,19 @@ Kiểm tra PostgreSQL đang chạy:
 ```powershell
 docker compose ps
 docker compose logs database
+docker compose exec -T database pg_isready -U hrm-user -d hrm
 ```
 
 Đồng thời kiểm tra `DB_URL`, `DB_USERNAME` và `DB_PASSWORD` nếu đã override giá trị mặc định.
+Nếu `docker compose ps` không cho thấy database đang `Up`, chạy `docker compose up -d database`
+rồi đợi `pg_isready` trả `accepting connections` trước khi khởi động lại API. Không cần xóa volume.
+
+### `./mvnw.cmd test` báo lỗi RBAC trên database đã có dữ liệu
+
+Test tích hợp ghi dữ liệu thử và có một số giả định về dữ liệu ban đầu. Chạy chúng trên database
+test riêng với `DB_URL` trỏ đến database đó, không dùng database `hrm` đang chứa dữ liệu phát triển.
+Nếu lỗi là `Status expected:<405> but was:<500>` tại `RbacManagementTest`, đó là lỗi trả mã HTTP
+của API; `GlobalExceptionHandler` hiện xử lý trường hợp này bằng `METHOD_NOT_ALLOWED`.
 
 ### Port đã được sử dụng
 

@@ -1,6 +1,6 @@
 # HRM System
 
-Hệ thống quản trị nhân sự gồm Spring Boot API, Next.js web và PostgreSQL. Chức năng hiện có bao gồm xác thực hai portal, quản lý nhân viên và cơ cấu tổ chức, RBAC theo phạm vi, ca làm việc, nghỉ phép, chấm công, ngày lễ, lương cơ bản, bảo hiểm nhân viên, thuế TNCN năm 2026, kỳ lương và báo cáo tổng hợp.
+Hệ thống quản trị nhân sự gồm Spring Boot API, Next.js web và PostgreSQL. Chức năng hiện có bao gồm xác thực hai portal, quản lý nhân viên và cơ cấu tổ chức, RBAC theo phạm vi, ca làm việc, nghỉ phép và thông báo đơn nghỉ, chấm công, ngày lễ, lương cơ bản, bảo hiểm nhân viên, thuế TNCN năm 2026, kỳ lương và báo cáo tổng hợp.
 
 ## Chạy nhanh
 

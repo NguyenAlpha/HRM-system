@@ -63,6 +63,21 @@ public interface AccountRoleAssignmentRepository extends JpaRepository<AccountRo
         @Param("date") LocalDate date
     );
 
+    @Query("""
+        SELECT DISTINCT assignment.account
+        FROM AccountRoleAssignment assignment
+        WHERE assignment.role.code = :roleCode
+          AND assignment.role.isActive = true
+          AND assignment.role.deletedAt IS NULL
+          AND assignment.revokedAt IS NULL
+          AND assignment.effectiveFrom <= :date
+          AND (assignment.effectiveTo IS NULL OR assignment.effectiveTo >= :date)
+        """)
+    List<Account> findActiveAccountsHoldingRole(
+        @Param("roleCode") String roleCode,
+        @Param("date") LocalDate date
+    );
+
     boolean existsByAccountIdAndRoleCodeAndRevokedAtIsNull(Long accountId, String roleCode);
 
     List<AccountRoleAssignment> findByRoleIdAndRevokedAtIsNull(Long roleId);
