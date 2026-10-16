@@ -50,6 +50,7 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
   const canReadOwnPayslips = !!account.employee
     && account.permissions.some((permission) => permission.code === "payroll.self.read")
   const canReadCompensation = account.permissions.some((permission) => permission.code === "compensation.read")
+  const canManageCompany = account.permissions.some((permission) => permission.code === "company.manage")
   const canReadOwnProfile = !!account.employee
     && account.permissions.some((permission) => permission.code === "profile.self.read")
 
@@ -107,6 +108,7 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
         [canReadPayrollReports, "Quỹ lương & thuế", "/reports/payroll"],
       ]),
       group("Hệ thống", [
+        [canManageCompany, "Thông tin doanh nghiệp", "/company"],
         [canReadAccounts, "Tài khoản", "/accounts"],
         [canUseRoleRequests, "Đề xuất role", "/role-requests"],
         [canAssignRoleDirect, "Cấp quyền trực tiếp", "/role-grant"],

@@ -420,6 +420,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/company": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_1"];
+        put: operations["update_7"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/company-holidays": {
         parameters: {
             query?: never;
@@ -843,7 +859,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_3"];
+        get: operations["get_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1051,7 +1067,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_2"];
+        get: operations["get_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1387,7 +1403,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_1"];
+        get: operations["get_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1923,6 +1939,11 @@ export interface components {
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
+        ApiResultCompanyProfileResponse: {
+            data: components["schemas"]["CompanyProfileResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
         ApiResultDependent: {
             data: components["schemas"]["Dependent"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
@@ -2423,6 +2444,25 @@ export interface components {
             id: number;
             name: string;
         };
+        CompanyProfileRequest: {
+            address?: string | null;
+            code: string;
+            /** Format: email */
+            email?: string | null;
+            name: string;
+            phone?: string | null;
+            taxCode?: string | null;
+        };
+        CompanyProfileResponse: {
+            address: string | null;
+            code: string;
+            email: string | null;
+            name: string;
+            phone: string | null;
+            taxCode: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         CompleteAccountActivationRequest: {
             password: string;
             passwordConfirmation: string;
@@ -2489,6 +2529,7 @@ export interface components {
         };
         CreateOrganizationCompanyOwnerRequest: {
             account: components["schemas"]["CreateCompanyOwnerAccountRequest"];
+            company: components["schemas"]["CompanyProfileRequest"];
             directorAppointmentReason: string;
             /** Format: date */
             effectiveFrom: string;
@@ -4382,6 +4423,50 @@ export interface operations {
             };
         };
     };
+    get_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultCompanyProfileResponse"];
+                };
+            };
+        };
+    };
+    update_7: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanyProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultCompanyProfileResponse"];
+                };
+            };
+        };
+    };
     list_11: {
         parameters: {
             query: {
@@ -5351,7 +5436,7 @@ export interface operations {
             };
         };
     };
-    get_3: {
+    get_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -5743,7 +5828,7 @@ export interface operations {
             };
         };
     };
-    get_2: {
+    get_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -6279,7 +6364,7 @@ export interface operations {
             };
         };
     };
-    get_1: {
+    get_2: {
         parameters: {
             query?: never;
             header?: never;

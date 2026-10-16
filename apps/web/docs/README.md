@@ -37,7 +37,7 @@ Menu chia nhóm Nhân sự, Chấm công & nghỉ, Lương, Báo cáo, Hệ th�
 | `/leave-requests` | Tab Đơn của tôi (phép năm còn lại, đơn của mình), Chờ tôi duyệt (đơn mình là người duyệt), Tất cả đơn (`request.read`: tìm, lọc trạng thái/loại/đơn vị/tháng, phân trang). `?tab=approvals` mở thẳng tab Chờ tôi duyệt. Tạo đơn bằng popup, chọn nhanh cả ngày/sáng/chiều, lưu nháp hoặc gửi duyệt ngay; HR tạo hộ theo mã nhân viên |
 | `/payroll` | Danh sách kỳ lương kèm số nhân viên, tổng thu nhập, tổng thực nhận; tạo kỳ mới |
 | `/payroll/{periodId}` | Bảng lương của kỳ: các bước quy trình, tổng hợp, bảng mọi nhân viên có dòng tổng, tính/duyệt/trả/khóa/hủy, khoản cộng/trừ, xuất Excel, phiếu từng người |
-| `/payslips` | Phiếu lương của chính người đăng nhập (từ kỳ đã duyệt), in từng phiếu; bảng lương năm (12 tháng × các khoản, dòng cả năm) có nút in. In chỉ ra phần được đánh dấu `print-area` (quy tắc `@media print` trong `app/globals.css`) |
+| `/payslips` | Phiếu lương của chính người đăng nhập (từ kỳ đã duyệt), in từng phiếu; bảng lương năm (12 tháng × các khoản, dòng cả năm) có nút in. In chỉ ra phần được đánh dấu `print-area` (quy tắc `@media print` trong `app/globals.css`), đầu trang in có tên, mã số thuế và địa chỉ doanh nghiệp |
 | `/allowances` | Chính sách phụ cấp chung: phụ cấp chức vụ theo chức danh (lịch sử, đổi mức) và các bậc phụ cấp thâm niên |
 | `/reports/workforce` | Cơ cấu nhân sự: trình độ, thâm niên và phân bố lương cơ bản |
 | `/resignations` | Đơn nghỉ việc: tab Đơn của tôi (nộp đơn bằng popup, ngày làm việc cuối và lý do; rút đơn chờ duyệt), Chờ tôi duyệt (duyệt có thể đổi ngày làm việc cuối, từ chối bắt buộc lý do), Tất cả đơn (`request.read`: tìm, lọc trạng thái/đơn vị, phân trang). `?tab=approvals` mở thẳng tab Chờ tôi duyệt |
@@ -48,6 +48,7 @@ Menu chia nhóm Nhân sự, Chấm công & nghỉ, Lương, Báo cáo, Hệ th�
 | `/reports/payroll` | Quỹ lương, bảo hiểm người lao động và thuế TNCN theo tháng và theo đơn vị (`report.payroll.read`, scope COMPANY) |
 
 Mọi bảng báo cáo có nút **Xuất CSV** (UTF-8 có BOM, mở thẳng bằng Excel).
+| `/company` | Thông tin doanh nghiệp (`GET /api/company`); menu chỉ hiện và nút sửa (popup, `PUT /api/company`) chỉ có với Company Owner (`company.manage`) |
 | `/rbac`, `/role-grant`, `/role-requests` | Quản lý quyền nghiệp vụ theo permission được cấp |
 
 ### Admin Console
@@ -57,7 +58,7 @@ Mọi bảng báo cáo có nút **Xuất CSV** (UTF-8 có BOM, mở thẳng bằ
 | `/admin` | Tổng quan quản trị hệ thống |
 | `/admin/employees`, `/admin/employees/{employeeId}` | Xem danh sách, hồ sơ nhân viên và cấp tài khoản (chỉ đọc hồ sơ) |
 | `/admin/accounts` | Danh sách tài khoản; gửi lại lời mời, reset mật khẩu, vô hiệu hóa, kích hoạt lại và xóa mềm (trừ tài khoản Company Owner) |
-| `/admin/company-owner` | Khởi tạo Company Owner đầu tiên |
+| `/admin/company-owner` | Khởi tạo Company Owner đầu tiên, nhập luôn thông tin doanh nghiệp |
 | `/admin/organization` | Dữ liệu tổ chức phục vụ bootstrap |
 | `/admin/rbac` | CRUD custom role, xem permission và đồng bộ quyền |
 | `/admin/role-grant` | Gán hoặc thu hồi role và permission override theo chính sách backend |
