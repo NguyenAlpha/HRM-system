@@ -12,12 +12,12 @@ import jakarta.validation.constraints.Size;
 
 public record CreateWorkShiftRequest(
     @NotBlank
-    @Size(max = 30)
+    @Size(max = 20)
     @Pattern(regexp = "^[A-Z][A-Z0-9_-]*$")
     String code,
 
     @NotBlank
-    @Size(max = 100)
+    @Size(max = 30)
     String name,
 
     @NotNull

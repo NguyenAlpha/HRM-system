@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Size;
 
 public record CancelRoleAssignmentRequest(
     @NotBlank
-    @Size(max = 500)
+    @Size(max = 100)
     String reason
 ) {
 }

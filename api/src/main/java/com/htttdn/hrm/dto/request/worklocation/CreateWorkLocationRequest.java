@@ -13,12 +13,12 @@ public record CreateWorkLocationRequest(
     Long parentLocationId,
 
     @NotBlank
-    @Size(max = 30)
+    @Size(max = 20)
     @Pattern(regexp = "^[A-Z][A-Z0-9_-]*$")
     String code,
 
     @NotBlank
-    @Size(max = 150)
+    @Size(max = 30)
     String name,
 
     @NotNull
@@ -27,7 +27,7 @@ public record CreateWorkLocationRequest(
     @NotBlank
     String address,
 
-    @Size(max = 20)
+    @Size(max = 12)
     @Nullable
     String phone
 ) {

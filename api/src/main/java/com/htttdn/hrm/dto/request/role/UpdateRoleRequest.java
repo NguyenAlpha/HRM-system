@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Size;
 
 public record UpdateRoleRequest(
     @NotBlank
-    @Size(max = 150)
+    @Size(max = 30)
     String name,
 
     @Nullable

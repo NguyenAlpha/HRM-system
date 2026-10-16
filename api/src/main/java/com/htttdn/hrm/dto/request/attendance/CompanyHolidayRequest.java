@@ -8,5 +8,5 @@ import jakarta.validation.constraints.Size;
 
 public record CompanyHolidayRequest(
     @NotNull LocalDate date,
-    @NotBlank @Size(max = 150) String name
+    @NotBlank @Size(max = 30) String name
 ) { }

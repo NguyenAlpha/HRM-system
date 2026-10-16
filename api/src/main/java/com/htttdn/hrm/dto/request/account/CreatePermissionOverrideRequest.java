@@ -25,7 +25,7 @@ public record CreatePermissionOverrideRequest(
     LocalDate effectiveTo,
 
     @NotBlank
-    @Size(max = 500)
+    @Size(max = 100)
     String reason
 ) {
 }

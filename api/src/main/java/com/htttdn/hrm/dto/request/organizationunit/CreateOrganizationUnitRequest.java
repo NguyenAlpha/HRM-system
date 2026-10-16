@@ -13,12 +13,12 @@ public record CreateOrganizationUnitRequest(
     Long parentUnitId,
 
     @NotBlank
-    @Size(max = 30)
+    @Size(max = 20)
     @Pattern(regexp = "^[A-Z][A-Z0-9_-]*$")
     String code,
 
     @NotBlank
-    @Size(max = 150)
+    @Size(max = 30)
     String name,
 
     @NotNull

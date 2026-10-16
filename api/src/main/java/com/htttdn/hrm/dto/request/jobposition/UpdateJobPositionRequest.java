@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 
 public record UpdateJobPositionRequest(
     @NotBlank
-    @Size(max = 150)
+    @Size(max = 30)
     String title,
 
     @Nullable

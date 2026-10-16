@@ -12,7 +12,7 @@ import jakarta.validation.constraints.Size;
 
 public record UpdateEmployeeRequest(
     @NotBlank
-    @Size(max = 200)
+    @Size(max = 40)
     String fullName,
 
     @Nullable
@@ -22,11 +22,11 @@ public record UpdateEmployeeRequest(
     @Nullable
     EducationLevel highestEducationLevel,
 
-    @Size(max = 200)
+    @Size(max = 30)
     @Nullable
     String major,
 
-    @Size(max = 200)
+    @Size(max = 30)
     @Nullable
     String institution,
 
@@ -34,11 +34,11 @@ public record UpdateEmployeeRequest(
     Short graduationYear,
 
     @Email
-    @Size(max = 100)
+    @Size(max = 30)
     @Nullable
     String workEmail,
 
-    @Size(max = 20)
+    @Size(max = 12)
     @Nullable
     String phone
 ) {

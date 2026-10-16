@@ -12,12 +12,12 @@ import jakarta.validation.constraints.Size;
  * Every field is replaced; null clears it.
  */
 public record UpdateSelfProfileRequest(
-    @Size(max = 20)
+    @Size(max = 12)
     @Nullable
     String phone,
 
     @Email
-    @Size(max = 100)
+    @Size(max = 30)
     @Nullable
     String personalEmail,
 
@@ -27,11 +27,11 @@ public record UpdateSelfProfileRequest(
     @Nullable
     EducationLevel highestEducationLevel,
 
-    @Size(max = 200)
+    @Size(max = 30)
     @Nullable
     String major,
 
-    @Size(max = 200)
+    @Size(max = 30)
     @Nullable
     String institution,
 

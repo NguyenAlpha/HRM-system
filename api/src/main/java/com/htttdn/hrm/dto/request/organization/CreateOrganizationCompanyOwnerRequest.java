@@ -25,11 +25,11 @@ public record CreateOrganizationCompanyOwnerRequest(
     LocalDate effectiveFrom,
 
     @NotBlank
-    @Size(max = 500)
+    @Size(max = 100)
     String ownershipReason,
 
     @NotBlank
-    @Size(max = 500)
+    @Size(max = 100)
     String directorAppointmentReason
 ) {
 }

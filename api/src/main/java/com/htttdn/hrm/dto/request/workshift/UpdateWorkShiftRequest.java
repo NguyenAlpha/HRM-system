@@ -11,7 +11,7 @@ import jakarta.validation.constraints.Size;
 
 public record UpdateWorkShiftRequest(
     @NotBlank
-    @Size(max = 100)
+    @Size(max = 30)
     String name,
 
     @NotNull

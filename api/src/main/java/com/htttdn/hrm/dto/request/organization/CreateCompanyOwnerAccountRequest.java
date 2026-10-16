@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 
 public record CreateCompanyOwnerAccountRequest(
     @NotBlank
-    @Size(min = 3, max = 50)
+    @Size(min = 3, max = 30)
     @Pattern(
         regexp = "^[A-Za-z0-9._-]+$",
         message = "username may contain only letters, numbers, dots, underscores, and hyphens"
