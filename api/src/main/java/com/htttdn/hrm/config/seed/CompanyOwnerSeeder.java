@@ -156,7 +156,7 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
             );
         }
 
-        ZonedDateTime seededAt = ZonedDateTime.now().minusYears(2);
+        ZonedDateTime seededAt = ZonedDateTime.now().minusYears(4);
         Instant createdAt = seededAt.toInstant();
         LocalDate startDate = seededAt.toLocalDate();
 
