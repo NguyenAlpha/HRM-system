@@ -36,7 +36,10 @@ phụ cấp chung của `/api/compensation/*` nằm ở `ALLOWANCE.md`.
 - Permission catalog do code sở hữu và chỉ đọc. API role hỗ trợ CRUD custom role và gán permission `DELEGABLE`.
 - Scope gồm `SELF`, `ORG_UNIT`, `LOCATION`, `COMPANY`; quyền UI không thay thế authorization backend.
 - Ngày nghiệp vụ dùng ISO `YYYY-MM-DD`; thời điểm dùng ISO-8601 và lưu UTC.
-- Lỗi nghiệp vụ trả `success:false` cùng `error.code`, `message` và `field` nếu có.
+- Lỗi nghiệp vụ trả `success:false` cùng `error.code`, `message` và `field` nếu có. Lỗi validation của
+  request DTO có `message` tiếng Việt (`src/main/resources/ValidationMessages.properties`), ví dụ
+  `field: "name"`, `message: "phải có từ 0 đến 40 ký tự"`; các message khác là tiếng Anh dành cho
+  developer, web tự hiển thị câu tiếng Việt theo `error.code`.
 - Đường dẫn không có endpoint trả `404 RESOURCE_NOT_FOUND`; method không được endpoint hỗ trợ trả
   `405 METHOD_NOT_ALLOWED` kèm header `Allow`. Chỉ lỗi ngoài dự kiến mới trả `500 INTERNAL_ERROR`.
 

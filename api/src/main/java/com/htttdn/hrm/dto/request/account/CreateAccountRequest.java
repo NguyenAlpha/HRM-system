@@ -13,7 +13,7 @@ public record CreateAccountRequest(
     @Size(min = 3, max = 30)
     @Pattern(
         regexp = "^[A-Za-z0-9._-]+$",
-        message = "username may contain only letters, numbers, dots, underscores, and hyphens"
+        message = "chỉ gồm chữ, số, dấu chấm, gạch dưới, gạch ngang"
     )
     String username
 ) {
