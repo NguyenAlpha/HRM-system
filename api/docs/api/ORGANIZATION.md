@@ -25,8 +25,10 @@ Quản lý danh mục cơ cấu tổ chức, địa điểm làm việc và ch�
 | `POST /api/job-positions` | `organization.manage` | Tạo một chức danh mới |
 | `PUT /api/job-positions/{positionId}` | `organization.manage` | Cập nhật nội dung và trạng thái chức danh |
 | `DELETE /api/job-positions/{positionId}` | `organization.manage` | Xóa mềm chức danh không còn được sử dụng |
+| `GET /api/company` | Đã đăng nhập | Xem thông tin doanh nghiệp |
+| `PUT /api/company` | `company.manage` | Cập nhật thông tin doanh nghiệp |
 
-Tất cả endpoint yêu cầu Bearer token. `HR_MANAGER`, `DIRECTOR` và `COMPANY_OWNER` được seed `organization.read`; `COMPANY_OWNER` và `SYSTEM_ADMIN` được seed `organization.manage`; `SYSTEM_ADMIN` cũng có `organization.read`.
+Tất cả endpoint yêu cầu Bearer token. `HR_MANAGER`, `DIRECTOR` và `COMPANY_OWNER` được seed `organization.read`; `COMPANY_OWNER` và `SYSTEM_ADMIN` được seed `organization.manage`; `SYSTEM_ADMIN` cũng có `organization.read`. `company.manage` là permission `SYSTEM_ONLY` chỉ seed cho `COMPANY_OWNER`.
 
 ---
 
@@ -422,3 +424,46 @@ Thực hiện soft delete: đặt `isActive=false` và ghi `deletedAt`. Endpoint
 - `account_role_assignments.work_location_id` mô tả phạm vi địa điểm mà một role được phép thao tác.
 - API danh mục Organization không tự tạo, thay đổi hoặc thu hồi các assignment trên.
 - Khi tạo hay điều chuyển nhân sự, client lấy ID hợp lệ từ danh mục này rồi gửi sang API employee tương ứng.
+
+---
+
+## Thông tin doanh nghiệp
+
+Hệ thống phục vụ một doanh nghiệp, lưu ở bản ghi duy nhất `company_profile` (`id = 1`). `SYSTEM_ADMIN`
+nhập thông tin này khi [khởi tạo Company Owner](ORGANIZATION_COMPANY_OWNER_ADMIN.md); sau khi bàn giao,
+chỉ Company Owner (`company.manage`) sửa. Mọi người đăng nhập đều xem được vì tên, mã số thuế và địa chỉ
+in trên phiếu lương.
+
+### GET `/api/company`
+
+Trả `404 RESOURCE_NOT_FOUND` nếu doanh nghiệp chưa được khởi tạo.
+
+```json
+{
+  "success": true,
+  "data": {
+    "code": "ACME",
+    "name": "Công ty TNHH ACME",
+    "taxCode": "0101234567",
+    "phone": "02812345678",
+    "email": "lienhe@acme.vn",
+    "address": "1 Lê Lợi, Quận 1, TP.HCM",
+    "updatedAt": "2026-10-16T10:00:00Z"
+  }
+}
+```
+
+### PUT `/api/company`
+
+Thay toàn bộ các trường; trường tùy chọn để trống hoặc `null` thì bị xóa.
+
+| Field | Type | Bắt buộc | Ràng buộc |
+|:------|:-----|:--------:|:----------|
+| `code` | string | ✅ | Mã doanh nghiệp, tối đa 30 ký tự |
+| `name` | string | ✅ | Tên doanh nghiệp, tối đa 200 ký tự |
+| `taxCode` | string | ❌ | Mã số thuế, tối đa 30 ký tự |
+| `phone` | string | ❌ | Tối đa 20 ký tự |
+| `email` | string | ❌ | Email hợp lệ, tối đa 100 ký tự |
+| `address` | string | ❌ | Địa chỉ đăng ký |
+
+Múi giờ (`timezone`) không sửa qua API.

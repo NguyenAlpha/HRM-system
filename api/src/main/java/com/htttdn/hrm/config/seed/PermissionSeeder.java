@@ -114,6 +114,12 @@ public class PermissionSeeder implements ApplicationRunner {
             PermissionModule.ORGANIZATION,
             "Khởi tạo tài khoản Chủ sở hữu doanh nghiệp đầu tiên của công ty"
         ),
+        systemPermission(
+            "company.manage",
+            "Cập nhật thông tin doanh nghiệp",
+            PermissionModule.ORGANIZATION,
+            "Cập nhật tên, mã số thuế, liên hệ và địa chỉ của doanh nghiệp"
+        ),
         permission("request.self.read", "Xem đơn cá nhân", PermissionModule.REQUEST, "Xem các đơn từ của chính mình"),
         permission("request.self.create", "Tạo đơn cá nhân", PermissionModule.REQUEST, "Tạo và gửi đơn từ của chính mình"),
         permission("request.self.cancel", "Hủy đơn cá nhân", PermissionModule.REQUEST, "Hủy các đơn của chính mình khi còn đủ điều kiện"),

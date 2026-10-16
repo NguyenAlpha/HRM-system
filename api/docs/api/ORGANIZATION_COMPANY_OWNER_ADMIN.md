@@ -24,6 +24,14 @@ Tạo đồng thời hồ sơ employee tối thiểu, account đăng nhập và 
 
 ```json
 {
+  "company": {
+    "code": "ACME",
+    "name": "Công ty TNHH ACME",
+    "taxCode": "0101234567",
+    "phone": "02812345678",
+    "email": "lienhe@acme.vn",
+    "address": "1 Lê Lợi, Quận 1, TP.HCM"
+  },
   "employee": {
     "fullName": "Nguyen Van Chu",
     "workEmail": "owner@company.com",
@@ -41,6 +49,7 @@ Tạo đồng thời hồ sơ employee tối thiểu, account đăng nhập và 
 
 | Field | Type | Bắt buộc | Ràng buộc |
 |:------|:-----|:--------:|:----------|
+| `company` | object | ✅ | Thông tin doanh nghiệp, ghi đè bản ghi `company_profile` (tạo nếu chưa có); ràng buộc như `PUT /api/company` trong [ORGANIZATION.md](ORGANIZATION.md#thông-tin-doanh-nghiệp) |
 | `employee.fullName` | string | ✅ | Không rỗng, tối đa 200 ký tự |
 | `employee.workEmail` | string | ✅ | Email hợp lệ, tối đa 100 ký tự, duy nhất không phân biệt hoa thường |
 | `employee.phone` | string | ❌ | Tối đa 20 ký tự |
@@ -58,7 +67,8 @@ Mã nhân viên được server cấp theo dãy chung `NV0001`, `NV0002`… như
 Toàn bộ workflow nằm trong một transaction:
 
 ```text
-Employee ACTIVE
+Company profile
+    → Employee ACTIVE
     → Account PENDING
     → EMPLOYEE / SELF
     → Activation token

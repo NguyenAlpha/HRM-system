@@ -1019,6 +1019,50 @@
         "tags" : [ "auth-controller" ]
       }
     },
+    "/api/company" : {
+      "get" : {
+        "operationId" : "get_1",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultCompanyProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "company-profile-controller" ]
+      },
+      "put" : {
+        "operationId" : "update_7",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CompanyProfileRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultCompanyProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "company-profile-controller" ]
+      }
+    },
     "/api/company-holidays" : {
       "get" : {
         "operationId" : "list_11",
@@ -2298,7 +2342,7 @@
     },
     "/api/leave-requests/{id}" : {
       "get" : {
-        "operationId" : "get_3",
+        "operationId" : "get_4",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -2791,7 +2835,7 @@
     },
     "/api/payroll/periods/{id}" : {
       "get" : {
-        "operationId" : "get_2",
+        "operationId" : "get_3",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -3562,7 +3606,7 @@
     },
     "/api/resignation-requests/{id}" : {
       "get" : {
-        "operationId" : "get_1",
+        "operationId" : "get_2",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -5105,6 +5149,29 @@
           "data" : {
             "anyOf" : [ {
               "$ref" : "#/components/schemas/CompanyHolidayResponse"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
+      "ApiResultCompanyProfileResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/CompanyProfileResponse"
             }, {
               "type" : "null"
             } ]
@@ -7057,6 +7124,69 @@
         },
         "required" : [ "createdAt", "holidayDate", "id", "name" ]
       },
+      "CompanyProfileRequest" : {
+        "type" : "object",
+        "properties" : {
+          "address" : {
+            "type" : [ "string", "null" ]
+          },
+          "code" : {
+            "type" : "string",
+            "maxLength" : 30,
+            "minLength" : 0
+          },
+          "email" : {
+            "type" : [ "string", "null" ],
+            "format" : "email",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "name" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "phone" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 20,
+            "minLength" : 0
+          },
+          "taxCode" : {
+            "type" : [ "string", "null" ],
+            "maxLength" : 30,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "code", "name" ]
+      },
+      "CompanyProfileResponse" : {
+        "type" : "object",
+        "properties" : {
+          "address" : {
+            "type" : [ "string", "null" ]
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : [ "string", "null" ]
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : [ "string", "null" ]
+          },
+          "taxCode" : {
+            "type" : [ "string", "null" ]
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "address", "code", "email", "name", "phone", "taxCode", "updatedAt" ]
+      },
       "CompleteAccountActivationRequest" : {
         "type" : "object",
         "properties" : {
@@ -7257,6 +7387,9 @@
           "account" : {
             "$ref" : "#/components/schemas/CreateCompanyOwnerAccountRequest"
           },
+          "company" : {
+            "$ref" : "#/components/schemas/CompanyProfileRequest"
+          },
           "directorAppointmentReason" : {
             "type" : "string",
             "maxLength" : 500,
@@ -7275,7 +7408,7 @@
             "minLength" : 0
           }
         },
-        "required" : [ "account", "directorAppointmentReason", "effectiveFrom", "employee", "ownershipReason" ]
+        "required" : [ "account", "company", "directorAppointmentReason", "effectiveFrom", "employee", "ownershipReason" ]
       },
       "CreateOrganizationUnitRequest" : {
         "type" : "object",
