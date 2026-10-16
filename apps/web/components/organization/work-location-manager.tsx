@@ -62,11 +62,11 @@ import {
 const CODE_PATTERN = /^[A-Z][A-Z0-9_-]*$/
 
 const locationSchema = z.object({
-  code: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự").regex(CODE_PATTERN, "Chữ hoa, số, gạch dưới/ngang; bắt đầu bằng chữ cái"),
-  name: z.string().trim().min(1, "Bắt buộc").max(150, "Tối đa 150 ký tự"),
+  code: z.string().trim().min(1, "Bắt buộc").max(12, "Tối đa 12 ký tự").regex(CODE_PATTERN, "Chữ hoa, số, gạch dưới/ngang; bắt đầu bằng chữ cái"),
+  name: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự"),
   locationType: z.string().min(1, "Bắt buộc"),
   address: z.string().trim().min(1, "Bắt buộc"),
-  phone: z.string().trim().max(20, "Tối đa 20 ký tự").optional(),
+  phone: z.string().trim().max(12, "Tối đa 12 ký tự").optional(),
   parentLocationId: z.string().optional(),
   isActive: z.string(),
 })

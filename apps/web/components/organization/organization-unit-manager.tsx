@@ -62,8 +62,8 @@ import {
 const CODE_PATTERN = /^[A-Z][A-Z0-9_-]*$/
 
 const unitSchema = z.object({
-  code: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự").regex(CODE_PATTERN, "Chữ hoa, số, gạch dưới/ngang; bắt đầu bằng chữ cái"),
-  name: z.string().trim().min(1, "Bắt buộc").max(150, "Tối đa 150 ký tự"),
+  code: z.string().trim().min(1, "Bắt buộc").max(20, "Tối đa 20 ký tự").regex(CODE_PATTERN, "Chữ hoa, số, gạch dưới/ngang; bắt đầu bằng chữ cái"),
+  name: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự"),
   unitType: z.string().min(1, "Bắt buộc"),
   parentUnitId: z.string().optional(),
   isActive: z.string(),

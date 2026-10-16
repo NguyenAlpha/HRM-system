@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import { login } from "@/lib/auth/client"
+import { friendlyErrorMessage } from "@/lib/api-helpers"
 import { AuthApiError, type Portal } from "@/lib/auth/types"
 
 interface LoginFormProps {
@@ -85,7 +86,7 @@ const loginSchema = z.object({
     .string()
     .trim()
     .min(1, "Vui lòng nhập tên đăng nhập hoặc email")
-    .max(100, "Tối đa 100 ký tự"),
+    .max(50, "Tối đa 50 ký tự"),
   password: z
     .string()
     .min(1, "Vui lòng nhập mật khẩu")
@@ -203,9 +204,9 @@ export function LoginForm({ portal }: LoginFormProps) {
             {error && (
               <Alert variant="destructive" className="mt-6 animate-in fade-in slide-in-from-top-1">
                 <TriangleAlert />
-                <AlertTitle className="text-xs tracking-wide">{error.code}</AlertTitle>
+                <AlertTitle>Không thể đăng nhập</AlertTitle>
                 <AlertDescription>
-                  {error.message}
+                  {friendlyErrorMessage(error.code, error.message, error.field)}
                   {error.code === "ADMIN_PORTAL_REQUIRED" && (
                     <Link className="mt-1 block font-semibold underline" href="/admin/login">
                       Đăng nhập tại cổng Admin

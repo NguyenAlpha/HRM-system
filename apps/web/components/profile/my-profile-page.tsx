@@ -302,11 +302,11 @@ function EditProfileDialog({ profile, onClose, onSaved }: {
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5">
               <Label htmlFor="self-phone">Điện thoại</Label>
-              <Input id="self-phone" type="tel" maxLength={20} value={phone} onChange={(event) => setPhone(event.target.value)} />
+              <Input id="self-phone" type="tel" maxLength={12} value={phone} onChange={(event) => setPhone(event.target.value)} />
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="self-email">Email cá nhân</Label>
-              <Input id="self-email" type="email" maxLength={100} value={personalEmail}
+              <Input id="self-email" type="email" maxLength={30} value={personalEmail}
                 onChange={(event) => setPersonalEmail(event.target.value)} />
             </div>
             <div className="grid gap-1.5 sm:col-span-2">
@@ -334,11 +334,11 @@ function EditProfileDialog({ profile, onClose, onSaved }: {
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="self-major">Chuyên ngành</Label>
-              <Input id="self-major" maxLength={200} value={major} onChange={(event) => setMajor(event.target.value)} />
+              <Input id="self-major" maxLength={30} value={major} onChange={(event) => setMajor(event.target.value)} />
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="self-institution">Trường / đơn vị đào tạo</Label>
-              <Input id="self-institution" maxLength={200} value={institution}
+              <Input id="self-institution" maxLength={30} value={institution}
                 onChange={(event) => setInstitution(event.target.value)} />
             </div>
             {error && <p role="alert" className="text-sm text-destructive sm:col-span-2">{error}</p>}

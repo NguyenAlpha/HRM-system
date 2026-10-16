@@ -83,7 +83,7 @@ const createRequestSchema = z
     workLocationId: z.string().optional(),
     effectiveFrom: z.string().min(1, "Bắt buộc"),
     effectiveTo: z.string().optional(),
-    reason: z.string().trim().min(1, "Bắt buộc").max(500, "Tối đa 500 ký tự"),
+    reason: z.string().trim().min(1, "Bắt buộc").max(100, "Tối đa 100 ký tự"),
   })
   .refine((data) => data.scopeType !== "ORG_UNIT" || !!data.organizationUnitId, {
     message: "Bắt buộc chọn đơn vị tổ chức",
@@ -632,6 +632,7 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
               <Textarea
                 id="action-note"
                 rows={3}
+                maxLength={100}
                 value={actionNote}
                 onChange={(event) => setActionNote(event.target.value)}
               />

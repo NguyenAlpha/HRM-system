@@ -27,7 +27,7 @@ import {
   type AccountRoleAssignment,
 } from "@/lib/role-assignment"
 
-const REASON_MAX = 500
+const REASON_MAX = 100
 
 /** HR picks an employee and one of their roles, then asks for it to be taken back. */
 export function RoleRevocationRequestDialog({ onClose, onCreated, onSessionExpired }: {

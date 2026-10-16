@@ -587,7 +587,7 @@ function PunchDialog({ employeeId, record, month, busy, onClose, onSubmit }: {
             <p className="text-xs text-muted-foreground sm:col-span-2">Giờ ra nhỏ hơn giờ vào được hiểu là sáng hôm sau (ca đêm).</p>
             <div className="grid gap-1.5 sm:col-span-2">
               <Label htmlFor="punch-note">Lý do và căn cứ</Label>
-              <Textarea id="punch-note" required rows={3} maxLength={1000} value={note} onChange={(event) => setNote(event.target.value)} />
+              <Textarea id="punch-note" required rows={3} maxLength={100} value={note} onChange={(event) => setNote(event.target.value)} />
             </div>
             {error && <p role="alert" className="text-sm text-destructive sm:col-span-2">{error}</p>}
           </div>
