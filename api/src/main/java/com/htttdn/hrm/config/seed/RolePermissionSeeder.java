@@ -124,6 +124,7 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "employee.delete",
             "organization.read",
             "organization.manage",
+            "company.manage",
             "holiday.read",
             "request.read",
             "attendance.read",

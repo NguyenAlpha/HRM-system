@@ -8,6 +8,11 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record CreateOrganizationCompanyOwnerRequest(
+    /** The company being handed over; replaces the seeded placeholder. */
+    @NotNull
+    @Valid
+    CompanyProfileRequest company,
+
     @NotNull
     @Valid
     CreateCompanyOwnerEmployeeRequest employee,

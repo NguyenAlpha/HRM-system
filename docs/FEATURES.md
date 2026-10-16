@@ -155,7 +155,9 @@ Cả bốn danh mục có tab riêng trên `/organization` (và `/admin/organiza
 nhánh. Chức danh quản lý không tự sinh quyền quản lý trong hệ thống.
 
 `SYSTEM_ADMIN` có riêng `POST /api/system/organization/company-owner` để tạo Company Owner đầu
-tiên, dùng một lần khi khởi tạo hệ thống.
+tiên, dùng một lần khi khởi tạo hệ thống; bước này nhập luôn thông tin doanh nghiệp (`company_profile`).
+Sau khi bàn giao, chỉ Company Owner sửa thông tin doanh nghiệp qua `PUT /api/company`
+(`company.manage`); mọi người đăng nhập xem được qua `GET /api/company`.
 
 ---
 

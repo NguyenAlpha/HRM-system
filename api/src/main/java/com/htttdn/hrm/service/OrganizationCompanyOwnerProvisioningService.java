@@ -26,19 +26,22 @@ public class OrganizationCompanyOwnerProvisioningService {
     private final AccountRoleAssignmentCommandService roleAssignmentCommandService;
     private final AccountRoleAssignmentMapper roleAssignmentMapper;
     private final CurrentAccountProvider currentAccountProvider;
+    private final CompanyProfileService companyProfileService;
 
     public OrganizationCompanyOwnerProvisioningService(
         EmployeeProvisioningService employeeProvisioningService,
         AccountProvisioningService accountProvisioningService,
         AccountRoleAssignmentCommandService roleAssignmentCommandService,
         AccountRoleAssignmentMapper roleAssignmentMapper,
-        CurrentAccountProvider currentAccountProvider
+        CurrentAccountProvider currentAccountProvider,
+        CompanyProfileService companyProfileService
     ) {
         this.employeeProvisioningService = employeeProvisioningService;
         this.accountProvisioningService = accountProvisioningService;
         this.roleAssignmentCommandService = roleAssignmentCommandService;
         this.roleAssignmentMapper = roleAssignmentMapper;
         this.currentAccountProvider = currentAccountProvider;
+        this.companyProfileService = companyProfileService;
     }
 
     @PreAuthorize("hasAuthority('organization.company_owner.bootstrap')")
@@ -54,6 +57,7 @@ public class OrganizationCompanyOwnerProvisioningService {
         }
 
         Long actorAccountId = currentAccountProvider.accountId();
+        companyProfileService.save(request.company());
         Employee employee = createCompanyOwnerEmployee(request.employee());
         AccountProvisioningResponse accountProvisioning = accountProvisioningService.provisionPendingAccount(
             employee.getId(),
