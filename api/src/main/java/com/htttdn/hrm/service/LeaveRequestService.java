@@ -56,6 +56,7 @@ public class LeaveRequestService {
     private final AttendanceService attendanceService;
     private final LeaveEntitlementService leaveEntitlementService;
     private final ApproverResolver approverResolver;
+    private final NotificationService notificationService;
 
     public LeaveRequestService(
         LeaveRequestRepository leaveRequestRepository,
@@ -65,7 +66,8 @@ public class LeaveRequestService {
         EmployeeAccessScopeService employeeAccessScopeService,
         AttendanceService attendanceService,
         LeaveEntitlementService leaveEntitlementService,
-        ApproverResolver approverResolver
+        ApproverResolver approverResolver,
+        NotificationService notificationService
     ) {
         this.leaveRequestRepository = leaveRequestRepository;
         this.employeeRepository = employeeRepository;
@@ -75,14 +77,15 @@ public class LeaveRequestService {
         this.attendanceService = attendanceService;
         this.leaveEntitlementService = leaveEntitlementService;
         this.approverResolver = approverResolver;
+        this.notificationService = notificationService;
     }
 
-    @PreAuthorize("hasAnyAuthority('request.self.create', 'request.manage')")
+    @PreAuthorize("hasAuthority('request.self.create')")
     public LeaveRequestView createDraft(CreateLeaveCommand command) {
         validateCommand(command);
+        requireOwnEmployee(command.employeeId());
         Employee employee = employeeRepository.findByIdAndDeletedAtIsNull(command.employeeId())
             .orElseThrow(() -> employeeNotFound(command.employeeId()));
-        requireSelfOrScopedAccess(command.employeeId(), REQUEST_MANAGE);
 
         Instant now = Instant.now();
         LeaveRequest request = LeaveRequest.builder()
@@ -105,10 +108,10 @@ public class LeaveRequestService {
      * Sends a draft to its approver: the direct manager, else the Director, else the Company Owner.
      * Leave of the Director or Company Owner needs no approval and is recorded as approved at once.
      */
-    @PreAuthorize("hasAnyAuthority('request.self.create', 'request.manage')")
+    @PreAuthorize("hasAuthority('request.self.create')")
     public LeaveRequestView submit(Long requestId) {
         LeaveRequest request = findForUpdate(requestId);
-        requireSelfOrScopedAccess(request.getEmployee().getId(), REQUEST_MANAGE);
+        requireOwnEmployee(request.getEmployee().getId());
         requireStatus(request, LeaveRequestStatus.DRAFT);
 
         Instant now = Instant.now();
@@ -125,13 +128,14 @@ public class LeaveRequestService {
         request.setApproverEmployee(approver);
         request.setStatus(LeaveRequestStatus.PENDING);
         request.setUpdatedAt(now);
+        notificationService.notifyLeaveSubmitted(request);
         return toView(request);
     }
 
-    @PreAuthorize("hasAnyAuthority('request.self.cancel', 'request.manage')")
+    @PreAuthorize("hasAuthority('request.self.cancel')")
     public LeaveRequestView cancel(Long requestId) {
         LeaveRequest request = findForUpdate(requestId);
-        requireSelfOrScopedAccess(request.getEmployee().getId(), REQUEST_MANAGE);
+        requireOwnEmployee(request.getEmployee().getId());
         if (request.getStatus() != LeaveRequestStatus.DRAFT
             && request.getStatus() != LeaveRequestStatus.PENDING) {
             throw alreadyProcessed("Only DRAFT or PENDING leave requests can be cancelled");
@@ -148,6 +152,7 @@ public class LeaveRequestService {
         requireApprover(request);
         requireStatus(request, LeaveRequestStatus.PENDING);
         applyApproval(request, reviewComment);
+        notificationService.notifyLeaveDecision(request);
         return toView(request);
     }
 
@@ -175,6 +180,7 @@ public class LeaveRequestService {
         requireApprover(request);
         requireStatus(request, LeaveRequestStatus.PENDING);
         review(request, LeaveRequestStatus.REJECTED, reviewComment);
+        notificationService.notifyLeaveDecision(request);
         return toView(request);
     }
 
@@ -314,6 +320,14 @@ public class LeaveRequestService {
             return;
         }
         employeeAccessScopeService.requireEmployeeAccess(employeeId, scopedPermission);
+    }
+
+    private void requireOwnEmployee(Long employeeId) {
+        Employee self = findCurrentAccount().getEmployee();
+        if (self == null || !employeeId.equals(self.getId())) {
+            throw new ForbiddenException(ErrorCode.FORBIDDEN,
+                "Only the employee can create, submit, or cancel their own leave request");
+        }
     }
 
     private LeaveRequest findForUpdate(Long requestId) {

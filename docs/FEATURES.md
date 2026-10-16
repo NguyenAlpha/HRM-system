@@ -21,6 +21,7 @@ Quy ước trạng thái:
 | Cơ cấu tổ chức | Đủ | `/organization`, `/admin/organization` |
 | Ca làm việc và ngày lễ | Đủ | `/organization` |
 | Nghỉ phép | Đủ | `/leave-requests` |
+| Thông báo đơn nghỉ | API có sẵn | Nút thông báo đang ẩn trong HRM Workspace |
 | Đơn nghỉ việc | Đủ | `/resignations` |
 | Chấm công | Đủ | `/attendance` |
 | Lương, bảo hiểm, thuế | Đủ | `/payroll`, `/payslips`, `/allowances`, thẻ lương trong `/employees/{id}` |
@@ -205,6 +206,12 @@ Chi tiết: [api/docs/api/ATTENDANCE.md](../api/docs/api/ATTENDANCE.md).
 | Xem số dư phép năm | `GET /api/leave-entitlements/employees/{id}` |
 
 Vòng đời: `DRAFT` → `PENDING` → `APPROVED` / `REJECTED`, hoặc `CANCELLED`.
+Chỉ nhân viên gắn với account đang đăng nhập được tạo, gửi hoặc hủy đơn của mình; form không cho nhập mã nhân viên.
+
+Khi gửi đơn, người duyệt được chốt và HR có quyền xem nhân viên nhận thông báo trong ứng dụng.
+Khi đơn được duyệt hoặc từ chối, nhân viên nộp đơn nhận thông báo kết quả.
+Nút thông báo đang ẩn trên giao diện; API vẫn lưu và trả thông báo cho đúng account.
+Chi tiết API: [NOTIFICATIONS.md](../api/docs/api/NOTIFICATIONS.md).
 
 Nghỉ `ANNUAL` có hạn mức năm: 12 ngày, chia tỷ lệ theo số tháng làm việc nếu vào làm giữa năm (tháng
 vào làm tính trọn tháng). Không cộng theo thâm niên, không chuyển phép dư sang năm sau, HR không điều

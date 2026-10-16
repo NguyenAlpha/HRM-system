@@ -37,7 +37,6 @@ import {
   workforceApi,
 } from "@/components/workforce/workforce-shared"
 import { apiErrorMessage } from "@/lib/api-helpers"
-import { findEmployeeByCode } from "@/lib/employee"
 import type { Page } from "@/lib/pagination"
 import { getOrganizationUnitOptions } from "@/lib/reference"
 import {
@@ -90,14 +89,16 @@ type Tab = "mine" | "approvals" | "all"
 type Review = { leave: LeaveRequest; approve: boolean }
 type Run = (success: string, action: () => Promise<unknown>) => Promise<boolean>
 
-export function LeaveRequestsPage({ openCreate = false, initialTab }: { openCreate?: boolean; initialTab?: Tab }) {
+export function LeaveRequestsPage({ openCreate = false, initialTab, initialRequestId }: {
+  openCreate?: boolean; initialTab?: Tab; initialRequestId?: number
+}) {
   const { session } = usePortalSession()
   const self = session.account.employee
   const permissions = new Set(session.account.permissions.map((permission) => permission.code))
   const canReadOwn = !!self && permissions.has("request.self.read")
   const canReadAll = permissions.has("request.read")
   const canManage = permissions.has("request.manage")
-  const canCreate = (!!self && permissions.has("request.self.create")) || canManage
+  const canCreate = !!self && permissions.has("request.self.create")
 
   const [revision, setRevision] = useState(0)
   const { busy, run } = useWorkforceAction(() => setRevision((value) => value + 1))
@@ -105,6 +106,20 @@ export function LeaveRequestsPage({ openCreate = false, initialTab }: { openCrea
   const [selectedTab, setTab] = useState<Tab>(initialTab ?? (canReadOwn ? "mine" : "all"))
   const [creating, setCreating] = useState(canCreate && openCreate)
   const [review, setReview] = useState<Review | null>(null)
+  const [highlight, setHighlight] = useState<{ id: number; leave: LeaveRequest | null; error: string | null } | null>(null)
+  const highlighted = highlight && highlight.id === initialRequestId ? highlight.leave : null
+  const highlightError = highlight && highlight.id === initialRequestId ? highlight.error : null
+
+  useEffect(() => {
+    if (!initialRequestId) return
+    let active = true
+    workforceApi<LeaveRequest>(`leave-requests/${initialRequestId}`)
+      .then((leave) => { if (active) setHighlight({ id: initialRequestId, leave, error: null }) })
+      .catch((caught: unknown) => {
+        if (active) setHighlight({ id: initialRequestId, leave: null, error: apiErrorMessage(caught) })
+      })
+    return () => { active = false }
+  }, [initialRequestId, revision])
 
   // Approval follows the reporting line, not a permission: only the approver fixed on submit reviews.
   useEffect(() => {
@@ -118,7 +133,6 @@ export function LeaveRequestsPage({ openCreate = false, initialTab }: { openCrea
   const isApprover = (leave: LeaveRequest) => !!self && leave.approverEmployeeId === self.id
   const actions: LeaveActions = {
     busy,
-    canManage,
     isApprover,
     selfId: self?.id,
     run,
@@ -137,6 +151,13 @@ export function LeaveRequestsPage({ openCreate = false, initialTab }: { openCrea
       />
 
       <div className="mt-6 grid gap-4">
+        {highlightError && <ErrorAlert error={highlightError} />}
+        {highlighted && (
+          <Card>
+            <CardHeader><CardTitle>Đơn #{highlighted.id} từ thông báo</CardTitle></CardHeader>
+            <CardContent><LeaveTable leaves={[highlighted]} showEmployee emptyText="Không tìm thấy đơn." actions={actions} /></CardContent>
+          </Card>
+        )}
         {!canReadOwn && !canReadAll && !showApprovals && <p role="alert">Tài khoản chưa có quyền xem đơn nghỉ.</p>}
 
         {(canReadOwn || canReadAll || showApprovals) && (
@@ -183,7 +204,6 @@ export function LeaveRequestsPage({ openCreate = false, initialTab }: { openCrea
 /** What a row menu may offer; each tab passes the same set. */
 type LeaveActions = {
   busy: boolean
-  canManage: boolean
   isApprover: (leave: LeaveRequest) => boolean
   selfId: number | undefined
   run: Run
@@ -338,13 +358,13 @@ function LeaveTable({ leaves, showEmployee = false, emptyText, actions }: {
   emptyText: string
   actions: LeaveActions
 }) {
-  const { busy, canManage, isApprover, selfId, run, onReview } = actions
+  const { busy, isApprover, selfId, run, onReview } = actions
   const columns = showEmployee ? 8 : 7
   const menu = (leave: LeaveRequest): ReactNode[] => {
     const own = leave.employeeId === selfId
     const open = leave.status === "DRAFT" || leave.status === "PENDING"
     return [
-      leave.status === "DRAFT" && (own || canManage) && (
+      leave.status === "DRAFT" && own && (
         <RowActionItem key="submit" icon={Send} disabled={busy}
           onClick={() => void run("Đã gửi đơn", () => workforceApi(`leave-requests/${leave.id}/submit`, "POST"))}>
           Gửi duyệt
@@ -356,7 +376,7 @@ function LeaveTable({ leaves, showEmployee = false, emptyText, actions }: {
       isApprover(leave) && leave.status === "PENDING" && (
         <RowActionItem key="reject" icon={X} destructive disabled={busy} onClick={() => onReview({ leave, approve: false })}>Từ chối</RowActionItem>
       ),
-      open && (own || canManage) && (
+      open && own && (
         <RowActionItem key="cancel" icon={Ban} destructive disabled={busy}
           onClick={() => void run("Đã hủy đơn", () => workforceApi(`leave-requests/${leave.id}/cancel`, "POST"))}>
           Hủy đơn
@@ -446,11 +466,10 @@ function BalanceCard({ balance }: { balance: LeaveBalance }) {
   )
 }
 
-type Applicant = { id: number; employeeCode: string; fullName: string }
+type Applicant = { id: number }
 
 /**
- * A new leave request. Employees file for themselves; holders of request.manage may file for
- * anyone in their scope and choose another salary treatment. "Gửi duyệt" saves and submits at once.
+ * A new leave request always belongs to the signed-in employee. "Gửi duyệt" saves and submits at once.
  */
 function CreateLeaveDialog({ canManage, self, busy, run, onClose }: {
   canManage: boolean
@@ -459,9 +478,6 @@ function CreateLeaveDialog({ canManage, self, busy, run, onClose }: {
   run: Run
   onClose: () => void
 }) {
-  const [code, setCode] = useState(self?.employeeCode ?? "")
-  const debouncedCode = useDebouncedValue(code.trim())
-  const [lookup, setLookup] = useState<{ code: string; applicant: Applicant | null } | null>(null)
   const [balance, setBalance] = useState<{ employeeId: number; value: LeaveBalance | null } | null>(null)
   const [leaveType, setLeaveType] = useState<LeaveType>("ANNUAL")
   const [treatment, setTreatment] = useState<LeaveSalaryTreatment>("EMPLOYER_PAID")
@@ -472,19 +488,7 @@ function CreateLeaveDialog({ canManage, self, busy, run, onClose }: {
   const [customMinutes, setCustomMinutes] = useState("480")
   const [reason, setReason] = useState("")
 
-  const isSelf = !!self && debouncedCode.toLowerCase() === self.employeeCode.toLowerCase()
-  const needsLookup = canManage && !isSelf && debouncedCode !== ""
-  useEffect(() => {
-    if (!needsLookup) return
-    let active = true
-    findEmployeeByCode("hrm", debouncedCode)
-      .then((found) => { if (active) setLookup({ code: debouncedCode, applicant: found }) })
-      .catch(() => { if (active) setLookup({ code: debouncedCode, applicant: null }) })
-    return () => { active = false }
-  }, [debouncedCode, needsLookup])
-  const applicant: Applicant | null = isSelf || !canManage ? self
-    : lookup?.code === debouncedCode ? lookup.applicant
-    : null
+  const applicant = self
 
   useEffect(() => {
     if (!applicant) return
@@ -527,18 +531,7 @@ function CreateLeaveDialog({ canManage, self, busy, run, onClose }: {
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            {canManage && (
-              <div className="grid gap-1.5 sm:col-span-2">
-                <Label htmlFor="leave-employee">Mã nhân viên</Label>
-                <Input id="leave-employee" required placeholder="NV0001" value={code} onChange={(event) => setCode(event.target.value)} />
-                <p className="text-xs text-muted-foreground">
-                  {applicant ? `${applicant.fullName}${applicantBalance ? ` · còn ${toDays(applicantBalance.remainingMinutes, applicantBalance.standardDayMinutes)} ngày phép năm ${applicantBalance.year}` : ""}`
-                    : needsLookup && lookup?.code === debouncedCode ? `Không tìm thấy nhân viên ${debouncedCode}.`
-                    : "Nhập mã nhân viên cần tạo đơn."}
-                </p>
-              </div>
-            )}
-            {!canManage && applicantBalance && (
+            {applicantBalance && (
               <p className="rounded-lg border bg-muted/40 px-3 py-2 text-sm sm:col-span-2">
                 Bạn còn <strong>{toDays(applicantBalance.remainingMinutes, applicantBalance.standardDayMinutes)} ngày</strong> phép năm {applicantBalance.year}.
               </p>
