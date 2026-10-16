@@ -11,7 +11,7 @@ import jakarta.validation.constraints.Size;
 public record CreateRoleRequest(
     @NotBlank
     @Size(max = 30)
-    @Pattern(regexp = "(?!ROLE_)[A-Z][A-Z0-9_]*", message = "Use uppercase role codes without the ROLE_ prefix")
+    @Pattern(regexp = "(?!ROLE_)[A-Z][A-Z0-9_]*", message = "chỉ gồm chữ hoa, số, gạch dưới và không bắt đầu bằng ROLE_")
     String code,
 
     @NotBlank
