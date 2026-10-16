@@ -137,11 +137,11 @@ function EditCompanyDialog({ company, onClose, onSaved }: {
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5 sm:col-span-2">
               <Label htmlFor="company-name">Tên doanh nghiệp</Label>
-              <Input id="company-name" required maxLength={200} value={name} onChange={(event) => setName(event.target.value)} />
+              <Input id="company-name" required maxLength={40} value={name} onChange={(event) => setName(event.target.value)} />
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="company-code">Mã doanh nghiệp</Label>
-              <Input id="company-code" required maxLength={30} value={code} onChange={(event) => setCode(event.target.value)} />
+              <Input id="company-code" required maxLength={20} value={code} onChange={(event) => setCode(event.target.value)} />
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="company-tax-code">Mã số thuế</Label>
@@ -149,11 +149,11 @@ function EditCompanyDialog({ company, onClose, onSaved }: {
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="company-phone">Điện thoại</Label>
-              <Input id="company-phone" type="tel" maxLength={20} value={phone} onChange={(event) => setPhone(event.target.value)} />
+              <Input id="company-phone" type="tel" maxLength={12} value={phone} onChange={(event) => setPhone(event.target.value)} />
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="company-email">Email</Label>
-              <Input id="company-email" type="email" maxLength={100} value={email} onChange={(event) => setEmail(event.target.value)} />
+              <Input id="company-email" type="email" maxLength={30} value={email} onChange={(event) => setEmail(event.target.value)} />
             </div>
             <div className="grid gap-1.5 sm:col-span-2">
               <Label htmlFor="company-address">Địa chỉ</Label>

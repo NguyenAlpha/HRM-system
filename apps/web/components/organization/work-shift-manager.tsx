@@ -62,8 +62,8 @@ const minutes = (label: string, min: number) =>
   z.string().trim().min(1, "Bắt buộc").refine((value) => Number.isInteger(Number(value)) && Number(value) >= min, `${label} phải là số nguyên ≥ ${min}`)
 
 const shiftSchema = z.object({
-  code: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự").regex(CODE_PATTERN, "Chữ hoa, số, gạch dưới/ngang; bắt đầu bằng chữ cái"),
-  name: z.string().trim().min(1, "Bắt buộc").max(100, "Tối đa 100 ký tự"),
+  code: z.string().trim().min(1, "Bắt buộc").max(20, "Tối đa 20 ký tự").regex(CODE_PATTERN, "Chữ hoa, số, gạch dưới/ngang; bắt đầu bằng chữ cái"),
+  name: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự"),
   startTime: z.string().min(1, "Bắt buộc"),
   endTime: z.string().min(1, "Bắt buộc"),
   crossesMidnight: z.string(),

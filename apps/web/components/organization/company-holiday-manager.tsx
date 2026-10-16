@@ -221,7 +221,7 @@ function HolidayDialog({ defaultYear, onClose, onSaved }: {
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="holiday-name">Tên ngày lễ</Label>
-              <Input id="holiday-name" required maxLength={150} placeholder="Quốc khánh"
+              <Input id="holiday-name" required maxLength={30} placeholder="Quốc khánh"
                 value={name} onChange={(event) => setName(event.target.value)} />
             </div>
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}

@@ -194,7 +194,7 @@ export function AccountActionDialog({ portal, account, kind, onClose, onDone, on
         {kind === "delete" && (
           <div className="grid gap-1.5">
             <Label htmlFor="account-delete-reason">Lý do xóa</Label>
-            <Textarea id="account-delete-reason" maxLength={500} value={reason} disabled={running}
+            <Textarea id="account-delete-reason" maxLength={100} value={reason} disabled={running}
               placeholder="Ví dụ: tạo nhầm, gõ sai email" onChange={(event) => setReason(event.target.value)} />
           </div>
         )}

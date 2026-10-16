@@ -23,7 +23,7 @@ import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import type { Portal } from "@/lib/auth/types"
 import { listAccountRoleAssignments, revokeAccountRole, type AccountRoleAssignment } from "@/lib/role-assignment"
 
-const REASON_MAX = 500
+const REASON_MAX = 100
 
 /**
  * Revokes one role assignment of an account. Given an assignment it revokes that one; otherwise it

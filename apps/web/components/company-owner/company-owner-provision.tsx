@@ -26,35 +26,35 @@ import { bootstrapCompanyOwner, type CompanyOwnerProvisioningResult } from "@/li
 
 const bootstrapSchema = z
   .object({
-    companyName: z.string().trim().min(1, "Bắt buộc").max(200, "Tối đa 200 ký tự"),
-    companyCode: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự"),
+    companyName: z.string().trim().min(1, "Bắt buộc").max(40, "Tối đa 40 ký tự"),
+    companyCode: z.string().trim().min(1, "Bắt buộc").max(20, "Tối đa 20 ký tự"),
     companyTaxCode: z.string().trim().max(30, "Tối đa 30 ký tự").optional(),
-    companyPhone: z.string().trim().max(20, "Tối đa 20 ký tự").optional(),
+    companyPhone: z.string().trim().max(12, "Tối đa 12 ký tự").optional(),
     companyEmail: z
       .string()
       .trim()
-      .max(100, "Tối đa 100 ký tự")
+      .max(30, "Tối đa 30 ký tự")
       .regex(/^$|^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Email không hợp lệ")
       .optional(),
     companyAddress: z.string().trim().optional(),
-    fullName: z.string().trim().min(1, "Bắt buộc").max(200, "Tối đa 200 ký tự"),
+    fullName: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự"),
     workEmail: z
       .string()
       .trim()
       .min(1, "Bắt buộc")
-      .max(100, "Tối đa 100 ký tự")
+      .max(30, "Tối đa 30 ký tự")
       .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Email không hợp lệ"),
-    phone: z.string().max(20, "Tối đa 20 ký tự").optional(),
+    phone: z.string().max(12, "Tối đa 12 ký tự").optional(),
     hireDate: z.string().min(1, "Bắt buộc"),
     username: z
       .string()
       .trim()
       .min(3, "Tối thiểu 3 ký tự")
-      .max(50, "Tối đa 50 ký tự")
+      .max(30, "Tối đa 30 ký tự")
       .regex(/^[A-Za-z0-9._-]+$/, "Chỉ gồm chữ, số, dấu chấm, gạch dưới, gạch ngang"),
     effectiveFrom: z.string().min(1, "Bắt buộc"),
-    ownershipReason: z.string().trim().min(1, "Bắt buộc").max(500, "Tối đa 500 ký tự"),
-    directorAppointmentReason: z.string().trim().min(1, "Bắt buộc").max(500, "Tối đa 500 ký tự"),
+    ownershipReason: z.string().trim().min(1, "Bắt buộc").max(100, "Tối đa 100 ký tự"),
+    directorAppointmentReason: z.string().trim().min(1, "Bắt buộc").max(100, "Tối đa 100 ký tự"),
   })
   .refine((data) => data.effectiveFrom >= data.hireDate, {
     message: "Ngày hiệu lực không được trước ngày vào làm",

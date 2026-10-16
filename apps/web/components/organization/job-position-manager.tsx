@@ -61,8 +61,8 @@ import {
 const CODE_PATTERN = /^[A-Z][A-Z0-9_-]*$/
 
 const positionSchema = z.object({
-  code: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự").regex(CODE_PATTERN, "Chữ hoa, số, gạch dưới/ngang; bắt đầu bằng chữ cái"),
-  title: z.string().trim().min(1, "Bắt buộc").max(150, "Tối đa 150 ký tự"),
+  code: z.string().trim().min(1, "Bắt buộc").max(20, "Tối đa 20 ký tự").regex(CODE_PATTERN, "Chữ hoa, số, gạch dưới/ngang; bắt đầu bằng chữ cái"),
+  title: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự"),
   description: z.string().max(1000, "Tối đa 1000 ký tự").optional(),
   isManagerial: z.string(),
   isActive: z.string(),

@@ -82,9 +82,9 @@ const roleSchema = z.object({
     .string()
     .trim()
     .min(1, "Bắt buộc")
-    .max(50, "Tối đa 50 ký tự")
+    .max(30, "Tối đa 30 ký tự")
     .regex(CODE_PATTERN, "Chữ hoa, số, gạch dưới; bắt đầu bằng chữ cái; không bắt đầu bằng ROLE_"),
-  name: z.string().trim().min(1, "Bắt buộc").max(150, "Tối đa 150 ký tự"),
+  name: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự"),
   description: z.string().max(1000, "Tối đa 1000 ký tự").optional(),
   grantPolicy: z.enum(ROLE_GRANT_POLICIES),
 })

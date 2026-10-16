@@ -28,7 +28,7 @@ const provisionSchema = z.object({
     .string()
     .trim()
     .min(3, "Tối thiểu 3 ký tự")
-    .max(50, "Tối đa 50 ký tự")
+    .max(30, "Tối đa 30 ký tự")
     .regex(/^[A-Za-z0-9._-]+$/, "Chỉ gồm chữ, số, dấu chấm, gạch dưới, gạch ngang"),
 })
 

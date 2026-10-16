@@ -31,13 +31,13 @@ import {
 } from "@/lib/employee"
 
 const sensitiveSchema = z.object({
-  nationalId: z.string().max(30, "Tối đa 30 ký tự"),
-  personalEmail: z.string().max(100, "Tối đa 100 ký tự"),
+  nationalId: z.string().max(15, "Tối đa 15 ký tự"),
+  personalEmail: z.string().max(30, "Tối đa 30 ký tự"),
   address: z.string(),
-  taxCode: z.string().max(30, "Tối đa 30 ký tự"),
-  bankName: z.string().max(150, "Tối đa 150 ký tự"),
-  bankAccountNumber: z.string().max(50, "Tối đa 50 ký tự"),
-  bankAccountHolder: z.string().max(200, "Tối đa 200 ký tự"),
+  taxCode: z.string().max(20, "Tối đa 20 ký tự"),
+  bankName: z.string().max(50, "Tối đa 50 ký tự"),
+  bankAccountNumber: z.string().max(20, "Tối đa 20 ký tự"),
+  bankAccountHolder: z.string().max(50, "Tối đa 50 ký tự"),
 }).refine((data) => !data.personalEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.personalEmail), {
   message: "Email cá nhân không hợp lệ",
   path: ["personalEmail"],

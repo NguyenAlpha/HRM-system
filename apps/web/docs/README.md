@@ -65,6 +65,10 @@ Mọi bảng báo cáo có nút **Xuất CSV** (UTF-8 có BOM, mở thẳng bằ
 
 Danh sách nhân sự và tài khoản có ô tìm kiếm, bộ lọc nâng cao (trạng thái, đơn vị, vị trí, vai trò) và sắp xếp theo cột; tìm kiếm và lọc chạy ở API nên áp dụng trên toàn bộ dữ liệu, không chỉ trang đang xem.
 
+Lỗi API hiển thị cho người dùng qua `apiErrorMessage` (`lib/api-helpers.ts`): không hiện mã lỗi hay câu tiếng
+Anh của API mà dùng câu tiếng Việt theo `error.code`; lỗi validation ghép tên trường với câu tiếng Việt của API.
+Giới hạn độ dài trên form (`maxLength`, `.max()` của zod) khớp với `@Size` của request DTO.
+
 Browser gọi API qua BFF và không nhận JWT. Việc hiển thị nút dựa trên permission chỉ phục vụ giao diện; backend tiếp tục kiểm tra permission và scope cho mọi thao tác.
 
 Tài liệu Spring Boot API nằm tại [mục lục API](../../../api/docs/api/README.md). Quy trình chấm công và lương được mô tả riêng trong [ATTENDANCE.md](../../../api/docs/api/ATTENDANCE.md) và [PAYROLL.md](../../../api/docs/api/PAYROLL.md).

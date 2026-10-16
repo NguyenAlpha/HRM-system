@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { completeAccountActivation } from "@/lib/activation"
+import { friendlyErrorMessage } from "@/lib/api-helpers"
 import { AuthApiError } from "@/lib/auth/types"
 
 const activateSchema = z
@@ -98,8 +99,8 @@ export function ActivateAccountPage({ initialToken }: { initialToken: string }) 
                   {error && (
                     <Alert variant="destructive" className="animate-in fade-in slide-in-from-top-1">
                       <TriangleAlert />
-                      <AlertTitle className="text-xs tracking-wide">{error.code}</AlertTitle>
-                      <AlertDescription>{error.message}</AlertDescription>
+                      <AlertTitle>Không thể kích hoạt</AlertTitle>
+                      <AlertDescription>{friendlyErrorMessage(error.code, error.message, error.field)}</AlertDescription>
                     </Alert>
                   )}
 

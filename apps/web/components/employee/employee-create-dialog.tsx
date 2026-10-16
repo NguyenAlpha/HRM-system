@@ -69,17 +69,17 @@ const EMPLOYMENT_TYPE_ITEMS: Record<string, string> = { ...EMPLOYMENT_TYPE_LABEL
 
 const createEmployeeSchema = z
   .object({
-    fullName: z.string().trim().min(1, "Bắt buộc").max(200, "Tối đa 200 ký tự"),
+    fullName: z.string().trim().min(1, "Bắt buộc").max(40, "Tối đa 40 ký tự"),
     hireDate: z.string().min(1, "Bắt buộc"),
     dateOfBirth: z.string().min(1, "Bắt buộc chọn ngày sinh")
       .refine((value) => !value || isEligibleEmployeeBirthDate(value), "Nhân sự phải đủ 17 tuổi"),
     gender: z.string(),
     highestEducationLevel: z.string(),
-    major: z.string().max(200, "Tối đa 200 ký tự").optional(),
-    institution: z.string().max(200, "Tối đa 200 ký tự").optional(),
+    major: z.string().max(30, "Tối đa 30 ký tự").optional(),
+    institution: z.string().max(30, "Tối đa 30 ký tự").optional(),
     graduationYear: z.string().optional(),
-    workEmail: z.string().max(100, "Tối đa 100 ký tự").optional(),
-    phone: z.string().max(20, "Tối đa 20 ký tự").optional(),
+    workEmail: z.string().max(30, "Tối đa 30 ký tự").optional(),
+    phone: z.string().max(12, "Tối đa 12 ký tự").optional(),
     organizationUnitId: z.string().min(1, "Bắt buộc"),
     workLocationId: z.string().min(1, "Bắt buộc"),
     positionId: z.string().min(1, "Bắt buộc"),

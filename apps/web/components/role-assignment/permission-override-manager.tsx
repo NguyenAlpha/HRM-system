@@ -49,7 +49,7 @@ const overrideSchema = z.object({
   permissionId: z.string().min(1, "Bắt buộc"),
   effectiveFrom: z.string().min(1, "Bắt buộc"),
   effectiveTo: z.string().optional(),
-  reason: z.string().trim().min(1, "Bắt buộc").max(500, "Tối đa 500 ký tự"),
+  reason: z.string().trim().min(1, "Bắt buộc").max(100, "Tối đa 100 ký tự"),
 }).refine((data) => !data.effectiveTo || data.effectiveTo >= data.effectiveFrom, {
   message: "Ngày kết thúc không được trước ngày bắt đầu",
   path: ["effectiveTo"],
@@ -481,6 +481,7 @@ export function PermissionOverrideManager({ portal, onSessionExpired }: {
             <Textarea
               id="override-revocation-reason"
               rows={3}
+              maxLength={100}
               value={revocationReason}
               onChange={(event) => setRevocationReason(event.target.value)}
             />
