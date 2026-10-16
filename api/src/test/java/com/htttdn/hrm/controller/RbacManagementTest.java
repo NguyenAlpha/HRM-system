@@ -385,7 +385,8 @@ class RbacManagementTest {
     }
 
     private String roleCode() {
-        return "TEST_" + UUID.randomUUID().toString().replace("-", "").toUpperCase(java.util.Locale.ROOT);
+        // Role codes are capped at 30 characters.
+        return "TEST_" + UUID.randomUUID().toString().replace("-", "").substring(0, 24).toUpperCase(java.util.Locale.ROOT);
     }
 
     private String permissionCode() {

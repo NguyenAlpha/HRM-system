@@ -9,7 +9,7 @@ public record CreateRoleRevocationRequest(
     @NotNull
     Long assignmentId,
     @NotBlank
-    @Size(max = 500)
+    @Size(max = 100)
     String reason
 ) {
 }

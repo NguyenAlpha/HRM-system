@@ -5,31 +5,31 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
 public record UpdateEmployeeSensitiveRequest(
-    @Size(max = 30)
+    @Size(max = 15)
     @Nullable
     String nationalId,
 
     @Email
-    @Size(max = 100)
+    @Size(max = 30)
     @Nullable
     String personalEmail,
 
     @Nullable
     String address,
 
-    @Size(max = 30)
+    @Size(max = 20)
     @Nullable
     String taxCode,
 
-    @Size(max = 150)
+    @Size(max = 50)
     @Nullable
     String bankName,
 
-    @Size(max = 50)
+    @Size(max = 20)
     @Nullable
     String bankAccountNumber,
 
-    @Size(max = 200)
+    @Size(max = 50)
     @Nullable
     String bankAccountHolder
 ) {

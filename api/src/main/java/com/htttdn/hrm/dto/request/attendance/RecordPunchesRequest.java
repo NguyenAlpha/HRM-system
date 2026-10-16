@@ -25,7 +25,7 @@ public record RecordPunchesRequest(
 
     /** Why HR entered or corrected the punches; null when they come from the time clock. */
     @Nullable
-    @Size(max = 1000)
+    @Size(max = 100)
     String note
 ) {
 }

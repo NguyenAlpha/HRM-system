@@ -12,7 +12,7 @@ import jakarta.validation.constraints.Size;
 
 public record AssignAccountRoleRequest(
     @NotBlank
-    @Size(max = 50)
+    @Size(max = 30)
     @Pattern(regexp = "^[A-Z][A-Z0-9_]*$")
     String roleCode,
 
@@ -32,7 +32,7 @@ public record AssignAccountRoleRequest(
     LocalDate effectiveTo,
 
     @NotBlank
-    @Size(max = 500)
+    @Size(max = 100)
     String reason
 ) {
 }

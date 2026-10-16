@@ -10,7 +10,7 @@ public record UpdateOrganizationUnitRequest(
     Long parentUnitId,
 
     @NotBlank
-    @Size(max = 150)
+    @Size(max = 30)
     String name,
 
     @NotNull

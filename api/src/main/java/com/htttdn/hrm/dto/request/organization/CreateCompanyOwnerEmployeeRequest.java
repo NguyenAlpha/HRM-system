@@ -10,15 +10,15 @@ import jakarta.validation.constraints.Size;
 
 public record CreateCompanyOwnerEmployeeRequest(
     @NotBlank
-    @Size(max = 200)
+    @Size(max = 30)
     String fullName,
 
     @NotBlank
     @Email
-    @Size(max = 100)
+    @Size(max = 30)
     String workEmail,
 
-    @Size(max = 20)
+    @Size(max = 12)
     @Nullable
     String phone,
 

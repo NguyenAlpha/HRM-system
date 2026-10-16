@@ -10,13 +10,13 @@ public record UpdateWorkLocationRequest(
     Long parentLocationId,
 
     @NotBlank
-    @Size(max = 150)
+    @Size(max = 30)
     String name,
 
     @NotBlank
     String address,
 
-    @Size(max = 20)
+    @Size(max = 12)
     @Nullable
     String phone,
 

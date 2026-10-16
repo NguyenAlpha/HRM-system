@@ -8,23 +8,23 @@ import jakarta.validation.constraints.Size;
 /** The company's own details. Every field is replaced; null clears an optional one. */
 public record CompanyProfileRequest(
     @NotBlank
-    @Size(max = 30)
+    @Size(max = 20)
     String code,
 
     @NotBlank
-    @Size(max = 200)
+    @Size(max = 40)
     String name,
 
     @Size(max = 30)
     @Nullable
     String taxCode,
 
-    @Size(max = 20)
+    @Size(max = 12)
     @Nullable
     String phone,
 
     @Email
-    @Size(max = 100)
+    @Size(max = 30)
     @Nullable
     String email,
 

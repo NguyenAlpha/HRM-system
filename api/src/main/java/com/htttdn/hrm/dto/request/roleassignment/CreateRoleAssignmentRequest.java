@@ -15,7 +15,7 @@ public record CreateRoleAssignmentRequest(
     Long accountId,
 
     @NotBlank
-    @Size(max = 50)
+    @Size(max = 30)
     @Pattern(regexp = "^[A-Z][A-Z0-9_]*$")
     String roleCode,
 
@@ -34,7 +34,7 @@ public record CreateRoleAssignmentRequest(
     LocalDate effectiveTo,
 
     @NotBlank
-    @Size(max = 500)
+    @Size(max = 100)
     String reason
 ) {
 }
