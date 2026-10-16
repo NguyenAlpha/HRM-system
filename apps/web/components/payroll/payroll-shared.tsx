@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Check, Printer } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -12,8 +13,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
-import { money } from "@/components/workforce/workforce-shared"
-import { PAYROLL_PERIOD_STATUS_LABELS, type PayrollPeriodStatus, type Payslip } from "@/lib/workforce"
+import { money, workforceApi } from "@/components/workforce/workforce-shared"
+import { PAYROLL_PERIOD_STATUS_LABELS, type CompanyProfile, type PayrollPeriodStatus, type Payslip } from "@/lib/workforce"
 
 export const PERIOD_TONE: Record<PayrollPeriodStatus, "default" | "secondary" | "outline" | "destructive"> = {
   DRAFT: "outline",
@@ -77,11 +78,35 @@ function Line({ label, amount, sign = "", strong = false }: { label: string; amo
 }
 
 /** One employee's payslip laid out like a printed slip: who, earnings, deductions, net pay; "In" prints just the slip. */
+/** The company's name, tax code and address heading a printed sheet; shown only on paper. */
+export function CompanyPrintHeader() {
+  const [company, setCompany] = useState<CompanyProfile | null>(null)
+
+  useEffect(() => {
+    let active = true
+    // Printing still works without it, so a failure just leaves the header out.
+    workforceApi<CompanyProfile>("company")
+      .then((result) => { if (active) setCompany(result) })
+      .catch(() => undefined)
+    return () => { active = false }
+  }, [])
+
+  if (!company) return null
+  return (
+    <div className="hidden border-b pb-2 text-sm print:block">
+      <p className="font-semibold uppercase">{company.name}</p>
+      {company.taxCode && <p>Mã số thuế: {company.taxCode}</p>}
+      {company.address && <p>{company.address}</p>}
+    </div>
+  )
+}
+
 export function PayslipDialog({ payslip, onClose }: { payslip: Payslip; onClose: () => void }) {
   const earnings = payslip.items.filter((item) => item.componentType !== "DEDUCTION")
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
       <DialogContent className="print-area max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <CompanyPrintHeader />
         <DialogHeader>
           <DialogTitle>Phiếu lương tháng {periodLabel(payslip.periodYear, payslip.periodMonth)}</DialogTitle>
           <DialogDescription>Số liệu chốt tại thời điểm tính lương; hồ sơ thay đổi sau đó không làm đổi phiếu.</DialogDescription>

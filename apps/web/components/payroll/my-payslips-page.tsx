@@ -5,6 +5,7 @@ import { Eye, Printer } from "lucide-react"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
+  CompanyPrintHeader,
   PayslipDialog,
   hours,
   payslipDeductions,
@@ -161,6 +162,7 @@ function YearlyPayrollCard({ payslips, printable }: { payslips: Payslip[]; print
 
   return (
     <Card className={printable ? "print-area" : undefined}>
+      <div className="px-6"><CompanyPrintHeader /></div>
       <CardHeader>
         <CardTitle>Bảng lương năm {year}</CardTitle>
         <CardDescription>
