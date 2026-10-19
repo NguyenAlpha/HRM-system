@@ -678,103 +678,103 @@ quyền mặc định của system role, chưa tính permission override trên t
 tính phạm vi dữ liệu: có permission không đồng nghĩa với truy cập được mọi nhân viên. Custom role
 không có trong bảng vì permission của chúng do người có `rbac.manage` tự chọn.
 
-Ký hiệu cột: **EMP** `EMPLOYEE`, **HRM** `HR_MANAGER`, **PAC** `PAYROLL_ACCOUNTANT`,
+Ký hiệu cột: **EMP** `EMPLOYEE`, **HRM** `HR_MANAGER`, **MGR** `MANAGER`, **PAC** `PAYROLL_ACCOUNTANT`,
 **PAP** `PAYROLL_APPROVER`, **DIR** `DIRECTOR`, **CO** `COMPANY_OWNER`, **SA** `SYSTEM_ADMIN`.
 Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho custom role.
 
 ### Module `EMPLOYEE`
 
-| Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
-|:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
-| `profile.self.read` | ✓ | | | | | | |
-| `profile.self.update` | ✓ | | | | | | |
-| `employee.list.read` | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `employee.read` | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `employee.create` | | ✓ | | | ✓ | ✓ | |
-| `employee.update` | | ✓ | | | ✓ | ✓ | |
-| `employee.probation.confirm` | | ✓ | | | ✓ | ✓ | |
-| `employee.assignment.read` | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `employee.assignment.manage` | | ✓ | | | ✓ | ✓ | |
-| `employee.lifecycle.manage` | | ✓ | | | ✓ | ✓ | |
-| `employee.lifecycle.approve` | | | | | ✓ | | |
-| `employee.delete` | | ✓ | | | ✓ | ✓ | |
-| `employee.sensitive.read` | | ✓ | | | | | |
-| `employee.sensitive.manage` | | ✓ | | | | | |
+| Permission | EMP | HRM | MGR | PAC | PAP | DIR | CO | SA |
+|:-----------|:---:|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
+| `profile.self.read` | ✓ | | | | | | | |
+| `profile.self.update` | ✓ | | | | | | | |
+| `employee.list.read` | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `employee.read` | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `employee.create` | | ✓ | | | | ✓ | ✓ | |
+| `employee.update` | | ✓ | | | | ✓ | ✓ | |
+| `employee.probation.confirm` | | ✓ | | | | ✓ | ✓ | |
+| `employee.assignment.read` | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `employee.assignment.manage` | | ✓ | | | | ✓ | ✓ | |
+| `employee.lifecycle.manage` | | ✓ | | | | ✓ | ✓ | |
+| `employee.lifecycle.approve` | | | | | | ✓ | | |
+| `employee.delete` | | ✓ | | | | ✓ | ✓ | |
+| `employee.sensitive.read` | | ✓ | | | | | | |
+| `employee.sensitive.manage` | | ✓ | | | | | | |
 
 ### Module `ACCOUNT`
 
-| Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
-|:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
-| `account.read` | | | | | | ✓ | ✓ |
-| `account.manage` | | | | | | ✓ | ✓ |
-| `account.provision` | | ✓ | | | | ✓ | ✓ |
-| `account.activation.manage` | | | | | | ✓ | ✓ |
-| `account.role.assign` | | | | | | ✓ | ✓ |
-| `role.assignment.request` | | ✓ | | | | | |
-| `role.assignment.approve` `(S)` | | | | | | ✓ | |
-| `account.permission.override.manage` `(S)` | | | | | | ✓ | ✓ |
+| Permission | EMP | HRM | MGR | PAC | PAP | DIR | CO | SA |
+|:-----------|:---:|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
+| `account.read` | | | | | | | ✓ | ✓ |
+| `account.manage` | | | | | | | ✓ | ✓ |
+| `account.provision` | | ✓ | | | | | ✓ | ✓ |
+| `account.activation.manage` | | | | | | | ✓ | ✓ |
+| `account.role.assign` | | | | | | | ✓ | ✓ |
+| `role.assignment.request` | | ✓ | | | | | | |
+| `role.assignment.approve` `(S)` | | | | | | | ✓ | |
+| `account.permission.override.manage` `(S)` | | | | | | | ✓ | ✓ |
 
 ### Module `ORGANIZATION`
 
-| Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
-|:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
-| `organization.read` | | ✓ | | | ✓ | ✓ | ✓ |
-| `organization.manage` | | | | | | ✓ | ✓ |
-| `organization.change.approve` | | | | | ✓ | | |
-| `organization.company_owner.bootstrap` `(S)` | | | | | | | ✓ |
-| `company.manage` `(S)` | | | | | | ✓ | |
+| Permission | EMP | HRM | MGR | PAC | PAP | DIR | CO | SA |
+|:-----------|:---:|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
+| `organization.read` | | ✓ | ✓ | | | ✓ | ✓ | ✓ |
+| `organization.manage` | | | | | | | ✓ | ✓ |
+| `organization.change.approve` | | | | | | ✓ | | |
+| `organization.company_owner.bootstrap` `(S)` | | | | | | | | ✓ |
+| `company.manage` `(S)` | | | | | | | ✓ | |
 
 ### Module `REQUEST`
 
-| Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
-|:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
-| `request.self.read` | ✓ | | | | | | |
-| `request.self.create` | ✓ | | | | | | |
-| `request.self.cancel` | ✓ | | | | | | |
-| `request.read` | | ✓ | | | ✓ | ✓ | |
-| `request.final_approve` | | | | | ✓ | | |
-| `request.manage` | | ✓ | | | | | |
+| Permission | EMP | HRM | MGR | PAC | PAP | DIR | CO | SA |
+|:-----------|:---:|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
+| `request.self.read` | ✓ | | | | | | | |
+| `request.self.create` | ✓ | | | | | | | |
+| `request.self.cancel` | ✓ | | | | | | | |
+| `request.read` | | ✓ | ✓ | | | ✓ | ✓ | |
+| `request.final_approve` | | | | | | ✓ | | |
+| `request.manage` | | ✓ | | | | | | |
 
 ### Module `ATTENDANCE`
 
-| Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
-|:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
-| `attendance.self.read` | ✓ | | | | | | |
-| `attendance.read` | | ✓ | | | | ✓ | |
-| `attendance.manage` | | ✓ | | | | | |
-| `holiday.read` | ✓ | ✓ | | | | ✓ | |
+| Permission | EMP | HRM | MGR | PAC | PAP | DIR | CO | SA |
+|:-----------|:---:|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
+| `attendance.self.read` | ✓ | | | | | | | |
+| `attendance.read` | | ✓ | ✓ | | | | ✓ | |
+| `attendance.manage` | | ✓ | | | | | | |
+| `holiday.read` | ✓ | ✓ | | | | | ✓ | |
 
 ### Module `PAYROLL`
 
-| Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
-|:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
-| `payroll.self.read` | ✓ | | | | | | |
-| `payroll.self.print` | ✓ | | | | | | |
-| `compensation.read` | | ✓ | ✓ | | ✓ | ✓ | |
-| `compensation.manage` | | ✓ | ✓ | | | | |
-| `payroll.calculate` | | | ✓ | | | | |
-| `payroll.approve` | | | | ✓ | | | |
-| `payroll.mark_paid` | | | | ✓ | | | |
-| `payroll.lock` | | | | ✓ | | | |
+| Permission | EMP | HRM | MGR | PAC | PAP | DIR | CO | SA |
+|:-----------|:---:|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
+| `payroll.self.read` | ✓ | | | | | | | |
+| `payroll.self.print` | ✓ | | | | | | | |
+| `compensation.read` | | ✓ | | ✓ | | ✓ | ✓ | |
+| `compensation.manage` | | ✓ | | ✓ | | | | |
+| `payroll.calculate` | | | | ✓ | | | | |
+| `payroll.approve` | | | | | ✓ | | | |
+| `payroll.mark_paid` | | | | | ✓ | | | |
+| `payroll.lock` | | | | | ✓ | | | |
 
 ### Module `REPORT`
 
-| Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
-|:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
-| `report.hr.read` | | ✓ | | | | ✓ | |
-| `report.payroll.read` | | ✓ | ✓ | ✓ | | ✓ | |
+| Permission | EMP | HRM | MGR | PAC | PAP | DIR | CO | SA |
+|:-----------|:---:|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
+| `report.hr.read` | | ✓ | ✓ | | | | ✓ | |
+| `report.payroll.read` | | ✓ | | ✓ | ✓ | | ✓ | |
 
 ### Module `RBAC`
 
-| Permission | EMP | HRM | PAC | PAP | DIR | CO | SA |
-|:-----------|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
-| `rbac.manage` | | | | | | ✓ | ✓ |
+| Permission | EMP | HRM | MGR | PAC | PAP | DIR | CO | SA |
+|:-----------|:---:|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
+| `rbac.manage` | | | | | | | ✓ | ✓ |
 
 ### Tổng số permission mỗi role
 
-| EMP | HRM | PAC | PAP | DIR | CO | SA |
-|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
-| 9 | 23 | 7 | 7 | 15 | 25 | 13 |
+| EMP | HRM | MGR | PAC | PAP | DIR | CO | SA |
+|:---:|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
+| 9 | 23 | 7 | 7 | 7 | 15 | 25 | 13 |
 
 Một vài ranh giới dễ hiểu nhầm:
 
@@ -791,6 +791,10 @@ Một vài ranh giới dễ hiểu nhầm:
   `organization.change.approve` nhưng không quản trị account hay RBAC.
 - `SYSTEM_ADMIN` quản trị *truy cập* (tài khoản, role, permission override, danh mục tổ chức) và chỉ *xem* hồ sơ nhân sự; nghiệp vụ nhân sự, chấm công, lương, báo cáo và dữ liệu nhạy cảm thuộc các role nghiệp vụ. Tài khoản đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được khóa, phát mã kích hoạt, đổi role hoặc permission override, và tài khoản đang giữ `SYSTEM_ADMIN` cũng chỉ một System Admin khác được làm các việc đó (mở khóa vẫn được phép), nên người quản trị truy cập không chiếm được quyền chủ doanh nghiệp và ngược lại. Không ai được đổi permission override trên chính account của mình.
 - Chỉ `HR_MANAGER` có `employee.sensitive.read` và `employee.sensitive.manage`.
+- `MANAGER` (Quản lý đơn vị, `HR_ASSIGNABLE`) là role chỉ đọc cho quản lý chi nhánh hoặc trưởng
+  phòng: gán với scope `LOCATION` hoặc `ORG_UNIT` để xem hồ sơ, phân công, bảng công, đơn nghỉ và báo
+  cáo nhân sự của nhân viên trong phạm vi đó. Role không có lương, dữ liệu nhạy cảm hay quyền sửa
+  hồ sơ. Việc duyệt nghỉ phép và tăng ca không cần role này: quản lý trực tiếp luôn là người duyệt.
 
 ---
 

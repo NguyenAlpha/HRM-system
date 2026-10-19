@@ -77,6 +77,16 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "account.provision",
             "role.assignment.request"
         )),
+        // Chỉ xem nhân sự trong scope (LOCATION hoặc ORG_UNIT) của lần gán; không lương, không dữ liệu nhạy cảm.
+        role("MANAGER", List.of(
+            "employee.list.read",
+            "employee.read",
+            "employee.assignment.read",
+            "request.read",
+            "attendance.read",
+            "report.hr.read",
+            "organization.read"
+        )),
         role("PAYROLL_ACCOUNTANT", List.of(
             "employee.list.read",
             "employee.read",

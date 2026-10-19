@@ -89,7 +89,7 @@ Kết quả sắp xếp theo tên role, sau đó theo code. Đây là danh mục
 | `AUTO` | Từ chối; role chỉ do workflow hệ thống tự gán | Từ chối |
 | `SYSTEM_ONLY` | Từ chối; role chỉ được quản lý qua workflow chuyên biệt | Từ chối |
 
-Mọi system role nghiệp vụ được seed (`HR_MANAGER`, `PAYROLL_ACCOUNTANT`, `PAYROLL_APPROVER`, `DIRECTOR`) đều là `OWNER_APPROVAL`, nên đề xuất thu hồi các role này luôn chờ Company Owner duyệt.
+Các system role nghiệp vụ `HR_MANAGER`, `PAYROLL_ACCOUNTANT`, `PAYROLL_APPROVER` và `DIRECTOR` là `OWNER_APPROVAL`, nên đề xuất cấp hoặc thu hồi các role này luôn chờ Company Owner duyệt. Riêng `MANAGER` (Quản lý đơn vị, chỉ đọc trong scope `LOCATION` hoặc `ORG_UNIT`) là `HR_ASSIGNABLE`: đề xuất của HR được duyệt và tạo assignment ngay.
 
 Việc phân nhánh nằm ở service theo `grantPolicy` được seed cho role, không dựa vào tên role do client tự suy đoán. Khi phê duyệt, hệ thống kiểm tra lại account, role, scope, thời gian và các assignment đang tồn tại để tránh dữ liệu đã thay đổi trong lúc request chờ xử lý.
 

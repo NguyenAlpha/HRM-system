@@ -26,6 +26,7 @@ API gán trực tiếp chỉ chấp nhận role có `grantPolicy=HR_ASSIGNABLE` 
 |:-----|:----------------|:--------|
 | `EMPLOYEE` | `SELF` | Hệ thống tự gán khi tạo account; API này không được gán/thu hồi |
 | `HR_MANAGER` | `COMPANY` | Company Owner gán sau khi hồ sơ nhân sự và account đã được tạo |
+| `MANAGER` | `LOCATION`, `ORG_UNIT` | Quản lý đơn vị; truyền `workLocationId` hoặc `organizationUnitId` của chi nhánh/phòng ban được giao |
 | `PAYROLL_ACCOUNTANT` | `COMPANY` | Không truyền ID phạm vi |
 | `PAYROLL_APPROVER` | `COMPANY` | Không truyền ID phạm vi |
 | `DIRECTOR` | `COMPANY` | Company Owner đầu tiên được gán tự động; chỉ một assignment được phép hiệu lực trong cùng khoảng thời gian trên toàn doanh nghiệp |

@@ -126,7 +126,7 @@ Quan hệ báo cáo và quan hệ phân quyền không phải một. `manager_em
 Ví dụ phạm vi kế thừa:
 
 ```text
-DEPARTMENT_MANAGER @ HR
+MANAGER @ HR
 └── truy cập nhân viên thuộc HR
 
 EMPLOYEE @ SELF
@@ -144,9 +144,9 @@ EMPLOYEE @ SELF
 | `DIRECTOR` | `COMPANY` | System role đã seed | Phê duyệt cuối các quyết định nghiệp vụ |
 | `COMPANY_OWNER` | `COMPANY` | System role đã seed | Quản trị account, role và cấu hình công ty |
 | `SYSTEM_ADMIN` | `COMPANY` | System role đã seed | Bootstrap Company Owner và quản trị hệ thống |
-| `DEPARTMENT_MANAGER` | `ORG_UNIT` | Custom role đề xuất | Quản lý nhân viên, đơn từ và chấm công của một phòng ban |
+| `MANAGER` | `LOCATION` / `ORG_UNIT` | System role đã seed | Quản lý đơn vị: xem nhân viên, bảng công, đơn nghỉ và báo cáo nhân sự của một chi nhánh hoặc phòng ban |
 
-`DEPARTMENT_MANAGER` không được seed sẵn. Người có quyền quản trị RBAC tạo role này, chỉ chọn các permission `DELEGABLE`, rồi gán với scope `ORG_UNIT` phù hợp.
+`MANAGER` là một role dùng chung cho mọi cấp quản lý; phạm vi do scope của lần gán quyết định: `MANAGER @ LOCATION BRANCH-01` là quản lý chi nhánh Hà Nội (thấy cả kho con `WAREHOUSE-02`), `MANAGER @ ORG_UNIT OPERATIONS` là trưởng phòng Vận hành. Role chỉ đọc, không có lương hay dữ liệu nhạy cảm, và có chính sách `HR_ASSIGNABLE` nên HR gán được mà không cần Company Owner duyệt.
 
 Không nên tạo một role cho mọi chức danh. Chuyên viên và thực tập sinh có thể cùng chỉ mang role `EMPLOYEE` nếu đều chỉ sử dụng chức năng tự phục vụ.
 
@@ -156,7 +156,7 @@ Không nên tạo một role cho mọi chức danh. Chuyên viên và thực t�
 
 | Username | Đơn vị | Vị trí | Role assignment | Kết quả mong đợi |
 |---|---|---|---|---|
-| `hr_head` | `HR` | `HR_HEAD` | `DEPARTMENT_MANAGER / ORG_UNIT / HR` | Truy cập nhân viên Phòng Nhân sự, không truy cập phòng khác |
+| `hr_head` | `HR` | `HR_HEAD` | `MANAGER / ORG_UNIT / HR` | Truy cập nhân viên Phòng Nhân sự, không truy cập phòng khác |
 | `hr_specialist` | `HR` | `HR_SPECIALIST` | `EMPLOYEE / SELF` | Chỉ truy cập bản thân |
 | `hr_intern` | `HR` | `HR_INTERN` | `EMPLOYEE / SELF` | Chỉ truy cập bản thân |
 | `hr_global` | `HR` | `HR_SPECIALIST` | `HR_MANAGER / COMPANY` | Truy cập nhân sự toàn công ty |
@@ -183,7 +183,7 @@ Dữ liệu seed được chia theo trách nhiệm và chạy theo `@Order`. M�
 | 60 | `OrganizationStructureSeeder` | `COMPANY_SEED_ENABLED` | 5 địa điểm `HO`, `BRANCH-01`, `BRANCH-02`, `WAREHOUSE-01`, `WAREHOUSE-02`; đơn vị `BOARD` và 3 phòng ban `HR`, `ACCOUNTING`, `OPERATIONS` |
 | 70 | `JobPositionSeeder` | `COMPANY_SEED_ENABLED` | 7 chức danh |
 | 80 | `WorkShiftSeeder` | `COMPANY_SEED_ENABLED` | Ca hành chính `OFFICE_DAY` 08:00–17:00 |
-| 100 | `RoleSeeder` | `RBAC_SEED_ENABLED` (mặc định bật) | 7 system role |
+| 100 | `RoleSeeder` | `RBAC_SEED_ENABLED` (mặc định bật) | 8 system role |
 | 200 | `PermissionSeeder` | `RBAC_SEED_ENABLED` | Danh mục 47 permission |
 | 300 | `RolePermissionSeeder` | `RBAC_SEED_ENABLED` | Permission mặc định của từng system role |
 | 400 | `SystemAdminSeeder` | `ADMIN_SEED_ENABLED` (mặc định bật) | Account bootstrap và gán role `SYSTEM_ADMIN` đã có sẵn |
@@ -292,6 +292,20 @@ File mặc định có `hr` (Nhân viên rồi Chuyên viên nhân sự, HR_MANA
 lương 11 → 12,5 triệu từ 3 tháng trước; 1 con phụ thuộc từ 6 tháng trước), cùng mật khẩu
 `password`. Lương đóng bảo hiểm bằng lương cơ bản.
 
+Để thấy quản lý theo chi nhánh, file còn có hai chi nhánh, tất cả thuộc phòng Vận hành, vùng lương 1,
+mật khẩu `password`:
+
+| Username | Địa điểm | Chức danh | Role | Quản lý trực tiếp |
+|---|---|---|---|---|
+| `branch-hn` | `BRANCH-01` Hà Nội | Quản lý chi nhánh | `MANAGER @ LOCATION`, `EMPLOYEE` | `owner` |
+| `staff-hn1`, `staff-hn2` | `BRANCH-01` | Nhân viên | `EMPLOYEE` | `branch-hn` |
+| `warehouse-hn` | `WAREHOUSE-02` (kho con của Hà Nội) | Giám sát kho | `EMPLOYEE` | `branch-hn` |
+| `branch-dn` | `BRANCH-02` Đà Nẵng (từ 12 tháng trước, trước đó ở trụ sở) | Quản lý chi nhánh | `MANAGER @ LOCATION`, `EMPLOYEE` | `owner` |
+| `staff-dn1`, `staff-dn2` | `BRANCH-02` | Nhân viên | `EMPLOYEE` | `branch-dn` |
+
+`branch-hn` chỉ thấy 4 người ở Hà Nội và kho Hà Nội, `branch-dn` chỉ thấy 3 người ở Đà Nẵng; mỗi
+người có đơn nghỉ đã duyệt và đơn sắp tới chờ quản lý chi nhánh của mình duyệt.
+
 Đơn từ và ngày công khác thường trong file mặc định:
 
 | Người | Đơn nghỉ | Ngày công khác | Yêu cầu cấp role |
@@ -322,8 +336,8 @@ Có sẵn vài khoản điều chỉnh: thưởng cho `hr`, khấu trừ hoàn t
 công và đơn nghỉ của tháng đó, như khi dùng thật; muốn sửa công những tháng này thì tắt seed lương.
 
 Đây là dữ liệu thật đang có, khác với bộ dữ liệu đề xuất ở mục 6: seeder chưa tạo các nhóm cấp
-`TEAM`, các chức danh `HR_HEAD`/`HR_INTERN`, role `DEPARTMENT_MANAGER` hay các account theo phòng
-ban. Muốn kiểm thử các tình huống ở mục 6.1 thì phải tạo tay qua API sau khi bootstrap.
+`TEAM`, các chức danh `HR_HEAD`/`HR_INTERN` hay các account theo phòng ban; quản lý theo chi nhánh
+thì đã có sẵn (`branch-hn`, `branch-dn` giữ `MANAGER` @ `LOCATION`). Muốn kiểm thử các tình huống ở mục 6.1 thì phải tạo tay qua API sau khi bootstrap.
 
 > `JobPositionSeeder` tạo các chức danh `BRANCH_MANAGER`, `WAREHOUSE_SUPERVISOR` và `TEAM_LEAD`.
 > Đây chỉ là **chức danh**; các system role trùng tên đã bị loại khỏi danh mục role. Trùng tên

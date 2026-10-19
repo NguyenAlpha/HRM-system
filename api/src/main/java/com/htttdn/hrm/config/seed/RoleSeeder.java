@@ -43,6 +43,12 @@ public class RoleSeeder implements ApplicationRunner {
             RoleGrantPolicy.OWNER_APPROVAL
         ),
         new RoleDefinition(
+            "MANAGER",
+            "Quản lý đơn vị",
+            "Theo dõi nhân sự, chấm công và đơn nghỉ trong phạm vi chi nhánh hoặc phòng ban được giao",
+            RoleGrantPolicy.HR_ASSIGNABLE
+        ),
+        new RoleDefinition(
             "PAYROLL_ACCOUNTANT",
             "Kế toán tiền lương",
             "Tính toán và kiểm tra bảng lương toàn công ty",
