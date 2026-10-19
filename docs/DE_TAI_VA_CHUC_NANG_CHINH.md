@@ -14,9 +14,9 @@ Hệ thống hỗ trợ quản lý tập trung hồ sơ nhân viên, cơ cấu t
 4. **Quản lý hồ sơ nhân viên:** Tạo, tra cứu, cập nhật hồ sơ; theo dõi phân công, điều chuyển và vòng đời làm việc.
 5. **Quản lý cơ cấu tổ chức:** Quản lý đơn vị, địa điểm làm việc, chức danh và mối liên hệ giữa các bộ phận.
 6. **Quản lý ca làm việc và ngày lễ:** Khai báo ca, thời gian làm việc và ngày nghỉ lễ của công ty.
-7. **Quản lý nghỉ phép:** Tạo, gửi, duyệt, từ chối hoặc hủy đơn nghỉ; theo dõi và điều chỉnh số dư phép năm.
-8. **Quản lý chấm công và tăng ca:** Ghi nhận giờ vào/ra, chuẩn bị bảng công, xử lý dữ liệu thiếu và duyệt tăng ca.
-9. **Quản lý lương, bảo hiểm và thuế:** Lưu dữ liệu đầu vào, tính và duyệt kỳ lương, lập phiếu lương, xác nhận thanh toán, khóa kỳ và xuất bảng lương.
+7. **Quản lý nghỉ phép:** Tạo, gửi, duyệt, từ chối hoặc hủy đơn nghỉ; theo dõi số dư phép năm.
+8. **Quản lý chấm công và tăng ca:** Ghi nhận giờ vào/ra từ máy chấm công, chuẩn bị bảng công, xử lý dữ liệu thiếu và duyệt tăng ca.
+9. **Quản lý lương, bảo hiểm và thuế:** Lưu dữ liệu đầu vào, nhập khoản thưởng/phụ cấp/khấu trừ theo kỳ, tính và duyệt kỳ lương, lập phiếu lương, xác nhận thanh toán, khóa kỳ và xuất bảng lương.
 10. **Báo cáo nhân sự và lương:** Tổng hợp phân bố nhân sự theo trình độ, thâm niên và phân bố lương cơ bản theo phạm vi được cấp quyền.
 
 ## III. Mô tả chi tiết các chức năng chính
@@ -127,51 +127,53 @@ Hệ thống hỗ trợ quản lý tập trung hồ sơ nhân viên, cơ cấu t
 
 ### 7. Quản lý nghỉ phép
 
-- **Người sử dụng:** Nhân viên lập đơn, người có thẩm quyền duyệt và HR quản lý hạn mức.
-- **Luồng chính:** Nhân viên tạo đơn nháp, gửi duyệt hoặc hủy. Người duyệt xem đơn chờ, chấp thuận hoặc từ chối. Nhân viên và người có quyền xem lịch sử đơn, số dư phép năm; HR có thể điều chỉnh hạn mức và nhập phép chuyển từ năm trước.
+- **Người sử dụng:** Nhân viên lập đơn, người có thẩm quyền duyệt và HR theo dõi số dư phép.
+- **Luồng chính:** Nhân viên tạo đơn nháp, gửi duyệt hoặc hủy. Người duyệt xem đơn chờ, chấp thuận hoặc từ chối. Nhân viên và người có quyền xem lịch sử đơn và số dư phép năm.
 - **Vòng đời:** `DRAFT` → `PENDING` → `APPROVED` hoặc `REJECTED`; đơn cũng có thể chuyển sang `CANCELLED` theo quy tắc nghiệp vụ.
-- **Quy tắc:** Phép năm có hạn mức cơ bản 12 ngày, được cộng theo thâm niên và tính tỷ lệ nếu vào làm giữa năm. Khi xét số dư, các đơn đang chờ cũng được tính để tránh duyệt vượt hạn mức. Đơn được duyệt cập nhật số phút nghỉ vào bảng công; cách trả lương phụ thuộc loại nghỉ.
+- **Quy tắc:** Phép năm có hạn mức 12 ngày, tính tỷ lệ theo số tháng làm việc nếu vào làm giữa năm. Khi xét số dư, các đơn đang chờ cũng được tính để tránh duyệt vượt hạn mức. Đơn được duyệt cập nhật số phút nghỉ vào bảng công; cách trả lương phụ thuộc loại nghỉ.
 - **Kết quả:** Đơn nghỉ và số dư phép được theo dõi thống nhất với chấm công, tính lương.
 
 **Thông tin của đơn nghỉ:** Nhân viên, loại nghỉ, khoảng thời gian, lý do, trạng thái và cách xử lý lương. Các loại hiện có là `ANNUAL` (phép năm), `SICK` (ốm), `MATERNITY` (thai sản), `UNPAID` (không lương) và `OTHER` (khác).
 
 **Các bước xử lý:** Nhân viên tạo đơn `DRAFT`, kiểm tra nội dung rồi gửi thành `PENDING`. Người duyệt xem các đơn đang chờ trong phạm vi được giao và chọn duyệt hoặc từ chối. Khi duyệt, hệ thống kiểm tra số dư nếu là phép năm, sau đó ghi số phút nghỉ lên bản ghi công tương ứng. Đơn hủy hoặc từ chối không tiếp tục được tính như ngày nghỉ đã duyệt.
 
-**Cách tính số dư:** Hạn mức nạp sẵn năm 2026 là 12 ngày cơ bản, cộng một ngày cho mỗi đủ 5 năm thâm niên và chia tỷ lệ khi vào làm giữa năm. Số dư được lưu và đối chiếu theo phút công. Chỉ đơn `ANNUAL` trừ hạn mức; đơn `PENDING` cũng được tạm tính khi kiểm tra khả năng duyệt các đơn khác. HR có thể điều chỉnh hạn mức kèm lý do và nhập phép chuyển năm trước; hệ thống chưa tự chuyển phép sang năm kế tiếp.
+**Cách tính số dư:** Mỗi năm có 12 ngày phép; người vào làm giữa năm được chia tỷ lệ theo số tháng làm việc, tháng vào làm tính trọn tháng (Bộ luật Lao động 2019, Điều 113). Hạn mức không lưu trong database mà được tính lại mỗi lần từ ngày vào làm và các đơn nghỉ, đối chiếu theo phút công. Chỉ đơn `ANNUAL` trừ hạn mức; đơn `PENDING` cũng được tạm tính khi kiểm tra khả năng duyệt các đơn khác, và duyệt đơn vượt số dư bị chặn. Phép không cộng theo thâm niên, không chuyển phần còn dư sang năm sau và HR không điều chỉnh tay hạn mức.
 
 **Liên hệ tính lương:** Hệ thống tự suy ra cách trả lương từ loại nghỉ: phép năm do doanh nghiệp trả, nghỉ ốm hoặc thai sản theo bảo hiểm xã hội, nghỉ không lương hoặc loại khác mặc định không trả. Người có `request.manage` mới được ghi đè khi có trường hợp nghiệp vụ phù hợp. Nghỉ có lương tăng số phút được trả lương trong bảng công; nghỉ không lương hoặc do bảo hiểm chi trả không tăng số phút này.
 
 ### 8. Quản lý chấm công và tăng ca
 
-- **Người sử dụng:** Nhân viên chấm vào/ra; HR đối soát; người được cấp quyền duyệt tăng ca.
-- **Luồng chính:** Hệ thống chuẩn bị bản ghi công cho tháng. Nhân viên ghi nhận giờ bắt đầu và kết thúc làm việc. HR xử lý ngày thiếu lần chấm, xem và điều chỉnh dữ liệu thuộc phạm vi quản lý. Người duyệt xác nhận số phút tăng ca và hệ số tương ứng.
+- **Người sử dụng:** Nhân viên xem bảng công của mình; HR ghi nhận và đối soát giờ chấm; quản lý trực tiếp duyệt tăng ca.
+- **Luồng chính:** Hệ thống chuẩn bị bản ghi công cho tháng. Giờ vào/ra lấy từ máy chấm công của công ty và được ghi vào hệ thống qua API ghi nhận giờ chấm; nhân viên không tự chấm trên web mà chỉ xem bảng công của mình. HR xử lý ngày thiếu lần chấm, xem và điều chỉnh dữ liệu thuộc phạm vi quản lý. Người duyệt xác nhận số phút tăng ca và hệ số tương ứng.
 - **Quy tắc:** Ngày làm việc chưa có dữ liệu được đánh dấu `MISSING_PUNCH`; tính lương không thể hoàn tất khi kỳ còn trạng thái này. Giờ làm vào Chủ nhật hoặc ngày lễ chỉ được tính trả theo quy trình duyệt tăng ca. Khi kỳ lương đã duyệt, việc sửa dữ liệu công liên quan bị chặn.
 - **Kết quả:** Bảng công phản ánh ngày làm, nghỉ và tăng ca đã được đối soát để làm đầu vào cho kỳ lương.
 
 **Các bước trong tháng:**
 
 1. HR chuẩn bị bảng công tháng. Với ngày làm việc chưa có dữ liệu, hệ thống tạo bản ghi `MISSING_PUNCH`; gọi lại thao tác chuẩn bị không tạo trùng.
-2. Nhân viên chấm vào và chấm ra; thời điểm được máy chủ ghi nhận. Hệ thống đối chiếu ca hiệu lực trong ngày để tính phút đã làm, phút được trả lương, phút đến muộn và phút về sớm.
+2. Giờ vào và giờ ra của từng ngày được ghi nhận từ máy chấm công qua `POST /api/attendance/punches` (quyền `attendance.manage`); HR cũng dùng đường này để nhập hoặc sửa giờ chấm kèm ghi chú. Hệ thống đối chiếu ca hiệu lực trong ngày để tính phút đã làm, phút được trả lương, phút đến muộn và phút về sớm.
 3. HR xem bản ghi theo nhân viên và thời gian, đối soát những ngày thiếu lần chấm hoặc vắng mặt, nhập số phút và ghi chú hợp lệ. Đơn nghỉ được duyệt có thể tự cập nhật phút nghỉ trên bảng công.
-4. Người có quyền duyệt tăng ca xác nhận số phút, hệ số và việc khoản tăng ca có được đánh dấu miễn thuế hay không. Phút tăng ca được tách khỏi phút công thường.
+4. Quản lý trực tiếp của nhân viên (nếu không có thì Giám đốc, rồi Chủ doanh nghiệp) duyệt tăng ca, xác nhận số phút, hệ số và việc khoản tăng ca có được đánh dấu miễn thuế hay không. Phút tăng ca được tách khỏi phút công thường.
 
 **Trạng thái ngày công:** Bảng công có thể ghi đi làm, nghỉ có lương, nghỉ không lương, nghỉ thai sản, nghỉ ốm, vắng không phép, ngày lễ hoặc thiếu dữ liệu chấm công. `MISSING_PUNCH` phải được giải quyết trước khi tính lương. Một ngày Chủ nhật hoặc ngày lễ không tự sinh phút công thường dù có chấm vào/ra; tiền tăng ca chỉ phát sinh sau bước duyệt với hệ số tối thiểu tương ứng.
 
-**Giới hạn hiện tại:** Mỗi nhân viên trong một ngày có một cặp chấm vào/ra và tối đa một đơn nghỉ gắn với ngày đó. Hệ thống chưa tích hợp máy chấm công vật lý. Dữ liệu công ảnh hưởng kỳ lương đã `APPROVED` trở đi bị khóa; thay đổi ở kỳ mới tính nhưng chưa duyệt đòi hỏi tính lại.
+**Giới hạn hiện tại:** Mỗi nhân viên trong một ngày có một cặp chấm vào/ra và tối đa một đơn nghỉ gắn với ngày đó. Việc kết nối trực tiếp với máy chấm công vật lý chưa được triển khai; hiện giờ chấm được đưa vào qua API ghi nhận giờ chấm. Dữ liệu công ảnh hưởng kỳ lương đã `APPROVED` trở đi bị khóa; thay đổi ở kỳ mới tính nhưng chưa duyệt đòi hỏi tính lại.
 
 ### 9. Quản lý lương, bảo hiểm và thuế
 
 - **Người sử dụng:** HR nhập dữ liệu nhân sự liên quan đến lương; kế toán lương tính kỳ; người duyệt lương phê duyệt; nhân viên xem phiếu lương của mình.
-- **Dữ liệu đầu vào:** Lịch sử lương cơ bản, hồ sơ bảo hiểm và thuế, người phụ thuộc, phân công theo thời gian, bảng công, nghỉ phép và tăng ca được duyệt.
+- **Dữ liệu đầu vào:** Lịch sử lương cơ bản, hồ sơ bảo hiểm và thuế, người phụ thuộc, phân công theo thời gian, bảng công, nghỉ phép, tăng ca được duyệt và các khoản cộng/trừ kế toán nhập theo kỳ.
 - **Luồng chính:** Tạo kỳ lương tháng ở trạng thái `DRAFT`; tính lương để sinh phiếu lương (`CALCULATED`); người có quyền riêng phê duyệt (`APPROVED`); xác nhận đã trả (`PAID`); sau đó khóa kỳ (`LOCKED`). Có thể hủy kỳ trước bước duyệt. Hệ thống hỗ trợ xem phiếu lương và xuất bảng lương ra Excel.
-- **Cách tính tổng quát:** Tiền lương dựa trên lương cơ bản và số phút được trả lương, cộng phụ cấp chức vụ, phụ cấp thâm niên và tăng ca; sau đó trừ phần bảo hiểm nhân viên phải đóng và thuế thu nhập cá nhân theo quy tắc áp dụng. Phiếu lương lưu căn cứ tính và bộ quy tắc đã dùng.
+- **Cách tính tổng quát:** Tiền lương dựa trên lương cơ bản và số phút được trả lương, cộng phụ cấp chức vụ, phụ cấp thâm niên, tăng ca và các khoản thưởng, phụ cấp khác nhập theo kỳ; sau đó trừ phần bảo hiểm nhân viên phải đóng, thuế thu nhập cá nhân theo quy tắc áp dụng và các khoản khấu trừ. Phiếu lương lưu căn cứ tính và bộ quy tắc đã dùng.
 - **Kiểm soát:** Người tính lương và người duyệt lương thuộc hai vai trò tách biệt. Từ khi kỳ được duyệt, phiếu lương là bản chụp không thay đổi và dữ liệu công liên quan không được sửa.
 - **Phạm vi hiện tại:** Nhân viên cư trú tại Việt Nam, trả lương bằng VND, kỳ lương tháng trong năm 2026; quy tắc bảo hiểm và thuế được nạp sẵn đến hết năm 2026.
 - **Kết quả:** Kỳ lương, phiếu lương và bảng xuất có thể đối soát theo dữ liệu, quy tắc đã áp dụng.
 
 **Điều kiện trước khi tính:** Mọi nhân viên thuộc kỳ cần có phân công chính và ca hợp lệ trên các ngày làm việc, bảng công đã xử lý hết `MISSING_PUNCH`, mức lương cơ bản có hiệu lực, hồ sơ bảo hiểm và thuế phù hợp. Thiếu dữ liệu ở nhân viên nào, hệ thống báo lỗi để HR hoặc kế toán bổ sung; kỳ không được hoàn tất bằng dữ liệu giả định.
 
-**Nội dung phiếu lương:** Phiếu thể hiện lương cơ bản theo phút được trả lương, phụ cấp chức vụ, phụ cấp thâm niên, tiền tăng ca, tổng thu nhập, phần BHXH/BHYT/BHTN nhân viên đóng, thu nhập tính thuế, thuế TNCN và số thực nhận. Căn cứ đóng bảo hiểm do HR nhập theo hồ sơ, không tự lấy từ tổng thu nhập. Thuế áp dụng theo quy tắc hiệu lực tại ngày trả lương dự kiến.
+**Nội dung phiếu lương:** Phiếu thể hiện lương cơ bản theo phút được trả lương, phụ cấp chức vụ, phụ cấp thâm niên, tiền tăng ca, thưởng và phụ cấp khác, tổng thu nhập, phần BHXH/BHYT/BHTN nhân viên đóng, thu nhập tính thuế, thuế TNCN, các khoản khấu trừ và số thực nhận. Căn cứ đóng bảo hiểm do HR nhập theo hồ sơ, không tự lấy từ tổng thu nhập. Thuế áp dụng theo quy tắc hiệu lực tại ngày trả lương dự kiến.
+
+**Khoản cộng/trừ theo kỳ:** Kế toán lương (`payroll.calculate`) nhập tay cho từng nhân viên trong kỳ các khoản thưởng (`BONUS`, chịu thuế), phụ cấp khác chịu thuế (`TAXABLE_ALLOWANCE`), phụ cấp khác không chịu thuế (`NON_TAXABLE_ALLOWANCE`) và khấu trừ sau thuế như hoàn tạm ứng hoặc tiền phạt (`DEDUCTION`). Các khoản này chỉ vào phiếu lương qua bước tính lương: thêm hoặc xóa khi kỳ đã `CALCULATED` đưa kỳ về `DRAFT` để tính lại; từ `APPROVED` trở đi chúng bị khóa cùng phiếu lương.
 
 **Quy trình kiểm soát kỳ lương:**
 
@@ -183,7 +185,7 @@ Hệ thống hỗ trợ quản lý tập trung hồ sơ nhân viên, cơ cấu t
 | `PAID` | Người có quyền ghi nhận ngày thực trả sau khi thanh toán; nếu khác tháng thuế đã duyệt, hệ thống chặn để đối soát. |
 | `LOCKED` | Kỳ đã trả được khóa, phục vụ tra cứu và xuất bảng lương. |
 
-**Phân tách trách nhiệm:** `PAYROLL_ACCOUNTANT` được tính kỳ nhưng không duyệt; `PAYROLL_APPROVER` được duyệt nhưng không tính. Nhân viên chỉ xem phiếu của mình từ kỳ đã duyệt trở đi. Người có quyền báo cáo lương ở phạm vi toàn công ty có thể xuất tệp Excel của kỳ đã tính; file lấy từ dữ liệu phiếu, gồm từng nhân viên và dòng tổng tiền. Chức năng hiện chưa xử lý thưởng, hoa hồng, truy thu, quyết toán thuế năm hoặc người không cư trú.
+**Phân tách trách nhiệm:** `PAYROLL_ACCOUNTANT` được tính kỳ nhưng không duyệt; `PAYROLL_APPROVER` được duyệt nhưng không tính. Nhân viên chỉ xem phiếu của mình từ kỳ đã duyệt trở đi. Người có quyền báo cáo lương ở phạm vi toàn công ty có thể xuất tệp Excel của kỳ đã tính; file lấy từ dữ liệu phiếu, gồm từng nhân viên và dòng tổng tiền. Thưởng và các khoản khác chỉ nhập tay theo kỳ; chức năng hiện chưa tự tính hoa hồng, truy thu, quyết toán thuế năm hoặc xử lý người không cư trú.
 
 ### 10. Báo cáo nhân sự và lương
 

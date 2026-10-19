@@ -69,7 +69,7 @@ PostgreSQL 16 (:5432)
 
 - Lịch làm việc cố định thứ 2–thứ 7, trừ ngày lễ công ty; chưa có lịch cá nhân hoặc xoay ca theo ngày.
 - Một bản ghi công chỉ có một cặp vào/ra và một đơn nghỉ trong ngày; nghỉ nửa ngày cần HR đối soát.
-- Chưa tính phụ trội làm đêm, thưởng, hoa hồng, truy thu, hoàn thuế, quyết toán năm hoặc người không cư trú.
+- Chưa tính phụ trội làm đêm, hoa hồng tự động, truy thu, hoàn thuế, quyết toán năm hoặc người không cư trú; thưởng và khoản khác chỉ nhập tay theo kỳ.
 - Quy tắc thuế/bảo hiểm chỉ được seed đến hết năm 2026 và phải cập nhật bằng migration khi chính sách thay đổi.
 - Dữ liệu nhạy cảm được kiểm soát bằng quyền và phạm vi; chưa có mã hóa cấp cột trong ứng dụng.
 
