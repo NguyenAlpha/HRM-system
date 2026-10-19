@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Azure demo secrets (scripts/azure-deploy-*.sh) ###
+.azure-*.env
