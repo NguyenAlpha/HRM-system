@@ -28,6 +28,7 @@ public class RoleAssignmentPolicy {
 
     private static final Map<String, Set<RoleScopeType>> SYSTEM_ROLE_SCOPES = Map.of(
         "HR_MANAGER", Set.of(RoleScopeType.COMPANY),
+        "MANAGER", Set.of(RoleScopeType.ORG_UNIT, RoleScopeType.LOCATION),
         "PAYROLL_ACCOUNTANT", Set.of(RoleScopeType.COMPANY),
         "PAYROLL_APPROVER", Set.of(RoleScopeType.COMPANY),
         "DIRECTOR", Set.of(RoleScopeType.COMPANY),

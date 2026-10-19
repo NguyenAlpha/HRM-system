@@ -39,6 +39,30 @@ class RolePermissionSeederTest {
 
     @Test
     void hrManagerReceivesBothHrAndPayrollReportPermissions() {
+        Set<String> hrManagerPermissions = seededPermissionsOf("HR_MANAGER");
+
+        assertEquals(
+            Set.of("report.hr.read", "report.payroll.read"),
+            hrManagerPermissions.stream()
+                .filter(code -> code.startsWith("report."))
+                .collect(Collectors.toSet())
+        );
+        assertTrue(hrManagerPermissions.containsAll(Set.of("compensation.read", "compensation.manage")));
+    }
+
+    @Test
+    void managerOnlyReadsStaffWithoutPayOrSensitiveData() {
+        assertEquals(
+            Set.of(
+                "employee.list.read", "employee.read", "employee.assignment.read",
+                "request.read", "attendance.read", "report.hr.read", "organization.read"
+            ),
+            seededPermissionsOf("MANAGER")
+        );
+    }
+
+    /** Runs the seeder against empty mappings and returns the permission codes it saved for {@code roleCode}. */
+    private Set<String> seededPermissionsOf(String roleCode) {
         AtomicLong roleIds = new AtomicLong();
         AtomicLong permissionIds = new AtomicLong();
         Map<String, Role> roles = new HashMap<>();
@@ -73,17 +97,9 @@ class RolePermissionSeederTest {
 
         ArgumentCaptor<RolePermission> captor = ArgumentCaptor.forClass(RolePermission.class);
         verify(rolePermissionRepository, org.mockito.Mockito.atLeastOnce()).save(captor.capture());
-        Set<String> hrManagerPermissions = captor.getAllValues().stream()
-            .filter(mapping -> "HR_MANAGER".equals(mapping.getRole().getCode()))
+        return captor.getAllValues().stream()
+            .filter(mapping -> roleCode.equals(mapping.getRole().getCode()))
             .map(mapping -> mapping.getPermission().getCode())
             .collect(Collectors.toSet());
-
-        assertEquals(
-            Set.of("report.hr.read", "report.payroll.read"),
-            hrManagerPermissions.stream()
-                .filter(code -> code.startsWith("report."))
-                .collect(Collectors.toSet())
-        );
-        assertTrue(hrManagerPermissions.containsAll(Set.of("compensation.read", "compensation.manage")));
     }
 }

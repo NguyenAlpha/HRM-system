@@ -107,5 +107,168 @@
     "roleRequests": [
       { "role": "PAYROLL_APPROVER", "scope": "COMPANY", "requestedBy": "hr", "status": "REJECTED", "daysAgo": 40, "effectiveFromDaysAgo": 35, "reason": "Duyệt bảng lương khi Ban giám đốc đi công tác", "note": "Không để một người vừa tính vừa duyệt bảng lương." }
     ]
+  },
+  {
+    "username": "branch-hn",
+    "password": "password",
+    "fullName": "Nguyễn Đức Mạnh",
+    "email": "branch-hn@hrm.local",
+    "profile": { "gender": "MALE", "dateOfBirth": "1987-06-18", "highestEducationLevel": "MASTER", "major": "Quản trị kinh doanh", "institution": "Trường Đại học Kinh tế Quốc dân", "graduationYear": 2012 },
+    "roles": { "MANAGER": "LOCATION", "EMPLOYEE": "SELF" },
+    "assignments": [
+      { "monthsAgo": 22, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-01", "position": "BRANCH_MANAGER", "manager": "owner" }
+    ],
+    "salaries": [
+      { "monthsAgo": 22, "baseSalary": 22000000, "reason": "Mức lương ban đầu" },
+      { "monthsAgo": 8, "baseSalary": 24000000, "reason": "Điều chỉnh lương định kỳ" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 22, "insuranceSalary": 22000000, "wageRegion": 1 },
+      { "monthsAgo": 8, "insuranceSalary": 24000000, "wageRegion": 1 }
+    ],
+    "dependents": [
+      { "fullName": "Nguyễn Minh Khôi", "identifier": "001215000401", "monthsAgo": 18 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 120, "days": 2, "type": "ANNUAL", "status": "APPROVED", "reason": "Nghỉ phép cùng gia đình" },
+      { "workDaysAgo": -10, "type": "ANNUAL", "status": "PENDING", "reason": "Đi khám sức khỏe định kỳ" }
+    ]
+  },
+  {
+    "username": "staff-hn1",
+    "password": "password",
+    "fullName": "Vũ Thị Lan",
+    "email": "staff-hn1@hrm.local",
+    "profile": { "gender": "FEMALE", "dateOfBirth": "1996-02-09", "highestEducationLevel": "BACHELOR", "major": "Quản trị kinh doanh", "institution": "Trường Đại học Thương mại", "graduationYear": 2018 },
+    "roles": { "EMPLOYEE": "SELF" },
+    "assignments": [
+      { "monthsAgo": 18, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-01", "position": "GENERAL_STAFF", "manager": "branch-hn" }
+    ],
+    "salaries": [
+      { "monthsAgo": 18, "baseSalary": 9000000, "reason": "Mức lương ban đầu" },
+      { "monthsAgo": 6, "baseSalary": 10000000, "reason": "Điều chỉnh lương định kỳ" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 18, "insuranceSalary": 9000000, "wageRegion": 1 },
+      { "monthsAgo": 6, "insuranceSalary": 10000000, "wageRegion": 1 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 90, "type": "SICK", "status": "APPROVED", "reason": "Viêm họng, sốt" },
+      { "workDaysAgo": 35, "days": 2, "type": "ANNUAL", "status": "APPROVED", "reason": "Về quê thăm ông bà", "comment": "Đồng ý, nhớ bàn giao khách hàng." },
+      { "workDaysAgo": -6, "type": "ANNUAL", "status": "PENDING", "reason": "Giải quyết việc gia đình" }
+    ]
+  },
+  {
+    "username": "staff-hn2",
+    "password": "password",
+    "fullName": "Đỗ Quang Huy",
+    "email": "staff-hn2@hrm.local",
+    "profile": { "gender": "MALE", "dateOfBirth": "2000-10-27", "highestEducationLevel": "COLLEGE", "major": "Kinh doanh thương mại", "institution": "Trường Cao đẳng Thương mại và Du lịch Hà Nội", "graduationYear": 2021 },
+    "roles": { "EMPLOYEE": "SELF" },
+    "assignments": [
+      { "monthsAgo": 9, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-01", "position": "GENERAL_STAFF", "manager": "branch-hn" }
+    ],
+    "salaries": [
+      { "monthsAgo": 9, "baseSalary": 8000000, "reason": "Mức lương ban đầu" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 9, "insuranceSalary": 8000000, "wageRegion": 1 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 50, "type": "UNPAID", "status": "REJECTED", "reason": "Nghỉ đi du lịch cùng bạn bè", "comment": "Chi nhánh đang thiếu người dịp này, em đăng ký ngày khác nhé." },
+      { "workDaysAgo": 15, "part": "MORNING", "type": "ANNUAL", "status": "APPROVED", "reason": "Làm thủ tục ngân hàng" },
+      { "workDaysAgo": -3, "days": 2, "type": "ANNUAL", "status": "PENDING", "reason": "Về quê dự đám cưới bạn thân" }
+    ],
+    "missingPunches": [1]
+  },
+  {
+    "username": "warehouse-hn",
+    "password": "password",
+    "fullName": "Hoàng Văn Tú",
+    "email": "warehouse-hn@hrm.local",
+    "profile": { "gender": "MALE", "dateOfBirth": "1990-12-05", "highestEducationLevel": "COLLEGE", "major": "Quản lý kho", "institution": "Trường Cao đẳng nghề Bách khoa Hà Nội", "graduationYear": 2010 },
+    "roles": { "EMPLOYEE": "SELF" },
+    "assignments": [
+      { "monthsAgo": 16, "organizationUnit": "OPERATIONS", "workLocation": "WAREHOUSE-02", "position": "WAREHOUSE_SUPERVISOR", "manager": "branch-hn" }
+    ],
+    "salaries": [
+      { "monthsAgo": 16, "baseSalary": 12000000, "reason": "Mức lương ban đầu" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 16, "insuranceSalary": 12000000, "wageRegion": 1 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 70, "days": 2, "type": "ANNUAL", "status": "APPROVED", "reason": "Đưa bố mẹ đi khám bệnh" },
+      { "workDaysAgo": -8, "type": "ANNUAL", "status": "PENDING", "reason": "Nghỉ phép việc cá nhân" }
+    ]
+  },
+  {
+    "username": "branch-dn",
+    "password": "password",
+    "fullName": "Phan Thị Hồng",
+    "email": "branch-dn@hrm.local",
+    "profile": { "gender": "FEMALE", "dateOfBirth": "1989-04-22", "highestEducationLevel": "BACHELOR", "major": "Quản trị kinh doanh", "institution": "Trường Đại học Kinh tế - Đại học Đà Nẵng", "graduationYear": 2011 },
+    "roles": { "MANAGER": "LOCATION", "EMPLOYEE": "SELF" },
+    "assignments": [
+      { "monthsAgo": 21, "organizationUnit": "OPERATIONS", "position": "OPERATIONS_MANAGER", "manager": "owner" },
+      { "monthsAgo": 12, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-02", "position": "BRANCH_MANAGER", "manager": "owner" }
+    ],
+    "salaries": [
+      { "monthsAgo": 21, "baseSalary": 18000000, "reason": "Mức lương ban đầu" },
+      { "monthsAgo": 12, "baseSalary": 21000000, "reason": "Bổ nhiệm Quản lý chi nhánh Đà Nẵng" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 21, "insuranceSalary": 18000000, "wageRegion": 1 },
+      { "monthsAgo": 12, "insuranceSalary": 21000000, "wageRegion": 1 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 100, "days": 2, "type": "ANNUAL", "status": "APPROVED", "reason": "Nghỉ phép cùng gia đình" }
+    ]
+  },
+  {
+    "username": "staff-dn1",
+    "password": "password",
+    "fullName": "Trương Minh Khang",
+    "email": "staff-dn1@hrm.local",
+    "profile": { "gender": "MALE", "dateOfBirth": "1997-07-30", "highestEducationLevel": "BACHELOR", "major": "Logistics và quản lý chuỗi cung ứng", "institution": "Trường Đại học Kinh tế - Đại học Đà Nẵng", "graduationYear": 2019 },
+    "roles": { "EMPLOYEE": "SELF" },
+    "assignments": [
+      { "monthsAgo": 11, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-02", "position": "GENERAL_STAFF", "manager": "branch-dn" }
+    ],
+    "salaries": [
+      { "monthsAgo": 11, "baseSalary": 9500000, "reason": "Mức lương ban đầu" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 11, "insuranceSalary": 9500000, "wageRegion": 1 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 60, "type": "SICK", "status": "APPROVED", "reason": "Đau lưng, đi vật lý trị liệu" },
+      { "workDaysAgo": 25, "part": "AFTERNOON", "type": "ANNUAL", "status": "APPROVED", "reason": "Họp phụ huynh cho con" },
+      { "workDaysAgo": -5, "type": "ANNUAL", "status": "PENDING", "reason": "Đi làm giấy tờ hành chính" }
+    ],
+    "absences": [
+      { "workDaysAgo": 40, "note": "Không đến làm, không báo trước" }
+    ]
+  },
+  {
+    "username": "staff-dn2",
+    "password": "password",
+    "fullName": "Lê Thị Mai",
+    "email": "staff-dn2@hrm.local",
+    "profile": { "gender": "FEMALE", "dateOfBirth": "2001-01-16", "highestEducationLevel": "COLLEGE", "major": "Kế toán doanh nghiệp", "institution": "Trường Cao đẳng Kinh tế - Kế hoạch Đà Nẵng", "graduationYear": 2022 },
+    "roles": { "EMPLOYEE": "SELF" },
+    "assignments": [
+      { "monthsAgo": 7, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-02", "position": "GENERAL_STAFF", "manager": "branch-dn" }
+    ],
+    "salaries": [
+      { "monthsAgo": 7, "baseSalary": 8000000, "reason": "Mức lương ban đầu" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 7, "insuranceSalary": 8000000, "wageRegion": 1 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 45, "type": "ANNUAL", "status": "APPROVED", "reason": "Về quê thăm gia đình" },
+      { "workDaysAgo": -12, "days": 2, "type": "ANNUAL", "status": "PENDING", "reason": "Nghỉ phép đi du lịch" }
+    ]
   }
 ]
