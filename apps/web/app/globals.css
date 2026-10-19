@@ -107,7 +107,7 @@ button:disabled { cursor: wait; opacity: 0.64; }
 .sidebar-account strong, .sidebar-account small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sidebar-account strong { font-size: 0.78rem; }
 .sidebar-account small { color: var(--muted-ink); font-size: 0.66rem; }
-.portal-content { width: min(100%, 88rem); margin: 0 auto; padding: 3rem clamp(1.5rem, 5vw, 5rem) 5rem; }
+.portal-content { width: 100%; padding: 3rem clamp(1.5rem, 5vw, 5rem) 5rem; }
 .portal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 2rem; }
 .portal-header h1 { margin: 0.6rem 0 0.35rem; font-size: clamp(2rem, 4vw, 3.2rem); letter-spacing: -0.045em; }
 .portal-header > div > p:last-child { margin: 0; color: var(--muted-ink); }
