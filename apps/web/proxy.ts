@@ -6,6 +6,7 @@ import { PORTAL_CONFIG } from "@/lib/auth/config"
 const HRM_PAGES = [
   "/dashboard", "/employees", "/accounts", "/organization", "/attendance", "/leave-requests", "/resignations",
   "/payslips", "/payroll", "/allowances", "/profile", "/reports", "/rbac", "/role-grant", "/role-requests",
+  "/company",
 ]
 
 function hasSession(request: NextRequest, portal: "hrm" | "admin"): boolean {
@@ -41,6 +42,6 @@ export const config = {
     "/login", "/dashboard/:path*", "/employees/:path*", "/accounts/:path*", "/organization/:path*",
     "/attendance/:path*", "/leave-requests/:path*", "/resignations/:path*", "/payslips/:path*", "/payroll/:path*",
     "/allowances/:path*", "/profile/:path*", "/reports/:path*", "/rbac/:path*",
-    "/role-grant/:path*", "/role-requests/:path*", "/admin/:path*",
+    "/role-grant/:path*", "/role-requests/:path*", "/company/:path*", "/admin/:path*",
   ],
 }
