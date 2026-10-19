@@ -10,6 +10,7 @@ type Schemas = components["schemas"]
 
 export type Role = Schemas["RoleResponse"]
 export type Permission = Schemas["PermissionResponse"]
+export type RoleWithPermissions = Schemas["RoleWithPermissionsResponse"]
 export type CreateRoleInput = Schemas["CreateRoleRequest"]
 export type UpdateRoleInput = Schemas["UpdateRoleRequest"]
 export type ReplaceRolePermissionsInput = Schemas["ReplaceRolePermissionsRequest"]

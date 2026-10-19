@@ -5,12 +5,14 @@ Giao diện có ở cả hai portal:
 - HRM Workspace: đăng nhập tại `/login`, mở `/rbac`; dành cho account nghiệp vụ có `rbac.manage`, thường là `COMPANY_OWNER`.
 - Admin Console: đăng nhập tại `/admin/login`, mở `/admin/rbac`; dành cho `SYSTEM_ADMIN` có `rbac.manage` theo cấu hình seed hiện tại.
 
-UI đơn giản gồm hai mục:
+UI đơn giản gồm ba mục:
 
 - **Vai trò**: xem danh sách phân trang, tạo, sửa tên/mô tả/chính sách cấp và xóa vai trò tùy chỉnh.
   Nhấn **Phân quyền** để chọn nhiều permission, tìm kiếm, chọn/bỏ toàn bộ hoặc thao tác theo từng
   `PermissionModule`, sau đó lưu tất cả thay đổi bằng một request.
 - **Quyền**: xem danh mục permission do ứng dụng định nghĩa và lọc theo module.
+- **Ma trận**: xem cùng lúc mọi vai trò (cột) và mọi permission (dòng, nhóm theo module) qua
+  `GET /api/roles/with-permissions`; bật/tắt từng nhóm quyền để thu gọn bảng. Chỉ đọc.
 
 Form giữ nguyên mã role khi sửa. Role hệ thống và bộ permission của role hệ thống chỉ được xem.
 API vẫn kiểm tra phân quyền, validation và các ràng buộc dữ liệu; lỗi API được hiển thị trên trang.
@@ -38,6 +40,7 @@ Danh sách endpoint, JSON mẫu và quy tắc xóa nằm trong
 5. Dùng **Chọn tất cả**, **Bỏ chọn tất cả**, tìm kiếm và **Hoàn tác** để kiểm tra trạng thái form.
 6. Mở một system role và xác nhận danh sách permission chỉ đọc.
 7. Kiểm tra phân trang, lọc module và các nút bảo vệ role hệ thống.
-8. Kiểm tra truy cập `/rbac` và `/admin/rbac` khi chưa đăng nhập; gọi từng BFF không có cookie tương ứng.
+8. Mở **Ma trận**, đối chiếu dấu tích của một role với hộp thoại **Phân quyền**; tắt/bật vài nhóm quyền.
+9. Kiểm tra truy cập `/rbac` và `/admin/rbac` khi chưa đăng nhập; gọi từng BFF không có cookie tương ứng.
 
 Không cần thêm dependency UI hoặc test runner để chạy trang này.
