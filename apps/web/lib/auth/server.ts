@@ -281,6 +281,7 @@ export async function handleRbacRequest(request: Request, segments: string[], po
   const path = segments.join("/")
   const routes = [
     { pattern: /^roles$/, methods: ["GET", "POST"] },
+    { pattern: /^roles\/with-permissions$/, methods: ["GET"] },
     { pattern: /^roles\/[1-9]\d*$/, methods: ["GET", "PUT", "DELETE"] },
     { pattern: /^permissions$/, methods: ["GET"] },
     { pattern: /^permissions\/[1-9]\d*$/, methods: ["GET"] },
