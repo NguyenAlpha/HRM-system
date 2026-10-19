@@ -21,10 +21,10 @@ Hệ thống đã có database PostgreSQL với schema do Flyway quản lý, xá
 | RBAC | System/custom role, permission catalog chỉ đọc, gán quyền, role assignment, permission override và yêu cầu cấp role |
 | Nghỉ phép | Tạo, gửi, duyệt, từ chối, hủy đơn; thông báo trong ứng dụng cho HR, người duyệt và nhân viên khi có kết quả; đồng bộ số phút nghỉ sang chấm công |
 | Chấm công | Chuẩn bị tháng, vào/ra ca, xử lý `MISSING_PUNCH`, ngày lễ và duyệt tăng ca |
-| Lương | Lịch sử lương, phụ cấp, kỳ lương, phiếu lương, BHXH/BHYT/BHTN nhân viên và thuế TNCN năm 2026 |
+| Lương | Lịch sử lương, phụ cấp, kỳ lương, phiếu lương, BHXH/BHYT/BHTN nhân viên và thuế TNCN từ 2020 đến 2026 |
 | Báo cáo | Phân bố nhân sự, trình độ, thâm niên và lương cơ bản theo phạm vi |
 
-Chi tiết công thức và giới hạn pháp lý nằm trong [PAYROLL.md](../api/docs/api/PAYROLL.md). Bộ quy tắc thuế và bảo hiểm nạp sẵn chỉ có hiệu lực trong năm 2026; kỳ ngoài phạm vi sẽ dừng và yêu cầu bổ sung quy tắc.
+Chi tiết công thức và giới hạn pháp lý nằm trong [PAYROLL.md](../api/docs/api/PAYROLL.md). Bộ quy tắc thuế và bảo hiểm nạp sẵn có hiệu lực từ năm 2020 đến hết năm 2026; kỳ ngoài phạm vi sẽ dừng và yêu cầu bổ sung quy tắc.
 
 ## 3. Kiến trúc
 
@@ -68,9 +68,9 @@ PostgreSQL 16 (:5432)
 ## 6. Giới hạn đã biết
 
 - Lịch làm việc cố định thứ 2–thứ 7, trừ ngày lễ công ty; chưa có lịch cá nhân hoặc xoay ca theo ngày.
-- Một bản ghi công chỉ có một cặp vào/ra và một đơn nghỉ trong ngày; nghỉ nửa ngày cần HR đối soát.
+- Một bản ghi công chỉ có một cặp vào/ra và một đơn nghỉ trong ngày; nghỉ nửa ngày có duyệt cộng nửa ngày còn lại đi làm được tính đủ công tự động.
 - Chưa tính phụ trội làm đêm, hoa hồng tự động, truy thu, hoàn thuế, quyết toán năm hoặc người không cư trú; thưởng và khoản khác chỉ nhập tay theo kỳ.
-- Quy tắc thuế/bảo hiểm chỉ được seed đến hết năm 2026 và phải cập nhật bằng migration khi chính sách thay đổi.
+- Quy tắc thuế/bảo hiểm chỉ được seed từ 2020 đến hết năm 2026 và phải cập nhật bằng migration khi chính sách thay đổi.
 - Dữ liệu nhạy cảm được kiểm soát bằng quyền và phạm vi; chưa có mã hóa cấp cột trong ứng dụng.
 
 ## 7. Tài liệu liên quan

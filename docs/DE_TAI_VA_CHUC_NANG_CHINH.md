@@ -166,7 +166,7 @@ Hệ thống hỗ trợ quản lý tập trung hồ sơ nhân viên, cơ cấu t
 - **Luồng chính:** Tạo kỳ lương tháng ở trạng thái `DRAFT`; tính lương để sinh phiếu lương (`CALCULATED`); người có quyền riêng phê duyệt (`APPROVED`); xác nhận đã trả (`PAID`); sau đó khóa kỳ (`LOCKED`). Có thể hủy kỳ trước bước duyệt. Hệ thống hỗ trợ xem phiếu lương và xuất bảng lương ra Excel.
 - **Cách tính tổng quát:** Tiền lương dựa trên lương cơ bản và số phút được trả lương, cộng phụ cấp chức vụ, phụ cấp thâm niên, tăng ca và các khoản thưởng, phụ cấp khác nhập theo kỳ; sau đó trừ phần bảo hiểm nhân viên phải đóng, thuế thu nhập cá nhân theo quy tắc áp dụng và các khoản khấu trừ. Phiếu lương lưu căn cứ tính và bộ quy tắc đã dùng.
 - **Kiểm soát:** Người tính lương và người duyệt lương thuộc hai vai trò tách biệt. Từ khi kỳ được duyệt, phiếu lương là bản chụp không thay đổi và dữ liệu công liên quan không được sửa.
-- **Phạm vi hiện tại:** Nhân viên cư trú tại Việt Nam, trả lương bằng VND, kỳ lương tháng trong năm 2026; quy tắc bảo hiểm và thuế được nạp sẵn đến hết năm 2026.
+- **Phạm vi hiện tại:** Nhân viên cư trú tại Việt Nam, trả lương bằng VND, kỳ lương tháng từ năm 2020 đến hết năm 2026 theo các quy tắc bảo hiểm và thuế được nạp sẵn; kỳ ngoài khoảng này dừng tính và báo thiếu quy tắc cho tới khi bổ sung.
 - **Kết quả:** Kỳ lương, phiếu lương và bảng xuất có thể đối soát theo dữ liệu, quy tắc đã áp dụng.
 
 **Điều kiện trước khi tính:** Mọi nhân viên thuộc kỳ cần có phân công chính và ca hợp lệ trên các ngày làm việc, bảng công đã xử lý hết `MISSING_PUNCH`, mức lương cơ bản có hiệu lực, hồ sơ bảo hiểm và thuế phù hợp. Thiếu dữ liệu ở nhân viên nào, hệ thống báo lỗi để HR hoặc kế toán bổ sung; kỳ không được hoàn tất bằng dữ liệu giả định.
