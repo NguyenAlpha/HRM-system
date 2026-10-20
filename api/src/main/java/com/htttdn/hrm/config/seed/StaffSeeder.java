@@ -158,16 +158,28 @@ public class StaffSeeder implements ApplicationRunner {
     record PayrollProfileEntry(int monthsAgo, BigDecimal insuranceSalary, short wageRegion) {
     }
 
-    /** Personal details and education, so the profile and the education report are not empty. All optional. */
+    /**
+     * Personal details, education, contact, tax and bank details, so the profile and the education
+     * report are not empty. All optional; {@code nationalId} must be unique.
+     */
     record ProfileEntry(
         Gender gender,
         LocalDate dateOfBirth,
         EducationLevel highestEducationLevel,
         String major,
         String institution,
-        Short graduationYear
+        Short graduationYear,
+        String nationalId,
+        String phone,
+        String personalEmail,
+        String address,
+        String taxCode,
+        String bankName,
+        String bankAccountNumber,
+        String bankAccountHolder
     ) {
-        static final ProfileEntry EMPTY = new ProfileEntry(null, null, null, null, null, null);
+        static final ProfileEntry EMPTY = new ProfileEntry(
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     /** A dependent claimed for tax from {@code monthsAgo}, no earlier than the hire date. */
@@ -301,6 +313,14 @@ public class StaffSeeder implements ApplicationRunner {
             .major(profile.major())
             .institution(profile.institution())
             .graduationYear(profile.graduationYear())
+            .nationalId(profile.nationalId())
+            .phone(profile.phone())
+            .personalEmail(profile.personalEmail())
+            .address(profile.address())
+            .taxCode(profile.taxCode())
+            .bankName(profile.bankName())
+            .bankAccountNumber(profile.bankAccountNumber())
+            .bankAccountHolder(profile.bankAccountHolder())
             .workEmail(entry.email())
             .hireDate(startDate)
             .seniorityStartDate(startDate)
