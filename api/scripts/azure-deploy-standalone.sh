@@ -108,7 +108,7 @@ az webapp config appsettings set -n "$APP" -g "$RG" -o none --settings \
     "CORS_ALLOWED_ORIGINS=$CORS_ORIGINS" "API_DOCS_ENABLED=true" \
     "WEBSITES_CONTAINER_START_TIME_LIMIT=600"
 # Không đặt JAVA_OPTS: heap mặc định của JVM là 25% RAM.
-# Start time limit 600s: lần đầu Flyway + seed (2 năm chấm công, các kỳ lương) trên B1 có thể lâu hơn mặc định 230s.
+# Start time limit 600s: lần đầu Flyway + seed (6 năm chấm công, các kỳ lương) trên B1 có thể lâu hơn mặc định 230s.
 
 # ── 3. Build JAR ────────────────────────────────────────────────────────────
 # application.properties chỉ chứa giá trị mặc định cho dev, mọi giá trị đều ghi đè được bằng app settings ở trên.
