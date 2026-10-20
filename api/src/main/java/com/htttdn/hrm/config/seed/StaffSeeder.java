@@ -30,6 +30,7 @@ import com.htttdn.hrm.entity.EmployeeSalaryHistory;
 import com.htttdn.hrm.entity.EmployeeTaxDependent;
 import com.htttdn.hrm.entity.JobPosition;
 import com.htttdn.hrm.entity.OrganizationUnit;
+import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.WorkLocation;
 import com.htttdn.hrm.entity.WorkShift;
 import com.htttdn.hrm.entity.enums.AccountStatus;
@@ -39,7 +40,9 @@ import com.htttdn.hrm.entity.enums.EmploymentType;
 import com.htttdn.hrm.entity.enums.Gender;
 import com.htttdn.hrm.entity.enums.LeaveRequestStatus;
 import com.htttdn.hrm.entity.enums.LeaveType;
+import com.htttdn.hrm.entity.enums.ResignationRequestStatus;
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
+import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
@@ -82,6 +85,12 @@ import tools.jackson.databind.json.JsonMapper;
  * <p>{@code leaves}, {@code absences} và {@code missingPunches} là đơn nghỉ và các ngày công khác
  * thường, ghi đè lên chấm công (xem {@link SeedLeaveWriter}); {@code roleRequests} là yêu cầu cấp
  * role HR gửi cho account này (xem {@link SeedRoleRequestWriter}).
+ *
+ * <p>{@code probation} đặt nhân viên ở trạng thái thử việc. {@code termination} cho nhân viên nghỉ việc
+ * {@code monthsAgo} tháng trước như {@code EmployeeService.endEmploymentAs}: phân công hiện hành đóng
+ * vào ngày đó, account bị vô hiệu hóa, role không tự cấp bị thu hồi; chấm công và lương dừng theo phân
+ * công, và {@code workDaysAgo} của đơn nghỉ đếm lùi từ ngày làm việc cuối cùng. {@code resignations} là
+ * đơn xin nghỉ việc (xem {@link SeedResignationWriter}).
  */
 @Component
 @Order(510)
@@ -107,7 +116,27 @@ public class StaffSeeder implements ApplicationRunner {
         List<LeaveEntry> leaves,
         List<AbsenceEntry> absences,
         List<Integer> missingPunches,
-        List<RoleRequestEntry> roleRequests
+        List<RoleRequestEntry> roleRequests,
+        Boolean probation,
+        TerminationEntry termination,
+        List<ResignationEntry> resignations
+    ) {
+    }
+
+    /**
+     * The end of the employment {@code monthsAgo} months ago: {@code RESIGNED}, {@code TERMINATED} or
+     * {@code RETIRED}. {@code comment} is the approver's on the resignation request of a resignation.
+     */
+    record TerminationEntry(EmploymentStatus status, int monthsAgo, String reason, String comment) {
+    }
+
+    /** A resignation request of someone still employed; {@code comment} is the approver's. */
+    record ResignationEntry(
+        ResignationRequestStatus status,
+        int daysAgo,
+        int lastWorkingDaysAgo,
+        String reason,
+        String comment
     ) {
     }
 
@@ -223,6 +252,7 @@ public class StaffSeeder implements ApplicationRunner {
     private final SeedAttendanceWriter seedAttendanceWriter;
     private final SeedLeaveWriter seedLeaveWriter;
     private final SeedRoleRequestWriter seedRoleRequestWriter;
+    private final SeedResignationWriter seedResignationWriter;
     private final EmployeeCodeGenerator employeeCodeGenerator;
     private final PasswordEncoder passwordEncoder;
     private final JsonMapper jsonMapper;
@@ -245,6 +275,7 @@ public class StaffSeeder implements ApplicationRunner {
         SeedAttendanceWriter seedAttendanceWriter,
         SeedLeaveWriter seedLeaveWriter,
         SeedRoleRequestWriter seedRoleRequestWriter,
+        SeedResignationWriter seedResignationWriter,
         EmployeeCodeGenerator employeeCodeGenerator,
         PasswordEncoder passwordEncoder,
         JsonMapper jsonMapper,
@@ -266,6 +297,7 @@ public class StaffSeeder implements ApplicationRunner {
         this.seedAttendanceWriter = seedAttendanceWriter;
         this.seedLeaveWriter = seedLeaveWriter;
         this.seedRoleRequestWriter = seedRoleRequestWriter;
+        this.seedResignationWriter = seedResignationWriter;
         this.employeeCodeGenerator = employeeCodeGenerator;
         this.passwordEncoder = passwordEncoder;
         this.jsonMapper = jsonMapper;
@@ -303,6 +335,15 @@ public class StaffSeeder implements ApplicationRunner {
         LocalDate startDate = first.effectiveFrom();
         Instant createdAt = startOf(startDate);
         ProfileEntry profile = entry.profile() != null ? entry.profile() : ProfileEntry.EMPTY;
+        TerminationEntry termination = entry.termination();
+        LocalDate terminationDate = terminationDate(entry, current.effectiveFrom());
+        // The employment ended at the end of its last working day.
+        Instant endedAt = terminationDate == null ? null : startOf(terminationDate.plusDays(1));
+        EmploymentStatus status = termination != null ? termination.status()
+            : Boolean.TRUE.equals(entry.probation()) ? EmploymentStatus.PROBATION : EmploymentStatus.ACTIVE;
+        Account owner = accountRoleAssignmentRepository.findAccountsHoldingRole("COMPANY_OWNER", LocalDate.now(ZONE))
+            .stream().findFirst()
+            .orElseThrow(() -> new IllegalStateException("Staff seed: no Company Owner to enter salaries"));
 
         Employee employee = employeeRepository.save(Employee.builder()
             .employeeCode(employeeCodeGenerator.next())
@@ -324,9 +365,11 @@ public class StaffSeeder implements ApplicationRunner {
             .workEmail(entry.email())
             .hireDate(startDate)
             .seniorityStartDate(startDate)
-            .employmentStatus(EmploymentStatus.ACTIVE)
+            .employmentStatus(status)
+            .terminationDate(terminationDate)
+            .terminationReason(termination == null ? null : termination.reason())
             .createdAt(createdAt)
-            .updatedAt(createdAt)
+            .updatedAt(endedAt != null ? endedAt : createdAt)
             .build());
 
         Account account = accountRepository.save(Account.builder()
@@ -334,28 +377,38 @@ public class StaffSeeder implements ApplicationRunner {
             .username(entry.username())
             .email(entry.email())
             .passwordHash(passwordEncoder.encode(entry.password()))
-            .status(AccountStatus.ACTIVE)
+            .status(terminationDate == null ? AccountStatus.ACTIVE : AccountStatus.DISABLED)
             .failedLoginCount(0)
             .createdAt(createdAt)
-            .updatedAt(createdAt)
+            .updatedAt(endedAt != null ? endedAt : createdAt)
             .build());
 
-        entry.roles().forEach((code, scope) -> accountRoleAssignmentRepository.save(AccountRoleAssignment.builder()
-            .account(account)
-            .role(roleRepository.findByCodeAndDeletedAtIsNull(code).orElseThrow(() -> missing(entry, "role", code)))
-            .scopeType(scope)
-            .organizationUnit(scope == RoleScopeType.ORG_UNIT ? current.unit() : null)
-            .workLocation(scope == RoleScopeType.LOCATION ? current.location() : null)
-            .effectiveFrom(startDate)
-            .grantedByAccount(account)
-            .reason(SEED_REASON)
-            .createdAt(createdAt)
-            .build()));
+        entry.roles().forEach((code, scope) -> {
+            Role role = roleRepository.findByCodeAndDeletedAtIsNull(code).orElseThrow(() -> missing(entry, "role", code));
+            // Like EmployeeService.endEmploymentAs, AUTO and SYSTEM_ONLY roles are left to their own workflows.
+            boolean revoked = terminationDate != null
+                && role.getGrantPolicy() != RoleGrantPolicy.AUTO && role.getGrantPolicy() != RoleGrantPolicy.SYSTEM_ONLY;
+            accountRoleAssignmentRepository.save(AccountRoleAssignment.builder()
+                .account(account)
+                .role(role)
+                .scopeType(scope)
+                .organizationUnit(scope == RoleScopeType.ORG_UNIT ? current.unit() : null)
+                .workLocation(scope == RoleScopeType.LOCATION ? current.location() : null)
+                .effectiveFrom(startDate)
+                .effectiveTo(revoked ? terminationDate : null)
+                .grantedByAccount(account)
+                .reason(SEED_REASON)
+                .createdAt(createdAt)
+                .revokedByAccount(revoked ? owner : null)
+                .revokedAt(revoked ? endedAt : null)
+                .revocationReason(revoked ? "Kết thúc làm việc: " + termination.reason() : null)
+                .build());
+        });
 
-        // Each period ends the day before the next one starts; the last stays open.
+        // Each period ends the day before the next one starts; the last stays open until the employment ends.
         for (int i = 0; i < assignments.size(); i++) {
             ResolvedAssignment assignment = assignments.get(i);
-            LocalDate effectiveTo = i + 1 < assignments.size() ? assignments.get(i + 1).effectiveFrom().minusDays(1) : null;
+            LocalDate effectiveTo = i + 1 < assignments.size() ? assignments.get(i + 1).effectiveFrom().minusDays(1) : terminationDate;
             employeeAssignmentRepository.save(EmployeeAssignment.builder()
                 .employee(employee)
                 .organizationUnit(assignment.unit())
@@ -373,9 +426,6 @@ public class StaffSeeder implements ApplicationRunner {
                 .build());
         }
 
-        Account owner = accountRoleAssignmentRepository.findAccountsHoldingRole("COMPANY_OWNER", LocalDate.now(ZONE))
-            .stream().findFirst()
-            .orElseThrow(() -> new IllegalStateException("Staff seed: no Company Owner to enter salaries"));
         seedSalaries(entry, employee, owner);
         seedPayrollProfiles(entry, employee, owner);
         seedDependents(entry, employee, owner);
@@ -384,8 +434,31 @@ public class StaffSeeder implements ApplicationRunner {
             date -> overtimeApproverOn(assignments, date));
         int leaves = seedLeaveWriter.write(entry, employee, date -> overtimeApproverOn(assignments, date), reconciler(entry));
         seedRoleRequestWriter.write(entry, account, current.unit(), current.location(), owner);
+        seedResignationWriter.write(entry, employee, date -> overtimeApproverOn(assignments, date));
         log.info("Staff seed: '{}' created as {} with {} attendance days and {} leave requests",
             entry.username(), employee.getEmployeeCode(), attendanceDays, leaves);
+    }
+
+    /**
+     * The last working day of an ended employment: during the current assignment and before today. Null
+     * when the employee still works here.
+     */
+    private static LocalDate terminationDate(StaffEntry entry, LocalDate currentFrom) {
+        TerminationEntry termination = entry.termination();
+        if (termination == null) {
+            return null;
+        }
+        LocalDate today = LocalDate.now(ZONE);
+        LocalDate date = today.minusMonths(termination.monthsAgo());
+        EmploymentStatus status = termination.status();
+        if (status != EmploymentStatus.RESIGNED && status != EmploymentStatus.TERMINATED && status != EmploymentStatus.RETIRED
+            || termination.reason() == null || Boolean.TRUE.equals(entry.probation())
+            || date.isBefore(currentFrom) || !date.isBefore(today)) {
+            throw new IllegalStateException("Staff seed '" + entry.username() + "': termination needs RESIGNED,"
+                + " TERMINATED or RETIRED and a reason, falls before today and during the current assignment,"
+                + " and does not go with probation");
+        }
+        return date;
     }
 
     /** The HR Manager who records unauthorized absences; only needed when the entry has some. */

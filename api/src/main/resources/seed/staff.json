@@ -215,7 +215,10 @@
       { "workDaysAgo": 15, "part": "MORNING", "type": "ANNUAL", "status": "APPROVED", "reason": "Làm thủ tục ngân hàng" },
       { "workDaysAgo": -3, "days": 2, "type": "ANNUAL", "status": "PENDING", "reason": "Về quê dự đám cưới bạn thân" }
     ],
-    "missingPunches": [1]
+    "missingPunches": [1],
+    "resignations": [
+      { "status": "PENDING", "daysAgo": 3, "lastWorkingDaysAgo": -30, "reason": "Nghỉ việc để đi du học Nhật Bản theo học bổng" }
+    ]
   },
   {
     "username": "warehouse-hn",
@@ -242,6 +245,9 @@
     "leaves": [
       { "workDaysAgo": 70, "days": 2, "type": "ANNUAL", "status": "APPROVED", "reason": "Đưa bố mẹ đi khám bệnh" },
       { "workDaysAgo": -8, "type": "ANNUAL", "status": "PENDING", "reason": "Nghỉ phép việc cá nhân" }
+    ],
+    "resignations": [
+      { "status": "APPROVED", "daysAgo": 16, "lastWorkingDaysAgo": -14, "reason": "Chuyển về quê Thái Bình làm việc để chăm sóc bố mẹ", "comment": "Đồng ý. Anh bàn giao sổ sách kho cho người thay thế trước ngày nghỉ nhé." }
     ]
   },
   {
@@ -302,6 +308,9 @@
     ],
     "absences": [
       { "workDaysAgo": 40, "note": "Không đến làm, không báo trước" }
+    ],
+    "resignations": [
+      { "status": "CANCELLED", "daysAgo": 150, "lastWorkingDaysAgo": 120, "reason": "Chuyển sang công ty logistics khác" }
     ]
   },
   {
@@ -327,6 +336,122 @@
     "leaves": [
       { "workDaysAgo": 45, "type": "ANNUAL", "status": "APPROVED", "reason": "Về quê thăm gia đình" },
       { "workDaysAgo": -12, "days": 2, "type": "ANNUAL", "status": "PENDING", "reason": "Nghỉ phép đi du lịch" }
+    ]
+  },
+  {
+    "username": "staff-hn3",
+    "password": "password",
+    "fullName": "Ngô Thanh Tùng",
+    "email": "staff-hn3@hrm.local",
+    "profile": {
+      "gender": "MALE", "dateOfBirth": "1994-08-11",
+      "highestEducationLevel": "BACHELOR", "major": "Tài chính - Ngân hàng", "institution": "Học viện Ngân hàng", "graduationYear": 2016,
+      "nationalId": "001094006158", "phone": "0983621547", "personalEmail": "tung.ngothanh94@gmail.com",
+      "address": "9 Hoàng Quốc Việt, Phường Nghĩa Đô, Thành phố Hà Nội",
+      "taxCode": "001094006158", "bankName": "Vietcombank", "bankAccountNumber": "0021001537846", "bankAccountHolder": "NGO THANH TUNG"
+    },
+    "roles": { "EMPLOYEE": "SELF" },
+    "assignments": [
+      { "monthsAgo": 15, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-01", "position": "GENERAL_STAFF", "manager": "branch-hn" }
+    ],
+    "salaries": [
+      { "monthsAgo": 15, "baseSalary": 9000000, "reason": "Mức lương ban đầu" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 15, "insuranceSalary": 9000000, "wageRegion": 1 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 60, "days": 2, "type": "ANNUAL", "status": "APPROVED", "reason": "Về quê thăm gia đình" },
+      { "workDaysAgo": 25, "type": "SICK", "status": "APPROVED", "reason": "Sốt xuất huyết, phải truyền dịch" }
+    ],
+    "termination": { "status": "RESIGNED", "monthsAgo": 3, "reason": "Chuyển sang công việc mới gần nhà hơn", "comment": "Đồng ý. Em bàn giao danh sách khách hàng cho Lan trước ngày nghỉ nhé." }
+  },
+  {
+    "username": "staff-dn3",
+    "password": "password",
+    "fullName": "Bùi Thị Ngọc",
+    "email": "staff-dn3@hrm.local",
+    "profile": {
+      "gender": "FEMALE", "dateOfBirth": "1999-05-03",
+      "highestEducationLevel": "COLLEGE", "major": "Kinh doanh thương mại", "institution": "Trường Cao đẳng Thương mại Đà Nẵng", "graduationYear": 2020,
+      "nationalId": "048199003472", "phone": "0914736205",
+      "address": "27 Lê Duẩn, Phường Hải Châu, Thành phố Đà Nẵng",
+      "taxCode": "048199003472", "bankName": "Vietcombank", "bankAccountNumber": "0041000928364", "bankAccountHolder": "BUI THI NGOC"
+    },
+    "roles": { "EMPLOYEE": "SELF" },
+    "assignments": [
+      { "monthsAgo": 11, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-02", "position": "GENERAL_STAFF", "manager": "branch-dn" }
+    ],
+    "salaries": [
+      { "monthsAgo": 11, "baseSalary": 8500000, "reason": "Mức lương ban đầu" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 11, "insuranceSalary": 8500000, "wageRegion": 1 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 40, "type": "ANNUAL", "status": "APPROVED", "reason": "Giải quyết việc gia đình" }
+    ],
+    "absences": [
+      { "workDaysAgo": 5, "note": "Không đến làm, không báo trước" },
+      { "workDaysAgo": 4, "note": "Không đến làm, gọi điện không liên lạc được" },
+      { "workDaysAgo": 3, "note": "Không đến làm, gọi điện không liên lạc được" },
+      { "workDaysAgo": 2, "note": "Không đến làm, đã gửi thông báo về địa chỉ thường trú" },
+      { "workDaysAgo": 1, "note": "Không đến làm, không có lý do chính đáng" }
+    ],
+    "termination": { "status": "TERMINATED", "monthsAgo": 5, "reason": "Sa thải do tự ý bỏ việc 5 ngày làm việc liên tục không có lý do chính đáng" }
+  },
+  {
+    "username": "accounting-hcm1",
+    "password": "password",
+    "fullName": "Đặng Thị Thu",
+    "email": "accounting-hcm1@hrm.local",
+    "profile": {
+      "gender": "FEMALE", "dateOfBirth": "1969-04-10",
+      "highestEducationLevel": "BACHELOR", "major": "Kế toán", "institution": "Học viện Tài chính", "graduationYear": 1991,
+      "nationalId": "079169001284", "phone": "0908145623",
+      "address": "16 Cao Thắng, Phường Bàn Cờ, Thành phố Hồ Chí Minh",
+      "taxCode": "079169001284", "bankName": "Vietcombank", "bankAccountNumber": "0071000213659", "bankAccountHolder": "DANG THI THU"
+    },
+    "roles": { "EMPLOYEE": "SELF" },
+    "assignments": [
+      { "monthsAgo": 40, "organizationUnit": "ACCOUNTING", "position": "GENERAL_STAFF", "manager": "owner" }
+    ],
+    "salaries": [
+      { "monthsAgo": 40, "baseSalary": 13000000, "reason": "Mức lương ban đầu" },
+      { "monthsAgo": 22, "baseSalary": 14000000, "reason": "Điều chỉnh lương định kỳ" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 40, "insuranceSalary": 13000000, "wageRegion": 1 },
+      { "monthsAgo": 22, "insuranceSalary": 14000000, "wageRegion": 1 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 90, "days": 3, "type": "ANNUAL", "status": "APPROVED", "reason": "Đi khám sức khỏe tổng quát và điều trị" },
+      { "workDaysAgo": 30, "type": "SICK", "status": "APPROVED", "reason": "Đau khớp gối, bác sĩ cho nghỉ" }
+    ],
+    "termination": { "status": "RETIRED", "monthsAgo": 10, "reason": "Nghỉ hưu theo chế độ khi đủ tuổi nghỉ hưu" }
+  },
+  {
+    "username": "hr-hcm1",
+    "password": "password",
+    "fullName": "Đinh Gia Bảo",
+    "email": "hr-hcm1@hrm.local",
+    "profile": {
+      "gender": "MALE", "dateOfBirth": "2002-07-19",
+      "highestEducationLevel": "BACHELOR", "major": "Quản trị nhân lực", "institution": "Trường Đại học Lao động - Xã hội (Cơ sở II)", "graduationYear": 2024,
+      "nationalId": "079202008451", "phone": "0367294158", "personalEmail": "bao.dinhgia02@gmail.com",
+      "address": "203 Nguyễn Xí, Phường Bình Lợi Trung, Thành phố Hồ Chí Minh",
+      "taxCode": "079202008451", "bankName": "Techcombank", "bankAccountNumber": "19038215467011", "bankAccountHolder": "DINH GIA BAO"
+    },
+    "roles": { "EMPLOYEE": "SELF" },
+    "probation": true,
+    "assignments": [
+      { "monthsAgo": 1, "organizationUnit": "HR", "position": "GENERAL_STAFF", "manager": "hr" }
+    ],
+    "salaries": [
+      { "monthsAgo": 1, "baseSalary": 7500000, "reason": "Lương thử việc" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 1, "insuranceSalary": 7500000, "wageRegion": 1 }
     ]
   }
 ]
