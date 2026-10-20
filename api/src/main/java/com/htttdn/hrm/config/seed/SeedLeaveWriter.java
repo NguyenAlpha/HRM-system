@@ -9,7 +9,9 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -22,15 +24,20 @@ import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AttendanceRecord;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.LeaveRequest;
+import com.htttdn.hrm.entity.Notification;
 import com.htttdn.hrm.entity.WorkShift;
 import com.htttdn.hrm.entity.enums.AttendanceStatus;
 import com.htttdn.hrm.entity.enums.LeaveRequestStatus;
 import com.htttdn.hrm.entity.enums.LeaveType;
+import com.htttdn.hrm.repository.AccountRepository;
+import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
+import com.htttdn.hrm.repository.NotificationRepository;
 import com.htttdn.hrm.service.AttendanceCalendarService;
 import com.htttdn.hrm.service.AttendanceCalendarService.ScheduledDay;
 import com.htttdn.hrm.service.AttendanceService;
+import com.htttdn.hrm.service.EmployeeAccessScopeService;
 import com.htttdn.hrm.service.LeaveEntitlementService;
 
 /**
@@ -45,6 +52,10 @@ import com.htttdn.hrm.service.LeaveEntitlementService;
  * nên trạng thái và số phút của ngày công khớp với luồng thật; đơn phép năm phải còn đủ phép. Ngày
  * vắng không phép là ngày HR đối soát; ngày thiếu chấm công chỉ ghi trong tháng hiện tại, để các
  * tháng trước vẫn tính lương được.
+ *
+ * <p>Thông báo được ghi như {@code NotificationService} gửi, nhưng theo ngày gửi và ngày quyết định của đơn:
+ * người duyệt và HR Manager xem được đơn của nhân viên nhận thông báo đơn mới, nhân viên nhận kết quả duyệt.
+ * Thông báo cũ hơn một tuần đã được đọc.
  */
 @Component
 class SeedLeaveWriter {
@@ -53,25 +64,39 @@ class SeedLeaveWriter {
     private static final int FUTURE_DAYS = 90;
     private static final String MORNING = "MORNING";
     private static final String AFTERNOON = "AFTERNOON";
+    // Notifications older than this were read; newer ones still show as unread.
+    private static final int READ_AFTER_DAYS = 7;
 
     private final AttendanceCalendarService attendanceCalendarService;
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final AttendanceService attendanceService;
     private final LeaveEntitlementService leaveEntitlementService;
     private final LeaveRequestRepository leaveRequestRepository;
+    private final AccountRepository accountRepository;
+    private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
+    private final EmployeeAccessScopeService employeeAccessScopeService;
+    private final NotificationRepository notificationRepository;
 
     SeedLeaveWriter(
         AttendanceCalendarService attendanceCalendarService,
         AttendanceRecordRepository attendanceRecordRepository,
         AttendanceService attendanceService,
         LeaveEntitlementService leaveEntitlementService,
-        LeaveRequestRepository leaveRequestRepository
+        LeaveRequestRepository leaveRequestRepository,
+        AccountRepository accountRepository,
+        AccountRoleAssignmentRepository accountRoleAssignmentRepository,
+        EmployeeAccessScopeService employeeAccessScopeService,
+        NotificationRepository notificationRepository
     ) {
         this.attendanceCalendarService = attendanceCalendarService;
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.attendanceService = attendanceService;
         this.leaveEntitlementService = leaveEntitlementService;
         this.leaveRequestRepository = leaveRequestRepository;
+        this.accountRepository = accountRepository;
+        this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
+        this.employeeAccessScopeService = employeeAccessScopeService;
+        this.notificationRepository = notificationRepository;
     }
 
     /**
@@ -177,6 +202,9 @@ class SeedLeaveWriter {
             leaveEntitlementService.requireSufficientBalance(request);
         }
         leaveRequestRepository.save(request);
+        if (!draft) {
+            notify(employee, request, approver, submittedAt, decidedAt);
+        }
         if (leave.status() != LeaveRequestStatus.APPROVED) {
             return;
         }
@@ -202,6 +230,42 @@ class SeedLeaveWriter {
             employee.getId(), first.workDate(), span.getLast().workDate())) {
             record.setUpdatedAt(decidedAt.isAfter(record.getCreatedAt()) ? decidedAt : record.getCreatedAt());
         }
+    }
+
+    /** The notifications NotificationService would have sent for a submitted request, at the time of each step. */
+    private void notify(Employee employee, LeaveRequest request, Account approver, Instant submittedAt, Instant decidedAt) {
+        Account applicant = accountRepository.findByEmployeeId(employee.getId())
+            .orElseThrow(() -> new IllegalStateException("Staff seed: " + employee.getEmployeeCode() + " has no account"));
+        Map<Long, Account> recipients = new LinkedHashMap<>();
+        recipients.put(approver.getId(), approver);
+        for (Account hr : accountRoleAssignmentRepository.findActiveAccountsHoldingRole(
+            "HR_MANAGER", LocalDate.ofInstant(submittedAt, ZONE))) {
+            if (employeeAccessScopeService.canAccountAccessEmployee(hr.getId(), employee.getId(), "request.read")) {
+                recipients.put(hr.getId(), hr);
+            }
+        }
+        recipients.remove(applicant.getId());
+
+        List<Notification> notifications = new ArrayList<>();
+        for (Account recipient : recipients.values()) {
+            notifications.add(notification(recipient, request, "LEAVE_SUBMITTED", submittedAt));
+        }
+        if (request.getStatus() == LeaveRequestStatus.APPROVED || request.getStatus() == LeaveRequestStatus.REJECTED) {
+            String type = request.getStatus() == LeaveRequestStatus.APPROVED ? "LEAVE_APPROVED" : "LEAVE_REJECTED";
+            notifications.add(notification(applicant, request, type, decidedAt));
+        }
+        notificationRepository.saveAll(notifications);
+    }
+
+    private static Notification notification(Account recipient, LeaveRequest request, String type, Instant createdAt) {
+        boolean read = createdAt.isBefore(Instant.now().minus(Duration.ofDays(READ_AFTER_DAYS)));
+        return Notification.builder()
+            .recipient(recipient)
+            .leaveRequest(request)
+            .type(type)
+            .createdAt(createdAt)
+            .readAt(read ? createdAt.plus(Duration.ofHours(1)) : null)
+            .build();
     }
 
     private AttendanceRecord recordOn(Employee employee, LocalDate date) {
