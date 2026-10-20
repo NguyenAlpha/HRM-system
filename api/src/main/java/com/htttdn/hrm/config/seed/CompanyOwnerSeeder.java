@@ -51,7 +51,8 @@ import com.htttdn.hrm.service.EmployeeCodeGenerator;
  *
  * <p>Dữ liệu giống kết quả của luồng bootstrap Company Owner trong Admin Console, nhưng account
  * được kích hoạt sẵn với mật khẩu cố định để dùng trong môi trường phát triển. Ngày tạo, ngày vào
- * làm, ngày cấp role và ngày bắt đầu phân công đều là 2 năm trước ngày chạy seed.
+ * làm, ngày cấp role và ngày bắt đầu phân công đều là 6 năm trước ngày chạy seed, sớm hơn mọi nhân
+ * sự trong {@code staff.json}.
  *
  * <p>Owner có lương cơ bản 50.000.000 và hồ sơ bảo hiểm/thuế (đóng đủ BHXH/BHYT/BHTN trên 50.000.000,
  * vùng 1) từ ngày vào làm, cùng 2 người con phụ thuộc giảm trừ: một từ ngày vào làm, một từ 8 tháng trước.
@@ -156,7 +157,7 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
             );
         }
 
-        ZonedDateTime seededAt = ZonedDateTime.now().minusYears(4);
+        ZonedDateTime seededAt = ZonedDateTime.now().minusYears(6);
         Instant createdAt = seededAt.toInstant();
         LocalDate startDate = seededAt.toLocalDate();
 
