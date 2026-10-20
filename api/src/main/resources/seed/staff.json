@@ -453,5 +453,197 @@
     "payrollProfiles": [
       { "monthsAgo": 1, "insuranceSalary": 7500000, "wageRegion": 1 }
     ]
+  },
+  {
+    "username": "warehouse-hcm",
+    "password": "password",
+    "fullName": "Trịnh Văn Hải",
+    "email": "warehouse-hcm@hrm.local",
+    "profile": {
+      "gender": "MALE", "dateOfBirth": "1980-02-14",
+      "highestEducationLevel": "COLLEGE", "major": "Logistics", "institution": "Trường Cao đẳng Giao thông Vận tải TP.HCM", "graduationYear": 2001,
+      "nationalId": "079080003617", "phone": "0903718264", "personalEmail": "hai.trinhvan80@gmail.com",
+      "address": "52 Đường số 7, Phường Bình Trị Đông, Thành phố Hồ Chí Minh",
+      "taxCode": "079080003617", "bankName": "Vietcombank", "bankAccountNumber": "0071000384125", "bankAccountHolder": "TRINH VAN HAI"
+    },
+    "roles": { "EMPLOYEE": "SELF" },
+    "assignments": [
+      { "monthsAgo": 61, "organizationUnit": "OPERATIONS", "workLocation": "WAREHOUSE-01", "position": "WAREHOUSE_SUPERVISOR", "manager": "owner" }
+    ],
+    "salaries": [
+      { "monthsAgo": 61, "baseSalary": 10000000, "reason": "Mức lương ban đầu" },
+      { "monthsAgo": 37, "baseSalary": 11500000, "reason": "Điều chỉnh lương định kỳ" },
+      { "monthsAgo": 13, "baseSalary": 13000000, "reason": "Điều chỉnh lương định kỳ" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 61, "insuranceSalary": 10000000, "wageRegion": 1 },
+      { "monthsAgo": 37, "insuranceSalary": 11500000, "wageRegion": 1 },
+      { "monthsAgo": 13, "insuranceSalary": 13000000, "wageRegion": 1 }
+    ],
+    "dependents": [
+      { "fullName": "Trịnh Gia Huy", "identifier": "079212004175", "monthsAgo": 61 },
+      { "fullName": "Trịnh Ngọc Hân", "identifier": "079318006243", "monthsAgo": 30 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 120, "days": 3, "type": "ANNUAL", "status": "APPROVED", "reason": "Về quê Bến Tre ăn giỗ ông nội" },
+      { "workDaysAgo": 45, "type": "SICK", "status": "APPROVED", "reason": "Đau lưng, bác sĩ cho nghỉ" },
+      { "workDaysAgo": -6, "type": "ANNUAL", "status": "PENDING", "reason": "Họp phụ huynh đầu năm học cho con" }
+    ]
+  },
+  {
+    "username": "ops-hcm1",
+    "password": "password",
+    "fullName": "Hồ Minh Tâm",
+    "email": "ops-hcm1@hrm.local",
+    "profile": {
+      "gender": "MALE", "dateOfBirth": "1986-10-03",
+      "highestEducationLevel": "BACHELOR", "major": "Quản lý công nghiệp", "institution": "Trường Đại học Bách khoa - ĐHQG TP.HCM", "graduationYear": 2009,
+      "nationalId": "079086005239", "phone": "0918264037", "personalEmail": "tam.hominh86@gmail.com",
+      "address": "88 Lê Lợi, Phường Bến Thành, Thành phố Hồ Chí Minh",
+      "taxCode": "079086005239", "bankName": "ACB", "bankAccountNumber": "235619874", "bankAccountHolder": "HO MINH TAM"
+    },
+    "roles": { "EMPLOYEE": "SELF" },
+    "assignments": [
+      { "monthsAgo": 38, "organizationUnit": "OPERATIONS", "position": "GENERAL_STAFF", "manager": "owner" },
+      { "monthsAgo": 20, "organizationUnit": "OPERATIONS", "position": "TEAM_LEAD", "manager": "owner" }
+    ],
+    "salaries": [
+      { "monthsAgo": 38, "baseSalary": 12000000, "reason": "Mức lương ban đầu" },
+      { "monthsAgo": 20, "baseSalary": 15000000, "reason": "Lên Trưởng nhóm vận hành" },
+      { "monthsAgo": 8, "baseSalary": 16000000, "reason": "Điều chỉnh lương định kỳ" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 38, "insuranceSalary": 12000000, "wageRegion": 1 },
+      { "monthsAgo": 20, "insuranceSalary": 15000000, "wageRegion": 1 },
+      { "monthsAgo": 8, "insuranceSalary": 16000000, "wageRegion": 1 }
+    ],
+    "dependents": [
+      { "fullName": "Hồ Minh Khoa", "identifier": "079217003582", "monthsAgo": 38 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 70, "days": 2, "type": "ANNUAL", "status": "APPROVED", "reason": "Đưa gia đình đi nghỉ hè" },
+      { "workDaysAgo": 10, "part": "MORNING", "type": "ANNUAL", "status": "APPROVED", "reason": "Đi làm thủ tục đăng kiểm xe" }
+    ]
+  },
+  {
+    "username": "ops-hcm2",
+    "password": "password",
+    "fullName": "Lý Thị Kim Anh",
+    "email": "ops-hcm2@hrm.local",
+    "profile": {
+      "gender": "FEMALE", "dateOfBirth": "1999-12-08",
+      "highestEducationLevel": "BACHELOR", "major": "Quản trị kinh doanh", "institution": "Trường Đại học Tôn Đức Thắng", "graduationYear": 2021,
+      "nationalId": "079199007364", "phone": "0938561247", "personalEmail": "kimanh.ly99@gmail.com",
+      "address": "34 Nguyễn Thị Minh Khai, Phường Xuân Hòa, Thành phố Hồ Chí Minh",
+      "taxCode": "079199007364", "bankName": "Sacombank", "bankAccountNumber": "060215847396", "bankAccountHolder": "LY THI KIM ANH"
+    },
+    "roles": { "EMPLOYEE": "SELF" },
+    "assignments": [
+      { "monthsAgo": 26, "organizationUnit": "OPERATIONS", "position": "GENERAL_STAFF", "manager": "ops-hcm1" }
+    ],
+    "salaries": [
+      { "monthsAgo": 26, "baseSalary": 8500000, "reason": "Mức lương ban đầu" },
+      { "monthsAgo": 8, "baseSalary": 9500000, "reason": "Điều chỉnh lương định kỳ" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 26, "insuranceSalary": 8500000, "wageRegion": 1 },
+      { "monthsAgo": 8, "insuranceSalary": 9500000, "wageRegion": 1 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 100, "type": "ANNUAL", "status": "APPROVED", "reason": "Đi phỏng vấn visa du lịch" },
+      { "workDaysAgo": 33, "type": "SICK", "status": "APPROVED", "reason": "Viêm xoang, đi khám" },
+      { "workDaysAgo": 12, "type": "UNPAID", "status": "REJECTED", "reason": "Nghỉ thêm để kéo dài chuyến du lịch", "comment": "Đang cao điểm giao hàng cuối tháng, em sắp xếp lại lịch nhé." },
+      { "workDaysAgo": -9, "days": 3, "type": "ANNUAL", "status": "PENDING", "reason": "Đi du lịch Đà Lạt cùng gia đình" }
+    ],
+    "missingPunches": [1]
+  },
+  {
+    "username": "ops-hcm3",
+    "password": "password",
+    "fullName": "Mai Văn Đạt",
+    "email": "ops-hcm3@hrm.local",
+    "profile": {
+      "gender": "MALE", "dateOfBirth": "1995-03-27",
+      "highestEducationLevel": "COLLEGE", "major": "Quản trị kinh doanh", "institution": "Trường Cao đẳng Kinh tế Đối ngoại", "graduationYear": 2016,
+      "nationalId": "048095006831", "phone": "0905283764", "personalEmail": "dat.maivan95@gmail.com",
+      "address": "120 Phan Đăng Lưu, Phường Đức Nhuận, Thành phố Hồ Chí Minh",
+      "taxCode": "048095006831", "bankName": "Techcombank", "bankAccountNumber": "19035647812019", "bankAccountHolder": "MAI VAN DAT"
+    },
+    "roles": { "EMPLOYEE": "SELF" },
+    "assignments": [
+      { "monthsAgo": 17, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-02", "position": "GENERAL_STAFF", "manager": "branch-dn" },
+      { "monthsAgo": 6, "organizationUnit": "OPERATIONS", "position": "GENERAL_STAFF", "manager": "ops-hcm1" }
+    ],
+    "salaries": [
+      { "monthsAgo": 17, "baseSalary": 8500000, "reason": "Mức lương ban đầu" },
+      { "monthsAgo": 6, "baseSalary": 9500000, "reason": "Chuyển công tác về trụ sở chính" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 17, "insuranceSalary": 8500000, "wageRegion": 1 },
+      { "monthsAgo": 6, "insuranceSalary": 9500000, "wageRegion": 1 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 160, "days": 2, "type": "ANNUAL", "status": "APPROVED", "reason": "Chuyển nhà vào TP.HCM" },
+      { "workDaysAgo": 50, "type": "ANNUAL", "status": "APPROVED", "reason": "Về Đà Nẵng làm thủ tục giấy tờ" }
+    ]
+  },
+  {
+    "username": "warehouse-hcm2",
+    "password": "password",
+    "fullName": "Phạm Quốc Việt",
+    "email": "warehouse-hcm2@hrm.local",
+    "profile": {
+      "gender": "MALE", "dateOfBirth": "2001-06-15",
+      "highestEducationLevel": "HIGH_SCHOOL", "institution": "Trường THPT Thủ Đức", "graduationYear": 2019,
+      "nationalId": "079201004528", "phone": "0372918465",
+      "address": "15/3 Lê Văn Việt, Phường Tăng Nhơn Phú, Thành phố Hồ Chí Minh",
+      "taxCode": "079201004528", "bankName": "Agribank", "bankAccountNumber": "6380205417592", "bankAccountHolder": "PHAM QUOC VIET"
+    },
+    "roles": { "EMPLOYEE": "SELF" },
+    "assignments": [
+      { "monthsAgo": 20, "organizationUnit": "OPERATIONS", "workLocation": "WAREHOUSE-01", "position": "GENERAL_STAFF", "manager": "warehouse-hcm" }
+    ],
+    "salaries": [
+      { "monthsAgo": 20, "baseSalary": 7500000, "reason": "Mức lương ban đầu" },
+      { "monthsAgo": 8, "baseSalary": 8000000, "reason": "Điều chỉnh lương định kỳ" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 20, "insuranceSalary": 7500000, "wageRegion": 1 },
+      { "monthsAgo": 8, "insuranceSalary": 8000000, "wageRegion": 1 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 66, "days": 3, "type": "SICK", "status": "APPROVED", "reason": "Bong gân cổ chân khi bốc xếp hàng" },
+      { "workDaysAgo": 18, "type": "ANNUAL", "status": "APPROVED", "reason": "Làm thủ tục đăng ký xe máy" }
+    ],
+    "absences": [
+      { "workDaysAgo": 90, "note": "Không đến làm, không báo trước" }
+    ]
+  },
+  {
+    "username": "accounting-hcm2",
+    "password": "password",
+    "fullName": "Võ Ngọc Trâm",
+    "email": "accounting-hcm2@hrm.local",
+    "profile": {
+      "gender": "FEMALE", "dateOfBirth": "1997-09-23",
+      "highestEducationLevel": "MASTER", "major": "Kế toán", "institution": "Trường Đại học Kinh tế TP.HCM", "graduationYear": 2022,
+      "nationalId": "079197002846", "phone": "0909372815", "personalEmail": "tram.vongoc97@gmail.com",
+      "address": "61 Võ Văn Tần, Phường Xuân Hòa, Thành phố Hồ Chí Minh",
+      "taxCode": "079197002846", "bankName": "BIDV", "bankAccountNumber": "31410003928475", "bankAccountHolder": "VO NGOC TRAM"
+    },
+    "roles": { "EMPLOYEE": "SELF" },
+    "assignments": [
+      { "monthsAgo": 8, "organizationUnit": "ACCOUNTING", "position": "GENERAL_STAFF", "manager": "accountant" }
+    ],
+    "salaries": [
+      { "monthsAgo": 8, "baseSalary": 11000000, "reason": "Mức lương ban đầu" }
+    ],
+    "payrollProfiles": [
+      { "monthsAgo": 8, "insuranceSalary": 11000000, "wageRegion": 1 }
+    ],
+    "leaves": [
+      { "workDaysAgo": 30, "type": "ANNUAL", "status": "APPROVED", "reason": "Đi thi chứng chỉ kế toán viên" },
+      { "workDaysAgo": -14, "days": 2, "type": "ANNUAL", "status": "PENDING", "reason": "Về quê dự đám cưới chị gái" }
+    ]
   }
 ]
