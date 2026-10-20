@@ -4,7 +4,13 @@
     "password": "password",
     "fullName": "Trần Thị Bình",
     "email": "hr@hrm.local",
-    "profile": { "gender": "FEMALE", "dateOfBirth": "1992-03-14", "highestEducationLevel": "BACHELOR", "major": "Quản trị nhân lực", "institution": "Trường Đại học Lao động - Xã hội", "graduationYear": 2014 },
+    "profile": {
+      "gender": "FEMALE", "dateOfBirth": "1992-03-14",
+      "highestEducationLevel": "BACHELOR", "major": "Quản trị nhân lực", "institution": "Trường Đại học Lao động - Xã hội", "graduationYear": 2014,
+      "nationalId": "079192004127", "phone": "0903412785", "personalEmail": "binh.tran92@gmail.com",
+      "address": "45 Nguyễn Văn Thủ, Phường Tân Định, Thành phố Hồ Chí Minh",
+      "taxCode": "079192004127", "bankName": "Vietcombank", "bankAccountNumber": "0071000845213", "bankAccountHolder": "TRAN THI BINH"
+    },
     "roles": { "HR_MANAGER": "COMPANY", "EMPLOYEE": "SELF" },
     "assignments": [
       { "monthsAgo": 20, "organizationUnit": "HR", "position": "GENERAL_STAFF", "manager": "owner" },
@@ -36,7 +42,13 @@
     "password": "password",
     "fullName": "Lê Văn Cường",
     "email": "employee@hrm.local",
-    "profile": { "gender": "MALE", "dateOfBirth": "1998-09-02", "highestEducationLevel": "COLLEGE", "major": "Công nghệ kỹ thuật điện", "institution": "Trường Cao đẳng Kỹ thuật Cao Thắng", "graduationYear": 2019 },
+    "profile": {
+      "gender": "MALE", "dateOfBirth": "1998-09-02",
+      "highestEducationLevel": "COLLEGE", "major": "Công nghệ kỹ thuật điện", "institution": "Trường Cao đẳng Kỹ thuật Cao Thắng", "graduationYear": 2019,
+      "nationalId": "079098011352", "phone": "0938217460", "personalEmail": "cuong.le98@gmail.com",
+      "address": "112/7 Lê Văn Sỹ, Phường Phú Nhuận, Thành phố Hồ Chí Minh",
+      "taxCode": "079098011352", "bankName": "Techcombank", "bankAccountNumber": "19036482571015", "bankAccountHolder": "LE VAN CUONG"
+    },
     "roles": { "EMPLOYEE": "SELF" },
     "assignments": [
       { "monthsAgo": 10, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-01", "position": "GENERAL_STAFF", "manager": "owner" },
@@ -76,7 +88,13 @@
     "password": "password",
     "fullName": "Phạm Thu Hà",
     "email": "accountant@hrm.local",
-    "profile": { "gender": "FEMALE", "dateOfBirth": "1995-11-21", "highestEducationLevel": "BACHELOR", "major": "Kế toán", "institution": "Trường Đại học Kinh tế TP.HCM", "graduationYear": 2017 },
+    "profile": {
+      "gender": "FEMALE", "dateOfBirth": "1995-11-21",
+      "highestEducationLevel": "BACHELOR", "major": "Kế toán", "institution": "Trường Đại học Kinh tế TP.HCM", "graduationYear": 2017,
+      "nationalId": "079195006481", "phone": "0909563128", "personalEmail": "ha.phamthu95@gmail.com",
+      "address": "28 Trần Não, Phường An Khánh, Thành phố Hồ Chí Minh",
+      "taxCode": "079195006481", "bankName": "BIDV", "bankAccountNumber": "31410002765194", "bankAccountHolder": "PHAM THU HA"
+    },
     "roles": { "PAYROLL_ACCOUNTANT": "COMPANY", "EMPLOYEE": "SELF" },
     "assignments": [
       { "monthsAgo": 14, "organizationUnit": "ACCOUNTING", "position": "PAYROLL_ACCOUNTANT", "manager": "owner" }
@@ -113,7 +131,13 @@
     "password": "password",
     "fullName": "Nguyễn Đức Mạnh",
     "email": "branch-hn@hrm.local",
-    "profile": { "gender": "MALE", "dateOfBirth": "1987-06-18", "highestEducationLevel": "MASTER", "major": "Quản trị kinh doanh", "institution": "Trường Đại học Kinh tế Quốc dân", "graduationYear": 2012 },
+    "profile": {
+      "gender": "MALE", "dateOfBirth": "1987-06-18",
+      "highestEducationLevel": "DOCTORATE", "major": "Quản trị kinh doanh", "institution": "Trường Đại học Kinh tế Quốc dân", "graduationYear": 2019,
+      "nationalId": "001087003915", "phone": "0912384506", "personalEmail": "manh.nguyenduc@gmail.com",
+      "address": "18 Nguyễn Chí Thanh, Phường Láng, Thành phố Hà Nội",
+      "taxCode": "001087003915", "bankName": "Vietcombank", "bankAccountNumber": "0011002398471", "bankAccountHolder": "NGUYEN DUC MANH"
+    },
     "roles": { "MANAGER": "LOCATION", "EMPLOYEE": "SELF" },
     "assignments": [
       { "monthsAgo": 22, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-01", "position": "BRANCH_MANAGER", "manager": "owner" }
@@ -139,7 +163,13 @@
     "password": "password",
     "fullName": "Vũ Thị Lan",
     "email": "staff-hn1@hrm.local",
-    "profile": { "gender": "FEMALE", "dateOfBirth": "1996-02-09", "highestEducationLevel": "BACHELOR", "major": "Quản trị kinh doanh", "institution": "Trường Đại học Thương mại", "graduationYear": 2018 },
+    "profile": {
+      "gender": "FEMALE", "dateOfBirth": "1996-02-09",
+      "highestEducationLevel": "BACHELOR", "major": "Quản trị kinh doanh", "institution": "Trường Đại học Thương mại", "graduationYear": 2018,
+      "nationalId": "001196008274", "phone": "0986145732", "personalEmail": "lan.vuthi96@gmail.com",
+      "address": "56 Trần Duy Hưng, Phường Yên Hòa, Thành phố Hà Nội",
+      "taxCode": "001196008274", "bankName": "VietinBank", "bankAccountNumber": "108872634519", "bankAccountHolder": "VU THI LAN"
+    },
     "roles": { "EMPLOYEE": "SELF" },
     "assignments": [
       { "monthsAgo": 18, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-01", "position": "GENERAL_STAFF", "manager": "branch-hn" }
@@ -163,7 +193,13 @@
     "password": "password",
     "fullName": "Đỗ Quang Huy",
     "email": "staff-hn2@hrm.local",
-    "profile": { "gender": "MALE", "dateOfBirth": "2000-10-27", "highestEducationLevel": "COLLEGE", "major": "Kinh doanh thương mại", "institution": "Trường Cao đẳng Thương mại và Du lịch Hà Nội", "graduationYear": 2021 },
+    "profile": {
+      "gender": "MALE", "dateOfBirth": "2000-10-27",
+      "highestEducationLevel": "COLLEGE", "major": "Kinh doanh thương mại", "institution": "Trường Cao đẳng Thương mại và Du lịch Hà Nội", "graduationYear": 2021,
+      "nationalId": "001200005617", "phone": "0978302164", "personalEmail": "huy.doquang2000@gmail.com",
+      "address": "21 Kim Ngưu, Phường Vĩnh Tuy, Thành phố Hà Nội",
+      "taxCode": "001200005617", "bankName": "MB Bank", "bankAccountNumber": "0350127846591", "bankAccountHolder": "DO QUANG HUY"
+    },
     "roles": { "EMPLOYEE": "SELF" },
     "assignments": [
       { "monthsAgo": 9, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-01", "position": "GENERAL_STAFF", "manager": "branch-hn" }
@@ -186,7 +222,13 @@
     "password": "password",
     "fullName": "Hoàng Văn Tú",
     "email": "warehouse-hn@hrm.local",
-    "profile": { "gender": "MALE", "dateOfBirth": "1990-12-05", "highestEducationLevel": "COLLEGE", "major": "Quản lý kho", "institution": "Trường Cao đẳng nghề Bách khoa Hà Nội", "graduationYear": 2010 },
+    "profile": {
+      "gender": "MALE", "dateOfBirth": "1990-12-05",
+      "highestEducationLevel": "HIGH_SCHOOL", "institution": "Trường THPT Gia Lâm", "graduationYear": 2008,
+      "nationalId": "001090007342", "phone": "0965728031", "personalEmail": "tu.hoangvan90@gmail.com",
+      "address": "Thôn Trung Mầu, Xã Phù Đổng, Thành phố Hà Nội",
+      "taxCode": "001090007342", "bankName": "Agribank", "bankAccountNumber": "1506205183946", "bankAccountHolder": "HOANG VAN TU"
+    },
     "roles": { "EMPLOYEE": "SELF" },
     "assignments": [
       { "monthsAgo": 16, "organizationUnit": "OPERATIONS", "workLocation": "WAREHOUSE-02", "position": "WAREHOUSE_SUPERVISOR", "manager": "branch-hn" }
@@ -207,7 +249,13 @@
     "password": "password",
     "fullName": "Phan Thị Hồng",
     "email": "branch-dn@hrm.local",
-    "profile": { "gender": "FEMALE", "dateOfBirth": "1989-04-22", "highestEducationLevel": "BACHELOR", "major": "Quản trị kinh doanh", "institution": "Trường Đại học Kinh tế - Đại học Đà Nẵng", "graduationYear": 2011 },
+    "profile": {
+      "gender": "FEMALE", "dateOfBirth": "1989-04-22",
+      "highestEducationLevel": "BACHELOR", "major": "Quản trị kinh doanh", "institution": "Trường Đại học Kinh tế - Đại học Đà Nẵng", "graduationYear": 2011,
+      "nationalId": "048189002563", "phone": "0905631874", "personalEmail": "hong.phanthi89@gmail.com",
+      "address": "72 Hàm Nghi, Phường Thanh Khê, Thành phố Đà Nẵng",
+      "taxCode": "048189002563", "bankName": "Vietcombank", "bankAccountNumber": "0041000673158", "bankAccountHolder": "PHAN THI HONG"
+    },
     "roles": { "MANAGER": "LOCATION", "EMPLOYEE": "SELF" },
     "assignments": [
       { "monthsAgo": 21, "organizationUnit": "OPERATIONS", "position": "OPERATIONS_MANAGER", "manager": "owner" },
@@ -230,7 +278,13 @@
     "password": "password",
     "fullName": "Trương Minh Khang",
     "email": "staff-dn1@hrm.local",
-    "profile": { "gender": "MALE", "dateOfBirth": "1997-07-30", "highestEducationLevel": "BACHELOR", "major": "Logistics và quản lý chuỗi cung ứng", "institution": "Trường Đại học Kinh tế - Đại học Đà Nẵng", "graduationYear": 2019 },
+    "profile": {
+      "gender": "MALE", "dateOfBirth": "1997-07-30",
+      "highestEducationLevel": "BACHELOR", "major": "Logistics và quản lý chuỗi cung ứng", "institution": "Trường Đại học Kinh tế - Đại học Đà Nẵng", "graduationYear": 2019,
+      "nationalId": "048097004718", "phone": "0935274196", "personalEmail": "khang.truong97@gmail.com",
+      "address": "15 Ngũ Hành Sơn, Phường Ngũ Hành Sơn, Thành phố Đà Nẵng",
+      "taxCode": "048097004718", "bankName": "Sacombank", "bankAccountNumber": "040081352947", "bankAccountHolder": "TRUONG MINH KHANG"
+    },
     "roles": { "EMPLOYEE": "SELF" },
     "assignments": [
       { "monthsAgo": 11, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-02", "position": "GENERAL_STAFF", "manager": "branch-dn" }
@@ -255,7 +309,11 @@
     "password": "password",
     "fullName": "Lê Thị Mai",
     "email": "staff-dn2@hrm.local",
-    "profile": { "gender": "FEMALE", "dateOfBirth": "2001-01-16", "highestEducationLevel": "COLLEGE", "major": "Kế toán doanh nghiệp", "institution": "Trường Cao đẳng Kinh tế - Kế hoạch Đà Nẵng", "graduationYear": 2022 },
+    "profile": {
+      "gender": "FEMALE", "dateOfBirth": "2001-01-16",
+      "nationalId": "048301006925", "phone": "0796418253",
+      "address": "38 Tôn Đức Thắng, Phường Hòa Khánh, Thành phố Đà Nẵng"
+    },
     "roles": { "EMPLOYEE": "SELF" },
     "assignments": [
       { "monthsAgo": 7, "organizationUnit": "OPERATIONS", "workLocation": "BRANCH-02", "position": "GENERAL_STAFF", "manager": "branch-dn" }
