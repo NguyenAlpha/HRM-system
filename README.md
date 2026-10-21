@@ -44,8 +44,9 @@ Sign in at `/login` with one of the seeded demo accounts. The password is `passw
   [`AccountAuthorizationService`](api/src/main/java/com/htttdn/hrm/service/AccountAuthorizationService.java)
 - **Payroll that stays correct under retroactive changes.** Periods move through
   `DRAFT → CALCULATED → APPROVED → PAID → LOCKED` and are locked with `PESSIMISTIC_WRITE` while being calculated.
-  A back-dated change to salary, attendance, holidays, insurance or tax rules resets affected `CALCULATED` periods
-  to `DRAFT` and is rejected for approved, paid or locked periods.
+  A back-dated change to salary, an employee's insurance/tax profile, dependents, holidays or manual adjustments
+  resets affected `CALCULATED` periods to `DRAFT` and is rejected for approved, paid or locked periods. Attendance
+  edited after calculation blocks approval until the period is recalculated.
   → [`PayrollService.calculate`](api/src/main/java/com/htttdn/hrm/service/PayrollService.java),
   [`PayrollDeductionsService`](api/src/main/java/com/htttdn/hrm/service/PayrollDeductionsService.java)
 - **Overlapping periods are rejected by the database.** Salary history, primary assignments, allowance rules, tax
@@ -194,6 +195,7 @@ Detailed documentation is written in Vietnamese.
 - [Overview and architecture](docs/OVERVIEW.md)
 - [Organization structure and permissions](docs/ORGANIZATION_STRUCTURE.md)
 - [Source structure](docs/PROJECT_STRUCTURE.md)
+- [Backend concepts](api/docs/concepts/README.md): data scope, token lifecycle, payroll lifecycle, effective dating
 - [API reference](api/docs/api/README.md), including [attendance](api/docs/api/ATTENDANCE.md) and [payroll](api/docs/api/PAYROLL.md)
 - [Database backup and restore](docs/BACKUP.md)
 - [Web app documentation](apps/web/docs/README.md)

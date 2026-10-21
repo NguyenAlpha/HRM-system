@@ -62,7 +62,7 @@ DRAFT ──calculate──▶ CALCULATED ──approve──▶ APPROVED ──
 ```
 
 - `calculate` chạy được ở `DRAFT` và `CALCULATED` (tính lại xóa phiếu cũ và tạo lại).
-- Khi kỳ đang `CALCULATED`, mọi thay đổi dữ liệu đầu vào đưa kỳ về `DRAFT` và xóa phiếu lương: mức lương, hồ sơ bảo hiểm/thuế, người phụ thuộc, khoản cộng/trừ, ngày lễ, dữ liệu công. Người dùng phải tính lại.
+- Khi kỳ đang `CALCULATED`, mọi thay đổi dữ liệu đầu vào đưa kỳ về `DRAFT` và xóa phiếu lương: mức lương, hồ sơ bảo hiểm/thuế, người phụ thuộc, khoản cộng/trừ, ngày lễ. Người dùng phải tính lại. Riêng dữ liệu công đổi sau lần tính không đưa kỳ về `DRAFT`, nhưng `approve` bị chặn cho tới khi tính lại (xem [PAYROLL_LIFECYCLE.md](../concepts/PAYROLL_LIFECYCLE.md#4-thay-đổi-dữ-liệu-hồi-tố)).
 - Từ `APPROVED` trở đi, các thay đổi ảnh hưởng kỳ đó bị chặn với `409 PAYROLL_PERIOD_LOCKED`. Kỳ `APPROVED` hiện không có luồng mở lại.
 - `CANCELLED` là trạng thái cuối; tháng đó có thể tạo kỳ mới.
 
