@@ -4,7 +4,7 @@ Hệ thống quản trị nhân sự gồm Spring Boot API, Next.js web và Post
 
 ## Chạy nhanh
 
-Yêu cầu: Java 21+, Node.js 20.9+, npm 10+ và Docker.
+Yêu cầu: Java 25+, Node.js 20.9+, npm 10+ và Docker.
 
 ```powershell
 docker compose up -d database

@@ -12,7 +12,7 @@ Cài đặt các công cụ sau:
 
 | Công cụ | Phiên bản |
 |:--------|:----------|
-| Java JDK | 21 |
+| Java JDK | 25 |
 | Node.js | 20.9 trở lên |
 | npm | 10 trở lên |
 | Docker | Docker Desktop hoặc Docker Engine có Compose |
