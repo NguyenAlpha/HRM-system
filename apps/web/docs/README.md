@@ -6,6 +6,7 @@ Tài liệu dành cho ứng dụng Next.js trong `apps/web`.
 
 | Tài liệu | Nội dung |
 |:---------|:---------|
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | Cấu trúc thư mục và luồng request, giải thích bằng khái niệm backend |
 | [DEVELOPMENT.md](./DEVELOPMENT.md) | Chuẩn bị môi trường, chạy local, cấu hình và checklist kiểm thử |
 | [AUTH.md](./AUTH.md) | Kiến trúc xác thực BFF, hai cổng đăng nhập, session API và cookie |
 | [RBAC.md](./RBAC.md) | Trang quản lý custom role và đồng bộ permission theo module |
