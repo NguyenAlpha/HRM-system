@@ -30,6 +30,9 @@ Hai chỗ dễ tra nhầm: `role-assignments` và `permission-overrides` nằm d
 có tài liệu riêng, còn `/api/compensation/employees/*` thuộc `PAYROLL.md` chứ không phải `EMPLOYEE.md`; chính sách
 phụ cấp chung của `/api/compensation/*` nằm ở `ALLOWANCE.md`.
 
+Cơ chế xuyên suốt nhiều endpoint (phạm vi dữ liệu, token, vòng đời kỳ lương, dữ liệu theo khoảng hiệu lực) được giải
+thích riêng trong [tài liệu cơ chế](../concepts/README.md).
+
 ## Quy ước chung
 
 - Actor/audit lấy từ JWT hiện tại; client không gửi account ID người thao tác.

@@ -44,8 +44,9 @@ frontend đi kèm để dùng thử API từ đầu đến cuối.
   [`AccountAuthorizationService`](api/src/main/java/com/htttdn/hrm/service/AccountAuthorizationService.java)
 - **Kỳ lương vẫn đúng khi dữ liệu thay đổi hồi tố.** Kỳ lương đi qua các trạng thái
   `DRAFT → CALCULATED → APPROVED → PAID → LOCKED` và bị khóa `PESSIMISTIC_WRITE` khi đang tính. Thay đổi có hiệu lực
-  lùi về quá khứ (lương, chấm công, ngày lễ, bảo hiểm, quy tắc thuế) đưa các kỳ `CALCULATED` bị ảnh hưởng về
-  `DRAFT`, và bị từ chối nếu kỳ đã duyệt, đã trả hoặc đã khóa.
+  lùi về quá khứ (lương, hồ sơ bảo hiểm/thuế của nhân viên, người phụ thuộc, ngày lễ, khoản điều chỉnh) đưa các kỳ
+  `CALCULATED` bị ảnh hưởng về `DRAFT`, và bị từ chối nếu kỳ đã duyệt, đã trả hoặc đã khóa. Chấm công bị sửa sau lúc
+  tính thì kỳ không duyệt được cho tới khi tính lại.
   → [`PayrollService.calculate`](api/src/main/java/com/htttdn/hrm/service/PayrollService.java),
   [`PayrollDeductionsService`](api/src/main/java/com/htttdn/hrm/service/PayrollDeductionsService.java)
 - **Database tự chặn các khoảng thời gian chồng lấn.** Lịch sử lương, phân công chính, quy tắc phụ cấp, quy tắc
@@ -192,6 +193,7 @@ container.
 - [Tổng quan và kiến trúc](docs/OVERVIEW.md)
 - [Cơ cấu tổ chức và phân quyền](docs/ORGANIZATION_STRUCTURE.md)
 - [Cấu trúc source](docs/PROJECT_STRUCTURE.md)
+- [Tài liệu cơ chế backend](api/docs/concepts/README.md): phạm vi dữ liệu, vòng đời token, vòng đời kỳ lương, dữ liệu theo khoảng hiệu lực
 - [Tài liệu API](api/docs/api/README.md), gồm [chấm công](api/docs/api/ATTENDANCE.md) và [tính lương](api/docs/api/PAYROLL.md)
 - [Sao lưu và phục hồi database](docs/BACKUP.md)
 - [Tài liệu web](apps/web/docs/README.md)
