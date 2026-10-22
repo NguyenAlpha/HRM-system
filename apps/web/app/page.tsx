@@ -1,9 +1,6 @@
-import type { Metadata } from "next"
+import { redirect } from "next/navigation"
 
-import { LandingPage } from "@/components/landing/landing-page"
-
-export const metadata: Metadata = { title: { absolute: "HRM — Nền tảng quản trị nguồn nhân lực" } }
-
+// Internal single-company app: no public landing page. The proxy sends visitors without a session on to /login.
 export default function HomePage() {
-  return <LandingPage />
+  redirect("/dashboard")
 }

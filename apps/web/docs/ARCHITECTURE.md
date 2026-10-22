@@ -23,7 +23,7 @@ trên trình duyệt không bao giờ đọc được JWT.
 apps/web/
 ├── proxy.ts              "Filter" chạy trước các trang: không có cookie phiên thì redirect về trang đăng nhập
 ├── app/                  ROUTING: mỗi thư mục là một đoạn URL
-│   ├── page.tsx              /            landing page
+│   ├── page.tsx              /            chuyển về /dashboard (chưa đăng nhập thì về /login)
 │   ├── login/                /login       đăng nhập HRM Workspace
 │   ├── activate/             /activate    kích hoạt tài khoản từ link mời
 │   ├── (hrm)/                nhóm trang HRM Workspace; "(…)" không xuất hiện trên URL
