@@ -38,9 +38,8 @@ export function WorkforceReportPage() {
 
 function AlertAccessDenied() {
   return (
-    <div className="dashboard-card">
-      <p className="eyebrow">ACCESS DENIED</p>
-      <h1 className="mt-2 text-2xl font-semibold">Bạn chưa có quyền xem báo cáo</h1>
+    <div className="rounded-xl border bg-card p-6">
+      <h1 className="text-2xl font-semibold tracking-tight">Bạn chưa có quyền xem báo cáo</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         Cần quyền xem báo cáo nhân sự hoặc báo cáo tiền lương để sử dụng trang này.
       </p>
