@@ -193,7 +193,8 @@ container.
 - [Tổng quan và kiến trúc](docs/OVERVIEW.md)
 - [Cơ cấu tổ chức và phân quyền](docs/ORGANIZATION_STRUCTURE.md)
 - [Cấu trúc source](docs/PROJECT_STRUCTURE.md)
-- [Tài liệu cơ chế backend](api/docs/concepts/README.md): phạm vi dữ liệu, vòng đời token, vòng đời kỳ lương, dữ liệu theo khoảng hiệu lực
+- [Tài liệu cơ chế backend](api/docs/concepts/README.md): phạm vi dữ liệu, token, kỳ lương, dữ liệu theo khoảng hiệu lực, định tuyến duyệt, cấp role, xử lý lỗi
+- [Architecture Decision Records](docs/adr/README.md)
 - [Tài liệu API](api/docs/api/README.md), gồm [chấm công](api/docs/api/ATTENDANCE.md) và [tính lương](api/docs/api/PAYROLL.md)
 - [Sao lưu và phục hồi database](docs/BACKUP.md)
 - [Tài liệu web](apps/web/docs/README.md)

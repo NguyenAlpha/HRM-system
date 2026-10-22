@@ -195,7 +195,8 @@ Detailed documentation is written in Vietnamese.
 - [Overview and architecture](docs/OVERVIEW.md)
 - [Organization structure and permissions](docs/ORGANIZATION_STRUCTURE.md)
 - [Source structure](docs/PROJECT_STRUCTURE.md)
-- [Backend concepts](api/docs/concepts/README.md): data scope, token lifecycle, payroll lifecycle, effective dating
+- [Backend concepts](api/docs/concepts/README.md): data scope, tokens, payroll lifecycle, effective dating, approval routing, role grants, error handling
+- [Architecture decision records](docs/adr/README.md)
 - [API reference](api/docs/api/README.md), including [attendance](api/docs/api/ATTENDANCE.md) and [payroll](api/docs/api/PAYROLL.md)
 - [Database backup and restore](docs/BACKUP.md)
 - [Web app documentation](apps/web/docs/README.md)
