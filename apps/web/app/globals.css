@@ -5,14 +5,18 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --muted-ink: #64706a;
-  --ink: #17211d;
-  --line: #dfe5e1;
-  --surface: #ffffff;
-  --canvas: #f4f7f5;
-  --green: #147a55;
-  --green-dark: #0d5f42;
-  --green-soft: #e7f5ee;
+  /* Legacy names used by the hand-written CSS below; they follow the shadcn tokens so the whole app shares one palette. */
+  --muted-ink: var(--muted-foreground);
+  --ink: var(--foreground);
+  --line: var(--border);
+  --surface: var(--card);
+  --canvas: oklch(0.985 0 0);
+  --green: var(--primary);
+  --green-dark: var(--brand-strong);
+  --green-soft: var(--brand-soft);
+  /* Brand tints not covered by shadcn: active nav item background and text. */
+  --brand-soft: oklch(0.97 0 0);
+  --brand-strong: oklch(0.145 0 0);
   --navy: #16233b;
   --navy-soft: #e9eef7;
   --danger: #b54242;
@@ -64,15 +68,13 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .brand { display: inline-flex; align-items: center; gap: 0.75rem; color: inherit; text-decoration: none; }
 .brand-mark {
   display: grid; width: 2.5rem; height: 2.5rem; place-items: center; border-radius: 0.75rem;
-  color: white; background: var(--green); font-size: 1.15rem; font-weight: 800;
-  box-shadow: 0 8px 24px rgb(5 54 36 / 18%);
+  color: var(--primary-foreground); background: var(--primary); font-size: 1.15rem; font-weight: 800;
 }
 .brand > span:last-child { display: grid; gap: 0.05rem; }
 .brand strong { font-size: 1.05rem; letter-spacing: 0.08em; }
 .brand small { color: inherit; font-size: 0.72rem; opacity: 0.64; }
-.eyebrow { margin: 0; color: var(--green); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.16em; }
+.eyebrow { margin: 0; color: var(--primary); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.16em; }
 
-.admin-shell .brand-mark { background: #4e6fa9; box-shadow: 0 8px 24px rgb(8 19 39 / 24%); }
 .dashboard-alert {
   display: grid; gap: 0.2rem; border: 1px solid #f0cece; border-radius: 0.75rem; margin-bottom: 1.2rem;
   padding: 0.8rem 0.9rem; color: #7f2f2f; background: #fff3f3; font-size: 0.82rem;
@@ -82,27 +84,22 @@ button:disabled { cursor: wait; opacity: 0.64; }
 /* Authenticated portals */
 .portal-shell { display: grid; min-height: 100vh; grid-template-columns: 17rem minmax(0, 1fr); background: var(--canvas); }
 .portal-sidebar {
-  position: sticky; top: 0; display: flex; height: 100vh; flex-direction: column; border-right: 1px solid #dce4df;
-  padding: 1.6rem 1.25rem; background: #f9fbfa;
+  position: sticky; top: 0; display: flex; height: 100vh; flex-direction: column; border-right: 1px solid var(--sidebar-border);
+  padding: 1.6rem 1.25rem; background: var(--sidebar);
 }
-.admin-shell .portal-sidebar { border-color: #d8deea; background: #f7f9fc; }
 .sidebar-brand { padding: 0 0.45rem; }
 .portal-sidebar nav { display: grid; align-content: start; gap: 1rem; margin: 2.25rem -0.5rem 1rem; padding: 0 0.5rem; overflow-y: auto; }
-.nav-item { position: relative; display: flex; align-items: center; border-radius: 0.5rem; padding: 0.5rem 0.75rem; color: #4f5d56; font-size: 0.875rem; font-weight: 500; text-decoration: none; transition: background-color 120ms ease, color 120ms ease; }
-.nav-item:not(.disabled):hover { color: var(--ink); background: #edf2ef; }
-.nav-item.active { color: var(--green-dark); background: var(--green-soft); font-weight: 600; }
-.nav-item.active::before { position: absolute; top: 0.45rem; bottom: 0.45rem; left: 0; width: 3px; border-radius: 3px; background: var(--green); content: ""; }
-.admin-shell .nav-item:not(.disabled):hover { background: #eef2f8; }
-.admin-shell .nav-item.active { color: #263f69; background: var(--navy-soft); }
-.admin-shell .nav-item.active::before { background: #4e6fa9; }
+.nav-item { position: relative; display: flex; align-items: center; border-radius: 0.5rem; padding: 0.5rem 0.75rem; color: var(--muted-foreground); font-size: 0.875rem; font-weight: 500; text-decoration: none; transition: background-color 120ms ease, color 120ms ease; }
+.nav-item:not(.disabled):hover { color: var(--foreground); background: var(--accent); }
+.nav-item.active { color: var(--brand-strong); background: var(--brand-soft); font-weight: 600; }
+.nav-item.active::before { position: absolute; top: 0.45rem; bottom: 0.45rem; left: 0; width: 3px; border-radius: 3px; background: var(--primary); content: ""; }
 .nav-group { display: grid; gap: 0.125rem; }
-.nav-group-title { margin: 0 0 0.25rem; padding: 0 0.75rem; color: #8a968f; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.nav-group-title { margin: 0 0 0.25rem; padding: 0 0.75rem; color: var(--muted-foreground); opacity: 0.8; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
 .sidebar-account { display: flex; align-items: center; gap: 0.7rem; border-top: 1px solid var(--line); margin-top: auto; padding: 1.2rem 0.4rem 0; overflow: hidden; }
-.avatar { display: grid; width: 2.25rem; height: 2.25rem; flex: 0 0 auto; place-items: center; border-radius: 50%; color: white; background: var(--green); font-size: 0.8rem; font-weight: 800; }
-.admin-shell .avatar { background: #4e6fa9; }
+.avatar { display: grid; width: 2.25rem; height: 2.25rem; flex: 0 0 auto; place-items: center; border-radius: 50%; color: var(--primary-foreground); background: var(--primary); font-size: 0.8rem; font-weight: 800; }
 .sidebar-account > span:nth-child(2) { display: grid; flex: 1; min-width: 0; gap: 0.08rem; }
 .sidebar-logout { display: grid; width: 2rem; height: 2rem; flex: 0 0 auto; place-items: center; border: 0; border-radius: 0.5rem; color: var(--muted-ink); background: transparent; cursor: pointer; }
-.sidebar-logout:hover { color: var(--ink); background: #edf2ef; }
+.sidebar-logout:hover { color: var(--foreground); background: var(--accent); }
 .sidebar-logout svg { width: 1rem; height: 1rem; }
 .sidebar-account strong, .sidebar-account small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sidebar-account strong { font-size: 0.78rem; }
