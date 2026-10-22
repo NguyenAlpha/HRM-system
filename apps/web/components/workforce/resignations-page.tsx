@@ -39,7 +39,7 @@ import {
 
 const STATUS_TONE: Record<ResignationStatus, "default" | "secondary" | "outline" | "destructive"> = {
   PENDING: "secondary",
-  APPROVED: "default",
+  APPROVED: "secondary",
   REJECTED: "destructive",
   CANCELLED: "outline",
 }
@@ -117,7 +117,7 @@ export function ResignationsPage({ initialTab }: { initialTab?: Tab }) {
             <TabsList>
               {canReadOwn && <TabsTrigger value="mine">Đơn của tôi</TabsTrigger>}
               {showApprovals && (
-                <TabsTrigger value="approvals">Chờ tôi duyệt <Badge className="ml-1">{pending?.length}</Badge></TabsTrigger>
+                <TabsTrigger value="approvals">Chờ tôi duyệt <Badge variant="secondary" className="ml-1">{pending?.length}</Badge></TabsTrigger>
               )}
               {canReadAll && <TabsTrigger value="all">Tất cả đơn</TabsTrigger>}
             </TabsList>

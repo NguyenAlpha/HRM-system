@@ -57,7 +57,7 @@ import {
 const STATUS_TONE: Record<LeaveStatus, "default" | "secondary" | "outline" | "destructive"> = {
   DRAFT: "outline",
   PENDING: "secondary",
-  APPROVED: "default",
+  APPROVED: "secondary",
   REJECTED: "destructive",
   CANCELLED: "outline",
 }
@@ -165,7 +165,7 @@ export function LeaveRequestsPage({ openCreate = false, initialTab, initialReque
             <TabsList>
               {canReadOwn && <TabsTrigger value="mine">Đơn của tôi</TabsTrigger>}
               {showApprovals && (
-                <TabsTrigger value="approvals">Chờ tôi duyệt <Badge className="ml-1">{pending?.length}</Badge></TabsTrigger>
+                <TabsTrigger value="approvals">Chờ tôi duyệt <Badge variant="secondary" className="ml-1">{pending?.length}</Badge></TabsTrigger>
               )}
               {canReadAll && <TabsTrigger value="all">Tất cả đơn</TabsTrigger>}
             </TabsList>
@@ -455,9 +455,9 @@ function BalanceCard({ balance }: { balance: LeaveBalance }) {
       <CardContent>
         <dl className="grid gap-3 sm:grid-cols-4">
           {stats.map(([label, minutes]) => (
-            <div key={label} className="rounded-xl border px-4 py-3">
+            <div key={label}>
               <dt className="text-xs text-muted-foreground">{label}</dt>
-              <dd className="text-2xl font-semibold">{toDays(minutes, day)} <span className="text-sm font-normal text-muted-foreground">ngày</span></dd>
+              <dd className="mt-1 text-xl font-semibold tabular-nums">{toDays(minutes, day)} <span className="text-sm font-normal text-muted-foreground">ngày</span></dd>
             </div>
           ))}
         </dl>
