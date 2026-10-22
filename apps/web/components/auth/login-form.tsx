@@ -20,7 +20,6 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
-import { cn } from "@/lib/utils"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -48,14 +47,6 @@ const THEME = {
     alternateAction: "Đến cổng Admin",
     usernamePlaceholder: "employee@company.vn",
     devHint: null,
-    heroBg:
-      "bg-[radial-gradient(circle_at_85%_18%,rgba(119,215,173,0.24),transparent_24rem),linear-gradient(145deg,#0c5a3d,#123d30_70%,#102e26)]",
-    accentText: "text-emerald-200",
-    accentSoft: "text-emerald-300/70",
-    button: "bg-[#147a55] hover:bg-[#0d5f42] focus-visible:ring-[#147a55]/25",
-    ring: "focus-visible:border-[#147a55] focus-visible:ring-[#147a55]/15",
-    link: "text-[#147a55] hover:text-[#0d5f42]",
-    blob: "bg-emerald-400/20",
   },
   admin: {
     icon: ShieldCheck,
@@ -70,14 +61,6 @@ const THEME = {
     alternateAction: "Về cổng nhân viên",
     usernamePlaceholder: "admin",
     devHint: "admin / Admin@123",
-    heroBg:
-      "bg-[radial-gradient(circle_at_80%_18%,rgba(97,131,195,0.30),transparent_24rem),linear-gradient(145deg,#1a2c4c,#111d33_70%,#0c1526)]",
-    accentText: "text-indigo-200",
-    accentSoft: "text-indigo-300/70",
-    button: "bg-[#263f69] hover:bg-[#1a3157] focus-visible:ring-[#4e6fa9]/25",
-    ring: "focus-visible:border-[#4e6fa9] focus-visible:ring-[#4e6fa9]/15",
-    link: "text-[#456398] hover:text-[#263f69]",
-    blob: "bg-indigo-400/20",
   },
 } satisfies Record<Portal, Record<string, unknown>>
 
@@ -134,20 +117,17 @@ export function LoginForm({ portal }: LoginFormProps) {
       <main className="grid min-h-svh lg:grid-cols-[minmax(24rem,42%)_1fr]">
         <section
           aria-label="Giới thiệu hệ thống"
-          className={cn(
-            "relative hidden flex-col justify-between overflow-hidden p-10 text-white lg:flex xl:p-16",
-            theme.heroBg,
-          )}
+          className="relative hidden flex-col justify-between overflow-hidden bg-primary p-10 text-white lg:flex xl:p-16"
         >
           <motion.div
             aria-hidden
-            className={cn("absolute -top-16 -right-16 h-72 w-72 rounded-full blur-3xl", theme.blob)}
+            className="absolute -top-16 -right-16 h-72 w-72 rounded-full bg-white/10 blur-3xl"
             animate={{ x: [0, 24, 0], y: [0, 18, 0] }}
             transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
             aria-hidden
-            className={cn("absolute -bottom-24 -left-10 h-56 w-56 rounded-full blur-3xl", theme.blob)}
+            className="absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-white/10 blur-3xl"
             animate={{ x: [0, -16, 0], y: [0, -12, 0] }}
             transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 1 }}
           />
@@ -157,7 +137,8 @@ export function LoginForm({ portal }: LoginFormProps) {
           />
 
           <Link className="brand relative z-10" href={portal === "admin" ? "/admin/login" : "/login"}>
-            <span className="brand-mark">H</span>
+            {/* Inverted so the mark stays visible on the dark hero panel; `!` beats the unlayered .brand-mark rule. */}
+            <span className="brand-mark bg-primary-foreground! text-primary!">H</span>
             <span>
               <strong>HRM</strong>
               <small>{portal === "admin" ? "Admin Console" : "People Workspace"}</small>
@@ -170,7 +151,7 @@ export function LoginForm({ portal }: LoginFormProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <p className={cn("flex items-center gap-2 text-xs font-extrabold tracking-[0.16em]", theme.accentText)}>
+            <p className="flex items-center gap-2 text-xs font-extrabold tracking-[0.16em] text-white/70">
               <HeroIcon className="size-3.5" aria-hidden />
               {theme.eyebrow}
             </p>
@@ -185,7 +166,7 @@ export function LoginForm({ portal }: LoginFormProps) {
           </p>
         </section>
 
-        <section className="flex min-h-svh items-center justify-center bg-[#fbfcfb] px-6 py-12 sm:px-10">
+        <section className="flex min-h-svh items-center justify-center bg-[var(--canvas)] px-6 py-12 sm:px-10">
           <motion.div
             className="w-full max-w-sm"
             initial={{ opacity: 0, y: 16 }}
@@ -231,7 +212,7 @@ export function LoginForm({ portal }: LoginFormProps) {
                   autoFocus
                   placeholder={theme.usernamePlaceholder}
                   aria-invalid={!!errors.usernameOrEmail}
-                  className={cn("h-11 px-3.5", theme.ring)}
+                  className="h-11 px-3.5"
                   {...register("usernameOrEmail")}
                 />
                 {errors.usernameOrEmail && (
@@ -250,7 +231,7 @@ export function LoginForm({ portal }: LoginFormProps) {
                     autoComplete="current-password"
                     placeholder="Nhập mật khẩu"
                     aria-invalid={!!errors.password}
-                    className={cn("h-11 px-3.5 pr-11", theme.ring)}
+                    className="h-11 px-3.5 pr-11"
                     {...register("password")}
                   />
                   <button
@@ -272,7 +253,7 @@ export function LoginForm({ portal }: LoginFormProps) {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className={cn("mt-1 h-11 w-full text-white", theme.button)}
+                className="mt-1 h-11 w-full"
               >
                 {isSubmitting ? (
                   <>
@@ -294,7 +275,7 @@ export function LoginForm({ portal }: LoginFormProps) {
 
             <p className="mt-8 text-center text-sm text-[var(--muted-ink)]">
               {theme.alternateLabel}{" "}
-              <Link className={cn("font-semibold", theme.link)} href={theme.alternateHref}>
+              <Link className="font-semibold text-foreground underline-offset-4 hover:underline" href={theme.alternateHref}>
                 {theme.alternateAction}
               </Link>
             </p>
@@ -320,15 +301,15 @@ function DevCredentials({ value }: { value: string }) {
   }
 
   return (
-    <div className="mt-6 flex flex-col items-start gap-2 rounded-xl bg-[#f0f3f8] px-3.5 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between">
-      <span className="text-[#68738a]">
-        Development seed · <code className="font-semibold text-[#253957]">{value}</code>
+    <div className="mt-6 flex flex-col items-start gap-2 rounded-xl bg-muted px-3.5 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between">
+      <span className="text-muted-foreground">
+        Development seed · <code className="font-semibold text-foreground">{value}</code>
       </span>
       <button
         type="button"
         onClick={handleCopy}
         aria-label="Sao chép thông tin đăng nhập"
-        className="shrink-0 rounded-md p-1.5 text-[#68738a] transition-colors hover:bg-white hover:text-[#253957]"
+        className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
       >
         {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
       </button>

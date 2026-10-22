@@ -64,7 +64,7 @@ export function ActivateAccountPage({ initialToken }: { initialToken: string }) 
   }
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-[#fbfcfb] px-6 py-12">
+    <main className="flex min-h-svh items-center justify-center bg-[var(--canvas)] px-6 py-12">
       <div className="w-full max-w-sm">
         <Link className="brand mb-8 justify-center" href="/login">
           <span className="brand-mark">H</span>
@@ -78,12 +78,12 @@ export function ActivateAccountPage({ initialToken }: { initialToken: string }) 
           {success ? (
             <>
               <CardHeader className="items-center text-center">
-                <CheckCircle2 className="size-10 text-[#147a55]" />
+                <CheckCircle2 className="size-10 text-primary" />
                 <CardTitle className="mt-2">Kích hoạt thành công</CardTitle>
                 <CardDescription>Mật khẩu đã được đặt. Bạn có thể đăng nhập ngay bây giờ.</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button type="button" className="w-full bg-[#147a55] text-white hover:bg-[#0d5f42]" render={<Link href="/login" />}>
+                <Button type="button" className="w-full" render={<Link href="/login" />}>
                   Đến trang đăng nhập
                 </Button>
               </CardContent>
@@ -152,7 +152,7 @@ export function ActivateAccountPage({ initialToken }: { initialToken: string }) 
                     )}
                   </div>
 
-                  <Button type="submit" className="h-11 bg-[#147a55] text-white hover:bg-[#0d5f42]" disabled={isSubmitting}>
+                  <Button type="submit" className="h-11" disabled={isSubmitting}>
                     {isSubmitting && <Loader2 className="animate-spin" />}
                     Kích hoạt tài khoản
                   </Button>
@@ -163,7 +163,7 @@ export function ActivateAccountPage({ initialToken }: { initialToken: string }) 
         </Card>
 
         <p className="mt-6 text-center text-sm text-[var(--muted-ink)]">
-          Đã có tài khoản? <Link className="font-semibold text-[#147a55] hover:text-[#0d5f42]" href="/login">Đăng nhập</Link>
+          Đã có tài khoản? <Link className="font-semibold text-foreground underline-offset-4 hover:underline" href="/login">Đăng nhập</Link>
         </p>
       </div>
     </main>
