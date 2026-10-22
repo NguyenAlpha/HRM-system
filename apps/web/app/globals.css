@@ -306,11 +306,3 @@ button:disabled { cursor: wait; opacity: 0.64; }
     display: none !important;
   }
 }
-
-/* Landing page: sections fade in as they scroll into view, where scroll-driven animations are supported. */
-@keyframes landing-reveal { from { opacity: 0; transform: translateY(1.5rem); } }
-@media (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .landing-reveal { animation: landing-reveal linear both; animation-timeline: view(); animation-range: entry 0% entry 60%; }
-  }
-}
