@@ -16,7 +16,7 @@ import {
   Wallet,
 } from "lucide-react"
 
-import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
+import { ActionsMenu, RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
   PayslipDialog,
   PeriodSteps,
@@ -136,10 +136,13 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
 
   return (
     <>
-      <header className="flex flex-wrap items-start justify-between gap-4">
+      <Link href="/payroll" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="size-4" /> Kỳ lương
+      </Link>
+
+      <header className="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="eyebrow">KỲ LƯƠNG</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
           {period && (
             <p className="mt-1.5 text-[var(--muted-ink)]">
               {period.periodStart} → {period.periodEnd} · Ngày trả lương {period.taxPaymentDate ?? "chưa đặt"}
@@ -163,19 +166,14 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
               <FileSpreadsheet /> Xuất Excel
             </Button>
           )}
-          {canCancel && (
-            <Button type="button" variant="outline" className="text-destructive" disabled={busy} onClick={() => setConfirm("cancel")}>
-              <Ban /> Hủy kỳ
-            </Button>
-          )}
-          <Button type="button" variant="outline" size="icon" aria-label="Tải lại" onClick={reload} disabled={loading}>
-            <RefreshCw className={loading ? "animate-spin" : ""} />
-          </Button>
-          <Button variant="outline" nativeButton={false} render={<Link href="/payroll" />}><ArrowLeft /> Kỳ lương</Button>
+          <ActionsMenu label={title} outline>
+            <RowActionItem icon={RefreshCw} onClick={reload} disabled={loading}>Tải lại</RowActionItem>
+            {canCancel && <RowActionItem icon={Ban} destructive disabled={busy} onClick={() => setConfirm("cancel")}>Hủy kỳ</RowActionItem>}
+          </ActionsMenu>
         </div>
       </header>
 
-      <div className="mt-6 grid gap-6">
+      <div className="mt-8 grid gap-6">
         <SectionError error={error} />
 
         {period && (
@@ -187,24 +185,27 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
           </div>
         )}
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {/* The five totals as one card of label/value pairs rather than five separate boxes. */}
+        <Card>
+          <CardContent>
+            <dl className="grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {[
             ["Số nhân viên", String(payslips.length)],
             ["Tổng thu nhập", money(sum(payslips, (slip) => slip.grossPay))],
             ["Bảo hiểm nhân viên đóng", money(sum(payslips, payslipInsurance))],
             ["Thuế TNCN", money(sum(payslips, (slip) => slip.personalIncomeTax))],
             ["Tổng thực nhận", money(sum(payslips, (slip) => slip.netPay))],
-          ].map(([label, value], index) => (
-            <Card key={label} className={index === 4 ? "border-primary/40" : undefined}>
-              <CardContent className="py-1">
-                <p className="text-xs text-muted-foreground">{label}</p>
-                {loading && !period
-                  ? <Skeleton className="mt-2 h-6 w-24" />
-                  : <p className={`mt-1 text-xl font-semibold tabular-nums ${index === 4 ? "text-primary" : ""}`}>{value}</p>}
-              </CardContent>
-            </Card>
+          ].map(([label, value]) => (
+            <div key={label} className="min-w-0">
+              <dt className="text-xs text-muted-foreground">{label}</dt>
+              {loading && !period
+                ? <Skeleton className="mt-2 h-6 w-24" />
+                : <dd className="mt-1 truncate text-xl font-semibold tabular-nums">{value}</dd>}
+            </div>
           ))}
-        </div>
+            </dl>
+          </CardContent>
+        </Card>
 
         <Tabs defaultValue="sheet">
           <TabsList>
