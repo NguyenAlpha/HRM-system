@@ -15,7 +15,7 @@
   --green-dark: var(--brand-strong);
   --green-soft: var(--brand-soft);
   /* Brand tints not covered by shadcn: active nav item background and text. */
-  --brand-soft: oklch(0.97 0 0);
+  --brand-soft: oklch(0.94 0 0);
   --brand-strong: oklch(0.145 0 0);
   --navy: #16233b;
   --navy-soft: #e9eef7;
