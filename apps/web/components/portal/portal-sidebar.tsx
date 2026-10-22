@@ -3,13 +3,71 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
-import { LogOut } from "lucide-react"
+import {
+  ArrowLeftRight,
+  Building2,
+  CalendarCheck,
+  CalendarDays,
+  CalendarRange,
+  ChartPie,
+  CircleUser,
+  Clock,
+  Crown,
+  DoorOpen,
+  FileText,
+  HandCoins,
+  KeyRound,
+  Landmark,
+  LayoutDashboard,
+  LogOut,
+  Network,
+  Receipt,
+  ShieldCheck,
+  ShieldPlus,
+  UserCheck,
+  UsersRound,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react"
 
 import { logout } from "@/lib/auth/client"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import type { AccountSummary, Portal } from "@/lib/auth/types"
 
 type NavLink = { label: string; href: string }
+
+/** Menu icon per page, keyed by the HRM path; admin paths are looked up without their /admin prefix. */
+const NAV_ICONS: Record<string, LucideIcon> = {
+  "/dashboard": LayoutDashboard,
+  "": LayoutDashboard,
+  "/profile": CircleUser,
+  "/employees": UsersRound,
+  "/organization": Network,
+  "/attendance": Clock,
+  "/leave-requests": FileText,
+  "/resignations": DoorOpen,
+  "/payroll": Wallet,
+  "/payslips": Receipt,
+  "/allowances": HandCoins,
+  "/reports/workforce": ChartPie,
+  "/reports/turnover": ArrowLeftRight,
+  "/reports/monthly": CalendarDays,
+  "/reports/attendance": CalendarCheck,
+  "/reports/leave": CalendarRange,
+  "/reports/payroll": Landmark,
+  "/company": Building2,
+  "/accounts": KeyRound,
+  "/role-requests": UserCheck,
+  "/role-grant": ShieldPlus,
+  "/rbac": ShieldCheck,
+  "/company-owner": Crown,
+}
+
+function NavIcon({ href }: { href: string }) {
+  const Icon = NAV_ICONS[href.startsWith("/admin") ? href.slice("/admin".length) : href]
+  return Icon ? <Icon aria-hidden /> : null
+}
+
 /** A titled block of the menu; a null title is the untitled block at the top. */
 type NavGroup = { title: string | null; links: NavLink[] }
 
@@ -127,7 +185,7 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
           <div key={navGroup.title ?? "main"} className="nav-group">
             {navGroup.title && <p className="nav-group-title">{navGroup.title}</p>}
             {navGroup.links.map((link) => (
-              <Link key={link.href} className={navClass(link.href)} href={link.href}>{link.label}</Link>
+              <Link key={link.href} className={navClass(link.href)} href={link.href}><NavIcon href={link.href} />{link.label}</Link>
             ))}
           </div>
         ))}

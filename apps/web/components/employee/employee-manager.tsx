@@ -32,13 +32,6 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -215,12 +208,12 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
 
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
-          <div>
-            <CardTitle>Danh sách nhân sự</CardTitle>
-            <CardDescription>Xem hồ sơ và cập nhật thông tin nhân sự trong phạm vi được phân công.</CardDescription>
-          </div>
+      {/* No card around the list: the page header already names it, so the toolbar and table sit directly on the page. */}
+      <div className="grid gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            {data ? `${data.totalElements.toLocaleString("vi-VN")} nhân sự trong phạm vi của bạn` : "Đang tải danh sách…"}
+          </p>
           <div className="flex items-center gap-2">
             <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
               <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
@@ -231,8 +224,8 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
               </Button>
             )}
           </div>
-        </CardHeader>
-        <CardContent className="grid gap-4">
+        </div>
+        <div className="grid gap-4">
           <ErrorAlert error={error} />
 
           <ListToolbar
@@ -281,7 +274,7 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
             />
           </ListToolbar>
 
-          <div className="rounded-xl border">
+          <div className="rounded-xl border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -313,7 +306,7 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
                       <span className="font-medium">{employee.fullName}</span>
                       <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <code>{employee.employeeCode}</code>
-                        <Badge variant={employee.employmentStatus === "ACTIVE" ? "default" : "outline"}>
+                        <Badge variant={employee.employmentStatus === "ACTIVE" ? "secondary" : "outline"}>
                           {EMPLOYMENT_STATUS_LABELS[employee.employmentStatus]}
                         </Badge>
                       </span>
@@ -387,8 +380,8 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
 
           <Pagination page={page} totalPages={data?.totalPages ?? 0} totalElements={data?.totalElements ?? 0} disabled={loading}
             onChange={(next) => { setError(null); setPage(next) }} />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {selectedId !== null && (
         <EmployeeDetailDialog
