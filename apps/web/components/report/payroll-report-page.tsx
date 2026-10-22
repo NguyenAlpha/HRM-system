@@ -80,7 +80,7 @@ export function PayrollReportPage() {
 
         {data && (
           <>
-            <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label={`Tổng hợp năm ${year}`}>
+            <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label={`Tổng hợp năm ${year}`}>
               <StatTile label="Quỹ lương (tổng thu nhập)" value={money(data.total.grossPay)}
                 hint={`${data.total.payslipCount} phiếu lương`} />
               <StatTile label="Bảo hiểm người lao động đóng" value={money(insurance(data.total))} hint="BHXH + BHYT + BHTN" />

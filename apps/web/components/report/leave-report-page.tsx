@@ -82,7 +82,7 @@ export function LeaveReportPage() {
 
         {canRead && (
           <>
-            <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Tổng hợp phép năm">
+            <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Tổng hợp phép năm">
               <StatTile label="Tổng phép được cấp" value={`${days(granted)} ngày`} hint={`${rows?.length ?? 0} nhân viên`} />
               <StatTile label="Đã dùng" value={`${days(used)} ngày`}
                 hint={granted > 0 ? `${days((used / granted) * 100)}% số được cấp` : undefined} />

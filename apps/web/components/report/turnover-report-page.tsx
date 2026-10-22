@@ -67,7 +67,7 @@ export function TurnoverReportPage() {
 
         {data && (
           <>
-            <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label="Tổng hợp năm">
+            <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5" aria-label="Tổng hợp năm">
               <StatTile label="Quân số đầu năm" value={data.headcountStart.toLocaleString("vi-VN")} hint={`Cuối ngày 31/12/${year - 1}`} />
               <StatTile label="Vào làm" value={data.hires.toLocaleString("vi-VN")} />
               <StatTile label="Nghỉ việc" value={data.terminations.toLocaleString("vi-VN")} />

@@ -65,13 +65,13 @@ export function MonthPicker({ month, onChange }: { month: string; onChange: (mon
   )
 }
 
-/** A headline figure with a short caption under it. */
+/** A headline figure with a short caption under it; same card style as the dashboard figures. */
 export function StatTile({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-xl border bg-card px-4 py-3">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
-      {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
+    <div className="min-w-0 rounded-xl border bg-card p-5">
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="mt-1 truncate text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
+      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
     </div>
   )
 }

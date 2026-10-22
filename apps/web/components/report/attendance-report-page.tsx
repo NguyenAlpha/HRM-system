@@ -104,7 +104,7 @@ export function AttendanceReportPage() {
 
         {canRead && (
           <>
-            <section className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6" aria-label={`Tổng hợp tháng ${month}`}>
+            <section className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6" aria-label={`Tổng hợp tháng ${month}`}>
               <StatTile label="Nhân viên" value={String(lines?.length ?? "—")} />
               <StatTile label="Công tính lương" value={decimal(payable)}
                 hint={`trên ${standard} ngày công chuẩn cả tháng`} />
