@@ -80,7 +80,7 @@ function AssignmentBadge({ assignment, currentAssignmentId }: {
   currentAssignmentId: number | null
 }) {
   if (assignment.id === currentAssignmentId) {
-    return <Badge>Hiện tại</Badge>
+    return <Badge variant="secondary">Hiện tại</Badge>
   }
   const today = todayIsoDate()
   if (assignment.effectiveFrom > today) {

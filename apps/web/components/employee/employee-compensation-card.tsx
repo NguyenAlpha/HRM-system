@@ -126,7 +126,7 @@ export function EmployeeCompensationCard({ employeeId, hireDate, permissions }: 
             <ListTable headers={["Hiệu lực", "Lương tháng", "Lý do"]} alignRight={[1]} empty="Chưa có mức lương; chưa thể tính lương.">
               {salaries.map((salary) => (
                 <TableRow key={salary.id}>
-                  <TableCell>{period(salary)}{salary.effectiveTo === null && <Badge className="ml-2">Hiện tại</Badge>}</TableCell>
+                  <TableCell>{period(salary)}{salary.effectiveTo === null && <Badge variant="secondary" className="ml-2">Hiện tại</Badge>}</TableCell>
                   <TableCell className="text-right font-medium tabular-nums">{money(salary.baseSalary)}</TableCell>
                   <TableCell className="text-muted-foreground">{salary.reason ?? "—"}</TableCell>
                 </TableRow>

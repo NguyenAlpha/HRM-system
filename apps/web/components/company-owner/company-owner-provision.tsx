@@ -169,7 +169,7 @@ export function CompanyOwnerProvision({ onSessionExpired }: { onSessionExpired: 
           <div>
             <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Role đã cấp</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              <Badge><ShieldCheck /> {result.companyOwnerRoleAssignment.roleName}</Badge>
+              <Badge variant="secondary"><ShieldCheck /> {result.companyOwnerRoleAssignment.roleName}</Badge>
               <Badge variant="secondary"><ShieldCheck /> {result.directorRoleAssignment.roleName}</Badge>
             </div>
           </div>
