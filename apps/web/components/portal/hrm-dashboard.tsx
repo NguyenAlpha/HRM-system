@@ -3,14 +3,12 @@
 import Link from "next/link"
 import { useEffect, useState, type ReactNode } from "react"
 import {
+  ArrowUpRight,
   CalendarCheck,
-  CalendarClock,
   ChevronRight,
   ClipboardList,
   Clock,
   FilePlus2,
-  UserPlus,
-  UsersRound,
   Wallet,
 } from "lucide-react"
 
@@ -20,7 +18,7 @@ import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { money, time, today, workforceApi } from "@/components/workforce/workforce-shared"
 import { employeeListQuery, employeeRequest, type EmployeeSummary } from "@/lib/employee"
@@ -113,7 +111,7 @@ export function HrmDashboard() {
         )}
       />
 
-      <div className="mt-6 grid gap-6">
+      <div className="mt-8 grid gap-6">
         {self && (
           <section aria-label="Của tôi" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {attendance !== null && (
@@ -141,11 +139,10 @@ export function HrmDashboard() {
           </section>
         )}
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card className={periods !== null ? "lg:col-span-2" : "lg:col-span-3"}>
             <CardHeader>
               <CardTitle>Việc cần xử lý</CardTitle>
-              <CardDescription>Các mục đang chờ bạn quyết định.</CardDescription>
             </CardHeader>
             <CardContent>
               {tasks === undefined
@@ -158,7 +155,7 @@ export function HrmDashboard() {
                         <li key={task.label}>
                           <Link href={task.href} className="flex items-center gap-3 py-3 text-sm hover:text-primary">
                             <span className="flex-1">{task.label}</span>
-                            <Badge>{task.count}</Badge>
+                            <Badge variant="secondary" className="tabular-nums">{task.count}</Badge>
                             <ChevronRight className="size-4 text-muted-foreground" />
                           </Link>
                         </li>
@@ -172,9 +169,6 @@ export function HrmDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Kỳ lương gần nhất</CardTitle>
-                <CardDescription>
-                  {latestPeriod ? `Tháng ${periodLabel(latestPeriod.year, latestPeriod.month)} · trả ngày ${formatDate(latestPeriod.taxPaymentDate)}` : "Chưa có kỳ lương nào."}
-                </CardDescription>
                 {latestPeriod && <CardAction><PeriodStatusBadge status={latestPeriod.status} /></CardAction>}
               </CardHeader>
               <CardContent>
@@ -183,38 +177,45 @@ export function HrmDashboard() {
                   : latestPeriod
                     ? (
                       <div className="grid gap-4">
-                        <dl className="grid grid-cols-3 gap-4">
-                          <Figure label="Số nhân viên" value={String(latestPeriod.payslipCount)} />
-                          <Figure label="Tổng thu nhập" value={money(latestPeriod.totalGrossPay)} />
-                          <Figure label="Tổng thực nhận" value={money(latestPeriod.totalNetPay)} />
+                        <dl className="grid gap-2.5 text-sm">
+                          <Line label="Kỳ lương" value={`Tháng ${periodLabel(latestPeriod.year, latestPeriod.month)}`} />
+                          <Line label="Ngày trả" value={formatDate(latestPeriod.taxPaymentDate)} />
+                          <Line label="Số nhân viên" value={String(latestPeriod.payslipCount)} />
+                          <Line label="Tổng thu nhập" value={money(latestPeriod.totalGrossPay)} />
+                          <Line label="Tổng thực nhận" value={money(latestPeriod.totalNetPay)} />
                         </dl>
-                        <Button variant="outline" className="justify-self-start" nativeButton={false}
-                          render={<Link href={`/payroll/${latestPeriod.id}`} />}>Mở bảng lương</Button>
+                        <MoreLink href={`/payroll/${latestPeriod.id}`}>Mở bảng lương</MoreLink>
                       </div>
                     )
-                    : <Button variant="outline" nativeButton={false} render={<Link href="/payroll" />}>Đến trang kỳ lương</Button>}
+                    : (
+                      <div className="grid gap-4">
+                        <p className="text-sm text-muted-foreground">Chưa có kỳ lương nào.</p>
+                        <MoreLink href="/payroll">Đến trang kỳ lương</MoreLink>
+                      </div>
+                    )}
               </CardContent>
             </Card>
           )}
         </div>
 
         {canReadEmployees && (
-          <>
-            <section aria-label="Nhân sự" className="grid gap-4 sm:grid-cols-3">
-              <Tile icon={<UsersRound />} label="Nhân sự chính thức" href="/employees"
-                value={activeCount === undefined ? undefined : String(activeCount?.totalElements ?? "—")} hint="Đang làm việc" />
-              <Tile icon={<CalendarClock />} label="Đang thử việc" href="/employees"
-                value={probation === undefined ? undefined : String(probation?.totalElements ?? "—")} hint="Cần xác nhận khi hết thử việc" />
-              <Tile icon={<UserPlus />} label="Vào làm tháng này" href="/employees"
-                value={hiredThisMonth === undefined ? undefined : String(hiredThisMonth)} hint={`Tháng ${month.slice(5)}/${month.slice(0, 4)}`} />
-            </section>
-
-            <div className="grid gap-4 lg:grid-cols-2">
-              <PeopleCard title="Nhân viên mới" description="5 người vào làm gần nhất." people={newest} emptyText="Chưa có nhân viên." />
-              <PeopleCard title="Đang thử việc" description="Xếp theo ngày vào làm, người vào sớm nhất lên trước."
-                people={probation} emptyText="Không có ai đang thử việc." />
-            </div>
-          </>
+          <Card>
+            <CardHeader>
+              <CardTitle>Nhân sự</CardTitle>
+              <CardAction><MoreLink href="/employees">Xem tất cả</MoreLink></CardAction>
+            </CardHeader>
+            <CardContent className="grid gap-6">
+              <dl className="grid grid-cols-3 gap-4 border-b pb-5">
+                <Figure label="Chính thức" value={activeCount === undefined ? "…" : String(activeCount?.totalElements ?? "—")} />
+                <Figure label="Đang thử việc" value={probation === undefined ? "…" : String(probation?.totalElements ?? "—")} />
+                <Figure label={`Vào làm tháng ${month.slice(5)}`} value={hiredThisMonth === undefined ? "…" : String(hiredThisMonth)} />
+              </dl>
+              <div className="grid gap-8 lg:grid-cols-2">
+                <PeopleList title="Mới vào làm" people={newest} emptyText="Chưa có nhân viên." />
+                <PeopleList title="Đang thử việc" people={probation} emptyText="Không có ai đang thử việc." />
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
     </>
@@ -261,11 +262,14 @@ function Tile({ icon, label, value, hint, href }: {
   href: string
 }) {
   return (
-    <Link href={href} className="group rounded-xl border bg-card p-4 transition-colors hover:border-primary/50">
-      <p className="flex items-center gap-2 text-sm text-muted-foreground [&_svg]:size-4">{icon} {label}</p>
+    <Link href={href} className="group rounded-xl border bg-card p-5 transition-colors hover:border-foreground/20">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground [&_svg]:size-4">{icon}</span>
+      </div>
       {value === undefined
-        ? <Skeleton className="mt-2 h-7 w-24" />
-        : <p className="mt-1.5 text-2xl font-semibold tabular-nums group-hover:text-primary">{value}</p>}
+        ? <Skeleton className="mt-2 h-8 w-28" />
+        : <p className="mt-1 truncate text-2xl font-semibold tracking-tight tabular-nums">{value}</p>}
       <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
     </Link>
   )
@@ -275,49 +279,62 @@ function Figure({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="mt-1 truncate font-semibold tabular-nums">{value}</dd>
+      <dd className="mt-1 truncate text-xl font-semibold tabular-nums">{value}</dd>
     </div>
   )
 }
 
-function PeopleCard({ title, description, people, emptyText }: {
+/** One label/value row of a definition list, value aligned right. */
+function Line({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="truncate font-medium tabular-nums">{value}</dd>
+    </div>
+  )
+}
+
+/** Quiet text link with an arrow, used instead of an extra button. */
+function MoreLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link href={href} className="inline-flex items-center gap-1 justify-self-start text-sm text-muted-foreground hover:text-foreground">
+      {children} <ArrowUpRight className="size-3.5" />
+    </Link>
+  )
+}
+
+function PeopleList({ title, people, emptyText }: {
   title: string
-  description: string
   people: Page<EmployeeSummary> | null | undefined
   emptyText: string
 }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {people === undefined
-          ? <Skeleton className="h-24 w-full" />
-          : !people || people.content.length === 0
-            ? <p className="py-6 text-center text-sm text-muted-foreground">{emptyText}</p>
-            : (
-              <ul className="divide-y">
-                {people.content.slice(0, 5).map((employee) => (
-                  <li key={employee.id}>
-                    <Link href={`/employees/${employee.id}`} className="flex items-center gap-3 py-2.5 text-sm hover:text-primary">
-                      <span className="grid size-8 place-items-center rounded-full bg-muted text-xs font-semibold">
-                        {employee.fullName.split(" ").pop()?.slice(0, 1)}
+    <section className="grid content-start gap-2">
+      <h3 className="text-sm font-medium">{title}</h3>
+      {people === undefined
+        ? <Skeleton className="h-24 w-full" />
+        : !people || people.content.length === 0
+          ? <p className="py-4 text-sm text-muted-foreground">{emptyText}</p>
+          : (
+            <ul className="divide-y">
+              {people.content.slice(0, 5).map((employee) => (
+                <li key={employee.id}>
+                  <Link href={`/employees/${employee.id}`} className="flex items-center gap-3 py-2.5 text-sm hover:text-primary">
+                    <span className="grid size-8 place-items-center rounded-full bg-muted text-xs font-semibold">
+                      {employee.fullName.split(" ").pop()?.slice(0, 1)}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium">{employee.fullName}</span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {employee.employeeCode} · {employee.currentAssignment?.positionTitle ?? "Chưa phân công"}
                       </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-medium">{employee.fullName}</span>
-                        <span className="block truncate text-xs text-muted-foreground">
-                          {employee.employeeCode} · {employee.currentAssignment?.positionTitle ?? "Chưa phân công"}
-                        </span>
-                      </span>
-                      <span className="text-xs text-muted-foreground">Vào làm {formatDate(employee.hireDate)}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-      </CardContent>
-    </Card>
+                    </span>
+                    <span className="text-xs text-muted-foreground">{formatDate(employee.hireDate)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+    </section>
   )
 }

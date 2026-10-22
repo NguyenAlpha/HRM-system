@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { AlertTriangle, Banknote, CalendarDays, GraduationCap, RefreshCw, UsersRound } from "lucide-react"
+import { AlertTriangle, Banknote, CalendarDays, RefreshCw, UsersRound } from "lucide-react"
 
 import { DistributionChart } from "@/components/report/distribution-chart"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -137,14 +137,10 @@ export function WorkforceReportDashboard({
 
   return (
     <div className="grid gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Bộ lọc báo cáo</CardTitle>
-          <CardDescription>Số liệu được tính theo hồ sơ và phân công có hiệu lực tại ngày đã chọn.</CardDescription>
-        </CardHeader>
-        <CardContent>
+      {/* Filters as one bar instead of a titled card; the date note moves to the bar's footnote. */}
+      <div className="rounded-xl border bg-card p-3">
           <form
-            className="grid gap-4 md:grid-cols-2 xl:grid-cols-5"
+            className="grid gap-3 md:grid-cols-2 xl:grid-cols-5"
             onSubmit={(event) => {
               event.preventDefault()
               void loadReports(filters)
@@ -227,8 +223,8 @@ export function WorkforceReportDashboard({
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+          <p className="mt-2 text-xs text-muted-foreground">Số liệu được tính theo hồ sơ và phân công có hiệu lực tại ngày đã chọn.</p>
+      </div>
 
       {error && (
         <Alert variant="destructive">
@@ -263,11 +259,11 @@ export function WorkforceReportDashboard({
         )}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         {canReadHr && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><GraduationCap className="size-5" /> Trình độ học vấn</CardTitle>
+              <CardTitle>Trình độ học vấn</CardTitle>
               <CardDescription>Phân bố trình độ cao nhất được cập nhật trong hồ sơ nhân sự.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -279,7 +275,7 @@ export function WorkforceReportDashboard({
         {canReadPayroll && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Banknote className="size-5" /> Mức lương cơ bản</CardTitle>
+              <CardTitle>Mức lương cơ bản</CardTitle>
               <CardDescription>Phân bố mức lương cơ bản đang có hiệu lực, đơn vị VND/tháng.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -289,9 +285,9 @@ export function WorkforceReportDashboard({
         )}
 
         {canReadHr && (
-          <Card className={canReadPayroll ? "xl:col-span-2" : ""}>
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><CalendarDays className="size-5" /> Thâm niên</CardTitle>
+              <CardTitle>Thâm niên</CardTitle>
               <CardDescription>Thời gian làm việc tính từ ngày bắt đầu thâm niên đến ngày thống kê.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -317,16 +313,12 @@ export function WorkforceReportDashboard({
 
 function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <Card size="sm">
-      <CardContent className="flex min-h-24 items-center gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--green-soft)] text-[var(--green-dark)]">
-          {icon}
-        </span>
-        <span className="grid min-w-0 gap-1">
-          <small className="text-xs text-muted-foreground">{label}</small>
-          <strong className="truncate text-xl tracking-tight">{value}</strong>
-        </span>
-      </CardContent>
-    </Card>
+    <div className="rounded-xl border bg-card p-5">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground [&_svg]:size-4">{icon}</span>
+      </div>
+      <strong className="mt-1 block truncate text-2xl font-semibold tracking-tight tabular-nums">{value}</strong>
+    </div>
   )
 }
