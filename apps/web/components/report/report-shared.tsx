@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
 import { ChevronLeft, ChevronRight, Download } from "lucide-react"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import { Button } from "@/components/ui/button"
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { Input } from "@/components/ui/input"
 
 /** A cell of an exported table; numbers stay numbers so Excel can sum them. */
@@ -77,52 +78,43 @@ export function StatTile({ label, value, hint }: { label: string; value: string;
 }
 
 /**
- * One series over the months of a year as columns: thin bars with a rounded data end on a shared
- * baseline, 2px apart, recessive gridlines, a tooltip per column. A month without data shows no bar.
+ * One series over the months of a year as columns (Recharts via the shadcn chart wrapper): bars
+ * capped at 24px with a 4px rounded data end, hairline horizontal gridlines, a tooltip per column.
+ * A month without data shows no bar. The single series needs no legend; `label` names it.
  */
 export function MonthlyColumnChart({ label, points, format }: {
-  /** What the series measures; names the chart for screen readers. */
+  /** What the series measures; names the chart for screen readers and the tooltip. */
   label: string
   points: { month: number; value: number | null }[]
   format: (value: number) => string
 }) {
-  const [hovered, setHovered] = useState<number | null>(null)
-  const max = Math.max(0, ...points.map((point) => point.value ?? 0))
-  const top = max > 0 ? max : 1
-  const shown = points.find((point) => point.month === hovered)
+  const data = points.map((point) => ({ month: point.month, value: point.value }))
+  const config = { value: { label, color: "var(--chart-1)" } } satisfies ChartConfig
 
   return (
-    <figure className="grid gap-2 pt-3" aria-label={label}>
-      <div className="relative h-44">
-        {[1, 0.5, 0].map((fraction) => (
-          <div key={fraction} className="absolute inset-x-0 flex items-center gap-2" style={{ bottom: `${fraction * 100}%` }}>
-            <span className="w-16 shrink-0 -translate-y-1/2 text-right text-[10px] text-muted-foreground tabular-nums">
-              {format(top * fraction)}
-            </span>
-            <span className={`h-px flex-1 -translate-y-1/2 ${fraction === 0 ? "bg-border" : "bg-border/50"}`} />
-          </div>
-        ))}
-        <div className="absolute inset-y-0 right-0 left-[4.5rem] flex items-end gap-[2px]">
-          {points.map((point) => (
-            <div key={point.month} className="relative flex h-full flex-1 items-end justify-center"
-              onMouseEnter={() => setHovered(point.month)} onMouseLeave={() => setHovered(null)}>
-              {point.value !== null && point.value > 0 && (
-                <div className={`w-full max-w-7 rounded-t-[4px] transition-opacity ${hovered === null || hovered === point.month ? "" : "opacity-50"}`}
-                  style={{ height: `${(point.value / top) * 100}%`, background: "var(--green)" }} />
-              )}
-            </div>
-          ))}
-        </div>
-        {shown && (
-          <div role="status" className="pointer-events-none absolute -top-2 right-0 rounded-md border bg-popover px-2.5 py-1.5 text-xs shadow-md">
-            <span className="text-muted-foreground">Tháng {shown.month}: </span>
-            <span className="font-semibold tabular-nums">{shown.value === null ? "Chưa có dữ liệu" : format(shown.value)}</span>
-          </div>
-        )}
-      </div>
-      <div className="ml-[4.5rem] flex gap-[2px] text-center text-[10px] text-muted-foreground">
-        {points.map((point) => <span key={point.month} className="flex-1">T{point.month}</span>)}
-      </div>
+    <figure aria-label={label} className="pt-3">
+      <ChartContainer config={config} className="aspect-auto h-52 w-full">
+        <BarChart data={data} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+          <CartesianGrid vertical={false} />
+          <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(month) => `T${month}`} />
+          <YAxis tickLine={false} axisLine={false} width={64} tickCount={3} tickFormatter={(value) => format(Number(value))} />
+          <ChartTooltip
+            cursor={{ fill: "var(--muted)", opacity: 0.6 }}
+            content={(
+              <ChartTooltipContent
+                labelFormatter={(_, payload) => `Tháng ${payload[0]?.payload.month ?? ""}`}
+                formatter={(value) => (
+                  <div className="flex w-full items-center justify-between gap-4">
+                    <span className="text-muted-foreground">{label}</span>
+                    <span className="font-medium tabular-nums">{format(Number(value))}</span>
+                  </div>
+                )}
+              />
+            )}
+          />
+          <Bar dataKey="value" fill="var(--color-value)" radius={[4, 4, 0, 0]} maxBarSize={24} />
+        </BarChart>
+      </ChartContainer>
     </figure>
   )
 }

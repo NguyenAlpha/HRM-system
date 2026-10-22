@@ -21,7 +21,7 @@ export function DistributionChart({ items, emptyLabel = "Chưa có dữ liệu p
           </div>
           <div className="h-2.5 overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full rounded-full bg-[var(--green)] transition-[width] duration-300"
+              className="h-full rounded-full bg-[var(--chart-1)] transition-[width] duration-300"
               style={{ width: `${Math.min(100, Math.max(0, Number(item.percentage)))}%` }}
             />
           </div>

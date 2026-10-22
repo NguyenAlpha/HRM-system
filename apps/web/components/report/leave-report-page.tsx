@@ -139,7 +139,7 @@ export function LeaveReportPage() {
                                 <TableCell>
                                   <div className="flex items-center gap-2" title={`Đã dùng ${days(share)}%`}>
                                     <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                                      <div className="h-full rounded-full" style={{ width: `${share}%`, background: "var(--green)" }} />
+                                      <div className="h-full rounded-full" style={{ width: `${share}%`, background: "var(--chart-1)" }} />
                                     </div>
                                     <span className="w-10 text-right text-xs text-muted-foreground tabular-nums">{Math.round(share)}%</span>
                                   </div>
