@@ -134,7 +134,7 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
   }, [portal])
 
   // The keyword goes through its debounced copy so typing does not fire a request per key.
-  const query = employeeListQuery(page, 10, {
+  const query = employeeListQuery(page, 20, {
     keyword,
     employmentStatus: filters.employmentStatus,
     organizationUnitId: filters.organizationUnitId,
