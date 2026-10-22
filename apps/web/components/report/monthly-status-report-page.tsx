@@ -88,7 +88,7 @@ export function MonthlyStatusReportPage() {
 
         {data && (
           <>
-            <section className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6" aria-label={`Tổng hợp tháng ${label}`}>
+            <section className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6" aria-label={`Tổng hợp tháng ${label}`}>
               <StatTile label="Quân số đầu tháng" value={data.headcountStart.toLocaleString("vi-VN")} />
               <StatTile label="Vào làm" value={data.hires.toLocaleString("vi-VN")} />
               <StatTile label="Nghỉ việc" value={data.terminations.toLocaleString("vi-VN")} />
