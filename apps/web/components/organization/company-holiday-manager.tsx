@@ -112,7 +112,7 @@ export function CompanyHolidayManager({ canManage }: { canManage: boolean }) {
 
       <ErrorAlert error={error} />
 
-      <div className="rounded-xl border">
+      <div className="rounded-xl border bg-card">
         <Table>
           <TableHeader>
             <TableRow>

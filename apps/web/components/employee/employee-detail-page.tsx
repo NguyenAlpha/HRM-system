@@ -3,24 +3,10 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import {
-  ArrowLeft,
-  BriefcaseBusiness,
-  Building2,
-  CalendarDays,
-  Clock3,
-  GraduationCap,
-  KeyRound,
-  LogOut,
-  MapPin,
-  Pencil,
-  RefreshCw,
-  Trash2,
-  UserRound,
-  UsersRound,
-} from "lucide-react"
+import { ArrowLeft, KeyRound, LogOut, Pencil, RefreshCw, Trash2 } from "lucide-react"
 
 import { ErrorAlert } from "@/components/common/list-controls"
+import { ActionsMenu, RowActionItem, RowActionLink } from "@/components/common/row-actions"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import { EmployeeCompensationCard } from "@/components/employee/employee-compensation-card"
 import { EmployeeDeleteDialog } from "@/components/employee/employee-delete-dialog"
@@ -32,7 +18,6 @@ import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -201,74 +186,60 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
 
   return (
     <>
-      <header className="flex flex-wrap items-start justify-between gap-4">
+      <Link href={backHref} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="size-4" /> {canReadEmployeeList ? "Danh sách nhân sự" : "Tổng quan"}
+      </Link>
+
+      <header className="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <span className="avatar shrink-0 text-lg">
             {(detail?.fullName ?? "?").slice(0, 1).toUpperCase()}
           </span>
           <div className="min-w-0">
-            <p className="eyebrow">HỒ SƠ NHÂN SỰ</p>
-            <h1 className="mt-1 truncate text-3xl font-semibold tracking-tight sm:text-4xl">
+            <h1 className="truncate text-3xl font-semibold tracking-tight">
               {detail?.fullName ?? "Chi tiết nhân sự"}
             </h1>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {detail && <code className="text-sm text-muted-foreground">{detail.employeeCode}</code>}
               {detail && (
-                <Badge variant={detail.employmentStatus === "ACTIVE" ? "default" : "outline"}>
+                <Badge variant={detail.employmentStatus === "ACTIVE" ? "secondary" : "outline"}>
                   {EMPLOYMENT_STATUS_LABELS[detail.employmentStatus]}
                 </Badge>
               )}
             </div>
           </div>
         </div>
+        {/* One visible action; the rarer ones sit in the "…" menu. */}
         <div className="flex flex-wrap items-center gap-2">
           {detail && canUpdateEmployee && (
             <Button type="button" variant="outline" onClick={() => setEditing(true)}>
               <Pencil /> Sửa hồ sơ
             </Button>
           )}
-          {detail && canManageLifecycle && !isEmploymentEnded(detail.employmentStatus) && (
-            <Button type="button" variant="outline" onClick={() => setEndingEmployment(true)}>
-              <LogOut /> Kết thúc làm việc
-            </Button>
-          )}
-          {detail && canDeleteEmployee && (
-            <Button type="button" variant="destructive" onClick={() => setDeleting(true)}>
-              <Trash2 /> Xóa hồ sơ
-            </Button>
-          )}
-          {detail?.account && canReadAccount && (
-            <Button variant="outline" nativeButton={false}
-              render={<Link href={`${PORTAL_CONFIG[portal].pagePrefix}/accounts/${detail.account.id}`} />}>
-              <KeyRound /> Tài khoản
-            </Button>
-          )}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={reload}
-            disabled={displayedLoading}
-          >
-            <RefreshCw className={displayedLoading ? "animate-spin" : ""} /> Tải lại
-          </Button>
-          <Button
-            variant="outline"
-            nativeButton={false}
-            render={<Link href={backHref} />}
-          >
-            <ArrowLeft /> {canReadEmployeeList ? "Về danh sách" : "Về tổng quan"}
-          </Button>
+          <ActionsMenu label={detail?.fullName ?? "hồ sơ"} outline>
+            {detail?.account && canReadAccount && (
+              <RowActionLink icon={KeyRound} href={`${PORTAL_CONFIG[portal].pagePrefix}/accounts/${detail.account.id}`}>
+                Xem tài khoản
+              </RowActionLink>
+            )}
+            <RowActionItem icon={RefreshCw} onClick={reload} disabled={displayedLoading}>Tải lại</RowActionItem>
+            {detail && canManageLifecycle && !isEmploymentEnded(detail.employmentStatus) && (
+              <RowActionItem icon={LogOut} onClick={() => setEndingEmployment(true)}>Kết thúc làm việc</RowActionItem>
+            )}
+            {detail && canDeleteEmployee && (
+              <RowActionItem icon={Trash2} destructive onClick={() => setDeleting(true)}>Xóa hồ sơ</RowActionItem>
+            )}
+          </ActionsMenu>
         </div>
       </header>
 
-      <div className="mt-6">
+      <div className="mt-8">
         {displayedLoading && <DetailSkeleton />}
 
         {!displayedLoading && displayedError && (
           <Card>
             <CardHeader>
               <CardTitle>Không thể tải hồ sơ</CardTitle>
-              <CardDescription>Kiểm tra quyền truy cập hoặc thử tải lại dữ liệu.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <ErrorAlert error={displayedError} />
@@ -280,11 +251,10 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
         )}
 
         {!displayedLoading && !displayedError && detail && (
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-6 lg:grid-cols-3">
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><UserRound /> Thông tin hồ sơ</CardTitle>
-                <CardDescription>Thông tin cá nhân, liên hệ và quá trình làm việc cơ bản.</CardDescription>
+                <CardTitle>Thông tin hồ sơ</CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
                 <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -300,7 +270,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
                 <Separator />
 
                 <div>
-                  <p className="flex items-center gap-2 text-sm font-medium"><GraduationCap /> Học vấn</p>
+                  <p className="text-sm font-medium">Học vấn</p>
                   <dl className="mt-3 grid gap-4 sm:grid-cols-2">
                     <InfoField
                       label="Trình độ cao nhất"
@@ -319,10 +289,10 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
               </CardContent>
             </Card>
 
-            <div className="grid content-start gap-4">
+            <div className="grid content-start gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><KeyRound /> Tài khoản</CardTitle>
+                  <CardTitle>Tài khoản</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {detail.account ? (
@@ -332,7 +302,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
                       <div>
                         <dt className="text-xs text-muted-foreground">Trạng thái</dt>
                         <dd className="mt-1">
-                          <Badge variant={detail.account.status === "ACTIVE" ? "default" : "outline"}>
+                          <Badge variant={detail.account.status === "ACTIVE" ? "secondary" : "outline"}>
                             {ACCOUNT_STATUS_LABELS[detail.account.status] ?? detail.account.status}
                           </Badge>
                         </dd>
@@ -346,7 +316,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><BriefcaseBusiness /> Phân công hiện tại</CardTitle>
+                  <CardTitle>Phân công hiện tại</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {currentAssignment ? (
@@ -387,10 +357,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
 
             {canReadAssignments && <Card className="lg:col-span-3">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Clock3 /> Lịch sử phân công</CardTitle>
-                <CardDescription>
-                  Bao gồm phân công đã kết thúc, đang hiệu lực và được lên lịch trong tương lai.
-                </CardDescription>
+                <CardTitle>Lịch sử phân công</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto rounded-xl border">
@@ -409,37 +376,25 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
                       {assignments.map((assignment) => (
                         <TableRow key={assignment.id}>
                           <TableCell className="min-w-40">
-                            <span className="flex items-center gap-1.5 text-sm">
-                              <CalendarDays className="size-3.5 text-muted-foreground" />
-                              {formatDate(assignment.effectiveFrom)}
-                            </span>
+                            <span className="text-sm">{formatDate(assignment.effectiveFrom)}</span>
                             <span className="mt-1 block text-xs text-muted-foreground">
                               đến {formatDate(assignment.effectiveTo)}
                             </span>
                           </TableCell>
                           <TableCell className="min-w-52">
-                            <span className="flex items-center gap-1.5 font-medium">
-                              <Building2 className="size-3.5 text-muted-foreground" />
-                              {assignment.organizationUnitName}
-                            </span>
+                            <span className="font-medium">{assignment.organizationUnitName}</span>
                             <span className="mt-1 block text-xs text-muted-foreground">
                               {assignment.positionTitle}
                             </span>
                           </TableCell>
                           <TableCell className="min-w-48">
-                            <span className="flex items-center gap-1.5 text-sm">
-                              <MapPin className="size-3.5 text-muted-foreground" />
-                              {assignment.workLocationName}
-                            </span>
+                            <span className="text-sm">{assignment.workLocationName}</span>
                             <span className="mt-1 block text-xs text-muted-foreground">
                               {assignment.shiftName || "Chưa xếp ca"}
                             </span>
                           </TableCell>
                           <TableCell className="min-w-40">
-                            <span className="flex items-center gap-1.5 text-sm">
-                              <UsersRound className="size-3.5 text-muted-foreground" />
-                              {assignment.managerEmployeeName || "Chưa chỉ định"}
-                            </span>
+                            <span className="text-sm">{assignment.managerEmployeeName || "Chưa chỉ định"}</span>
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline">

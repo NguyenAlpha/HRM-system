@@ -216,7 +216,7 @@ export function WorkLocationManager({ portal, onSessionExpired }: { portal: Port
 
       <ErrorAlert error={error} />
 
-      <div className="rounded-xl border">
+      <div className="rounded-xl border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -251,7 +251,7 @@ export function WorkLocationManager({ portal, onSessionExpired }: { portal: Port
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">{location.parentLocationName ?? "—"}</TableCell>
                 <TableCell>
-                  <Badge variant={location.isActive ? "default" : "outline"}>{location.isActive ? "Hoạt động" : "Tạm tắt"}</Badge>
+                  <Badge variant={location.isActive ? "secondary" : "outline"}>{location.isActive ? "Hoạt động" : "Tạm tắt"}</Badge>
                 </TableCell>
                 <RowActionsCell label={location.code}>
                   <RowActionItem icon={Pencil} onClick={() => openEdit(location)}>Sửa</RowActionItem>

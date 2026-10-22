@@ -21,25 +21,33 @@ export function RowActionsCell({ label, children }: { label: string; children?: 
   const items = Children.toArray(children).length > 0
   return (
     <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
-      {items ? (
-        <Menu.Root>
-          <Menu.Trigger
-            aria-label={`Mở menu thao tác cho ${label}`}
-            title="Thao tác"
-            render={<Button type="button" variant="ghost" size="icon-sm" />}
-          >
-            <Ellipsis />
-          </Menu.Trigger>
-          <Menu.Portal>
-            <Menu.Positioner side="bottom" align="end" sideOffset={4} className="isolate z-50">
-              <Menu.Popup className="min-w-44 origin-(--transform-origin) rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95">
-                {children}
-              </Menu.Popup>
-            </Menu.Positioner>
-          </Menu.Portal>
-        </Menu.Root>
-      ) : <span className="text-muted-foreground">—</span>}
+      {items ? <ActionsMenu label={label}>{children}</ActionsMenu> : <span className="text-muted-foreground">—</span>}
     </TableCell>
+  )
+}
+
+/**
+ * The "…" button and its menu on their own, for secondary actions outside a table (e.g. a page header).
+ * `outline` gives the bordered button used next to other header buttons.
+ */
+export function ActionsMenu({ label, outline = false, children }: { label: string; outline?: boolean; children: ReactNode }) {
+  return (
+    <Menu.Root>
+      <Menu.Trigger
+        aria-label={`Mở menu thao tác cho ${label}`}
+        title="Thao tác"
+        render={<Button type="button" variant={outline ? "outline" : "ghost"} size={outline ? "icon" : "icon-sm"} />}
+      >
+        <Ellipsis />
+      </Menu.Trigger>
+      <Menu.Portal>
+        <Menu.Positioner side="bottom" align="end" sideOffset={4} className="isolate z-50">
+          <Menu.Popup className="min-w-44 origin-(--transform-origin) rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95">
+            {children}
+          </Menu.Popup>
+        </Menu.Positioner>
+      </Menu.Portal>
+    </Menu.Root>
   )
 }
 
