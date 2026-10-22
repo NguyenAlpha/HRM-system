@@ -4,12 +4,10 @@ import { Inter, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-// Loading the fonts registers 'Inter' and 'Geist Mono'; globals.css names them in @theme.
+// The fonts expose CSS variables on <html>; globals.css maps them to Tailwind's font tokens in @theme.
 // Both are variable fonts, so omitting `weight` still covers every weight.
-/* eslint-disable @typescript-eslint/no-unused-vars */
-const _inter = Inter({ subsets: ["latin", "vietnamese"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
-/* eslint-enable @typescript-eslint/no-unused-vars */
+const inter = Inter({ subsets: ["latin", "vietnamese"], variable: "--font-inter" })
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" })
 
 export const metadata: Metadata = {
   title: {
@@ -21,7 +19,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="vi" className="font-sans" suppressHydrationWarning>
+    <html lang="vi" className={`${inter.variable} ${geistMono.variable} font-sans`} suppressHydrationWarning>
       <body>
         <TooltipProvider delay={200}>{children}</TooltipProvider>
         <Toaster position="top-center" richColors />
