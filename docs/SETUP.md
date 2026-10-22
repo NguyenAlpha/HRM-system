@@ -184,11 +184,24 @@ Mở các địa chỉ sau:
 
 ## 5. Tài khoản phát triển
 
-Seeder chỉ tạo một tài khoản:
+Khi các cờ seed để mặc định (bật), database mới có sẵn các tài khoản sau:
 
-| Portal | Username | Password | Role |
-|:-------|:---------|:---------|:-----|
-| Admin | `admin` | `Admin@123` | `SYSTEM_ADMIN` |
+| Portal | Username | Password | Role chính |
+|:-------|:---------|:---------|:-----------|
+| Admin | `admin` | `Admin@123` (`ADMIN_SEED_PASSWORD`) | `SYSTEM_ADMIN` |
+| HRM | `owner` | `password` | `COMPANY_OWNER`, `DIRECTOR`, `PAYROLL_APPROVER` |
+| HRM | `hr` | `password` | `HR_MANAGER` (toàn công ty) |
+| HRM | `accountant` | `password` | `PAYROLL_ACCOUNTANT` (toàn công ty) |
+| HRM | `branch-hn` | `password` | `MANAGER` (địa điểm chi nhánh Hà Nội) |
+| HRM | `employee` | `password` | `EMPLOYEE` (chính mình) |
+
+`owner` do `CompanyOwnerSeeder` tạo; các tài khoản HRM còn lại (20 người) khai báo trong
+`api/src/main/resources/seed/staff.json`, mọi tài khoản trong file đều có role `EMPLOYEE`. Danh sách đầy đủ, phân
+công và dữ liệu đi kèm xem ở [ORGANIZATION_STRUCTURE.md](ORGANIZATION_STRUCTURE.md#7-seeder-hiện-có).
+
+Tắt `OWNER_SEED_ENABLED` và `STAFF_SEED_ENABLED` nếu muốn bắt đầu từ database chỉ có `admin` và đi qua luồng khởi
+tạo thật: `admin` tạo Company Owner tại `/admin/company-owner`, Company Owner kích hoạt qua link mời rồi tạo nhân
+viên và cấp role cho người khác.
 
 Tài khoản `SYSTEM_ADMIN` phải đăng nhập tại `/admin/login`. Tài khoản HRM (Company Owner và người
 được tạo sau đó) đăng nhập tại `/login`. Đăng nhập sai portal sẽ trả `ADMIN_PORTAL_REQUIRED` hoặc
@@ -196,12 +209,12 @@ Tài khoản `SYSTEM_ADMIN` phải đăng nhập tại `/admin/login`. Tài kho�
 
 ## 6. Kiểm tra sau khi setup
 
-Ngày 2026-10-11 chuỗi migration được gộp lại thành baseline mới. Database local tạo trước ngày đó phải chạy `docker compose down -v` một lần (xem mục 7), nếu không API sẽ dừng vì Flyway báo lệch checksum. Trước khi tính lương một kỳ, HR cần nhập hồ sơ bảo hiểm, người phụ thuộc và kế toán cần khai báo ngày dự kiến trả lương theo [hướng dẫn tính lương](../api/docs/api/PAYROLL.md). Bộ quy tắc nạp sẵn chỉ phục vụ năm 2026; kỳ khác sẽ báo thiếu quy tắc để bổ sung migration phù hợp.
+Ngày 2026-10-11 chuỗi migration được gộp lại thành baseline mới. Database local tạo trước ngày đó phải chạy `docker compose down -v` một lần (xem mục 7), nếu không API sẽ dừng vì Flyway báo lệch checksum. Trước khi tính lương một kỳ, HR cần nhập hồ sơ bảo hiểm, người phụ thuộc và kế toán cần khai báo ngày dự kiến trả lương theo [hướng dẫn tính lương](../api/docs/api/PAYROLL.md). Quy tắc thuế TNCN và bảo hiểm nạp sẵn (migration `V8__reference_data.sql`) có hiệu lực từ 2020-01-01 đến 2026-12-31; kỳ lương ngoài khoảng này sẽ báo thiếu quy tắc để bổ sung migration phù hợp.
 
 Thực hiện lần lượt:
 
 1. Mở `/admin/login`, đăng nhập bằng `admin` và kiểm tra được chuyển tới `/admin`.
-2. Tạo Company Owner tại `/admin/company-owner`, kích hoạt qua link mời, đăng nhập `/login` và kiểm tra được chuyển tới `/dashboard` theo [workflow khởi tạo](../api/docs/api/ORGANIZATION_COMPANY_OWNER_ADMIN.md).
+2. Mở `/login`, đăng nhập bằng `owner` / `password` và kiểm tra được chuyển tới `/dashboard`. Nếu đã tắt seed Company Owner, tạo Company Owner tại `/admin/company-owner` và kích hoạt qua link mời theo [workflow khởi tạo](../api/docs/api/ORGANIZATION_COMPANY_OWNER_ADMIN.md).
 3. Kiểm tra dashboard hiển thị account, role và permission.
 4. Thử refresh session và đăng xuất để kiểm tra cookie/session hoạt động.
 

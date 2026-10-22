@@ -183,8 +183,9 @@ Dữ liệu seed được chia theo trách nhiệm và chạy theo `@Order`. M�
 | 60 | `OrganizationStructureSeeder` | `COMPANY_SEED_ENABLED` | 5 địa điểm `HO`, `BRANCH-01`, `BRANCH-02`, `WAREHOUSE-01`, `WAREHOUSE-02`; đơn vị `BOARD` và 3 phòng ban `HR`, `ACCOUNTING`, `OPERATIONS` |
 | 70 | `JobPositionSeeder` | `COMPANY_SEED_ENABLED` | 7 chức danh |
 | 80 | `WorkShiftSeeder` | `COMPANY_SEED_ENABLED` | Ca hành chính `OFFICE_DAY` 08:00–17:00 |
+| 90 | `CompanyHolidaySeeder` | `COMPANY_SEED_ENABLED` | Ngày lễ, Tết hưởng nguyên lương năm 2025 và 2026 theo Điều 112 Bộ luật Lao động 2019 (lễ rơi vào Chủ nhật được nghỉ bù); năm đã có ngày lễ nào thì bỏ qua cả năm |
 | 100 | `RoleSeeder` | `RBAC_SEED_ENABLED` (mặc định bật) | 8 system role |
-| 200 | `PermissionSeeder` | `RBAC_SEED_ENABLED` | Danh mục 47 permission |
+| 200 | `PermissionSeeder` | `RBAC_SEED_ENABLED` | Danh mục 48 permission |
 | 300 | `RolePermissionSeeder` | `RBAC_SEED_ENABLED` | Permission mặc định của từng system role |
 | 400 | `SystemAdminSeeder` | `ADMIN_SEED_ENABLED` (mặc định bật) | Account bootstrap và gán role `SYSTEM_ADMIN` đã có sẵn |
 | 500 | `CompanyOwnerSeeder` | `OWNER_SEED_ENABLED` (mặc định bật) | Company Owner `owner`/`password` (role `COMPANY_OWNER`, `DIRECTOR`, `PAYROLL_APPROVER`, `EMPLOYEE`), phân công tại `BOARD`, lương cơ bản 50.000.000, hồ sơ bảo hiểm/thuế (đóng trên 50.000.000, vùng 1), 2 con phụ thuộc, chấm công 2 năm |

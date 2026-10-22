@@ -790,7 +790,7 @@ Giá trị `grant_policy`: `AUTO` cấp ngay khi account được tạo, `HR_ASS
 ### 5.1. Danh mục permission code
 
 Danh mục quyền thuộc sở hữu của code: `PermissionSeeder` là nguồn chuẩn, không thêm permission
-qua API. Catalog hiện có 47 code trên 8 module của `PermissionModule`. Code đánh dấu `(S)` có
+qua API. Catalog hiện có 48 code trên 8 module của `PermissionModule`. Code đánh dấu `(S)` có
 `assignment_policy = SYSTEM_ONLY`, chỉ seeder gán cho system role; các code còn lại là `DELEGABLE`.
 
 ```text
@@ -809,9 +809,10 @@ account.provision                 account.activation.manage
 account.role.assign               role.assignment.request
 role.assignment.approve (S)       account.permission.override.manage (S)
 
-ORGANIZATION (4)
+ORGANIZATION (5)
 organization.read                 organization.manage
 organization.change.approve       organization.company_owner.bootstrap (S)
+company.manage (S)
 
 REQUEST (6)
 request.self.read                 request.self.create

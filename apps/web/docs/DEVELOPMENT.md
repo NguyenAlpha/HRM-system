@@ -48,10 +48,14 @@ AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS=2592000
 | Portal | Username | Password mặc định | Role | Điều kiện API |
 |:-------|:---------|:------------------|:-----|:--------------|
 | Admin | `admin` | `Admin@123` | `SYSTEM_ADMIN` | `ADMIN_SEED_ENABLED=true` |
+| HRM | `owner` | `password` | `COMPANY_OWNER`, `DIRECTOR`, `PAYROLL_APPROVER` | `OWNER_SEED_ENABLED=true` |
+| HRM | `hr`, `accountant`, `branch-hn`, `employee`, … | `password` | Theo `seed/staff.json` | `STAFF_SEED_ENABLED=true` |
 
-Hệ thống không seed nhân viên hay tài khoản HRM nào. Database mới đi qua chuỗi bootstrap thực tế:
-`admin` đăng nhập `/admin/login` và tạo Company Owner tại `/admin/company-owner`, Company Owner kích hoạt
-tài khoản qua link mời rồi đăng nhập `/login` để tạo nhân viên và cấp role (ví dụ HR Manager) cho người khác.
+Các cờ trên mặc định bật, nên database mới có sẵn Company Owner và 20 tài khoản nhân sự để thử từng vai trò (danh
+sách ở [docs/SETUP.md](../../../docs/SETUP.md#5-tài-khoản-phát-triển)). Tắt `OWNER_SEED_ENABLED` và
+`STAFF_SEED_ENABLED` để đi qua chuỗi bootstrap thực tế: `admin` đăng nhập `/admin/login` và tạo Company Owner tại
+`/admin/company-owner`, Company Owner kích hoạt tài khoản qua link mời rồi đăng nhập `/login` để tạo nhân viên và
+cấp role cho người khác.
 
 Không dùng mật khẩu mặc định ở môi trường thật. Production cần tắt seeder hoặc truyền mật
 khẩu an toàn qua biến môi trường.
