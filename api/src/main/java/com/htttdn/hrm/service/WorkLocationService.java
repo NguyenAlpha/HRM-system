@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -39,17 +40,20 @@ public class WorkLocationService {
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final RoleAssignmentRequestRepository roleAssignmentRequestRepository;
+    private final Clock clock;
 
     public WorkLocationService(
         WorkLocationRepository workLocationRepository,
         EmployeeAssignmentRepository employeeAssignmentRepository,
         AccountRoleAssignmentRepository accountRoleAssignmentRepository,
-        RoleAssignmentRequestRepository roleAssignmentRequestRepository
+        RoleAssignmentRequestRepository roleAssignmentRequestRepository,
+        Clock clock
     ) {
         this.workLocationRepository = workLocationRepository;
         this.employeeAssignmentRepository = employeeAssignmentRepository;
         this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
         this.roleAssignmentRequestRepository = roleAssignmentRequestRepository;
+        this.clock = clock;
     }
 
     @PreAuthorize("hasAuthority('organization.read')")
@@ -167,7 +171,7 @@ public class WorkLocationService {
     }
 
     private void requireNotInUse(Long locationId) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         if (employeeAssignmentRepository.existsCurrentOrFutureByWorkLocationId(locationId, today)) {
             throw resourceInUse("Work location is used by a current or future employee assignment");
         }

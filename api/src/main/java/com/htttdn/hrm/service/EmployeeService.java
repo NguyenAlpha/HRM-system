@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -80,6 +81,7 @@ public class EmployeeService {
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final EmployeeAssignmentService employeeAssignmentService;
     private final EmployeeCodeGenerator employeeCodeGenerator;
+    private final Clock clock;
 
     public EmployeeService(
         EmployeeRepository employeeRepository,
@@ -94,7 +96,8 @@ public class EmployeeService {
         CurrentAccountProvider currentAccountProvider,
         EmployeeAccessScopeService employeeAccessScopeService,
         EmployeeAssignmentService employeeAssignmentService,
-        EmployeeCodeGenerator employeeCodeGenerator
+        EmployeeCodeGenerator employeeCodeGenerator,
+        Clock clock
     ) {
         this.employeeRepository = employeeRepository;
         this.employeeAssignmentRepository = employeeAssignmentRepository;
@@ -109,6 +112,7 @@ public class EmployeeService {
         this.employeeAccessScopeService = employeeAccessScopeService;
         this.employeeAssignmentService = employeeAssignmentService;
         this.employeeCodeGenerator = employeeCodeGenerator;
+        this.clock = clock;
     }
 
     @PreAuthorize("hasAuthority('employee.create')")
@@ -176,7 +180,7 @@ public class EmployeeService {
     @PreAuthorize("hasAuthority('profile.self.update')")
     public SelfProfileResponse updateSelfProfile(UpdateSelfProfileRequest request) {
         Employee employee = findSelf();
-        int currentYear = LocalDate.now().getYear();
+        int currentYear = LocalDate.now(clock).getYear();
         if (request.graduationYear() != null
             && (request.graduationYear() < 1950 || request.graduationYear() > currentYear)) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
@@ -219,7 +223,7 @@ public class EmployeeService {
         for (Specification<Employee> filter : Arrays.asList(
             EmployeeSpecifications.matchesKeyword(criteria.keyword()),
             EmployeeSpecifications.hasEmploymentStatus(criteria.employmentStatus()),
-            EmployeeSpecifications.currentlyAssignedTo(criteria.organizationUnitId(), criteria.positionId(), LocalDate.now())
+            EmployeeSpecifications.currentlyAssignedTo(criteria.organizationUnitId(), criteria.positionId(), LocalDate.now(clock))
         )) {
             if (filter != null) {
                 specification = specification.and(filter);
@@ -451,7 +455,7 @@ public class EmployeeService {
     }
 
     private Optional<EmployeeAssignment> findCurrentAssignment(Long employeeId) {
-        return employeeAssignmentRepository.findCurrentPrimaryCandidates(employeeId, LocalDate.now()).stream()
+        return employeeAssignmentRepository.findCurrentPrimaryCandidates(employeeId, LocalDate.now(clock)).stream()
             .findFirst();
     }
 
@@ -481,7 +485,7 @@ public class EmployeeService {
 
         List<Long> employeeIds = employees.stream().map(Employee::getId).toList();
         Map<Long, EmployeeAssignment> assignmentsByEmployeeId = new HashMap<>();
-        employeeAssignmentRepository.findCurrentPrimaryByEmployeeIds(employeeIds, LocalDate.now())
+        employeeAssignmentRepository.findCurrentPrimaryByEmployeeIds(employeeIds, LocalDate.now(clock))
             .forEach(assignment -> assignmentsByEmployeeId.put(assignment.getEmployee().getId(), assignment));
         return assignmentsByEmployeeId;
     }

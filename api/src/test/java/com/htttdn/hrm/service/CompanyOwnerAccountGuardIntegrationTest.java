@@ -16,6 +16,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.dto.request.account.CreatePermissionOverrideRequest;
 import com.htttdn.hrm.entity.enums.PermissionOverrideEffect;
 import com.htttdn.hrm.exception.ForbiddenException;
@@ -127,7 +128,7 @@ class CompanyOwnerAccountGuardIntegrationTest {
         Long permissionId = jdbc.queryForObject(
             "SELECT id FROM permissions WHERE code = 'account.read'", Long.class);
         return new CreatePermissionOverrideRequest(
-            permissionId, PermissionOverrideEffect.REVOKE, LocalDate.now(), null, "guard test");
+            permissionId, PermissionOverrideEffect.REVOKE, LocalDate.now(ClockConfig.BUSINESS_ZONE), null, "guard test");
     }
 
     private Long insertAccount(String prefix) {

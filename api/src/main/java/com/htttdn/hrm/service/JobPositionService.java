@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -26,13 +27,16 @@ public class JobPositionService {
 
     private final JobPositionRepository jobPositionRepository;
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
+    private final Clock clock;
 
     public JobPositionService(
         JobPositionRepository jobPositionRepository,
-        EmployeeAssignmentRepository employeeAssignmentRepository
+        EmployeeAssignmentRepository employeeAssignmentRepository,
+        Clock clock
     ) {
         this.jobPositionRepository = jobPositionRepository;
         this.employeeAssignmentRepository = employeeAssignmentRepository;
+        this.clock = clock;
     }
 
     @PreAuthorize("hasAuthority('organization.read')")
@@ -92,7 +96,7 @@ public class JobPositionService {
         JobPosition position = findPositionForUpdate(positionId);
         if (employeeAssignmentRepository.existsCurrentOrFutureByPositionId(
             positionId,
-            LocalDate.now()
+            LocalDate.now(clock)
         )) {
             throw new ConflictException(
                 ErrorCode.ORGANIZATION_RESOURCE_IN_USE,

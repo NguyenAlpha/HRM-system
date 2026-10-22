@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.time.LocalTime;
 
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.dto.request.workshift.CreateWorkShiftRequest;
 import com.htttdn.hrm.entity.WorkShift;
 import com.htttdn.hrm.exception.BusinessException;
@@ -63,6 +65,7 @@ class WorkShiftServiceTest {
     }
 
     private WorkShiftService service() {
-        return new WorkShiftService(workShiftRepository, employeeAssignmentRepository, attendanceRecordRepository);
+        return new WorkShiftService(workShiftRepository, employeeAssignmentRepository, attendanceRecordRepository,
+            Clock.system(ClockConfig.BUSINESS_ZONE));
     }
 }

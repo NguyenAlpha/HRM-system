@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -54,6 +55,7 @@ public class RoleAssignmentRequestService {
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final CurrentAccountProvider currentAccountProvider;
     private final CompanyOwnerAccountGuard companyOwnerAccountGuard;
+    private final Clock clock;
 
     public RoleAssignmentRequestService(
         RoleAssignmentRequestRepository requestRepository,
@@ -64,7 +66,8 @@ public class RoleAssignmentRequestService {
         AccountRoleAssignmentMapper roleAssignmentMapper,
         EmployeeAccessScopeService employeeAccessScopeService,
         CurrentAccountProvider currentAccountProvider,
-        CompanyOwnerAccountGuard companyOwnerAccountGuard
+        CompanyOwnerAccountGuard companyOwnerAccountGuard,
+        Clock clock
     ) {
         this.requestRepository = requestRepository;
         this.accountRepository = accountRepository;
@@ -75,6 +78,7 @@ public class RoleAssignmentRequestService {
         this.employeeAccessScopeService = employeeAccessScopeService;
         this.currentAccountProvider = currentAccountProvider;
         this.companyOwnerAccountGuard = companyOwnerAccountGuard;
+        this.clock = clock;
     }
 
     @PreAuthorize("hasAuthority('role.assignment.request')")
@@ -145,7 +149,7 @@ public class RoleAssignmentRequestService {
             return List.of();
         }
         employeeAccessScopeService.requireEmployeeAccess(employee.getId(), REQUEST_PERMISSION);
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         return roleAssignmentRepository.findByAccountIdAndRevokedAtIsNull(accountId).stream()
             .filter(assignment -> assignment.getEffectiveTo() == null || !assignment.getEffectiveTo().isBefore(today))
             .filter(assignment -> assignment.getRole().getGrantPolicy() == RoleGrantPolicy.HR_ASSIGNABLE
@@ -355,7 +359,7 @@ public class RoleAssignmentRequestService {
     /** Only an assignment that is not revoked and has not ended can be revoked by a request. */
     private void requireStillHeld(AccountRoleAssignment assignment) {
         if (assignment.getRevokedAt() != null
-            || (assignment.getEffectiveTo() != null && assignment.getEffectiveTo().isBefore(LocalDate.now()))) {
+            || (assignment.getEffectiveTo() != null && assignment.getEffectiveTo().isBefore(LocalDate.now(clock)))) {
             throw new ConflictException(
                 ErrorCode.ROLE_ASSIGNMENT_NOT_ALLOWED,
                 "Role assignment is already revoked or has ended"

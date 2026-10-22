@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
@@ -35,15 +36,18 @@ public class ApproverResolver {
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
     private final AccountRepository accountRepository;
     private final AccountRoleAssignmentRepository roleAssignmentRepository;
+    private final Clock clock;
 
     public ApproverResolver(
         EmployeeAssignmentRepository employeeAssignmentRepository,
         AccountRepository accountRepository,
-        AccountRoleAssignmentRepository roleAssignmentRepository
+        AccountRoleAssignmentRepository roleAssignmentRepository,
+        Clock clock
     ) {
         this.employeeAssignmentRepository = employeeAssignmentRepository;
         this.accountRepository = accountRepository;
         this.roleAssignmentRepository = roleAssignmentRepository;
+        this.clock = clock;
     }
 
     /** The approver of the employee's requests; empty when nobody stands above them. */
@@ -87,12 +91,12 @@ public class ApproverResolver {
     }
 
     private boolean holdsRole(Account account, String roleCode) {
-        return roleAssignmentRepository.findActiveWithRoleByAccountId(account.getId(), LocalDate.now()).stream()
+        return roleAssignmentRepository.findActiveWithRoleByAccountId(account.getId(), LocalDate.now(clock)).stream()
             .anyMatch(assignment -> roleCode.equals(assignment.getRole().getCode()));
     }
 
     private Employee roleHolder(String roleCode) {
-        List<Account> holders = roleAssignmentRepository.findAccountsHoldingRole(roleCode, LocalDate.now());
+        List<Account> holders = roleAssignmentRepository.findAccountsHoldingRole(roleCode, LocalDate.now(clock));
         return holders.stream().map(Account::getEmployee).filter(Objects::nonNull).findFirst().orElse(null);
     }
 

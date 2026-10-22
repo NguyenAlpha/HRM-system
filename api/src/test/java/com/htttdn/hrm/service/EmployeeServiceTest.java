@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -13,6 +14,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.dto.request.employee.SoftDeleteEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.CreateEmployeeProfileRequest;
 import com.htttdn.hrm.dto.request.employee.CreateEmployeeRequest;
@@ -316,7 +318,8 @@ class EmployeeServiceTest {
             currentAccountProvider,
             employeeAccessScopeService,
             employeeAssignmentService,
-            employeeCodeGenerator
+            employeeCodeGenerator,
+            Clock.system(ClockConfig.BUSINESS_ZONE)
         );
     }
 }

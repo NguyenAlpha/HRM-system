@@ -1,5 +1,6 @@
 package com.htttdn.hrm.config.seed;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Locale;
@@ -50,6 +51,7 @@ public class SystemAdminSeeder implements ApplicationRunner {
     private final String username;
     private final String email;
     private final String password;
+    private final Clock clock;
 
     public SystemAdminSeeder(
         AccountRepository accountRepository,
@@ -59,7 +61,8 @@ public class SystemAdminSeeder implements ApplicationRunner {
         @Value("${admin.seed.enabled:false}") boolean enabled,
         @Value("${admin.seed.username:admin}") String username,
         @Value("${admin.seed.email:admin@hrm.local}") String email,
-        @Value("${admin.seed.password:}") String password
+        @Value("${admin.seed.password:}") String password,
+        Clock clock
     ) {
         this.accountRepository = accountRepository;
         this.roleRepository = roleRepository;
@@ -69,6 +72,7 @@ public class SystemAdminSeeder implements ApplicationRunner {
         this.username = username;
         this.email = email;
         this.password = password;
+        this.clock = clock;
     }
 
     @Override
@@ -170,7 +174,7 @@ public class SystemAdminSeeder implements ApplicationRunner {
             .account(admin)
             .role(role)
             .scopeType(RoleScopeType.COMPANY)
-            .effectiveFrom(LocalDate.now())
+            .effectiveFrom(LocalDate.now(clock))
             .grantedByAccount(admin)
             .reason("Bootstrap system administrator")
             .createdAt(Instant.now())

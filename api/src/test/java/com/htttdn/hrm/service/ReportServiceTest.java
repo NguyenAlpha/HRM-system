@@ -1,6 +1,7 @@
 package com.htttdn.hrm.service;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeSalaryHistory;
 import com.htttdn.hrm.entity.enums.EducationLevel;
@@ -104,7 +106,7 @@ class ReportServiceTest {
     void reportRejectsFutureDate() {
         assertThrows(
             BusinessException.class,
-            () -> service().getWorkforceReport(LocalDate.now().plusDays(1), null, null, null)
+            () -> service().getWorkforceReport(LocalDate.now(ClockConfig.BUSINESS_ZONE).plusDays(1), null, null, null)
         );
     }
 
@@ -157,7 +159,8 @@ class ReportServiceTest {
             employeeSalaryHistoryRepository,
             employeeAccessScopeService,
             employeeAssignmentRepository,
-            attendanceRecordRepository
+            attendanceRecordRepository,
+            Clock.system(ClockConfig.BUSINESS_ZONE)
         );
     }
 }

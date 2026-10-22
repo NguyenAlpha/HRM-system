@@ -1,5 +1,6 @@
 package com.htttdn.hrm.config.seed;
 
+import java.time.Clock;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.Role;
@@ -172,7 +174,8 @@ class SystemAdminSeederTest {
             enabled,
             username,
             email,
-            password
+            password,
+            Clock.system(ClockConfig.BUSINESS_ZONE)
         );
     }
 }

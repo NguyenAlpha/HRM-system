@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -48,6 +49,7 @@ public class EmployeeAssignmentService {
     private final AccountRepository accountRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
+    private final Clock clock;
 
     public EmployeeAssignmentService(
         EmployeeRepository employeeRepository,
@@ -58,7 +60,8 @@ public class EmployeeAssignmentService {
         WorkShiftRepository workShiftRepository,
         AccountRepository accountRepository,
         CurrentAccountProvider currentAccountProvider,
-        EmployeeAccessScopeService employeeAccessScopeService
+        EmployeeAccessScopeService employeeAccessScopeService,
+        Clock clock
     ) {
         this.employeeRepository = employeeRepository;
         this.employeeAssignmentRepository = employeeAssignmentRepository;
@@ -69,6 +72,7 @@ public class EmployeeAssignmentService {
         this.accountRepository = accountRepository;
         this.currentAccountProvider = currentAccountProvider;
         this.employeeAccessScopeService = employeeAccessScopeService;
+        this.clock = clock;
     }
 
     @PreAuthorize("hasAuthority('employee.create')")
@@ -120,7 +124,7 @@ public class EmployeeAssignmentService {
         findEmployee(employeeId);
         employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_ASSIGNMENT_READ);
         return employeeAssignmentRepository
-            .findCurrentPrimaryCandidates(employeeId, LocalDate.now()).stream()
+            .findCurrentPrimaryCandidates(employeeId, LocalDate.now(clock)).stream()
             .findFirst()
             .map(this::toResponse)
             .orElseThrow(() -> new ResourceNotFoundException(
