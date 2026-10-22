@@ -96,7 +96,7 @@ export function AttendancePage({ initialTab }: { initialTab?: Tab }) {
               {canReadAll && <TabsTrigger value="sheet">Bảng công tổng hợp</TabsTrigger>}
               {canReadOwn && <TabsTrigger value="mine">Bảng công của tôi</TabsTrigger>}
               {showOvertime && (
-                <TabsTrigger value="overtime">Tăng ca chờ duyệt <Badge className="ml-1">{overtime?.items.length}</Badge></TabsTrigger>
+                <TabsTrigger value="overtime">Tăng ca chờ duyệt <Badge variant="secondary" className="ml-1">{overtime?.items.length}</Badge></TabsTrigger>
               )}
             </TabsList>
           </Tabs>
@@ -116,9 +116,10 @@ export function AttendancePage({ initialTab }: { initialTab?: Tab }) {
         {tab === "sheet" && canReadAll && viewing && (
           <>
             <div className="flex flex-wrap items-center gap-3">
-              <Button type="button" variant="outline" size="sm" onClick={() => setViewing(null)}>
-                <ArrowLeft /> Bảng công tổng hợp
-              </Button>
+              <button type="button" onClick={() => setViewing(null)}
+                className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+                <ArrowLeft className="size-4" /> Bảng công tổng hợp
+              </button>
               <span className="font-medium">{viewing.employeeCode} · {viewing.fullName}</span>
             </div>
             <AttendanceSection employeeId={viewing.id} employeeLabel={`${viewing.employeeCode} · ${viewing.fullName}`}

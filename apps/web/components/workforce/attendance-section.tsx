@@ -42,7 +42,7 @@ import {
 } from "@/components/workforce/workforce-shared"
 
 const STATUS_TONE: Record<AttendanceStatus, "default" | "secondary" | "outline" | "destructive"> = {
-  PRESENT: "default",
+  PRESENT: "secondary",
   PAID_LEAVE: "secondary",
   UNPAID_LEAVE: "outline",
   MATERNITY_LEAVE: "secondary",
