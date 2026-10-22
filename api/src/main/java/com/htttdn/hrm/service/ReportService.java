@@ -2,6 +2,7 @@ package com.htttdn.hrm.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -60,19 +61,22 @@ public class ReportService {
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
+    private final Clock clock;
 
     public ReportService(
         EmployeeRepository employeeRepository,
         EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository,
         EmployeeAccessScopeService employeeAccessScopeService,
         EmployeeAssignmentRepository employeeAssignmentRepository,
-        AttendanceRecordRepository attendanceRecordRepository
+        AttendanceRecordRepository attendanceRecordRepository,
+        Clock clock
     ) {
         this.employeeRepository = employeeRepository;
         this.employeeSalaryHistoryRepository = employeeSalaryHistoryRepository;
         this.employeeAccessScopeService = employeeAccessScopeService;
         this.employeeAssignmentRepository = employeeAssignmentRepository;
         this.attendanceRecordRepository = attendanceRecordRepository;
+        this.clock = clock;
     }
 
     @PreAuthorize("hasAuthority('report.hr.read')")
@@ -211,7 +215,7 @@ public class ReportService {
      */
     @PreAuthorize("hasAuthority('report.hr.read')")
     public TurnoverReportResponse getTurnoverReport(int year) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         if (year > today.getYear()) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "year must not be in the future", "year");
         }
@@ -276,7 +280,7 @@ public class ReportService {
     @PreAuthorize("hasAuthority('report.hr.read')")
     public MonthlyHrStatusReportResponse getMonthlyStatusReport(int year, int month) {
         LocalDate first = LocalDate.of(year, month, 1);
-        if (first.isAfter(LocalDate.now())) {
+        if (first.isAfter(LocalDate.now(clock))) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "month must not be in the future", "month");
         }
         LocalDate last = first.withDayOfMonth(first.lengthOfMonth());
@@ -470,8 +474,8 @@ public class ReportService {
     }
 
     private LocalDate validateAsOfDate(LocalDate requestedDate) {
-        LocalDate date = requestedDate == null ? LocalDate.now() : requestedDate;
-        if (date.isAfter(LocalDate.now())) {
+        LocalDate date = requestedDate == null ? LocalDate.now(clock) : requestedDate;
+        if (date.isAfter(LocalDate.now(clock))) {
             throw new BusinessException(
                 ErrorCode.VALIDATION_ERROR,
                 "asOfDate must not be in the future",

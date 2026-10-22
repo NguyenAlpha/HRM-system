@@ -93,14 +93,21 @@ hết ngày. Kết thúc tự nhiên (`effective_to` trong quá khứ) thì gi�
 
 ## 6. Múi giờ của "hôm nay"
 
-Ngày nghiệp vụ của công ty là giờ Việt Nam (`Asia/Ho_Chi_Minh`). Seeder, job định kỳ và `mark-paid` dùng múi giờ này
-tường minh, nhưng **phần lớn service gọi `LocalDate.now()` không truyền múi giờ**, tức theo múi giờ mặc định của JVM.
-Ứng dụng không tự đặt múi giờ mặc định.
+Hai loại dữ liệu thời gian được xử lý khác nhau:
 
-Nếu máy chủ chạy UTC (mặc định thường gặp của container và App Service Linux), từ 00:00 đến 07:00 giờ Việt Nam,
-"hôm nay" ở các service đó vẫn là ngày hôm trước: role hết hạn chưa mất, phân công mới chưa có hiệu lực, phạm vi dữ
-liệu tính theo ngày cũ. Cách khắc phục là đặt múi giờ cho JVM (ví dụ biến môi trường `TZ=Asia/Ho_Chi_Minh` hoặc
-`-Duser.timezone=Asia/Ho_Chi_Minh`), hoặc dùng một `Clock` theo giờ Việt Nam trong code.
+| Loại | Kiểu | Múi giờ |
+|:-----|:-----|:--------|
+| Thời điểm (giờ chấm công, giờ bắt đầu nghỉ, `createdAt`) | `Instant` / `TIMESTAMPTZ` | Lưu UTC (`hibernate.jdbc.time_zone=UTC`), API trả ISO-8601 có `Z`, web đổi sang giờ Việt Nam khi hiển thị |
+| Ngày nghiệp vụ (`effective_from`, ngày vào làm, ngày công) | `LocalDate` / `DATE` | Không có múi giờ |
+
+Riêng câu hỏi "**hôm nay là ngày mấy**" luôn trả lời theo giờ Việt Nam (`Asia/Ho_Chi_Minh`), bất kể máy chủ chạy múi
+giờ nào. Bean `Clock` trong [`ClockConfig`](../../src/main/java/com/htttdn/hrm/config/ClockConfig.java) là nguồn duy
+nhất: service inject `Clock` và gọi `LocalDate.now(clock)`. **Không dùng `LocalDate.now()` không tham số**, vì nó lấy
+múi giờ của JVM; trên máy chủ chạy UTC, từ 00:00 đến 06:59 giờ Việt Nam nó vẫn trả về ngày hôm trước (role chưa hết
+hạn, phân công mới chưa có hiệu lực, phạm vi dữ liệu tính theo ngày cũ).
+
+Một số chỗ có từ trước dùng `LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"))` trực tiếp (job định kỳ, chấm công, phép
+năm…); kết quả giống nhau. Test cần cố định "hôm nay" thì truyền `Clock.fixed(...)` vào constructor của service.
 
 ## Code
 

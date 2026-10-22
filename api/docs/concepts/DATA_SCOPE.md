@@ -101,7 +101,7 @@ hôm nay ở `BRANCH-01` hoặc địa điểm con như kho `WAREHOUSE-02`. Hồ
   [TOKEN_LIFECYCLE.md](./TOKEN_LIFECYCLE.md#6-khi-nào-mọi-phiên-bị-thu-hồi)). Trong lúc access token cũ còn hạn,
   `@PreAuthorize` có thể vẫn cho qua, nhưng lần gán đã thu hồi không còn đóng góp phạm vi nào nên dữ liệu bị lọc
   ngay.
-- **Ngày "hôm nay"** lấy theo múi giờ của JVM, xem
+- **Ngày "hôm nay"** là ngày theo giờ Việt Nam (bean `Clock`), xem
   [EFFECTIVE_DATING.md](./EFFECTIVE_DATING.md#6-múi-giờ-của-hôm-nay).
 - **Ẩn nút trên web chỉ là giao diện.** Mọi kiểm tra thật đều nằm ở backend.
 

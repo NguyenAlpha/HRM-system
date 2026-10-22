@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -33,15 +34,18 @@ public class WorkShiftService {
     private final WorkShiftRepository workShiftRepository;
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
+    private final Clock clock;
 
     public WorkShiftService(
         WorkShiftRepository workShiftRepository,
         EmployeeAssignmentRepository employeeAssignmentRepository,
-        AttendanceRecordRepository attendanceRecordRepository
+        AttendanceRecordRepository attendanceRecordRepository,
+        Clock clock
     ) {
         this.workShiftRepository = workShiftRepository;
         this.employeeAssignmentRepository = employeeAssignmentRepository;
         this.attendanceRecordRepository = attendanceRecordRepository;
+        this.clock = clock;
     }
 
     @PreAuthorize("hasAuthority('organization.read')")
@@ -133,7 +137,7 @@ public class WorkShiftService {
     @PreAuthorize("hasAuthority('organization.manage')")
     public void softDelete(Long shiftId) {
         WorkShift shift = findShiftForUpdate(shiftId);
-        if (employeeAssignmentRepository.existsCurrentOrFutureByShiftId(shiftId, LocalDate.now())) {
+        if (employeeAssignmentRepository.existsCurrentOrFutureByShiftId(shiftId, LocalDate.now(clock))) {
             throw resourceInUse("Work shift is used by a current or future employee assignment");
         }
 

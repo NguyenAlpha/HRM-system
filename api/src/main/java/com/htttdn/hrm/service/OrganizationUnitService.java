@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -39,17 +40,20 @@ public class OrganizationUnitService {
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final RoleAssignmentRequestRepository roleAssignmentRequestRepository;
+    private final Clock clock;
 
     public OrganizationUnitService(
         OrganizationUnitRepository organizationUnitRepository,
         EmployeeAssignmentRepository employeeAssignmentRepository,
         AccountRoleAssignmentRepository accountRoleAssignmentRepository,
-        RoleAssignmentRequestRepository roleAssignmentRequestRepository
+        RoleAssignmentRequestRepository roleAssignmentRequestRepository,
+        Clock clock
     ) {
         this.organizationUnitRepository = organizationUnitRepository;
         this.employeeAssignmentRepository = employeeAssignmentRepository;
         this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
         this.roleAssignmentRequestRepository = roleAssignmentRequestRepository;
+        this.clock = clock;
     }
 
     @PreAuthorize("hasAuthority('organization.read')")
@@ -162,7 +166,7 @@ public class OrganizationUnitService {
     }
 
     private void requireNotInUse(Long unitId) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         if (employeeAssignmentRepository.existsCurrentOrFutureByOrganizationUnitId(unitId, today)) {
             throw resourceInUse("Organization unit is used by a current or future employee assignment");
         }

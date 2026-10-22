@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -33,20 +34,23 @@ public class AccountAuthorizationService {
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final RolePermissionRepository rolePermissionRepository;
     private final AccountPermissionOverrideRepository accountPermissionOverrideRepository;
+    private final Clock clock;
 
     public AccountAuthorizationService(
         AccountRoleAssignmentRepository accountRoleAssignmentRepository,
         RolePermissionRepository rolePermissionRepository,
-        AccountPermissionOverrideRepository accountPermissionOverrideRepository
+        AccountPermissionOverrideRepository accountPermissionOverrideRepository,
+        Clock clock
     ) {
         this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
         this.rolePermissionRepository = rolePermissionRepository;
         this.accountPermissionOverrideRepository = accountPermissionOverrideRepository;
+        this.clock = clock;
     }
 
     @Transactional(readOnly = true)
     public AuthorizationSnapshot getSnapshot(Long accountId) {
-        AuthorizationContext context = loadContext(accountId, LocalDate.now());
+        AuthorizationContext context = loadContext(accountId, LocalDate.now(clock));
         if (context.assignments().isEmpty()) {
             return new AuthorizationSnapshot(List.of(), List.of(), List.of(), List.of());
         }
@@ -91,7 +95,7 @@ public class AccountAuthorizationService {
     /** Today's permissions of the account, each with the role assignments that give it. */
     @Transactional(readOnly = true)
     public List<AccountPermissionGrantResponse> getPermissionGrants(Long accountId) {
-        AuthorizationContext context = loadContext(accountId, LocalDate.now());
+        AuthorizationContext context = loadContext(accountId, LocalDate.now(clock));
         Map<String, List<PermissionGrantSource>> sourcesByCode = new TreeMap<>();
         for (AccountRoleAssignment assignment : context.assignments()) {
             Set<String> rolePermissions =
@@ -117,7 +121,7 @@ public class AccountAuthorizationService {
 
     @Transactional(readOnly = true)
     public List<AuthorizationScope> getScopes(Long accountId, String permissionCode) {
-        AuthorizationContext context = loadContext(accountId, LocalDate.now());
+        AuthorizationContext context = loadContext(accountId, LocalDate.now(clock));
         return context.assignments().stream()
             .filter(assignment -> effectivePermissions(assignment, context).contains(permissionCode))
             .map(assignment -> new AuthorizationScope(

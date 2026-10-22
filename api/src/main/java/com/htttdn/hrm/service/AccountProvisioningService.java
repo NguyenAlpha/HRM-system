@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -48,19 +49,22 @@ public class AccountProvisioningService {
     private final RoleRepository roleRepository;
     private final AccountRoleAssignmentRepository roleAssignmentRepository;
     private final AccountActivationService accountActivationService;
+    private final Clock clock;
 
     public AccountProvisioningService(
         AccountRepository accountRepository,
         EmployeeRepository employeeRepository,
         RoleRepository roleRepository,
         AccountRoleAssignmentRepository roleAssignmentRepository,
-        AccountActivationService accountActivationService
+        AccountActivationService accountActivationService,
+        Clock clock
     ) {
         this.accountRepository = accountRepository;
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
         this.roleAssignmentRepository = roleAssignmentRepository;
         this.accountActivationService = accountActivationService;
+        this.clock = clock;
     }
 
     public AccountProvisioningResponse provisionPendingAccount(
@@ -148,7 +152,7 @@ public class AccountProvisioningService {
             .account(account)
             .role(role)
             .scopeType(RoleScopeType.SELF)
-            .effectiveFrom(LocalDate.now())
+            .effectiveFrom(LocalDate.now(clock))
             .grantedByAccount(actor)
             .reason("Default employee access assigned during account provisioning")
             .createdAt(now)

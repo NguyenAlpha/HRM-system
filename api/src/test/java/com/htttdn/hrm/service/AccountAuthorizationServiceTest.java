@@ -1,6 +1,8 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -8,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.dto.response.account.AccountPermissionGrantResponse;
 import com.htttdn.hrm.dto.response.account.PermissionGrantSource;
 import com.htttdn.hrm.entity.AccountPermissionOverride;
@@ -26,6 +29,7 @@ import com.htttdn.hrm.repository.RolePermissionRepository;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,6 +43,17 @@ class AccountAuthorizationServiceTest {
 
     @Mock
     private AccountPermissionOverrideRepository overrideRepository;
+
+    @Test
+    void readsAssignmentsActiveOnTheVietnamDateWhileUtcIsStillTheDayBefore() {
+        // 23:30 UTC on 31 October is 06:30 on 1 November in Vietnam.
+        Clock clock = Clock.fixed(Instant.parse("2026-10-31T23:30:00Z"), ClockConfig.BUSINESS_ZONE);
+        when(assignmentRepository.findActiveWithRoleByAccountId(eq(7L), any())).thenReturn(List.of());
+
+        service(clock).getScopes(7L, "employee.list.read");
+
+        verify(assignmentRepository).findActiveWithRoleByAccountId(7L, LocalDate.of(2026, 11, 1));
+    }
 
     @Test
     void appliesOverridesPerAssignmentBeforeCombiningPermissions() {
@@ -181,10 +196,15 @@ class AccountAuthorizationServiceTest {
     }
 
     private AccountAuthorizationService service() {
+        return service(Clock.system(ClockConfig.BUSINESS_ZONE));
+    }
+
+    private AccountAuthorizationService service(Clock clock) {
         return new AccountAuthorizationService(
             assignmentRepository,
             rolePermissionRepository,
-            overrideRepository
+            overrideRepository,
+            clock
         );
     }
 }

@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -46,6 +47,7 @@ public class AccountPermissionOverrideService {
     private final CurrentAccountProvider currentAccountProvider;
     private final RefreshTokenService refreshTokenService;
     private final CompanyOwnerAccountGuard companyOwnerAccountGuard;
+    private final Clock clock;
 
     public AccountPermissionOverrideService(
         AccountRepository accountRepository,
@@ -55,7 +57,8 @@ public class AccountPermissionOverrideService {
         RolePermissionRepository rolePermissionRepository,
         CurrentAccountProvider currentAccountProvider,
         RefreshTokenService refreshTokenService,
-        CompanyOwnerAccountGuard companyOwnerAccountGuard
+        CompanyOwnerAccountGuard companyOwnerAccountGuard,
+        Clock clock
     ) {
         this.accountRepository = accountRepository;
         this.assignmentRepository = assignmentRepository;
@@ -65,6 +68,7 @@ public class AccountPermissionOverrideService {
         this.currentAccountProvider = currentAccountProvider;
         this.refreshTokenService = refreshTokenService;
         this.companyOwnerAccountGuard = companyOwnerAccountGuard;
+        this.clock = clock;
     }
 
     @Transactional(readOnly = true)
@@ -277,7 +281,7 @@ public class AccountPermissionOverrideService {
     }
 
     private AccountPermissionOverrideResponse toResponse(AccountPermissionOverride permissionOverride) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         PermissionOverrideStatus status;
         if (permissionOverride.getRevokedAt() != null) {
             status = PermissionOverrideStatus.REVOKED;

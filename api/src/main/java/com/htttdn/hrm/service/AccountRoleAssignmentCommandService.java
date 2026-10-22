@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
@@ -54,6 +55,7 @@ public class AccountRoleAssignmentCommandService {
     private final WorkLocationRepository workLocationRepository;
     private final RoleAssignmentPolicy roleAssignmentPolicy;
     private final RefreshTokenService refreshTokenService;
+    private final Clock clock;
 
     public AccountRoleAssignmentCommandService(
         AccountRepository accountRepository,
@@ -62,7 +64,8 @@ public class AccountRoleAssignmentCommandService {
         OrganizationUnitRepository organizationUnitRepository,
         WorkLocationRepository workLocationRepository,
         RoleAssignmentPolicy roleAssignmentPolicy,
-        RefreshTokenService refreshTokenService
+        RefreshTokenService refreshTokenService,
+        Clock clock
     ) {
         this.accountRepository = accountRepository;
         this.roleRepository = roleRepository;
@@ -71,6 +74,7 @@ public class AccountRoleAssignmentCommandService {
         this.workLocationRepository = workLocationRepository;
         this.roleAssignmentPolicy = roleAssignmentPolicy;
         this.refreshTokenService = refreshTokenService;
+        this.clock = clock;
     }
 
     /**
@@ -83,7 +87,7 @@ public class AccountRoleAssignmentCommandService {
         if (assignment.getRevokedAt() != null) {
             return;
         }
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         assignment.setRevokedByAccount(actor);
         assignment.setRevokedAt(Instant.now());
         assignment.setRevocationReason(reason.trim());

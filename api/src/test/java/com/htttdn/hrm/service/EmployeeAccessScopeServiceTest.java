@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Set;
 
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.entity.OrganizationUnit;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.repository.AccountRepository;
@@ -55,7 +57,8 @@ class EmployeeAccessScopeServiceTest {
             accountRepository,
             employeeRepository,
             organizationUnitRepository,
-            workLocationRepository
+            workLocationRepository,
+            Clock.system(ClockConfig.BUSINESS_ZONE)
         );
     }
 }

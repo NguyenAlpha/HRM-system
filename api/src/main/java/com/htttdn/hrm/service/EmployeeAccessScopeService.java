@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -42,6 +43,7 @@ public class EmployeeAccessScopeService {
     private final EmployeeRepository employeeRepository;
     private final OrganizationUnitRepository organizationUnitRepository;
     private final WorkLocationRepository workLocationRepository;
+    private final Clock clock;
 
     public EmployeeAccessScopeService(
         AccountAuthorizationService accountAuthorizationService,
@@ -49,7 +51,8 @@ public class EmployeeAccessScopeService {
         AccountRepository accountRepository,
         EmployeeRepository employeeRepository,
         OrganizationUnitRepository organizationUnitRepository,
-        WorkLocationRepository workLocationRepository
+        WorkLocationRepository workLocationRepository,
+        Clock clock
     ) {
         this.accountAuthorizationService = accountAuthorizationService;
         this.currentAccountProvider = currentAccountProvider;
@@ -57,6 +60,7 @@ public class EmployeeAccessScopeService {
         this.employeeRepository = employeeRepository;
         this.organizationUnitRepository = organizationUnitRepository;
         this.workLocationRepository = workLocationRepository;
+        this.clock = clock;
     }
 
     public EmployeeAccessScope resolve(String permissionCode) {
@@ -66,7 +70,7 @@ public class EmployeeAccessScopeService {
     public boolean canAccountAccessEmployee(Long accountId, Long employeeId, String permissionCode) {
         EmployeeAccessScope scope = resolve(accountId, permissionCode);
         return employeeRepository.exists(notDeleted()
-            .and(scope.toSpecification(LocalDate.now()))
+            .and(scope.toSpecification(LocalDate.now(clock)))
             .and(hasId(employeeId)));
     }
 
@@ -109,7 +113,7 @@ public class EmployeeAccessScopeService {
     public void requireEmployeeAccess(Long employeeId, String permissionCode) {
         EmployeeAccessScope scope = resolve(permissionCode);
         Specification<Employee> specification = notDeleted()
-            .and(scope.toSpecification(LocalDate.now()))
+            .and(scope.toSpecification(LocalDate.now(clock)))
             .and(hasId(employeeId));
         if (!employeeRepository.exists(specification)) {
             throw new ForbiddenException(ErrorCode.FORBIDDEN, "Employee is outside the assigned scope");
@@ -123,7 +127,7 @@ public class EmployeeAccessScopeService {
     }
 
     public Specification<Employee> accessibleEmployees(String permissionCode) {
-        return notDeleted().and(resolve(permissionCode).toSpecification(LocalDate.now()));
+        return notDeleted().and(resolve(permissionCode).toSpecification(LocalDate.now(clock)));
     }
 
     /**
