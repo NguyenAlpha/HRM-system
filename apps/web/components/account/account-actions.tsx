@@ -39,7 +39,7 @@ export const ACCOUNT_STATUS_LABELS: Record<Account["status"], string> = {
 
 export const ACCOUNT_STATUS_VARIANTS: Record<Account["status"], "default" | "secondary" | "destructive" | "outline"> = {
   PENDING: "secondary",
-  ACTIVE: "default",
+  ACTIVE: "secondary",
   LOCKED: "destructive",
   DISABLED: "outline",
 }

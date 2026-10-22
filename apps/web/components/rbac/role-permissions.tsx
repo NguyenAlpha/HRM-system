@@ -221,7 +221,7 @@ export function RolePermissions({ portal, role, onClose, onSessionExpired }: {
                 <section key={group.module} className="rounded-xl border">
                   <header className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted/40 px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <Badge>{group.module}</Badge>
+                      <Badge variant="secondary">{group.module}</Badge>
                       <span className="text-xs text-muted-foreground">
                         {role.isSystem ? `${group.permissions.length} quyền` : `${selectedCount}/${moduleCatalog.length} đã chọn`}
                       </span>

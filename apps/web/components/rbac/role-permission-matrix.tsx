@@ -108,7 +108,7 @@ export function RolePermissionMatrix({ portal, onSessionExpired }: { portal: Por
                 key={group.module}
                 type="button"
                 size="sm"
-                variant={shown ? "default" : "outline"}
+                variant={shown ? "secondary" : "outline"}
                 aria-pressed={shown}
                 onClick={() => toggleModule(group.module)}
               >
@@ -159,7 +159,7 @@ export function RolePermissionMatrix({ portal, onSessionExpired }: { portal: Por
                   <Fragment key={group.module}>
                     <tr>
                       <td className="sticky left-0 z-10 border-b bg-muted px-3 py-1.5">
-                        <Badge>{group.module}</Badge>
+                        <Badge variant="secondary">{group.module}</Badge>
                       </td>
                       <td colSpan={roles.length} className="border-b bg-muted" />
                     </tr>

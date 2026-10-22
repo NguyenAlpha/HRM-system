@@ -1,7 +1,7 @@
 "use client"
 
 import { FormEvent, useEffect, useState } from "react"
-import { Building2, Loader2, PencilLine } from "lucide-react"
+import { Loader2, PencilLine } from "lucide-react"
 import { toast } from "sonner"
 
 import { InfoField } from "@/components/employee/employee-detail-page"
@@ -56,7 +56,7 @@ export function CompanyProfilePage() {
         {company && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Building2 className="size-5" /> {company.name}</CardTitle>
+              <CardTitle>{company.name}</CardTitle>
               <CardDescription>Cập nhật lần cuối {dateTime(company.updatedAt)}</CardDescription>
               {canManage && (
                 <CardAction>

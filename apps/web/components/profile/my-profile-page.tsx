@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { FormEvent, useEffect, useState } from "react"
-import { BriefcaseBusiness, GraduationCap, KeyRound, Loader2, PencilLine, UserRound } from "lucide-react"
+import { GraduationCap, KeyRound, Loader2, PencilLine } from "lucide-react"
 import { toast } from "sonner"
 
 import { formatDate, InfoField } from "@/components/employee/employee-detail-page"
@@ -97,7 +97,7 @@ export function MyProfilePage() {
           <div className="grid gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><UserRound /> {detail.fullName}</CardTitle>
+                <CardTitle>{detail.fullName}</CardTitle>
                 <CardDescription>{detail.employeeCode} · {assignment?.positionTitle ?? "Chưa có chức danh"}</CardDescription>
                 <CardAction><Badge variant="secondary">{EMPLOYMENT_STATUS_LABELS[detail.employmentStatus]}</Badge></CardAction>
               </CardHeader>
@@ -132,7 +132,7 @@ export function MyProfilePage() {
             <div className="grid content-start gap-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><BriefcaseBusiness /> Công việc</CardTitle>
+                  <CardTitle>Công việc</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {assignment
@@ -152,7 +152,7 @@ export function MyProfilePage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><KeyRound /> Tài khoản</CardTitle>
+                  <CardTitle>Tài khoản</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-4">
                   <dl className="grid gap-4">
