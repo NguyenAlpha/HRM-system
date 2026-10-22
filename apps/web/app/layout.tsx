@@ -1,14 +1,14 @@
 import type { Metadata } from "next"
 import "./globals.css"
-import { Inter, Geist_Mono, Source_Serif_4 } from "next/font/google";
+import { Inter, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-// Loading the fonts registers 'Inter', 'Geist Mono' and 'Source Serif 4'; globals.css names them in @theme.
+// Loading the fonts registers 'Inter' and 'Geist Mono'; globals.css names them in @theme.
+// Both are variable fonts, so omitting `weight` still covers every weight.
 /* eslint-disable @typescript-eslint/no-unused-vars */
-const _inter = Inter({ subsets: ["latin"], weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"], weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"] })
-const _sourceSerif4 = Source_Serif_4({ subsets: ["latin"], weight: ["200", "300", "400", "500", "600", "700", "800", "900"] })
+const _inter = Inter({ subsets: ["latin", "vietnamese"] })
+const _geistMono = Geist_Mono({ subsets: ["latin"] })
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
 export const metadata: Metadata = {
