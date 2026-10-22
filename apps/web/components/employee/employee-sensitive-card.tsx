@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, EyeOff, Loader2, PencilLine, ShieldAlert } from "lucide-react"
+import { Eye, EyeOff, Loader2, PencilLine } from "lucide-react"
 
 import { EmployeeSensitiveDialog } from "@/components/employee/employee-sensitive-dialog"
 import { ErrorAlert } from "@/components/common/list-controls"
@@ -62,7 +62,7 @@ export function EmployeeSensitiveCard({ employee, canManage, onSessionExpired }:
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><ShieldAlert /> Dữ liệu nhạy cảm</CardTitle>
+          <CardTitle>Dữ liệu nhạy cảm</CardTitle>
           <CardDescription>
             CCCD, email cá nhân, địa chỉ, mã số thuế và tài khoản ngân hàng. Chỉ tải khi bạn yêu cầu.
           </CardDescription>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, type ReactNode } from "react"
-import { CalendarX, Eye, Loader2, Plus, Wallet } from "lucide-react"
+import { CalendarX, Eye, Loader2, Plus } from "lucide-react"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { PayslipDialog, payslipDeductions, periodLabel } from "@/components/payroll/payroll-shared"
@@ -99,7 +99,7 @@ export function EmployeeCompensationCard({ employeeId, hireDate, permissions }: 
     <Card>
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
         <div>
-          <CardTitle className="flex items-center gap-2"><Wallet /> Lương & bảo hiểm</CardTitle>
+          <CardTitle>Lương & bảo hiểm</CardTitle>
           <CardDescription>Dữ liệu đầu vào của kỳ lương; mỗi mục có ngày hiệu lực, mục mới tự kết thúc mục đang áp dụng.</CardDescription>
         </div>
         {currentSalary && (

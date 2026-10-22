@@ -208,7 +208,7 @@ export function OrganizationUnitManager({ portal, onSessionExpired }: { portal: 
 
       <ErrorAlert error={error} />
 
-      <div className="rounded-xl border">
+      <div className="rounded-xl border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -238,7 +238,7 @@ export function OrganizationUnitManager({ portal, onSessionExpired }: { portal: 
                 <TableCell><Badge variant="secondary">{ORGANIZATION_UNIT_TYPE_LABELS[unit.unitType]}</Badge></TableCell>
                 <TableCell className="text-sm text-muted-foreground">{unit.parentUnitName ?? "—"}</TableCell>
                 <TableCell>
-                  <Badge variant={unit.isActive ? "default" : "outline"}>{unit.isActive ? "Hoạt động" : "Tạm tắt"}</Badge>
+                  <Badge variant={unit.isActive ? "secondary" : "outline"}>{unit.isActive ? "Hoạt động" : "Tạm tắt"}</Badge>
                 </TableCell>
                 <RowActionsCell label={unit.code}>
                   <RowActionItem icon={Pencil} onClick={() => openEdit(unit)}>Sửa</RowActionItem>

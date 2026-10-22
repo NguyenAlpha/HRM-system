@@ -197,7 +197,7 @@ export function JobPositionManager({ portal, onSessionExpired }: { portal: Porta
 
       <ErrorAlert error={error} />
 
-      <div className="rounded-xl border">
+      <div className="rounded-xl border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -227,7 +227,7 @@ export function JobPositionManager({ portal, onSessionExpired }: { portal: Porta
                 <TableCell className="max-w-sm text-sm text-wrap text-muted-foreground">{position.description ?? "—"}</TableCell>
                 <TableCell>{position.isManagerial && <Badge variant="secondary">Quản lý</Badge>}</TableCell>
                 <TableCell>
-                  <Badge variant={position.isActive ? "default" : "outline"}>{position.isActive ? "Hoạt động" : "Tạm tắt"}</Badge>
+                  <Badge variant={position.isActive ? "secondary" : "outline"}>{position.isActive ? "Hoạt động" : "Tạm tắt"}</Badge>
                 </TableCell>
                 <RowActionsCell label={position.code}>
                   <RowActionItem icon={Pencil} onClick={() => openEdit(position)}>Sửa</RowActionItem>

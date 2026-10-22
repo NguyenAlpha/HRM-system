@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { Briefcase, Building2, CalendarClock, CalendarHeart, Clock, MapPin } from "lucide-react"
 
 import { CompanyHolidayManager } from "@/components/organization/company-holiday-manager"
 import { JobPositionManager } from "@/components/organization/job-position-manager"
@@ -9,13 +8,6 @@ import { OrganizationUnitManager } from "@/components/organization/organization-
 import { WorkLocationManager } from "@/components/organization/work-location-manager"
 import { WorkShiftManager } from "@/components/organization/work-shift-manager"
 import { usePortalSession } from "@/components/portal/portal-shell"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { Portal } from "@/lib/auth/types"
 import { EMPLOYMENT_TYPES, EMPLOYMENT_TYPE_LABELS } from "@/lib/employee"
@@ -28,59 +20,52 @@ export function OrganizationReferenceManager({ portal, onSessionExpired }: { por
   const canReadHolidays = portal === "hrm" && has("holiday.read")
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Danh mục tổ chức</CardTitle>
-        <CardDescription>Quản lý đơn vị tổ chức, địa điểm làm việc, vị trí công việc, ca làm việc, ngày lễ và hình thức làm việc.</CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList>
-            <TabsTrigger value="units"><Building2 /> Đơn vị tổ chức</TabsTrigger>
-            <TabsTrigger value="locations"><MapPin /> Địa điểm làm việc</TabsTrigger>
-            <TabsTrigger value="positions"><Briefcase /> Vị trí công việc</TabsTrigger>
-            <TabsTrigger value="shifts"><CalendarClock /> Ca làm việc</TabsTrigger>
-            {canReadHolidays && <TabsTrigger value="holidays"><CalendarHeart /> Ngày lễ</TabsTrigger>}
-            <TabsTrigger value="employment-types"><Clock /> Hình thức làm việc</TabsTrigger>
-          </TabsList>
+    // No card around the tabs: the page header already names the catalogue.
+    <Tabs value={tab} onValueChange={setTab}>
+      <TabsList>
+        <TabsTrigger value="units">Đơn vị tổ chức</TabsTrigger>
+        <TabsTrigger value="locations">Địa điểm làm việc</TabsTrigger>
+        <TabsTrigger value="positions">Vị trí công việc</TabsTrigger>
+        <TabsTrigger value="shifts">Ca làm việc</TabsTrigger>
+        {canReadHolidays && <TabsTrigger value="holidays">Ngày lễ</TabsTrigger>}
+        <TabsTrigger value="employment-types">Hình thức làm việc</TabsTrigger>
+      </TabsList>
 
-          <TabsContent value="units" className="mt-4 grid gap-4">
-            <OrganizationUnitManager portal={portal} onSessionExpired={onSessionExpired} />
-          </TabsContent>
+      <TabsContent value="units" className="mt-4 grid gap-4">
+        <OrganizationUnitManager portal={portal} onSessionExpired={onSessionExpired} />
+      </TabsContent>
 
-          <TabsContent value="locations" className="mt-4 grid gap-4">
-            <WorkLocationManager portal={portal} onSessionExpired={onSessionExpired} />
-          </TabsContent>
+      <TabsContent value="locations" className="mt-4 grid gap-4">
+        <WorkLocationManager portal={portal} onSessionExpired={onSessionExpired} />
+      </TabsContent>
 
-          <TabsContent value="positions" className="mt-4 grid gap-4">
-            <JobPositionManager portal={portal} onSessionExpired={onSessionExpired} />
-          </TabsContent>
+      <TabsContent value="positions" className="mt-4 grid gap-4">
+        <JobPositionManager portal={portal} onSessionExpired={onSessionExpired} />
+      </TabsContent>
 
-          <TabsContent value="shifts" className="mt-4 grid gap-4">
-            <WorkShiftManager portal={portal} onSessionExpired={onSessionExpired} />
-          </TabsContent>
+      <TabsContent value="shifts" className="mt-4 grid gap-4">
+        <WorkShiftManager portal={portal} onSessionExpired={onSessionExpired} />
+      </TabsContent>
 
-          {canReadHolidays && (
-            <TabsContent value="holidays" className="mt-4 grid gap-4">
-              <CompanyHolidayManager canManage={has("organization.manage")} />
-            </TabsContent>
-          )}
+      {canReadHolidays && (
+        <TabsContent value="holidays" className="mt-4 grid gap-4">
+          <CompanyHolidayManager canManage={has("organization.manage")} />
+        </TabsContent>
+      )}
 
-          <TabsContent value="employment-types" className="mt-4">
-            <p className="mb-3 text-xs text-muted-foreground">
-              Hình thức làm việc là danh mục cố định do hệ thống định nghĩa, không thể chỉnh sửa.
-            </p>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {EMPLOYMENT_TYPES.map((type) => (
-                <div key={type} className="rounded-xl border px-4 py-3">
-                  <p className="font-medium">{EMPLOYMENT_TYPE_LABELS[type]}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground"><code>{type}</code></p>
-                </div>
-              ))}
+      <TabsContent value="employment-types" className="mt-4">
+        <p className="mb-3 text-xs text-muted-foreground">
+          Hình thức làm việc là danh mục cố định do hệ thống định nghĩa, không thể chỉnh sửa.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {EMPLOYMENT_TYPES.map((type) => (
+            <div key={type} className="rounded-xl border bg-card px-4 py-3">
+              <p className="font-medium">{EMPLOYMENT_TYPE_LABELS[type]}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground"><code>{type}</code></p>
             </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+          ))}
+        </div>
+      </TabsContent>
+    </Tabs>
   )
 }

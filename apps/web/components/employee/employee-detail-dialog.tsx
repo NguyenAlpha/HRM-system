@@ -154,7 +154,7 @@ export function EmployeeDetailDialog({ portal, employeeId, canUpdate, canProvisi
                     <div className="min-w-0">
                       <dt className="text-xs text-muted-foreground">Trạng thái</dt>
                       <dd className="mt-1">
-                        <Badge variant={detail.account.status === "ACTIVE" ? "default" : "outline"}>
+                        <Badge variant={detail.account.status === "ACTIVE" ? "secondary" : "outline"}>
                           {detail.account.status}
                         </Badge>
                       </dd>

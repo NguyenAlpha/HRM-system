@@ -221,7 +221,7 @@ export function WorkShiftManager({ portal, onSessionExpired }: { portal: Portal;
 
       <ErrorAlert error={error} />
 
-      <div className="rounded-xl border">
+      <div className="rounded-xl border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -258,7 +258,7 @@ export function WorkShiftManager({ portal, onSessionExpired }: { portal: Portal;
                 <TableCell>{shift.standardWorkMinutes} phút</TableCell>
                 <TableCell>{shift.graceLateMinutes} phút</TableCell>
                 <TableCell>
-                  <Badge variant={shift.isActive ? "default" : "outline"}>{shift.isActive ? "Hoạt động" : "Tạm tắt"}</Badge>
+                  <Badge variant={shift.isActive ? "secondary" : "outline"}>{shift.isActive ? "Hoạt động" : "Tạm tắt"}</Badge>
                 </TableCell>
                 <RowActionsCell label={shift.code}>
                   <RowActionItem icon={Pencil} onClick={() => openEdit(shift)}>Sửa</RowActionItem>
