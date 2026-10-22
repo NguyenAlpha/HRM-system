@@ -9,7 +9,6 @@ import { PeriodStatusBadge, periodLabel } from "@/components/payroll/payroll-sha
 import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -75,12 +74,10 @@ export function PayrollPeriodsPage() {
       <div className="mt-6">
         {!canRead && <p role="alert">Tài khoản chưa có quyền truy cập mục này.</p>}
         {canRead && (
-          <Card>
-            <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
-              <div>
-                <CardTitle>Danh sách kỳ lương</CardTitle>
-                <CardDescription>Chọn một kỳ để xem bảng lương của toàn bộ nhân viên.</CardDescription>
-              </div>
+          // No card around the list: the page header already names it.
+          <div className="grid gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-muted-foreground">Chọn một kỳ để xem bảng lương của toàn bộ nhân viên.</p>
               <div className="flex gap-2">
                 <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
                   <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
@@ -89,10 +86,9 @@ export function PayrollPeriodsPage() {
                   <Button type="button" size="sm" onClick={() => setCreating(true)}><Plus /> Tạo kỳ lương</Button>
                 )}
               </div>
-            </CardHeader>
-            <CardContent className="grid gap-4">
+            </div>
               <SectionError error={error} />
-              <div className="rounded-xl border">
+              <div className="rounded-xl border bg-card">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -135,8 +131,7 @@ export function PayrollPeriodsPage() {
                   </TableBody>
                 </Table>
               </div>
-            </CardContent>
-          </Card>
+          </div>
         )}
       </div>
 

@@ -19,8 +19,8 @@ import { PAYROLL_PERIOD_STATUS_LABELS, type CompanyProfile, type PayrollPeriodSt
 export const PERIOD_TONE: Record<PayrollPeriodStatus, "default" | "secondary" | "outline" | "destructive"> = {
   DRAFT: "outline",
   CALCULATED: "secondary",
-  APPROVED: "default",
-  PAID: "default",
+  APPROVED: "secondary",
+  PAID: "secondary",
   LOCKED: "outline",
   CANCELLED: "destructive",
 }

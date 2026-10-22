@@ -46,7 +46,7 @@ function PeriodBadge({ period }: { period: Period }) {
   const day = today()
   if (period.effectiveFrom > day) return <Badge variant="outline">Sắp áp dụng</Badge>
   if (period.effectiveTo !== null && period.effectiveTo < day) return <Badge variant="secondary">Hết hiệu lực</Badge>
-  return <Badge>Đang áp dụng</Badge>
+  return <Badge variant="secondary">Đang áp dụng</Badge>
 }
 
 const periodText = (period: Period) => `${period.effectiveFrom} → ${period.effectiveTo ?? "nay"}`
