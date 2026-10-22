@@ -148,13 +148,13 @@ export function PermissionManager({ portal, onSessionExpired }: { portal: Portal
                   <TableCell className="font-medium">{permission.name}</TableCell>
                   <TableCell><Badge variant="secondary">{permission.module}</Badge></TableCell>
                   <TableCell>
-                    <Badge variant={permission.assignmentPolicy === "DELEGABLE" ? "default" : "outline"}>
+                    <Badge variant={permission.assignmentPolicy === "DELEGABLE" ? "secondary" : "outline"}>
                       {permission.assignmentPolicy === "DELEGABLE" ? "Có thể ủy quyền" : "Chỉ system role"}
                     </Badge>
                   </TableCell>
                   <TableCell className="max-w-xs text-sm text-muted-foreground text-wrap">{permission.description}</TableCell>
                   <TableCell>
-                    <Badge variant={permission.isActive ? "default" : "outline"}>
+                    <Badge variant={permission.isActive ? "secondary" : "outline"}>
                       {permission.isActive ? "Hoạt động" : "Tạm tắt"}
                     </Badge>
                   </TableCell>

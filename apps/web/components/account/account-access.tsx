@@ -10,7 +10,7 @@ import { ROLE_SCOPE_LABELS, type AccountRoleAssignment } from "@/lib/role-assign
 export type AssignmentState = "active" | "scheduled" | "expired" | "revoked"
 
 export const ASSIGNMENT_STATES: Record<AssignmentState, { label: string; variant: "default" | "secondary" | "outline" }> = {
-  active: { label: "Đang hiệu lực", variant: "default" },
+  active: { label: "Đang hiệu lực", variant: "secondary" },
   scheduled: { label: "Chưa hiệu lực", variant: "secondary" },
   expired: { label: "Đã hết hạn", variant: "outline" },
   revoked: { label: "Đã thu hồi", variant: "outline" },
@@ -87,7 +87,7 @@ export function AccountPermissionList({ permissions, loading }: {
                 </span>
                 <span className="flex flex-wrap justify-end gap-1">
                   {permission.grantedBy.map((source) => (
-                    <Badge key={source.assignmentId} variant={source.viaOverride ? "default" : "outline"}>
+                    <Badge key={source.assignmentId} variant={source.viaOverride ? "secondary" : "outline"}>
                       {source.roleName}{source.viaOverride && " · ngoại lệ"}
                     </Badge>
                   ))}

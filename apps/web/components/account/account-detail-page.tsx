@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { ArrowLeft, KeyRound, RefreshCw, ShieldCheck, ShieldMinus, UserRound, UsersRound } from "lucide-react"
+import { ArrowLeft, RefreshCw, ShieldMinus, UserRound } from "lucide-react"
 
 import {
   AccountPermissionList,
@@ -25,7 +25,7 @@ import {
 } from "@/components/account/account-actions"
 import { RevokeRoleDialog } from "@/components/account/revoke-role-dialog"
 import { ErrorAlert } from "@/components/common/list-controls"
-import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
+import { ActionsMenu, RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -109,12 +109,15 @@ export function AccountDetailPage({ accountId: rawAccountId }: { accountId: stri
 
   return (
     <>
-      <header className="flex flex-wrap items-start justify-between gap-4">
+      <Link href={listHref} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="size-4" /> Danh sách tài khoản
+      </Link>
+
+      <header className="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <span className="avatar shrink-0 text-lg">{(account?.username ?? "?").slice(0, 1).toUpperCase()}</span>
           <div className="min-w-0">
-            <p className="eyebrow">TÀI KHOẢN</p>
-            <h1 className="mt-1 truncate text-3xl font-semibold tracking-tight sm:text-4xl">
+            <h1 className="truncate text-3xl font-semibold tracking-tight">
               {account?.username ?? "Chi tiết tài khoản"}
             </h1>
             {account && (
@@ -126,32 +129,27 @@ export function AccountDetailPage({ accountId: rawAccountId }: { accountId: stri
             )}
           </div>
         </div>
+        {/* The linked employee profile stays visible; account lifecycle actions and reload sit in the "…" menu. */}
         <div className="flex flex-wrap items-center gap-2">
-          {actions.map((kind) => {
-            const Icon = ACCOUNT_ACTIONS[kind].icon
-            return (
-              <Button key={kind} type="button" variant={ACCOUNT_ACTIONS[kind].destructive ? "destructive" : "outline"}
-                onClick={() => setPending(kind)}>
-                <Icon /> {ACCOUNT_ACTIONS[kind].label}
-              </Button>
-            )
-          })}
           {account?.employeeId != null && canReadEmployee && (
             <Button variant="outline" nativeButton={false}
               render={<Link href={`${PORTAL_CONFIG[portal].pagePrefix}/employees/${account.employeeId}`} />}>
               <UserRound /> Hồ sơ nhân sự
             </Button>
           )}
-          <Button type="button" variant="outline" onClick={reload} disabled={loading}>
-            <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
-          </Button>
-          <Button variant="outline" nativeButton={false} render={<Link href={listHref} />}>
-            <ArrowLeft /> Về danh sách
-          </Button>
+          <ActionsMenu label={account?.username ?? "tài khoản"} outline>
+            <RowActionItem icon={RefreshCw} onClick={reload} disabled={loading}>Tải lại</RowActionItem>
+            {actions.map((kind) => (
+              <RowActionItem key={kind} icon={ACCOUNT_ACTIONS[kind].icon} destructive={ACCOUNT_ACTIONS[kind].destructive}
+                onClick={() => setPending(kind)}>
+                {ACCOUNT_ACTIONS[kind].label}
+              </RowActionItem>
+            ))}
+          </ActionsMenu>
         </div>
       </header>
 
-      <div className="mt-6">
+      <div className="mt-8">
         {loading && (
           <div className="grid gap-4 lg:grid-cols-3">
             <Skeleton className="h-56 w-full" />
@@ -178,7 +176,7 @@ export function AccountDetailPage({ accountId: rawAccountId }: { accountId: stri
           <div className="grid gap-4 lg:grid-cols-3">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><KeyRound /> Thông tin tài khoản</CardTitle>
+                <CardTitle>Thông tin tài khoản</CardTitle>
               </CardHeader>
               <CardContent>
                 <dl className="grid gap-4">
@@ -210,7 +208,7 @@ export function AccountDetailPage({ accountId: rawAccountId }: { accountId: stri
             <Card className="lg:col-span-2">
               <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
                 <div>
-                  <CardTitle className="flex items-center gap-2"><UsersRound /> Role</CardTitle>
+                  <CardTitle>Role</CardTitle>
                   <CardDescription>Các lần gán role của tài khoản, kèm phạm vi và thời gian hiệu lực.</CardDescription>
                 </div>
                 {past.length > 0 && (
@@ -275,9 +273,7 @@ export function AccountDetailPage({ accountId: rawAccountId }: { accountId: stri
 
             <Card className="lg:col-span-3">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ShieldCheck /> Permission hiệu lực{permissions && ` (${permissions.length})`}
-                </CardTitle>
+                <CardTitle>Permission hiệu lực{permissions && ` (${permissions.length})`}</CardTitle>
                 <CardDescription>
                   Quyền tài khoản có hôm nay: quyền của các role đang hiệu lực, cộng và trừ ngoại lệ quyền.
                 </CardDescription>

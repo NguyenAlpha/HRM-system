@@ -267,7 +267,7 @@ export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSe
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={role.isSystem ? "secondary" : "default"}>
+                      <Badge variant={role.isSystem ? "secondary" : "outline"}>
                         {role.isSystem ? "Hệ thống" : "Tùy chỉnh"}
                       </Badge>
                       <span className="mt-1 block text-xs text-muted-foreground">

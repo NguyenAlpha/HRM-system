@@ -118,7 +118,7 @@ const ACTION_VERBS: Record<ActionKind, string> = { approve: "Duyệt", reject: "
 const REQUEST_TYPE_LABELS: Record<RoleAssignmentRequestType, string> = { GRANT: "Cấp", REVOKE: "Thu hồi" }
 
 function statusBadgeVariant(status: RoleAssignmentRequestStatus): "default" | "secondary" | "outline" | "destructive" {
-  if (status === "APPROVED") return "default"
+  if (status === "APPROVED") return "secondary"
   if (status === "PENDING") return "secondary"
   if (status === "REJECTED") return "destructive"
   return "outline"

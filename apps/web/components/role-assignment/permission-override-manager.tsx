@@ -66,7 +66,7 @@ function todayIso() {
 }
 
 function statusVariant(status: AccountPermissionOverride["status"]) {
-  if (status === "ACTIVE") return "default" as const
+  if (status === "ACTIVE") return "secondary" as const
   if (status === "REVOKED") return "destructive" as const
   return "outline" as const
 }
@@ -423,7 +423,7 @@ export function PermissionOverrideManager({ portal, onSessionExpired }: {
                           <code className="block text-xs text-muted-foreground">{permissionOverride.permissionCode}</code>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={permissionOverride.effect === "GRANT" ? "default" : "outline"}>
+                          <Badge variant={permissionOverride.effect === "GRANT" ? "secondary" : "outline"}>
                             {PERMISSION_OVERRIDE_EFFECT_LABELS[permissionOverride.effect]}
                           </Badge>
                         </TableCell>
