@@ -71,7 +71,9 @@ Khi dữ liệu đầu vào thay đổi với ngày hiệu lực nằm trong m�
 | Khoản cộng/trừ nhập tay | Về `DRAFT` | Chỉ thêm/xóa được khi kỳ `DRAFT` hoặc `CALCULATED` | `PayrollAdjustmentService` |
 | Ngày lễ công ty | Về `DRAFT` | Chặn | `CompanyHolidayService` |
 | Chấm công (gồm do duyệt đơn nghỉ, tăng ca) | **Không** về `DRAFT`, nhưng `approve` bị chặn tới khi tính lại | Chặn sửa | `AttendanceService.assertAttendanceEditable`, `PayrollService.approve` |
-| Phụ cấp chức vụ / thâm niên, phân công, ca làm | **Không kiểm tra** | **Không kiểm tra** | Xem mục 6 |
+| Phụ cấp chức vụ / thâm niên | Về `DRAFT`, xóa phiếu | Chặn | `AllowancePolicyService.setPositionAllowance`, `setSeniorityAllowance` |
+| Phân công chính (chức danh, ca, đơn vị, quản lý) | Về `DRAFT`, xóa phiếu | Chặn | `EmployeeAssignmentService.assign` |
+| Giờ của ca làm | — | Chặn nếu ca đã có dữ liệu chấm công | `WorkShiftService.update` |
 
 Quy tắc thuế TNCN và bảo hiểm (bậc thuế, tỉ lệ, trần) **không sửa được qua API**; chúng được nạp bằng migration và
 seeder.
@@ -90,9 +92,7 @@ chéo nhau.
 ## 6. Giới hạn hiện tại
 
 - Không mở lại được kỳ `APPROVED` trở đi. Muốn sửa phải xử lý ngoài hệ thống hoặc bằng khoản điều chỉnh ở kỳ sau.
-- Đổi quy tắc phụ cấp, phân công chính hoặc ca làm với ngày hiệu lực lùi về quá khứ **không** đưa kỳ đã tính về
-  `DRAFT` và **không** bị chặn ở kỳ đã duyệt. Phiếu đã tính không đổi (nhờ snapshot), nhưng có thể không còn khớp
-  với dữ liệu mới; tính lại kỳ `CALCULATED` sẽ ra số khác.
+- Phân công chính lùi về quá khứ **không** chuẩn bị lại chấm công: các ngày công đã chuẩn bị vẫn giữ ca cũ.
 
 ## Code
 

@@ -17,9 +17,12 @@ import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeAssignment;
 import com.htttdn.hrm.entity.JobPosition;
 import com.htttdn.hrm.entity.OrganizationUnit;
+import com.htttdn.hrm.entity.PayrollPeriod;
+import com.htttdn.hrm.entity.Payslip;
 import com.htttdn.hrm.entity.WorkLocation;
 import com.htttdn.hrm.entity.WorkShift;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
+import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
@@ -28,6 +31,9 @@ import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.JobPositionRepository;
 import com.htttdn.hrm.repository.OrganizationUnitRepository;
+import com.htttdn.hrm.repository.PayrollPeriodRepository;
+import com.htttdn.hrm.repository.PayslipItemRepository;
+import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.repository.WorkLocationRepository;
 import com.htttdn.hrm.repository.WorkShiftRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
@@ -46,6 +52,9 @@ public class EmployeeAssignmentService {
     private final WorkLocationRepository workLocationRepository;
     private final JobPositionRepository jobPositionRepository;
     private final WorkShiftRepository workShiftRepository;
+    private final PayrollPeriodRepository payrollPeriodRepository;
+    private final PayslipRepository payslipRepository;
+    private final PayslipItemRepository payslipItemRepository;
     private final AccountRepository accountRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
@@ -58,6 +67,9 @@ public class EmployeeAssignmentService {
         WorkLocationRepository workLocationRepository,
         JobPositionRepository jobPositionRepository,
         WorkShiftRepository workShiftRepository,
+        PayrollPeriodRepository payrollPeriodRepository,
+        PayslipRepository payslipRepository,
+        PayslipItemRepository payslipItemRepository,
         AccountRepository accountRepository,
         CurrentAccountProvider currentAccountProvider,
         EmployeeAccessScopeService employeeAccessScopeService,
@@ -69,6 +81,9 @@ public class EmployeeAssignmentService {
         this.workLocationRepository = workLocationRepository;
         this.jobPositionRepository = jobPositionRepository;
         this.workShiftRepository = workShiftRepository;
+        this.payrollPeriodRepository = payrollPeriodRepository;
+        this.payslipRepository = payslipRepository;
+        this.payslipItemRepository = payslipItemRepository;
         this.accountRepository = accountRepository;
         this.currentAccountProvider = currentAccountProvider;
         this.employeeAccessScopeService = employeeAccessScopeService;
@@ -102,6 +117,7 @@ public class EmployeeAssignmentService {
         validateEffectiveFrom(employee, request.effectiveFrom(), "effectiveFrom");
         validateManagerIsNotSelf(employeeId, request.managerEmployeeId());
         AssignmentResources resources = resolveResources(request, EMPLOYEE_ASSIGNMENT_MANAGE);
+        invalidateAffectedPayroll(request.effectiveFrom());
 
         List<EmployeeAssignment> openAssignments = employeeAssignmentRepository
             .findOpenPrimaryForUpdate(employeeId);
@@ -238,6 +254,27 @@ public class EmployeeAssignmentService {
                 "An employee cannot be their own manager",
                 "managerEmployeeId"
             );
+        }
+    }
+
+    private void invalidateAffectedPayroll(LocalDate effectiveFrom) {
+        List<PayrollPeriod> affected = payrollPeriodRepository.findAffectedPeriodsForUpdate(effectiveFrom,
+            List.of(PayrollPeriodStatus.CALCULATED, PayrollPeriodStatus.APPROVED,
+                PayrollPeriodStatus.PAID, PayrollPeriodStatus.LOCKED));
+        for (PayrollPeriod period : affected) {
+            if (period.getStatus() != PayrollPeriodStatus.CALCULATED) {
+                throw new ConflictException(ErrorCode.PAYROLL_PERIOD_LOCKED,
+                    "Cannot change payroll data: period " + period.getYear() + "-" + period.getMonth()
+                        + " is " + period.getStatus());
+            }
+            for (Payslip payslip : payslipRepository.findByPayrollPeriodId(period.getId())) {
+                payslipItemRepository.deleteByPayslipId(payslip.getId());
+                payslipRepository.delete(payslip);
+            }
+            period.setStatus(PayrollPeriodStatus.DRAFT);
+            period.setCalculatedByAccount(null);
+            period.setCalculatedAt(null);
+            period.setUpdatedAt(Instant.now());
         }
     }
 
