@@ -89,6 +89,12 @@ public class PermissionSeeder implements ApplicationRunner {
             PermissionModule.ACCOUNT,
             "Phê duyệt hoặc từ chối yêu cầu cấp vai trò nghiệp vụ cho tài khoản nhân viên"
         ),
+        systemPermission(
+            "system.rate_limit.read",
+            "Xem thống kê giới hạn truy cập",
+            PermissionModule.ACCOUNT,
+            "Xem cấu hình giới hạn truy cập API và số request bị chặn theo IP, tài khoản"
+        ),
 
         permission(
             "organization.read",

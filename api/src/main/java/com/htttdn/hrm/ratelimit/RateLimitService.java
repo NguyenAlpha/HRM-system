@@ -1,6 +1,10 @@
 package com.htttdn.hrm.ratelimit;
 
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -8,6 +12,9 @@ import org.springframework.stereotype.Service;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.htttdn.hrm.dto.response.ratelimit.RateLimitStatsResponse;
+import com.htttdn.hrm.dto.response.ratelimit.RateLimitStatsResponse.BlockedKeyStats;
+import com.htttdn.hrm.dto.response.ratelimit.RateLimitStatsResponse.PolicyStats;
 
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
@@ -23,6 +30,7 @@ public class RateLimitService {
 
     private static final int MAX_BUCKETS_PER_POLICY = 10_000;
     private static final int MAX_TRACKED_BLOCKED_KEYS = 1_000;
+    private static final int TOP_BLOCKED_KEYS = 20;
 
     private final RateLimitProperties properties;
     private final Map<RateLimitPolicy, Cache<String, Bucket>> buckets = new EnumMap<>(RateLimitPolicy.class);
@@ -31,6 +39,7 @@ public class RateLimitService {
     private final Cache<BlockedKey, LongAdder> blockedByKey = Caffeine.newBuilder()
         .maximumSize(MAX_TRACKED_BLOCKED_KEYS)
         .build();
+    private final Instant startedAt = Instant.now();
 
     public RateLimitService(RateLimitProperties properties) {
         this.properties = properties;
@@ -79,6 +88,31 @@ public class RateLimitService {
     /** Takes one token without counting a request, for failures counted after {@link #check}. */
     public void penalize(RateLimitPolicy policy, String key) {
         bucket(policy, key).tryConsume(1);
+    }
+
+    /** Every policy with its quota and counters, and the keys blocked most often. */
+    public RateLimitStatsResponse stats() {
+        List<PolicyStats> policies = Arrays.stream(RateLimitPolicy.values())
+            .map(policy -> new PolicyStats(
+                policy.key(),
+                policy.scope().name(),
+                properties.quota(policy).maxRequests(),
+                properties.quota(policy).windowSeconds(),
+                allowedCount(policy),
+                blockedCount(policy)
+            ))
+            .toList();
+        List<BlockedKeyStats> topBlocked = blockedByKey.asMap().entrySet().stream()
+            .map(entry -> new BlockedKeyStats(
+                entry.getKey().policy().key(),
+                entry.getKey().policy().scope().name(),
+                entry.getKey().key(),
+                entry.getValue().sum()
+            ))
+            .sorted(Comparator.comparingLong(BlockedKeyStats::blocked).reversed())
+            .limit(TOP_BLOCKED_KEYS)
+            .toList();
+        return new RateLimitStatsResponse(startedAt, properties.enabled(), policies, topBlocked);
     }
 
     long allowedCount(RateLimitPolicy policy) {

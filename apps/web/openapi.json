@@ -4406,6 +4406,24 @@
         "tags" : [ "organization-company-owner-admin-controller" ]
       }
     },
+    "/api/system/rate-limit/stats" : {
+      "get" : {
+        "operationId" : "stats",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultRateLimitStatsResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "rate-limit-stats-controller" ]
+      }
+    },
     "/api/work-locations" : {
       "get" : {
         "operationId" : "list_1",
@@ -6604,6 +6622,29 @@
         },
         "required" : [ "data", "error", "success" ]
       },
+      "ApiResultRateLimitStatsResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/RateLimitStatsResponse"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
       "ApiResultResignationRequestView" : {
         "type" : "object",
         "properties" : {
@@ -7170,6 +7211,25 @@
           }
         },
         "required" : [ "employeeId", "grantedMinutes", "pendingMinutes", "remainingMinutes", "standardDayMinutes", "usedMinutes", "year" ]
+      },
+      "BlockedKeyStats" : {
+        "type" : "object",
+        "properties" : {
+          "blocked" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "policy" : {
+            "type" : "string"
+          },
+          "scope" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "blocked", "key", "policy", "scope" ]
       },
       "BrandingResponse" : {
         "type" : "object",
@@ -9358,6 +9418,34 @@
         },
         "required" : [ "assignmentPolicy", "code", "description", "id", "isActive", "module", "name" ]
       },
+      "PolicyStats" : {
+        "type" : "object",
+        "properties" : {
+          "allowed" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "blocked" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "maxRequests" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "policy" : {
+            "type" : "string"
+          },
+          "scope" : {
+            "type" : "string"
+          },
+          "windowSeconds" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "allowed", "blocked", "maxRequests", "policy", "scope", "windowSeconds" ]
+      },
       "PositionAllowanceSummary" : {
         "type" : "object",
         "properties" : {
@@ -9491,6 +9579,31 @@
           }
         },
         "required" : [ "effectiveFrom", "healthInsurance", "insuranceSalary", "socialInsurance", "taxResident", "unemploymentInsurance", "wageRegion" ]
+      },
+      "RateLimitStatsResponse" : {
+        "type" : "object",
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "policies" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PolicyStats"
+            }
+          },
+          "startedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "topBlocked" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/BlockedKeyStats"
+            }
+          }
+        },
+        "required" : [ "enabled", "policies", "startedAt", "topBlocked" ]
       },
       "RecordPunchesRequest" : {
         "type" : "object",

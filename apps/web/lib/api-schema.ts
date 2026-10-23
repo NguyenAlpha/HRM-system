@@ -1732,6 +1732,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/system/rate-limit/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["stats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/work-locations": {
         parameters: {
             query?: never;
@@ -2288,6 +2304,11 @@ export interface components {
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
+        ApiResultRateLimitStatsResponse: {
+            data: components["schemas"]["RateLimitStatsResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
         ApiResultResignationRequestView: {
             data: components["schemas"]["ResignationRequestView"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
@@ -2475,6 +2496,13 @@ export interface components {
             usedMinutes: number;
             /** Format: int32 */
             year: number;
+        };
+        BlockedKeyStats: {
+            /** Format: int64 */
+            blocked: number;
+            key: string;
+            policy: string;
+            scope: string;
         };
         BrandingResponse: {
             /** Format: date-time */
@@ -3290,6 +3318,18 @@ export interface components {
             module: "EMPLOYEE" | "ACCOUNT" | "ORGANIZATION" | "REQUEST" | "ATTENDANCE" | "PAYROLL" | "RBAC" | "REPORT";
             name: string;
         };
+        PolicyStats: {
+            /** Format: int64 */
+            allowed: number;
+            /** Format: int64 */
+            blocked: number;
+            /** Format: int64 */
+            maxRequests: number;
+            policy: string;
+            scope: string;
+            /** Format: int64 */
+            windowSeconds: number;
+        };
         PositionAllowanceSummary: {
             active: boolean;
             code: string;
@@ -3343,6 +3383,13 @@ export interface components {
             unemploymentInsurance: boolean;
             /** Format: int32 */
             wageRegion: number;
+        };
+        RateLimitStatsResponse: {
+            enabled: boolean;
+            policies: components["schemas"]["PolicyStats"][];
+            /** Format: date-time */
+            startedAt: string;
+            topBlocked: components["schemas"]["BlockedKeyStats"][];
         };
         RecordPunchesRequest: {
             /** Format: date-time */
@@ -7073,6 +7120,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultOrganizationCompanyOwnerProvisioningResponse"];
+                };
+            };
+        };
+    };
+    stats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultRateLimitStatsResponse"];
                 };
             };
         };
