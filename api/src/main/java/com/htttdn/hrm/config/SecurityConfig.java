@@ -1,5 +1,6 @@
 package com.htttdn.hrm.config;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +22,12 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
+import com.htttdn.hrm.ratelimit.ClientIpResolver;
+import com.htttdn.hrm.ratelimit.IpRateLimitFilter;
+import com.htttdn.hrm.ratelimit.RateLimitResponses;
+import com.htttdn.hrm.ratelimit.RateLimitService;
 import com.htttdn.hrm.security.RestAccessDeniedHandler;
 import com.htttdn.hrm.security.RestAuthenticationEntryPoint;
 
@@ -39,10 +45,14 @@ public class SecurityConfig {
         HttpSecurity http,
         Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter,
         RestAuthenticationEntryPoint authenticationEntryPoint,
-        RestAccessDeniedHandler accessDeniedHandler
+        RestAccessDeniedHandler accessDeniedHandler,
+        RateLimitService rateLimitService,
+        ClientIpResolver clientIpResolver
     ) throws Exception {
         return http
             .cors(Customizer.withDefaults())
+            // After CORS so a 429 still carries the CORS headers, before authentication.
+            .addFilterAfter(new IpRateLimitFilter(rateLimitService, clientIpResolver), CorsFilter.class)
             .csrf(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)
@@ -77,7 +87,9 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of(HttpHeaders.AUTHORIZATION, HttpHeaders.CONTENT_TYPE));
-        configuration.setExposedHeaders(List.of(HttpHeaders.AUTHORIZATION));
+        List<String> exposedHeaders = new ArrayList<>(List.of(HttpHeaders.AUTHORIZATION));
+        exposedHeaders.addAll(RateLimitResponses.EXPOSED_HEADERS);
+        configuration.setExposedHeaders(exposedHeaders);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
