@@ -30,9 +30,11 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
+import { BrandMark } from "@/components/portal/brand-mark"
 import { logout } from "@/lib/auth/client"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import type { AccountSummary, Portal } from "@/lib/auth/types"
+import type { Branding } from "@/lib/branding"
 
 type NavLink = { label: string; href: string }
 
@@ -71,7 +73,7 @@ function NavIcon({ href }: { href: string }) {
 /** A titled block of the menu; a null title is the untitled block at the top. */
 type NavGroup = { title: string | null; links: NavLink[] }
 
-export function PortalSidebar({ portal, account }: { portal: Portal; account: AccountSummary }) {
+export function PortalSidebar({ portal, account, branding }: { portal: Portal; account: AccountSummary; branding: Branding }) {
   const admin = portal === "admin"
   const pathname = usePathname()
   const router = useRouter()
@@ -177,8 +179,8 @@ export function PortalSidebar({ portal, account }: { portal: Portal; account: Ac
   return (
     <aside className="portal-sidebar">
       <div className="brand sidebar-brand">
-        <span className="brand-mark">H</span>
-        <span><strong>HRM</strong><small>{admin ? "Admin Console" : "People Workspace"}</small></span>
+        <BrandMark branding={branding} />
+        <span className="min-w-0"><strong className="truncate">{branding.name}</strong><small>{admin ? "Admin Console" : "People Workspace"}</small></span>
       </div>
       <nav aria-label="Điều hướng chính">
         {groups.map((navGroup) => (

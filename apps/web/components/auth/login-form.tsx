@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
+import { BrandMark } from "@/components/portal/brand-mark"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,9 +29,11 @@ import { PORTAL_CONFIG } from "@/lib/auth/config"
 import { login } from "@/lib/auth/client"
 import { friendlyErrorMessage } from "@/lib/api-helpers"
 import { AuthApiError, type Portal } from "@/lib/auth/types"
+import type { Branding } from "@/lib/branding"
 
 interface LoginFormProps {
   portal: Portal
+  branding: Branding
 }
 
 const THEME = {
@@ -78,7 +81,7 @@ const loginSchema = z.object({
 
 type LoginValues = z.infer<typeof loginSchema>
 
-export function LoginForm({ portal }: LoginFormProps) {
+export function LoginForm({ portal, branding }: LoginFormProps) {
   const router = useRouter()
   const theme = THEME[portal]
   const HeroIcon = theme.icon
@@ -137,10 +140,11 @@ export function LoginForm({ portal }: LoginFormProps) {
           />
 
           <Link className="brand relative z-10" href={portal === "admin" ? "/admin/login" : "/login"}>
-            {/* Inverted so the mark stays visible on the dark hero panel; `!` beats the unlayered .brand-mark rule. */}
-            <span className="brand-mark bg-primary-foreground! text-primary!">H</span>
+            {/* Inverted so the mark stays visible on the dark hero panel; `!` beats the unlayered .brand-mark rule.
+                A logo gets the light tile too, since most logos are drawn for a light background. */}
+            <BrandMark branding={branding} className="bg-primary-foreground! p-1 text-primary!" />
             <span>
-              <strong>HRM</strong>
+              <strong>{branding.name}</strong>
               <small>{portal === "admin" ? "Admin Console" : "People Workspace"}</small>
             </span>
           </Link>
@@ -162,7 +166,7 @@ export function LoginForm({ portal }: LoginFormProps) {
           </motion.div>
 
           <p className="relative z-10 text-xs tracking-[0.08em] text-white/50">
-            HRM Platform · Internal access only
+            {branding.name} · Internal access only
           </p>
         </section>
 
@@ -173,9 +177,10 @@ export function LoginForm({ portal }: LoginFormProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
-            <div className="brand mb-10 lg:hidden">
-              <span className="brand-mark">H</span>
-              <strong>HRM</strong>
+            {/* `!` beats the unlayered .brand display rule; the hero panel already shows the brand on large screens. */}
+            <div className="brand mb-10 lg:hidden!">
+              <BrandMark branding={branding} />
+              <strong>{branding.name}</strong>
             </div>
 
             <p className="eyebrow">{theme.eyebrow}</p>

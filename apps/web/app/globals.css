@@ -67,6 +67,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
   display: grid; width: 2.5rem; height: 2.5rem; place-items: center; border-radius: 0.75rem;
   color: var(--primary-foreground); background: var(--primary); font-size: 1.15rem; font-weight: 800;
 }
+/* An uploaded logo keeps its own colours and proportions inside the tile. */
+.brand-logo { object-fit: contain; background: transparent; }
 .brand > span:last-child { display: grid; gap: 0.05rem; }
 .brand strong { font-size: 1.05rem; letter-spacing: 0.08em; }
 .brand small { color: inherit; font-size: 0.72rem; opacity: 0.64; }
