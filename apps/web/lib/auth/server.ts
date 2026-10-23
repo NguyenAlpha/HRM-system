@@ -5,6 +5,7 @@ import { cache } from "react"
 import type { components } from "@/lib/api-schema"
 import { isSystemAdmin, PORTAL_CONFIG } from "@/lib/auth/config"
 import { FALLBACK_BRANDING, toBranding, type Branding } from "@/lib/branding"
+import { clientIpHeaders } from "@/lib/client-ip"
 import type {
   AccountSummary,
   ApiEnvelope,
@@ -51,6 +52,7 @@ async function callApi<T>(path: string, init?: RequestInit): Promise<{
       cache: "no-store",
       headers: {
         Accept: "application/json",
+        ...await clientIpHeaders(),
         ...init?.headers,
       },
     })
@@ -514,7 +516,7 @@ export async function handleBrandingLogoRequest(request: Request): Promise<Respo
   try {
     response = await fetch(`${apiBaseUrl}/api/public/branding/logo`, {
       cache: "no-store",
-      headers: ifNoneMatch ? { "If-None-Match": ifNoneMatch } : {},
+      headers: { ...await clientIpHeaders(), ...(ifNoneMatch ? { "If-None-Match": ifNoneMatch } : {}) },
     })
   } catch {
     return gatewayFailure()
@@ -536,7 +538,11 @@ async function proxyDownload(path: string, accessToken: string): Promise<NextRes
   try {
     response = await fetch(`${apiBaseUrl}${path}`, {
       cache: "no-store",
-      headers: { Accept: `${XLSX_TYPE}, application/json`, Authorization: `Bearer ${accessToken}` },
+      headers: {
+        Accept: `${XLSX_TYPE}, application/json`,
+        Authorization: `Bearer ${accessToken}`,
+        ...await clientIpHeaders(),
+      },
     })
   } catch {
     return gatewayFailure()
