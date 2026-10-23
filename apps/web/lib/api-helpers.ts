@@ -1,6 +1,7 @@
 "use client"
 
 import { AuthApiError } from "@/lib/auth/types"
+import { RATE_LIMIT_FALLBACK_MESSAGE } from "@/lib/rate-limit"
 
 const FALLBACK_MESSAGE = "Không thể hoàn tất thao tác. Vui lòng thử lại."
 
@@ -67,6 +68,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   METHOD_NOT_ALLOWED: FALLBACK_MESSAGE,
   CONFLICT: "Dữ liệu trùng hoặc mâu thuẫn với dữ liệu đã có.",
   CONCURRENT_MODIFICATION: "Dữ liệu vừa được người khác thay đổi. Vui lòng tải lại trang.",
+  // The BFF normally replaces the message with one that says how long to wait.
+  RATE_LIMIT_EXCEEDED: RATE_LIMIT_FALLBACK_MESSAGE,
   INTERNAL_ERROR: "Hệ thống đang gặp sự cố. Vui lòng thử lại sau.",
 }
 

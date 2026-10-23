@@ -6,6 +6,7 @@ import type { components } from "@/lib/api-schema"
 import { isSystemAdmin, PORTAL_CONFIG } from "@/lib/auth/config"
 import { FALLBACK_BRANDING, toBranding, type Branding } from "@/lib/branding"
 import { clientIpHeaders } from "@/lib/client-ip"
+import { withRateLimitMessage } from "@/lib/rate-limit"
 import type {
   AccountSummary,
   ApiEnvelope,
@@ -58,7 +59,7 @@ async function callApi<T>(path: string, init?: RequestInit): Promise<{
     })
     const payload = (await response.json().catch(() =>
       failure("INVALID_API_RESPONSE", "HRM API trả về dữ liệu không hợp lệ"))) as ApiEnvelope<T>
-    return { response, payload }
+    return { response, payload: withRateLimitMessage(response, payload) }
   } catch {
     return null
   }
@@ -180,7 +181,8 @@ export async function handleRefresh(portal: Portal): Promise<NextResponse> {
   }
   if (!result.response.ok || !result.payload.success || !result.payload.data) {
     const response = NextResponse.json(result.payload, { status: result.response.status })
-    clearSessionCookies(response, portal)
+    // Too many refreshes is not an invalid session: keep the cookies so a later try can succeed.
+    if (result.response.status !== 429) clearSessionCookies(response, portal)
     return response
   }
 
@@ -550,7 +552,10 @@ async function proxyDownload(path: string, accessToken: string): Promise<NextRes
   if (!response.ok) {
     const payload = (await response.json().catch(() =>
       failure("INVALID_API_RESPONSE", "HRM API trả về dữ liệu không hợp lệ"))) as ApiEnvelope<unknown>
-    return NextResponse.json(payload, { status: response.status, headers: { "Cache-Control": "no-store" } })
+    return NextResponse.json(withRateLimitMessage(response, payload), {
+      status: response.status,
+      headers: { "Cache-Control": "no-store" },
+    })
   }
   return new NextResponse(response.body, {
     status: response.status,
