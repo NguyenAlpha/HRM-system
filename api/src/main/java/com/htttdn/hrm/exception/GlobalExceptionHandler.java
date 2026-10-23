@@ -5,10 +5,13 @@ import java.util.Set;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.common.ErrorDetail;
+import com.htttdn.hrm.ratelimit.RateLimitDecision;
+import com.htttdn.hrm.ratelimit.RateLimitResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +39,17 @@ public class GlobalExceptionHandler {
             : ErrorDetail.of(exception.getErrorCode(), exception.getMessage(), exception.getField());
 
         return ResponseEntity.status(exception.getStatus()).body(ApiResult.fail(error));
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ApiResult<?>> handleRateLimit(RateLimitExceededException exception) {
+        RateLimitDecision decision = exception.getDecision();
+        return ResponseEntity.status(exception.getStatus())
+            .header(RateLimitResponses.LIMIT, Long.toString(decision.limit()))
+            .header(RateLimitResponses.REMAINING, Long.toString(decision.remaining()))
+            .header(RateLimitResponses.RESET, Long.toString(decision.resetSeconds()))
+            .header(HttpHeaders.RETRY_AFTER, Long.toString(decision.retryAfterSeconds()))
+            .body(ApiResult.fail(ErrorDetail.of(exception.getErrorCode(), exception.getMessage())));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
