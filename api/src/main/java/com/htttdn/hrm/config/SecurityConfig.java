@@ -18,6 +18,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -28,6 +29,7 @@ import com.htttdn.hrm.ratelimit.ClientIpResolver;
 import com.htttdn.hrm.ratelimit.IpRateLimitFilter;
 import com.htttdn.hrm.ratelimit.RateLimitResponses;
 import com.htttdn.hrm.ratelimit.RateLimitService;
+import com.htttdn.hrm.ratelimit.UserRateLimitFilter;
 import com.htttdn.hrm.security.RestAccessDeniedHandler;
 import com.htttdn.hrm.security.RestAuthenticationEntryPoint;
 
@@ -53,6 +55,8 @@ public class SecurityConfig {
             .cors(Customizer.withDefaults())
             // After CORS so a 429 still carries the CORS headers, before authentication.
             .addFilterAfter(new IpRateLimitFilter(rateLimitService, clientIpResolver), CorsFilter.class)
+            // Once the JWT is verified, so the quota is per user.
+            .addFilterAfter(new UserRateLimitFilter(rateLimitService), BearerTokenAuthenticationFilter.class)
             .csrf(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)
