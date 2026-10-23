@@ -11,6 +11,8 @@ public record CompanyProfileResponse(
     @Nullable String phone,
     @Nullable String email,
     @Nullable String address,
+    /** When the logo was last set; null when there is none. */
+    @Nullable Instant logoUpdatedAt,
     Instant updatedAt
 ) {
 }

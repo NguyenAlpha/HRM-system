@@ -20,6 +20,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
@@ -68,6 +70,21 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResult<?>> handleNoRoute(NoResourceFoundException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
             ApiResult.fail(ErrorDetail.of(ErrorCode.RESOURCE_NOT_FOUND, "No endpoint matches this path"))
+        );
+    }
+
+    /** Uploads above the servlet multipart limit never reach a service, so they are refused here. */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResult<?>> handleUploadTooLarge(MaxUploadSizeExceededException exception) {
+        return ResponseEntity.badRequest().body(
+            ApiResult.fail(ErrorDetail.of(ErrorCode.VALIDATION_ERROR, "Uploaded file is too large", "file"))
+        );
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ApiResult<?>> handleMissingPart(MissingServletRequestPartException exception) {
+        return ResponseEntity.badRequest().body(
+            ApiResult.fail(ErrorDetail.of(ErrorCode.VALIDATION_ERROR, "Missing file part", exception.getRequestPartName()))
         );
     }
 
