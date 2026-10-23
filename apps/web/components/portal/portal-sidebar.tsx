@@ -15,6 +15,7 @@ import {
   Crown,
   DoorOpen,
   FileText,
+  Gauge,
   HandCoins,
   KeyRound,
   Landmark,
@@ -63,6 +64,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   "/role-grant": ShieldPlus,
   "/rbac": ShieldCheck,
   "/company-owner": Crown,
+  "/rate-limit": Gauge,
 }
 
 function NavIcon({ href }: { href: string }) {
@@ -89,6 +91,7 @@ export function PortalSidebar({ portal, account, branding }: { portal: Portal; a
     (permission) => permission.code === "organization.company_owner.bootstrap",
   )
   const canReadEmployees = account.permissions.some((permission) => permission.code === "employee.list.read")
+  const canReadRateLimit = account.permissions.some((permission) => permission.code === "system.rate_limit.read")
   const canReadAccounts = account.permissions.some((permission) => permission.code === "account.read")
   const canUseRoleRequests = account.permissions.some(
     (permission) => permission.code === "role.assignment.request" || permission.code === "role.assignment.approve",
@@ -139,6 +142,7 @@ export function PortalSidebar({ portal, account, branding }: { portal: Portal; a
       [canAssignRoleDirect, "Cấp quyền trực tiếp", "/admin/role-grant"],
       [canReadOrganization, "Danh mục tổ chức", "/admin/organization"],
       [canBootstrapCompanyOwner, "Company Owner", "/admin/company-owner"],
+      [canReadRateLimit, "Giới hạn truy cập", "/admin/rate-limit"],
     ])]
     : [
       group(null, [
