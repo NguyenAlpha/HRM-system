@@ -46,6 +46,16 @@ public class CompanyProfile {
     @Column(nullable = false, length = 50)
     private String timezone;
 
+    /** Logo image bytes; null when the company has none. Set together with its content type and timestamp. */
+    @Column(columnDefinition = "BYTEA")
+    private byte[] logo;
+
+    @Column(name = "logo_content_type", length = 20)
+    private String logoContentType;
+
+    @Column(name = "logo_updated_at")
+    private Instant logoUpdatedAt;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

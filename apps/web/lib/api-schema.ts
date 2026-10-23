@@ -468,6 +468,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/company/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateLogo"];
+        post?: never;
+        delete: operations["deleteLogo"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/compensation/employees/{employeeId}/payroll-profiles": {
         parameters: {
             query?: never;
@@ -859,7 +875,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_4"];
+        get: operations["get_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1067,7 +1083,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_3"];
+        get: operations["get_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1244,6 +1260,38 @@ export interface paths {
             cookie?: never;
         };
         get: operations["getById_8"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/branding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/branding/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["logo"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1934,6 +1982,11 @@ export interface components {
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
+        ApiResultBrandingResponse: {
+            data: components["schemas"]["BrandingResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
         ApiResultCompanyHolidayResponse: {
             data: components["schemas"]["CompanyHolidayResponse"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
@@ -2423,6 +2476,11 @@ export interface components {
             /** Format: int32 */
             year: number;
         };
+        BrandingResponse: {
+            /** Format: date-time */
+            logoUpdatedAt: string | null;
+            name: string;
+        };
         CancelRoleAssignmentRequest: {
             reason: string;
         };
@@ -2457,6 +2515,8 @@ export interface components {
             address: string | null;
             code: string;
             email: string | null;
+            /** Format: date-time */
+            logoUpdatedAt: string | null;
             name: string;
             phone: string | null;
             taxCode: string | null;
@@ -4536,6 +4596,53 @@ export interface operations {
             };
         };
     };
+    updateLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultCompanyProfileResponse"];
+                };
+            };
+        };
+    };
+    deleteLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultCompanyProfileResponse"];
+                };
+            };
+        };
+    };
     profiles: {
         parameters: {
             query?: never;
@@ -5436,7 +5543,7 @@ export interface operations {
             };
         };
     };
-    get_4: {
+    get_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -5828,7 +5935,7 @@ export interface operations {
             };
         };
     };
-    get_3: {
+    get_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -6124,6 +6231,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultPermissionResponse"];
+                };
+            };
+        };
+    };
+    get_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultBrandingResponse"];
+                };
+            };
+        };
+    };
+    logo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
                 };
             };
         };

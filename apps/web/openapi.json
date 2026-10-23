@@ -1151,6 +1151,56 @@
         "tags" : [ "company-holiday-controller" ]
       }
     },
+    "/api/company/logo" : {
+      "delete" : {
+        "operationId" : "deleteLogo",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultCompanyProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "company-profile-controller" ]
+      },
+      "put" : {
+        "operationId" : "updateLogo",
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultCompanyProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "company-profile-controller" ]
+      }
+    },
     "/api/compensation/employees/{employeeId}/payroll-profiles" : {
       "get" : {
         "operationId" : "profiles",
@@ -2342,7 +2392,7 @@
     },
     "/api/leave-requests/{id}" : {
       "get" : {
-        "operationId" : "get_4",
+        "operationId" : "get_5",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -2835,7 +2885,7 @@
     },
     "/api/payroll/periods/{id}" : {
       "get" : {
-        "operationId" : "get_3",
+        "operationId" : "get_4",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -3224,6 +3274,43 @@
           }
         },
         "tags" : [ "permission-controller" ]
+      }
+    },
+    "/api/public/branding" : {
+      "get" : {
+        "operationId" : "get_3",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultBrandingResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "public-branding-controller" ]
+      }
+    },
+    "/api/public/branding/logo" : {
+      "get" : {
+        "operationId" : "logo",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "public-branding-controller" ]
       }
     },
     "/api/reports/hr/leave-balances" : {
@@ -5126,6 +5213,29 @@
           "data" : {
             "anyOf" : [ {
               "$ref" : "#/components/schemas/BalanceView"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
+      "ApiResultBrandingResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/BrandingResponse"
             }, {
               "type" : "null"
             } ]
@@ -7061,6 +7171,19 @@
         },
         "required" : [ "employeeId", "grantedMinutes", "pendingMinutes", "remainingMinutes", "standardDayMinutes", "usedMinutes", "year" ]
       },
+      "BrandingResponse" : {
+        "type" : "object",
+        "properties" : {
+          "logoUpdatedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "logoUpdatedAt", "name" ]
+      },
       "CancelRoleAssignmentRequest" : {
         "type" : "object",
         "properties" : {
@@ -7171,6 +7294,10 @@
           "email" : {
             "type" : [ "string", "null" ]
           },
+          "logoUpdatedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
           "name" : {
             "type" : "string"
           },
@@ -7185,7 +7312,7 @@
             "format" : "date-time"
           }
         },
-        "required" : [ "address", "code", "email", "name", "phone", "taxCode", "updatedAt" ]
+        "required" : [ "address", "code", "email", "logoUpdatedAt", "name", "phone", "taxCode", "updatedAt" ]
       },
       "CompleteAccountActivationRequest" : {
         "type" : "object",

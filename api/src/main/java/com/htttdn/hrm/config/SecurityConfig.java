@@ -51,6 +51,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/account-activations/*/complete").permitAll()
+                // Company name and logo for the sign-in page.
+                .requestMatchers(HttpMethod.GET, "/api/public/branding", "/api/public/branding/logo").permitAll()
                 // OpenAPI spec and Swagger UI; turned off with API_DOCS_ENABLED=false.
                 .requestMatchers(HttpMethod.GET, "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                 .anyRequest().authenticated()

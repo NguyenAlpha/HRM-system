@@ -12,9 +12,17 @@ CREATE TABLE company_profile (
     email VARCHAR(100),
     address TEXT,
     timezone VARCHAR(50) NOT NULL DEFAULT 'Asia/Ho_Chi_Minh',
+    -- Logo hiển thị trên giao diện (PNG/JPEG/WebP, tối đa 512 KB); ba cột cùng có hoặc cùng trống.
+    logo BYTEA,
+    logo_content_type VARCHAR(20),
+    logo_updated_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT chk_company_profile_single CHECK (id = 1)
+    CONSTRAINT chk_company_profile_single CHECK (id = 1),
+    CONSTRAINT chk_company_profile_logo CHECK (
+        (logo IS NULL AND logo_content_type IS NULL AND logo_updated_at IS NULL)
+        OR (logo IS NOT NULL AND logo_content_type IS NOT NULL AND logo_updated_at IS NOT NULL)
+    )
 );
 
 CREATE TABLE work_locations (
