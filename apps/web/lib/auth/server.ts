@@ -1,7 +1,10 @@
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
+import { cache } from "react"
 
+import type { components } from "@/lib/api-schema"
 import { isSystemAdmin, PORTAL_CONFIG } from "@/lib/auth/config"
+import { FALLBACK_BRANDING, toBranding, type Branding } from "@/lib/branding"
 import type {
   AccountSummary,
   ApiEnvelope,
@@ -408,6 +411,7 @@ export async function handleWorkforceRequest(request: Request, segments: string[
     { pattern: /^company-holidays$/, methods: ["GET", "POST"] },
     { pattern: /^company-holidays\/[1-9]\d*$/, methods: ["DELETE"] },
     { pattern: /^company$/, methods: ["GET", "PUT"] },
+    { pattern: /^company\/logo$/, methods: ["PUT", "DELETE"] },
     { pattern: /^leave-requests$/, methods: ["GET", "POST"] },
     { pattern: /^leave-requests\/pending$/, methods: ["GET"] },
     { pattern: /^leave-requests\/employees\/[1-9]\d*$/, methods: ["GET"] },
@@ -453,6 +457,17 @@ export async function handleWorkforceRequest(request: Request, segments: string[
   if (!accessToken) return NextResponse.json(failure("UNAUTHORIZED", "Phiên đăng nhập đã hết hạn"), { status: 401 })
   if (/^payroll\/periods\/[1-9]\d*\/export$/.test(path)) return proxyDownload(`/api/${path}`, accessToken)
 
+  // The logo goes up as multipart form data; pass it through untouched.
+  if (path === "company/logo" && request.method === "PUT") {
+    const result = await callApi<unknown>("/api/company/logo", {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": request.headers.get("content-type") ?? "" },
+      body: await request.arrayBuffer(),
+    })
+    if (!result) return gatewayFailure()
+    return NextResponse.json(result.payload, { status: result.response.status, headers: { "Cache-Control": "no-store" } })
+  }
+
   let body: string | undefined
   if (request.method === "PUT" || (request.method === "POST" &&
       (/^(?:leave-requests|resignation-requests|payroll\/periods|company-holidays)$/.test(path)
@@ -484,6 +499,33 @@ export async function handleWorkforceRequest(request: Request, segments: string[
     status: result.response.status,
     headers: { "Cache-Control": "no-store" },
   })
+}
+
+/** Company name and logo for the sidebar, sign-in page and tab title; fetched once per request. */
+export const getBranding = cache(async (): Promise<Branding> => {
+  const result = await callApi<components["schemas"]["BrandingResponse"]>("/api/public/branding")
+  return result?.payload.success && result.payload.data ? toBranding(result.payload.data) : FALLBACK_BRANDING
+})
+
+// Public like the API endpoint, since the sign-in page shows the logo; revalidates with the API's ETag.
+export async function handleBrandingLogoRequest(request: Request): Promise<Response> {
+  const ifNoneMatch = request.headers.get("if-none-match")
+  let response: Response
+  try {
+    response = await fetch(`${apiBaseUrl}/api/public/branding/logo`, {
+      cache: "no-store",
+      headers: ifNoneMatch ? { "If-None-Match": ifNoneMatch } : {},
+    })
+  } catch {
+    return gatewayFailure()
+  }
+  if (response.status !== 200 && response.status !== 304) return new Response(null, { status: response.status })
+  const headers = new Headers({ "X-Content-Type-Options": "nosniff" })
+  for (const name of ["Content-Type", "ETag", "Cache-Control"]) {
+    const value = response.headers.get(name)
+    if (value) headers.set(name, value)
+  }
+  return new Response(response.status === 304 ? null : response.body, { status: response.status, headers })
 }
 
 const XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

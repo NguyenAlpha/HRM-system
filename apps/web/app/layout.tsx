@@ -3,18 +3,23 @@ import "./globals.css"
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { getBranding } from "@/lib/auth/server";
 
 // The fonts expose CSS variables on <html>; globals.css maps them to Tailwind's font tokens in @theme.
 // Both are variable fonts, so omitting `weight` still covers every weight.
 const geist = Geist({ subsets: ["latin", "vietnamese"], variable: "--font-geist" })
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" })
 
-export const metadata: Metadata = {
-  title: {
-    default: "HRM",
-    template: "%s | HRM",
-  },
-  description: "Nền tảng quản trị nguồn nhân lực",
+// The tab title carries the company's own name.
+export async function generateMetadata(): Promise<Metadata> {
+  const { name } = await getBranding()
+  return {
+    title: {
+      default: name,
+      template: `%s | ${name}`,
+    },
+    description: "Nền tảng quản trị nguồn nhân lực",
+  }
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

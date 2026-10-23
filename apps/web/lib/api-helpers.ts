@@ -41,6 +41,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   ORGANIZATION_HIERARCHY_INVALID: "Cấp cha không hợp lệ cho mục này.",
   ORGANIZATION_RESOURCE_IN_USE: "Mục này đang được sử dụng nên không thể thay đổi.",
   COMPANY_OWNER_ALREADY_EXISTS: "Doanh nghiệp đã có Company Owner.",
+  COMPANY_LOGO_INVALID: "Logo phải là ảnh PNG, JPG hoặc WebP, tối đa 512 KB.",
   REQUEST_NOT_FOUND: "Không tìm thấy đơn.",
   REQUEST_ALREADY_PROCESSED: "Đơn này đã được xử lý.",
   APPROVER_NOT_FOUND: "Chưa xác định được người duyệt cho đơn này.",

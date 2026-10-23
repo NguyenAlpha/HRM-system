@@ -1,12 +1,24 @@
 "use client"
 
-import { FormEvent, useEffect, useState } from "react"
-import { Loader2, PencilLine } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { FormEvent, useEffect, useRef, useState } from "react"
+import { Loader2, PencilLine, Trash2, Upload } from "lucide-react"
 import { toast } from "sonner"
 
 import { InfoField } from "@/components/employee/employee-detail-page"
+import { BrandMark } from "@/components/portal/brand-mark"
 import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -22,11 +34,14 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { SectionError, dateTime, workforceApi } from "@/components/workforce/workforce-shared"
-import { apiErrorMessage } from "@/lib/api-helpers"
+import { apiErrorMessage, friendlyErrorMessage } from "@/lib/api-helpers"
+import { authorizedRequest } from "@/lib/auth/client"
+import { LOGO_TYPES, MAX_LOGO_BYTES, logoUrl } from "@/lib/branding"
 import type { CompanyProfile, WorkforceBody } from "@/lib/workforce"
 
 /** The company's own details; only the Company Owner (`company.manage`) edits them. */
 export function CompanyProfilePage() {
+  const router = useRouter()
   const { session } = usePortalSession()
   const canManage = session.account.permissions.some((permission) => permission.code === "company.manage")
   const [company, setCompany] = useState<CompanyProfile | null>(null)
@@ -41,6 +56,12 @@ export function CompanyProfilePage() {
       .catch((caught: unknown) => { if (active) setError(apiErrorMessage(caught)) })
     return () => { active = false }
   }, [revision])
+
+  // Reloads the card and, through the server layout, the name and logo in the sidebar.
+  function reload() {
+    setRevision((value) => value + 1)
+    router.refresh()
+  }
 
   return (
     <>
@@ -67,6 +88,7 @@ export function CompanyProfilePage() {
               )}
             </CardHeader>
             <CardContent>
+              <CompanyLogo company={company} canManage={canManage} onChanged={reload} />
               <dl className="grid gap-4 sm:grid-cols-2">
                 <InfoField label="Mã doanh nghiệp" value={company.code} />
                 <InfoField label="Mã số thuế" value={company.taxCode} />
@@ -83,10 +105,110 @@ export function CompanyProfilePage() {
         <EditCompanyDialog
           company={company}
           onClose={() => setEditing(false)}
-          onSaved={() => { setEditing(false); setRevision((value) => value + 1) }}
+          onSaved={() => { setEditing(false); reload() }}
         />
       )}
     </>
+  )
+}
+
+/** Logo preview; the Company Owner uploads, replaces or removes it. */
+function CompanyLogo({ company, canManage, onChanged }: {
+  company: CompanyProfile
+  canManage: boolean
+  onChanged: () => void
+}) {
+  const fileInput = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const hasLogo = company.logoUpdatedAt !== null
+
+  async function change(method: "PUT" | "DELETE", file?: File) {
+    setBusy(true)
+    let body: FormData | undefined
+    if (file) {
+      body = new FormData()
+      body.append("file", file)
+    }
+    try {
+      await authorizedRequest("hrm", "/workforce/company/logo", { method, body })
+      toast.success(method === "PUT" ? "Đã cập nhật logo" : "Đã xóa logo")
+      setConfirmingDelete(false)
+      onChanged()
+    } catch (caught) {
+      toast.error(apiErrorMessage(caught))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function upload(file: File) {
+    // Same rule as the API, checked first so a wrong file fails without uploading it.
+    if (!LOGO_TYPES.includes(file.type) || file.size > MAX_LOGO_BYTES) {
+      toast.error(friendlyErrorMessage("COMPANY_LOGO_INVALID", "", null))
+      return
+    }
+    void change("PUT", file)
+  }
+
+  return (
+    <div className="mb-5 flex items-center gap-4 border-b pb-5">
+      {/* `!` beats the unlayered .brand-mark size rules. */}
+      <BrandMark
+        branding={{ name: company.name, logoUrl: logoUrl(company.logoUpdatedAt) }}
+        className="size-16! rounded-xl! text-2xl!"
+      />
+      <div className="grid gap-1">
+        <p className="text-sm font-medium">Logo</p>
+        <p className="text-xs text-muted-foreground">
+          Hiện ở thanh bên và trang đăng nhập. PNG, JPG hoặc WebP, tối đa 512 KB.
+        </p>
+        {canManage && (
+          <div className="mt-1 flex gap-2">
+            <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => fileInput.current?.click()}>
+              {busy ? <Loader2 className="animate-spin" /> : <Upload />} {hasLogo ? "Đổi logo" : "Tải logo lên"}
+            </Button>
+            {hasLogo && (
+              <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={() => setConfirmingDelete(true)}>
+                <Trash2 /> Xóa logo
+              </Button>
+            )}
+            <input
+              ref={fileInput}
+              type="file"
+              accept={LOGO_TYPES.join(",")}
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0]
+                // Cleared so choosing the same file again still fires a change.
+                event.target.value = ""
+                if (file) upload(file)
+              }}
+            />
+          </div>
+        )}
+      </div>
+
+      <AlertDialog open={confirmingDelete} onOpenChange={(open) => { if (!open && !busy) setConfirmingDelete(false) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xóa logo doanh nghiệp?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Thanh bên và trang đăng nhập sẽ hiện chữ cái đầu của tên doanh nghiệp thay cho logo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Hủy</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" disabled={busy} onClick={(event) => {
+              event.preventDefault()
+              void change("DELETE")
+            }}>
+              {busy && <Loader2 className="animate-spin" />} Xóa logo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   )
 }
 

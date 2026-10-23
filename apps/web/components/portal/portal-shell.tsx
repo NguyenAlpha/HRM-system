@@ -9,6 +9,7 @@ import { apiErrorMessage } from "@/lib/api-helpers"
 import { getCurrentSession } from "@/lib/auth/client"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import { AuthApiError, type Portal, type SessionData } from "@/lib/auth/types"
+import type { Branding } from "@/lib/branding"
 
 interface PortalSessionValue {
   portal: Portal
@@ -29,7 +30,7 @@ export function usePortalSession(): PortalSessionValue {
 }
 
 /** Shared frame of every signed-in page: loads the session once, then renders the sidebar and the page. */
-export function PortalShell({ portal, children }: { portal: Portal; children: ReactNode }) {
+export function PortalShell({ portal, branding, children }: { portal: Portal; branding: Branding; children: ReactNode }) {
   const router = useRouter()
   const { loginPath } = PORTAL_CONFIG[portal]
   const [session, setSession] = useState<SessionData | null>(null)
@@ -67,7 +68,7 @@ export function PortalShell({ portal, children }: { portal: Portal; children: Re
   return (
     <PortalSessionContext.Provider value={{ portal, session, setSession, onSessionExpired }}>
       <main className={`portal-shell ${portal === "admin" ? "admin-shell" : "hrm-shell"}`}>
-        <PortalSidebar portal={portal} account={session.account} />
+        <PortalSidebar portal={portal} account={session.account} branding={branding} />
         <section className="portal-content">{children}</section>
       </main>
     </PortalSessionContext.Provider>
