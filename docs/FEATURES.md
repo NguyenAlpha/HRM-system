@@ -50,10 +50,11 @@ Trạng thái account: `PENDING` → `ACTIVE`, và `LOCKED` / `DISABLED`.
 
 Mọi API đều có giới hạn số request theo IP và theo người dùng; sai mật khẩu quá 5 lần trong 15 phút thì phải chờ
 mới đăng nhập lại được (không khoá tài khoản). Admin Console có trang thống kê **Giới hạn truy cập**
-(`GET /api/system/rate-limit/stats`).
+(`GET /api/system/rate-limit/stats`) và trang **Lưu lượng API** (`GET /api/system/traffic/stats`): số request, thời
+gian xử lý trung bình và số lỗi của từng API kể từ lần khởi động.
 
 Chi tiết: [api/docs/api/AUTH.md](../api/docs/api/AUTH.md), [apps/web/docs/AUTH.md](../apps/web/docs/AUTH.md),
-[RATE_LIMIT.md](../api/docs/concepts/RATE_LIMIT.md).
+[RATE_LIMIT.md](../api/docs/concepts/RATE_LIMIT.md), [API_TRAFFIC.md](../api/docs/concepts/API_TRAFFIC.md).
 
 ---
 
