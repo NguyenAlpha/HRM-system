@@ -13,7 +13,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   EMAIL_TAKEN: "Email đã được sử dụng.",
   INVALID_CREDENTIALS: "Tên đăng nhập hoặc mật khẩu không đúng.",
   ACCOUNT_PENDING: "Tài khoản chưa được kích hoạt. Hãy dùng link kích hoạt đã được gửi.",
-  ACCOUNT_LOCKED: "Tài khoản đang tạm khóa do đăng nhập sai nhiều lần. Vui lòng thử lại sau.",
+  ACCOUNT_LOCKED: "Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên.",
   ACCOUNT_DISABLED: "Tài khoản đã bị vô hiệu hóa.",
   ACCOUNT_NOT_FOUND: "Không tìm thấy tài khoản.",
   EMPLOYEE_ACCOUNT_EXISTS: "Nhân viên này đã có tài khoản.",
