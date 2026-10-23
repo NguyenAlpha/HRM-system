@@ -95,6 +95,12 @@ public class PermissionSeeder implements ApplicationRunner {
             PermissionModule.ACCOUNT,
             "Xem cấu hình giới hạn truy cập API và số request bị chặn theo IP, tài khoản"
         ),
+        systemPermission(
+            "system.traffic.read",
+            "Xem lưu lượng API",
+            PermissionModule.ACCOUNT,
+            "Xem số request, thời gian xử lý và số lỗi của từng API từ lần khởi động gần nhất"
+        ),
 
         permission(
             "organization.read",
