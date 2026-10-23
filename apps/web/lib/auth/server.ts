@@ -910,3 +910,21 @@ export async function handleAccountActivationRequest(request: Request, token: st
     headers: { "Cache-Control": "no-store" },
   })
 }
+
+// Read-only rate-limit statistics for the admin portal.
+export async function handleRateLimitStatsRequest(): Promise<NextResponse> {
+  const accessToken = (await cookies()).get(PORTAL_CONFIG.admin.accessCookie)?.value
+  if (!accessToken) {
+    return NextResponse.json(failure("UNAUTHORIZED", "Phiên quản trị đã hết hạn"), { status: 401 })
+  }
+
+  const result = await callApi<unknown>("/api/system/rate-limit/stats", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!result) return gatewayFailure()
+
+  return NextResponse.json(result.payload, {
+    status: result.response.status,
+    headers: { "Cache-Control": "no-store" },
+  })
+}
