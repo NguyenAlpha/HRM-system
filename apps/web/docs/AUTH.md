@@ -128,7 +128,8 @@ BFF đọc refresh token từ cookie tương ứng, gọi `POST /api/auth/refres
 access cookie và refresh cookie. Client gom các yêu cầu refresh đồng thời trong cùng portal
 về một Promise để tránh tự reuse refresh token do nhiều request chạy song song.
 
-Nếu refresh thất bại, cookie của portal đó bị xóa. Hai portal dùng cookie khác nhau nên thao
+Nếu refresh thất bại, cookie của portal đó bị xóa, trừ khi API trả `429` (gọi quá nhanh không có nghĩa là phiên
+hết hạn, nên cookie được giữ lại để lần sau thử tiếp). Hai portal dùng cookie khác nhau nên thao
 tác này không xóa session của portal còn lại.
 
 ### Me và tự refresh
@@ -222,6 +223,11 @@ Ngoài error được chuyển tiếp từ Spring Boot, BFF có thể trả:
 | `405` | `METHOD_NOT_ALLOWED` | Method không được handler hỗ trợ |
 | `502` | `API_UNAVAILABLE` | Next.js không kết nối được tới Spring Boot API |
 | Theo upstream | `INVALID_API_RESPONSE` | API trả response không đọc được theo envelope JSON |
+
+Với response `429 RATE_LIMIT_EXCEEDED` từ API, BFF giữ nguyên `code` nhưng thay `message` bằng câu tiếng Việt có thời
+gian chờ lấy từ header `Retry-After` (`lib/rate-limit.ts`), vì header đó không được chuyển tới trình duyệt. Mọi lời
+gọi API từ server Next đều gửi kèm `X-Forwarded-For` với IP của trình duyệt (`lib/client-ip.ts`), xem
+[RATE_LIMIT.md](../../../api/docs/concepts/RATE_LIMIT.md#4-ip-của-client-và-proxy-tin-cậy).
 
 ## Quy tắc khi mở rộng
 

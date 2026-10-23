@@ -48,7 +48,12 @@ Console cho `SYSTEM_ADMIN`. Trình duyệt không bao giờ giữ JWT; Next.js g
 
 Trạng thái account: `PENDING` → `ACTIVE`, và `LOCKED` / `DISABLED`.
 
-Chi tiết: [api/docs/api/AUTH.md](../api/docs/api/AUTH.md), [apps/web/docs/AUTH.md](../apps/web/docs/AUTH.md).
+Mọi API đều có giới hạn số request theo IP và theo người dùng; sai mật khẩu quá 5 lần trong 15 phút thì phải chờ
+mới đăng nhập lại được (không khoá tài khoản). Admin Console có trang thống kê **Giới hạn truy cập**
+(`GET /api/system/rate-limit/stats`).
+
+Chi tiết: [api/docs/api/AUTH.md](../api/docs/api/AUTH.md), [apps/web/docs/AUTH.md](../apps/web/docs/AUTH.md),
+[RATE_LIMIT.md](../api/docs/concepts/RATE_LIMIT.md).
 
 ---
 
