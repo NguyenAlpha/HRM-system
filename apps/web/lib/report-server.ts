@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import type { ApiEnvelope } from "@/lib/auth/types"
+import { clientIpHeaders } from "@/lib/client-ip"
 
 const apiBaseUrl = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080"
 
@@ -32,7 +33,7 @@ export async function handleReportRequest(
   try {
     const response = await fetch(`${apiBaseUrl}${endpoint}?${query}`, {
       cache: "no-store",
-      headers: { Accept: "application/json", Authorization: `Bearer ${accessToken}` },
+      headers: { Accept: "application/json", Authorization: `Bearer ${accessToken}`, ...await clientIpHeaders() },
     })
     const payload = (await response.json().catch(() =>
       failure("INVALID_API_RESPONSE", "HRM API trả về dữ liệu không hợp lệ"))) as ApiEnvelope<unknown>
