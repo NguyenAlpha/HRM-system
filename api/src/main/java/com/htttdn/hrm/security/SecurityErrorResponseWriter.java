@@ -9,12 +9,12 @@ import com.htttdn.hrm.dto.response.common.ErrorCode;
 
 import jakarta.servlet.http.HttpServletResponse;
 
-final class SecurityErrorResponseWriter {
+public final class SecurityErrorResponseWriter {
 
     private SecurityErrorResponseWriter() {
     }
 
-    static void write(
+    public static void write(
         HttpServletResponse response,
         int status,
         ErrorCode errorCode,
