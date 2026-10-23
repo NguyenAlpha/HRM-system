@@ -911,14 +911,16 @@ export async function handleAccountActivationRequest(request: Request, token: st
   })
 }
 
-// Read-only rate-limit statistics for the admin portal.
-export async function handleRateLimitStatsRequest(): Promise<NextResponse> {
+// Read-only system statistics (rate limits, API traffic) for the admin portal.
+export async function handleSystemStatsRequest(
+  apiPath: "/api/system/rate-limit/stats" | "/api/system/traffic/stats",
+): Promise<NextResponse> {
   const accessToken = (await cookies()).get(PORTAL_CONFIG.admin.accessCookie)?.value
   if (!accessToken) {
     return NextResponse.json(failure("UNAUTHORIZED", "Phiên quản trị đã hết hạn"), { status: 401 })
   }
 
-  const result = await callApi<unknown>("/api/system/rate-limit/stats", {
+  const result = await callApi<unknown>(apiPath, {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   if (!result) return gatewayFailure()

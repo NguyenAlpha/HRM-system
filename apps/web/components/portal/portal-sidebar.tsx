@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
 import {
+  Activity,
   ArrowLeftRight,
   Building2,
   CalendarCheck,
@@ -65,6 +66,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   "/rbac": ShieldCheck,
   "/company-owner": Crown,
   "/rate-limit": Gauge,
+  "/traffic": Activity,
 }
 
 function NavIcon({ href }: { href: string }) {
@@ -92,6 +94,7 @@ export function PortalSidebar({ portal, account, branding }: { portal: Portal; a
   )
   const canReadEmployees = account.permissions.some((permission) => permission.code === "employee.list.read")
   const canReadRateLimit = account.permissions.some((permission) => permission.code === "system.rate_limit.read")
+  const canReadTraffic = account.permissions.some((permission) => permission.code === "system.traffic.read")
   const canReadAccounts = account.permissions.some((permission) => permission.code === "account.read")
   const canUseRoleRequests = account.permissions.some(
     (permission) => permission.code === "role.assignment.request" || permission.code === "role.assignment.approve",
@@ -143,6 +146,7 @@ export function PortalSidebar({ portal, account, branding }: { portal: Portal; a
       [canReadOrganization, "Danh mục tổ chức", "/admin/organization"],
       [canBootstrapCompanyOwner, "Company Owner", "/admin/company-owner"],
       [canReadRateLimit, "Giới hạn truy cập", "/admin/rate-limit"],
+      [canReadTraffic, "Lưu lượng API", "/admin/traffic"],
     ])]
     : [
       group(null, [

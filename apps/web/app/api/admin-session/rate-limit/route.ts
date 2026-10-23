@@ -1,5 +1,5 @@
-import { handleRateLimitStatsRequest } from "@/lib/auth/server"
+import { handleSystemStatsRequest } from "@/lib/auth/server"
 
 export async function GET() {
-  return handleRateLimitStatsRequest()
+  return handleSystemStatsRequest("/api/system/rate-limit/stats")
 }
