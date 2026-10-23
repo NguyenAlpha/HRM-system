@@ -117,6 +117,7 @@ Database chỉ lưu SHA-256 hash của token. Raw token không được ghi vào
 | 400 | `VALIDATION_ERROR` | Mật khẩu không hợp lệ hoặc xác nhận mật khẩu không khớp |
 | 401 | `ACTIVATION_TOKEN_INVALID` | Token không tồn tại, đã dùng, đã thu hồi hoặc account không còn chờ kích hoạt |
 | 401 | `ACTIVATION_TOKEN_EXPIRED` | Token đã hết hạn |
+| 429 | `RATE_LIMIT_EXCEEDED` | Quá 10 lần kích hoạt / phút từ một IP |
 
 ---
 
@@ -223,7 +224,9 @@ Spring Security chuyển role code thành authority có prefix `ROLE_`; ví dụ
 ### Theo dõi đăng nhập sai
 
 - Mỗi lần sai mật khẩu tăng `failedLoginCount` để phục vụ audit.
-- Hệ thống hiện chưa tự động khóa account theo số lần đăng nhập sai.
+- Hệ thống không tự động khóa account theo số lần đăng nhập sai. Thay vào đó, sai mật khẩu quá 5 lần trong 15 phút
+  (mặc định) thì đăng nhập vào tài khoản đó bị trả `429 RATE_LIMIT_EXCEEDED` tới khi hết thời gian chờ, kể cả với mật
+  khẩu đúng. Xem [RATE_LIMIT.md](../concepts/RATE_LIMIT.md#5-chống-dò-mật-khẩu).
 - Đăng nhập thành công đặt bộ đếm về 0 và cập nhật `lastLoginAt`.
 - Account ở trạng thái `LOCKED` do quản trị viên thiết lập vẫn không thể đăng nhập.
 
@@ -236,6 +239,7 @@ Spring Security chuyển role code thành authority có prefix `ROLE_`; ví dụ
 | 401 | `ACCOUNT_PENDING` | Account chưa được kích hoạt |
 | 401 | `ACCOUNT_LOCKED` | Account đang bị quản trị viên khóa |
 | 401 | `ACCOUNT_DISABLED` | Account đã bị vô hiệu hóa |
+| 429 | `RATE_LIMIT_EXCEEDED` | Quá 20 lần đăng nhập / phút từ một IP, hoặc hết lượt sai mật khẩu của tài khoản |
 
 ---
 
@@ -316,6 +320,7 @@ Cấu trúc response giống login, nhưng cả `accessToken` và `refreshToken`
 | 400 | `VALIDATION_ERROR` | Thiếu refresh token hoặc body không hợp lệ |
 | 401 | `REFRESH_TOKEN_INVALID` | Token không tồn tại, đã dùng, đã revoke hoặc account không còn active |
 | 401 | `REFRESH_TOKEN_EXPIRED` | Refresh token đã hết hạn |
+| 429 | `RATE_LIMIT_EXCEEDED` | Quá 30 lần refresh / phút từ một IP |
 
 ---
 
@@ -467,6 +472,7 @@ Sau khi đổi mật khẩu:
 | 400 | `VALIDATION_ERROR` | Field không hợp lệ hoặc mật khẩu mới giống mật khẩu hiện tại |
 | 401 | `INVALID_CREDENTIALS` | Mật khẩu hiện tại không đúng |
 | 401 | `UNAUTHORIZED` | Thiếu access token, access token không hợp lệ, hoặc account trong JWT không còn tồn tại |
+| 429 | `RATE_LIMIT_EXCEEDED` | Quá 5 lần đổi mật khẩu / 10 phút |
 
 ---
 
@@ -496,6 +502,9 @@ $env:JWT_SECRET = [Convert]::ToBase64String($bytes)
 ```
 
 Không commit giá trị `JWT_SECRET` vào repository.
+
+Biến `RATE_LIMIT_*` (giới hạn đăng nhập, refresh, kích hoạt và mọi API) được mô tả ở
+[RATE_LIMIT.md](../concepts/RATE_LIMIT.md#3-cấu-hình).
 
 ---
 

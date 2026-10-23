@@ -27,6 +27,7 @@ Service ném exception; `GlobalExceptionHandler` đổi thành response:
 | `ForbiddenException` | 403 | Không có quyền, ngoài phạm vi dữ liệu |
 | `ResourceNotFoundException` | 404 | Không tìm thấy bản ghi |
 | `ConflictException` | 409 | Trạng thái không cho phép, trùng dữ liệu, đã bị khóa |
+| `RateLimitExceededException` | 429 | Hết lượt sai mật khẩu khi đăng nhập; kèm header `Retry-After` và `RateLimit-*` |
 
 Tất cả kế thừa `AppException` (mang `ErrorCode`, `message`, `field`, `status`). Các exception của framework cũng
 được bắt:
@@ -42,6 +43,7 @@ Tất cả kế thừa `AppException` (mang `ErrorCode`, `message`, `field`, `st
 | `AccessDeniedException` (`@PreAuthorize` không qua) | 403 | `FORBIDDEN` |
 | `OptimisticLockingFailureException` | 409 | `CONCURRENT_MODIFICATION` |
 | `DataIntegrityViolationException` (vi phạm ràng buộc DB) | 409 | `CONFLICT`, ghi log mức WARN |
+| Bị chặn ở `IpRateLimitFilter` / `UserRateLimitFilter` (trước controller) | 429 | `RATE_LIMIT_EXCEEDED`, xem [RATE_LIMIT.md](./RATE_LIMIT.md#6-response-khi-bị-chặn) |
 | Mọi exception khác | 500 | `INTERNAL_ERROR`, ghi log mức ERROR kèm stack trace |
 
 Lỗi xảy ra **trước khi vào controller** (thiếu token, token hết hạn, sai chữ ký) do `RestAuthenticationEntryPoint`
@@ -62,8 +64,9 @@ nêu tên trường; web tự ghép tên trường vào trước.
 2. `VALIDATION_ERROR` có `field` nhưng `message` tiếng Anh: "<Tên trường> chưa hợp lệ. Vui lòng kiểm tra lại."
 3. Còn lại: tra `ERROR_MESSAGES[code]`; không có thì dùng câu mặc định "Không thể hoàn tất thao tác…".
 
-Người dùng **không bao giờ thấy** mã lỗi hay câu tiếng Anh của API. Hiện cả 57 mã trong `ErrorCode` đều có câu
-tiếng Việt trong `ERROR_MESSAGES`.
+Người dùng **không bao giờ thấy** mã lỗi hay câu tiếng Anh của API. Hiện cả 60 mã trong `ErrorCode` đều có câu
+tiếng Việt trong `ERROR_MESSAGES`. Riêng `RATE_LIMIT_EXCEEDED`, BFF thay `message` bằng câu tiếng Việt có thời gian
+chờ lấy từ `Retry-After` ("thử lại sau 8 phút"), nên web hiện câu đó theo bước 1.
 
 Lỗi do BFF tự tạo (không có cookie phiên, đường dẫn không nằm trong whitelist, không gọi được API…) được liệt kê ở
 [apps/web/docs/AUTH.md](../../../apps/web/docs/AUTH.md#error-do-bff-tạo).

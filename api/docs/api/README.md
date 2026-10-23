@@ -19,6 +19,7 @@ năng theo module thay vì theo endpoint, đọc [docs/FEATURES.md](../../../doc
 | [EMPLOYEE.md](EMPLOYEE.md) | `/api/employees/*`, `/api/employees/{employeeId}/assignments`, `/api/employees/{employeeId}/sensitive`, `/api/resignation-requests/*` |
 | [ORGANIZATION.md](ORGANIZATION.md) | `/api/organization-units/*`, `/api/work-locations/*`, `/api/job-positions/*`, `/api/company` |
 | [ORGANIZATION_COMPANY_OWNER_ADMIN.md](ORGANIZATION_COMPANY_OWNER_ADMIN.md) | `/api/system/organization/company-owner` |
+| [RATE_LIMIT.md](../concepts/RATE_LIMIT.md#7-thống-kê) | `/api/system/rate-limit/stats` |
 | [WORK_SHIFT.md](WORK_SHIFT.md) | `/api/work-shifts/*` |
 | [ATTENDANCE.md](ATTENDANCE.md) | `/api/attendance/*`, `/api/leave-requests/*`, `/api/company-holidays/*`, `/api/leave-entitlements/*` |
 | [NOTIFICATIONS.md](NOTIFICATIONS.md) | `/api/notifications/*` |
@@ -36,6 +37,8 @@ thích riêng trong [tài liệu cơ chế](../concepts/README.md).
 ## Quy ước chung
 
 - Actor/audit lấy từ JWT hiện tại; client không gửi account ID người thao tác.
+- Mọi endpoint đều có giới hạn số request; hết lượt thì trả `429 RATE_LIMIT_EXCEEDED` kèm `Retry-After`
+  ([RATE_LIMIT.md](../concepts/RATE_LIMIT.md)).
 - Permission catalog do code sở hữu và chỉ đọc. API role hỗ trợ CRUD custom role và gán permission `DELEGABLE`.
 - Scope gồm `SELF`, `ORG_UNIT`, `LOCATION`, `COMPANY`; quyền UI không thay thế authorization backend.
 - Ngày nghiệp vụ dùng ISO `YYYY-MM-DD`; thời điểm dùng ISO-8601 và lưu UTC.
