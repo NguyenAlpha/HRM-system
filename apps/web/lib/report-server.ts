@@ -4,6 +4,7 @@ import { NextResponse } from "next/server"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import type { ApiEnvelope } from "@/lib/auth/types"
 import { clientIpHeaders } from "@/lib/client-ip"
+import { withRateLimitMessage } from "@/lib/rate-limit"
 
 const apiBaseUrl = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080"
 
@@ -37,7 +38,7 @@ export async function handleReportRequest(
     })
     const payload = (await response.json().catch(() =>
       failure("INVALID_API_RESPONSE", "HRM API trả về dữ liệu không hợp lệ"))) as ApiEnvelope<unknown>
-    return NextResponse.json(payload, {
+    return NextResponse.json(withRateLimitMessage(response, payload), {
       status: response.status,
       headers: { "Cache-Control": "no-store" },
     })
