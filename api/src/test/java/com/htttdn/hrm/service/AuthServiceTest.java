@@ -20,6 +20,7 @@ import com.htttdn.hrm.entity.enums.PermissionModule;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.exception.InvalidTokenException;
 import com.htttdn.hrm.exception.UnauthorizedException;
+import com.htttdn.hrm.ratelimit.LoginAttemptLimiter;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.security.JwtService;
 import com.htttdn.hrm.service.AccountAuthorizationService.AuthorizationSnapshot;
@@ -53,6 +54,9 @@ class AuthServiceTest {
 
     @Mock
     private AccountAuthorizationService accountAuthorizationService;
+
+    @Mock
+    private LoginAttemptLimiter loginAttemptLimiter;
 
     @Test
     void loginReturnsTokenBundleAndResetsFailedAttempts() {
@@ -154,7 +158,8 @@ class AuthServiceTest {
             passwordEncoder,
             jwtService,
             refreshTokenService,
-            accountAuthorizationService
+            accountAuthorizationService,
+            loginAttemptLimiter
         );
     }
 

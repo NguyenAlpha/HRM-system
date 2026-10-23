@@ -23,6 +23,7 @@ import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.InvalidTokenException;
 import com.htttdn.hrm.exception.UnauthorizedException;
+import com.htttdn.hrm.ratelimit.LoginAttemptLimiter;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.security.JwtService;
 import com.htttdn.hrm.service.AccountAuthorizationService.AuthorizationSnapshot;
@@ -36,6 +37,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final AccountAuthorizationService accountAuthorizationService;
+    private final LoginAttemptLimiter loginAttemptLimiter;
 
     public AuthService(
         AccountRepository accountRepository,
@@ -43,7 +45,8 @@ public class AuthService {
         PasswordEncoder passwordEncoder,
         JwtService jwtService,
         RefreshTokenService refreshTokenService,
-        AccountAuthorizationService accountAuthorizationService
+        AccountAuthorizationService accountAuthorizationService,
+        LoginAttemptLimiter loginAttemptLimiter
     ) {
         this.accountRepository = accountRepository;
         this.authenticationManager = authenticationManager;
@@ -51,12 +54,15 @@ public class AuthService {
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
         this.accountAuthorizationService = accountAuthorizationService;
+        this.loginAttemptLimiter = loginAttemptLimiter;
     }
 
     @Transactional(noRollbackFor = UnauthorizedException.class)
     public AuthResponse login(LoginRequest request) {
         String login = normalizeLogin(request.usernameOrEmail());
         Account account = accountRepository.findByLogin(login).orElse(null);
+        String attemptKey = LoginAttemptLimiter.key(account == null ? null : account.getId(), login);
+        loginAttemptLimiter.check(attemptKey);
 
         if (account != null) {
             ensureLoginAllowed(account);
@@ -68,6 +74,7 @@ public class AuthService {
             );
         } catch (AuthenticationException exception) {
             recordFailedAttempt(account);
+            loginAttemptLimiter.recordFailure(attemptKey);
             throw new UnauthorizedException(ErrorCode.INVALID_CREDENTIALS, "Invalid username or password");
         }
 
