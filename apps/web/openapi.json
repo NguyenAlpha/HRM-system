@@ -4408,7 +4408,7 @@
     },
     "/api/system/rate-limit/stats" : {
       "get" : {
-        "operationId" : "stats",
+        "operationId" : "stats_1",
         "responses" : {
           "200" : {
             "content" : {
@@ -4422,6 +4422,24 @@
           }
         },
         "tags" : [ "rate-limit-stats-controller" ]
+      }
+    },
+    "/api/system/traffic/stats" : {
+      "get" : {
+        "operationId" : "stats",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultApiTrafficResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "api-traffic-controller" ]
       }
     },
     "/api/work-locations" : {
@@ -5139,6 +5157,29 @@
           "data" : {
             "anyOf" : [ {
               "$ref" : "#/components/schemas/AccountRoleAssignmentResponse"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
+      "ApiResultApiTrafficResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ApiTrafficResponse"
             }, {
               "type" : "null"
             } ]
@@ -6871,6 +6912,34 @@
         },
         "required" : [ "data", "error", "success" ]
       },
+      "ApiTrafficResponse" : {
+        "type" : "object",
+        "properties" : {
+          "clientErrors" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "endpoints" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/EndpointTraffic"
+            }
+          },
+          "serverErrors" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "startedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "totalRequests" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "clientErrors", "endpoints", "serverErrors", "startedAt", "totalRequests" ]
+      },
       "ApproveOvertimeRequest" : {
         "type" : "object",
         "properties" : {
@@ -8236,6 +8305,34 @@
           }
         },
         "required" : [ "endStatus", "terminationDate", "terminationReason" ]
+      },
+      "EndpointTraffic" : {
+        "type" : "object",
+        "properties" : {
+          "clientErrors" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "meanMillis" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "method" : {
+            "type" : "string"
+          },
+          "requests" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "serverErrors" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "uri" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "clientErrors", "meanMillis", "method", "requests", "serverErrors", "uri" ]
       },
       "ErrorDetail" : {
         "type" : "object",

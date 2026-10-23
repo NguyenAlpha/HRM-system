@@ -64,6 +64,11 @@
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>3.0.3</version>
 		</dependency>
+		<!-- Micrometer times every request (http.server.requests) for the API traffic statistics. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
 		<!-- In-memory token buckets for rate limiting; Caffeine evicts idle buckets. -->
 		<dependency>
 			<groupId>com.bucket4j</groupId>

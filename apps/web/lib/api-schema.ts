@@ -1739,6 +1739,22 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        get: operations["stats_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/traffic/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         get: operations["stats"];
         put?: never;
         post?: never;
@@ -1975,6 +1991,11 @@ export interface components {
         };
         ApiResultAccountRoleAssignmentResponse: {
             data: components["schemas"]["AccountRoleAssignmentResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultApiTrafficResponse: {
+            data: components["schemas"]["ApiTrafficResponse"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
@@ -2358,6 +2379,17 @@ export interface components {
             data: components["schemas"]["WorkShiftResponse"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
+        };
+        ApiTrafficResponse: {
+            /** Format: int64 */
+            clientErrors: number;
+            endpoints: components["schemas"]["EndpointTraffic"][];
+            /** Format: int64 */
+            serverErrors: number;
+            /** Format: date-time */
+            startedAt: string;
+            /** Format: int64 */
+            totalRequests: number;
         };
         ApproveOvertimeRequest: {
             /** Format: int32 */
@@ -2856,6 +2888,18 @@ export interface components {
             /** Format: date */
             terminationDate: string;
             terminationReason: string;
+        };
+        EndpointTraffic: {
+            /** Format: int64 */
+            clientErrors: number;
+            /** Format: double */
+            meanMillis: number;
+            method: string;
+            /** Format: int64 */
+            requests: number;
+            /** Format: int64 */
+            serverErrors: number;
+            uri: string;
         };
         ErrorDetail: {
             code: string;
@@ -7124,7 +7168,7 @@ export interface operations {
             };
         };
     };
-    stats: {
+    stats_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -7140,6 +7184,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultRateLimitStatsResponse"];
+                };
+            };
+        };
+    };
+    stats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultApiTrafficResponse"];
                 };
             };
         };
