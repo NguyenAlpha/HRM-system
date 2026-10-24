@@ -29,7 +29,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import {
   EmptyRow,
-  dateTime,
   monthRange,
   toDays,
   today,
@@ -37,6 +36,7 @@ import {
   workforceApi,
 } from "@/components/workforce/workforce-shared"
 import { apiErrorMessage } from "@/lib/api-helpers"
+import { formatDateTime } from "@/lib/format-date"
 import type { Page } from "@/lib/pagination"
 import { getOrganizationUnitOptions } from "@/lib/reference"
 import {
@@ -417,7 +417,7 @@ function LeaveTable({ leaves, showEmployee = false, emptyText, actions }: {
                 {LEAVE_TYPE_LABELS[leave.leaveType]}
                 <span className="block text-xs text-muted-foreground">{LEAVE_SALARY_TREATMENT_LABELS[leave.salaryTreatment]}</span>
               </TableCell>
-              <TableCell className="text-sm">{dateTime(leave.startAt)} → {dateTime(leave.endAt)}</TableCell>
+              <TableCell className="text-sm">{formatDateTime(leave.startAt)} → {formatDateTime(leave.endAt)}</TableCell>
               <TableCell className="text-right tabular-nums">{hours(leave.requestedMinutes)}</TableCell>
               <TableCell>
                 <Badge variant={STATUS_TONE[leave.status]}>{LEAVE_STATUS_LABELS[leave.status]}</Badge>
@@ -628,7 +628,7 @@ function ReviewDialog({ review, busy, onClose, onSubmit }: {
           <DialogHeader>
             <DialogTitle>{approve ? "Duyệt" : "Từ chối"} đơn #{leave.id}</DialogTitle>
             <DialogDescription>
-              {leave.employeeCode} · {leave.employeeName} · {LEAVE_TYPE_LABELS[leave.leaveType]} · {dateTime(leave.startAt)} → {dateTime(leave.endAt)}
+              {leave.employeeCode} · {leave.employeeName} · {LEAVE_TYPE_LABELS[leave.leaveType]} · {formatDateTime(leave.startAt)} → {formatDateTime(leave.endAt)}
               {" "}· {leave.requestedMinutes} phút. {leave.reason}
             </DialogDescription>
           </DialogHeader>

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react"
 
 import { ErrorAlert } from "@/components/common/list-controls"
 import { ALL_OPTION, FilterSelect, ListToolbar, useDebouncedValue } from "@/components/common/list-filters"
-import { formatDate } from "@/components/employee/employee-detail-page"
+import { formatDate } from "@/lib/format-date"
 import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import { ExportButton, MonthPicker, StatTile, downloadCsv } from "@/components/report/report-shared"

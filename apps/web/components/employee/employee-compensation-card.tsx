@@ -32,13 +32,14 @@ import {
 import { apiErrorMessage } from "@/lib/api-helpers"
 import type { Page } from "@/lib/pagination"
 import type { PayrollProfile, Payslip, SalaryHistory, TaxDependent, WorkforceBody } from "@/lib/workforce"
+import { formatDate, formatDateRange } from "@/lib/format-date"
 
 type Form = "salary" | "profile" | "dependent"
 
 const REGION_ITEMS = { 1: "Vùng I", 2: "Vùng II", 3: "Vùng III", 4: "Vùng IV" }
 
 const period = (row: { effectiveFrom: string; effectiveTo: string | null }) =>
-  `${row.effectiveFrom} → ${row.effectiveTo ?? "hiện tại"}`
+  formatDateRange(row.effectiveFrom, row.effectiveTo, "hiện tại")
 
 /**
  * Salary, insurance and tax deductions of one employee, plus their payslips: the inputs HR keeps
@@ -404,7 +405,7 @@ function EndDependentDialog({ dependent, busy, onClose, onSubmit }: {
   const [effectiveTo, setEffectiveTo] = useState(today())
   return (
     <FormDialog title={`Kết thúc giảm trừ cho ${dependent.fullName}`}
-      description={`Ngày cuối cùng còn được giảm trừ; không được trước ${dependent.effectiveFrom}.`} busy={busy}
+      description={`Ngày cuối cùng còn được giảm trừ; không được trước ${formatDate(dependent.effectiveFrom)}.`} busy={busy}
       onClose={onClose} onSubmit={() => onSubmit(effectiveTo)}>
       <div className="grid gap-1.5">
         <Label htmlFor="dependent-end">Ngày kết thúc</Label>

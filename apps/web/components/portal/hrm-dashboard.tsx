@@ -12,7 +12,7 @@ import {
   Wallet,
 } from "lucide-react"
 
-import { formatDate } from "@/components/employee/employee-detail-page"
+import { formatDate } from "@/lib/format-date"
 import { PeriodStatusBadge, periodLabel } from "@/components/payroll/payroll-shared"
 import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"

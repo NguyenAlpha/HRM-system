@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import { changeAccountStatus, deleteAccount, issueAccountInvitation, type Account, type AccountInvitation } from "@/lib/account"
 import type { AccountSummary, Portal } from "@/lib/auth/types"
+import { formatDateTime } from "@/lib/format-date"
 
 export const ACCOUNT_STATUS_LABELS: Record<Account["status"], string> = {
   PENDING: "Chờ kích hoạt",
@@ -137,10 +138,6 @@ export function availableAccountActions(account: Account, viewer: AccountViewer)
   if (viewer.canManage && !guarded && !self && (account.status === "ACTIVE" || account.status === "LOCKED")) actions.push("suspend")
   if (viewer.canManage && !guarded && !self) actions.push("delete")
   return actions
-}
-
-export function formatDateTime(value: string | null) {
-  return value ? new Date(value).toLocaleString("vi-VN") : "—"
 }
 
 /** Confirms one lifecycle action; a resend or password reset then shows the new one-time activation token. */

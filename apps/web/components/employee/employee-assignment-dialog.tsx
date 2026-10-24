@@ -53,6 +53,7 @@ import {
   type WorkLocationOption,
   type WorkShiftOption,
 } from "@/lib/reference"
+import { formatDate } from "@/lib/format-date"
 
 const NONE = "NONE"
 
@@ -225,7 +226,7 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
         } satisfies AssignEmployeeInput,
       )
       toast.success(`Đã cập nhật phân công cho ${employee.fullName}`, {
-        description: `Hiệu lực từ ${assignment.effectiveFrom}.`,
+        description: `Hiệu lực từ ${formatDate(assignment.effectiveFrom)}.`,
       })
       onClose()
       onAssigned()

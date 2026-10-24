@@ -19,7 +19,6 @@ import {
   AccountActionDialog,
   accountViewer,
   availableAccountActions,
-  formatDateTime,
   isGuardedAccount,
   type AccountActionKind,
 } from "@/components/account/account-actions"
@@ -35,6 +34,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import { getAccount, getAccountPermissions, type Account, type AccountPermissionGrant } from "@/lib/account"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
+import { formatDateTime } from "@/lib/format-date"
 import { listAccountRoleAssignments, type AccountRoleAssignment } from "@/lib/role-assignment"
 
 function InfoField({ label, children }: { label: string; children: React.ReactNode }) {

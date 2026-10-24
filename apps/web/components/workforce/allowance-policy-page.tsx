@@ -37,6 +37,7 @@ import type {
   SeniorityAllowance,
   WorkforceBody,
 } from "@/lib/workforce"
+import { formatDateRange } from "@/lib/format-date"
 
 type Run = (success: string, action: () => Promise<unknown>) => Promise<boolean>
 type Period = { effectiveFrom: string; effectiveTo: string | null }
@@ -49,7 +50,7 @@ function PeriodBadge({ period }: { period: Period }) {
   return <Badge variant="secondary">Đang áp dụng</Badge>
 }
 
-const periodText = (period: Period) => `${period.effectiveFrom} → ${period.effectiveTo ?? "nay"}`
+const periodText = (period: Period) => formatDateRange(period.effectiveFrom, period.effectiveTo)
 
 const yearsText = (rule: Pick<SeniorityAllowance, "minYears" | "maxYears">) =>
   rule.maxYears === null ? `Từ ${rule.minYears} năm` : `${rule.minYears} – dưới ${rule.maxYears} năm`

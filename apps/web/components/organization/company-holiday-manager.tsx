@@ -32,12 +32,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { EmptyRow, today, workforceApi } from "@/components/workforce/workforce-shared"
 import { apiErrorMessage } from "@/lib/api-helpers"
 import type { CompanyHoliday, WorkforceBody } from "@/lib/workforce"
+import { formatDate } from "@/lib/format-date"
 
 const WEEKDAY_NAMES = ["Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"]
 
 const weekdayName = (date: string) => WEEKDAY_NAMES[new Date(`${date}T00:00:00Z`).getUTCDay()]
-
-const displayDate = (date: string) => `${date.slice(8, 10)}/${date.slice(5, 7)}/${date.slice(0, 4)}`
 
 /** Company holidays of one year. Days off that count as paid and not as work days in attendance and payroll. */
 export function CompanyHolidayManager({ canManage }: { canManage: boolean }) {
@@ -135,7 +134,7 @@ export function CompanyHolidayManager({ canManage }: { canManage: boolean }) {
             )}
             {!loading && holidays.map((holiday) => (
               <TableRow key={holiday.id}>
-                <TableCell className="font-medium tabular-nums">{displayDate(holiday.holidayDate)}</TableCell>
+                <TableCell className="font-medium tabular-nums">{formatDate(holiday.holidayDate)}</TableCell>
                 <TableCell className="text-muted-foreground">{weekdayName(holiday.holidayDate)}</TableCell>
                 <TableCell>{holiday.name}</TableCell>
                 {canManage && (
@@ -163,7 +162,7 @@ export function CompanyHolidayManager({ canManage }: { canManage: boolean }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Xóa ngày lễ {toDelete?.name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ngày {toDelete && displayDate(toDelete.holidayDate)} sẽ trở lại là ngày làm việc bình thường.
+              Ngày {toDelete && formatDate(toDelete.holidayDate)} sẽ trở lại là ngày làm việc bình thường.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

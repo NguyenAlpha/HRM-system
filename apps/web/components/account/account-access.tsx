@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { AccountPermissionGrant } from "@/lib/account"
 import { ROLE_SCOPE_LABELS, type AccountRoleAssignment } from "@/lib/role-assignment"
+import { formatDate } from "@/lib/format-date"
 
 export type AssignmentState = "active" | "scheduled" | "expired" | "revoked"
 
@@ -53,7 +54,7 @@ export function scopeLabel(assignment: AccountRoleAssignment) {
 }
 
 export function validityLabel(assignment: AccountRoleAssignment) {
-  return `từ ${assignment.effectiveFrom}${assignment.effectiveTo ? ` đến ${assignment.effectiveTo}` : ", không thời hạn"}`
+  return `từ ${formatDate(assignment.effectiveFrom)}${assignment.effectiveTo ? ` đến ${formatDate(assignment.effectiveTo)}` : ", không thời hạn"}`
 }
 
 /** Today's permissions grouped by module, each tagged with the roles (or overrides) that give it. */

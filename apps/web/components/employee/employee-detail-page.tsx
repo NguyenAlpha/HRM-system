@@ -46,18 +46,13 @@ import {
   type EmployeeDetail,
 } from "@/lib/employee"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
+import { formatDate } from "@/lib/format-date"
 
 const ACCOUNT_STATUS_LABELS: Record<string, string> = {
   PENDING: "Chờ kích hoạt",
   ACTIVE: "Đang hoạt động",
   LOCKED: "Đang khóa",
   DISABLED: "Đã vô hiệu hóa",
-}
-
-export function formatDate(value: string | null | undefined) {
-  if (!value) return "—"
-  const [year, month, day] = value.split("-")
-  return year && month && day ? `${day}/${month}/${year}` : value
 }
 
 function todayIsoDate() {

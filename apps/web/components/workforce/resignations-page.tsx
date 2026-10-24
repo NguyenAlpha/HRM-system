@@ -6,7 +6,7 @@ import { Ban, Check, FileX2, Loader2, RefreshCw, X } from "lucide-react"
 import { ErrorAlert, Pagination } from "@/components/common/list-controls"
 import { ALL_OPTION, FilterSelect, ListToolbar, useDebouncedValue } from "@/components/common/list-filters"
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
-import { formatDate } from "@/components/employee/employee-detail-page"
+import { formatDate, formatDateTime } from "@/lib/format-date"
 import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import { Badge } from "@/components/ui/badge"
@@ -26,7 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { EmptyRow, dateTime, today, useWorkforceAction, workforceApi } from "@/components/workforce/workforce-shared"
+import { EmptyRow, today, useWorkforceAction, workforceApi } from "@/components/workforce/workforce-shared"
 import { apiErrorMessage } from "@/lib/api-helpers"
 import type { Page } from "@/lib/pagination"
 import { getOrganizationUnitOptions } from "@/lib/reference"
@@ -310,7 +310,7 @@ function ResignationTable({ requests, showEmployee = false, emptyText, actions }
                 {request.reviewComment && <span className="block max-w-56 text-xs text-muted-foreground">{request.reviewComment}</span>}
               </TableCell>
               <TableCell className="text-sm">{request.approverEmployeeName}</TableCell>
-              <TableCell className="text-sm">{dateTime(request.createdAt)}</TableCell>
+              <TableCell className="text-sm">{formatDateTime(request.createdAt)}</TableCell>
               <RowActionsCell label={`đơn #${request.id}`}>{menu(request)}</RowActionsCell>
             </TableRow>
           ))}

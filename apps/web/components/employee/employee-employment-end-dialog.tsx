@@ -36,6 +36,7 @@ import {
   isSessionExpired,
   type EmployeeDetail,
 } from "@/lib/employee"
+import { formatDate } from "@/lib/format-date"
 
 const employmentEndSchema = z.object({
   endStatus: z.enum(EMPLOYMENT_END_STATUSES),
@@ -135,7 +136,7 @@ export function EmployeeEmploymentEndDialog({ employee, onClose, onCompleted, on
                 <p className="text-sm text-destructive">{errors.terminationDate.message}</p>
               )}
               <p className="text-xs text-muted-foreground">
-                Không được trước ngày vào làm {employee.hireDate}.
+                Không được trước ngày vào làm {formatDate(employee.hireDate)}.
               </p>
             </div>
 
