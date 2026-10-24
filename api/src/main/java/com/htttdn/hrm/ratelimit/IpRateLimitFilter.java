@@ -44,8 +44,13 @@ public class IpRateLimitFilter extends OncePerRequestFilter {
         HttpServletResponse response,
         FilterChain chain
     ) throws ServletException, IOException {
+        RateLimitPolicy policy = policy(request);
+        if (!rateLimitService.enabled(policy)) {
+            chain.doFilter(request, response);
+            return;
+        }
         String key = ClientIpResolver.bucketKey(clientIpResolver.resolve(request));
-        RateLimitDecision decision = rateLimitService.tryConsume(policy(request), key);
+        RateLimitDecision decision = rateLimitService.tryConsume(policy, key);
         if (!decision.allowed()) {
             RateLimitResponses.writeTooManyRequests(response, decision);
             return;

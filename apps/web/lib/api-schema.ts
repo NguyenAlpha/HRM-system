@@ -1732,6 +1732,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/system/rate-limit/policies/{policy}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updatePolicy"];
+        post?: never;
+        delete: operations["restorePolicyDefault"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/system/rate-limit/stats": {
         parameters: {
             query?: never;
@@ -3367,6 +3383,13 @@ export interface components {
             allowed: number;
             /** Format: int64 */
             blocked: number;
+            canDisable: boolean;
+            customized: boolean;
+            /** Format: int64 */
+            defaultMaxRequests: number;
+            /** Format: int64 */
+            defaultWindowSeconds: number;
+            enabled: boolean;
             /** Format: int64 */
             maxRequests: number;
             policy: string;
@@ -3427,6 +3450,13 @@ export interface components {
             unemploymentInsurance: boolean;
             /** Format: int32 */
             wageRegion: number;
+        };
+        RateLimitPolicyRequest: {
+            enabled: boolean;
+            /** Format: int32 */
+            maxRequests: number;
+            /** Format: int32 */
+            windowSeconds: number;
         };
         RateLimitStatsResponse: {
             enabled: boolean;
@@ -7164,6 +7194,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultOrganizationCompanyOwnerProvisioningResponse"];
+                };
+            };
+        };
+    };
+    updatePolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RateLimitPolicyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultRateLimitStatsResponse"];
+                };
+            };
+        };
+    };
+    restorePolicyDefault: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultRateLimitStatsResponse"];
                 };
             };
         };

@@ -1,27 +1,57 @@
 package com.htttdn.hrm.controller;
 
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.htttdn.hrm.dto.request.ratelimit.RateLimitPolicyRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.ratelimit.RateLimitStatsResponse;
 import com.htttdn.hrm.ratelimit.RateLimitService;
+import com.htttdn.hrm.service.RateLimitSettingsService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/system/rate-limit")
 public class RateLimitStatsController {
 
     private final RateLimitService rateLimitService;
+    private final RateLimitSettingsService rateLimitSettingsService;
 
-    public RateLimitStatsController(RateLimitService rateLimitService) {
+    public RateLimitStatsController(
+        RateLimitService rateLimitService,
+        RateLimitSettingsService rateLimitSettingsService
+    ) {
         this.rateLimitService = rateLimitService;
+        this.rateLimitSettingsService = rateLimitSettingsService;
     }
 
     @GetMapping("/stats")
     @PreAuthorize("hasAuthority('system.rate_limit.read')")
     public ApiResult<RateLimitStatsResponse> stats() {
         return ApiResult.ok(rateLimitService.stats());
+    }
+
+    /** Replaces a policy's quota and on/off state; {@code policy} is its key, e.g. {@code heavy-write}. */
+    @PutMapping("/policies/{policy}")
+    @PreAuthorize("hasAuthority('system.rate_limit.manage')")
+    public ApiResult<RateLimitStatsResponse> updatePolicy(
+        @PathVariable String policy,
+        @Valid @RequestBody RateLimitPolicyRequest request
+    ) {
+        return ApiResult.ok(rateLimitSettingsService.update(policy, request));
+    }
+
+    /** Back to the application.properties quota, switched on. */
+    @DeleteMapping("/policies/{policy}")
+    @PreAuthorize("hasAuthority('system.rate_limit.manage')")
+    public ApiResult<RateLimitStatsResponse> restorePolicyDefault(@PathVariable String policy) {
+        return ApiResult.ok(rateLimitSettingsService.restoreDefault(policy));
     }
 }

@@ -1,5 +1,8 @@
 package com.htttdn.hrm.ratelimit;
 
+import java.util.Arrays;
+import java.util.Optional;
+
 /**
  * One quota. {@link #key()} is the name used in {@code rate-limit.policies.<key>.*} and in the
  * statistics; {@link #scope()} says what a bucket is counted by.
@@ -32,5 +35,14 @@ public enum RateLimitPolicy {
 
     public Scope scope() {
         return scope;
+    }
+
+    /** Administrators may switch a policy off, except the one guarding against password guessing. */
+    public boolean canDisable() {
+        return this != LOGIN_FAILURE;
+    }
+
+    public static Optional<RateLimitPolicy> fromKey(String key) {
+        return Arrays.stream(values()).filter(policy -> policy.key.equals(key)).findFirst();
     }
 }
