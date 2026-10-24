@@ -95,7 +95,7 @@ Endpoint này chỉ tạo `Employee` và `EmployeeAssignment`:
 | `institution` | ❌ | Tối đa 200 ký tự |
 | `graduationYear` | ❌ | Số nguyên 16-bit |
 | `workEmail` | ❌ | Email hợp lệ, tối đa 100 ký tự và duy nhất; được chuẩn hóa chữ thường |
-| `phone` | ❌ | Tối đa 20 ký tự |
+| `phone` | ❌ | 8–11 chữ số, có thể bắt đầu bằng `+` (ví dụ `0912345678`, `+84912345678`) |
 | `hireDate` | ✅ | Ngày ISO `YYYY-MM-DD` |
 
 Các dữ liệu nhạy cảm như CCCD, email cá nhân, địa chỉ, mã số thuế và thông tin ngân hàng không được nhận tại endpoint này. Chúng được nhập qua `PUT /api/employees/{employeeId}/sensitive` với permission `employee.sensitive.manage`.
@@ -428,7 +428,7 @@ Cập nhật các thông tin hồ sơ thông thường được lưu trực ti�
 | `institution` | `institution` | ❌ | Tối đa 200 ký tự; `null` để xóa |
 | `graduationYear` | `graduation_year` | ❌ | Số nguyên 16-bit; `null` để xóa |
 | `workEmail` | `work_email` | ❌ | Email hợp lệ, tối đa 100 ký tự và duy nhất; `null` để xóa nếu employee chưa có account |
-| `phone` | `phone` | ❌ | Tối đa 20 ký tự; `null` để xóa |
+| `phone` | `phone` | ❌ | 8–11 chữ số, có thể bắt đầu bằng `+` (ví dụ `0912345678`, `+84912345678`); `null` để xóa |
 
 Đây là API `PUT`, vì vậy client phải gửi `fullName`; các field tùy chọn không truyền hoặc truyền `null` sẽ được cập nhật thành `null`.
 
