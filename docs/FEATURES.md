@@ -112,7 +112,7 @@ Ma trận đầy đủ role → permission: [api/docs/api/RBAC.md](../api/docs/a
 | Cập nhật hồ sơ | `PUT /api/employees/{id}` | `employee.update` |
 | Nhân viên tự sửa liên lạc và học vấn của mình | `PUT /api/employees/me/profile` | `profile.self.update` |
 | Xác nhận hết thử việc | `POST /api/employees/{id}/confirm` | `employee.probation.confirm` |
-| Kết thúc làm việc: nghỉ việc, chấm dứt hợp đồng, nghỉ hưu | `POST /api/employees/{id}/employment-end` | `employee.lifecycle.manage` |
+| Kết thúc làm việc: nghỉ việc, chấm dứt hợp đồng, nghỉ hưu; lên lịch nếu ngày làm việc cuối sau hôm nay, hủy lịch | `POST`, `DELETE /api/employees/{id}/employment-end` | `employee.lifecycle.manage` |
 | Nộp đơn nghỉ việc, rút đơn chờ duyệt | `POST /api/resignation-requests`, `/{id}/cancel` | `request.self.create`, `request.self.cancel` |
 | Duyệt (có thể đổi ngày làm việc cuối), từ chối đơn nghỉ việc | `POST /api/resignation-requests/{id}/approve`, `/reject` | Người duyệt theo tuyến quản lý |
 | Xóa mềm hồ sơ tạo nhầm | `POST /api/employees/{id}/soft-delete` | `employee.delete` |
@@ -126,6 +126,8 @@ Trạng thái lao động: `PROBATION`, `ACTIVE`, `RESIGNED`, `TERMINATED`, `RET
 `ACTIVE` kết thúc sang một trong ba trạng thái `RESIGNED`, `TERMINATED`, `RETIRED` qua `employment-end`.
 Đơn nghỉ việc đã duyệt kết thúc hợp đồng (`RESIGNED`) tự động vào ngày sau ngày làm việc cuối, bằng
 job chạy lúc khởi động và 00:10 mỗi đêm; trước đó nhân viên vẫn đăng nhập và chấm công bình thường.
+HR kết thúc làm việc với ngày làm việc cuối sau hôm nay cũng chỉ lên lịch, và job cùng giờ kết thúc
+khi ngày đó đã qua.
 
 Phân công giữ cả đơn vị, địa điểm, vị trí, ca làm và người quản lý trực tiếp, có thời gian hiệu
 lực để tính lại đúng dữ liệu lịch sử.

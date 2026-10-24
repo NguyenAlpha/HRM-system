@@ -46,12 +46,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 class EmployeeServiceTest {
+
+    /** Noon of 2026-10-24 in Vietnam: "today" for every test. */
+    private static final Clock TODAY = Clock.fixed(Instant.parse("2026-10-24T05:00:00Z"), ClockConfig.BUSINESS_ZONE);
 
     @Mock private EmployeeRepository employeeRepository;
     @Mock private EmployeeAssignmentRepository employeeAssignmentRepository;
@@ -219,7 +223,7 @@ class EmployeeServiceTest {
         Employee employee = employee(1L);
         EmployeeAssignment assignment = EmployeeAssignment.builder().effectiveFrom(LocalDate.of(2025, 1, 1)).build();
         Account account = Account.builder().id(5L).status(AccountStatus.ACTIVE).build();
-        LocalDate endDate = LocalDate.of(2026, 10, 31);
+        LocalDate endDate = LocalDate.of(2026, 10, 24);
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
         when(employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(1L))
             .thenReturn(Optional.of(assignment));
@@ -239,7 +243,7 @@ class EmployeeServiceTest {
     void endEmploymentRevokesTheBusinessRolesStillHeld() {
         Employee employee = employee(1L);
         Account account = Account.builder().id(5L).status(AccountStatus.ACTIVE).build();
-        LocalDate endDate = LocalDate.of(2026, 10, 31);
+        LocalDate endDate = LocalDate.of(2026, 10, 20);
         AccountRoleAssignment current = roleAssignment(RoleGrantPolicy.HR_ASSIGNABLE, LocalDate.of(2025, 1, 1), null);
         AccountRoleAssignment director = roleAssignment(RoleGrantPolicy.OWNER_APPROVAL, LocalDate.of(2025, 1, 1), LocalDate.of(2027, 1, 1));
         AccountRoleAssignment future = roleAssignment(RoleGrantPolicy.HR_ASSIGNABLE, LocalDate.of(2026, 12, 1), null);
@@ -266,6 +270,113 @@ class EmployeeServiceTest {
         assertNull(ended.getRevokedAt());
         assertNull(automatic.getRevokedAt());
         assertNull(systemOnly.getRevokedAt());
+    }
+
+    @Test
+    void aLaterLastWorkingDayOnlySchedulesTheEnd() {
+        Employee employee = employee(1L);
+        EmployeeAssignment assignment = EmployeeAssignment.builder().effectiveFrom(LocalDate.of(2025, 1, 1)).build();
+        Account account = Account.builder().id(5L).status(AccountStatus.ACTIVE).build();
+        LocalDate endDate = LocalDate.of(2026, 10, 27);
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(1L))
+            .thenReturn(Optional.of(assignment));
+        Account actor = stubActor();
+
+        var result = service().endEmployment(1L, EmploymentStatus.TERMINATED, endDate, "Reason");
+
+        assertEquals(EmploymentStatus.ACTIVE, employee.getEmploymentStatus());
+        assertEquals(endDate, employee.getTerminationDate());
+        assertEquals("Reason", employee.getTerminationReason());
+        assertEquals(EmploymentStatus.TERMINATED, employee.getScheduledEndStatus());
+        assertEquals(actor, employee.getScheduledEndByAccount());
+        assertEquals(EmploymentStatus.TERMINATED, result.scheduledEndStatus());
+        // Still working until then.
+        assertNull(assignment.getEffectiveTo());
+        assertEquals(AccountStatus.ACTIVE, account.getStatus());
+        verify(refreshTokenService, never()).revokeAll(any());
+    }
+
+    @Test
+    void aScheduledEndMustNotFallBeforeTheCurrentAssignment() {
+        Employee employee = employee(1L);
+        EmployeeAssignment assignment = EmployeeAssignment.builder().effectiveFrom(LocalDate.of(2026, 11, 1)).build();
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(1L))
+            .thenReturn(Optional.of(assignment));
+        stubActor();
+
+        BusinessException exception = assertThrows(BusinessException.class,
+            () -> service().endEmployment(1L, EmploymentStatus.RESIGNED, LocalDate.of(2026, 10, 27), "Reason"));
+
+        assertEquals("terminationDate", exception.getField());
+        assertNull(employee.getScheduledEndStatus());
+    }
+
+    @Test
+    void theDueScheduledEndClosesAccessAsWhoeverScheduledIt() {
+        Employee employee = employee(1L);
+        Account scheduler = Account.builder().id(9L).build();
+        employee.setTerminationDate(LocalDate.of(2026, 10, 23));
+        employee.setTerminationReason("Hết hợp đồng");
+        employee.setScheduledEndStatus(EmploymentStatus.RETIRED);
+        employee.setScheduledEndByAccount(scheduler);
+        EmployeeAssignment assignment = EmployeeAssignment.builder().effectiveFrom(LocalDate.of(2025, 1, 1)).build();
+        Account account = Account.builder().id(5L).status(AccountStatus.ACTIVE).build();
+        AccountRoleAssignment role = roleAssignment(RoleGrantPolicy.HR_ASSIGNABLE, LocalDate.of(2025, 1, 1), null);
+        when(employeeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(employee));
+        when(employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(1L))
+            .thenReturn(Optional.of(assignment));
+        when(accountRepository.findByEmployeeId(1L)).thenReturn(Optional.of(account));
+        when(accountRoleAssignmentRepository.findByAccountIdAndRevokedAtIsNull(5L)).thenReturn(List.of(role));
+
+        service().completeScheduledEnd(1L);
+
+        assertEquals(EmploymentStatus.RETIRED, employee.getEmploymentStatus());
+        assertEquals(LocalDate.of(2026, 10, 23), employee.getTerminationDate());
+        assertNull(employee.getScheduledEndStatus());
+        assertNull(employee.getScheduledEndByAccount());
+        assertEquals(LocalDate.of(2026, 10, 23), assignment.getEffectiveTo());
+        assertEquals(AccountStatus.DISABLED, account.getStatus());
+        assertEquals(scheduler, role.getRevokedByAccount());
+        verify(refreshTokenService).revokeAll(5L);
+    }
+
+    @Test
+    void aCancelledScheduleIsSkippedByTheJob() {
+        Employee employee = employee(1L);
+        when(employeeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(employee));
+
+        service().completeScheduledEnd(1L);
+
+        assertEquals(EmploymentStatus.ACTIVE, employee.getEmploymentStatus());
+        verify(refreshTokenService, never()).revokeAll(any());
+    }
+
+    @Test
+    void cancellingTheScheduleKeepsTheEmployeeWorking() {
+        Employee employee = employee(1L);
+        employee.setTerminationDate(LocalDate.of(2026, 10, 27));
+        employee.setTerminationReason("Reason");
+        employee.setScheduledEndStatus(EmploymentStatus.RESIGNED);
+        employee.setScheduledEndByAccount(Account.builder().id(9L).build());
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+
+        var result = service().cancelScheduledEnd(1L);
+
+        assertNull(employee.getTerminationDate());
+        assertNull(employee.getTerminationReason());
+        assertNull(employee.getScheduledEndStatus());
+        assertNull(employee.getScheduledEndByAccount());
+        assertNull(result.scheduledEndStatus());
+        verify(employeeAccessScopeService).requireEmployeeAccess(1L, "employee.lifecycle.manage");
+    }
+
+    @Test
+    void cancellingWithoutAScheduleIsAConflict() {
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee(1L)));
+
+        assertThrows(ConflictException.class, () -> service().cancelScheduledEnd(1L));
     }
 
     @ParameterizedTest
@@ -319,7 +430,7 @@ class EmployeeServiceTest {
             employeeAccessScopeService,
             employeeAssignmentService,
             employeeCodeGenerator,
-            Clock.system(ClockConfig.BUSINESS_ZONE)
+            TODAY
         );
     }
 }

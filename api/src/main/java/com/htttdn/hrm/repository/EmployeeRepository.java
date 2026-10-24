@@ -38,6 +38,15 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
     @Query("SELECT employee FROM Employee employee WHERE employee.id = :id AND employee.deletedAt IS NULL")
     Optional<Employee> findByIdForUpdate(@Param("id") Long id);
 
+    /** Employees whose scheduled end is due: their last working day is before {@code today}. */
+    @Query("""
+        SELECT employee.id FROM Employee employee
+        WHERE employee.deletedAt IS NULL
+          AND employee.scheduledEndStatus IS NOT NULL
+          AND employee.terminationDate < :today
+        """)
+    List<Long> findScheduledEndsDue(@Param("today") LocalDate today);
+
     Optional<Employee> findByWorkEmail(String workEmail);
 
     boolean existsByEmployeeCode(String employeeCode);
