@@ -115,6 +115,8 @@ public class EmployeeAssignmentService {
             );
         }
         validateEffectiveFrom(employee, request.effectiveFrom(), "effectiveFrom");
+        // A scheduled end leaves the employee working until the last working day, not after it.
+        EmploymentEndGuard.requireNotAfterEnd(employee, request.effectiveFrom(), "effectiveFrom");
         validateManagerIsNotSelf(employeeId, request.managerEmployeeId());
         AssignmentResources resources = resolveResources(request, EMPLOYEE_ASSIGNMENT_MANAGE);
         invalidateAffectedPayroll(request.effectiveFrom());

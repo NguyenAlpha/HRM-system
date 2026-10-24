@@ -1612,9 +1612,10 @@ vào file của domain tương ứng thay vì thêm file vá. Mỗi khi file bas
 | `V10__notification_decisions.sql` | Bổ sung loại thông báo duyệt và từ chối đơn nghỉ | 6 |
 | `V11__rate_limit_settings.sql` | `rate_limit_policy_settings`: hạn mức rate-limit do quản trị viên chỉnh | 5 |
 | `V12__scheduled_employment_end.sql` | `employees.scheduled_end_status`, `scheduled_end_by_account_id`: lịch kết thúc làm việc chờ ngày làm việc cuối qua | 3 |
+| `V13__close_payroll_inputs_of_ended_employments.sql` | Đóng lương cơ bản, hồ sơ bảo hiểm/thuế và người phụ thuộc còn chạy quá ngày làm việc cuối của người đã nghỉ | 4, 8 |
 
 `V8` nạp dữ liệu pháp lý dùng chung; `V9` bổ sung schema thông báo, `V10` mở rộng loại thông báo, `V11` thêm bảng
-hạn mức rate-limit và `V12` thêm lịch kết thúc làm việc. Danh mục permission, role,
+hạn mức rate-limit, `V12` thêm lịch kết thúc làm việc và `V13` đóng dữ liệu lương của người đã nghỉ. Danh mục permission, role,
 mapping, cơ cấu tổ chức, ca làm việc và tài khoản mẫu do các seeder trong
 `api/src/main/java/com/htttdn/hrm/config/seed/` tạo.
 
