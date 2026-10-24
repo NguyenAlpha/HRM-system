@@ -1915,6 +1915,31 @@
       }
     },
     "/api/employees/{employeeId}/employment-end" : {
+      "delete" : {
+        "operationId" : "cancelScheduledEnd",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "employeeId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultEmployeeDetailResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "employee-controller" ]
+      },
       "post" : {
         "operationId" : "endEmployment",
         "parameters" : [ {
@@ -8381,6 +8406,10 @@
           "phone" : {
             "type" : [ "string", "null" ]
           },
+          "scheduledEndStatus" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "PROBATION", "ACTIVE", "RESIGNED", "TERMINATED", "RETIRED", null ]
+          },
           "terminationDate" : {
             "type" : [ "string", "null" ],
             "format" : "date"
@@ -8389,7 +8418,7 @@
             "type" : [ "string", "null" ]
           }
         },
-        "required" : [ "account", "currentAssignment", "dateOfBirth", "employeeCode", "employmentStatus", "fullName", "gender", "graduationYear", "highestEducationLevel", "hireDate", "id", "institution", "major", "phone", "terminationDate", "workEmail" ]
+        "required" : [ "account", "currentAssignment", "dateOfBirth", "employeeCode", "employmentStatus", "fullName", "gender", "graduationYear", "highestEducationLevel", "hireDate", "id", "institution", "major", "phone", "scheduledEndStatus", "terminationDate", "workEmail" ]
       },
       "EmployeeSensitiveResponse" : {
         "type" : "object",
