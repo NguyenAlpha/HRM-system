@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +62,9 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 @Service
 @Transactional
 public class PayrollService {
+
+    /** Dates written into payslip lines read like the rest of the app: 24/10/2026. */
+    private static final DateTimeFormatter DISPLAY_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final PayrollPeriodRepository payrollPeriodRepository;
     private final PayslipRepository payslipRepository;
@@ -344,7 +348,7 @@ public class PayrollService {
             items.add(PayslipItem.builder()
                 .componentType(PayslipItemType.OVERTIME)
                 .componentCode("OVERTIME_" + record.getWorkDate())
-                .description("Tăng ca ngày " + record.getWorkDate())
+                .description("Tăng ca ngày " + record.getWorkDate().format(DISPLAY_DATE))
                 .quantity(hours)
                 .unitRate(overtimeHourlyRate)
                 .multiplier(record.getOvertimeMultiplier())
