@@ -20,7 +20,7 @@ năng theo module thay vì theo endpoint, đọc [docs/FEATURES.md](../../../doc
 | [ORGANIZATION.md](ORGANIZATION.md) | `/api/organization-units/*`, `/api/work-locations/*`, `/api/job-positions/*`, `/api/company` |
 | [ORGANIZATION_COMPANY_OWNER_ADMIN.md](ORGANIZATION_COMPANY_OWNER_ADMIN.md) | `/api/system/organization/company-owner` |
 | [RATE_LIMIT.md](../concepts/RATE_LIMIT.md#7-thống-kê) | `/api/system/rate-limit/stats`, `/api/system/rate-limit/timeline`, `/api/system/rate-limit/policies/{policy}` |
-| [API_TRAFFIC.md](../concepts/API_TRAFFIC.md#2-api) | `/api/system/traffic/stats` |
+| [API_TRAFFIC.md](../concepts/API_TRAFFIC.md#2-api) | `/api/system/traffic/stats`, `/api/system/traffic/timeline` |
 | [WORK_SHIFT.md](WORK_SHIFT.md) | `/api/work-shifts/*` |
 | [ATTENDANCE.md](ATTENDANCE.md) | `/api/attendance/*`, `/api/leave-requests/*`, `/api/company-holidays/*`, `/api/leave-entitlements/*` |
 | [NOTIFICATIONS.md](NOTIFICATIONS.md) | `/api/notifications/*` |

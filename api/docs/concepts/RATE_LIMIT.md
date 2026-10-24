@@ -243,8 +243,8 @@ cho custom role.
 - Mức đang tắt không được đếm.
 - Sai tham số: `range` lạ trả `400 VALIDATION_ERROR`, `policy` lạ trả `404 RATE_LIMIT_POLICY_NOT_FOUND`.
 
-`RateLimitTimeline` giữ mỗi mức ba vòng đếm cố định (60 + 96 + 168 ô), ô cũ được xoá khi tới lượt dùng lại, nên bộ nhớ
-không tăng dù backend chạy bao lâu.
+`RateLimitTimeline` giữ mỗi mức ba vòng đếm cố định (60 + 96 + 168 ô, `TimelineRing` trong package `timeline`, dùng
+chung với biểu đồ lưu lượng API), ô cũ được xoá khi tới lượt dùng lại, nên bộ nhớ không tăng dù backend chạy bao lâu.
 
 Trang **Giới hạn truy cập** vẽ dữ liệu này thành hai biểu đồ chung trục thời gian, "Request" và "Bị chặn": số bị
 chặn thường rất nhỏ so với số request nên vẽ chung một trục sẽ thành đường sát đáy. Vạch đứt đánh dấu lúc backend
