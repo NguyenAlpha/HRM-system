@@ -151,6 +151,22 @@ class RateLimitSettingsIntegrationTest {
     }
 
     @Test
+    void theSettingsStayReachableUnderTheTightestQuotas() throws Exception {
+        update("ip-ceiling", true, 1, 86_400).andExpect(status().isOk());
+        update("api", true, 1, 86_400).andExpect(status().isOk());
+
+        String admin = manager();
+        for (int i = 0; i < 3; i++) {
+            mockMvc.perform(get("/api/system/rate-limit/stats").header(HttpHeaders.AUTHORIZATION, admin))
+                .andExpect(status().isOk());
+        }
+        mockMvc.perform(delete(API_POLICY).header(HttpHeaders.AUTHORIZATION, admin))
+            .andExpect(status().isOk());
+        mockMvc.perform(delete("/api/system/rate-limit/policies/ip-ceiling").header(HttpHeaders.AUTHORIZATION, admin))
+            .andExpect(status().isOk());
+    }
+
+    @Test
     void theLoginFailurePolicyCannotBeSwitchedOff() throws Exception {
         update("login-failure", false, 5, 900)
             .andExpect(status().isBadRequest())
