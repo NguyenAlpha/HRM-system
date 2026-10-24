@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Service;
 
 import com.htttdn.hrm.dto.response.traffic.ApiTrafficResponse;
 import com.htttdn.hrm.dto.response.traffic.ApiTrafficResponse.EndpointTraffic;
+import com.htttdn.hrm.dto.response.traffic.ApiTrafficTimelineResponse;
+import com.htttdn.hrm.timeline.TimelineRange;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -25,10 +28,15 @@ public class ApiTrafficService {
     private static final String REQUEST_METRIC = "http.server.requests";
 
     private final MeterRegistry meterRegistry;
-    private final Instant startedAt = Instant.now();
+    private final ApiTrafficTimeline timeline;
+    private final Clock clock;
+    private final Instant startedAt;
 
-    public ApiTrafficService(MeterRegistry meterRegistry) {
+    public ApiTrafficService(MeterRegistry meterRegistry, ApiTrafficTimeline timeline, Clock clock) {
         this.meterRegistry = meterRegistry;
+        this.timeline = timeline;
+        this.clock = clock;
+        this.startedAt = clock.instant();
     }
 
     public ApiTrafficResponse stats() {
@@ -48,6 +56,16 @@ public class ApiTrafficService {
             endpoints.stream().mapToLong(EndpointTraffic::clientErrors).sum(),
             endpoints.stream().mapToLong(EndpointTraffic::serverErrors).sum(),
             endpoints
+        );
+    }
+
+    /** Requests, errors and mean processing time of the whole API over the range. */
+    public ApiTrafficTimelineResponse timeline(TimelineRange range) {
+        return new ApiTrafficTimelineResponse(
+            range.name(),
+            range.slotSeconds(),
+            startedAt,
+            timeline.points(range, clock.instant())
         );
     }
 

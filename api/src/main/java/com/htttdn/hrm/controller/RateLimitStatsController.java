@@ -18,8 +18,8 @@ import com.htttdn.hrm.dto.response.ratelimit.RateLimitTimelineResponse;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.ratelimit.RateLimitPolicy;
 import com.htttdn.hrm.ratelimit.RateLimitService;
-import com.htttdn.hrm.ratelimit.RateLimitTimeline;
 import com.htttdn.hrm.service.RateLimitSettingsService;
+import com.htttdn.hrm.timeline.TimelineRange;
 
 import jakarta.validation.Valid;
 
@@ -51,7 +51,7 @@ public class RateLimitStatsController {
     @GetMapping("/timeline")
     @PreAuthorize("hasAuthority('system.rate_limit.read')")
     public ApiResult<RateLimitTimelineResponse> timeline(
-        @RequestParam(defaultValue = "HOUR") RateLimitTimeline.Range range,
+        @RequestParam(defaultValue = "HOUR") TimelineRange range,
         @RequestParam(required = false) String policy
     ) {
         RateLimitPolicy selected = policy == null ? null : RateLimitPolicy.fromKey(policy)
