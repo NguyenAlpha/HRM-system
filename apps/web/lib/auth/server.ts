@@ -913,7 +913,11 @@ export async function handleAccountActivationRequest(request: Request, token: st
 
 // Read-only system statistics (rate limits, API traffic) for the admin portal.
 export async function handleSystemStatsRequest(
-  apiPath: "/api/system/rate-limit/stats" | "/api/system/rate-limit/timeline" | "/api/system/traffic/stats",
+  apiPath:
+    | "/api/system/rate-limit/stats"
+    | "/api/system/rate-limit/timeline"
+    | "/api/system/traffic/stats"
+    | "/api/system/traffic/timeline",
   query?: URLSearchParams,
 ): Promise<NextResponse> {
   const accessToken = (await cookies()).get(PORTAL_CONFIG.admin.accessCookie)?.value

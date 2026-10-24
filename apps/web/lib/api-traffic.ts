@@ -12,3 +12,11 @@ export type EndpointTraffic = Schemas["EndpointTraffic"]
 export function getApiTraffic(): Promise<ApiTraffic> {
   return authorizedRequest<ApiTraffic>("admin", "/traffic", { cache: "no-store" })
 }
+
+export type ApiTrafficTimeline = Schemas["ApiTrafficTimelineResponse"]
+export type TrafficPoint = Schemas["TrafficPoint"]
+
+/** Requests, errors and mean processing time of the whole API over the range. */
+export function getApiTrafficTimeline(range: "HOUR" | "DAY" | "WEEK"): Promise<ApiTrafficTimeline> {
+  return authorizedRequest<ApiTrafficTimeline>("admin", `/traffic/timeline?range=${range}`, { cache: "no-store" })
+}

@@ -7,6 +7,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import { StatTile } from "@/components/report/report-shared"
+import { ApiTrafficTimelineCard } from "@/components/traffic/api-traffic-timeline"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -114,6 +115,8 @@ export function ApiTrafficPage() {
               </>
             ) : Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-[106px] rounded-xl" />)}
           </div>
+
+          <ApiTrafficTimelineCard revision={revision} onSessionExpired={onSessionExpired} />
 
           <Card>
             <CardHeader>
