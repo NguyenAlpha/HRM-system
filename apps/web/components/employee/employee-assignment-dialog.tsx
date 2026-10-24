@@ -89,7 +89,8 @@ function nextEffectiveDate(detail: EmployeeDetail) {
 }
 
 export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSessionExpired }: {
-  employee: EmployeeSummary
+  // Opened from the employee list and from the employee detail page, so only what both have.
+  employee: Pick<EmployeeSummary, "id" | "fullName" | "employeeCode">
   onClose: () => void
   onAssigned: () => void
   onSessionExpired: () => void
