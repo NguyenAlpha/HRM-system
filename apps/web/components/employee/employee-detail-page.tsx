@@ -3,12 +3,13 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { ArrowLeft, BriefcaseBusiness, KeyRound, LogOut, Pencil, RefreshCw, Trash2 } from "lucide-react"
+import { ArrowLeft, BadgeCheck, BriefcaseBusiness, KeyRound, LogOut, Pencil, RefreshCw, Trash2 } from "lucide-react"
 
 import { ErrorAlert } from "@/components/common/list-controls"
 import { ActionsMenu, RowActionItem, RowActionLink } from "@/components/common/row-actions"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import { EmployeeAssignmentDialog } from "@/components/employee/employee-assignment-dialog"
+import { EmployeeConfirmDialog } from "@/components/employee/employee-confirm-dialog"
 import { EmployeeCompensationCard } from "@/components/employee/employee-compensation-card"
 import { EmployeeDeleteDialog } from "@/components/employee/employee-delete-dialog"
 import { EmployeeEditDialog } from "@/components/employee/employee-edit-dialog"
@@ -115,6 +116,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
   const [deleting, setDeleting] = useState(false)
   const [editing, setEditing] = useState(false)
   const [assigning, setAssigning] = useState(false)
+  const [confirming, setConfirming] = useState(false)
 
   const numericEmployeeId = Number(employeeId)
   const hasValidEmployeeId = /^\d+$/.test(employeeId)
@@ -183,6 +185,9 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
   const canManageAssignments = session.account.permissions.some(
     (permission) => permission.code === "employee.assignment.manage",
   )
+  const canConfirmProbation = session.account.permissions.some(
+    (permission) => permission.code === "employee.probation.confirm",
+  )
   const canDeleteEmployee = session.account.permissions.some(
     (permission) => permission.code === "employee.delete",
   )
@@ -232,6 +237,9 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
             {detail && canManageAssignments
               && (detail.employmentStatus === "ACTIVE" || detail.employmentStatus === "PROBATION") && (
               <RowActionItem icon={BriefcaseBusiness} onClick={() => setAssigning(true)}>Thay đổi phân công</RowActionItem>
+            )}
+            {detail && canConfirmProbation && detail.employmentStatus === "PROBATION" && (
+              <RowActionItem icon={BadgeCheck} onClick={() => setConfirming(true)}>Xác nhận chính thức</RowActionItem>
             )}
             {detail && canManageLifecycle && !isEmploymentEnded(detail.employmentStatus) && (
               <RowActionItem icon={LogOut} onClick={() => setEndingEmployment(true)}>Kết thúc làm việc</RowActionItem>
@@ -460,6 +468,16 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
           employee={detail}
           onClose={() => setAssigning(false)}
           onAssigned={reload}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
+
+      {confirming && detail && (
+        <EmployeeConfirmDialog
+          portal={portal}
+          employee={detail}
+          onClose={() => setConfirming(false)}
+          onConfirmed={reload}
           onSessionExpired={onSessionExpired}
         />
       )}

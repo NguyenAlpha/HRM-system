@@ -1,10 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { BadgeCheck, BriefcaseBusiness, Eye, KeyRound, Loader2, Pencil, Plus, RefreshCw } from "lucide-react"
+import { BadgeCheck, BriefcaseBusiness, Eye, KeyRound, Pencil, Plus, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 
 import { EmployeeAssignmentDialog } from "@/components/employee/employee-assignment-dialog"
+import { EmployeeConfirmDialog } from "@/components/employee/employee-confirm-dialog"
 import { EmployeeCreateDialog } from "@/components/employee/employee-create-dialog"
 import { EmployeeDetailDialog } from "@/components/employee/employee-detail-dialog"
 import { EmployeeEditDialog } from "@/components/employee/employee-edit-dialog"
@@ -20,16 +21,6 @@ import {
 } from "@/components/common/list-filters"
 import { Pagination, ErrorAlert } from "@/components/common/list-controls"
 import { RowActionItem, RowActionLink, RowActionsCell } from "@/components/common/row-actions"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -45,7 +36,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import {
   employeeErrorMessage,
   employeeListQuery,
-  employeeMutation,
   employeeRequest,
   EMPLOYMENT_STATUS_LABELS,
   isSessionExpired,
@@ -106,7 +96,6 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
   const [provisioning, setProvisioning] = useState<EmployeeSummary | null>(null)
   const [assigning, setAssigning] = useState<EmployeeSummary | null>(null)
   const [confirming, setConfirming] = useState<EmployeeSummary | null>(null)
-  const [confirmingEmployment, setConfirmingEmployment] = useState(false)
   const [filters, setFilters] = useState<EmployeeFilters>(EMPTY_FILTERS)
   const [sort, setSort] = useState<SortState>(DEFAULT_SORT)
   const [unitOptions, setUnitOptions] = useState<{ value: string; label: string }[]>([])
@@ -188,22 +177,6 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
     }
   }
 
-  async function confirmEmployeeEmployment() {
-    if (!confirming) return
-    setConfirmingEmployment(true)
-    try {
-      const saved = await employeeMutation<EmployeeDetail>(portal, `/${confirming.id}/confirm`, "POST")
-      toast.success(`Đã xác nhận ${saved.fullName} là nhân sự chính thức`)
-      setConfirming(null)
-      setSheetRevision((value) => value + 1)
-      reload()
-    } catch (caught) {
-      if (isSessionExpired(caught)) onSessionExpired()
-      toast.error("Không thể xác nhận nhân sự", { description: employeeErrorMessage(caught) })
-    } finally {
-      setConfirmingEmployment(false)
-    }
-  }
 
 
   return (
@@ -435,29 +408,15 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
         />
       )}
 
-      <AlertDialog
-        open={confirming !== null}
-        onOpenChange={(open) => { if (!open && !confirmingEmployment) setConfirming(null) }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận nhân sự chính thức?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Chuyển {confirming?.fullName} ({confirming?.employeeCode}) từ “Thử việc” sang “Đang làm việc”.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={confirmingEmployment}>Hủy</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={confirmingEmployment}
-              onClick={(event) => { event.preventDefault(); void confirmEmployeeEmployment() }}
-            >
-              {confirmingEmployment && <Loader2 className="animate-spin" />}
-              Xác nhận chính thức
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {confirming && (
+        <EmployeeConfirmDialog
+          portal={portal}
+          employee={confirming}
+          onClose={() => setConfirming(null)}
+          onConfirmed={() => { setSheetRevision((value) => value + 1); reload() }}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
     </>
   )
 }
