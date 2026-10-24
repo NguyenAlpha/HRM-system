@@ -930,3 +930,40 @@ export async function handleSystemStatsRequest(
     headers: { "Cache-Control": "no-store" },
   })
 }
+
+// Edits (PUT) or resets (DELETE) one rate-limit policy for the admin portal; the API checks the permission.
+export async function handleRateLimitPolicyRequest(request: Request, policy: string): Promise<NextResponse> {
+  if (!/^[a-z-]{1,30}$/.test(policy)) {
+    return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
+  }
+  const origin = request.headers.get("origin")
+  if (origin && origin !== new URL(request.url).origin) {
+    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
+  }
+  const accessToken = (await cookies()).get(PORTAL_CONFIG.admin.accessCookie)?.value
+  if (!accessToken) {
+    return NextResponse.json(failure("UNAUTHORIZED", "Phiên quản trị đã hết hạn"), { status: 401 })
+  }
+
+  let body: string | undefined
+  if (request.method === "PUT") {
+    try {
+      body = JSON.stringify(await request.json())
+    } catch {
+      return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
+    }
+  }
+  const result = await callApi<unknown>(`/api/system/rate-limit/policies/${policy}`, {
+    method: request.method,
+    headers: body
+      ? { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }
+      : { Authorization: `Bearer ${accessToken}` },
+    body,
+  })
+  if (!result) return gatewayFailure()
+
+  return NextResponse.json(result.payload, {
+    status: result.response.status,
+    headers: { "Cache-Control": "no-store" },
+  })
+}

@@ -1,13 +1,20 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { RefreshCw } from "lucide-react"
+import { Pencil, Power, PowerOff, RefreshCw, RotateCcw } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
+import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
+import {
+  RateLimitPolicyConfirmDialog,
+  RateLimitPolicyEditDialog,
+  type RateLimitPolicyAction,
+} from "@/components/rate-limit/rate-limit-policy-dialogs"
 import { StatTile } from "@/components/report/report-shared"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
@@ -15,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import {
+  formatQuota,
   getRateLimitStats,
   POLICY_LABELS,
   SCOPE_LABELS,
@@ -23,13 +31,6 @@ import {
 } from "@/lib/rate-limit-stats"
 
 const count = (value: number) => value.toLocaleString("vi-VN")
-
-/** 60 → "1 phút", 900 → "15 phút", 30 → "30 giây". */
-function formatWindow(seconds: number): string {
-  if (seconds % 3600 === 0) return `${seconds / 3600} giờ`
-  if (seconds % 60 === 0) return `${seconds / 60} phút`
-  return `${seconds} giây`
-}
 
 function formatTime(value: string): string {
   return new Intl.DateTimeFormat("vi-VN", {
@@ -42,14 +43,18 @@ const policyLabel = (policy: string) => POLICY_LABELS[policy] ?? policy
 /**
  * Admin Console view of the API rate limits: every quota with its allowed/blocked counters and
  * the keys refused most often. The API keeps the counters in memory since its last start.
+ * Holders of system.rate_limit.manage also edit, switch off and reset each quota from its row.
  */
 export function RateLimitPage() {
   const { session, onSessionExpired } = usePortalSession()
   const canRead = session.account.permissions.some((permission) => permission.code === "system.rate_limit.read")
+  const canManage = session.account.permissions.some((permission) => permission.code === "system.rate_limit.manage")
   const [stats, setStats] = useState<RateLimitStats | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [revision, setRevision] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [editing, setEditing] = useState<RateLimitPolicyStats | null>(null)
+  const [confirming, setConfirming] = useState<{ policy: RateLimitPolicyStats; action: RateLimitPolicyAction } | null>(null)
 
   useEffect(() => {
     if (!canRead) return
@@ -119,7 +124,14 @@ export function RateLimitPage() {
           </Card>
 
           <section className="grid gap-3">
-            <h2 className="text-lg font-semibold">Hạn mức đang áp dụng</h2>
+            <div>
+              <h2 className="text-lg font-semibold">Hạn mức đang áp dụng</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {canManage
+                  ? "Thay đổi được lưu vào cơ sở dữ liệu và có hiệu lực ngay. Mức sai mật khẩu chỉ chỉnh được hạn mức, không tắt được."
+                  : "Mặc định lấy từ application.properties; quản trị viên có quyền chỉnh có thể thay đổi."}
+              </p>
+            </div>
             <div className="rounded-xl border bg-card">
               <Table>
                 <TableHeader>
@@ -127,12 +139,14 @@ export function RateLimitPage() {
                     <TableHead>Mức</TableHead>
                     <TableHead>Đếm theo</TableHead>
                     <TableHead>Hạn mức</TableHead>
+                    <TableHead>Trạng thái</TableHead>
                     <TableHead className="text-right">Được cho qua</TableHead>
                     <TableHead className="text-right">Bị chặn</TableHead>
+                    {canManage && <TableHead className="text-right">Thao tác</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {!stats && <SkeletonRows columns={5} />}
+                  {!stats && <SkeletonRows columns={canManage ? 7 : 6} />}
                   {stats?.policies.map((policy) => (
                     <TableRow key={policy.policy}>
                       <TableCell>
@@ -141,10 +155,36 @@ export function RateLimitPage() {
                       </TableCell>
                       <TableCell className="text-sm">{SCOPE_LABELS[policy.scope] ?? policy.scope}</TableCell>
                       <TableCell className="text-sm tabular-nums">
-                        {count(policy.maxRequests)} request / {formatWindow(policy.windowSeconds)}
+                        {formatQuota(policy.maxRequests, policy.windowSeconds)}
+                        {(policy.maxRequests !== policy.defaultMaxRequests || policy.windowSeconds !== policy.defaultWindowSeconds) && (
+                          <span className="mt-1 block text-xs text-muted-foreground">
+                            Đã chỉnh · mặc định {formatQuota(policy.defaultMaxRequests, policy.defaultWindowSeconds)}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={policy.enabled ? "secondary" : "outline"}>{policy.enabled ? "Đang bật" : "Đã tắt"}</Badge>
                       </TableCell>
                       <TableCell className="text-right text-sm tabular-nums">{count(policy.allowed)}</TableCell>
                       <TableCell className="text-right text-sm font-medium tabular-nums">{count(policy.blocked)}</TableCell>
+                      {canManage && (
+                        <RowActionsCell label={policyLabel(policy.policy)}>
+                          <RowActionItem icon={Pencil} onClick={() => setEditing(policy)}>Sửa hạn mức</RowActionItem>
+                          {policy.enabled && policy.canDisable && (
+                            <RowActionItem icon={PowerOff} destructive onClick={() => setConfirming({ policy, action: "disable" })}>
+                              Tắt mức này
+                            </RowActionItem>
+                          )}
+                          {!policy.enabled && (
+                            <RowActionItem icon={Power} onClick={() => setConfirming({ policy, action: "enable" })}>Bật lại</RowActionItem>
+                          )}
+                          {policy.customized && (
+                            <RowActionItem icon={RotateCcw} onClick={() => setConfirming({ policy, action: "restore" })}>
+                              Khôi phục mặc định
+                            </RowActionItem>
+                          )}
+                        </RowActionsCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -191,6 +231,15 @@ export function RateLimitPage() {
             </div>
           </section>
         </div>
+      )}
+
+      {editing && (
+        <RateLimitPolicyEditDialog policy={editing} onClose={() => setEditing(null)} onSaved={setStats}
+          onSessionExpired={onSessionExpired} />
+      )}
+      {confirming && (
+        <RateLimitPolicyConfirmDialog policy={confirming.policy} action={confirming.action}
+          onClose={() => setConfirming(null)} onSaved={setStats} onSessionExpired={onSessionExpired} />
       )}
     </>
   )

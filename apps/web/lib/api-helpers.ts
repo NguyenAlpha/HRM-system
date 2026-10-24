@@ -70,6 +70,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   CONCURRENT_MODIFICATION: "Dữ liệu vừa được người khác thay đổi. Vui lòng tải lại trang.",
   // The BFF normally replaces the message with one that says how long to wait.
   RATE_LIMIT_EXCEEDED: RATE_LIMIT_FALLBACK_MESSAGE,
+  RATE_LIMIT_POLICY_NOT_FOUND: "Không tìm thấy mức giới hạn này.",
+  RATE_LIMIT_POLICY_REQUIRED: "Mức chống dò mật khẩu không được tắt.",
   INTERNAL_ERROR: "Hệ thống đang gặp sự cố. Vui lòng thử lại sau.",
 }
 
@@ -110,6 +112,8 @@ const FIELD_LABELS: Record<string, string> = {
   comment: "Ghi chú",
   ownershipReason: "Lý do cấp quyền sở hữu",
   directorAppointmentReason: "Lý do bổ nhiệm Director",
+  maxRequests: "Số request tối đa",
+  windowSeconds: "Khoảng thời gian",
 }
 
 const VIETNAMESE = /[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]/i
