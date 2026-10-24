@@ -112,7 +112,32 @@ npm run build
 CI (`.github/workflows/ci.yml`) chạy ba lệnh này cùng `./mvnw test` của API (trên PostgreSQL
 rỗng) cho mỗi push lên `main` và mỗi pull request.
 
-Dự án chưa cấu hình test runner tự động cho web. Trước khi bàn giao thay đổi, thực hiện ít nhất checklist thủ công sau:
+### Test E2E (Playwright)
+
+Test E2E nằm trong `e2e/`, chạy trên trình duyệt thật qua web, API và PostgreSQL. CI chưa chạy
+các test này. Cần bật API (port 8080) trước; web dev server được Playwright tự bật nếu port 3000
+chưa có.
+
+```powershell
+npx playwright install chromium   # lần đầu
+npm run test:e2e                  # chạy toàn bộ
+npx playwright test --ui          # xem từng bước trên trình duyệt
+npx playwright show-report        # báo cáo HTML sau khi chạy
+npx playwright codegen http://localhost:3000/login   # ghi thao tác thành code test
+```
+
+`e2e/login.spec.ts` dùng tài khoản seed `admin / Admin@123`. Tài khoản HRM trong seed chưa có
+mật khẩu, nên case đăng nhập HRM thành công chỉ chạy khi đặt `E2E_HRM_USERNAME` và
+`E2E_HRM_PASSWORD` của một tài khoản đã kích hoạt:
+
+```powershell
+$env:E2E_HRM_USERNAME="owner"; $env:E2E_HRM_PASSWORD="..."; npm run test:e2e
+```
+
+Case sai mật khẩu dùng tên đăng nhập ngẫu nhiên, nên không làm tài khoản thật bị giới hạn 5 lần
+sai/15 phút.
+
+Phần chưa có test E2E vẫn kiểm tra thủ công. Trước khi bàn giao thay đổi, thực hiện ít nhất checklist sau:
 
 1. Đăng nhập một tài khoản HRM đã kích hoạt (ví dụ Company Owner) tại `/login` và kiểm tra chuyển tới `/dashboard`.
 2. Đăng nhập `admin` tại `/admin/login` và kiểm tra chuyển tới `/admin`.

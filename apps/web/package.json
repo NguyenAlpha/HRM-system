@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "typecheck": "npm run check:api && next typegen && tsc --noEmit",
     "gen:api": "openapi-typescript openapi.json -o lib/api-schema.ts",
-    "check:api": "openapi-typescript openapi.json -o lib/api-schema.ts --check"
+    "check:api": "openapi-typescript openapi.json -o lib/api-schema.ts --check",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -30,6 +31,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
