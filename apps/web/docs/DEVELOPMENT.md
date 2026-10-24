@@ -133,6 +133,12 @@ Tài khoản seed dùng trong test khai báo ở `e2e/auth.ts`: `admin / Admin@1
 `account-status` sau khi các test khác xong. Nếu test dừng giữa chừng, `employee` có thể còn ở trạng
 thái vô hiệu hóa; kích hoạt lại tại `/accounts/4` trước khi chạy tiếp.
 
+`e2e/annual-leave-attendance.spec.ts` tìm ngày thiếu chấm công đầu tiên của tháng hiện tại (trước hôm
+nay, chưa gắn đơn) của `employee`, gửi đơn phép năm buổi sáng ngày đó, cho `hr` (quản lý trực tiếp)
+duyệt, rồi kiểm tra phép năm "Đã dùng"/"Còn lại" và "Công tính lương" mỗi bên đổi đúng 0,5 ngày. Test
+ghi thật vào database: mỗi lần chạy dùng một ngày thiếu công và nửa ngày phép, không hoàn tác. Khi
+tháng không còn ngày nào như vậy, test báo skip thay vì fail.
+
 Case sai mật khẩu dùng tên đăng nhập ngẫu nhiên, nên không làm tài khoản thật bị giới hạn 5 lần
 sai/15 phút.
 

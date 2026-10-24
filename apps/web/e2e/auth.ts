@@ -3,8 +3,10 @@ import type { Page } from "@playwright/test"
 // Seeded by the API; also shown on /admin/login in development.
 export const ADMIN = { username: "admin", password: "Admin@123" }
 
-// Seeded HRM accounts: the Company Owner and an EMPLOYEE (account id 4).
+// Seeded HRM accounts: the Company Owner, the HR manager and an EMPLOYEE (account id 4) whose
+// direct manager is that HR manager, so hr approves the employee's leave.
 export const OWNER = { username: "owner", password: "password" }
+export const HR = { username: "hr", password: "password" }
 export const EMPLOYEE = { username: "employee", password: "password", accountId: 4 }
 
 export async function signIn(page: Page, username: string, password: string) {
