@@ -2706,8 +2706,6 @@ export interface components {
             /** @enum {string} */
             leaveType: "ANNUAL" | "SICK" | "MATERNITY" | "UNPAID" | "OTHER";
             reason: string;
-            /** Format: int32 */
-            requestedMinutes: number;
             /** @enum {string|null} */
             salaryTreatment?: "EMPLOYER_PAID" | "SOCIAL_INSURANCE" | "UNPAID" | null;
             /** Format: date-time */

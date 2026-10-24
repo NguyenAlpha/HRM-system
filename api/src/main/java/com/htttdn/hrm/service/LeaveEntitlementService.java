@@ -114,9 +114,9 @@ public class LeaveEntitlementService {
     }
 
     /**
-     * Rejects an approval that would overdraw the year. Other PENDING requests are counted as
-     * already spent, otherwise several requests waiting together would each pass this check and
-     * only overshoot once they are all approved.
+     * Rejects a request that would overdraw the year, checked when it is created, submitted and
+     * approved. Other PENDING requests are counted as already spent, otherwise several requests
+     * waiting together would each pass this check and only overshoot once they are all approved.
      */
     public void requireSufficientBalance(LeaveRequest request) {
         if (request.getLeaveType() != LeaveType.ANNUAL) {
@@ -127,7 +127,7 @@ public class LeaveEntitlementService {
 
         if (request.getRequestedMinutes() > balance.remainingMinutes()) {
             throw new ConflictException(
-                ErrorCode.CONFLICT,
+                ErrorCode.INSUFFICIENT_LEAVE_BALANCE,
                 "Annual leave balance for %d is not enough: %d minutes remaining, %d requested"
                     .formatted(year, balance.remainingMinutes(), request.getRequestedMinutes())
             );

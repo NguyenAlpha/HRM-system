@@ -248,6 +248,22 @@ public class AttendanceService {
         return toResponse(attendanceRecordRepository.save(record));
     }
 
+    /**
+     * The scheduled work minutes a leave from {@code startAt} to {@code endAt} takes: the shift
+     * time it covers on each work day, without breaks, Sundays and company holidays. The day
+     * before {@code startAt} is read too, for a night shift that ends inside the leave.
+     */
+    @Transactional(readOnly = true)
+    public int leaveMinutesFor(Long employeeId, Instant startAt, Instant endAt) {
+        LocalDate from = LocalDate.ofInstant(startAt, ZONE).minusDays(1);
+        LocalDate to = LocalDate.ofInstant(endAt.minusNanos(1), ZONE);
+        int minutes = 0;
+        for (AttendanceCalendarService.ScheduledDay day : attendanceCalendarService.scheduleFor(employeeId, from, to)) {
+            minutes += Math.min(day.minutes(), workMinutes(day.startAt(), day.endAt(), day.shift(), startAt, endAt));
+        }
+        return minutes;
+    }
+
     public void applyApprovedLeave(LeaveRequest request) {
         Long employeeId = request.getEmployee().getId();
         LocalDate from = LocalDate.ofInstant(request.getStartAt(), ZONE).minusDays(1);

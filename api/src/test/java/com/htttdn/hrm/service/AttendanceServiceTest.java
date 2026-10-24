@@ -76,6 +76,21 @@ class AttendanceServiceTest {
     }
 
     @Test
+    void leaveMinutesCoverEachWorkDayOfThePeriodWithoutTheBreak() {
+        WorkShift shift = WorkShift.builder().id(3L).startTime(LocalTime.of(8, 0)).breakMinutes(60)
+            .breakStartTime(LocalTime.of(12, 0)).standardWorkMinutes(480).build();
+        LocalDate monday = LocalDate.of(2026, 1, 12);
+        when(attendanceCalendarService.scheduleFor(2L, monday.minusDays(1), monday.plusDays(2)))
+            .thenReturn(List.of(officeDay(monday, shift), officeDay(monday.plusDays(1), shift), officeDay(monday.plusDays(2), shift)));
+
+        // Monday 13:00 to Wednesday 12:00 (UTC+7).
+        int minutes = service().leaveMinutesFor(2L,
+            Instant.parse("2026-01-12T06:00:00Z"), Instant.parse("2026-01-14T05:00:00Z"));
+
+        assertEquals(240 + 480 + 240, minutes);
+    }
+
+    @Test
     void overtimeCannotReuseRegularPayableMinutes() {
         LocalDate date = LocalDate.of(2026, 1, 15);
         AttendanceRecord record = record(date);
@@ -285,6 +300,12 @@ class AttendanceServiceTest {
             .payableMinutes(240)
             .status(AttendanceStatus.PRESENT)
             .build();
+    }
+
+    /** 08:00 to 17:00 in UTC+7. */
+    private static AttendanceCalendarService.ScheduledDay officeDay(LocalDate date, WorkShift shift) {
+        Instant start = date.atTime(1, 0).toInstant(java.time.ZoneOffset.UTC);
+        return new AttendanceCalendarService.ScheduledDay(date, shift, start, start.plusSeconds(9 * 3600), 480);
     }
 
     private static LeaveRequest leave(AttendanceRecord record, String start, String end) {
