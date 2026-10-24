@@ -3,7 +3,8 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { ArrowLeft, BadgeCheck, BriefcaseBusiness, CalendarCheck, KeyRound, LogOut, Pencil, RefreshCw, Trash2 } from "lucide-react"
+import { ArrowLeft, BadgeCheck, BriefcaseBusiness, CalendarCheck, CalendarX, KeyRound, Loader2, LogOut, Pencil, RefreshCw, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 
 import { ErrorAlert } from "@/components/common/list-controls"
 import { ActionsMenu, RowActionItem, RowActionLink } from "@/components/common/row-actions"
@@ -15,6 +16,16 @@ import { EmployeeDeleteDialog } from "@/components/employee/employee-delete-dial
 import { EmployeeEditDialog } from "@/components/employee/employee-edit-dialog"
 import { EmployeeEmploymentEndDialog } from "@/components/employee/employee-employment-end-dialog"
 import { EmployeeSensitiveCard } from "@/components/employee/employee-sensitive-card"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -34,7 +45,9 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import {
+  cancelScheduledEmploymentEnd,
   EDUCATION_LEVEL_LABELS,
+  EMPLOYMENT_END_LABELS,
   employeeErrorMessage,
   employeeRequest,
   EMPLOYMENT_STATUS_LABELS,
@@ -44,6 +57,7 @@ import {
   isSessionExpired,
   type EmployeeAssignment,
   type EmployeeDetail,
+  type EmploymentEndStatus,
 } from "@/lib/employee"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import { formatDate } from "@/lib/format-date"
@@ -112,6 +126,8 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
   const [editing, setEditing] = useState(false)
   const [assigning, setAssigning] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [cancellingEnd, setCancellingEnd] = useState(false)
+  const [cancelBusy, setCancelBusy] = useState(false)
 
   const numericEmployeeId = Number(employeeId)
   const hasValidEmployeeId = /^\d+$/.test(employeeId)
@@ -154,6 +170,22 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
     setRevision((value) => value + 1)
   }
 
+  async function cancelEnd() {
+    if (!detail) return
+    setCancelBusy(true)
+    try {
+      await cancelScheduledEmploymentEnd(detail.id)
+      toast.success(`Đã hủy lịch kết thúc làm việc của ${detail.fullName}`)
+      setCancellingEnd(false)
+      reload()
+    } catch (caught) {
+      if (isSessionExpired(caught)) onSessionExpired()
+      toast.error("Không thể hủy lịch kết thúc", { description: employeeErrorMessage(caught) })
+    } finally {
+      setCancelBusy(false)
+    }
+  }
+
   const currentAssignment = detail?.currentAssignment ?? null
   const canReadAssignments = session.account.permissions.some(
     (permission) => permission.code === "employee.assignment.read",
@@ -188,6 +220,8 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
   const canDeleteEmployee = session.account.permissions.some(
     (permission) => permission.code === "employee.delete",
   )
+  // An end set for a later day: the employee keeps working until then.
+  const scheduledEnd = detail?.scheduledEndStatus ? detail.scheduledEndStatus as EmploymentEndStatus : null
   const displayedError = hasValidEmployeeId ? error : "Mã nhân sự trên đường dẫn không hợp lệ."
   const displayedLoading = hasValidEmployeeId && loading
 
@@ -211,6 +245,11 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
               {detail && (
                 <Badge variant={detail.employmentStatus === "ACTIVE" ? "secondary" : "outline"}>
                   {EMPLOYMENT_STATUS_LABELS[detail.employmentStatus]}
+                </Badge>
+              )}
+              {detail && scheduledEnd && (
+                <Badge variant="outline">
+                  {EMPLOYMENT_END_LABELS[scheduledEnd]} sau ngày {formatDate(detail.terminationDate)}
                 </Badge>
               )}
             </div>
@@ -242,7 +281,12 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
               <RowActionItem icon={BadgeCheck} onClick={() => setConfirming(true)}>Xác nhận chính thức</RowActionItem>
             )}
             {detail && canManageLifecycle && !isEmploymentEnded(detail.employmentStatus) && (
-              <RowActionItem icon={LogOut} onClick={() => setEndingEmployment(true)}>Kết thúc làm việc</RowActionItem>
+              <RowActionItem icon={LogOut} onClick={() => setEndingEmployment(true)}>
+                {scheduledEnd ? "Đổi lịch kết thúc" : "Kết thúc làm việc"}
+              </RowActionItem>
+            )}
+            {detail && canManageLifecycle && scheduledEnd && (
+              <RowActionItem icon={CalendarX} onClick={() => setCancellingEnd(true)}>Hủy lịch kết thúc</RowActionItem>
             )}
             {detail && canDeleteEmployee && (
               <RowActionItem icon={Trash2} destructive onClick={() => setDeleting(true)}>Xóa hồ sơ</RowActionItem>
@@ -481,6 +525,25 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
           onSessionExpired={onSessionExpired}
         />
       )}
+
+      <AlertDialog open={cancellingEnd} onOpenChange={(open) => { if (!open && !cancelBusy) setCancellingEnd(false) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hủy lịch kết thúc làm việc?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {detail?.fullName} ({detail?.employeeCode}) sẽ tiếp tục làm việc, không còn ngày nghỉ việc
+              {detail?.terminationDate ? ` ${formatDate(detail.terminationDate)}` : ""}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelBusy}>Đóng</AlertDialogCancel>
+            <AlertDialogAction disabled={cancelBusy} onClick={(event) => { event.preventDefault(); void cancelEnd() }}>
+              {cancelBusy && <Loader2 className="animate-spin" />}
+              Hủy lịch
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {deleting && detail && (
         <EmployeeDeleteDialog

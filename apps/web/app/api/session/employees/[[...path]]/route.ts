@@ -7,4 +7,4 @@ async function handle(request: Request, context: Context) {
   return handleEmployeeRequest(request, path ?? [], "hrm")
 }
 
-export { handle as GET, handle as POST, handle as PUT }
+export { handle as DELETE, handle as GET, handle as POST, handle as PUT }

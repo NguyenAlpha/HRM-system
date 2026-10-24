@@ -351,7 +351,7 @@ export async function handleEmployeeRequest(request: Request, segments: string[]
     { pattern: /^[1-9]\d*\/assignments$/, methods: ["GET", "POST"] },
     { pattern: /^[1-9]\d*\/confirm$/, methods: ["POST"] },
     { pattern: /^[1-9]\d*\/sensitive$/, methods: ["GET", "PUT"] },
-    { pattern: /^[1-9]\d*\/employment-end$/, methods: ["POST"] },
+    { pattern: /^[1-9]\d*\/employment-end$/, methods: ["POST", "DELETE"] },
     { pattern: /^[1-9]\d*\/soft-delete$/, methods: ["POST"] },
   ]
   const route = routes.find((candidate) => candidate.pattern.test(path))

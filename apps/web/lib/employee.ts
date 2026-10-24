@@ -117,7 +117,7 @@ export async function findEmployeeByCode(portal: Portal, code: string): Promise<
   return page.content.find((employee) => employee.employeeCode.toLowerCase() === wanted) ?? null
 }
 
-export function employeeMutation<T>(portal: Portal, path: string, method: "POST" | "PUT", body?: unknown): Promise<T> {
+export function employeeMutation<T>(portal: Portal, path: string, method: "POST" | "PUT" | "DELETE", body?: unknown): Promise<T> {
   return employeeRequest<T>(portal, path, {
     method,
     headers: { "Content-Type": "application/json" },
@@ -151,6 +151,11 @@ export function endEmployeeEmployment(
     terminationDate,
     terminationReason,
   } satisfies Schemas["EndEmploymentRequest"])
+}
+
+/** Cancels an employment end that still waits for its last working day. */
+export function cancelScheduledEmploymentEnd(employeeId: number): Promise<EmployeeDetail> {
+  return employeeMutation<EmployeeDetail>("hrm", `/${employeeId}/employment-end`, "DELETE")
 }
 
 export function softDeleteEmployee(employeeId: number, deletionReason: string): Promise<null> {

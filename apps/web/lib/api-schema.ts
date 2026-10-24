@@ -734,7 +734,7 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["endEmployment"];
-        delete?: never;
+        delete: operations["cancelScheduledEnd"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2911,6 +2911,8 @@ export interface components {
             institution: string | null;
             major: string | null;
             phone: string | null;
+            /** @enum {string|null} */
+            scheduledEndStatus: "PROBATION" | "ACTIVE" | "RESIGNED" | "TERMINATED" | "RETIRED" | null;
             /** Format: date */
             terminationDate: string | null;
             workEmail: string | null;
@@ -5416,6 +5418,28 @@ export interface operations {
                 "application/json": components["schemas"]["EndEmploymentRequest"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultEmployeeDetailResponse"];
+                };
+            };
+        };
+    };
+    cancelScheduledEnd: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
