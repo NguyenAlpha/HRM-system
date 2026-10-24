@@ -4486,7 +4486,7 @@
     },
     "/api/system/rate-limit/timeline" : {
       "get" : {
-        "operationId" : "timeline",
+        "operationId" : "timeline_1",
         "parameters" : [ {
           "in" : "query",
           "name" : "range",
@@ -4528,6 +4528,34 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ApiResultApiTrafficResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "api-traffic-controller" ]
+      }
+    },
+    "/api/system/traffic/timeline" : {
+      "get" : {
+        "operationId" : "timeline",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "range",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "HOUR",
+            "enum" : [ "HOUR", "DAY", "WEEK" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultApiTrafficTimelineResponse"
                 }
               }
             },
@@ -5275,6 +5303,29 @@
           "data" : {
             "anyOf" : [ {
               "$ref" : "#/components/schemas/ApiTrafficResponse"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
+      "ApiResultApiTrafficTimelineResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ApiTrafficTimelineResponse"
             }, {
               "type" : "null"
             } ]
@@ -7057,6 +7108,29 @@
           }
         },
         "required" : [ "clientErrors", "endpoints", "serverErrors", "startedAt", "totalRequests" ]
+      },
+      "ApiTrafficTimelineResponse" : {
+        "type" : "object",
+        "properties" : {
+          "points" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TrafficPoint"
+            }
+          },
+          "range" : {
+            "type" : "string"
+          },
+          "slotSeconds" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "startedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "points", "range", "slotSeconds", "startedAt" ]
       },
       "ApproveOvertimeRequest" : {
         "type" : "object",
@@ -10537,6 +10611,32 @@
           }
         },
         "required" : [ "employeeCode", "employeeId", "employeeName", "records" ]
+      },
+      "TrafficPoint" : {
+        "type" : "object",
+        "properties" : {
+          "clientErrors" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "meanMillis" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          },
+          "requests" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "serverErrors" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "start" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "clientErrors", "meanMillis", "requests", "serverErrors", "start" ]
       },
       "TurnoverEvent" : {
         "type" : "object",

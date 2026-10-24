@@ -1771,7 +1771,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["timeline"];
+        get: operations["timeline_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1788,6 +1788,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["stats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/traffic/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["timeline"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2028,6 +2044,11 @@ export interface components {
         };
         ApiResultApiTrafficResponse: {
             data: components["schemas"]["ApiTrafficResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultApiTrafficTimelineResponse: {
+            data: components["schemas"]["ApiTrafficTimelineResponse"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
@@ -2427,6 +2448,14 @@ export interface components {
             startedAt: string;
             /** Format: int64 */
             totalRequests: number;
+        };
+        ApiTrafficTimelineResponse: {
+            points: components["schemas"]["TrafficPoint"][];
+            range: string;
+            /** Format: int64 */
+            slotSeconds: number;
+            /** Format: date-time */
+            startedAt: string;
         };
         ApproveOvertimeRequest: {
             /** Format: int32 */
@@ -3745,6 +3774,18 @@ export interface components {
             employeeId: number;
             employeeName: string;
             records: components["schemas"]["AttendanceRecordResponse"][];
+        };
+        TrafficPoint: {
+            /** Format: int64 */
+            clientErrors: number;
+            /** Format: double */
+            meanMillis: number | null;
+            /** Format: int64 */
+            requests: number;
+            /** Format: int64 */
+            serverErrors: number;
+            /** Format: date-time */
+            start: string;
         };
         TurnoverEvent: {
             /** Format: date */
@@ -7304,7 +7345,7 @@ export interface operations {
             };
         };
     };
-    timeline: {
+    timeline_1: {
         parameters: {
             query?: {
                 range?: "HOUR" | "DAY" | "WEEK";
@@ -7343,6 +7384,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultApiTrafficResponse"];
+                };
+            };
+        };
+    };
+    timeline: {
+        parameters: {
+            query?: {
+                range?: "HOUR" | "DAY" | "WEEK";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultApiTrafficTimelineResponse"];
                 };
             };
         };

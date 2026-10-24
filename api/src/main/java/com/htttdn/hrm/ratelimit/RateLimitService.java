@@ -18,6 +18,7 @@ import com.htttdn.hrm.dto.response.ratelimit.RateLimitStatsResponse;
 import com.htttdn.hrm.dto.response.ratelimit.RateLimitStatsResponse.BlockedKeyStats;
 import com.htttdn.hrm.dto.response.ratelimit.RateLimitStatsResponse.PolicyStats;
 import com.htttdn.hrm.dto.response.ratelimit.RateLimitTimelineResponse;
+import com.htttdn.hrm.timeline.TimelineRange;
 
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
@@ -153,7 +154,7 @@ public class RateLimitService {
     }
 
     /** Requests and blocks over the range, for one policy or, when it is null, for all of them. */
-    public RateLimitTimelineResponse timeline(RateLimitTimeline.Range range, RateLimitPolicy policy) {
+    public RateLimitTimelineResponse timeline(TimelineRange range, RateLimitPolicy policy) {
         return new RateLimitTimelineResponse(
             range.name(),
             policy == null ? null : policy.key(),
