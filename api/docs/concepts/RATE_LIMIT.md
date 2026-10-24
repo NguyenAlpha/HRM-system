@@ -27,6 +27,9 @@ Trình duyệt → route của Next (BFF, gửi kèm IP thật qua X-Forwarded-F
 Một request đã đăng nhập đi qua cả lớp IP lẫn lớp người dùng; bị chặn ở lớp nào thì dừng ở lớp đó. Request mang token
 sai bị trả `401` trước lớp người dùng nên không tốn lượt của ai. Request preflight CORS (`OPTIONS`) không bị tính.
 
+Các API `/api/system/rate-limit/**` (mục 7, 8) **không bị giới hạn** ở cả hai lớp, để quản trị viên lỡ đặt hạn mức
+quá chặt (ví dụ `api` 1 request / 24 giờ) vẫn nới lại được. Các API này vẫn cần đăng nhập và permission `SYSTEM_ONLY`.
+
 Hai filter được tạo bằng `new` trong `SecurityConfig`, không phải bean, để servlet container không đăng ký chúng thêm
 lần nữa ngoài security chain.
 
@@ -52,7 +55,7 @@ Mỗi mức cho phép `max-requests` request trong `window-seconds` giây. Bucke
 `api`. `HEAD` dùng chung bucket với `GET` vì Spring MVC chạy cùng controller `@GetMapping` cho cả hai.
 
 Con số mặc định hợp với môi trường dev/demo: demo và kiểm thử bằng tay không chạm tới, nhưng vẫn chặn được việc
-spam. Khi chạy thật, xem số liệu ở trang thống kê (mục 7) rồi chỉnh dần.
+spam. Khi chạy thật, xem số liệu ở trang thống kê (mục 7) rồi chỉnh dần ngay trên giao diện (mục 8).
 
 ## 3. Cấu hình
 
@@ -60,7 +63,7 @@ Mọi giá trị nằm trong `application.properties` và đổi được bằng
 
 | Biến môi trường | Mặc định | Ý nghĩa |
 |:----------------|:---------|:--------|
-| `RATE_LIMIT_ENABLED` | `true` | Tắt thì cả ba lớp cho mọi request đi qua và không đếm |
+| `RATE_LIMIT_ENABLED` | `true` | Tắt thì cả ba lớp cho mọi request đi qua và không đếm. Chỉ đổi được ở đây, giao diện không có nút tắt toàn bộ |
 | `RATE_LIMIT_TRUSTED_PROXIES` | `127.0.0.1,::1` | IP hoặc dải CIDR của proxy được tin `X-Forwarded-For` (mục 4) |
 | `RATE_LIMIT_<MỨC>_MAX_REQUESTS` | theo bảng mục 2 | Số request tối đa trong một cửa sổ |
 | `RATE_LIMIT_<MỨC>_WINDOW_SECONDS` | theo bảng mục 2 | Độ dài cửa sổ, tính bằng giây |
@@ -74,7 +77,10 @@ RATE_LIMIT_LOGIN_FAILURE_WINDOW_SECONDS=600
 ```
 
 Thiếu một mức, hoặc có giá trị không dương, thì backend **không khởi động** (`RateLimitProperties` kiểm tra lúc
-bind). Đổi hạn mức cần khởi động lại backend, và việc khởi động lại cũng xoá toàn bộ bucket đang có.
+bind). Đổi giá trị ở đây cần khởi động lại backend, và việc khởi động lại cũng xoá toàn bộ bucket đang có.
+
+Đây là giá trị **mặc định**. Hạn mức quản trị viên chỉnh trên giao diện (mục 8) được lưu trong database và ghi đè giá
+trị ở đây cho tới khi bấm "Khôi phục mặc định".
 
 ## 4. IP của client và proxy tin cậy
 
@@ -166,7 +172,11 @@ lại.
     "startedAt": "2026-10-23T14:07:00Z",
     "enabled": true,
     "policies": [
-      { "policy": "api", "scope": "USER", "maxRequests": 300, "windowSeconds": 60, "allowed": 1520, "blocked": 3 }
+      {
+        "policy": "api", "scope": "USER", "enabled": true, "canDisable": true, "customized": true,
+        "maxRequests": 200, "windowSeconds": 60, "defaultMaxRequests": 300, "defaultWindowSeconds": 60,
+        "allowed": 1520, "blocked": 3
+      }
     ],
     "topBlocked": [
       { "policy": "api", "scope": "USER", "key": "hr01", "blocked": 3 }
@@ -181,6 +191,11 @@ lại.
 | `startedAt` | Lúc bắt đầu đếm, tức lần khởi động backend gần nhất |
 | `policies[]` | Mọi mức, kèm hạn mức đang áp dụng và số request được cho qua / bị chặn |
 | `policies[].scope` | `IP`, `USER` hoặc `ACCOUNT`: bucket của mức này đếm theo gì |
+| `policies[].maxRequests`, `windowSeconds` | Hạn mức **đang áp dụng** |
+| `policies[].defaultMaxRequests`, `defaultWindowSeconds` | Hạn mức trong `application.properties` |
+| `policies[].enabled` | `false` khi quản trị viên đã tắt mức này (mục 8) |
+| `policies[].customized` | `true` khi mức có thay đổi lưu trong database (đổi hạn mức hoặc tắt/bật) |
+| `policies[].canDisable` | `false` với `login-failure`: chỉ đổi được hạn mức, không tắt được |
 | `topBlocked[]` | Tối đa 20 khoá bị chặn nhiều nhất: IP, username, hoặc `account:<id>` / `name:<sha256>` với `login-failure` |
 
 Cách đọc số liệu:
@@ -195,17 +210,60 @@ Cách đọc số liệu:
 Danh sách `topBlocked` chứa username và IP, là dữ liệu nhạy cảm; vì vậy permission là `SYSTEM_ONLY`, không gán được
 cho custom role.
 
-## 8. Giới hạn hiện tại
+## 8. Chỉnh hạn mức trên giao diện
 
-- **Mất khi khởi động lại:** bucket và số liệu thống kê nằm trong bộ nhớ, khởi động lại backend là về 0.
+Người có permission `system.rate_limit.manage` (`SYSTEM_ONLY`, chỉ seed cho `SYSTEM_ADMIN`) chỉnh từng mức ở trang
+**Giới hạn truy cập**, qua menu "…" của từng dòng: **Sửa hạn mức**, **Tắt mức này** / **Bật lại**, **Khôi phục
+mặc định**.
+
+| API | Body | Kết quả |
+|:----|:-----|:--------|
+| `PUT /api/system/rate-limit/policies/{policy}` | `{ "enabled": true, "maxRequests": 200, "windowSeconds": 60 }` | Lưu hạn mức và trạng thái bật/tắt của mức, áp dụng ngay |
+| `DELETE /api/system/rate-limit/policies/{policy}` | không có | Xoá thay đổi đã lưu: mức về giá trị `application.properties` và được bật lại |
+
+`{policy}` là tên mức ở bảng mục 2, ví dụ `heavy-write`. Cả hai API trả về nội dung giống `GET .../stats` (mục 7) với
+thay đổi đã có hiệu lực, nên trang cập nhật bảng mà không cần tải lại.
+
+| Trường | Ràng buộc |
+|:-------|:----------|
+| `enabled` | Bắt buộc. `false` với `login-failure` bị từ chối (`400 RATE_LIMIT_POLICY_REQUIRED`) |
+| `maxRequests` | Bắt buộc, 1–100.000 |
+| `windowSeconds` | Bắt buộc, 1–86.400 (tối đa 24 giờ) |
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 400 | `VALIDATION_ERROR` | Thiếu trường hoặc ngoài khoảng cho phép |
+| 400 | `RATE_LIMIT_POLICY_REQUIRED` | Tắt mức `login-failure` |
+| 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
+| 403 | `FORBIDDEN` | Không có `system.rate_limit.manage` |
+| 404 | `RATE_LIMIT_POLICY_NOT_FOUND` | Tên mức không tồn tại |
+
+Cách hoạt động (`RateLimitSettingsService`):
+
+- Mỗi mức đã chỉnh là một dòng trong bảng `rate_limit_policy_settings` (migration `V11`), kèm người chỉnh và thời
+  điểm. Mức không có dòng nào dùng giá trị trong `application.properties` và luôn bật. Database cũng có CHECK chặn
+  giá trị ngoài khoảng và chặn tắt `login-failure`.
+- Lưu xong, `RateLimitService` thay hạn mức của mức đó **ngay**. Mọi bucket của mức đó được tạo lại đầy, tức là mọi
+  người được đếm lại từ đầu theo hạn mức mới. Số liệu `allowed` / `blocked` không bị xoá.
+- Khi backend khởi động, các dòng đã lưu được nạp lại trước khi nhận request, nên thay đổi không mất khi khởi động
+  lại.
+- Mức bị tắt thì request thuộc mức đó đi qua lớp của nó mà không bị đếm, không có header `RateLimit-*` của lớp đó.
+  Lớp còn lại vẫn áp dụng: tắt `api` thì trần `ip-ceiling` theo IP vẫn còn.
+- Không có nút tắt toàn bộ: `RATE_LIMIT_ENABLED` (mục 3) chỉ đổi được bằng biến môi trường.
+
+## 9. Giới hạn hiện tại
+
+- **Mất khi khởi động lại:** bucket và số liệu thống kê nằm trong bộ nhớ, khởi động lại backend là về 0. Hạn mức
+  chỉnh trên giao diện thì không mất vì nằm trong database.
 - **Một instance:** chạy nhiều instance backend thì mỗi instance có bucket riêng, hạn mức thực tế thành
   `hạn mức × số instance`. Khi cần, đổi chỗ lưu bucket trong `RateLimitService` sang Redis (Bucket4j có sẵn
-  `LettuceBasedProxyManager`); hai filter, `LoginAttemptLimiter` và API thống kê giữ nguyên.
+  `LettuceBasedProxyManager`); hai filter, `LoginAttemptLimiter` và API thống kê giữ nguyên. Hạn mức chỉnh trên
+  giao diện cũng chỉ áp dụng ngay cho instance nhận request; instance khác chỉ nạp lại khi khởi động.
 - **Bộ nhớ có giới hạn:** mỗi mức giữ tối đa 10.000 bucket (Caffeine). Bucket không được dùng trong một cửa sổ sẽ bị
   xoá, việc này không làm mất gì vì bucket đó đã đầy lại.
 - **Giả IP khi gọi thẳng vào Next:** xem mục 4.
 
-## 9. Kiểm thử
+## 10. Kiểm thử
 
 Bộ test chung chạy với rate-limit **tắt**: `maven-surefire-plugin` đặt system property `rate-limit.enabled=false`, vì
 test đăng nhập nhiều hơn người thật rất nhiều. Các test rate-limit tự bật lại bằng
@@ -216,16 +274,18 @@ rate-limit vẫn bật, các test đăng nhập có thể bị `429`; khi đó t
 
 | Test | Kiểm tra |
 |:-----|:---------|
-| `RateLimitServiceTest` | Hết lượt, nạp lại, khoá và mức đếm riêng, `check` không trừ lượt còn `penalize` thì trừ, thiếu cấu hình thì báo lỗi |
+| `RateLimitServiceTest` | Hết lượt, nạp lại, khoá và mức đếm riêng, `check` không trừ lượt còn `penalize` thì trừ, thiếu cấu hình thì báo lỗi, đổi hạn mức có hiệu lực ngay, tắt/khôi phục mức, không tắt được `login-failure` |
 | `ClientIpResolverTest` | Client gọi thẳng không giả được IP, proxy tin cậy truyền IP, bỏ qua các hop tin cậy, header hỏng thì lấy `remoteAddr`, gom IPv6 /64 |
 | `IpRateLimitIntegrationTest` | `429` kèm header và CORS, trần chung theo IP, preflight không bị tính, proxy tin cậy và chống giả IP |
 | `UserRateLimitIntegrationTest` | Mỗi người một hạn mức, luật riêng thay mức `api`, `GET`/`HEAD` chung bucket xuất Excel, token sai không bị tính |
 | `LoginAttemptLimiterIntegrationTest` | Sai mật khẩu hết lượt thì cả mật khẩu đúng cũng chờ, đăng nhập đúng không trừ, username/email chung bucket, tên không tồn tại vẫn bị giới hạn, tài khoản bị khoá không trừ |
 | `RateLimitStatsIntegrationTest` | Phân quyền và nội dung API thống kê |
+| `RateLimitSettingsIntegrationTest` | Phân quyền, hạn mức mới chặn ngay và được lưu, mức tắt cho mọi request qua, khôi phục xoá dòng đã lưu, nạp lại khi khởi động, API chỉnh vẫn gọi được khi hạn mức chặt nhất, không tắt được `login-failure`, giá trị sai |
 
 Khi thêm một mức mới: thêm vào `RateLimitPolicy`, cấu hình trong `application.properties`, luật trong
 `UserRateLimitFilter` hoặc `IpRateLimitFilter`, nhãn tiếng Việt trong `apps/web/lib/rate-limit-stats.ts`, bảng mục 2
-của tài liệu này, và test kiểm tra mức đó đếm riêng và trả `429` khi hết lượt.
+của tài liệu này, migration mới mở rộng CHECK `chk_rate_limit_policy` của `rate_limit_policy_settings`, và test kiểm
+tra mức đó đếm riêng và trả `429` khi hết lượt.
 
 ## Code
 
@@ -234,6 +294,10 @@ của tài liệu này, và test kiểm tra mức đó đếm riêng và trả `
   `RateLimitResponses`
 - [`SecurityConfig`](../../src/main/java/com/htttdn/hrm/config/SecurityConfig.java): thứ tự filter, header CORS
 - [`AuthService.login`](../../src/main/java/com/htttdn/hrm/service/AuthService.java),
-  [`RateLimitStatsController`](../../src/main/java/com/htttdn/hrm/controller/RateLimitStatsController.java)
+  [`RateLimitStatsController`](../../src/main/java/com/htttdn/hrm/controller/RateLimitStatsController.java),
+  [`RateLimitSettingsService`](../../src/main/java/com/htttdn/hrm/service/RateLimitSettingsService.java),
+  [`RateLimitPolicySetting`](../../src/main/java/com/htttdn/hrm/entity/RateLimitPolicySetting.java),
+  [`V11__rate_limit_settings.sql`](../../src/main/resources/db/migration/V11__rate_limit_settings.sql)
 - Web: [`client-ip.ts`](../../../apps/web/lib/client-ip.ts), [`rate-limit.ts`](../../../apps/web/lib/rate-limit.ts),
-  [`rate-limit-page.tsx`](../../../apps/web/components/rate-limit/rate-limit-page.tsx)
+  [`rate-limit-page.tsx`](../../../apps/web/components/rate-limit/rate-limit-page.tsx),
+  [`rate-limit-policy-dialogs.tsx`](../../../apps/web/components/rate-limit/rate-limit-policy-dialogs.tsx)
