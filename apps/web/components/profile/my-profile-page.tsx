@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useState } from "react"
 import { GraduationCap, KeyRound, Loader2, PencilLine } from "lucide-react"
 import { toast } from "sonner"
 
+import { PhoneInput } from "@/components/common/phone-input"
 import { formatDate, InfoField } from "@/components/employee/employee-detail-page"
 import { PageHeader } from "@/components/portal/page-header"
 import { roleScope } from "@/components/portal/portal-dashboard"
@@ -302,7 +303,7 @@ function EditProfileDialog({ profile, onClose, onSaved }: {
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5">
               <Label htmlFor="self-phone">Điện thoại</Label>
-              <Input id="self-phone" type="tel" maxLength={12} value={phone} onChange={(event) => setPhone(event.target.value)} />
+              <PhoneInput id="self-phone" value={phone} onChange={(event) => setPhone(event.target.value)} />
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="self-email">Email cá nhân</Label>

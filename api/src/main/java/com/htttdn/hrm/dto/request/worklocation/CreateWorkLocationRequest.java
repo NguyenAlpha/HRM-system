@@ -1,5 +1,6 @@
 package com.htttdn.hrm.dto.request.worklocation;
 
+import com.htttdn.hrm.dto.request.ValidationPatterns;
 import com.htttdn.hrm.entity.enums.LocationType;
 
 import jakarta.annotation.Nullable;
@@ -26,6 +27,8 @@ public record CreateWorkLocationRequest(
 
     @NotBlank
     String address,
+
+    @Pattern(regexp = ValidationPatterns.PHONE, message = ValidationPatterns.PHONE_MESSAGE)
 
     @Size(max = 12)
     @Nullable

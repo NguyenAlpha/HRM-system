@@ -7,6 +7,7 @@ import { z } from "zod"
 import { Check, Copy, KeyRound, Link2, Loader2, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
 
+import { PhoneInput } from "@/components/common/phone-input"
 import { ErrorAlert } from "@/components/common/list-controls"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -21,6 +22,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
+import { phoneSchema } from "@/lib/phone"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import { bootstrapCompanyOwner, type CompanyOwnerProvisioningResult } from "@/lib/company-owner"
 
@@ -29,7 +31,7 @@ const bootstrapSchema = z
     companyName: z.string().trim().min(1, "Bắt buộc").max(40, "Tối đa 40 ký tự"),
     companyCode: z.string().trim().min(1, "Bắt buộc").max(20, "Tối đa 20 ký tự"),
     companyTaxCode: z.string().trim().max(30, "Tối đa 30 ký tự").optional(),
-    companyPhone: z.string().trim().max(12, "Tối đa 12 ký tự").optional(),
+    companyPhone: phoneSchema,
     companyEmail: z
       .string()
       .trim()
@@ -44,7 +46,7 @@ const bootstrapSchema = z
       .min(1, "Bắt buộc")
       .max(30, "Tối đa 30 ký tự")
       .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Email không hợp lệ"),
-    phone: z.string().max(12, "Tối đa 12 ký tự").optional(),
+    phone: phoneSchema,
     hireDate: z.string().min(1, "Bắt buộc"),
     username: z
       .string()
@@ -212,7 +214,7 @@ export function CompanyOwnerProvision({ onSessionExpired }: { onSessionExpired: 
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="company-phone">Điện thoại</Label>
-              <Input id="company-phone" aria-invalid={!!errors.companyPhone} {...register("companyPhone")} />
+              <PhoneInput id="company-phone" aria-invalid={!!errors.companyPhone} {...register("companyPhone")} />
               {errors.companyPhone && <p className="text-xs font-medium text-destructive">{errors.companyPhone.message}</p>}
             </div>
             <div className="grid gap-1.5">
@@ -252,7 +254,7 @@ export function CompanyOwnerProvision({ onSessionExpired }: { onSessionExpired: 
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="owner-phone">Điện thoại</Label>
-              <Input id="owner-phone" aria-invalid={!!errors.phone} {...register("phone")} />
+              <PhoneInput id="owner-phone" aria-invalid={!!errors.phone} {...register("phone")} />
               {errors.phone && <p className="text-xs font-medium text-destructive">{errors.phone.message}</p>}
             </div>
           </div>
