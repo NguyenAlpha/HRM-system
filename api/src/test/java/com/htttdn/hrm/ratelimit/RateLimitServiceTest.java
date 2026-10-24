@@ -1,5 +1,6 @@
 package com.htttdn.hrm.ratelimit;
 
+import java.time.Clock;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,7 @@ class RateLimitServiceTest {
 
     @Test
     void blocksOnceTheQuotaIsUsedAndReportsWhenToRetry() {
-        RateLimitService service = new RateLimitService(properties(2, 60));
+        RateLimitService service = new RateLimitService(properties(2, 60), Clock.systemUTC());
 
         RateLimitDecision first = service.tryConsume(RateLimitPolicy.API, "alice");
         RateLimitDecision second = service.tryConsume(RateLimitPolicy.API, "alice");
@@ -36,7 +37,7 @@ class RateLimitServiceTest {
 
     @Test
     void countsEveryKeyAndPolicySeparately() {
-        RateLimitService service = new RateLimitService(properties(1, 60));
+        RateLimitService service = new RateLimitService(properties(1, 60), Clock.systemUTC());
 
         assertTrue(service.tryConsume(RateLimitPolicy.API, "alice").allowed());
         assertTrue(service.tryConsume(RateLimitPolicy.API, "bob").allowed());
@@ -46,7 +47,7 @@ class RateLimitServiceTest {
 
     @Test
     void refillsAfterTheWindow() throws InterruptedException {
-        RateLimitService service = new RateLimitService(properties(1, 1));
+        RateLimitService service = new RateLimitService(properties(1, 1), Clock.systemUTC());
 
         assertTrue(service.tryConsume(RateLimitPolicy.API, "alice").allowed());
         assertFalse(service.tryConsume(RateLimitPolicy.API, "alice").allowed());
@@ -56,7 +57,7 @@ class RateLimitServiceTest {
 
     @Test
     void checkDoesNotTakeATokenButPenalizeDoes() {
-        RateLimitService service = new RateLimitService(properties(1, 60));
+        RateLimitService service = new RateLimitService(properties(1, 60), Clock.systemUTC());
 
         assertTrue(service.check(RateLimitPolicy.LOGIN_FAILURE, "account:1").allowed());
         assertTrue(service.check(RateLimitPolicy.LOGIN_FAILURE, "account:1").allowed());
@@ -69,7 +70,7 @@ class RateLimitServiceTest {
 
     @Test
     void configureAppliesTheNewQuotaAtOnceWithFreshBuckets() {
-        RateLimitService service = new RateLimitService(properties(1, 60));
+        RateLimitService service = new RateLimitService(properties(1, 60), Clock.systemUTC());
         assertTrue(service.tryConsume(RateLimitPolicy.API, "alice").allowed());
         assertFalse(service.tryConsume(RateLimitPolicy.API, "alice").allowed());
 
@@ -87,7 +88,7 @@ class RateLimitServiceTest {
 
     @Test
     void aDisabledPolicyIsNotEnforcedAndRestoreDefaultSwitchesItBackOn() {
-        RateLimitService service = new RateLimitService(properties(5, 60));
+        RateLimitService service = new RateLimitService(properties(5, 60), Clock.systemUTC());
 
         service.configure(RateLimitPolicy.EXPORT, new RateLimitProperties.Quota(5, 60), false);
         assertFalse(service.enabled(RateLimitPolicy.EXPORT));
@@ -100,7 +101,7 @@ class RateLimitServiceTest {
 
     @Test
     void theLoginFailurePolicyCannotBeDisabled() {
-        RateLimitService service = new RateLimitService(properties(5, 60));
+        RateLimitService service = new RateLimitService(properties(5, 60), Clock.systemUTC());
 
         assertThrows(IllegalArgumentException.class, () -> service.configure(
             RateLimitPolicy.LOGIN_FAILURE, new RateLimitProperties.Quota(5, 60), false));

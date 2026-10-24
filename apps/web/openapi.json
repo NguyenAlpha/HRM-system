@@ -4484,6 +4484,41 @@
         "tags" : [ "rate-limit-stats-controller" ]
       }
     },
+    "/api/system/rate-limit/timeline" : {
+      "get" : {
+        "operationId" : "timeline",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "range",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "HOUR",
+            "enum" : [ "HOUR", "DAY", "WEEK" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "policy",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultRateLimitTimelineResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "rate-limit-stats-controller" ]
+      }
+    },
     "/api/system/traffic/stats" : {
       "get" : {
         "operationId" : "stats",
@@ -6729,6 +6764,29 @@
           "data" : {
             "anyOf" : [ {
               "$ref" : "#/components/schemas/RateLimitStatsResponse"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
+      "ApiResultRateLimitTimelineResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/RateLimitTimelineResponse"
             }, {
               "type" : "null"
             } ]
@@ -9575,6 +9633,24 @@
         },
         "required" : [ "assignmentPolicy", "code", "description", "id", "isActive", "module", "name" ]
       },
+      "Point" : {
+        "type" : "object",
+        "properties" : {
+          "blocked" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "requests" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "start" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "blocked", "requests", "start" ]
+      },
       "PolicyStats" : {
         "type" : "object",
         "properties" : {
@@ -9799,6 +9875,32 @@
           }
         },
         "required" : [ "enabled", "policies", "startedAt", "topBlocked" ]
+      },
+      "RateLimitTimelineResponse" : {
+        "type" : "object",
+        "properties" : {
+          "points" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Point"
+            }
+          },
+          "policy" : {
+            "type" : [ "string", "null" ]
+          },
+          "range" : {
+            "type" : "string"
+          },
+          "slotSeconds" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "startedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "points", "policy", "range", "slotSeconds", "startedAt" ]
       },
       "RecordPunchesRequest" : {
         "type" : "object",
