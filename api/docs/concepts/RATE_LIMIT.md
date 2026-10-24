@@ -210,6 +210,47 @@ Cách đọc số liệu:
 Danh sách `topBlocked` chứa username và IP, là dữ liệu nhạy cảm; vì vậy permission là `SYSTEM_ONLY`, không gán được
 cho custom role.
 
+### 7.1. Theo thời gian
+
+`GET /api/system/rate-limit/timeline?range=HOUR&policy=api`, cùng permission `system.rate_limit.read`.
+
+| Tham số | Giá trị | Mặc định |
+|:--------|:--------|:---------|
+| `range` | `HOUR` (60 phút, mỗi điểm 1 phút), `DAY` (24 giờ, mỗi điểm 15 phút), `WEEK` (7 ngày, mỗi điểm 1 giờ) | `HOUR` |
+| `policy` | Tên mức ở bảng mục 2; bỏ trống là tất cả các mức | tất cả |
+
+```json
+{
+  "success": true,
+  "data": {
+    "range": "HOUR",
+    "policy": "api",
+    "slotSeconds": 60,
+    "startedAt": "2026-10-24T05:53:00Z",
+    "points": [
+      { "start": "2026-10-24T05:54:00Z", "requests": 83, "blocked": 2 }
+    ]
+  },
+  "error": null
+}
+```
+
+- `points` luôn đủ cả khoảng (60, 96 hoặc 168 điểm), cũ nhất trước, điểm cuối là khung đang chạy. Khung trước
+  `startedAt` bằng 0 vì số liệu nằm trong bộ nhớ.
+- Với một mức: `requests` là mọi request được mức đó đếm, gồm cả request bị chặn; `blocked` là số bị chặn.
+- Với tất cả các mức: `requests` chỉ cộng các mức lớp IP, vì mỗi request `/api/**` đi qua đúng một mức IP (trừ các
+  API của mục 7 và 8, không bị đếm); `blocked` cộng mọi mức, vì một request chỉ bị chặn một lần.
+- Mức đang tắt không được đếm.
+- Sai tham số: `range` lạ trả `400 VALIDATION_ERROR`, `policy` lạ trả `404 RATE_LIMIT_POLICY_NOT_FOUND`.
+
+`RateLimitTimeline` giữ mỗi mức ba vòng đếm cố định (60 + 96 + 168 ô), ô cũ được xoá khi tới lượt dùng lại, nên bộ nhớ
+không tăng dù backend chạy bao lâu.
+
+Trang **Giới hạn truy cập** vẽ dữ liệu này thành hai biểu đồ chung trục thời gian, "Request" và "Bị chặn": số bị
+chặn thường rất nhỏ so với số request nên vẽ chung một trục sẽ thành đường sát đáy. Vạch đứt đánh dấu lúc backend
+khởi động. Trang tự tải lại mỗi 15 giây khi đang mở (tab bị ẩn thì bỏ qua lượt đó); nút "Tự động làm mới" trên đầu
+trang tắt việc này. Các API của trang không bị rate-limit (mục 1), nên tự tải lại không tốn lượt của ai.
+
 ## 8. Chỉnh hạn mức trên giao diện
 
 Người có permission `system.rate_limit.manage` (`SYSTEM_ONLY`, chỉ seed cho `SYSTEM_ADMIN`) chỉnh từng mức ở trang
@@ -253,8 +294,9 @@ Cách hoạt động (`RateLimitSettingsService`):
 
 ## 9. Giới hạn hiện tại
 
-- **Mất khi khởi động lại:** bucket và số liệu thống kê nằm trong bộ nhớ, khởi động lại backend là về 0. Hạn mức
-  chỉnh trên giao diện thì không mất vì nằm trong database.
+- **Mất khi khởi động lại:** bucket và số liệu thống kê, kể cả biểu đồ theo thời gian, nằm trong bộ nhớ; khởi động
+  lại backend là về 0, nên biểu đồ 7 ngày chỉ có dữ liệu từ lần khởi động gần nhất. Hạn mức chỉnh trên giao diện thì
+  không mất vì nằm trong database.
 - **Một instance:** chạy nhiều instance backend thì mỗi instance có bucket riêng, hạn mức thực tế thành
   `hạn mức × số instance`. Khi cần, đổi chỗ lưu bucket trong `RateLimitService` sang Redis (Bucket4j có sẵn
   `LettuceBasedProxyManager`); hai filter, `LoginAttemptLimiter` và API thống kê giữ nguyên. Hạn mức chỉnh trên
@@ -279,7 +321,8 @@ rate-limit vẫn bật, các test đăng nhập có thể bị `429`; khi đó t
 | `IpRateLimitIntegrationTest` | `429` kèm header và CORS, trần chung theo IP, preflight không bị tính, proxy tin cậy và chống giả IP |
 | `UserRateLimitIntegrationTest` | Mỗi người một hạn mức, luật riêng thay mức `api`, `GET`/`HEAD` chung bucket xuất Excel, token sai không bị tính |
 | `LoginAttemptLimiterIntegrationTest` | Sai mật khẩu hết lượt thì cả mật khẩu đúng cũng chờ, đăng nhập đúng không trừ, username/email chung bucket, tên không tồn tại vẫn bị giới hạn, tài khoản bị khoá không trừ |
-| `RateLimitStatsIntegrationTest` | Phân quyền và nội dung API thống kê |
+| `RateLimitTimelineTest` | Đủ điểm cho cả khoảng, đếm theo khung, cách cộng khi xem tất cả các mức, bỏ khung quá cũ |
+| `RateLimitStatsIntegrationTest` | Phân quyền và nội dung API thống kê và API theo thời gian, tham số sai |
 | `RateLimitSettingsIntegrationTest` | Phân quyền, hạn mức mới chặn ngay và được lưu, mức tắt cho mọi request qua, khôi phục xoá dòng đã lưu, nạp lại khi khởi động, API chỉnh vẫn gọi được khi hạn mức chặt nhất, không tắt được `login-failure`, giá trị sai |
 
 Khi thêm một mức mới: thêm vào `RateLimitPolicy`, cấu hình trong `application.properties`, luật trong
@@ -290,8 +333,8 @@ tra mức đó đếm riêng và trả `429` khi hết lượt.
 ## Code
 
 - [`ratelimit/`](../../src/main/java/com/htttdn/hrm/ratelimit): `RateLimitPolicy`, `RateLimitProperties`,
-  `RateLimitService`, `ClientIpResolver`, `IpRateLimitFilter`, `UserRateLimitFilter`, `LoginAttemptLimiter`,
-  `RateLimitResponses`
+  `RateLimitService`, `RateLimitTimeline`, `ClientIpResolver`, `IpRateLimitFilter`, `UserRateLimitFilter`,
+  `LoginAttemptLimiter`, `RateLimitResponses`
 - [`SecurityConfig`](../../src/main/java/com/htttdn/hrm/config/SecurityConfig.java): thứ tự filter, header CORS
 - [`AuthService.login`](../../src/main/java/com/htttdn/hrm/service/AuthService.java),
   [`RateLimitStatsController`](../../src/main/java/com/htttdn/hrm/controller/RateLimitStatsController.java),
@@ -300,4 +343,5 @@ tra mức đó đếm riêng và trả `429` khi hết lượt.
   [`V11__rate_limit_settings.sql`](../../src/main/resources/db/migration/V11__rate_limit_settings.sql)
 - Web: [`client-ip.ts`](../../../apps/web/lib/client-ip.ts), [`rate-limit.ts`](../../../apps/web/lib/rate-limit.ts),
   [`rate-limit-page.tsx`](../../../apps/web/components/rate-limit/rate-limit-page.tsx),
-  [`rate-limit-policy-dialogs.tsx`](../../../apps/web/components/rate-limit/rate-limit-policy-dialogs.tsx)
+  [`rate-limit-policy-dialogs.tsx`](../../../apps/web/components/rate-limit/rate-limit-policy-dialogs.tsx),
+  [`rate-limit-timeline.tsx`](../../../apps/web/components/rate-limit/rate-limit-timeline.tsx)
