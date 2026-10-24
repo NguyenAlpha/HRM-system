@@ -1,16 +1,6 @@
-import { expect, test, type Page } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 
-// Seeded by the API; also shown on /admin/login in development.
-const ADMIN = { username: "admin", password: "Admin@123" }
-
-// Seeded HRM account with the EMPLOYEE role.
-const EMPLOYEE = { username: "employee", password: "password" }
-
-async function signIn(page: Page, username: string, password: string) {
-  await page.getByLabel("Tên đăng nhập hoặc email").fill(username)
-  await page.getByLabel("Mật khẩu", { exact: true }).fill(password)
-  await page.getByRole("button", { name: /^Đăng nhập (hệ thống|Admin)$/ }).click()
-}
+import { ADMIN, EMPLOYEE, signIn } from "./auth"
 
 test.describe("Đăng nhập HRM (/login)", () => {
   test.beforeEach(async ({ page }) => {

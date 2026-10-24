@@ -126,8 +126,12 @@ npx playwright show-report        # báo cáo HTML sau khi chạy
 npx playwright codegen http://localhost:3000/login   # ghi thao tác thành code test
 ```
 
-`e2e/login.spec.ts` dùng hai tài khoản seed: `admin / Admin@123` (cổng Admin) và
-`employee / password` (cổng HRM).
+Tài khoản seed dùng trong test khai báo ở `e2e/auth.ts`: `admin / Admin@123` (cổng Admin),
+`owner / password` và `employee / password` (cổng HRM, `employee` là account id 4).
+
+`e2e/account-status.spec.ts` cho `owner` vô hiệu hóa rồi kích hoạt lại `employee`, nên chạy ở project
+`account-status` sau khi các test khác xong. Nếu test dừng giữa chừng, `employee` có thể còn ở trạng
+thái vô hiệu hóa; kích hoạt lại tại `/accounts/4` trước khi chạy tiếp.
 
 Case sai mật khẩu dùng tên đăng nhập ngẫu nhiên, nên không làm tài khoản thật bị giới hạn 5 lần
 sai/15 phút.

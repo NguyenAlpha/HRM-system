@@ -16,7 +16,16 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: /account-status/ },
+    // Disables the shared employee account for a while, so it runs only after the other tests finish.
+    {
+      name: "account-status",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /account-status/,
+      dependencies: ["chromium"],
+    },
+  ],
   webServer: {
     command: "npm run dev",
     url: "http://localhost:3000/login",
