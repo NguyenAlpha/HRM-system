@@ -45,9 +45,11 @@ const period = (row: { effectiveFrom: string; effectiveTo: string | null }) =>
  * Salary, insurance and tax deductions of one employee, plus their payslips: the inputs HR keeps
  * for payroll. Each list adds a dated entry through a dialog; a new entry closes the current one.
  */
-export function EmployeeCompensationCard({ employeeId, hireDate, permissions }: {
+export function EmployeeCompensationCard({ employeeId, hireDate, lastDay, permissions }: {
   employeeId: number
   hireDate: string
+  /** The last working day once employment ends or is scheduled to; nothing is dated after it. */
+  lastDay: string | null
   permissions: ReadonlySet<string>
 }) {
   const canManage = permissions.has("compensation.manage")
@@ -88,9 +90,16 @@ export function EmployeeCompensationCard({ employeeId, hireDate, permissions }: 
     return () => { active = false }
   }, [base, canReadPayslips, employeeId, revision])
 
-  const currentSalary = salaries.find((salary) => salary.effectiveTo === null)
+  // An entry starting after the last working day never applied (added before the end was enforced).
+  const afterEnd = (row: { effectiveFrom: string }) => lastDay !== null && row.effectiveFrom > lastDay
+  const isCurrent = (row: { effectiveFrom: string; effectiveTo: string | null }) => row.effectiveTo === null && !afterEnd(row)
+  const currentSalary = salaries.find(isCurrent)
+  const capped = (date: string) => lastDay !== null && date > lastDay ? lastDay : date
   // The first entry of each history starts on the hire date; later ones default to today.
-  const firstDate = (rows: unknown[]) => rows.length === 0 ? hireDate : today()
+  const firstDate = (rows: unknown[]) => capped(rows.length === 0 ? hireDate : today())
+  const periodCell = (row: { effectiveFrom: string; effectiveTo: string | null }) => afterEnd(row)
+    ? <>{formatDate(row.effectiveFrom)} <Badge variant="outline" className="ml-2">Sau ngày nghỉ việc, không áp dụng</Badge></>
+    : <>{period(row)}{isCurrent(row) && <Badge variant="secondary" className="ml-2">Hiện tại</Badge>}</>
 
   const addButton = (kind: Form, label: string) => canManage && (
     <Button type="button" size="sm" onClick={() => setForm(kind)}><Plus /> {label}</Button>
@@ -112,6 +121,12 @@ export function EmployeeCompensationCard({ employeeId, hireDate, permissions }: 
       </CardHeader>
       <CardContent className="grid gap-4">
         <SectionError error={error} />
+        {lastDay && (
+          <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+            Ngày làm việc cuối là {formatDate(lastDay)}: chỉ thêm được mục có hiệu lực đến ngày đó, ví dụ để
+            đính chính trước khi chốt lương tháng cuối.
+          </p>
+        )}
         <Tabs defaultValue="salary">
           <TabsList>
             <TabsTrigger value="salary">Lương cơ bản</TabsTrigger>
@@ -127,7 +142,7 @@ export function EmployeeCompensationCard({ employeeId, hireDate, permissions }: 
             <ListTable headers={["Hiệu lực", "Lương tháng", "Lý do"]} alignRight={[1]} empty="Chưa có mức lương; chưa thể tính lương.">
               {salaries.map((salary) => (
                 <TableRow key={salary.id}>
-                  <TableCell>{period(salary)}{salary.effectiveTo === null && <Badge variant="secondary" className="ml-2">Hiện tại</Badge>}</TableCell>
+                  <TableCell>{periodCell(salary)}</TableCell>
                   <TableCell className="text-right font-medium tabular-nums">{money(salary.baseSalary)}</TableCell>
                   <TableCell className="text-muted-foreground">{salary.reason ?? "—"}</TableCell>
                 </TableRow>
@@ -143,7 +158,7 @@ export function EmployeeCompensationCard({ employeeId, hireDate, permissions }: 
               empty="Chưa có hồ sơ bảo hiểm/thuế; chưa thể tính lương.">
               {profiles.map((profile) => (
                 <TableRow key={profile.id}>
-                  <TableCell>{period(profile)}</TableCell>
+                  <TableCell>{periodCell(profile)}</TableCell>
                   <TableCell className="text-right tabular-nums">{money(profile.insuranceSalary)}</TableCell>
                   <TableCell>{REGION_ITEMS[profile.wageRegion as 1 | 2 | 3 | 4]}</TableCell>
                   <TableCell className="text-sm">
@@ -164,7 +179,7 @@ export function EmployeeCompensationCard({ employeeId, hireDate, permissions }: 
                 <TableRow key={dependent.id}>
                   <TableCell className="font-medium">{dependent.fullName}</TableCell>
                   <TableCell className="text-muted-foreground">{dependent.identifier ?? "—"}</TableCell>
-                  <TableCell>{period(dependent)}</TableCell>
+                  <TableCell>{periodCell(dependent)}</TableCell>
                   <RowActionsCell label={dependent.fullName}>
                     {canManage && !dependent.effectiveTo && (
                       <RowActionItem icon={CalendarX} destructive disabled={busy} onClick={() => setEnding(dependent)}>Kết thúc giảm trừ</RowActionItem>
@@ -197,20 +212,20 @@ export function EmployeeCompensationCard({ employeeId, hireDate, permissions }: 
       </CardContent>
 
       {form === "salary" && (
-        <SalaryDialog defaultDate={firstDate(salaries)} busy={busy} onClose={() => setForm(null)}
+        <SalaryDialog defaultDate={firstDate(salaries)} maxDate={lastDay} busy={busy} onClose={() => setForm(null)}
           onSubmit={(body) => run("Đã lưu mức lương", () => workforceApi(`${base}/salary-history`, "POST", body))} />
       )}
       {form === "profile" && (
-        <ProfileDialog defaultDate={firstDate(profiles)} defaultSalary={currentSalary?.baseSalary} busy={busy}
+        <ProfileDialog defaultDate={firstDate(profiles)} maxDate={lastDay} defaultSalary={currentSalary?.baseSalary} busy={busy}
           onClose={() => setForm(null)}
           onSubmit={(body) => run("Đã lưu hồ sơ bảo hiểm", () => workforceApi(`${base}/payroll-profiles`, "POST", body))} />
       )}
       {form === "dependent" && (
-        <DependentDialog busy={busy} onClose={() => setForm(null)}
+        <DependentDialog defaultDate={capped(today())} maxDate={lastDay} busy={busy} onClose={() => setForm(null)}
           onSubmit={(body) => run("Đã thêm người phụ thuộc", () => workforceApi(`${base}/tax-dependents`, "POST", body))} />
       )}
       {ending && (
-        <EndDependentDialog dependent={ending} busy={busy} onClose={() => setEnding(null)}
+        <EndDependentDialog dependent={ending} defaultDate={capped(today())} maxDate={lastDay} busy={busy} onClose={() => setEnding(null)}
           onSubmit={(effectiveTo) => run("Đã kết thúc người phụ thuộc", () => workforceApi(
             `${base}/tax-dependents/${ending.id}/end`, "PUT", { effectiveTo } satisfies WorkforceBody["EndDependentCommand"]))} />
       )}
@@ -284,8 +299,9 @@ function FormDialog({ title, description, busy, onClose, onSubmit, children }: {
   )
 }
 
-function SalaryDialog({ defaultDate, busy, onClose, onSubmit }: {
+function SalaryDialog({ defaultDate, maxDate, busy, onClose, onSubmit }: {
   defaultDate: string
+  maxDate: string | null
   busy: boolean
   onClose: () => void
   onSubmit: (body: WorkforceBody["SetSalaryCommand"]) => Promise<boolean>
@@ -303,7 +319,7 @@ function SalaryDialog({ defaultDate, busy, onClose, onSubmit }: {
       </div>
       <div className="grid gap-1.5">
         <Label htmlFor="salary-from">Hiệu lực từ</Label>
-        <Input id="salary-from" required type="date" value={effectiveFrom} onChange={(event) => setEffectiveFrom(event.target.value)} />
+        <Input id="salary-from" required type="date" max={maxDate ?? undefined} value={effectiveFrom} onChange={(event) => setEffectiveFrom(event.target.value)} />
       </div>
       <div className="grid gap-1.5">
         <Label htmlFor="salary-reason">Lý do</Label>
@@ -314,8 +330,9 @@ function SalaryDialog({ defaultDate, busy, onClose, onSubmit }: {
   )
 }
 
-function ProfileDialog({ defaultDate, defaultSalary, busy, onClose, onSubmit }: {
+function ProfileDialog({ defaultDate, maxDate, defaultSalary, busy, onClose, onSubmit }: {
   defaultDate: string
+  maxDate: string | null
   defaultSalary?: number
   busy: boolean
   onClose: () => void
@@ -337,7 +354,7 @@ function ProfileDialog({ defaultDate, defaultSalary, busy, onClose, onSubmit }: 
       })}>
       <div className="grid gap-1.5">
         <Label htmlFor="profile-from">Hiệu lực từ</Label>
-        <Input id="profile-from" required type="date" value={effectiveFrom} onChange={(event) => setEffectiveFrom(event.target.value)} />
+        <Input id="profile-from" required type="date" max={maxDate ?? undefined} value={effectiveFrom} onChange={(event) => setEffectiveFrom(event.target.value)} />
       </div>
       <div className="grid gap-1.5">
         <Label htmlFor="profile-salary">Lương đóng bảo hiểm (VND)</Label>
@@ -368,14 +385,16 @@ function ProfileDialog({ defaultDate, defaultSalary, busy, onClose, onSubmit }: 
   )
 }
 
-function DependentDialog({ busy, onClose, onSubmit }: {
+function DependentDialog({ defaultDate, maxDate, busy, onClose, onSubmit }: {
+  defaultDate: string
+  maxDate: string | null
   busy: boolean
   onClose: () => void
   onSubmit: (body: WorkforceBody["DependentCommand"]) => Promise<boolean>
 }) {
   const [fullName, setFullName] = useState("")
   const [identifier, setIdentifier] = useState("")
-  const [effectiveFrom, setEffectiveFrom] = useState(today())
+  const [effectiveFrom, setEffectiveFrom] = useState(defaultDate)
   return (
     <FormDialog title="Thêm người phụ thuộc" description="Người phụ thuộc đã đăng ký giảm trừ gia cảnh với cơ quan thuế." busy={busy}
       onClose={onClose}
@@ -390,26 +409,28 @@ function DependentDialog({ busy, onClose, onSubmit }: {
       </div>
       <div className="grid gap-1.5">
         <Label htmlFor="dependent-from">Giảm trừ từ ngày</Label>
-        <Input id="dependent-from" required type="date" value={effectiveFrom} onChange={(event) => setEffectiveFrom(event.target.value)} />
+        <Input id="dependent-from" required type="date" max={maxDate ?? undefined} value={effectiveFrom} onChange={(event) => setEffectiveFrom(event.target.value)} />
       </div>
     </FormDialog>
   )
 }
 
-function EndDependentDialog({ dependent, busy, onClose, onSubmit }: {
+function EndDependentDialog({ dependent, defaultDate, maxDate, busy, onClose, onSubmit }: {
   dependent: TaxDependent
+  defaultDate: string
+  maxDate: string | null
   busy: boolean
   onClose: () => void
   onSubmit: (effectiveTo: string) => Promise<boolean>
 }) {
-  const [effectiveTo, setEffectiveTo] = useState(today())
+  const [effectiveTo, setEffectiveTo] = useState(defaultDate)
   return (
     <FormDialog title={`Kết thúc giảm trừ cho ${dependent.fullName}`}
       description={`Ngày cuối cùng còn được giảm trừ; không được trước ${formatDate(dependent.effectiveFrom)}.`} busy={busy}
       onClose={onClose} onSubmit={() => onSubmit(effectiveTo)}>
       <div className="grid gap-1.5">
         <Label htmlFor="dependent-end">Ngày kết thúc</Label>
-        <Input id="dependent-end" type="date" required min={dependent.effectiveFrom} value={effectiveTo}
+        <Input id="dependent-end" type="date" required min={dependent.effectiveFrom} max={maxDate ?? undefined} value={effectiveTo}
           onChange={(event) => setEffectiveTo(event.target.value)} />
       </div>
     </FormDialog>

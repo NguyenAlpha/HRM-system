@@ -403,7 +403,8 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
 
             {canReadCompensation && (
               <div className="lg:col-span-3">
-                <EmployeeCompensationCard employeeId={detail.id} hireDate={detail.hireDate} permissions={permissions} />
+                <EmployeeCompensationCard employeeId={detail.id} hireDate={detail.hireDate} lastDay={detail.terminationDate ?? null}
+                  permissions={permissions} />
               </div>
             )}
 
