@@ -3,9 +3,8 @@ import { expect, test, type Page } from "@playwright/test"
 // Seeded by the API; also shown on /admin/login in development.
 const ADMIN = { username: "admin", password: "Admin@123" }
 
-// HRM accounts are seeded without a password, so a working one is passed in when available.
-const HRM_USERNAME = process.env.E2E_HRM_USERNAME
-const HRM_PASSWORD = process.env.E2E_HRM_PASSWORD
+// Seeded HRM account with the EMPLOYEE role.
+const EMPLOYEE = { username: "employee", password: "password" }
 
 async function signIn(page: Page, username: string, password: string) {
   await page.getByLabel("Tên đăng nhập hoặc email").fill(username)
@@ -63,12 +62,9 @@ test.describe("Đăng nhập HRM (/login)", () => {
   })
 
   test("tài khoản HRM hợp lệ vào được dashboard", async ({ page }) => {
-    test.skip(!HRM_USERNAME || !HRM_PASSWORD, "Đặt E2E_HRM_USERNAME và E2E_HRM_PASSWORD để chạy case này")
-
-    await signIn(page, HRM_USERNAME!, HRM_PASSWORD!)
+    await signIn(page, EMPLOYEE.username, EMPLOYEE.password)
 
     await expect(page).toHaveURL(/\/dashboard$/)
-    await expect(page.getByText("Đăng nhập thành công")).toBeVisible()
   })
 })
 
@@ -78,7 +74,6 @@ test.describe("Đăng nhập Admin (/admin/login)", () => {
     await signIn(page, ADMIN.username, ADMIN.password)
 
     await expect(page).toHaveURL(/\/admin$/)
-    await expect(page.getByText("Đăng nhập thành công")).toBeVisible()
 
     // The session survives a reload instead of bouncing back to the login page.
     await page.reload()

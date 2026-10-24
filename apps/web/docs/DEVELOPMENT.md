@@ -126,13 +126,8 @@ npx playwright show-report        # báo cáo HTML sau khi chạy
 npx playwright codegen http://localhost:3000/login   # ghi thao tác thành code test
 ```
 
-`e2e/login.spec.ts` dùng tài khoản seed `admin / Admin@123`. Tài khoản HRM trong seed chưa có
-mật khẩu, nên case đăng nhập HRM thành công chỉ chạy khi đặt `E2E_HRM_USERNAME` và
-`E2E_HRM_PASSWORD` của một tài khoản đã kích hoạt:
-
-```powershell
-$env:E2E_HRM_USERNAME="owner"; $env:E2E_HRM_PASSWORD="..."; npm run test:e2e
-```
+`e2e/login.spec.ts` dùng hai tài khoản seed: `admin / Admin@123` (cổng Admin) và
+`employee / password` (cổng HRM).
 
 Case sai mật khẩu dùng tên đăng nhập ngẫu nhiên, nên không làm tài khoản thật bị giới hạn 5 lần
 sai/15 phút.
