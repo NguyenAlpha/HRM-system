@@ -20,6 +20,12 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 public class IpRateLimitFilter extends OncePerRequestFilter {
 
+    /**
+     * The rate-limit statistics and settings are never limited, so an administrator who set a quota
+     * too tight can always loosen it again. They need a signed-in SYSTEM_ONLY permission anyway.
+     */
+    static final String SETTINGS_PATH = "/api/system/rate-limit/";
+
     private static final PathPattern ACTIVATION_COMPLETE =
         PathPatternParser.defaultInstance.parse("/api/account-activations/{token}/complete");
 
@@ -35,7 +41,8 @@ public class IpRateLimitFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         return !rateLimitService.enabled()
             || HttpMethod.OPTIONS.matches(request.getMethod())
-            || !path(request).startsWith("/api/");
+            || !path(request).startsWith("/api/")
+            || path(request).startsWith(SETTINGS_PATH);
     }
 
     @Override

@@ -44,7 +44,9 @@ public class UserRateLimitFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !rateLimitService.enabled() || !path(request).startsWith("/api/");
+        return !rateLimitService.enabled()
+            || !path(request).startsWith("/api/")
+            || path(request).startsWith(IpRateLimitFilter.SETTINGS_PATH);
     }
 
     @Override
