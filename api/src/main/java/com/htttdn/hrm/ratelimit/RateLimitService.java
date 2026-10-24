@@ -1,5 +1,6 @@
 package com.htttdn.hrm.ratelimit;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -16,6 +17,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.htttdn.hrm.dto.response.ratelimit.RateLimitStatsResponse;
 import com.htttdn.hrm.dto.response.ratelimit.RateLimitStatsResponse.BlockedKeyStats;
 import com.htttdn.hrm.dto.response.ratelimit.RateLimitStatsResponse.PolicyStats;
+import com.htttdn.hrm.dto.response.ratelimit.RateLimitTimelineResponse;
 
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
@@ -43,10 +45,14 @@ public class RateLimitService {
     private final Cache<BlockedKey, LongAdder> blockedByKey = Caffeine.newBuilder()
         .maximumSize(MAX_TRACKED_BLOCKED_KEYS)
         .build();
-    private final Instant startedAt = Instant.now();
+    private final RateLimitTimeline timeline = new RateLimitTimeline();
+    private final Clock clock;
+    private final Instant startedAt;
 
-    public RateLimitService(RateLimitProperties properties) {
+    public RateLimitService(RateLimitProperties properties, Clock clock) {
         this.properties = properties;
+        this.clock = clock;
+        this.startedAt = clock.instant();
         for (RateLimitPolicy policy : RateLimitPolicy.values()) {
             states.put(policy, PolicyState.of(properties.quota(policy), true, false));
             allowed.put(policy, new LongAdder());
@@ -146,6 +152,17 @@ public class RateLimitService {
         return new RateLimitStatsResponse(startedAt, properties.enabled(), policies, topBlocked);
     }
 
+    /** Requests and blocks over the range, for one policy or, when it is null, for all of them. */
+    public RateLimitTimelineResponse timeline(RateLimitTimeline.Range range, RateLimitPolicy policy) {
+        return new RateLimitTimelineResponse(
+            range.name(),
+            policy == null ? null : policy.key(),
+            range.slotSeconds(),
+            startedAt,
+            timeline.points(range, policy, clock.instant())
+        );
+    }
+
     long allowedCount(RateLimitPolicy policy) {
         return allowed.get(policy).sum();
     }
@@ -155,6 +172,7 @@ public class RateLimitService {
     }
 
     private void record(RateLimitPolicy policy, String key, boolean wasAllowed) {
+        timeline.record(policy, !wasAllowed, clock.instant());
         if (wasAllowed) {
             allowed.get(policy).increment();
             return;

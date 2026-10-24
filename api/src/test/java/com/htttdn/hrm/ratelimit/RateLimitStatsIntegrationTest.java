@@ -8,11 +8,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import com.htttdn.hrm.entity.Account;
+import com.jayway.jsonpath.JsonPath;
 import com.htttdn.hrm.security.JwtService;
 import com.htttdn.hrm.service.AccountAuthorizationService.AuthorizationSnapshot;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -63,6 +66,48 @@ class RateLimitStatsIntegrationTest {
             .andExpect(jsonPath("$.data.topBlocked[0].key").value("stats-spammer"))
             .andExpect(jsonPath("$.data.topBlocked[0].scope").value("USER"))
             .andExpect(jsonPath("$.data.topBlocked[0].blocked").value(3));
+    }
+
+    @Test
+    void reportsTheTimelineOfAPolicyOrOfAllOfThem() throws Exception {
+        String spammer = bearer(14L, "timeline-spammer", List.of());
+        for (int i = 0; i < 4; i++) {
+            mockMvc.perform(get("/api/accounts").header(HttpHeaders.AUTHORIZATION, spammer));
+        }
+        String reader = bearer(15L, "timeline-admin", List.of("system.rate_limit.read"));
+
+        mockMvc.perform(get("/api/system/rate-limit/timeline").header(HttpHeaders.AUTHORIZATION,
+                bearer(16L, "timeline-nobody", List.of())))
+            .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/system/rate-limit/timeline").param("policy", "api")
+                .header(HttpHeaders.AUTHORIZATION, reader))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.range").value("HOUR"))
+            .andExpect(jsonPath("$.data.policy").value("api"))
+            .andExpect(jsonPath("$.data.slotSeconds").value(60))
+            .andExpect(jsonPath("$.data.points.length()").value(60))
+            // Summed, so the test holds when the requests and the read fall in different minutes.
+            .andExpect(result -> assertTrue(sum(result, "$.data.points[*].blocked") >= 2));
+        mockMvc.perform(get("/api/system/rate-limit/timeline").param("range", "WEEK")
+                .header(HttpHeaders.AUTHORIZATION, reader))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.policy").doesNotExist())
+            .andExpect(jsonPath("$.data.slotSeconds").value(3600))
+            .andExpect(jsonPath("$.data.points.length()").value(168))
+            .andExpect(result -> assertTrue(sum(result, "$.data.points[*].requests") >= 4));
+        mockMvc.perform(get("/api/system/rate-limit/timeline").param("range", "YEAR")
+                .header(HttpHeaders.AUTHORIZATION, reader))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+        mockMvc.perform(get("/api/system/rate-limit/timeline").param("policy", "nope")
+                .header(HttpHeaders.AUTHORIZATION, reader))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.error.code").value("RATE_LIMIT_POLICY_NOT_FOUND"));
+    }
+
+    private static long sum(MvcResult result, String path) throws Exception {
+        List<Number> values = JsonPath.read(result.getResponse().getContentAsString(), path);
+        return values.stream().mapToLong(Number::longValue).sum();
     }
 
     private String bearer(Long accountId, String username, List<String> permissions) {

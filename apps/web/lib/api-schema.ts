@@ -1764,6 +1764,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/system/rate-limit/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["timeline"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/system/traffic/stats": {
         parameters: {
             query?: never;
@@ -2343,6 +2359,11 @@ export interface components {
         };
         ApiResultRateLimitStatsResponse: {
             data: components["schemas"]["RateLimitStatsResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
+        ApiResultRateLimitTimelineResponse: {
+            data: components["schemas"]["RateLimitTimelineResponse"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
@@ -3378,6 +3399,14 @@ export interface components {
             module: "EMPLOYEE" | "ACCOUNT" | "ORGANIZATION" | "REQUEST" | "ATTENDANCE" | "PAYROLL" | "RBAC" | "REPORT";
             name: string;
         };
+        Point: {
+            /** Format: int64 */
+            blocked: number;
+            /** Format: int64 */
+            requests: number;
+            /** Format: date-time */
+            start: string;
+        };
         PolicyStats: {
             /** Format: int64 */
             allowed: number;
@@ -3464,6 +3493,15 @@ export interface components {
             /** Format: date-time */
             startedAt: string;
             topBlocked: components["schemas"]["BlockedKeyStats"][];
+        };
+        RateLimitTimelineResponse: {
+            points: components["schemas"]["Point"][];
+            policy: string | null;
+            range: string;
+            /** Format: int64 */
+            slotSeconds: number;
+            /** Format: date-time */
+            startedAt: string;
         };
         RecordPunchesRequest: {
             /** Format: date-time */
@@ -7262,6 +7300,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultRateLimitStatsResponse"];
+                };
+            };
+        };
+    };
+    timeline: {
+        parameters: {
+            query?: {
+                range?: "HOUR" | "DAY" | "WEEK";
+                policy?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultRateLimitTimelineResponse"];
                 };
             };
         };
