@@ -3,11 +3,12 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { ArrowLeft, KeyRound, LogOut, Pencil, RefreshCw, Trash2 } from "lucide-react"
+import { ArrowLeft, BriefcaseBusiness, KeyRound, LogOut, Pencil, RefreshCw, Trash2 } from "lucide-react"
 
 import { ErrorAlert } from "@/components/common/list-controls"
 import { ActionsMenu, RowActionItem, RowActionLink } from "@/components/common/row-actions"
 import { usePortalSession } from "@/components/portal/portal-shell"
+import { EmployeeAssignmentDialog } from "@/components/employee/employee-assignment-dialog"
 import { EmployeeCompensationCard } from "@/components/employee/employee-compensation-card"
 import { EmployeeDeleteDialog } from "@/components/employee/employee-delete-dialog"
 import { EmployeeEditDialog } from "@/components/employee/employee-edit-dialog"
@@ -113,6 +114,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
   const [endingEmployment, setEndingEmployment] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [assigning, setAssigning] = useState(false)
 
   const numericEmployeeId = Number(employeeId)
   const hasValidEmployeeId = /^\d+$/.test(employeeId)
@@ -178,6 +180,9 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
     (permission) => permission.code === "employee.lifecycle.manage",
   )
   const canUpdateEmployee = session.account.permissions.some((permission) => permission.code === "employee.update")
+  const canManageAssignments = session.account.permissions.some(
+    (permission) => permission.code === "employee.assignment.manage",
+  )
   const canDeleteEmployee = session.account.permissions.some(
     (permission) => permission.code === "employee.delete",
   )
@@ -223,6 +228,11 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
               </RowActionLink>
             )}
             <RowActionItem icon={RefreshCw} onClick={reload} disabled={displayedLoading}>Tải lại</RowActionItem>
+            {/* Same rule as the employee list: only people still working can be reassigned. */}
+            {detail && canManageAssignments
+              && (detail.employmentStatus === "ACTIVE" || detail.employmentStatus === "PROBATION") && (
+              <RowActionItem icon={BriefcaseBusiness} onClick={() => setAssigning(true)}>Thay đổi phân công</RowActionItem>
+            )}
             {detail && canManageLifecycle && !isEmploymentEnded(detail.employmentStatus) && (
               <RowActionItem icon={LogOut} onClick={() => setEndingEmployment(true)}>Kết thúc làm việc</RowActionItem>
             )}
@@ -441,6 +451,15 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
           detail={detail}
           onClose={() => setEditing(false)}
           onSaved={reload}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
+
+      {assigning && detail && (
+        <EmployeeAssignmentDialog
+          employee={detail}
+          onClose={() => setAssigning(false)}
+          onAssigned={reload}
           onSessionExpired={onSessionExpired}
         />
       )}
