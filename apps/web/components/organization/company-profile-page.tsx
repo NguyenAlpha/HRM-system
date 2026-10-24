@@ -34,9 +34,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
-import { SectionError, dateTime, workforceApi } from "@/components/workforce/workforce-shared"
+import { SectionError, workforceApi } from "@/components/workforce/workforce-shared"
 import { apiErrorMessage, friendlyErrorMessage } from "@/lib/api-helpers"
 import { authorizedRequest } from "@/lib/auth/client"
+import { formatDateTime } from "@/lib/format-date"
 import { LOGO_TYPES, MAX_LOGO_BYTES, logoUrl } from "@/lib/branding"
 import type { CompanyProfile, WorkforceBody } from "@/lib/workforce"
 
@@ -79,7 +80,7 @@ export function CompanyProfilePage() {
           <Card>
             <CardHeader>
               <CardTitle>{company.name}</CardTitle>
-              <CardDescription>Cập nhật lần cuối {dateTime(company.updatedAt)}</CardDescription>
+              <CardDescription>Cập nhật lần cuối {formatDateTime(company.updatedAt)}</CardDescription>
               {canManage && (
                 <CardAction>
                   <Button type="button" variant="outline" size="sm" onClick={() => setEditing(true)}>

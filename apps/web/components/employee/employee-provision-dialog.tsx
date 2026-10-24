@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import type { Portal } from "@/lib/auth/types"
 import { provisionAccount, type AccountProvisioningResponse } from "@/lib/account"
+import { formatDateTime } from "@/lib/format-date"
 
 const provisionSchema = z.object({
   username: z
@@ -149,7 +150,7 @@ export function EmployeeProvisionDialog({ portal, employeeId, employeeName, onCl
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Hết hạn lúc {new Date(result.invitation.expiresAt).toLocaleString("vi-VN")}. Nếu hết hạn, hãy gửi lại lời mời từ trang quản trị tài khoản.
+                Hết hạn lúc {formatDateTime(result.invitation.expiresAt)}. Nếu hết hạn, hãy gửi lại lời mời từ trang quản trị tài khoản.
               </p>
             </div>
 

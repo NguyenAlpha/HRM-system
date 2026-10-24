@@ -29,6 +29,7 @@ import {
 } from "@/lib/employee"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import type { Portal } from "@/lib/auth/types"
+import { formatDate } from "@/lib/format-date"
 
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
@@ -107,7 +108,7 @@ export function EmployeeDetailDialog({ portal, employeeId, canUpdate, canProvisi
               <section>
                 <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Cá nhân</p>
                 <dl className="mt-2 grid grid-cols-2 gap-3">
-                  <Field label="Ngày sinh" value={detail.dateOfBirth} />
+                  <Field label="Ngày sinh" value={formatDate(detail.dateOfBirth)} />
                   <Field label="Giới tính" value={detail.gender ? GENDER_LABELS[detail.gender] : null} />
                 </dl>
               </section>
@@ -129,15 +130,15 @@ export function EmployeeDetailDialog({ portal, employeeId, canUpdate, canProvisi
               <section>
                 <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Công việc</p>
                 <dl className="mt-2 grid grid-cols-2 gap-3">
-                  <Field label="Ngày vào làm" value={detail.hireDate} />
-                  <Field label="Ngày nghỉ việc" value={detail.terminationDate} />
+                  <Field label="Ngày vào làm" value={formatDate(detail.hireDate)} />
+                  <Field label="Ngày nghỉ việc" value={formatDate(detail.terminationDate)} />
                 </dl>
                 {detail.currentAssignment ? (
                   <dl className="mt-3 grid grid-cols-2 gap-3">
                     <Field label="Đơn vị tổ chức" value={detail.currentAssignment.organizationUnitName} />
                     <Field label="Địa điểm làm việc" value={detail.currentAssignment.workLocationName} />
                     <Field label="Vị trí công việc" value={detail.currentAssignment.positionTitle} />
-                    <Field label="Hiệu lực từ" value={detail.currentAssignment.effectiveFrom} />
+                    <Field label="Hiệu lực từ" value={formatDate(detail.currentAssignment.effectiveFrom)} />
                   </dl>
                 ) : (
                   <p className="mt-2 text-sm text-muted-foreground">Chưa có phân công hiện tại.</p>

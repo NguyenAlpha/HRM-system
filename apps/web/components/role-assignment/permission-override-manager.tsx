@@ -44,6 +44,7 @@ import {
   type AccountRoleAssignment,
   type PermissionOverrideOption,
 } from "@/lib/role-assignment"
+import { formatDateRange } from "@/lib/format-date"
 
 const overrideSchema = z.object({
   permissionId: z.string().min(1, "Bắt buộc"),
@@ -428,7 +429,7 @@ export function PermissionOverrideManager({ portal, onSessionExpired }: {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm">
-                          {permissionOverride.effectiveFrom} → {permissionOverride.effectiveTo ?? "Không thời hạn"}
+                          {formatDateRange(permissionOverride.effectiveFrom, permissionOverride.effectiveTo, "Không thời hạn")}
                         </TableCell>
                         <TableCell>
                           <Badge variant={statusVariant(permissionOverride.status)}>

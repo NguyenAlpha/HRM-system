@@ -30,16 +30,11 @@ import {
   type RateLimitPolicyStats,
   type RateLimitStats,
 } from "@/lib/rate-limit-stats"
+import { formatDateTime } from "@/lib/format-date"
 
 const count = (value: number) => value.toLocaleString("vi-VN")
 
 const AUTO_REFRESH_MS = 15_000
-
-function formatTime(value: string): string {
-  return new Intl.DateTimeFormat("vi-VN", {
-    hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric",
-  }).format(new Date(value))
-}
 
 const policyLabel = (policy: string) => POLICY_LABELS[policy] ?? policy
 
@@ -134,7 +129,7 @@ export function RateLimitPage() {
             {stats ? (
               <>
                 <StatTile label="Trạng thái" value={stats.enabled ? "Đang bật" : "Đang tắt"} hint="Đổi bằng RATE_LIMIT_ENABLED" />
-                <StatTile label="Đếm từ" value={formatTime(stats.startedAt)} hint="Lần khởi động backend gần nhất" />
+                <StatTile label="Đếm từ" value={formatDateTime(stats.startedAt)} hint="Lần khởi động backend gần nhất" />
                 <StatTile label="Request bị chặn" value={count(totalBlocked)} hint="Cộng tất cả các mức" />
                 <StatTile label="Bị chặn nhiều nhất" value={top ? top.key : "—"}
                   hint={top ? `${count(top.blocked)} lần · ${policyLabel(top.policy)}` : "Chưa có request nào bị chặn"} />

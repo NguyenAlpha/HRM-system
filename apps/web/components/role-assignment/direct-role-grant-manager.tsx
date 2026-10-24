@@ -45,6 +45,7 @@ import {
   type AccountRoleAssignment,
   type RoleScopeType,
 } from "@/lib/role-assignment"
+import { formatDate, formatDateTime } from "@/lib/format-date"
 
 const grantSchema = z
   .object({
@@ -262,7 +263,7 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
           <CardTitle>Đã cấp quyền cho {result.employee.fullName}</CardTitle>
           <CardDescription>
             {result.assignment
-              ? `Role ${result.assignment.roleName} có hiệu lực từ ${result.assignment.effectiveFrom}.`
+              ? `Role ${result.assignment.roleName} có hiệu lực từ ${formatDate(result.assignment.effectiveFrom)}.`
               : "Xem lỗi bên dưới để gán role lại sau."}
           </CardDescription>
         </CardHeader>
@@ -275,8 +276,8 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
               <div className="min-w-0 flex-1">
                 <p className="font-medium">{result.assignment.roleName}</p>
                 <p className="text-xs text-muted-foreground">
-                  {ROLE_SCOPE_LABELS[result.assignment.scopeType]} · hiệu lực từ {result.assignment.effectiveFrom}
-                  {result.assignment.effectiveTo ? ` đến ${result.assignment.effectiveTo}` : ""}
+                  {ROLE_SCOPE_LABELS[result.assignment.scopeType]} · hiệu lực từ {formatDate(result.assignment.effectiveFrom)}
+                  {result.assignment.effectiveTo ? ` đến ${formatDate(result.assignment.effectiveTo)}` : ""}
                 </p>
               </div>
             </div>
@@ -305,7 +306,7 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Hết hạn lúc {new Date(result.provisioning.invitation.expiresAt).toLocaleString("vi-VN")}.
+                Hết hạn lúc {formatDateTime(result.provisioning.invitation.expiresAt)}.
               </p>
             </>
           )}

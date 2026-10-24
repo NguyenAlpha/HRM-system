@@ -25,6 +25,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { phoneSchema } from "@/lib/phone"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import { bootstrapCompanyOwner, type CompanyOwnerProvisioningResult } from "@/lib/company-owner"
+import { formatDateTime } from "@/lib/format-date"
 
 const bootstrapSchema = z
   .object({
@@ -163,7 +164,7 @@ export function CompanyOwnerProvision({ onSessionExpired }: { onSessionExpired: 
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Hết hạn lúc {new Date(result.accountProvisioning.invitation.expiresAt).toLocaleString("vi-VN")}. Hãy chuyển mã này cho Company Owner qua kênh an toàn để họ tự đặt mật khẩu.
+            Hết hạn lúc {formatDateTime(result.accountProvisioning.invitation.expiresAt)}. Hãy chuyển mã này cho Company Owner qua kênh an toàn để họ tự đặt mật khẩu.
           </p>
 
           <Separator />

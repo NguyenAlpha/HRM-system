@@ -18,17 +18,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import { getApiTraffic, type ApiTraffic, type EndpointTraffic } from "@/lib/api-traffic"
+import { formatDateTime } from "@/lib/format-date"
 
 const count = (value: number) => value.toLocaleString("vi-VN")
 const millis = (value: number) => `${value.toLocaleString("vi-VN", { maximumFractionDigits: value < 10 ? 1 : 0 })} ms`
 const percent = (part: number, total: number) => total === 0 ? "0%"
   : `${(part / total * 100).toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%`
-
-function formatTime(value: string): string {
-  return new Intl.DateTimeFormat("vi-VN", {
-    hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric",
-  }).format(new Date(value))
-}
 
 /** Requests answered before a controller was chosen have no route template. */
 const routeLabel = (endpoint: EndpointTraffic) => endpoint.uri === "UNKNOWN"
@@ -111,7 +106,7 @@ export function ApiTrafficPage() {
                   hint={`${percent(traffic.clientErrors, traffic.totalRequests)} tổng request`} />
                 <StatTile label="Lỗi máy chủ (5xx)" value={count(traffic.serverErrors)}
                   hint={`${percent(traffic.serverErrors, traffic.totalRequests)} tổng request`} />
-                <StatTile label="Đếm từ" value={formatTime(traffic.startedAt)} hint="Lần khởi động backend gần nhất" />
+                <StatTile label="Đếm từ" value={formatDateTime(traffic.startedAt)} hint="Lần khởi động backend gần nhất" />
               </>
             ) : Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-[106px] rounded-xl" />)}
           </div>

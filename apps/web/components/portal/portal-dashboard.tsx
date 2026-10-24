@@ -17,17 +17,7 @@ import { Label } from "@/components/ui/label"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import { changePassword, refreshSession } from "@/lib/auth/client"
 import type { SessionData } from "@/lib/auth/types"
-
-function formatExpiry(value: string): string {
-  return new Intl.DateTimeFormat("vi-VN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(new Date(value))
-}
+import { formatDateTime } from "@/lib/format-date"
 
 export function roleScope(role: SessionData["account"]["roles"][number]): string {
   if (role.scopeType === "ORG_UNIT") return role.organizationUnitName ?? `Đơn vị #${role.organizationUnitId}`
@@ -114,7 +104,7 @@ export function PortalDashboard() {
                 <Line label="Username" value={account.username} />
                 <Line label="Email" value={account.email} />
                 <Line label="Nhân viên" value={account.employee ? `${account.employee.fullName} (${account.employee.employeeCode})` : "Chưa liên kết"} />
-                <Line label="Access token hết hạn" value={formatExpiry(session.expiresAt)} />
+                <Line label="Access token hết hạn" value={formatDateTime(session.expiresAt)} />
               </dl>
               <Button type="button" variant="outline" size="sm" className="justify-self-start" onClick={handleRefresh} disabled={working}>
                 {working ? "Đang xử lý..." : "Xoay vòng refresh token"}

@@ -30,6 +30,7 @@ import {
   type OvertimeApprovalItem,
   type WorkforceBody,
 } from "@/lib/workforce"
+import { formatDate } from "@/lib/format-date"
 import {
   EmptyRow,
   SectionError,
@@ -290,7 +291,7 @@ function CalendarView({ days, onSelect }: { days: Day[]; onSelect: (day: Day) =>
         const sunday = weekday(day.date) === 0
         return (
           <button key={day.date} type="button" disabled={!record && !holiday} onClick={() => onSelect(day)}
-            aria-label={`Ngày ${day.date}`}
+            aria-label={`Ngày ${formatDate(day.date)}`}
             className={`flex min-h-20 flex-col items-start gap-0.5 rounded-lg border p-1.5 text-left transition-colors enabled:hover:ring-2 enabled:hover:ring-ring/40 ${
               tone ? DAY_TONES[tone].cell : sunday ? "bg-muted/50" : ""}`}>
             <span className={`text-xs font-medium ${sunday ? "text-muted-foreground" : ""}`}>{Number(day.date.slice(8, 10))}</span>
@@ -354,7 +355,7 @@ function ListView({ days, actions, emptyText }: { days: Day[]; actions: DayActio
                     {record.overtimeMinutes > 0 ? `${hours(record.overtimeMinutes)} × ${record.overtimeMultiplier}` : "—"}
                     {record.overtimeMinutes > 0 && record.overtimeTaxExempt && <span className="block text-xs text-muted-foreground">miễn thuế</span>}
                   </TableCell>
-                  <RowActionsCell label={`ngày ${record.workDate}`}>
+                  <RowActionsCell label={`ngày ${formatDate(record.workDate)}`}>
                     {recordActions(day, record, actions).map(({ key, icon, label, destructive, onClick }) => (
                       <RowActionItem key={key} icon={icon} destructive={destructive} disabled={actions.busy} onClick={onClick}>{label}</RowActionItem>
                     ))}
@@ -494,12 +495,12 @@ function OvertimeQueueCard({ items, busy, onDecide }: {
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
                     <span className="inline-block w-7 text-muted-foreground">{WEEKDAYS[weekday(record.workDate)]}</span>
-                    {record.workDate.slice(8, 10)}/{record.workDate.slice(5, 7)}/{record.workDate.slice(0, 4)}
+                    {formatDate(record.workDate)}
                   </TableCell>
                   <TableCell className="tabular-nums">{time(record.checkInAt)} – {time(record.checkOutAt)}</TableCell>
                   <TableCell className="text-right tabular-nums">{hours(record.workedMinutes)}</TableCell>
                   <TableCell className="text-right tabular-nums">{hours(record.payableMinutes)}</TableCell>
-                  <RowActionsCell label={`tăng ca ngày ${record.workDate}`}>
+                  <RowActionsCell label={`tăng ca ngày ${formatDate(record.workDate)}`}>
                     <RowActionItem icon={Zap} disabled={busy} onClick={() => onDecide(record)}>Quyết định tăng ca</RowActionItem>
                   </RowActionsCell>
                 </TableRow>
@@ -560,7 +561,7 @@ function PunchDialog({ employeeId, record, month, busy, onClose, onSubmit }: {
       <DialogContent className="sm:max-w-md">
         <form onSubmit={submit}>
           <DialogHeader>
-            <DialogTitle>{record ? `Nhập giờ vào/ra ngày ${record.workDate}` : "Nhập giờ vào/ra ngày khác"}</DialogTitle>
+            <DialogTitle>{record ? `Nhập giờ vào/ra ngày ${formatDate(record.workDate)}` : "Nhập giờ vào/ra ngày khác"}</DialogTitle>
             <DialogDescription>
               {record
                 ? `Hiện tại: ${ATTENDANCE_STATUS_LABELS[record.status]}, ${record.payableMinutes}/${record.scheduledMinutes} phút. `
@@ -620,7 +621,7 @@ function AbsenceDialog({ record, busy, onClose, onSubmit }: {
           }).then((ok) => { if (ok) onClose() })
         }}>
           <DialogHeader>
-            <DialogTitle>Ghi vắng không phép ngày {record.workDate}</DialogTitle>
+            <DialogTitle>Ghi vắng không phép ngày {formatDate(record.workDate)}</DialogTitle>
             <DialogDescription>
               Hiện tại: {ATTENDANCE_STATUS_LABELS[record.status]}, {record.payableMinutes}/{record.scheduledMinutes} phút.
               Ngày này sẽ không được trả lương. Nghỉ có lương phải đi qua quy trình duyệt đơn.
@@ -672,7 +673,7 @@ function OvertimeDialog({ record, holidays, busy, onClose, onSubmit }: {
       <DialogContent className="sm:max-w-md">
         <form onSubmit={submit}>
           <DialogHeader>
-            <DialogTitle>Quyết định tăng ca ngày {record.workDate}</DialogTitle>
+            <DialogTitle>Quyết định tăng ca ngày {formatDate(record.workDate)}</DialogTitle>
             <DialogDescription>
               Đã làm {record.workedMinutes} phút, trong đó {record.payableMinutes} phút là công thường. Nhập 0 phút nếu phần giờ dư không tính tăng ca.
             </DialogDescription>

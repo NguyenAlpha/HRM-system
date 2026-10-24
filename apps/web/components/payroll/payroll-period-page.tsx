@@ -62,6 +62,7 @@ import {
 import { apiErrorMessage } from "@/lib/api-helpers"
 import { authorizedDownload } from "@/lib/auth/client"
 import type { PayrollPeriod, Payslip, WorkforceBody } from "@/lib/workforce"
+import { formatDate, formatDateRange } from "@/lib/format-date"
 
 type Confirm = "approve" | "lock" | "cancel"
 
@@ -145,7 +146,7 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
           <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
           {period && (
             <p className="mt-1.5 text-[var(--muted-ink)]">
-              {period.periodStart} → {period.periodEnd} · Ngày trả lương {period.taxPaymentDate ?? "chưa đặt"}
+              {formatDateRange(period.periodStart, period.periodEnd)} · Ngày trả lương {period.taxPaymentDate ? formatDate(period.taxPaymentDate) : "chưa đặt"}
             </p>
           )}
         </div>

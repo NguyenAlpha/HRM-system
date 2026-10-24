@@ -22,7 +22,6 @@ import {
   AccountStatusBadge,
   AccountActionDialog,
   availableAccountActions,
-  formatDateTime,
   isGuardedAccount,
   type AccountActionKind,
   type AccountViewer,
@@ -36,6 +35,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import { listAccounts, type Account, type AccountFilters, type AccountPage } from "@/lib/account"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
+import { formatDateTime } from "@/lib/format-date"
 import type { Page } from "@/lib/pagination"
 import { rbacRequest, type Role } from "@/lib/rbac"
 import type { Portal } from "@/lib/auth/types"

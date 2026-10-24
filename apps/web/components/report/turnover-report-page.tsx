@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 
 import { ErrorAlert } from "@/components/common/list-controls"
-import { formatDate } from "@/components/employee/employee-detail-page"
+import { formatDate } from "@/lib/format-date"
 import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import { ExportButton, MonthlyColumnChart, StatTile, YearPicker, downloadCsv } from "@/components/report/report-shared"

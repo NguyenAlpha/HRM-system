@@ -32,6 +32,7 @@ import {
 import { apiErrorMessage } from "@/lib/api-helpers"
 import type { Page } from "@/lib/pagination"
 import type { PayrollPeriod, WorkforceBody } from "@/lib/workforce"
+import { formatDate, formatDateRange } from "@/lib/format-date"
 
 /** Payroll runs, one per month; each opens its payroll sheet. */
 export function PayrollPeriodsPage() {
@@ -114,9 +115,9 @@ export function PayrollPeriodsPage() {
                       <TableRow key={period.id} className="cursor-pointer" onClick={() => open(period)}>
                         <TableCell>
                           <span className="font-medium">Tháng {periodLabel(period.year, period.month)}</span>
-                          <span className="block text-xs text-muted-foreground">{period.periodStart} → {period.periodEnd}</span>
+                          <span className="block text-xs text-muted-foreground">{formatDateRange(period.periodStart, period.periodEnd)}</span>
                         </TableCell>
-                        <TableCell>{period.taxPaymentDate ?? "—"}</TableCell>
+                        <TableCell>{formatDate(period.taxPaymentDate)}</TableCell>
                         <TableCell className="text-right">{period.payslipCount || "—"}</TableCell>
                         <TableCell className="text-right">{period.payslipCount ? money(period.totalGrossPay) : "—"}</TableCell>
                         <TableCell className="text-right font-medium">{period.payslipCount ? money(period.totalNetPay) : "—"}</TableCell>

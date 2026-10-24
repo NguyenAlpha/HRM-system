@@ -35,9 +35,6 @@ export const money = (amount: number) =>
 export const toDays = (minutes: number, dayMinutes: number) =>
   dayMinutes > 0 ? Number((minutes / dayMinutes).toFixed(2)) : 0
 
-export const dateTime = (instant: string | null) =>
-  instant ? new Date(instant).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" }) : "—"
-
 export const time = (instant: string | null) =>
   instant ? new Date(instant).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "—"
 
