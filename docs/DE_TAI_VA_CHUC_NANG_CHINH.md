@@ -30,7 +30,7 @@ Hệ thống hỗ trợ quản lý tập trung hồ sơ nhân viên, cơ cấu t
 
 **Quy trình sử dụng:**
 
-1. Người dùng nhập tên đăng nhập hoặc email cùng mật khẩu tại `/login` hoặc `/admin/login`. API kiểm tra thông tin xác thực, trạng thái tài khoản và cổng được phép sử dụng.
+1. Người dùng nhập tên đăng nhập, email hoặc mã nhân viên cùng mật khẩu tại `/login` hoặc `/admin/login`. API kiểm tra thông tin xác thực, trạng thái tài khoản và cổng được phép sử dụng.
 2. Khi đăng nhập thành công, hệ thống trả thông tin tài khoản, vai trò, quyền và phạm vi hiện có. Giao diện dùng những thông tin này để hiển thị các chức năng phù hợp; API tiếp tục kiểm tra quyền cho từng yêu cầu.
 3. Khi access token hết hạn, ứng dụng dùng refresh token để lấy phiên mới theo cơ chế xoay vòng. Người dùng có thể chủ động đăng xuất hoặc đổi mật khẩu từ phiên hợp lệ.
 4. Với tài khoản mới hoặc cần đặt lại mật khẩu, người dùng mở liên kết chứa token kích hoạt còn hiệu lực, tự tạo mật khẩu và chuyển tài khoản từ `PENDING` sang `ACTIVE`.

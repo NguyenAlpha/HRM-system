@@ -39,7 +39,7 @@ sequenceDiagram
 
 `AuthService.login`:
 
-- Chấp nhận username hoặc email (email được đưa về chữ thường).
+- Chấp nhận username, email (đưa về chữ thường) hoặc mã nhân viên (không phân biệt hoa/thường), tìm theo đúng thứ tự đó.
 - Account phải ở trạng thái `ACTIVE`. `PENDING`, `LOCKED`, `DISABLED` trả mã lỗi riêng.
 - Sai mật khẩu thì tăng `failedLoginCount`, nhưng **hiện không tự khóa account** theo số lần sai. Đăng nhập đúng
   đặt bộ đếm về 0 và ghi `lastLoginAt`.

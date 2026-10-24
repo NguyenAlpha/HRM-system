@@ -9,7 +9,7 @@ Xác thực tài khoản HRM bằng access token JWT và refresh token. HRM khô
 | Endpoint | Public | Yêu cầu Bearer token | Mô tả |
 |:---------|:------:|:--------------------:|:------|
 | `POST /api/account-activations/{token}/complete` | ✅ | ❌ | Dùng token một lần để đặt mật khẩu và kích hoạt account `PENDING` |
-| `POST /api/auth/login` | ✅ | ❌ | Đăng nhập bằng username hoặc email để nhận access token và refresh token |
+| `POST /api/auth/login` | ✅ | ❌ | Đăng nhập bằng username, email hoặc mã nhân viên để nhận access token và refresh token |
 | `POST /api/auth/refresh` | ✅ | ❌ | Đổi refresh token hợp lệ lấy cặp token mới và thu hồi refresh token cũ |
 | `POST /api/auth/logout` | ❌ | ✅ | Thu hồi refresh token được gửi trong request để kết thúc phiên đăng nhập |
 | `GET /api/auth/me` | ❌ | ✅ | Lấy thông tin account, employee, role và permission của người đang đăng nhập |
@@ -123,7 +123,7 @@ Database chỉ lưu SHA-256 hash của token. Raw token không được ghi vào
 
 ## POST `/api/auth/login`
 
-Đăng nhập bằng username hoặc email. Endpoint public, không cần JWT.
+Đăng nhập bằng username, email hoặc mã nhân viên. Endpoint public, không cần JWT.
 
 ### Request
 
@@ -136,10 +136,12 @@ Database chỉ lưu SHA-256 hash của token. Raw token không được ghi vào
 
 | Field | Type | Bắt buộc | Ràng buộc |
 |:------|:-----|:--------:|:----------|
-| `usernameOrEmail` | string | ✅ | Không rỗng, tối đa 100 ký tự |
+| `usernameOrEmail` | string | ✅ | Không rỗng, tối đa 50 ký tự; username, email hoặc mã nhân viên |
 | `password` | string | ✅ | Không rỗng, tối đa 100 ký tự |
 
-Email được chuẩn hóa về chữ thường. Username giữ nguyên chữ hoa/thường.
+Email được chuẩn hóa về chữ thường. Username giữ nguyên chữ hoa/thường. Mã nhân viên không phân biệt hoa/thường (`NV0003` hay `nv0003`) và trỏ tới account chưa bị xóa của nhân viên đó.
+
+Tài khoản được tìm theo thứ tự username → email → mã nhân viên. Nếu username của một người trùng mã nhân viên của người khác, giá trị đó đăng nhập vào account có username ấy.
 
 ### Response `200 OK`
 
