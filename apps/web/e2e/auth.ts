@@ -1,0 +1,14 @@
+import type { Page } from "@playwright/test"
+
+// Seeded by the API; also shown on /admin/login in development.
+export const ADMIN = { username: "admin", password: "Admin@123" }
+
+// Seeded HRM accounts: the Company Owner and an EMPLOYEE (account id 4).
+export const OWNER = { username: "owner", password: "password" }
+export const EMPLOYEE = { username: "employee", password: "password", accountId: 4 }
+
+export async function signIn(page: Page, username: string, password: string) {
+  await page.getByLabel("Tên đăng nhập hoặc email").fill(username)
+  await page.getByLabel("Mật khẩu", { exact: true }).fill(password)
+  await page.getByRole("button", { name: /^Đăng nhập (hệ thống|Admin)$/ }).click()
+}
