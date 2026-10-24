@@ -60,7 +60,7 @@ public class AuthService {
     @Transactional(noRollbackFor = UnauthorizedException.class)
     public AuthResponse login(LoginRequest request) {
         String login = normalizeLogin(request.usernameOrEmail());
-        Account account = accountRepository.findByLogin(login).orElse(null);
+        Account account = accountRepository.findBySignInName(login).orElse(null);
         String attemptKey = LoginAttemptLimiter.key(account == null ? null : account.getId(), login);
         loginAttemptLimiter.check(attemptKey);
 

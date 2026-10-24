@@ -15,7 +15,7 @@ test.describe("Đăng nhập HRM (/login)", () => {
 
     await page.getByRole("button", { name: "Đăng nhập hệ thống" }).click()
 
-    await expect(page.getByText("Vui lòng nhập tên đăng nhập hoặc email")).toBeVisible()
+    await expect(page.getByText("Vui lòng nhập thông tin đăng nhập")).toBeVisible()
     await expect(page.getByText("Vui lòng nhập mật khẩu")).toBeVisible()
     await expect(page).toHaveURL(/\/login$/)
     expect(loginCalled).toBe(false)
@@ -55,6 +55,17 @@ test.describe("Đăng nhập HRM (/login)", () => {
     await signIn(page, EMPLOYEE.username, EMPLOYEE.password)
 
     await expect(page).toHaveURL(/\/dashboard$/)
+  })
+
+  test("đăng nhập bằng mã nhân viên, viết hoa hay thường đều được", async ({ browser }) => {
+    for (const code of [EMPLOYEE.employeeCode, EMPLOYEE.employeeCode.toLowerCase()]) {
+      const context = await browser.newContext()
+      const page = await context.newPage()
+      await page.goto("/login")
+      await signIn(page, code, EMPLOYEE.password)
+      await expect(page).toHaveURL(/\/dashboard$/)
+      await context.close()
+    }
   })
 })
 
