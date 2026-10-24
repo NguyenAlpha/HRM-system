@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { ArrowLeft, BadgeCheck, BriefcaseBusiness, KeyRound, LogOut, Pencil, RefreshCw, Trash2 } from "lucide-react"
+import { ArrowLeft, BadgeCheck, BriefcaseBusiness, CalendarCheck, KeyRound, LogOut, Pencil, RefreshCw, Trash2 } from "lucide-react"
 
 import { ErrorAlert } from "@/components/common/list-controls"
 import { ActionsMenu, RowActionItem, RowActionLink } from "@/components/common/row-actions"
@@ -172,6 +172,8 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
   const permissions = new Set(session.account.permissions.map((permission) => permission.code))
   // Salary data goes through the HRM workforce proxy, so the Admin Console never shows it.
   const canReadCompensation = portal === "hrm" && permissions.has("compensation.read")
+  // The attendance page lives in the HRM portal only.
+  const canReadAttendance = portal === "hrm" && permissions.has("attendance.read")
   const canReadSensitive = session.account.permissions.some(
     (permission) => permission.code === "employee.sensitive.read",
   )
@@ -231,6 +233,9 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
               <RowActionLink icon={KeyRound} href={`${PORTAL_CONFIG[portal].pagePrefix}/accounts/${detail.account.id}`}>
                 Xem tài khoản
               </RowActionLink>
+            )}
+            {detail && canReadAttendance && (
+              <RowActionLink icon={CalendarCheck} href={`/attendance?employeeId=${detail.id}`}>Xem chấm công</RowActionLink>
             )}
             <RowActionItem icon={RefreshCw} onClick={reload} disabled={displayedLoading}>Tải lại</RowActionItem>
             {/* Same rule as the employee list: only people still working can be reassigned. */}

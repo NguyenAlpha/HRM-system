@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AttendanceSection, OvertimeApprovals } from "@/components/workforce/attendance-section"
 import { AttendanceTimesheet, type TimesheetEmployee } from "@/components/workforce/attendance-timesheet"
 import { today, workforceApi } from "@/components/workforce/workforce-shared"
+import { employeeRequest, type EmployeeDetail } from "@/lib/employee"
 import type { CompanyHoliday, OvertimeApprovalItem } from "@/lib/workforce"
 
 /** YYYY-MM shifted by a number of months. */
@@ -26,9 +27,9 @@ type Tab = "mine" | "sheet" | "overtime"
 /**
  * Attendance: the signed-in employee's own month; for attendance.read the company timesheet, from
  * which one employee's month opens for review and corrections; and for whoever approves someone's
- * overtime, the days waiting for that decision.
+ * overtime, the days waiting for that decision. `initialEmployeeId` opens that employee's month directly.
  */
-export function AttendancePage({ initialTab }: { initialTab?: Tab }) {
+export function AttendancePage({ initialTab, initialEmployeeId }: { initialTab?: Tab; initialEmployeeId?: number }) {
   const { session } = usePortalSession()
   const self = session.account.employee
   const permissions = useMemo(
@@ -41,9 +42,25 @@ export function AttendancePage({ initialTab }: { initialTab?: Tab }) {
   const defaultTab: Tab = canReadAll ? "sheet" : "mine"
   const [selectedTab, setTab] = useState<Tab>(initialTab ?? defaultTab)
   const [viewing, setViewing] = useState<TimesheetEmployee | null>(null)
+  // While the employee asked for on the URL loads, the company timesheet is held back.
+  const [opening, setOpening] = useState(initialEmployeeId !== undefined && canReadAll)
   const [overtime, setOvertime] = useState<{ items: OvertimeApprovalItem[]; holidays: CompanyHoliday[] } | null>(null)
   const [overtimeRevision, setOvertimeRevision] = useState(0)
   const canReadHolidays = permissions.has("holiday.read")
+
+  useEffect(() => {
+    if (initialEmployeeId === undefined || !canReadAll) return
+    let active = true
+    employeeRequest<EmployeeDetail>("hrm", `/${initialEmployeeId}`)
+      .then((employee) => {
+        if (!active) return
+        setViewing({ id: employee.id, employeeCode: employee.employeeCode, fullName: employee.fullName })
+        setTab("sheet")
+      })
+      .catch(() => undefined)
+      .finally(() => { if (active) setOpening(false) })
+    return () => { active = false }
+  }, [initialEmployeeId, canReadAll])
 
   // Approval follows the reporting line, so anyone may have overtime to decide, whatever their permissions.
   useEffect(() => {
@@ -112,7 +129,7 @@ export function AttendancePage({ initialTab }: { initialTab?: Tab }) {
             permissions={permissions} month={month} />
         )}
 
-        {tab === "sheet" && canReadAll && !viewing && <AttendanceTimesheet month={month} onOpen={setViewing} />}
+        {tab === "sheet" && canReadAll && !viewing && !opening && <AttendanceTimesheet month={month} onOpen={setViewing} />}
         {tab === "sheet" && canReadAll && viewing && (
           <>
             <div className="flex flex-wrap items-center gap-3">
