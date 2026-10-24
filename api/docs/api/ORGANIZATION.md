@@ -265,7 +265,7 @@ Trả cùng cấu trúc `WorkLocationResponse` của endpoint danh sách. ID đ�
 | `name` | ✅ | Không rỗng, tối đa 150 ký tự |
 | `locationType` | ✅ | `HEAD_OFFICE`, `BRANCH`, `WAREHOUSE` |
 | `address` | ✅ | Không rỗng |
-| `phone` | ❌ | Tối đa 20 ký tự; chuỗi rỗng được chuẩn hóa thành null |
+| `phone` | ❌ | 8–11 chữ số, có thể bắt đầu bằng `+` (ví dụ `0912345678`, `+84912345678`); chuỗi rỗng được chuẩn hóa thành null |
 
 Response `201 Created` trả `WorkLocationResponse`. Địa điểm mới luôn có `isActive=true`.
 
@@ -462,7 +462,7 @@ Thay toàn bộ các trường; trường tùy chọn để trống hoặc `null
 | `code` | string | ✅ | Mã doanh nghiệp, tối đa 30 ký tự |
 | `name` | string | ✅ | Tên doanh nghiệp, tối đa 200 ký tự |
 | `taxCode` | string | ❌ | Mã số thuế, tối đa 30 ký tự |
-| `phone` | string | ❌ | Tối đa 20 ký tự |
+| `phone` | string | ❌ | 8–11 chữ số, có thể bắt đầu bằng `+` (ví dụ `0912345678`, `+84912345678`) |
 | `email` | string | ❌ | Email hợp lệ, tối đa 100 ký tự |
 | `address` | string | ❌ | Địa chỉ đăng ký |
 
