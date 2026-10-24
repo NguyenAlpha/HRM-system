@@ -91,6 +91,7 @@ public class PayrollDeductionsService {
         if (command.effectiveFrom().isBefore(employee.getHireDate())) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Invalid payroll profile or effective date");
         }
+        EmploymentEndGuard.requireNotAfterEnd(employee, command.effectiveFrom(), "effectiveFrom");
         if (!command.taxResident()) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Non-resident income tax requires a separate rule set; this payroll supports resident employees only");
@@ -142,17 +143,20 @@ public class PayrollDeductionsService {
             || command.effectiveTo() != null && command.effectiveTo().isBefore(command.effectiveFrom())) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Invalid dependent or effective period");
         }
+        EmploymentEndGuard.requireNotAfterEnd(employee, command.effectiveFrom(), "effectiveFrom");
+        // Nothing is deducted after the last working day, so the period stops there.
+        LocalDate effectiveTo = EmploymentEndGuard.capAtEnd(employee, command.effectiveTo());
         if (dependentRepository.existsOverlappingPeriod(employeeId, command.fullName().trim(),
-            command.effectiveFrom(), command.effectiveTo())) {
+            command.effectiveFrom(), effectiveTo)) {
             throw new ConflictException(ErrorCode.CONFLICT, "Dependent already overlaps this effective period");
         }
-        invalidateAffectedTaxPaymentPeriods(command.effectiveFrom(), command.effectiveTo());
+        invalidateAffectedTaxPaymentPeriods(command.effectiveFrom(), effectiveTo);
         EmployeeTaxDependent created = dependentRepository.save(EmployeeTaxDependent.builder()
             .employee(employee)
             .fullName(command.fullName().trim())
             .identifier(blankToNull(command.identifier()))
             .effectiveFrom(command.effectiveFrom())
-            .effectiveTo(command.effectiveTo())
+            .effectiveTo(effectiveTo)
             .createdByAccount(accounts.getReferenceById(actor.accountId()))
             .createdAt(Instant.now())
             .build());

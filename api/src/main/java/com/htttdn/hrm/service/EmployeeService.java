@@ -46,8 +46,10 @@ import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
+import com.htttdn.hrm.repository.EmployeePayrollProfileRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
+import com.htttdn.hrm.repository.EmployeeTaxDependentRepository;
 import com.htttdn.hrm.repository.specification.EmployeeSpecifications;
 import com.htttdn.hrm.repository.specification.SearchPatterns;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
@@ -71,6 +73,8 @@ public class EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
     private final EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository;
+    private final EmployeePayrollProfileRepository employeePayrollProfileRepository;
+    private final EmployeeTaxDependentRepository employeeTaxDependentRepository;
     private final LeaveRequestRepository leaveRequestRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final PayslipRepository payslipRepository;
@@ -87,6 +91,8 @@ public class EmployeeService {
         EmployeeRepository employeeRepository,
         EmployeeAssignmentRepository employeeAssignmentRepository,
         EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository,
+        EmployeePayrollProfileRepository employeePayrollProfileRepository,
+        EmployeeTaxDependentRepository employeeTaxDependentRepository,
         LeaveRequestRepository leaveRequestRepository,
         AttendanceRecordRepository attendanceRecordRepository,
         PayslipRepository payslipRepository,
@@ -102,6 +108,8 @@ public class EmployeeService {
         this.employeeRepository = employeeRepository;
         this.employeeAssignmentRepository = employeeAssignmentRepository;
         this.employeeSalaryHistoryRepository = employeeSalaryHistoryRepository;
+        this.employeePayrollProfileRepository = employeePayrollProfileRepository;
+        this.employeeTaxDependentRepository = employeeTaxDependentRepository;
         this.leaveRequestRepository = leaveRequestRepository;
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.payslipRepository = payslipRepository;
@@ -410,6 +418,7 @@ public class EmployeeService {
 
         employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employeeId)
             .ifPresent(assignment -> closeAssignmentAtTermination(assignment, terminationDate));
+        closePayrollInputsAtTermination(employeeId, terminationDate);
         accountRepository.findByEmployeeId(employeeId).ifPresent(account -> {
             account.setStatus(AccountStatus.DISABLED);
             account.setUpdatedAt(Instant.now());
@@ -460,6 +469,27 @@ public class EmployeeService {
             || accountRepository.existsByEmailIgnoreCase(workEmail))) {
             throw new ConflictException(ErrorCode.EMAIL_TAKEN, "Work email is already taken", "employee.workEmail");
         }
+    }
+
+    /**
+     * Ends the salary, payroll profile and dependents still running past the last working day there,
+     * so none reads as current. Payroll already stops at that day, so no payslip changes. A record
+     * starting after the day is left as it is: it never applied.
+     */
+    private void closePayrollInputsAtTermination(Long employeeId, LocalDate terminationDate) {
+        employeeSalaryHistoryRepository.findByEmployeeIdOrderByEffectiveFromDesc(employeeId).stream()
+            .filter(salary -> runsPast(salary.getEffectiveFrom(), salary.getEffectiveTo(), terminationDate))
+            .forEach(salary -> salary.setEffectiveTo(terminationDate));
+        employeePayrollProfileRepository.findByEmployeeIdForUpdate(employeeId).stream()
+            .filter(profile -> runsPast(profile.getEffectiveFrom(), profile.getEffectiveTo(), terminationDate))
+            .forEach(profile -> profile.setEffectiveTo(terminationDate));
+        employeeTaxDependentRepository.findByEmployeeIdOrderByEffectiveFromDescIdDesc(employeeId).stream()
+            .filter(dependent -> runsPast(dependent.getEffectiveFrom(), dependent.getEffectiveTo(), terminationDate))
+            .forEach(dependent -> dependent.setEffectiveTo(terminationDate));
+    }
+
+    private static boolean runsPast(LocalDate from, LocalDate to, LocalDate terminationDate) {
+        return !from.isAfter(terminationDate) && (to == null || to.isAfter(terminationDate));
     }
 
     private void closeAssignmentAtTermination(EmployeeAssignment assignment, LocalDate terminationDate) {

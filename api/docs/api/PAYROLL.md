@@ -41,6 +41,18 @@ Quy trình một tháng:
 | `GET /api/payroll/payslips/{id}` | `payroll.self.read` (chính mình) hoặc `report.payroll.read` (trong scope) | Chi tiết phiếu lương |
 | `GET /api/payroll/employees/{employeeId}/payslips` | `payroll.self.read` (chính mình) hoặc `report.payroll.read` (trong scope) | Phiếu lương của một nhân viên |
 
+### Sau ngày làm việc cuối
+
+Khi nhân viên kết thúc làm việc, hoặc HR đã lên lịch kết thúc, `terminationDate` là ngày làm việc cuối và
+lương chỉ tính đến ngày đó. Vì vậy:
+
+- Lương cơ bản, hồ sơ bảo hiểm/thuế và người phụ thuộc mới không được có `effectiveFrom` sau ngày đó
+  (`400 AFTER_EMPLOYMENT_END`). Mục có hiệu lực đến ngày đó vẫn thêm được, để đính chính trước khi
+  chốt lương tháng cuối; người phụ thuộc không ghi `effectiveTo`, hoặc ghi ngày sau ngày đó, được
+  lưu với `effectiveTo` là ngày làm việc cuối.
+- Lúc kết thúc, lương cơ bản, hồ sơ và người phụ thuộc còn chạy quá ngày làm việc cuối được đóng tại
+  ngày đó. Mục bắt đầu sau ngày đó (nhập trước khi có quy tắc này) giữ nguyên và không bao giờ áp dụng.
+
 Tất cả endpoint yêu cầu Bearer token; thiếu hoặc hết hạn trả `401 UNAUTHORIZED`. Không có permission trả `403 FORBIDDEN`. "Trong scope" nghĩa là nhân viên nằm trong phạm vi của role cấp permission đó (theo phân công hiện hành); "phạm vi `COMPANY`" nghĩa là role phải có scope toàn công ty, scope hẹp hơn trả `403 FORBIDDEN`.
 
 Role hệ thống mặc định:
@@ -348,6 +360,7 @@ Trả [`SalaryHistoryView`](#salaryhistoryview) vừa tạo. Kỳ `CALCULATED` c
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Thiếu/sai field, `effectiveFrom` trước ngày vào làm hoặc không sau mức đang mở (`field: effectiveFrom`) |
+| 400 | `AFTER_EMPLOYMENT_END` | `effectiveFrom` sau ngày làm việc cuối của nhân viên (`field: effectiveFrom`), xem [Sau ngày làm việc cuối](#sau-ngày-làm-việc-cuối) |
 | 403 | `FORBIDDEN` | Không có `compensation.manage` hoặc nhân viên ngoài scope |
 | 404 | `EMPLOYEE_NOT_FOUND` | Nhân viên không tồn tại |
 | 409 | `PAYROLL_PERIOD_LOCKED` | Một kỳ kết thúc từ `effectiveFrom` trở đi đã `APPROVED`, `PAID` hoặc `LOCKED` |
@@ -405,6 +418,7 @@ Trả [`Profile`](#profile--hồ-sơ-bảo-hiểmthuế) vừa tạo. Kỳ `CALC
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Thiếu/sai field, ngày hiệu lực không hợp lệ, `taxResident: false`, hoặc tham gia bảo hiểm mà `insuranceSalary` bằng 0 |
+| 400 | `AFTER_EMPLOYMENT_END` | `effectiveFrom` sau ngày làm việc cuối của nhân viên (`field: effectiveFrom`), xem [Sau ngày làm việc cuối](#sau-ngày-làm-việc-cuối) |
 | 403 | `FORBIDDEN` | Không có `compensation.manage` hoặc nhân viên ngoài scope |
 | 404 | `EMPLOYEE_NOT_FOUND` | Nhân viên không tồn tại hoặc đã xóa |
 | 409 | `PAYROLL_PERIOD_LOCKED` | Một kỳ kết thúc từ `effectiveFrom` trở đi đã `APPROVED`, `PAID` hoặc `LOCKED` |
@@ -448,6 +462,7 @@ Trả [`Dependent`](#dependent--người-phụ-thuộc) vừa tạo. Kỳ `CALCU
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Thiếu `fullName`/`effectiveFrom`, hoặc khoảng hiệu lực không hợp lệ |
+| 400 | `AFTER_EMPLOYMENT_END` | `effectiveFrom` sau ngày làm việc cuối của nhân viên (`field: effectiveFrom`), xem [Sau ngày làm việc cuối](#sau-ngày-làm-việc-cuối) |
 | 403 | `FORBIDDEN` | Không có `compensation.manage` hoặc nhân viên ngoài scope |
 | 404 | `EMPLOYEE_NOT_FOUND` | Nhân viên không tồn tại hoặc đã xóa |
 | 409 | `CONFLICT` | Đã có người phụ thuộc cùng tên trong khoảng hiệu lực chồng lấn |

@@ -36,8 +36,10 @@ import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
+import com.htttdn.hrm.repository.EmployeePayrollProfileRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
+import com.htttdn.hrm.repository.EmployeeTaxDependentRepository;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
@@ -60,6 +62,8 @@ class EmployeeServiceTest {
     @Mock private EmployeeRepository employeeRepository;
     @Mock private EmployeeAssignmentRepository employeeAssignmentRepository;
     @Mock private EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository;
+    @Mock private EmployeePayrollProfileRepository employeePayrollProfileRepository;
+    @Mock private EmployeeTaxDependentRepository employeeTaxDependentRepository;
     @Mock private LeaveRequestRepository leaveRequestRepository;
     @Mock private AttendanceRecordRepository attendanceRecordRepository;
     @Mock private PayslipRepository payslipRepository;
@@ -420,6 +424,8 @@ class EmployeeServiceTest {
             employeeRepository,
             employeeAssignmentRepository,
             employeeSalaryHistoryRepository,
+            employeePayrollProfileRepository,
+            employeeTaxDependentRepository,
             leaveRequestRepository,
             attendanceRecordRepository,
             payslipRepository,

@@ -159,6 +159,7 @@ public class EmployeeSalaryHistoryService {
                 "effectiveFrom"
             );
         }
+        EmploymentEndGuard.requireNotAfterEnd(employee, command.effectiveFrom(), "effectiveFrom");
     }
 
     private void requireReadableEmployee(Long employeeId) {

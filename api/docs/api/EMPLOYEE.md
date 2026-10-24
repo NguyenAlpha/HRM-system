@@ -484,21 +484,22 @@ Kết thúc làm việc theo một trong ba hình thức: `RESIGNED` (nghỉ vi�
 
 `terminationDate` là **ngày làm việc cuối**, vẫn được tính công và lương. Vì vậy:
 
-- `terminationDate` là hôm nay hoặc đã qua: kết thúc ngay, theo bốn bước bên dưới.
+- `terminationDate` là hôm nay hoặc đã qua: kết thúc ngay, theo năm bước bên dưới.
 - `terminationDate` sau hôm nay: chỉ **lên lịch**. Ghi `terminationDate`, `terminationReason` và
   `scheduledEndStatus` (trạng thái sẽ đặt), còn `employmentStatus`, phân công, account và role giữ
   nguyên, nên nhân sự vẫn đăng nhập, chấm công và nộp đơn đến hết ngày đó. Bảng công, bảng lương và
   phép năm đã dừng ở `terminationDate` ngay từ lúc lên lịch. Job chạy lúc khởi động và 00:10 mỗi
-  đêm kết thúc các lịch có `terminationDate` đã qua theo bốn bước bên dưới, người thu hồi role là
+  đêm kết thúc các lịch có `terminationDate` đã qua theo năm bước bên dưới, người thu hồi role là
   người đã lên lịch. Gọi lại endpoint khi đang có lịch sẽ thay lịch cũ (hoặc kết thúc ngay nếu ngày
   mới không sau hôm nay); [`DELETE`](#delete-apiemployeesemployeeidemployment-end) hủy lịch.
 
-Khi kết thúc, một lần chạy thay đổi bốn thứ trong cùng transaction:
+Khi kết thúc, một lần chạy thay đổi năm thứ trong cùng transaction:
 
 1. `employmentStatus` chuyển sang `endStatus`, ghi `terminationDate` và `terminationReason`.
 2. Phân công chính đang mở được đóng lại tại `terminationDate`.
 3. Account liên kết chuyển sang `DISABLED` và toàn bộ refresh token của account bị thu hồi, nên các phiên đang đăng nhập không refresh được nữa.
 4. Các role nghiệp vụ account còn giữ bị thu hồi như khi gọi [API thu hồi role](./ACCOUNT_ROLE_ASSIGNMENTS.md#post-apiaccountsaccountidrole-assignmentsassignmentidrevoke): ghi `revokedAt`, người thu hồi là người gọi, `revocationReason` là `Kết thúc làm việc: <terminationReason>`. Assignment đã bắt đầu được đóng `effectiveTo` tại `terminationDate`; assignment chưa bắt đầu giữ nguyên ngày. Assignment đã kết thúc trước `terminationDate` giữ nguyên làm lịch sử. Role `AUTO` (`EMPLOYEE`) và `SYSTEM_ONLY` (`COMPANY_OWNER`, `SYSTEM_ADMIN`) không bị đụng tới. Nhờ vậy assignment `DIRECTOR` của người nghỉ không còn chặn việc bổ nhiệm Giám đốc mới.
+5. Lương cơ bản, hồ sơ bảo hiểm/thuế và người phụ thuộc còn chạy quá `terminationDate` được đóng tại ngày đó, nên không mục nào còn hiện là "hiện tại". Lương đã dừng ở ngày đó nên không phiếu lương nào đổi. Từ lúc lên lịch hoặc kết thúc, các mục này và phân công mới không được có hiệu lực sau `terminationDate` (xem [PAYROLL.md](./PAYROLL.md#sau-ngày-làm-việc-cuối)); hồ sơ và dữ liệu nhạy cảm vẫn sửa được.
 
 ### Request
 
@@ -761,6 +762,7 @@ API này chỉ cập nhật lịch sử công việc trong `employee_assignments
 | 404 | `JOB_POSITION_NOT_FOUND` | Chức danh không tồn tại hoặc không active |
 | 404 | `WORK_SHIFT_NOT_FOUND` | Ca làm việc không tồn tại hoặc không active |
 | 404 | `RESOURCE_NOT_FOUND` | Account thao tác không tồn tại |
+| 400 | `AFTER_EMPLOYMENT_END` | Employee đã được lên lịch kết thúc và `effectiveFrom` sau ngày làm việc cuối |
 | 409 | `CONFLICT` | Employee đã kết thúc làm việc hoặc dữ liệu phân công hiện tại không nhất quán |
 
 ---
