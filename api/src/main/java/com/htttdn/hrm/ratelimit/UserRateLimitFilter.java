@@ -58,7 +58,12 @@ public class UserRateLimitFilter extends OncePerRequestFilter {
             chain.doFilter(request, response);
             return;
         }
-        RateLimitDecision decision = rateLimitService.tryConsume(policy(request), authentication.getName());
+        RateLimitPolicy policy = policy(request);
+        if (!rateLimitService.enabled(policy)) {
+            chain.doFilter(request, response);
+            return;
+        }
+        RateLimitDecision decision = rateLimitService.tryConsume(policy, authentication.getName());
         if (!decision.allowed()) {
             RateLimitResponses.writeTooManyRequests(response, decision);
             return;

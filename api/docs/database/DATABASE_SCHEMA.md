@@ -54,7 +54,8 @@ Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
 | Quy tắc thuế và bảo hiểm | `payroll_tax_rules`, `payroll_tax_brackets`, `payroll_insurance_rules` |
 | Tính lương | `payroll_periods`, `payroll_adjustments`, `payslips`, `payslip_items` |
 
-Database runtime có 33 bảng này (chưa kể bảng `flyway_schema_history` của Flyway).
+Database runtime có 33 bảng này cùng bảng cấu hình kỹ thuật `rate_limit_policy_settings` (mục 5), chưa kể bảng
+`flyway_schema_history` của Flyway.
 
 ### 1.3. Sơ đồ quan hệ tổng quát
 
@@ -786,6 +787,21 @@ Giá trị `grant_policy`: `AUTO` cấp ngay khi account được tạo, `HR_ASS
 | `reason` | TEXT | NOT NULL | Lý do |
 | `granted_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người thiết lập |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
+
+### `rate_limit_policy_settings` — Hạn mức giới hạn truy cập do quản trị viên chỉnh
+
+Bảng cấu hình kỹ thuật, không phải dữ liệu nghiệp vụ. Mỗi dòng ghi đè giá trị `rate-limit.policies.<mức>.*` trong
+`application.properties`; mức không có dòng nào dùng giá trị đó và luôn bật. Backend nạp bảng này khi khởi động, xem
+[RATE_LIMIT.md](../concepts/RATE_LIMIT.md).
+
+| Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
+|---|---|---|---|
+| `policy` | VARCHAR(30) | PK, một trong 10 mức (`login`, `api`, `heavy-write`…) | Tên mức |
+| `enabled` | BOOLEAN | NOT NULL; luôn `true` với `login-failure` | Mức có đang được áp dụng |
+| `max_requests` | INTEGER | NOT NULL, 1–100.000 | Số request tối đa trong một cửa sổ |
+| `window_seconds` | INTEGER | NOT NULL, 1–86.400 | Độ dài cửa sổ (giây) |
+| `updated_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người chỉnh gần nhất |
+| `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm chỉnh gần nhất |
 
 ### 5.1. Danh mục permission code
 
@@ -1592,8 +1608,10 @@ vào file của domain tương ứng thay vì thêm file vá. Mỗi khi file bas
 | `V8__reference_data.sql` | Quy tắc thuế TNCN, bảo hiểm từ 2020 đến 2026 và quy tắc phép năm | 6, 8.4 |
 | `V9__notifications.sql` | Bảng và index thông báo trong ứng dụng | 6 |
 | `V10__notification_decisions.sql` | Bổ sung loại thông báo duyệt và từ chối đơn nghỉ | 6 |
+| `V11__rate_limit_settings.sql` | `rate_limit_policy_settings`: hạn mức rate-limit do quản trị viên chỉnh | 5 |
 
-`V8` nạp dữ liệu pháp lý dùng chung; `V9` bổ sung schema thông báo và `V10` mở rộng loại thông báo. Danh mục permission, role,
+`V8` nạp dữ liệu pháp lý dùng chung; `V9` bổ sung schema thông báo, `V10` mở rộng loại thông báo và `V11` thêm bảng
+hạn mức rate-limit. Danh mục permission, role,
 mapping, cơ cấu tổ chức, ca làm việc và tài khoản mẫu do các seeder trong
 `api/src/main/java/com/htttdn/hrm/config/seed/` tạo.
 

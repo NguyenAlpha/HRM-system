@@ -4406,6 +4406,66 @@
         "tags" : [ "organization-company-owner-admin-controller" ]
       }
     },
+    "/api/system/rate-limit/policies/{policy}" : {
+      "delete" : {
+        "operationId" : "restorePolicyDefault",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "policy",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultRateLimitStatsResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "rate-limit-stats-controller" ]
+      },
+      "put" : {
+        "operationId" : "updatePolicy",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "policy",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RateLimitPolicyRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultRateLimitStatsResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "rate-limit-stats-controller" ]
+      }
+    },
     "/api/system/rate-limit/stats" : {
       "get" : {
         "operationId" : "stats_1",
@@ -9526,6 +9586,23 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "canDisable" : {
+            "type" : "boolean"
+          },
+          "customized" : {
+            "type" : "boolean"
+          },
+          "defaultMaxRequests" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "defaultWindowSeconds" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
           "maxRequests" : {
             "type" : "integer",
             "format" : "int64"
@@ -9541,7 +9618,7 @@
             "format" : "int64"
           }
         },
-        "required" : [ "allowed", "blocked", "maxRequests", "policy", "scope", "windowSeconds" ]
+        "required" : [ "allowed", "blocked", "canDisable", "customized", "defaultMaxRequests", "defaultWindowSeconds", "enabled", "maxRequests", "policy", "scope", "windowSeconds" ]
       },
       "PositionAllowanceSummary" : {
         "type" : "object",
@@ -9676,6 +9753,27 @@
           }
         },
         "required" : [ "effectiveFrom", "healthInsurance", "insuranceSalary", "socialInsurance", "taxResident", "unemploymentInsurance", "wageRegion" ]
+      },
+      "RateLimitPolicyRequest" : {
+        "type" : "object",
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "maxRequests" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 100000,
+            "minimum" : 1
+          },
+          "windowSeconds" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 86400,
+            "minimum" : 1
+          }
+        },
+        "required" : [ "enabled", "maxRequests", "windowSeconds" ]
       },
       "RateLimitStatsResponse" : {
         "type" : "object",

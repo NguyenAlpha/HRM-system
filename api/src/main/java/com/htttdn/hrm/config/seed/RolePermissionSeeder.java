@@ -165,6 +165,7 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "account.role.assign",
             "account.permission.override.manage",
             "system.rate_limit.read",
+            "system.rate_limit.manage",
             "system.traffic.read"
         ))
     );

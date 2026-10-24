@@ -642,7 +642,7 @@ Lấy chi tiết một permission.
 | `DELEGABLE` | Company Owner hoặc người có `rbac.manage` có thể gán permission cho custom role |
 | `SYSTEM_ONLY` | Chỉ seeder được gán permission cho system role; API từ chối gán cho custom role |
 
-Hiện tại `organization.company_owner.bootstrap`, `company.manage`, `role.assignment.approve`, `account.permission.override.manage`, `system.rate_limit.read` và `system.traffic.read` là `SYSTEM_ONLY`; các permission còn lại là `DELEGABLE`.
+Hiện tại `organization.company_owner.bootstrap`, `company.manage`, `role.assignment.approve`, `account.permission.override.manage`, `system.rate_limit.read`, `system.rate_limit.manage` và `system.traffic.read` là `SYSTEM_ONLY`; các permission còn lại là `DELEGABLE`.
 Migration và `RolePermissionSeeder` tự thu hồi mapping `SYSTEM_ONLY` từng bị gán cho custom role trước khi chính sách này được áp dụng.
 
 Ba permission chuẩn bị cho workflow cấp tài khoản và đề xuất role. Role nào được seed các
@@ -714,6 +714,7 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 | `role.assignment.approve` `(S)` | | | | | | | ✓ | |
 | `account.permission.override.manage` `(S)` | | | | | | | ✓ | ✓ |
 | `system.rate_limit.read` `(S)` | | | | | | | | ✓ |
+| `system.rate_limit.manage` `(S)` | | | | | | | | ✓ |
 | `system.traffic.read` `(S)` | | | | | | | | ✓ |
 
 ### Module `ORGANIZATION`
