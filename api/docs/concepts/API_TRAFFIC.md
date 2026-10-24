@@ -58,6 +58,39 @@ Admin Console hiển thị dữ liệu này ở trang **Lưu lượng API** (`/a
 | 403 | `FORBIDDEN` | Không có `system.traffic.read` |
 | 429 | `RATE_LIMIT_EXCEEDED` | Hết lượt của mức `api` |
 
+### 2.1. Theo thời gian
+
+`GET /api/system/traffic/timeline?range=HOUR`, cùng permission `system.traffic.read`. `range` là `HOUR` (60 phút,
+mỗi điểm 1 phút), `DAY` (24 giờ, mỗi điểm 15 phút) hoặc `WEEK` (7 ngày, mỗi điểm 1 giờ); mặc định `HOUR`, giá trị
+lạ trả `400 VALIDATION_ERROR`.
+
+```json
+{
+  "success": true,
+  "data": {
+    "range": "HOUR",
+    "slotSeconds": 60,
+    "startedAt": "2026-10-24T06:06:00Z",
+    "points": [
+      { "start": "2026-10-24T06:06:00Z", "requests": 61, "clientErrors": 25, "serverErrors": 0, "meanMillis": 13.6 }
+    ]
+  },
+  "error": null
+}
+```
+
+- `points` luôn đủ cả khoảng (60, 96 hoặc 168 điểm), cũ nhất trước, điểm cuối là khung đang chạy.
+- `meanMillis` là `null` ở khung không có request nào.
+- Timer của Micrometer chỉ giữ tổng, nên số liệu này do `ApiTrafficTimelineFilter` tự ghi: filter chạy ngay sau
+  filter đo của Spring Boot và trước Spring Security, ghi status và thời gian xử lý của **mọi** request (kể cả `401`,
+  `404`, `429`) vào `ApiTrafficTimeline`. Exception lọt ra khỏi chuỗi filter được tính là `500`.
+- Mỗi khoảng là một vòng đếm cố định (`TimelineRing`, dùng chung với biểu đồ rate-limit), ô cũ được xoá khi tới lượt
+  dùng lại, nên bộ nhớ không tăng dù backend chạy bao lâu.
+
+Trang **Lưu lượng API** vẽ dữ liệu này thành ba biểu đồ chung trục thời gian: **Request**, **Lỗi (4xx + 5xx)** (tooltip
+tách 4xx và 5xx) và **Thời gian xử lý TB**. Ba số khác đơn vị và độ lớn nên mỗi số một biểu đồ, không dùng hai trục y
+trên một hình. Vạch đứt đánh dấu lúc backend khởi động.
+
 ## 3. Cách đọc số liệu
 
 - Request gọi API thống kê cũng được tính, và chỉ được ghi **sau khi** response trả về, nên lần tải trang ngay sau
@@ -72,7 +105,9 @@ Admin Console hiển thị dữ liệu này ở trang **Lưu lượng API** (`/a
 
 - **Mất khi khởi động lại:** mọi timer nằm trong bộ nhớ.
 - **Một instance:** chạy nhiều instance thì mỗi instance chỉ thấy request của chính nó.
-- **Không có lịch sử theo thời gian:** chỉ có tổng từ lúc khởi động, không vẽ được biểu đồ theo giờ hay theo ngày.
+- **Lịch sử ngắn:** biểu đồ theo thời gian (mục 2.1) chỉ giữ tối đa 7 ngày, và cũng mất khi khởi động lại, nên biểu
+  đồ 7 ngày chỉ có dữ liệu từ lần khởi động gần nhất. Bảng theo từng API vẫn chỉ có tổng, không có số theo thời gian
+  cho từng API.
 
 Khi cần lịch sử lâu dài, thêm `micrometer-registry-prometheus` và một server Prometheus (thường kèm Grafana để vẽ
 dashboard): Prometheus định kỳ lấy chính các timer này và lưu lại theo thời gian. API và trang hiện có giữ nguyên.
@@ -80,8 +115,14 @@ dashboard): Prometheus định kỳ lấy chính các timer này và lưu lại 
 ## Code
 
 - [`ApiTrafficService`](../../src/main/java/com/htttdn/hrm/service/ApiTrafficService.java),
+  [`ApiTrafficTimeline`](../../src/main/java/com/htttdn/hrm/service/ApiTrafficTimeline.java),
+  [`ApiTrafficTimelineFilter`](../../src/main/java/com/htttdn/hrm/config/ApiTrafficTimelineFilter.java),
+  [`timeline/`](../../src/main/java/com/htttdn/hrm/timeline) (`TimelineRange`, `TimelineRing`),
   [`ApiTrafficController`](../../src/main/java/com/htttdn/hrm/controller/ApiTrafficController.java),
   [`ApiTrafficResponse`](../../src/main/java/com/htttdn/hrm/dto/response/traffic/ApiTrafficResponse.java)
 - Test: [`ApiTrafficIntegrationTest`](../../src/test/java/com/htttdn/hrm/controller/ApiTrafficIntegrationTest.java)
-  (phân quyền, đếm request và lỗi theo route, `/actuator` không bị mở)
-- Web: [`api-traffic-page.tsx`](../../../apps/web/components/traffic/api-traffic-page.tsx)
+  (phân quyền, đếm request và lỗi theo route, API theo thời gian, `/actuator` không bị mở),
+  [`ApiTrafficTimelineTest`](../../src/test/java/com/htttdn/hrm/service/ApiTrafficTimelineTest.java)
+- Web: [`api-traffic-page.tsx`](../../../apps/web/components/traffic/api-traffic-page.tsx),
+  [`api-traffic-timeline.tsx`](../../../apps/web/components/traffic/api-traffic-timeline.tsx),
+  [`timeline-chart.tsx`](../../../apps/web/components/common/timeline-chart.tsx) (dùng chung với trang giới hạn truy cập)
