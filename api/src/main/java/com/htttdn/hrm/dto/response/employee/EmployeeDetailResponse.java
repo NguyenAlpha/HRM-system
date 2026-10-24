@@ -23,6 +23,8 @@ public record EmployeeDetailResponse(
     LocalDate hireDate,
     EmploymentStatus employmentStatus,
     @Nullable LocalDate terminationDate,
+    /** Set while the employment end waits for {@code terminationDate} to pass: the status the employee then takes. */
+    @Nullable EmploymentStatus scheduledEndStatus,
     @Nullable EmployeeAssignmentResponse currentAssignment,
     @Nullable EmployeeAccountSummaryResponse account
 ) {

@@ -16,7 +16,8 @@ Tạo và tra cứu hồ sơ nhân sự trong phạm vi được phân công. AP
 | `GET /api/employees/{employeeId}` | ✅ | `employee.read` | Lấy chi tiết hồ sơ, phân công hiện tại và thông tin account nếu đã có |
 | `PUT /api/employees/{employeeId}` | ✅ | `employee.update` | Cập nhật các thông tin hồ sơ được phép thay đổi trong entity employee |
 | `POST /api/employees/{employeeId}/confirm` | ✅ | `employee.probation.confirm` | Xác nhận nhân sự thử việc trở thành nhân sự chính thức |
-| `POST /api/employees/{employeeId}/employment-end` | ✅ | `employee.lifecycle.manage` | Kết thúc làm việc (nghỉ việc, chấm dứt hợp đồng, nghỉ hưu), đóng phân công và vô hiệu hóa account |
+| `POST /api/employees/{employeeId}/employment-end` | ✅ | `employee.lifecycle.manage` | Kết thúc làm việc (nghỉ việc, chấm dứt hợp đồng, nghỉ hưu), đóng phân công và vô hiệu hóa account; ngày làm việc cuối sau hôm nay thì lên lịch |
+| `DELETE /api/employees/{employeeId}/employment-end` | ✅ | `employee.lifecycle.manage` | Hủy lịch kết thúc làm việc chưa đến hạn |
 | `POST /api/employees/{employeeId}/soft-delete` | ✅ | `employee.delete` | Xóa mềm hồ sơ tạo nhầm, chỉ khi chưa phát sinh dữ liệu nghiệp vụ |
 | `GET /api/employees/{employeeId}/assignments` | ✅ | `employee.assignment.read` | Lấy toàn bộ lịch sử phân công của nhân sự |
 | `GET /api/employees/{employeeId}/assignments/current` | ✅ | `employee.assignment.read` | Lấy phân công đang hiệu lực tại ngày gọi API |
@@ -481,7 +482,18 @@ Response `200 OK` trả `EmployeeDetailResponse` sau khi cập nhật.
 Kết thúc làm việc theo một trong ba hình thức: `RESIGNED` (nghỉ việc), `TERMINATED` (chấm dứt hợp
 đồng), `RETIRED` (nghỉ hưu). Ba hình thức có cùng hệ quả, chỉ khác trạng thái được ghi. Đây là bước **thực thi** một quyết định đã hợp lệ, không phải bước phê duyệt: endpoint không kiểm tra có đơn hay có người duyệt hay chưa.
 
-Một lần gọi thay đổi bốn thứ trong cùng transaction:
+`terminationDate` là **ngày làm việc cuối**, vẫn được tính công và lương. Vì vậy:
+
+- `terminationDate` là hôm nay hoặc đã qua: kết thúc ngay, theo bốn bước bên dưới.
+- `terminationDate` sau hôm nay: chỉ **lên lịch**. Ghi `terminationDate`, `terminationReason` và
+  `scheduledEndStatus` (trạng thái sẽ đặt), còn `employmentStatus`, phân công, account và role giữ
+  nguyên, nên nhân sự vẫn đăng nhập, chấm công và nộp đơn đến hết ngày đó. Bảng công, bảng lương và
+  phép năm đã dừng ở `terminationDate` ngay từ lúc lên lịch. Job chạy lúc khởi động và 00:10 mỗi
+  đêm kết thúc các lịch có `terminationDate` đã qua theo bốn bước bên dưới, người thu hồi role là
+  người đã lên lịch. Gọi lại endpoint khi đang có lịch sẽ thay lịch cũ (hoặc kết thúc ngay nếu ngày
+  mới không sau hôm nay); [`DELETE`](#delete-apiemployeesemployeeidemployment-end) hủy lịch.
+
+Khi kết thúc, một lần chạy thay đổi bốn thứ trong cùng transaction:
 
 1. `employmentStatus` chuyển sang `endStatus`, ghi `terminationDate` và `terminationReason`.
 2. Phân công chính đang mở được đóng lại tại `terminationDate`.
@@ -506,17 +518,34 @@ Một lần gọi thay đổi bốn thứ trong cùng transaction:
 
 ### Response `200 OK`
 
-Trả `EmployeeDetailResponse` sau khi cập nhật, cùng cấu trúc với `POST /{employeeId}/confirm`.
+Trả `EmployeeDetailResponse` sau khi cập nhật, cùng cấu trúc với `POST /{employeeId}/confirm`. Khi
+chỉ lên lịch, `employmentStatus` giữ nguyên và `scheduledEndStatus` là trạng thái sẽ đặt; ngoài lúc
+đó `scheduledEndStatus` là `null`.
 
 ### Lỗi
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
-| 400 | `VALIDATION_ERROR` | Thiếu field bắt buộc, `endStatus` không phải trạng thái kết thúc, hoặc `terminationDate` trước `hireDate` |
+| 400 | `VALIDATION_ERROR` | Thiếu field bắt buộc, `endStatus` không phải trạng thái kết thúc, `terminationDate` trước `hireDate` hoặc trước ngày bắt đầu phân công hiện tại |
 | 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
 | 403 | `FORBIDDEN` | Thiếu `employee.lifecycle.manage` hoặc employee nằm ngoài scope được giao |
 | 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
 | 409 | `CONFLICT` | Employee đã kết thúc làm việc trước đó |
+
+---
+
+## DELETE `/api/employees/{employeeId}/employment-end`
+
+Hủy lịch kết thúc làm việc chưa đến hạn: xóa `terminationDate`, `terminationReason` và
+`scheduledEndStatus`, nhân sự tiếp tục làm việc như chưa từng có lịch. Không có body. Trả
+`EmployeeDetailResponse`.
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
+| 403 | `FORBIDDEN` | Thiếu `employee.lifecycle.manage` hoặc employee nằm ngoài scope được giao |
+| 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
+| 409 | `CONFLICT` | Employee không có lịch kết thúc nào (chưa lên lịch, hoặc đã kết thúc) |
 
 ---
 

@@ -542,6 +542,8 @@ erDiagram
 | `employment_status` | VARCHAR(20) | NOT NULL | `PROBATION` / `ACTIVE` / `RESIGNED` / `TERMINATED` / `RETIRED` |
 | `termination_date` | DATE | | Ngày làm việc cuối cùng |
 | `termination_reason` | TEXT | | Lý do kết thúc làm việc |
+| `scheduled_end_status` | VARCHAR(20) | | Khi HR kết thúc làm việc với ngày làm việc cuối sau hôm nay: trạng thái sẽ đặt (`RESIGNED` / `TERMINATED` / `RETIRED`) sau ngày đó. Có giá trị thì `employment_status` vẫn là `PROBATION`/`ACTIVE` và `termination_date`, `termination_reason` đã ghi |
+| `scheduled_end_by_account_id` | BIGINT | FK → accounts | Người lên lịch; job đêm dùng làm người thu hồi role |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 | `deleted_at` | TIMESTAMPTZ | | Chỉ dùng với hồ sơ tạo nhầm |
@@ -1609,9 +1611,10 @@ vào file của domain tương ứng thay vì thêm file vá. Mỗi khi file bas
 | `V9__notifications.sql` | Bảng và index thông báo trong ứng dụng | 6 |
 | `V10__notification_decisions.sql` | Bổ sung loại thông báo duyệt và từ chối đơn nghỉ | 6 |
 | `V11__rate_limit_settings.sql` | `rate_limit_policy_settings`: hạn mức rate-limit do quản trị viên chỉnh | 5 |
+| `V12__scheduled_employment_end.sql` | `employees.scheduled_end_status`, `scheduled_end_by_account_id`: lịch kết thúc làm việc chờ ngày làm việc cuối qua | 3 |
 
-`V8` nạp dữ liệu pháp lý dùng chung; `V9` bổ sung schema thông báo, `V10` mở rộng loại thông báo và `V11` thêm bảng
-hạn mức rate-limit. Danh mục permission, role,
+`V8` nạp dữ liệu pháp lý dùng chung; `V9` bổ sung schema thông báo, `V10` mở rộng loại thông báo, `V11` thêm bảng
+hạn mức rate-limit và `V12` thêm lịch kết thúc làm việc. Danh mục permission, role,
 mapping, cơ cấu tổ chức, ca làm việc và tài khoản mẫu do các seeder trong
 `api/src/main/java/com/htttdn/hrm/config/seed/` tạo.
 

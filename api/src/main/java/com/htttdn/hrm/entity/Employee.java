@@ -107,6 +107,18 @@ public class Employee {
     @Column(name = "termination_reason", columnDefinition = "TEXT")
     private String terminationReason;
 
+    /**
+     * Set while an employment end waits for its last working day ({@code terminationDate}) to pass:
+     * the status the employee then takes, and who scheduled it.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "scheduled_end_status", length = 20)
+    private EmploymentStatus scheduledEndStatus;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "scheduled_end_by_account_id")
+    private Account scheduledEndByAccount;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

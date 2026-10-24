@@ -338,8 +338,58 @@ public class EmployeeService {
             throw new ConflictException(ErrorCode.CONFLICT, "Employee employment has already ended");
         }
 
-        endEmploymentAs(employee, endStatus, terminationDate, terminationReason, findCurrentAccount());
+        // The last working day is still worked and paid, so a later one only schedules the end; it
+        // replaces any end already scheduled.
+        if (terminationDate.isAfter(LocalDate.now(clock))) {
+            scheduleEnd(employee, endStatus, terminationDate, terminationReason, findCurrentAccount());
+        } else {
+            endEmploymentAs(employee, endStatus, terminationDate, terminationReason, findCurrentAccount());
+        }
         return toDetailResponse(employee);
+    }
+
+    @PreAuthorize("hasAuthority('employee.lifecycle.manage')")
+    public EmployeeDetailResponse cancelScheduledEnd(Long employeeId) {
+        Employee employee = findEmployeeOrThrow(employeeId);
+        employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_LIFECYCLE_MANAGE);
+        if (employee.getScheduledEndStatus() == null) {
+            throw new ConflictException(ErrorCode.CONFLICT, "No employment end is scheduled");
+        }
+        employee.setTerminationDate(null);
+        employee.setTerminationReason(null);
+        employee.setScheduledEndStatus(null);
+        employee.setScheduledEndByAccount(null);
+        employee.setUpdatedAt(Instant.now());
+        return toDetailResponse(employee);
+    }
+
+    /**
+     * Ends a scheduled employment once its last working day has passed, acting as whoever scheduled
+     * it. Run by {@link ScheduledEmploymentEndJob}; an end cancelled in the meantime is skipped.
+     */
+    public void completeScheduledEnd(Long employeeId) {
+        Employee employee = employeeRepository.findByIdForUpdate(employeeId).orElse(null);
+        if (employee == null || employee.getScheduledEndStatus() == null) {
+            return;
+        }
+        endEmploymentAs(employee, employee.getScheduledEndStatus(), employee.getTerminationDate(),
+            employee.getTerminationReason(), employee.getScheduledEndByAccount());
+    }
+
+    /**
+     * Records the last working day and the status to take after it, leaving the employee working until
+     * then. Payroll, attendance and leave already stop at that day.
+     */
+    private void scheduleEnd(
+        Employee employee, EmploymentStatus endStatus, LocalDate terminationDate, String terminationReason, Account actor
+    ) {
+        employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employee.getId())
+            .ifPresent(assignment -> requireNotBeforeAssignment(assignment, terminationDate));
+        employee.setTerminationDate(terminationDate);
+        employee.setTerminationReason(terminationReason);
+        employee.setScheduledEndStatus(endStatus);
+        employee.setScheduledEndByAccount(actor);
+        employee.setUpdatedAt(Instant.now());
     }
 
     /**
@@ -354,6 +404,8 @@ public class EmployeeService {
         employee.setEmploymentStatus(endStatus);
         employee.setTerminationDate(terminationDate);
         employee.setTerminationReason(terminationReason);
+        employee.setScheduledEndStatus(null);
+        employee.setScheduledEndByAccount(null);
         employee.setUpdatedAt(Instant.now());
 
         employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employeeId)
@@ -411,6 +463,11 @@ public class EmployeeService {
     }
 
     private void closeAssignmentAtTermination(EmployeeAssignment assignment, LocalDate terminationDate) {
+        requireNotBeforeAssignment(assignment, terminationDate);
+        assignment.setEffectiveTo(terminationDate);
+    }
+
+    private void requireNotBeforeAssignment(EmployeeAssignment assignment, LocalDate terminationDate) {
         if (terminationDate.isBefore(assignment.getEffectiveFrom())) {
             throw new BusinessException(
                 ErrorCode.VALIDATION_ERROR,
@@ -418,7 +475,6 @@ public class EmployeeService {
                 "terminationDate"
             );
         }
-        assignment.setEffectiveTo(terminationDate);
     }
 
     private void ensureEmployeeHasNoBusinessHistory(Long employeeId) {
@@ -528,6 +584,7 @@ public class EmployeeService {
             employee.getHireDate(),
             employee.getEmploymentStatus(),
             employee.getTerminationDate(),
+            employee.getScheduledEndStatus(),
             currentAssignment,
             accountRepository.findByEmployeeId(employee.getId())
                 .map(this::toAccountSummaryResponse)
