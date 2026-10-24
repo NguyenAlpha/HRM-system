@@ -65,3 +65,14 @@ export function formatWindow(seconds: number): string {
 export function formatQuota(maxRequests: number, windowSeconds: number): string {
   return `${maxRequests.toLocaleString("vi-VN")} request / ${formatWindow(windowSeconds)}`
 }
+
+export type RateLimitTimeline = Schemas["RateLimitTimelineResponse"]
+export type RateLimitTimelinePoint = Schemas["Point"]
+export type RateLimitTimelineRange = "HOUR" | "DAY" | "WEEK"
+
+/** Requests and blocks over the range, for one policy or all of them. */
+export function getRateLimitTimeline(range: RateLimitTimelineRange, policy: string | null): Promise<RateLimitTimeline> {
+  const query = new URLSearchParams({ range })
+  if (policy) query.set("policy", policy)
+  return authorizedRequest<RateLimitTimeline>("admin", `/rate-limit/timeline?${query}`, { cache: "no-store" })
+}

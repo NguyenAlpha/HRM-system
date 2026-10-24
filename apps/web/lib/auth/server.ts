@@ -913,14 +913,15 @@ export async function handleAccountActivationRequest(request: Request, token: st
 
 // Read-only system statistics (rate limits, API traffic) for the admin portal.
 export async function handleSystemStatsRequest(
-  apiPath: "/api/system/rate-limit/stats" | "/api/system/traffic/stats",
+  apiPath: "/api/system/rate-limit/stats" | "/api/system/rate-limit/timeline" | "/api/system/traffic/stats",
+  query?: URLSearchParams,
 ): Promise<NextResponse> {
   const accessToken = (await cookies()).get(PORTAL_CONFIG.admin.accessCookie)?.value
   if (!accessToken) {
     return NextResponse.json(failure("UNAUTHORIZED", "Phiên quản trị đã hết hạn"), { status: 401 })
   }
 
-  const result = await callApi<unknown>(apiPath, {
+  const result = await callApi<unknown>(query?.size ? `${apiPath}?${query}` : apiPath, {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   if (!result) return gatewayFailure()
