@@ -64,7 +64,7 @@ nêu tên trường; web tự ghép tên trường vào trước.
 2. `VALIDATION_ERROR` có `field` nhưng `message` tiếng Anh: "<Tên trường> chưa hợp lệ. Vui lòng kiểm tra lại."
 3. Còn lại: tra `ERROR_MESSAGES[code]`; không có thì dùng câu mặc định "Không thể hoàn tất thao tác…".
 
-Người dùng **không bao giờ thấy** mã lỗi hay câu tiếng Anh của API. Hiện cả 60 mã trong `ErrorCode` đều có câu
+Người dùng **không bao giờ thấy** mã lỗi hay câu tiếng Anh của API. Hiện cả 62 mã trong `ErrorCode` đều có câu
 tiếng Việt trong `ERROR_MESSAGES`. Riêng `RATE_LIMIT_EXCEEDED`, BFF thay `message` bằng câu tiếng Việt có thời gian
 chờ lấy từ `Retry-After` ("thử lại sau 8 phút"), nên web hiện câu đó theo bước 1.
 
