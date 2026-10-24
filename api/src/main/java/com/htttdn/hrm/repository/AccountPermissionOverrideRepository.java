@@ -48,7 +48,7 @@ public interface AccountPermissionOverrideRepository extends JpaRepository<Accou
         WHERE permissionOverride.accountRoleAssignment.id = :assignmentId
           AND permissionOverride.permission.id = :permissionId
           AND permissionOverride.revokedAt IS NULL
-          AND (:effectiveTo IS NULL OR permissionOverride.effectiveFrom <= :effectiveTo)
+          AND permissionOverride.effectiveFrom <= COALESCE(:effectiveTo, permissionOverride.effectiveFrom)
           AND (permissionOverride.effectiveTo IS NULL OR permissionOverride.effectiveTo >= :effectiveFrom)
         """)
     boolean existsOverlappingActive(
