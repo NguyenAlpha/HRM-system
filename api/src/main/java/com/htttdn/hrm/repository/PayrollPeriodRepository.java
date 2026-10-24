@@ -56,7 +56,7 @@ public interface PayrollPeriodRepository extends JpaRepository<PayrollPeriod, Lo
     @Query("""
         SELECT period FROM PayrollPeriod period
         WHERE period.taxPaymentDate >= :from
-          AND (:to IS NULL OR period.taxPaymentDate <= :to)
+          AND period.taxPaymentDate <= COALESCE(:to, period.taxPaymentDate)
           AND period.status IN :statuses
         ORDER BY period.taxPaymentDate, period.id
         """)
