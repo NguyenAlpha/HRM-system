@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Pencil, Power, PowerOff, RefreshCw, RotateCcw } from "lucide-react"
+import { Pencil, Power, PowerOff, RefreshCw, RotateCcw, Timer, TimerOff } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
@@ -12,6 +12,7 @@ import {
   RateLimitPolicyEditDialog,
   type RateLimitPolicyAction,
 } from "@/components/rate-limit/rate-limit-policy-dialogs"
+import { RateLimitTimelineCard } from "@/components/rate-limit/rate-limit-timeline"
 import { StatTile } from "@/components/report/report-shared"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -32,6 +33,8 @@ import {
 
 const count = (value: number) => value.toLocaleString("vi-VN")
 
+const AUTO_REFRESH_MS = 15_000
+
 function formatTime(value: string): string {
   return new Intl.DateTimeFormat("vi-VN", {
     hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric",
@@ -44,6 +47,7 @@ const policyLabel = (policy: string) => POLICY_LABELS[policy] ?? policy
  * Admin Console view of the API rate limits: every quota with its allowed/blocked counters and
  * the keys refused most often. The API keeps the counters in memory since its last start.
  * Holders of system.rate_limit.manage also edit, switch off and reset each quota from its row.
+ * The page reloads itself every 15 seconds while it is visible, unless switched off.
  */
 export function RateLimitPage() {
   const { session, onSessionExpired } = usePortalSession()
@@ -53,6 +57,8 @@ export function RateLimitPage() {
   const [error, setError] = useState<string | null>(null)
   const [revision, setRevision] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [autoRefresh, setAutoRefresh] = useState(true)
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null)
   const [editing, setEditing] = useState<RateLimitPolicyStats | null>(null)
   const [confirming, setConfirming] = useState<{ policy: RateLimitPolicyStats; action: RateLimitPolicyAction } | null>(null)
 
@@ -64,6 +70,7 @@ export function RateLimitPage() {
         if (!active) return
         setStats(loaded)
         setError(null)
+        setUpdatedAt(new Date())
       })
       .catch((caught: unknown) => {
         if (!active) return
@@ -73,6 +80,15 @@ export function RateLimitPage() {
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [canRead, revision, onSessionExpired])
+
+  // Silent: the figures stay on screen while the next ones load. A hidden tab skips its turn.
+  useEffect(() => {
+    if (!canRead || !autoRefresh) return
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") setRevision((value) => value + 1)
+    }, AUTO_REFRESH_MS)
+    return () => clearInterval(timer)
+  }, [canRead, autoRefresh])
 
   function reload() {
     setLoading(true)
@@ -89,9 +105,22 @@ export function RateLimitPage() {
         title="Giới hạn truy cập"
         description="Hạn mức request của API và số lần bị chặn. Số liệu nằm trong bộ nhớ, tính từ lần khởi động backend gần nhất."
         actions={canRead && (
-          <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
-            <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
-          </Button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {updatedAt && (
+              <span className="text-xs text-muted-foreground tabular-nums">
+                Cập nhật lúc {updatedAt.toLocaleTimeString("vi-VN")}
+              </span>
+            )}
+            <Button type="button" variant="outline" size="sm" aria-pressed={autoRefresh}
+              title="Tải lại mỗi 15 giây khi đang mở trang"
+              onClick={() => setAutoRefresh((value) => !value)}>
+              {autoRefresh ? <Timer /> : <TimerOff />}
+              Tự động làm mới: {autoRefresh ? "Bật" : "Tắt"}
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
+              <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
+            </Button>
+          </div>
         )}
       />
 
@@ -112,6 +141,8 @@ export function RateLimitPage() {
               </>
             ) : Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-[106px] rounded-xl" />)}
           </div>
+
+          <RateLimitTimelineCard revision={revision} onSessionExpired={onSessionExpired} />
 
           <Card>
             <CardHeader>
