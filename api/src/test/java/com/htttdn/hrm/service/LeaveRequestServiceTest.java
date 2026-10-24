@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.LeaveRequest;
@@ -26,6 +27,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
@@ -57,13 +61,13 @@ class LeaveRequestServiceTest {
 
         Instant startAt = Instant.parse("2026-01-05T01:00:00Z");
         Instant endAt = Instant.parse("2026-01-05T05:00:00Z");
+        when(attendanceService.leaveMinutesFor(1L, startAt, endAt)).thenReturn(240);
         var result = service().createDraft(new LeaveRequestService.CreateLeaveCommand(
             1L,
             LeaveType.ANNUAL,
             LeaveSalaryTreatment.EMPLOYER_PAID,
             startAt,
             endAt,
-            240,
             "Personal appointment",
             null
         ));
@@ -85,7 +89,7 @@ class LeaveRequestServiceTest {
             new LeaveRequestService.CreateLeaveCommand(
                 applicant.getId(), LeaveType.ANNUAL, null,
                 Instant.parse("2026-01-05T01:00:00Z"), Instant.parse("2026-01-05T05:00:00Z"),
-                240, "Personal", null)));
+                "Personal", null)));
     }
 
     @Test
@@ -188,13 +192,66 @@ class LeaveRequestServiceTest {
     }
 
     @Test
+    void draftTakesItsMinutesFromTheScheduleOverTheWholePeriod() {
+        stubOwnEmployee(11 * 480);
+        when(leaveRequestRepository.save(any(LeaveRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Two weeks of leave: the schedule, not the client, says how much work time that is.
+        var result = service().createDraft(annualLeave("2026-11-12T01:00:00Z", "2026-11-27T10:00:00Z"));
+
+        assertEquals(11 * 480, result.requestedMinutes());
+    }
+
+    @Test
+    void draftOutsideTheWorkScheduleIsRejected() {
+        stubOwnEmployee(0);
+
+        BusinessException thrown = assertThrows(BusinessException.class,
+            () -> service().createDraft(annualLeave("2026-11-15T01:00:00Z", "2026-11-15T10:00:00Z")));
+
+        assertEquals(ErrorCode.LEAVE_OUTSIDE_WORK_SCHEDULE, thrown.getErrorCode());
+        verify(leaveRequestRepository, never()).save(any());
+    }
+
+    @Test
+    void draftBeyondTheAnnualBalanceIsRejectedBeforeItIsSaved() {
+        stubOwnEmployee(12 * 480);
+        doThrow(new ConflictException(ErrorCode.INSUFFICIENT_LEAVE_BALANCE, "not enough"))
+            .when(leaveEntitlementService).requireSufficientBalance(any());
+
+        ConflictException thrown = assertThrows(ConflictException.class,
+            () -> service().createDraft(annualLeave("2026-11-12T01:00:00Z", "2026-11-27T10:00:00Z")));
+
+        assertEquals(ErrorCode.INSUFFICIENT_LEAVE_BALANCE, thrown.getErrorCode());
+        verify(leaveRequestRepository, never()).save(any());
+    }
+
+    @Test
+    void submitRechecksTheAnnualBalance() {
+        Employee employee = Employee.builder().id(1L).build();
+        LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee)
+            .leaveType(LeaveType.ANNUAL).status(LeaveRequestStatus.DRAFT).build();
+        when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
+        when(currentAccountProvider.accountId()).thenReturn(9L);
+        when(accountRepository.findById(9L))
+            .thenReturn(Optional.of(Account.builder().id(9L).employee(employee).build()));
+        doThrow(new ConflictException(ErrorCode.INSUFFICIENT_LEAVE_BALANCE, "not enough"))
+            .when(leaveEntitlementService).requireSufficientBalance(request);
+
+        assertThrows(ConflictException.class, () -> service().submit(3L));
+
+        assertEquals(LeaveRequestStatus.DRAFT, request.getStatus());
+        verify(notificationService, never()).notifyLeaveSubmitted(any());
+    }
+
+    @Test
     void salaryTreatmentFollowsTheLeaveTypeWhenTheRequesterPicksAnother() {
         stubSelfServiceDraft();
 
         var result = service().createDraft(new LeaveRequestService.CreateLeaveCommand(
             1L, LeaveType.SICK, null,
             Instant.parse("2026-01-05T01:00:00Z"), Instant.parse("2026-01-05T05:00:00Z"),
-            240, "Sick", null
+            "Sick", null
         ));
 
         assertEquals(LeaveSalaryTreatment.SOCIAL_INSURANCE, result.salaryTreatment());
@@ -207,7 +264,7 @@ class LeaveRequestServiceTest {
         var result = service().createDraft(new LeaveRequestService.CreateLeaveCommand(
             1L, LeaveType.OTHER, null,
             Instant.parse("2026-01-05T01:00:00Z"), Instant.parse("2026-01-05T05:00:00Z"),
-            240, "Personal", null
+            "Personal", null
         ));
 
         assertEquals(LeaveSalaryTreatment.UNPAID, result.salaryTreatment());
@@ -226,7 +283,7 @@ class LeaveRequestServiceTest {
             new LeaveRequestService.CreateLeaveCommand(
                 1L, LeaveType.UNPAID, LeaveSalaryTreatment.EMPLOYER_PAID,
                 Instant.parse("2026-01-05T01:00:00Z"), Instant.parse("2026-01-05T05:00:00Z"),
-                240, "Personal", null
+                "Personal", null
             )
         ));
     }
@@ -239,6 +296,7 @@ class LeaveRequestServiceTest {
         when(currentAccountProvider.accountId()).thenReturn(9L);
         when(accountRepository.findById(9L)).thenReturn(Optional.of(actor));
         when(currentAccountProvider.hasAuthority("request.manage")).thenReturn(true);
+        when(attendanceService.leaveMinutesFor(eq(1L), any(), any())).thenReturn(240);
         when(leaveRequestRepository.save(any(LeaveRequest.class))).thenAnswer(invocation -> {
             LeaveRequest saved = invocation.getArgument(0);
             saved.setId(4L);
@@ -248,23 +306,33 @@ class LeaveRequestServiceTest {
         var result = service().createDraft(new LeaveRequestService.CreateLeaveCommand(
             1L, LeaveType.SICK, LeaveSalaryTreatment.EMPLOYER_PAID,
             Instant.parse("2026-01-05T01:00:00Z"), Instant.parse("2026-01-05T05:00:00Z"),
-            240, "Company pays the first days", null
+            "Company pays the first days", null
         ));
 
         assertEquals(LeaveSalaryTreatment.EMPLOYER_PAID, result.salaryTreatment());
     }
 
     private void stubSelfServiceDraft() {
-        Employee employee = Employee.builder().id(1L).build();
-        Account actor = Account.builder().id(9L).employee(employee).build();
-        when(employeeRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(employee));
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(actor));
+        stubOwnEmployee(240);
         when(leaveRequestRepository.save(any(LeaveRequest.class))).thenAnswer(invocation -> {
             LeaveRequest saved = invocation.getArgument(0);
             saved.setId(3L);
             return saved;
         });
+    }
+
+    private void stubOwnEmployee(int scheduledMinutes) {
+        Employee employee = Employee.builder().id(1L).build();
+        Account actor = Account.builder().id(9L).employee(employee).build();
+        when(employeeRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(employee));
+        when(currentAccountProvider.accountId()).thenReturn(9L);
+        when(accountRepository.findById(9L)).thenReturn(Optional.of(actor));
+        when(attendanceService.leaveMinutesFor(eq(1L), any(), any())).thenReturn(scheduledMinutes);
+    }
+
+    private static LeaveRequestService.CreateLeaveCommand annualLeave(String startAt, String endAt) {
+        return new LeaveRequestService.CreateLeaveCommand(
+            1L, LeaveType.ANNUAL, null, Instant.parse(startAt), Instant.parse(endAt), "Trip", null);
     }
 
     private LeaveRequestService service() {

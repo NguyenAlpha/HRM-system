@@ -35,7 +35,6 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 
 @Service
 @Transactional
@@ -80,27 +79,38 @@ public class LeaveRequestService {
         this.notificationService = notificationService;
     }
 
+    /**
+     * The minutes are worked out from the employee's shifts over the period, never taken from the
+     * client, so the period and the time drawn from the annual balance cannot disagree.
+     */
     @PreAuthorize("hasAuthority('request.self.create')")
     public LeaveRequestView createDraft(CreateLeaveCommand command) {
         validateCommand(command);
         requireOwnEmployee(command.employeeId());
         Employee employee = employeeRepository.findByIdAndDeletedAtIsNull(command.employeeId())
             .orElseThrow(() -> employeeNotFound(command.employeeId()));
+        LeaveSalaryTreatment salaryTreatment = resolveSalaryTreatment(command);
+        int requestedMinutes = attendanceService.leaveMinutesFor(employee.getId(), command.startAt(), command.endAt());
+        if (requestedMinutes == 0) {
+            throw new BusinessException(ErrorCode.LEAVE_OUTSIDE_WORK_SCHEDULE,
+                "The leave period contains no scheduled work time", "endAt");
+        }
 
         Instant now = Instant.now();
         LeaveRequest request = LeaveRequest.builder()
             .employee(employee)
             .leaveType(command.leaveType())
-            .salaryTreatment(resolveSalaryTreatment(command))
+            .salaryTreatment(salaryTreatment)
             .startAt(command.startAt())
             .endAt(command.endAt())
-            .requestedMinutes(command.requestedMinutes())
+            .requestedMinutes(requestedMinutes)
             .reason(command.reason().trim())
             .attachmentUrl(normalizeNullable(command.attachmentUrl()))
             .status(LeaveRequestStatus.DRAFT)
             .createdAt(now)
             .updatedAt(now)
             .build();
+        leaveEntitlementService.requireSufficientBalance(request);
         return toView(leaveRequestRepository.save(request));
     }
 
@@ -113,6 +123,8 @@ public class LeaveRequestService {
         LeaveRequest request = findForUpdate(requestId);
         requireOwnEmployee(request.getEmployee().getId());
         requireStatus(request, LeaveRequestStatus.DRAFT);
+        // Other requests may have been submitted or approved since this draft was created.
+        leaveEntitlementService.requireSufficientBalance(request);
 
         Instant now = Instant.now();
         request.setSubmittedAt(now);
@@ -419,7 +431,6 @@ public class LeaveRequestService {
         @Nullable LeaveSalaryTreatment salaryTreatment,
         @NotNull Instant startAt,
         @NotNull Instant endAt,
-        @NotNull @Positive Integer requestedMinutes,
         @NotBlank String reason,
         @Nullable String attachmentUrl
     ) {

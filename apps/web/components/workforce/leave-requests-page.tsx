@@ -485,7 +485,6 @@ function CreateLeaveDialog({ canManage, self, busy, run, onClose }: {
   const [date, setDate] = useState(today())
   const [customStart, setCustomStart] = useState("")
   const [customEnd, setCustomEnd] = useState("")
-  const [customMinutes, setCustomMinutes] = useState("480")
   const [reason, setReason] = useState("")
 
   const applicant = self
@@ -509,8 +508,8 @@ function CreateLeaveDialog({ canManage, self, busy, run, onClose }: {
   function save(submit: boolean) {
     if (!applicant) return
     const span = part === "CUSTOM"
-      ? { startAt: new Date(customStart).toISOString(), endAt: new Date(customEnd).toISOString(), requestedMinutes: Number(customMinutes) }
-      : { startAt: vietnamInstant(date, PART_HOURS[part][0]), endAt: vietnamInstant(date, PART_HOURS[part][1]), requestedMinutes: presetMinutes }
+      ? { startAt: new Date(customStart).toISOString(), endAt: new Date(customEnd).toISOString() }
+      : { startAt: vietnamInstant(date, PART_HOURS[part][0]), endAt: vietnamInstant(date, PART_HOURS[part][1]) }
     const body = {
       employeeId: applicant.id, leaveType, ...(canManage ? { salaryTreatment: treatment } : {}), ...span, reason: reason.trim(),
     } satisfies WorkforceBody["CreateLeaveCommand"]
@@ -570,10 +569,10 @@ function CreateLeaveDialog({ canManage, self, busy, run, onClose }: {
               </Select>
             </div>
             {part === "CUSTOM" ? (
-              <div className="grid gap-1.5">
-                <Label htmlFor="leave-minutes">Số phút công nghỉ</Label>
-                <Input id="leave-minutes" required type="number" min="1" value={customMinutes} onChange={(event) => setCustomMinutes(event.target.value)} />
-              </div>
+              // The API works the minutes out from the shifts, so there is nothing to type here.
+              <p className="self-end text-xs text-muted-foreground">
+                Số công nghỉ được tính theo ca làm việc trong khoảng đã chọn, không gồm giờ nghỉ trưa, Chủ nhật và ngày lễ.
+              </p>
             ) : (
               <div className="grid gap-1.5">
                 <Label htmlFor="leave-date">Ngày nghỉ</Label>

@@ -7814,10 +7814,6 @@
             "type" : "string",
             "minLength" : 1
           },
-          "requestedMinutes" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
           "salaryTreatment" : {
             "type" : [ "string", "null" ],
             "enum" : [ "EMPLOYER_PAID", "SOCIAL_INSURANCE", "UNPAID", null ]
@@ -7827,7 +7823,7 @@
             "format" : "date-time"
           }
         },
-        "required" : [ "employeeId", "endAt", "leaveType", "reason", "requestedMinutes", "startAt" ]
+        "required" : [ "employeeId", "endAt", "leaveType", "reason", "startAt" ]
       },
       "CreateOrganizationCompanyOwnerRequest" : {
         "type" : "object",

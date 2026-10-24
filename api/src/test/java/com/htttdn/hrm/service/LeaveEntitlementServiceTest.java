@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.LeaveRequest;
 import com.htttdn.hrm.entity.enums.LeaveRequestStatus;
@@ -91,6 +92,7 @@ class LeaveEntitlementServiceTest {
             ConflictException.class, () -> service().requireSufficientBalance(annualRequest(2 * DAY))
         );
         assertEquals(true, thrown.getMessage().contains("not enough"));
+        assertEquals(ErrorCode.INSUFFICIENT_LEAVE_BALANCE, thrown.getErrorCode());
     }
 
     @Test

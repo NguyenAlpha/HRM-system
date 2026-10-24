@@ -25,9 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.htttdn.hrm.dto.request.attendance.ApproveOvertimeRequest;
 import com.htttdn.hrm.dto.response.attendance.OvertimeApprovalItemResponse;
 import com.htttdn.hrm.dto.response.attendance.TimesheetRowResponse;
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.WorkShift;
 import com.htttdn.hrm.entity.enums.LeaveRequestStatus;
 import com.htttdn.hrm.entity.enums.LeaveType;
+import com.htttdn.hrm.exception.AppException;
 import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.repository.WorkShiftRepository;
 import com.htttdn.hrm.service.LeaveRequestService.LeaveRequestView;
@@ -210,7 +212,7 @@ class ApprovalChainIntegrationTest {
         Instant start = calendarService.scheduleFor(staff.employeeId(), LEAVE_DAY.plusDays(1), LEAVE_DAY.plusDays(1))
             .getFirst().startAt();
         leaveRequestService.createDraft(new LeaveRequestService.CreateLeaveCommand(
-            staff.employeeId(), LeaveType.UNPAID, null, start, start.plusSeconds(4 * 3600), 240, "Nháp", null));
+            staff.employeeId(), LeaveType.UNPAID, null, start, start.plusSeconds(4 * 3600), "Nháp", null));
 
         Long otherUnitId = id("INSERT INTO organization_units(code, name, unit_type) VALUES (?, 'Other unit', 'DEPARTMENT') RETURNING id",
             "APO_" + suffix());
@@ -235,18 +237,59 @@ class ApprovalChainIntegrationTest {
     }
 
     @Test
+    void annualLeaveTakesTheScheduledMinutesOfEveryDayItCovers() {
+        authenticateAs(staff, EMPLOYEE);
+        // Monday 13:00 to Wednesday 12:00 (UTC+7): an afternoon, a whole day and a morning.
+        LeaveRequestView draft = leaveRequestService.createDraft(new LeaveRequestService.CreateLeaveCommand(
+            staff.employeeId(), LeaveType.ANNUAL, null,
+            Instant.parse("2026-03-02T06:00:00Z"), Instant.parse("2026-03-04T05:00:00Z"), "Về quê", null));
+        assertEquals(240 + 480 + 240, draft.requestedMinutes());
+
+        leaveRequestService.submit(draft.id());
+        authenticateAs(manager, EMPLOYEE);
+        leaveRequestService.approve(draft.id(), null);
+
+        // Every day of the period is on leave, not only the first one.
+        assertEquals(List.of(240, 480, 240), jdbc.queryForList("""
+            SELECT leave_minutes FROM attendance_records WHERE leave_request_id = ? ORDER BY work_date
+            """, Integer.class, draft.id()));
+    }
+
+    @Test
+    void annualLeaveBeyondTheBalanceIsRejectedWhenTheDraftIsCreated() {
+        authenticateAs(staff, EMPLOYEE);
+        // Three weeks hold 18 work days; the year grants 12.
+        AppException thrown = assertThrows(AppException.class, () -> leaveRequestService.createDraft(
+            new LeaveRequestService.CreateLeaveCommand(staff.employeeId(), LeaveType.ANNUAL, null,
+                Instant.parse("2026-03-02T01:00:00Z"), Instant.parse("2026-03-21T10:00:00Z"), "Du lịch", null)));
+
+        assertEquals(ErrorCode.INSUFFICIENT_LEAVE_BALANCE, thrown.getErrorCode());
+    }
+
+    @Test
+    void leaveOnADayOffIsRejected() {
+        authenticateAs(staff, EMPLOYEE);
+        // 2026-03-08 is a Sunday.
+        AppException thrown = assertThrows(AppException.class, () -> leaveRequestService.createDraft(
+            new LeaveRequestService.CreateLeaveCommand(staff.employeeId(), LeaveType.UNPAID, null,
+                Instant.parse("2026-03-08T01:00:00Z"), Instant.parse("2026-03-08T10:00:00Z"), "Việc riêng", null)));
+
+        assertEquals(ErrorCode.LEAVE_OUTSIDE_WORK_SCHEDULE, thrown.getErrorCode());
+    }
+
+    @Test
     void hrCannotCreateSubmitOrCancelAnotherEmployeesLeave() {
         authenticateAs(staff, EMPLOYEE);
         Instant start = calendarService.scheduleFor(staff.employeeId(), LEAVE_DAY, LEAVE_DAY)
             .getFirst().startAt();
         LeaveRequestView draft = leaveRequestService.createDraft(new LeaveRequestService.CreateLeaveCommand(
             staff.employeeId(), LeaveType.UNPAID, null, start, start.plusSeconds(4 * 3600),
-            240, "Personal leave", null));
+            "Personal leave", null));
 
         authenticateAs(hr, "request.self.create", "request.self.cancel", "request.manage");
         assertThrows(ForbiddenException.class, () -> leaveRequestService.createDraft(
             new LeaveRequestService.CreateLeaveCommand(staff.employeeId(), LeaveType.UNPAID,
-                null, start, start.plusSeconds(4 * 3600), 240, "On behalf", null)));
+                null, start, start.plusSeconds(4 * 3600), "On behalf", null)));
         assertThrows(ForbiddenException.class, () -> leaveRequestService.submit(draft.id()));
         assertThrows(ForbiddenException.class, () -> leaveRequestService.cancel(draft.id()));
         assertEquals("DRAFT", jdbc.queryForObject(
@@ -287,7 +330,7 @@ class ApprovalChainIntegrationTest {
         // Four hours from the start of the shift on a Monday, as the calendar reads it.
         Instant start = calendarService.scheduleFor(person.employeeId(), LEAVE_DAY, LEAVE_DAY).getFirst().startAt();
         LeaveRequestView draft = leaveRequestService.createDraft(new LeaveRequestService.CreateLeaveCommand(
-            person.employeeId(), LeaveType.UNPAID, null, start, start.plusSeconds(4 * 3600), 240, "Việc riêng", null));
+            person.employeeId(), LeaveType.UNPAID, null, start, start.plusSeconds(4 * 3600), "Việc riêng", null));
         return leaveRequestService.submit(draft.id());
     }
 
