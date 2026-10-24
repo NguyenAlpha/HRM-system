@@ -443,7 +443,6 @@ Tạo đơn nghỉ ở trạng thái `DRAFT`.
   "salaryTreatment": null,
   "startAt": "2026-01-15T01:00:00Z",
   "endAt": "2026-01-15T05:00:00Z",
-  "requestedMinutes": 240,
   "reason": "Việc gia đình",
   "attachmentUrl": null
 }
@@ -456,11 +455,12 @@ Tạo đơn nghỉ ở trạng thái `DRAFT`.
 | `salaryTreatment` | enum | | `EMPLOYER_PAID`, `SOCIAL_INSURANCE` hoặc `UNPAID`; xem bên dưới |
 | `startAt` | instant | ✅ | |
 | `endAt` | instant | ✅ | Sau `startAt` |
-| `requestedMinutes` | int | ✅ | > 0 |
 | `reason` | string | ✅ | Không rỗng |
 | `attachmentUrl` | string | | |
 
 Cách trả lương của đơn **do server suy ra từ loại nghỉ**, không nhận từ client: `ANNUAL` → `EMPLOYER_PAID`, `SICK` và `MATERNITY` → `SOCIAL_INSURANCE`, `UNPAID` và `OTHER` → `UNPAID`. Nếu client gửi `salaryTreatment` khác giá trị suy ra, API trả `400` trừ khi người gọi có `request.manage`. Không có ràng buộc này thì nhân viên chỉ cần nộp đơn `OTHER` kèm `EMPLOYER_PAID` là được trả lương đủ mà không trừ ngày phép nào. HR vẫn ghi đè được cho các trường hợp như công ty trả lương mấy ngày ốm đầu tiên hoặc nghỉ việc riêng có lương theo Điều 115.
+
+`requestedMinutes` của đơn **do server tính**, client không gửi: tổng phút công theo ca của phân công chính trên mỗi ngày làm việc nằm trong `startAt`–`endAt`, không gồm giờ nghỉ giữa ca, Chủ nhật và ngày lễ công ty. Ví dụ ca 08:00–17:00 nghỉ trưa 12:00–13:00, nghỉ từ 13:00 thứ Hai đến 12:00 thứ Tư là 240 + 480 + 240 = 960 phút. Nhờ vậy khoảng thời gian và số phút trừ phép không thể lệch nhau. Với `ANNUAL`, đơn vượt [số dư phép năm](#hạn-mức-phép-năm) bị từ chối ngay khi tạo.
 
 ### Response `201 Created`
 
@@ -498,14 +498,16 @@ Cách trả lương của đơn **do server suy ra từ loại nghỉ**, không 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Request sai, `endAt` không sau `startAt`, hoặc `salaryTreatment` khác giá trị suy ra mà không có `request.manage` |
+| 400 | `LEAVE_OUTSIDE_WORK_SCHEDULE` | Khoảng thời gian không có phút công nào theo ca (ví dụ chỉ gồm Chủ nhật, ngày lễ hoặc giờ ngoài ca) |
 | 403 | `FORBIDDEN` | `employeeId` không thuộc account đang đăng nhập |
 | 404 | `EMPLOYEE_NOT_FOUND` | Nhân viên không tồn tại hoặc đã bị xóa mềm |
+| 409 | `INSUFFICIENT_LEAVE_BALANCE` | Đơn `ANNUAL` vượt số dư phép năm còn lại |
 
 ---
 
 ## POST `/api/leave-requests/{id}/submit` và `/cancel`
 
-- `submit` ghi `submittedAt`, chốt [người duyệt](#người-duyệt) vào `approverEmployeeId` và chuyển đơn `DRAFT` sang `PENDING`. Đơn của Giám đốc hoặc Chủ sở hữu chuyển thẳng sang `APPROVED` (tự ghi nhận, kiểm tra như khi duyệt). Không tìm được người duyệt trả `409 APPROVER_NOT_FOUND`.
+- `submit` ghi `submittedAt`, chốt [người duyệt](#người-duyệt) vào `approverEmployeeId` và chuyển đơn `DRAFT` sang `PENDING`. Đơn của Giám đốc hoặc Chủ sở hữu chuyển thẳng sang `APPROVED` (tự ghi nhận, kiểm tra như khi duyệt). Không tìm được người duyệt trả `409 APPROVER_NOT_FOUND`. Đơn `ANNUAL` được kiểm tra lại số dư phép năm, vì các đơn khác có thể đã gửi hoặc được duyệt sau khi lưu nháp; vượt số dư trả `409 INSUFFICIENT_LEAVE_BALANCE`.
 - `cancel` chuyển đơn `DRAFT` hoặc `PENDING` sang `CANCELLED`.
 
 Cả hai không có body và trả `LeaveRequestView`. Chỉ chủ đơn được gửi hoặc hủy; quyền `request.manage`
@@ -538,7 +540,8 @@ Nghỉ một phần ngày rồi chấm công phần còn lại không cần đ�
 | 403 | `FORBIDDEN` | Người gọi không phải người duyệt của đơn |
 | 404 | `REQUEST_NOT_FOUND` | Đơn không tồn tại |
 | 409 | `REQUEST_ALREADY_PROCESSED` | Đơn không ở `PENDING` |
-| 409 | `CONFLICT` | Trùng đơn đã duyệt, vượt số dư phép năm, ngày đã gắn đơn khác, ngày đang chấm dở, hoặc đơn trùng giờ đã làm |
+| 409 | `CONFLICT` | Trùng đơn đã duyệt, ngày đã gắn đơn khác, ngày đang chấm dở, hoặc đơn trùng giờ đã làm |
+| 409 | `INSUFFICIENT_LEAVE_BALANCE` | Đơn `ANNUAL` vượt số dư phép năm còn lại |
 | 409 | `PAYROLL_PERIOD_LOCKED` | Ngày nghỉ thuộc kỳ lương đã duyệt, đã trả hoặc đã khóa |
 
 ---
@@ -624,7 +627,7 @@ GET /api/leave-entitlements/employees/1?year=2026
 
 ## Hạn mức phép năm
 
-Mỗi nhân viên được **12 ngày phép năm** (Bộ luật Lao động 2019, Điều 113) và `POST /api/leave-requests/{id}/approve` sẽ trả `409` nếu đơn vượt số dư còn lại. Chỉ có hai quy tắc:
+Mỗi nhân viên được **12 ngày phép năm** (Bộ luật Lao động 2019, Điều 113). Đơn vượt số dư còn lại bị từ chối với `409 INSUFFICIENT_LEAVE_BALANCE` khi tạo, khi gửi và khi duyệt. Chỉ có hai quy tắc:
 
 - Làm cả năm: 12 ngày.
 - Vào làm giữa năm: 12 × số tháng làm việc / 12, tháng vào làm tính trọn tháng. Vào làm tháng 9 được 4 ngày, tháng 10 được 3 ngày.
