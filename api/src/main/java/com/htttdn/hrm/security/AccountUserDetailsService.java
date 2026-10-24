@@ -21,7 +21,7 @@ public class AccountUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String usernameOrEmail) {
-        Account account = accountRepository.findByLogin(usernameOrEmail)
+        Account account = accountRepository.findBySignInName(usernameOrEmail)
             .orElseThrow(() -> new UsernameNotFoundException("Account not found"));
 
         boolean active = account.getStatus() == AccountStatus.ACTIVE;

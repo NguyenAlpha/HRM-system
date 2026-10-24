@@ -48,6 +48,7 @@ const THEME = {
     alternateLabel: "Bạn là quản trị viên hệ thống?",
     alternateHref: "/admin/login",
     alternateAction: "Đến cổng Admin",
+    usernameLabel: "Tên đăng nhập, email hoặc mã nhân viên",
     usernamePlaceholder: "employee@company.vn",
     devHint: null,
   },
@@ -62,6 +63,7 @@ const THEME = {
     alternateLabel: "Bạn là người dùng HRM?",
     alternateHref: "/login",
     alternateAction: "Về cổng nhân viên",
+    usernameLabel: "Tên đăng nhập hoặc email",
     usernamePlaceholder: "admin",
     devHint: "admin / Admin@123",
   },
@@ -71,7 +73,7 @@ const loginSchema = z.object({
   usernameOrEmail: z
     .string()
     .trim()
-    .min(1, "Vui lòng nhập tên đăng nhập hoặc email")
+    .min(1, "Vui lòng nhập thông tin đăng nhập")
     .max(50, "Tối đa 50 ký tự"),
   password: z
     .string()
@@ -209,7 +211,7 @@ export function LoginForm({ portal, branding }: LoginFormProps) {
 
             <form className="mt-8 grid gap-5" onSubmit={handleSubmit(onSubmit)} noValidate>
               <div className="grid gap-2">
-                <Label htmlFor={`${portal}-username`}>Tên đăng nhập hoặc email</Label>
+                <Label htmlFor={`${portal}-username`}>{theme.usernameLabel}</Label>
                 <Input
                   id={`${portal}-username`}
                   type="text"

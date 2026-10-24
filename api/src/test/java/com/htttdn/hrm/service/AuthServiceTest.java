@@ -62,7 +62,7 @@ class AuthServiceTest {
     void loginReturnsTokenBundleAndResetsFailedAttempts() {
         Account account = activeAccount();
         account.setFailedLoginCount(2);
-        when(accountRepository.findByLogin("admin")).thenReturn(Optional.of(account));
+        when(accountRepository.findBySignInName("admin")).thenReturn(Optional.of(account));
         when(refreshTokenService.create(account)).thenReturn("refresh-token");
         when(accountAuthorizationService.getSnapshot(1L)).thenReturn(
             new AuthorizationSnapshot(
@@ -97,7 +97,7 @@ class AuthServiceTest {
     void invalidPasswordIncrementsCounterWithoutLockingAccount() {
         Account account = activeAccount();
         account.setFailedLoginCount(4);
-        when(accountRepository.findByLogin("admin")).thenReturn(Optional.of(account));
+        when(accountRepository.findBySignInName("admin")).thenReturn(Optional.of(account));
         when(authenticationManager.authenticate(any())).thenThrow(new BadCredentialsException("bad"));
 
         UnauthorizedException exception = assertThrows(

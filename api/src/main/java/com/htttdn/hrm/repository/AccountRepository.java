@@ -35,6 +35,22 @@ public interface AccountRepository extends JpaRepository<Account, Long>, JpaSpec
         """)
     Optional<Account> findByLogin(@Param("login") String login);
 
+    /** The not deleted account of the employee with this code; codes compare case-insensitively. */
+    @Query("""
+        SELECT account
+        FROM Account account
+        WHERE LOWER(account.employee.employeeCode) = LOWER(:code) AND account.deletedAt IS NULL
+        """)
+    Optional<Account> findByEmployeeCode(@Param("code") String code);
+
+    /**
+     * The account a sign-in names: its username, else its email, else its employee code. Usernames
+     * win, so a username equal to another person's employee code still signs in as its own account.
+     */
+    default Optional<Account> findBySignInName(String login) {
+        return findByLogin(login).or(() -> findByEmployeeCode(login));
+    }
+
     /** The employee's account that is not deleted, if any. */
     @Query("SELECT account FROM Account account WHERE account.employee.id = :employeeId AND account.deletedAt IS NULL")
     Optional<Account> findByEmployeeId(@Param("employeeId") Long employeeId);
