@@ -1,8 +1,11 @@
 package com.htttdn.hrm.dto.request.organization;
 
+import com.htttdn.hrm.dto.request.ValidationPatterns;
+
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /** The company's own details. Every field is replaced; null clears an optional one. */
@@ -18,6 +21,8 @@ public record CompanyProfileRequest(
     @Size(max = 30)
     @Nullable
     String taxCode,
+
+    @Pattern(regexp = ValidationPatterns.PHONE, message = ValidationPatterns.PHONE_MESSAGE)
 
     @Size(max = 12)
     @Nullable

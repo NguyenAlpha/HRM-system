@@ -7,6 +7,7 @@ import { z } from "zod"
 import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
+import { PhoneInput } from "@/components/common/phone-input"
 import { ErrorAlert } from "@/components/common/list-controls"
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
@@ -47,6 +48,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { phoneSchema } from "@/lib/phone"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import type { Portal } from "@/lib/auth/types"
 import {
@@ -66,7 +68,7 @@ const locationSchema = z.object({
   name: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự"),
   locationType: z.string().min(1, "Bắt buộc"),
   address: z.string().trim().min(1, "Bắt buộc"),
-  phone: z.string().trim().max(12, "Tối đa 12 ký tự").optional(),
+  phone: phoneSchema,
   parentLocationId: z.string().optional(),
   isActive: z.string(),
 })
@@ -322,7 +324,7 @@ export function WorkLocationManager({ portal, onSessionExpired }: { portal: Port
 
               <div className="grid gap-1.5">
                 <Label htmlFor="location-phone">Số điện thoại (tùy chọn)</Label>
-                <Input id="location-phone" aria-invalid={!!errors.phone} {...register("phone")} />
+                <PhoneInput id="location-phone" aria-invalid={!!errors.phone} {...register("phone")} />
                 {errors.phone && <p className="text-xs font-medium text-destructive">{errors.phone.message}</p>}
               </div>
 

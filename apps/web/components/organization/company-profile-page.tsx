@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useRef, useState } from "react"
 import { Loader2, PencilLine, Trash2, Upload } from "lucide-react"
 import { toast } from "sonner"
 
+import { PhoneInput } from "@/components/common/phone-input"
 import { InfoField } from "@/components/employee/employee-detail-page"
 import { BrandMark } from "@/components/portal/brand-mark"
 import { PageHeader } from "@/components/portal/page-header"
@@ -271,7 +272,7 @@ function EditCompanyDialog({ company, onClose, onSaved }: {
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="company-phone">Điện thoại</Label>
-              <Input id="company-phone" type="tel" maxLength={12} value={phone} onChange={(event) => setPhone(event.target.value)} />
+              <PhoneInput id="company-phone" value={phone} onChange={(event) => setPhone(event.target.value)} />
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="company-email">Email</Label>

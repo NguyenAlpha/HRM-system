@@ -1,9 +1,11 @@
 package com.htttdn.hrm.dto.request.employee;
 
+import com.htttdn.hrm.dto.request.ValidationPatterns;
 import com.htttdn.hrm.entity.enums.EducationLevel;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -12,6 +14,7 @@ import jakarta.validation.constraints.Size;
  * Every field is replaced; null clears it.
  */
 public record UpdateSelfProfileRequest(
+    @Pattern(regexp = ValidationPatterns.PHONE, message = ValidationPatterns.PHONE_MESSAGE)
     @Size(max = 12)
     @Nullable
     String phone,

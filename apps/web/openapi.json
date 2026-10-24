@@ -7593,7 +7593,8 @@
           "phone" : {
             "type" : [ "string", "null" ],
             "maxLength" : 12,
-            "minLength" : 0
+            "minLength" : 0,
+            "pattern" : "^(\\+?[0-9]{8,11})?$"
           },
           "taxCode" : {
             "type" : [ "string", "null" ],
@@ -7694,7 +7695,8 @@
           "phone" : {
             "type" : [ "string", "null" ],
             "maxLength" : 12,
-            "minLength" : 0
+            "minLength" : 0,
+            "pattern" : "^(\\+?[0-9]{8,11})?$"
           },
           "workEmail" : {
             "type" : "string",
@@ -7746,7 +7748,8 @@
           "phone" : {
             "type" : [ "string", "null" ],
             "maxLength" : 12,
-            "minLength" : 0
+            "minLength" : 0,
+            "pattern" : "^(\\+?[0-9]{8,11})?$"
           },
           "workEmail" : {
             "type" : [ "string", "null" ],
@@ -8075,7 +8078,8 @@
           "phone" : {
             "type" : [ "string", "null" ],
             "maxLength" : 12,
-            "minLength" : 0
+            "minLength" : 0,
+            "pattern" : "^(\\+?[0-9]{8,11})?$"
           }
         },
         "required" : [ "address", "code", "locationType", "name" ]
@@ -10771,7 +10775,8 @@
           "phone" : {
             "type" : [ "string", "null" ],
             "maxLength" : 12,
-            "minLength" : 0
+            "minLength" : 0,
+            "pattern" : "^(\\+?[0-9]{8,11})?$"
           },
           "workEmail" : {
             "type" : [ "string", "null" ],
@@ -10910,7 +10915,8 @@
           "phone" : {
             "type" : [ "string", "null" ],
             "maxLength" : 12,
-            "minLength" : 0
+            "minLength" : 0,
+            "pattern" : "^(\\+?[0-9]{8,11})?$"
           }
         }
       },
@@ -10936,7 +10942,8 @@
           "phone" : {
             "type" : [ "string", "null" ],
             "maxLength" : 12,
-            "minLength" : 0
+            "minLength" : 0,
+            "pattern" : "^(\\+?[0-9]{8,11})?$"
           }
         },
         "required" : [ "address", "isActive", "name" ]

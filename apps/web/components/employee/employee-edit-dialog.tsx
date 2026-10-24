@@ -7,6 +7,7 @@ import { z } from "zod"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
+import { PhoneInput } from "@/components/common/phone-input"
 import { EmployeeBirthDateSelect } from "@/components/employee/employee-birth-date-select"
 import { ErrorAlert } from "@/components/common/list-controls"
 import { Button } from "@/components/ui/button"
@@ -40,6 +41,7 @@ import {
   type Gender,
   type UpdateEmployeeInput,
 } from "@/lib/employee"
+import { phoneSchema } from "@/lib/phone"
 import type { Portal } from "@/lib/auth/types"
 import { isEligibleEmployeeBirthDate } from "@/lib/employee-birth-date"
 
@@ -60,7 +62,7 @@ const employeeEditSchema = z
     institution: z.string().max(30, "Tối đa 30 ký tự").optional(),
     graduationYear: z.string().optional(),
     workEmail: z.string().max(30, "Tối đa 30 ký tự").optional(),
-    phone: z.string().max(12, "Tối đa 12 ký tự").optional(),
+    phone: phoneSchema,
   })
   .refine((data) => !data.workEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.workEmail), {
     message: "Email không hợp lệ",
@@ -219,7 +221,7 @@ export function EmployeeEditDialog({ portal, detail, onClose, onSaved, onSession
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="emp-phone">Điện thoại</Label>
-                <Input id="emp-phone" aria-invalid={!!errors.phone} {...register("phone")} />
+                <PhoneInput id="emp-phone" aria-invalid={!!errors.phone} {...register("phone")} />
                 {errors.phone && <p className="text-xs font-medium text-destructive">{errors.phone.message}</p>}
               </div>
             </div>
