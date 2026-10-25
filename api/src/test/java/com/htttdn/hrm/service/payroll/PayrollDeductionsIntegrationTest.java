@@ -117,8 +117,8 @@ class PayrollDeductionsIntegrationTest {
         CurrentAccountProvider actor = mock(CurrentAccountProvider.class);
         when(actor.accountId()).thenReturn(jdbc.queryForObject("SELECT id FROM accounts ORDER BY id LIMIT 1", Long.class));
         return new PayrollDeductionsService(profiles, dependents, taxRules, taxBrackets, insuranceRules,
-            accounts, employees, mock(EmployeeAccessScopeService.class), actor, periods,
-            mock(PayslipRepository.class), mock(PayslipItemRepository.class));
+            accounts, employees, mock(EmployeeAccessScopeService.class), actor,
+            new PayrollPeriodInvalidator(periods, mock(PayslipRepository.class), mock(PayslipItemRepository.class)));
     }
 
     private Long seedEmployee() {

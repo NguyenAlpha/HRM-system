@@ -1,0 +1,65 @@
+package com.htttdn.hrm.service.payroll;
+
+import java.time.LocalDate;
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
+import com.htttdn.hrm.dto.response.common.ErrorCode;
+import com.htttdn.hrm.entity.PayrollPeriod;
+import com.htttdn.hrm.entity.Payslip;
+import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
+import com.htttdn.hrm.exception.ConflictException;
+import com.htttdn.hrm.repository.PayrollPeriodRepository;
+import com.htttdn.hrm.repository.PayslipItemRepository;
+import com.htttdn.hrm.repository.PayslipRepository;
+
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Khi một dữ liệu đầu vào của lương (phân công, lương, phụ cấp, hồ sơ thuế…) đổi từ một ngày, các kỳ
+ * lương bị ảnh hưởng phải được xử lý trước: kỳ đã duyệt/trả/khóa → từ chối (409
+ * {@code PAYROLL_PERIOD_LOCKED}); kỳ đã tính → xóa phiếu lương và đưa về {@code DRAFT} để tính lại.
+ *
+ * <p>Là {@code @Component} không có {@code @Transactional}: chạy trong transaction của service gọi nó,
+ * nên nếu thay đổi sau đó lỗi thì việc xóa phiếu lương cũng được rollback.
+ */
+@Component
+@RequiredArgsConstructor
+public class PayrollPeriodInvalidator {
+
+    private static final List<PayrollPeriodStatus> CALCULATED_OR_RELEASED = List.of(
+        PayrollPeriodStatus.CALCULATED, PayrollPeriodStatus.APPROVED,
+        PayrollPeriodStatus.PAID, PayrollPeriodStatus.LOCKED);
+
+    private final PayrollPeriodRepository payrollPeriodRepository;
+    private final PayslipRepository payslipRepository;
+    private final PayslipItemRepository payslipItemRepository;
+
+    /** Các kỳ kết thúc từ {@code effectiveFrom} trở đi (khóa ghi). */
+    public void invalidateFrom(LocalDate effectiveFrom) {
+        invalidate(payrollPeriodRepository.findAffectedPeriodsForUpdate(effectiveFrom, CALCULATED_OR_RELEASED));
+    }
+
+    /** Các kỳ có ngày nộp thuế trong [{@code from}, {@code to}]; {@code to} null → không giới hạn. */
+    public void invalidateTaxPaymentsBetween(LocalDate from, LocalDate to) {
+        invalidate(payrollPeriodRepository.findAffectedPaymentPeriodsForUpdate(from, to, CALCULATED_OR_RELEASED));
+    }
+
+    private void invalidate(List<PayrollPeriod> affected) {
+        for (PayrollPeriod period : affected) {
+            if (period.getStatus() != PayrollPeriodStatus.CALCULATED) {
+                throw new ConflictException(ErrorCode.PAYROLL_PERIOD_LOCKED,
+                    "Cannot change payroll data: period " + period.getYear() + "-" + period.getMonth()
+                        + " is " + period.getStatus());
+            }
+            for (Payslip payslip : payslipRepository.findByPayrollPeriodId(period.getId())) {
+                payslipItemRepository.deleteByPayslipId(payslip.getId());
+                payslipRepository.delete(payslip);
+            }
+            period.setStatus(PayrollPeriodStatus.DRAFT);
+            period.setCalculatedByAccount(null);
+            period.setCalculatedAt(null);
+        }
+    }
+}

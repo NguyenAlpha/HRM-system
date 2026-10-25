@@ -36,6 +36,7 @@ import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.repository.WorkLocationRepository;
 import com.htttdn.hrm.repository.WorkShiftRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
+import com.htttdn.hrm.service.payroll.PayrollPeriodInvalidator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -122,11 +123,9 @@ class EmployeeAssignmentServiceTest {
             workLocationRepository,
             jobPositionRepository,
             workShiftRepository,
-            payrollPeriodRepository,
-            payslipRepository,
-            payslipItemRepository,
             currentAccountProvider,
             employeeAccessScopeService,
+            new PayrollPeriodInvalidator(payrollPeriodRepository, payslipRepository, payslipItemRepository),
             new EmployeeMapper(employeeAssignmentRepository, accountRepository, Clock.systemDefaultZone()),
             Clock.systemDefaultZone()
         );

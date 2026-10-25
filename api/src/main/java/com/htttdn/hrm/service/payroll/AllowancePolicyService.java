@@ -12,18 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.JobPosition;
-import com.htttdn.hrm.entity.PayrollPeriod;
-import com.htttdn.hrm.entity.Payslip;
 import com.htttdn.hrm.entity.PositionAllowanceRule;
 import com.htttdn.hrm.entity.SeniorityAllowanceRule;
-import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.JobPositionRepository;
-import com.htttdn.hrm.repository.PayrollPeriodRepository;
-import com.htttdn.hrm.repository.PayslipItemRepository;
-import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.repository.PositionAllowanceRuleRepository;
 import com.htttdn.hrm.repository.SeniorityAllowanceRuleRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
@@ -43,10 +37,8 @@ public class AllowancePolicyService {
     private final PositionAllowanceRuleRepository positionRuleRepository;
     private final SeniorityAllowanceRuleRepository seniorityRuleRepository;
     private final JobPositionRepository jobPositionRepository;
-    private final PayrollPeriodRepository payrollPeriodRepository;
-    private final PayslipRepository payslipRepository;
-    private final PayslipItemRepository payslipItemRepository;
     private final CurrentAccountProvider currentAccountProvider;
+    private final PayrollPeriodInvalidator payrollPeriodInvalidator;
 
     @PreAuthorize("hasAuthority('compensation.manage')")
     public PositionAllowanceView setPositionAllowance(
@@ -61,7 +53,7 @@ public class AllowancePolicyService {
                 ErrorCode.JOB_POSITION_NOT_FOUND,
                 "Active job position not found: " + jobPositionId
             ));
-        invalidateAffectedPayroll(command.effectiveFrom());
+        payrollPeriodInvalidator.invalidateFrom(command.effectiveFrom());
 
         List<PositionAllowanceRule> openRules = positionRuleRepository
             .findOpenByJobPositionIdForUpdate(jobPositionId);
@@ -124,7 +116,7 @@ public class AllowancePolicyService {
     @PreAuthorize("hasAuthority('compensation.manage')")
     public SeniorityAllowanceView setSeniorityAllowance(SetSeniorityAllowanceCommand command) {
         validateSeniorityCommand(command);
-        invalidateAffectedPayroll(command.effectiveFrom());
+        payrollPeriodInvalidator.invalidateFrom(command.effectiveFrom());
         List<SeniorityAllowanceRule> overlappingOpenRules = seniorityRuleRepository
             .findOpenForUpdate()
             .stream()
@@ -178,26 +170,6 @@ public class AllowancePolicyService {
     private void requireDate(LocalDate effectiveFrom) {
         if (effectiveFrom == null) {
             throw validation("effectiveFrom is required", "effectiveFrom");
-        }
-    }
-
-    private void invalidateAffectedPayroll(LocalDate effectiveFrom) {
-        List<PayrollPeriod> affected = payrollPeriodRepository.findAffectedPeriodsForUpdate(effectiveFrom,
-            List.of(PayrollPeriodStatus.CALCULATED, PayrollPeriodStatus.APPROVED,
-                PayrollPeriodStatus.PAID, PayrollPeriodStatus.LOCKED));
-        for (PayrollPeriod period : affected) {
-            if (period.getStatus() != PayrollPeriodStatus.CALCULATED) {
-                throw new ConflictException(ErrorCode.PAYROLL_PERIOD_LOCKED,
-                    "Cannot change payroll data: period " + period.getYear() + "-" + period.getMonth()
-                        + " is " + period.getStatus());
-            }
-            for (Payslip payslip : payslipRepository.findByPayrollPeriodId(period.getId())) {
-                payslipItemRepository.deleteByPayslipId(payslip.getId());
-                payslipRepository.delete(payslip);
-            }
-            period.setStatus(PayrollPeriodStatus.DRAFT);
-            period.setCalculatedByAccount(null);
-            period.setCalculatedAt(null);
         }
     }
 

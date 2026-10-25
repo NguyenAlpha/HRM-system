@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.htttdn.hrm.service.payroll.PayrollPeriodInvalidator;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -13,17 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeSalaryHistory;
-import com.htttdn.hrm.entity.PayrollPeriod;
-import com.htttdn.hrm.entity.Payslip;
-import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
-import com.htttdn.hrm.repository.PayrollPeriodRepository;
-import com.htttdn.hrm.repository.PayslipItemRepository;
-import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
 import jakarta.annotation.Nullable;
@@ -42,11 +37,9 @@ public class EmployeeSalaryHistoryService {
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeSalaryHistoryRepository salaryHistoryRepository;
-    private final PayrollPeriodRepository payrollPeriodRepository;
-    private final PayslipRepository payslipRepository;
-    private final PayslipItemRepository payslipItemRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
+    private final PayrollPeriodInvalidator payrollPeriodInvalidator;
 
     @PreAuthorize("hasAuthority('compensation.manage')")
     public SalaryHistoryView setSalary(Long employeeId, SetSalaryCommand command) {
@@ -54,18 +47,8 @@ public class EmployeeSalaryHistoryService {
         Employee employee = employeeRepository.getRequiredForUpdate(employeeId);
         validateCommand(employee, command);
 
-        List<PayrollPeriod> affectedPeriods = payrollPeriodRepository.findAffectedPeriodsForUpdate(
-            command.effectiveFrom(),
-            List.of(PayrollPeriodStatus.CALCULATED, PayrollPeriodStatus.APPROVED,
-                PayrollPeriodStatus.PAID, PayrollPeriodStatus.LOCKED));
-        for (PayrollPeriod period : affectedPeriods) {
-            if (period.getStatus() != PayrollPeriodStatus.CALCULATED) {
-                throw new ConflictException(ErrorCode.PAYROLL_PERIOD_LOCKED,
-                    "Cannot change salary effective " + command.effectiveFrom()
-                        + ": payroll period " + period.getYear() + "-" + period.getMonth()
-                        + " is " + period.getStatus());
-            }
-        }
+        // Before closing the current salary: a released period makes the whole change fail.
+        payrollPeriodInvalidator.invalidateFrom(command.effectiveFrom());
 
         List<EmployeeSalaryHistory> openSalaries = salaryHistoryRepository
             .findOpenByEmployeeIdForUpdate(employeeId);
@@ -96,15 +79,6 @@ public class EmployeeSalaryHistoryService {
             .note(normalizeNullable(command.note()))
             .build();
         SalaryHistoryView result = toView(salaryHistoryRepository.save(salary));
-        for (PayrollPeriod period : affectedPeriods) {
-            for (Payslip payslip : payslipRepository.findByPayrollPeriodId(period.getId())) {
-                payslipItemRepository.deleteByPayslipId(payslip.getId());
-                payslipRepository.delete(payslip);
-            }
-            period.setStatus(PayrollPeriodStatus.DRAFT);
-            period.setCalculatedByAccount(null);
-            period.setCalculatedAt(null);
-        }
         return result;
     }
 

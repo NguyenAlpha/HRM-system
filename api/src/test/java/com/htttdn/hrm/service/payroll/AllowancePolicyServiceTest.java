@@ -106,10 +106,8 @@ class AllowancePolicyServiceTest {
             positionRuleRepository,
             seniorityRuleRepository,
             jobPositionRepository,
-            payrollPeriodRepository,
-            payslipRepository,
-            payslipItemRepository,
-            currentAccountProvider
+            currentAccountProvider,
+            new PayrollPeriodInvalidator(payrollPeriodRepository, payslipRepository, payslipItemRepository)
         );
     }
 }

@@ -17,9 +17,6 @@ import com.htttdn.hrm.entity.EmployeePayrollProfile;
 import com.htttdn.hrm.entity.EmployeeTaxDependent;
 import com.htttdn.hrm.entity.PayrollInsuranceRule;
 import com.htttdn.hrm.entity.PayrollTaxRule;
-import com.htttdn.hrm.entity.PayrollPeriod;
-import com.htttdn.hrm.entity.Payslip;
-import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
@@ -28,11 +25,8 @@ import com.htttdn.hrm.repository.EmployeePayrollProfileRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeTaxDependentRepository;
 import com.htttdn.hrm.repository.PayrollInsuranceRuleRepository;
-import com.htttdn.hrm.repository.PayrollPeriodRepository;
-import com.htttdn.hrm.repository.PayslipItemRepository;
 import com.htttdn.hrm.repository.PayrollTaxBracketRepository;
 import com.htttdn.hrm.repository.PayrollTaxRuleRepository;
-import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
 import jakarta.annotation.Nullable;
@@ -57,9 +51,7 @@ public class PayrollDeductionsService {
     private final EmployeeRepository employees;
     private final EmployeeAccessScopeService access;
     private final CurrentAccountProvider actor;
-    private final PayrollPeriodRepository periods;
-    private final PayslipRepository payslips;
-    private final PayslipItemRepository items;
+    private final PayrollPeriodInvalidator invalidator;
 
     @PreAuthorize("hasAuthority('compensation.read')")
     @Transactional(readOnly = true)
@@ -84,7 +76,7 @@ public class PayrollDeductionsService {
             && command.insuranceSalary().signum() == 0) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "insuranceSalary is required when insurance is enabled");
         }
-        invalidateAffectedPayroll(command.effectiveFrom());
+        invalidator.invalidateFrom(command.effectiveFrom());
         EmployeePayrollProfile open = profileRepository.findByEmployeeIdForUpdate(employeeId).stream()
             .filter(profile -> profile.getEffectiveTo() == null).findFirst().orElse(null);
         if (open != null) {
@@ -133,7 +125,7 @@ public class PayrollDeductionsService {
             command.effectiveFrom(), effectiveTo)) {
             throw new ConflictException(ErrorCode.CONFLICT, "Dependent already overlaps this effective period");
         }
-        invalidateAffectedTaxPaymentPeriods(command.effectiveFrom(), effectiveTo);
+        invalidator.invalidateTaxPaymentsBetween(command.effectiveFrom(), effectiveTo);
         EmployeeTaxDependent created = dependentRepository.save(EmployeeTaxDependent.builder()
             .employee(employee)
             .fullName(command.fullName().trim())
@@ -156,7 +148,7 @@ public class PayrollDeductionsService {
             || current.getEffectiveTo() != null && !effectiveTo.isBefore(current.getEffectiveTo())) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Invalid dependent end date");
         }
-        invalidateAffectedTaxPaymentPeriods(effectiveTo.plusDays(1), current.getEffectiveTo());
+        invalidator.invalidateTaxPaymentsBetween(effectiveTo.plusDays(1), current.getEffectiveTo());
         current.setEffectiveTo(effectiveTo);
         return toDependent(current);
     }
@@ -243,36 +235,6 @@ public class PayrollDeductionsService {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Tax brackets must cover all income");
         }
         return money(pit);
-    }
-
-    private void invalidateAffectedPayroll(LocalDate effectiveFrom) {
-        invalidate(periods.findAffectedPeriodsForUpdate(effectiveFrom, lockedStatuses()));
-    }
-
-    private void invalidateAffectedTaxPaymentPeriods(LocalDate effectiveFrom, LocalDate effectiveTo) {
-        invalidate(periods.findAffectedPaymentPeriodsForUpdate(effectiveFrom, effectiveTo, lockedStatuses()));
-    }
-
-    private List<PayrollPeriodStatus> lockedStatuses() {
-        return List.of(PayrollPeriodStatus.CALCULATED, PayrollPeriodStatus.APPROVED,
-            PayrollPeriodStatus.PAID, PayrollPeriodStatus.LOCKED);
-    }
-
-    private void invalidate(List<PayrollPeriod> affected) {
-        for (PayrollPeriod period : affected) {
-            if (period.getStatus() != PayrollPeriodStatus.CALCULATED) {
-                throw new ConflictException(ErrorCode.PAYROLL_PERIOD_LOCKED,
-                    "Cannot change payroll data: period " + period.getYear() + "-" + period.getMonth()
-                        + " is " + period.getStatus());
-            }
-            for (Payslip slip : payslips.findByPayrollPeriodId(period.getId())) {
-                items.deleteByPayslipId(slip.getId());
-                payslips.delete(slip);
-            }
-            period.setStatus(PayrollPeriodStatus.DRAFT);
-            period.setCalculatedByAccount(null);
-            period.setCalculatedAt(null);
-        }
     }
 
     private static Profile toProfile(EmployeePayrollProfile profile) {

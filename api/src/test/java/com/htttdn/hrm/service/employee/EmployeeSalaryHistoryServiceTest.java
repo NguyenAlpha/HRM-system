@@ -24,6 +24,7 @@ import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.repository.PayslipItemRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
+import com.htttdn.hrm.service.payroll.PayrollPeriodInvalidator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -130,11 +131,9 @@ class EmployeeSalaryHistoryServiceTest {
         return new EmployeeSalaryHistoryService(
             employeeRepository,
             salaryHistoryRepository,
-            payrollPeriodRepository,
-            payslipRepository,
-            payslipItemRepository,
             currentAccountProvider,
-            employeeAccessScopeService
+            employeeAccessScopeService,
+            new PayrollPeriodInvalidator(payrollPeriodRepository, payslipRepository, payslipItemRepository)
         );
     }
 }
