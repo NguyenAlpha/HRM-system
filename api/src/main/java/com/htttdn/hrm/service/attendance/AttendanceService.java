@@ -215,10 +215,7 @@ public class AttendanceService {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Check-out must be after check-in and within 24 hours", "checkOutAt");
         }
-        Employee employee = employeeRepository.findById(request.employeeId())
-            .filter(e -> e.getDeletedAt() == null)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.EMPLOYEE_NOT_FOUND, "Employee not found: " + request.employeeId()));
+        Employee employee = employeeRepository.getRequired(request.employeeId());
         if (employee.getHireDate().isAfter(workDate)
             || employee.getTerminationDate() != null && employee.getTerminationDate().isBefore(workDate)) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
@@ -251,7 +248,7 @@ public class AttendanceService {
         record.setStatus(AttendanceStatus.PRESENT);
         // Xóa quyết định tăng ca cũ → ngày quay lại hàng chờ của người duyệt nếu vẫn làm dư giờ.
         record.setOvertimeMinutes(0);
-        record.setOvertimeMultiplier(java.math.BigDecimal.ONE);
+        record.setOvertimeMultiplier(BigDecimal.ONE);
         record.setOvertimeTaxExempt(false);
         record.setOvertimeApprovedByAccount(null);
         record.setOvertimeApprovedAt(null);
@@ -339,7 +336,6 @@ public class AttendanceService {
                 throw new ConflictException(ErrorCode.CONFLICT,
                     "Leave overlaps worked time on " + day.workDate());
             }
-            Instant now = Instant.now();
             if (record == null) {
                 record = newRecord(request.getEmployee(), day);
             }

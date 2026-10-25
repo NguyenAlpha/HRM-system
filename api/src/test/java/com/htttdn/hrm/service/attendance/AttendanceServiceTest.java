@@ -215,8 +215,8 @@ class AttendanceServiceTest {
         // 08:00-17:00 in Asia/Ho_Chi_Minh, break 12:00-13:00; punched 08:20-17:00 with 15 minutes grace.
         WorkShift shift = WorkShift.builder().id(3L).startTime(LocalTime.of(8, 0)).breakMinutes(60)
             .breakStartTime(LocalTime.of(12, 0)).standardWorkMinutes(480).graceLateMinutes(15).build();
-        when(employeeRepository.findById(2L)).thenReturn(Optional.of(
-            Employee.builder().id(2L).hireDate(LocalDate.of(2024, 1, 1)).build()));
+        when(employeeRepository.getRequired(2L)).thenReturn(
+            Employee.builder().id(2L).hireDate(LocalDate.of(2024, 1, 1)).build());
         when(attendanceRecordRepository.findByEmployeeIdAndWorkDateForUpdate(2L, date)).thenReturn(Optional.empty());
         when(attendanceCalendarService.assignedDay(2L, date)).thenReturn(Optional.of(
             new AttendanceCalendarService.ScheduledDay(date, shift,
@@ -243,8 +243,8 @@ class AttendanceServiceTest {
         record.setStatus(AttendanceStatus.UNAUTHORIZED_ABSENCE);
         record.setOvertimeMinutes(120);
         record.setOvertimeMultiplier(new java.math.BigDecimal("1.5"));
-        when(employeeRepository.findById(2L)).thenReturn(Optional.of(
-            Employee.builder().id(2L).hireDate(LocalDate.of(2024, 1, 1)).build()));
+        when(employeeRepository.getRequired(2L)).thenReturn(
+            Employee.builder().id(2L).hireDate(LocalDate.of(2024, 1, 1)).build());
         when(attendanceRecordRepository.findByEmployeeIdAndWorkDateForUpdate(2L, date)).thenReturn(Optional.of(record));
         when(attendanceCalendarService.companyWorkDates(date, date)).thenReturn(List.of(date));
         when(attendanceRecordRepository.save(record)).thenReturn(record);
@@ -266,8 +266,8 @@ class AttendanceServiceTest {
         AttendanceRecord record = record(date);
         record.setCheckInAt(null);
         record.setStatus(AttendanceStatus.PAID_LEAVE);
-        when(employeeRepository.findById(2L)).thenReturn(Optional.of(
-            Employee.builder().id(2L).hireDate(LocalDate.of(2024, 1, 1)).build()));
+        when(employeeRepository.getRequired(2L)).thenReturn(
+            Employee.builder().id(2L).hireDate(LocalDate.of(2024, 1, 1)).build());
         when(attendanceRecordRepository.findByEmployeeIdAndWorkDateForUpdate(2L, date)).thenReturn(Optional.of(record));
 
         assertThrows(ConflictException.class, () -> service().recordPunches(new RecordPunchesRequest(2L, date,
