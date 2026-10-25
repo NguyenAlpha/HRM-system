@@ -401,21 +401,28 @@ class PayrollServiceTest {
     }
 
     private PayrollService service() {
-        return new PayrollService(
-            payrollPeriodRepository,
+        PayslipCalculator payslipCalculator = new PayslipCalculator(
             payslipRepository,
             payslipItemRepository,
-            employeeRepository,
             employeeAssignmentRepository,
             employeeSalaryHistoryRepository,
             positionAllowanceRuleRepository,
             seniorityAllowanceRuleRepository,
             attendanceRecordRepository,
-            currentAccountProvider,
-            employeeAccessScopeService,
             attendanceCalendarService,
             payrollDeductionsService,
             payrollAdjustmentRepository
+        );
+        return new PayrollService(
+            payrollPeriodRepository,
+            payslipRepository,
+            payslipItemRepository,
+            employeeRepository,
+            attendanceRecordRepository,
+            currentAccountProvider,
+            employeeAccessScopeService,
+            payslipCalculator,
+            new PayrollMapper(payslipRepository, payslipItemRepository)
         );
     }
 

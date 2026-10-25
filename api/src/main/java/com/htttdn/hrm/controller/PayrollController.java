@@ -22,6 +22,7 @@ import com.htttdn.hrm.dto.response.payroll.PayrollPeriodResponse;
 import com.htttdn.hrm.dto.response.payroll.PayslipResponse;
 import com.htttdn.hrm.service.PayrollExportService;
 import com.htttdn.hrm.service.PayrollExportService.PayrollExport;
+import com.htttdn.hrm.service.PayrollQueryService;
 import com.htttdn.hrm.service.PayrollService;
 
 import jakarta.validation.Valid;
@@ -35,6 +36,7 @@ public class PayrollController {
     static final String XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
     private final PayrollService service;
+    private final PayrollQueryService queryService;
     private final PayrollExportService exportService;
 
     @PostMapping("/periods")
@@ -44,12 +46,12 @@ public class PayrollController {
 
     @GetMapping("/periods")
     public ApiResult<PagedResult<PayrollPeriodResponse>> list(@PageableDefault(size = 20) Pageable pageable) {
-        return ApiResult.ok(PagedResult.of(service.listPeriods(pageable)));
+        return ApiResult.ok(PagedResult.of(queryService.listPeriods(pageable)));
     }
 
     @GetMapping("/periods/{id}")
     public ApiResult<PayrollPeriodResponse> get(@PathVariable Long id) {
-        return ApiResult.ok(service.getPeriodById(id));
+        return ApiResult.ok(queryService.getPeriodById(id));
     }
 
     @GetMapping(value = "/periods/{id}/export", produces = XLSX)
@@ -90,17 +92,17 @@ public class PayrollController {
 
     @GetMapping("/periods/{id}/payslips")
     public ApiResult<List<PayslipResponse>> periodPayslips(@PathVariable Long id) {
-        return ApiResult.ok(service.listPayslipsForPeriod(id));
+        return ApiResult.ok(queryService.listPayslipsForPeriod(id));
     }
 
     @GetMapping("/payslips/{id}")
     public ApiResult<PayslipResponse> payslip(@PathVariable Long id) {
-        return ApiResult.ok(service.getPayslip(id));
+        return ApiResult.ok(queryService.getPayslip(id));
     }
 
     @GetMapping("/employees/{employeeId}/payslips")
     public ApiResult<PagedResult<PayslipResponse>> employeePayslips(@PathVariable Long employeeId,
         @PageableDefault(size = 20) Pageable pageable) {
-        return ApiResult.ok(PagedResult.of(service.listPayslipsForEmployee(employeeId, pageable)));
+        return ApiResult.ok(PagedResult.of(queryService.listPayslipsForEmployee(employeeId, pageable)));
     }
 }
