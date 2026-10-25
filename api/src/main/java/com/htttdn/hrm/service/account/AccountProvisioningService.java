@@ -91,7 +91,7 @@ public class AccountProvisioningService {
         assignDefaultEmployeeRole(account, actor, now);
         AccountActivationService.IssuedActivationToken issued = accountActivationService.issue(
             account.getId(),
-            actor.getId()
+            actor
         );
 
         return new AccountProvisioningResponse(

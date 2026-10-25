@@ -5,8 +5,6 @@ import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -81,33 +79,23 @@ public class RoleController {
     @PostMapping("/{roleId}/permissions")
     public ApiResult<Void> grantPermission(
         @PathVariable Long roleId,
-        @Valid @RequestBody GrantPermissionRequest request,
-        @AuthenticationPrincipal Jwt jwt
+        @Valid @RequestBody GrantPermissionRequest request
     ) {
-        roleService.grantPermission(roleId, request, accountId(jwt));
+        roleService.grantPermission(roleId, request);
         return ApiResult.ok();
     }
 
     @PutMapping("/{roleId}/permissions")
     public ApiResult<List<PermissionResponse>> replacePermissions(
         @PathVariable Long roleId,
-        @Valid @RequestBody ReplaceRolePermissionsRequest request,
-        @AuthenticationPrincipal Jwt jwt
+        @Valid @RequestBody ReplaceRolePermissionsRequest request
     ) {
-        return ApiResult.ok(roleService.replacePermissions(roleId, request, accountId(jwt)));
+        return ApiResult.ok(roleService.replacePermissions(roleId, request));
     }
 
     @DeleteMapping("/{roleId}/permissions/{permissionId}")
     public ApiResult<Void> revokePermission(@PathVariable Long roleId, @PathVariable Long permissionId) {
         roleService.revokePermission(roleId, permissionId);
         return ApiResult.ok();
-    }
-
-    private Long accountId(Jwt jwt) {
-        Object accountId = jwt.getClaim("accountId");
-        if (accountId instanceof Number number) {
-            return number.longValue();
-        }
-        throw new IllegalStateException("Authenticated token does not contain a valid accountId claim");
     }
 }

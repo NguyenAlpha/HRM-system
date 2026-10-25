@@ -19,10 +19,10 @@ import com.htttdn.hrm.entity.enums.PermissionAssignmentPolicy;
 import com.htttdn.hrm.entity.enums.PermissionModule;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
-import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.PermissionRepository;
 import com.htttdn.hrm.repository.RolePermissionRepository;
 import com.htttdn.hrm.repository.RoleRepository;
+import com.htttdn.hrm.security.CurrentAccountProvider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -38,7 +38,7 @@ class RoleServiceTest {
     @Mock private RoleRepository roleRepository;
     @Mock private PermissionRepository permissionRepository;
     @Mock private RolePermissionRepository rolePermissionRepository;
-    @Mock private AccountRepository accountRepository;
+    @Mock private CurrentAccountProvider currentAccountProvider;
 
     @Test
     void replacePermissionsAddsAndRemovesMappingsInOneOperation() {
@@ -52,14 +52,13 @@ class RoleServiceTest {
 
         when(roleRepository.getRequiredForUpdate(10L)).thenReturn(role);
         when(permissionRepository.findAllById(any())).thenReturn(List.of(added, retained));
-        when(accountRepository.getRequired(99L)).thenReturn(actor);
+        when(currentAccountProvider.account()).thenReturn(actor);
         when(rolePermissionRepository.findByIdRoleId(10L))
             .thenReturn(List.of(retainedMapping, removedMapping));
 
         var result = service().replacePermissions(
             10L,
-            new ReplaceRolePermissionsRequest(List.of(2L, 1L, 2L)),
-            99L
+            new ReplaceRolePermissionsRequest(List.of(2L, 1L, 2L))
         );
 
         assertEquals(List.of("employee.read", "employee.update"), result.stream().map(value -> value.code()).toList());
@@ -87,8 +86,7 @@ class RoleServiceTest {
             ConflictException.class,
             () -> service().replacePermissions(
                 10L,
-                new ReplaceRolePermissionsRequest(List.of(4L)),
-                99L
+                new ReplaceRolePermissionsRequest(List.of(4L))
             )
         );
 
@@ -107,13 +105,12 @@ class RoleServiceTest {
             permission(1L, "employee.read", PermissionAssignmentPolicy.DELEGABLE)
         );
         when(roleRepository.getRequiredForUpdate(10L)).thenReturn(role);
-        when(accountRepository.getRequired(99L)).thenReturn(actor);
+        when(currentAccountProvider.account()).thenReturn(actor);
         when(rolePermissionRepository.findByIdRoleId(10L)).thenReturn(List.of(existing));
 
         var result = service().replacePermissions(
             10L,
-            new ReplaceRolePermissionsRequest(List.of()),
-            99L
+            new ReplaceRolePermissionsRequest(List.of())
         );
 
         assertEquals(List.of(), result);
@@ -130,8 +127,7 @@ class RoleServiceTest {
             ResourceNotFoundException.class,
             () -> service().replacePermissions(
                 10L,
-                new ReplaceRolePermissionsRequest(List.of(404L)),
-                99L
+                new ReplaceRolePermissionsRequest(List.of(404L))
             )
         );
 
@@ -173,7 +169,7 @@ class RoleServiceTest {
             roleRepository,
             permissionRepository,
             rolePermissionRepository,
-            accountRepository
+            currentAccountProvider
         );
     }
 }

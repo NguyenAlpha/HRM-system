@@ -105,7 +105,7 @@ public class AccountAdminService {
     @PreAuthorize("hasAuthority('account.activation.manage')")
     public AccountInvitationResponse resendInvitation(Long accountId) {
         companyOwnerAccountGuard.requireCanManage(accountId);
-        return issueInvitation(accountId, currentAccountProvider.accountId());
+        return issueInvitation(accountId);
     }
 
     @PreAuthorize("hasAuthority('account.activation.manage')")
@@ -123,7 +123,7 @@ public class AccountAdminService {
         account.setFailedLoginCount(0);
         account.setLockedUntil(null);
         refreshTokenService.revokeAll(accountId);
-        return issueInvitation(accountId, actorAccountId);
+        return issueInvitation(accountId);
     }
 
     @PreAuthorize("hasAuthority('account.manage')")
@@ -207,10 +207,10 @@ public class AccountAdminService {
         return toResponse(accountRepository.saveAndFlush(account));
     }
 
-    private AccountInvitationResponse issueInvitation(Long accountId, Long actorAccountId) {
+    private AccountInvitationResponse issueInvitation(Long accountId) {
         AccountActivationService.IssuedActivationToken issued = accountActivationService.issue(
             accountId,
-            actorAccountId
+            currentAccountProvider.account()
         );
         return new AccountInvitationResponse(accountId, issued.rawToken(), issued.expiresAt());
     }

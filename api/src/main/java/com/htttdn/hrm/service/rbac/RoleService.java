@@ -32,11 +32,11 @@ import com.htttdn.hrm.entity.RolePermissionId;
 import com.htttdn.hrm.entity.enums.PermissionAssignmentPolicy;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
-import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.PermissionRepository;
 import com.htttdn.hrm.repository.RolePermissionRepository;
 import com.htttdn.hrm.repository.RoleRepository;
 import com.htttdn.hrm.security.CanManageRbac;
+import com.htttdn.hrm.security.CurrentAccountProvider;
 
 import lombok.RequiredArgsConstructor;
 
@@ -49,7 +49,7 @@ public class RoleService {
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final RolePermissionRepository rolePermissionRepository;
-    private final AccountRepository accountRepository;
+    private final CurrentAccountProvider currentAccountProvider;
 
     public RoleResponse create(CreateRoleRequest request) {
         if (roleRepository.existsByCode(request.code())) {
@@ -124,7 +124,7 @@ public class RoleService {
         role.setDeletedAt(now);
     }
 
-    public void grantPermission(Long roleId, GrantPermissionRequest request, Long grantedByAccountId) {
+    public void grantPermission(Long roleId, GrantPermissionRequest request) {
         Role role = roleRepository.getRequired(roleId);
         rejectSystemRolePermissionChange(role);
         Permission permission = permissionRepository.getRequired(request.permissionId());
@@ -135,7 +135,7 @@ public class RoleService {
             throw new ConflictException(ErrorCode.CONFLICT, "Permission is already granted to this role");
         }
 
-        Account grantedBy = accountRepository.getRequired(grantedByAccountId);
+        Account grantedBy = currentAccountProvider.account();
 
         RolePermission rolePermission = RolePermission.builder()
             .id(id)
@@ -149,8 +149,7 @@ public class RoleService {
 
     public List<PermissionResponse> replacePermissions(
         Long roleId,
-        ReplaceRolePermissionsRequest request,
-        Long grantedByAccountId
+        ReplaceRolePermissionsRequest request
     ) {
         Role role = roleRepository.getRequiredForUpdate(roleId);
         rejectSystemRolePermissionChange(role);
@@ -173,7 +172,7 @@ public class RoleService {
             rejectNonDelegablePermission(permission, "permissionIds");
         }
 
-        Account grantedBy = accountRepository.getRequired(grantedByAccountId);
+        Account grantedBy = currentAccountProvider.account();
         List<RolePermission> existingMappings = rolePermissionRepository.findByIdRoleId(roleId);
         Map<Long, RolePermission> existingByPermissionId = existingMappings.stream()
             .collect(Collectors.toMap(mapping -> mapping.getPermission().getId(), Function.identity()));

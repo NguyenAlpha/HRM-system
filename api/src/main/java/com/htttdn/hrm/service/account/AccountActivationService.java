@@ -43,7 +43,7 @@ public class AccountActivationService {
      * để gửi tới người nhận; database chỉ lưu SHA-256 hash.
      */
     @Transactional
-    public IssuedActivationToken issue(Long accountId, Long createdByAccountId) {
+    public IssuedActivationToken issue(Long accountId, Account createdByAccount) {
         Account account = accountRepository.getRequiredForUpdate(accountId);
         if (account.getStatus() != AccountStatus.PENDING) {
             throw new ConflictException(
@@ -51,8 +51,6 @@ public class AccountActivationService {
                 "Only a pending account can receive an activation token"
             );
         }
-
-        Account createdByAccount = accountRepository.getRequired(createdByAccountId);
 
         Instant now = Instant.now();
         activationTokenRepository.revokeActiveByAccountId(accountId, now);
