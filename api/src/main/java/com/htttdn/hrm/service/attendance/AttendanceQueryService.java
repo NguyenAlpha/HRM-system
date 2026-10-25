@@ -47,6 +47,14 @@ public class AttendanceQueryService {
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final AttendanceMapper attendanceMapper;
 
+    /**
+     * Một ngày công. Nhân viên xem được của chính mình ({@code attendance.self.read}); HR/quản lý xem
+     * được người trong phạm vi {@code attendance.read}.
+     *
+     * @throws com.htttdn.hrm.exception.ResourceNotFoundException không có ngày công (→ 404; tìm trước khi
+     *         kiểm tra quyền)
+     * @throws ForbiddenException không phải của mình và ngoài phạm vi (→ 403)
+     */
     @PreAuthorize("hasAnyAuthority('attendance.self.read', 'attendance.read')")
     public AttendanceRecordResponse getById(Long id) {
         AttendanceRecord record = attendanceRecordRepository.getRequired(id);
@@ -54,6 +62,11 @@ public class AttendanceQueryService {
         return attendanceMapper.toResponse(record);
     }
 
+    /**
+     * Các ngày công của một nhân viên trong khoảng ngày, phân trang; quyền xem như {@link #getById}.
+     *
+     * @throws ForbiddenException không phải của mình và ngoài phạm vi (→ 403)
+     */
     @PreAuthorize("hasAnyAuthority('attendance.self.read', 'attendance.read')")
     public Page<AttendanceRecordResponse> listByEmployee(Long employeeId, LocalDate from, LocalDate to, Pageable pageable) {
         requireSelfOrScopedAccess(employeeId, "attendance.self.read", "attendance.read");
@@ -64,11 +77,19 @@ public class AttendanceQueryService {
     /**
      * Bảng công tháng của mọi nhân viên trong scope {@code attendance.read} có làm việc trong tháng,
      * xếp theo mã nhân viên. Lọc thêm theo từ khóa (mã, tên, email) và đơn vị của phân công hiện tại.
+     *
+     * @param keyword từ khóa; rỗng/null → không lọc
+     * @param organizationUnitId đơn vị; null → không lọc
+     * @return mỗi nhân viên một dòng kèm các ngày công trong tháng; nhân viên chưa có ngày công nào vẫn
+     *         có dòng, danh sách ngày rỗng
      */
     @PreAuthorize("hasAuthority('attendance.read')")
     public List<TimesheetRowResponse> timesheet(int year, int month, String keyword, Long organizationUnitId) {
         LocalDate from = LocalDate.of(year, month, 1);
         LocalDate to = from.withDayOfMonth(from.lengthOfMonth());
+        // Có làm việc trong tháng: vào làm trước cuối tháng và chưa nghỉ trước đầu tháng. Phạm vi
+        // (accessibleEmployees) đã bỏ nhân viên xóa mềm; matchesKeyword/currentlyAssignedTo trả null khi
+        // không lọc → bỏ qua.
         Specification<Employee> employed = (root, query, builder) -> builder.and(
             builder.lessThanOrEqualTo(root.get("hireDate"), to),
             builder.or(builder.isNull(root.get("terminationDate")), builder.greaterThanOrEqualTo(root.get("terminationDate"), from))
@@ -86,6 +107,7 @@ public class AttendanceQueryService {
         if (employees.isEmpty()) {
             return List.of();
         }
+        // Một query lấy công của cả danh sách (không query từng người), gom thành Map<employeeId, ngày công>.
         Map<Long, List<AttendanceRecordResponse>> records = attendanceRecordRepository
             .findByEmployeeIdInAndWorkDateBetweenOrderByWorkDateAsc(employees.stream().map(Employee::getId).toList(), from, to)
             .stream()
@@ -97,6 +119,12 @@ public class AttendanceQueryService {
             .toList();
     }
 
+    /**
+     * Cho qua khi là công của chính mình (có quyền self); không thì phải có quyền theo phạm vi và nhân
+     * viên nằm trong phạm vi đó ({@code EmployeeAccessScopeService.requireEmployeeAccess}).
+     *
+     * @throws ForbiddenException không phải của mình và ngoài phạm vi (→ 403)
+     */
     private void requireSelfOrScopedAccess(Long employeeId, String selfPermission, String scopedPermission) {
         if (currentAccountProvider.hasAuthority(selfPermission)) {
             Account actor = currentAccountProvider.account();

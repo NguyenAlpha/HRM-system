@@ -26,6 +26,15 @@ public class AttendanceEditGuard {
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final PayrollPeriodRepository payrollPeriodRepository;
 
+    /**
+     * Chặn sửa công của ngày thuộc kỳ lương đã chốt. Kỳ {@code DRAFT}/{@code CALCULATED} vẫn sửa được;
+     * sửa sau khi tính thì lúc duyệt kỳ lương sẽ báo phải tính lại.
+     *
+     * <p>{@code findContainingDateForUpdate} khóa ghi kỳ lương (bỏ qua kỳ {@code CANCELLED}) → không
+     * thể vừa sửa công vừa duyệt kỳ cùng lúc.
+     *
+     * @throws ConflictException kỳ chứa ngày này đã duyệt/trả/khóa (→ 409 {@code PAYROLL_PERIOD_LOCKED})
+     */
     public void requireEditable(LocalDate workDate) {
         payrollPeriodRepository.findContainingDateForUpdate(workDate)
             .filter(period -> period.getStatus() == PayrollPeriodStatus.APPROVED
@@ -37,8 +46,15 @@ public class AttendanceEditGuard {
             });
     }
 
-    /** Ngày công theo id, đã kiểm tra còn sửa được, kèm khóa ghi. */
+    /**
+     * Ngày công theo id, đã kiểm tra còn sửa được, kèm khóa ghi.
+     *
+     * @throws com.htttdn.hrm.exception.ResourceNotFoundException không có ngày công (→ 404
+     *         {@code ATTENDANCE_NOT_FOUND})
+     * @throws ConflictException ngày thuộc kỳ lương đã chốt (→ 409)
+     */
     public AttendanceRecord getEditableForUpdate(Long id) {
+        // Đọc thường trước để biết ngày (cần cho kiểm tra kỳ lương), sau đó mới khóa ghi bản ghi.
         AttendanceRecord existing = attendanceRecordRepository.getRequired(id);
         requireEditable(existing.getWorkDate());
         return attendanceRecordRepository.getRequiredForUpdate(id);
