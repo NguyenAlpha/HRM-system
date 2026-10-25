@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.traffic.ApiTrafficResponse;
 import com.htttdn.hrm.dto.response.traffic.ApiTrafficTimelineResponse;
-import com.htttdn.hrm.service.ApiTrafficService;
+import com.htttdn.hrm.service.system.ApiTrafficService;
 import com.htttdn.hrm.timeline.TimelineRange;
 
 import lombok.RequiredArgsConstructor;

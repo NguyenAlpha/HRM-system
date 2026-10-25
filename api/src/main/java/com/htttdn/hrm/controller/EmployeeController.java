@@ -27,7 +27,7 @@ import com.htttdn.hrm.dto.response.employee.EmployeeDetailResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeSummaryResponse;
 import com.htttdn.hrm.dto.response.employee.SelfProfileResponse;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
-import com.htttdn.hrm.service.EmployeeService;
+import com.htttdn.hrm.service.employee.EmployeeService;
 
 import jakarta.validation.Valid;
 

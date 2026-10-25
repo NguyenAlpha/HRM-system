@@ -16,7 +16,7 @@ import com.htttdn.hrm.dto.request.account.AssignAccountRoleRequest;
 import com.htttdn.hrm.dto.request.account.RevokeAccountRoleRequest;
 import com.htttdn.hrm.dto.response.account.AccountRoleAssignmentResponse;
 import com.htttdn.hrm.dto.response.common.ApiResult;
-import com.htttdn.hrm.service.AccountRoleAssignmentAdminService;
+import com.htttdn.hrm.service.rbac.AccountRoleAssignmentAdminService;
 
 import jakarta.validation.Valid;
 

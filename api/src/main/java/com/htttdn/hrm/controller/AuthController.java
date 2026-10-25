@@ -15,7 +15,7 @@ import com.htttdn.hrm.dto.request.auth.RefreshTokenRequest;
 import com.htttdn.hrm.dto.response.auth.AuthAccountResponse;
 import com.htttdn.hrm.dto.response.auth.AuthResponse;
 import com.htttdn.hrm.dto.response.common.ApiResult;
-import com.htttdn.hrm.service.AuthService;
+import com.htttdn.hrm.service.auth.AuthService;
 
 import jakarta.validation.Valid;
 

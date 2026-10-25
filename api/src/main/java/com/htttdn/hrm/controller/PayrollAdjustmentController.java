@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.htttdn.hrm.dto.request.payroll.CreatePayrollAdjustmentRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.payroll.PayrollAdjustmentResponse;
-import com.htttdn.hrm.service.PayrollAdjustmentService;
+import com.htttdn.hrm.service.payroll.PayrollAdjustmentService;
 
 import jakarta.validation.Valid;
 

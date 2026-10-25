@@ -24,7 +24,7 @@ import com.htttdn.hrm.dto.response.attendance.OvertimeApprovalItemResponse;
 import com.htttdn.hrm.dto.response.attendance.TimesheetRowResponse;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
-import com.htttdn.hrm.service.AttendanceService;
+import com.htttdn.hrm.service.attendance.AttendanceService;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;

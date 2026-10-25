@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.htttdn.hrm.dto.request.employee.AssignEmployeeRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.employee.EmployeeAssignmentResponse;
-import com.htttdn.hrm.service.EmployeeAssignmentService;
+import com.htttdn.hrm.service.employee.EmployeeAssignmentService;
 
 import jakarta.validation.Valid;
 

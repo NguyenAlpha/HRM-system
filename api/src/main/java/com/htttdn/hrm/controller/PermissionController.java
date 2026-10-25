@@ -12,7 +12,7 @@ import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.dto.response.permission.PermissionResponse;
 import com.htttdn.hrm.entity.enums.PermissionModule;
-import com.htttdn.hrm.service.PermissionService;
+import com.htttdn.hrm.service.rbac.PermissionService;
 
 import lombok.RequiredArgsConstructor;
 

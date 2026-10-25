@@ -19,9 +19,9 @@ import com.htttdn.hrm.dto.request.employeerequest.CreateResignationRequestReques
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.entity.enums.ResignationRequestStatus;
-import com.htttdn.hrm.service.ResignationRequestService;
-import com.htttdn.hrm.service.ResignationRequestService.ResignationRequestSearch;
-import com.htttdn.hrm.service.ResignationRequestService.ResignationRequestView;
+import com.htttdn.hrm.service.employee.ResignationRequestService;
+import com.htttdn.hrm.service.employee.ResignationRequestService.ResignationRequestSearch;
+import com.htttdn.hrm.service.employee.ResignationRequestService.ResignationRequestView;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;

@@ -17,10 +17,10 @@ import com.htttdn.hrm.dto.response.report.PayrollSalaryReportResponse;
 import com.htttdn.hrm.dto.response.report.PayrollSummaryReportResponse;
 import com.htttdn.hrm.dto.response.report.TurnoverReportResponse;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
-import com.htttdn.hrm.service.LeaveEntitlementService;
-import com.htttdn.hrm.service.LeaveEntitlementService.EmployeeBalanceView;
-import com.htttdn.hrm.service.PayrollReportService;
-import com.htttdn.hrm.service.ReportService;
+import com.htttdn.hrm.service.leave.LeaveEntitlementService;
+import com.htttdn.hrm.service.leave.LeaveEntitlementService.EmployeeBalanceView;
+import com.htttdn.hrm.service.payroll.PayrollReportService;
+import com.htttdn.hrm.service.report.ReportService;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

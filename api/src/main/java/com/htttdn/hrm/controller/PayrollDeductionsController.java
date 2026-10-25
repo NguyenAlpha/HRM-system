@@ -13,12 +13,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.htttdn.hrm.dto.response.common.ApiResult;
-import com.htttdn.hrm.service.PayrollDeductionsService;
-import com.htttdn.hrm.service.PayrollDeductionsService.Dependent;
-import com.htttdn.hrm.service.PayrollDeductionsService.DependentCommand;
-import com.htttdn.hrm.service.PayrollDeductionsService.EndDependentCommand;
-import com.htttdn.hrm.service.PayrollDeductionsService.Profile;
-import com.htttdn.hrm.service.PayrollDeductionsService.ProfileCommand;
+import com.htttdn.hrm.service.payroll.PayrollDeductionsService;
+import com.htttdn.hrm.service.payroll.PayrollDeductionsService.Dependent;
+import com.htttdn.hrm.service.payroll.PayrollDeductionsService.DependentCommand;
+import com.htttdn.hrm.service.payroll.PayrollDeductionsService.EndDependentCommand;
+import com.htttdn.hrm.service.payroll.PayrollDeductionsService.Profile;
+import com.htttdn.hrm.service.payroll.PayrollDeductionsService.ProfileCommand;
 
 import jakarta.validation.Valid;
 

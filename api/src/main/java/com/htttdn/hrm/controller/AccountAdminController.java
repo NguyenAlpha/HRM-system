@@ -25,7 +25,7 @@ import com.htttdn.hrm.dto.response.account.AccountResponse;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.entity.enums.AccountStatus;
-import com.htttdn.hrm.service.AccountAdminService;
+import com.htttdn.hrm.service.account.AccountAdminService;
 
 import jakarta.validation.Valid;
 

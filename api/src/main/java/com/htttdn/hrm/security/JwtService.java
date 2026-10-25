@@ -10,7 +10,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
 import com.htttdn.hrm.entity.Account;
-import com.htttdn.hrm.service.AccountAuthorizationService.AuthorizationSnapshot;
+import com.htttdn.hrm.service.rbac.AccountAuthorizationService.AuthorizationSnapshot;
 
 import lombok.RequiredArgsConstructor;
 

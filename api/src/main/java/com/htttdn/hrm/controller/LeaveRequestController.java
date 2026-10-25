@@ -17,12 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
-import com.htttdn.hrm.service.LeaveRequestService;
+import com.htttdn.hrm.service.leave.LeaveRequestService;
 import com.htttdn.hrm.entity.enums.LeaveRequestStatus;
 import com.htttdn.hrm.entity.enums.LeaveType;
-import com.htttdn.hrm.service.LeaveRequestService.CreateLeaveCommand;
-import com.htttdn.hrm.service.LeaveRequestService.LeaveRequestSearch;
-import com.htttdn.hrm.service.LeaveRequestService.LeaveRequestView;
+import com.htttdn.hrm.service.leave.LeaveRequestService.CreateLeaveCommand;
+import com.htttdn.hrm.service.leave.LeaveRequestService.LeaveRequestSearch;
+import com.htttdn.hrm.service.leave.LeaveRequestService.LeaveRequestView;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;

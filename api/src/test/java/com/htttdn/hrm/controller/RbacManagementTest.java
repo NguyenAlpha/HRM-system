@@ -38,9 +38,9 @@ import com.htttdn.hrm.repository.PermissionRepository;
 import com.htttdn.hrm.repository.RolePermissionRepository;
 import com.htttdn.hrm.repository.RoleRepository;
 import com.htttdn.hrm.security.JwtService;
-import com.htttdn.hrm.service.AccountAuthorizationService.AuthorizationSnapshot;
-import com.htttdn.hrm.service.PermissionService;
-import com.htttdn.hrm.service.RoleService;
+import com.htttdn.hrm.service.rbac.AccountAuthorizationService.AuthorizationSnapshot;
+import com.htttdn.hrm.service.rbac.PermissionService;
+import com.htttdn.hrm.service.rbac.RoleService;
 
 import tools.jackson.databind.ObjectMapper;
 

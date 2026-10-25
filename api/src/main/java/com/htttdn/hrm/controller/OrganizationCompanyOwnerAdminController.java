@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.htttdn.hrm.dto.request.organization.CreateOrganizationCompanyOwnerRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.organization.OrganizationCompanyOwnerProvisioningResponse;
-import com.htttdn.hrm.service.OrganizationCompanyOwnerProvisioningService;
+import com.htttdn.hrm.service.organization.OrganizationCompanyOwnerProvisioningService;
 
 import jakarta.validation.Valid;
 

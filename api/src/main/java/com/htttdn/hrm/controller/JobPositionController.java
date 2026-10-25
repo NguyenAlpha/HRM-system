@@ -19,7 +19,7 @@ import com.htttdn.hrm.dto.request.jobposition.CreateJobPositionRequest;
 import com.htttdn.hrm.dto.request.jobposition.UpdateJobPositionRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.jobposition.JobPositionResponse;
-import com.htttdn.hrm.service.JobPositionService;
+import com.htttdn.hrm.service.organization.JobPositionService;
 
 import jakarta.validation.Valid;
 

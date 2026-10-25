@@ -21,7 +21,7 @@ import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.worklocation.WorkLocationResponse;
 import com.htttdn.hrm.dto.response.worklocation.WorkLocationTreeResponse;
 import com.htttdn.hrm.entity.enums.LocationType;
-import com.htttdn.hrm.service.WorkLocationService;
+import com.htttdn.hrm.service.organization.WorkLocationService;
 
 import jakarta.validation.Valid;
 

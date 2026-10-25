@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.htttdn.hrm.dto.response.common.ApiResult;
-import com.htttdn.hrm.service.LeaveEntitlementService;
-import com.htttdn.hrm.service.LeaveEntitlementService.BalanceView;
+import com.htttdn.hrm.service.leave.LeaveEntitlementService;
+import com.htttdn.hrm.service.leave.LeaveEntitlementService.BalanceView;
 
 import lombok.RequiredArgsConstructor;
 

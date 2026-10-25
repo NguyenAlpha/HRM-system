@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.htttdn.hrm.dto.request.organization.CompanyProfileRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.organization.CompanyProfileResponse;
-import com.htttdn.hrm.service.CompanyProfileService;
+import com.htttdn.hrm.service.organization.CompanyProfileService;
 
 import jakarta.validation.Valid;
 

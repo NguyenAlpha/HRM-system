@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.htttdn.hrm.dto.request.account.CompleteAccountActivationRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
-import com.htttdn.hrm.service.AccountActivationService;
+import com.htttdn.hrm.service.account.AccountActivationService;
 
 import jakarta.validation.Valid;
 

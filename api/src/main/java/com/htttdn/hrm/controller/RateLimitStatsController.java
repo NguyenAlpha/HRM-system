@@ -18,7 +18,7 @@ import com.htttdn.hrm.dto.response.ratelimit.RateLimitTimelineResponse;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.ratelimit.RateLimitPolicy;
 import com.htttdn.hrm.ratelimit.RateLimitService;
-import com.htttdn.hrm.service.RateLimitSettingsService;
+import com.htttdn.hrm.service.system.RateLimitSettingsService;
 import com.htttdn.hrm.timeline.TimelineRange;
 
 import jakarta.validation.Valid;

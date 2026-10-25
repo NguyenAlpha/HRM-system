@@ -41,7 +41,7 @@ import com.htttdn.hrm.repository.OrganizationUnitRepository;
 import com.htttdn.hrm.repository.RoleRepository;
 import com.htttdn.hrm.repository.WorkLocationRepository;
 import com.htttdn.hrm.repository.WorkShiftRepository;
-import com.htttdn.hrm.service.EmployeeCodeGenerator;
+import com.htttdn.hrm.service.employee.EmployeeCodeGenerator;
 
 import lombok.RequiredArgsConstructor;
 

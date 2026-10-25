@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.htttdn.hrm.dto.response.common.ApiResult;
-import com.htttdn.hrm.service.EmployeeSalaryHistoryService;
-import com.htttdn.hrm.service.EmployeeSalaryHistoryService.SalaryHistoryView;
-import com.htttdn.hrm.service.EmployeeSalaryHistoryService.SetSalaryCommand;
+import com.htttdn.hrm.service.employee.EmployeeSalaryHistoryService;
+import com.htttdn.hrm.service.employee.EmployeeSalaryHistoryService.SalaryHistoryView;
+import com.htttdn.hrm.service.employee.EmployeeSalaryHistoryService.SetSalaryCommand;
 
 import jakarta.validation.Valid;
 

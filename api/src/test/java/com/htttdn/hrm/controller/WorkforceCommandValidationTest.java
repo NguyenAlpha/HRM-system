@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.security.JwtService;
-import com.htttdn.hrm.service.AccountAuthorizationService.AuthorizationSnapshot;
+import com.htttdn.hrm.service.rbac.AccountAuthorizationService.AuthorizationSnapshot;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;

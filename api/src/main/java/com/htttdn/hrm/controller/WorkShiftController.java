@@ -19,7 +19,7 @@ import com.htttdn.hrm.dto.request.workshift.CreateWorkShiftRequest;
 import com.htttdn.hrm.dto.request.workshift.UpdateWorkShiftRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.workshift.WorkShiftResponse;
-import com.htttdn.hrm.service.WorkShiftService;
+import com.htttdn.hrm.service.organization.WorkShiftService;
 
 import jakarta.validation.Valid;
 

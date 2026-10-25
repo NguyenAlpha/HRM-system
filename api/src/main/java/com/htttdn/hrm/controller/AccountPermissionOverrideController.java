@@ -16,7 +16,7 @@ import com.htttdn.hrm.dto.request.account.RevokePermissionOverrideRequest;
 import com.htttdn.hrm.dto.response.account.AccountPermissionOverrideResponse;
 import com.htttdn.hrm.dto.response.account.PermissionOverrideOptionResponse;
 import com.htttdn.hrm.dto.response.common.ApiResult;
-import com.htttdn.hrm.service.AccountPermissionOverrideService;
+import com.htttdn.hrm.service.rbac.AccountPermissionOverrideService;
 
 import jakarta.validation.Valid;
 

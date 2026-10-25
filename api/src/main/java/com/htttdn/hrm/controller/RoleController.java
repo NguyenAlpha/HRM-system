@@ -26,7 +26,7 @@ import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.dto.response.permission.PermissionResponse;
 import com.htttdn.hrm.dto.response.role.RoleResponse;
 import com.htttdn.hrm.dto.response.role.RoleWithPermissionsResponse;
-import com.htttdn.hrm.service.RoleService;
+import com.htttdn.hrm.service.rbac.RoleService;
 
 import jakarta.validation.Valid;
 

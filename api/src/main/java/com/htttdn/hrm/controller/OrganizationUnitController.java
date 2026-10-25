@@ -21,7 +21,7 @@ import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.organizationunit.OrganizationUnitResponse;
 import com.htttdn.hrm.dto.response.organizationunit.OrganizationUnitTreeResponse;
 import com.htttdn.hrm.entity.enums.OrganizationUnitType;
-import com.htttdn.hrm.service.OrganizationUnitService;
+import com.htttdn.hrm.service.organization.OrganizationUnitService;
 
 import jakarta.validation.Valid;
 

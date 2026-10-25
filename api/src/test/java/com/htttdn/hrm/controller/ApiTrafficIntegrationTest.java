@@ -13,7 +13,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import com.htttdn.hrm.entity.Account;
 import com.jayway.jsonpath.JsonPath;
 import com.htttdn.hrm.security.JwtService;
-import com.htttdn.hrm.service.AccountAuthorizationService.AuthorizationSnapshot;
+import com.htttdn.hrm.service.rbac.AccountAuthorizationService.AuthorizationSnapshot;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItem;

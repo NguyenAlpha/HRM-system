@@ -8,7 +8,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.htttdn.hrm.service.ApiTrafficTimeline;
+import com.htttdn.hrm.service.system.ApiTrafficTimeline;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

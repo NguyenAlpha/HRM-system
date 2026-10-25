@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.htttdn.hrm.dto.request.employee.UpdateEmployeeSensitiveRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.employee.EmployeeSensitiveResponse;
-import com.htttdn.hrm.service.EmployeeSensitiveDataService;
+import com.htttdn.hrm.service.employee.EmployeeSensitiveDataService;
 
 import jakarta.validation.Valid;
 

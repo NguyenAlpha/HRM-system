@@ -17,7 +17,7 @@ import com.htttdn.hrm.entity.AttendanceRecord;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.enums.AttendanceStatus;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
-import com.htttdn.hrm.service.AttendanceCalendarService;
+import com.htttdn.hrm.service.attendance.AttendanceCalendarService;
 
 import lombok.RequiredArgsConstructor;
 

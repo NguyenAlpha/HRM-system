@@ -29,7 +29,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import com.htttdn.hrm.security.AccountUserDetailsService;
 import com.htttdn.hrm.security.JwtProperties;
 import com.htttdn.hrm.security.JwtService;
-import com.htttdn.hrm.service.AuthService;
+import com.htttdn.hrm.service.auth.AuthService;
 
 /**
  * Cấu hình các bean mã hóa mật khẩu và JWT dùng chung cho toàn bộ ứng dụng.

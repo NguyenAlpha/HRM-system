@@ -34,11 +34,11 @@ import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.repository.NotificationRepository;
-import com.htttdn.hrm.service.AttendanceCalendarService;
-import com.htttdn.hrm.service.AttendanceCalendarService.ScheduledDay;
-import com.htttdn.hrm.service.AttendanceService;
-import com.htttdn.hrm.service.EmployeeAccessScopeService;
-import com.htttdn.hrm.service.LeaveEntitlementService;
+import com.htttdn.hrm.service.attendance.AttendanceCalendarService;
+import com.htttdn.hrm.service.attendance.AttendanceCalendarService.ScheduledDay;
+import com.htttdn.hrm.service.attendance.AttendanceService;
+import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
+import com.htttdn.hrm.service.leave.LeaveEntitlementService;
 
 import lombok.RequiredArgsConstructor;
 

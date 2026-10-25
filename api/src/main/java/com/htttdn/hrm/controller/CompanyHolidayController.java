@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.htttdn.hrm.dto.request.attendance.CompanyHolidayRequest;
 import com.htttdn.hrm.dto.response.attendance.CompanyHolidayResponse;
 import com.htttdn.hrm.dto.response.common.ApiResult;
-import com.htttdn.hrm.service.CompanyHolidayService;
+import com.htttdn.hrm.service.organization.CompanyHolidayService;
 
 import jakarta.validation.Valid;
 

@@ -12,12 +12,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.htttdn.hrm.dto.response.common.ApiResult;
-import com.htttdn.hrm.service.AllowancePolicyService;
-import com.htttdn.hrm.service.AllowancePolicyService.PositionAllowanceSummary;
-import com.htttdn.hrm.service.AllowancePolicyService.PositionAllowanceView;
-import com.htttdn.hrm.service.AllowancePolicyService.SeniorityAllowanceView;
-import com.htttdn.hrm.service.AllowancePolicyService.SetPositionAllowanceCommand;
-import com.htttdn.hrm.service.AllowancePolicyService.SetSeniorityAllowanceCommand;
+import com.htttdn.hrm.service.payroll.AllowancePolicyService;
+import com.htttdn.hrm.service.payroll.AllowancePolicyService.PositionAllowanceSummary;
+import com.htttdn.hrm.service.payroll.AllowancePolicyService.PositionAllowanceView;
+import com.htttdn.hrm.service.payroll.AllowancePolicyService.SeniorityAllowanceView;
+import com.htttdn.hrm.service.payroll.AllowancePolicyService.SetPositionAllowanceCommand;
+import com.htttdn.hrm.service.payroll.AllowancePolicyService.SetSeniorityAllowanceCommand;
 
 import jakarta.validation.Valid;
 

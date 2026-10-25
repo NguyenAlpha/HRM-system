@@ -35,8 +35,8 @@ import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.PayrollInsuranceRuleRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.repository.PayrollTaxRuleRepository;
-import com.htttdn.hrm.service.PayrollAdjustmentService;
-import com.htttdn.hrm.service.PayrollService;
+import com.htttdn.hrm.service.payroll.PayrollAdjustmentService;
+import com.htttdn.hrm.service.payroll.PayrollService;
 
 import jakarta.persistence.EntityManager;
 

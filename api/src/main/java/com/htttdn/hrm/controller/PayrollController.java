@@ -20,10 +20,10 @@ import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.dto.response.payroll.PayrollPeriodResponse;
 import com.htttdn.hrm.dto.response.payroll.PayslipResponse;
-import com.htttdn.hrm.service.PayrollExportService;
-import com.htttdn.hrm.service.PayrollExportService.PayrollExport;
-import com.htttdn.hrm.service.PayrollQueryService;
-import com.htttdn.hrm.service.PayrollService;
+import com.htttdn.hrm.service.payroll.PayrollExportService;
+import com.htttdn.hrm.service.payroll.PayrollExportService.PayrollExport;
+import com.htttdn.hrm.service.payroll.PayrollQueryService;
+import com.htttdn.hrm.service.payroll.PayrollService;
 
 import jakarta.validation.Valid;
 

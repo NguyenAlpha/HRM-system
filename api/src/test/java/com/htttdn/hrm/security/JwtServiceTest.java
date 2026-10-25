@@ -10,7 +10,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 
 import com.htttdn.hrm.config.ApplicationConfig;
 import com.htttdn.hrm.entity.Account;
-import com.htttdn.hrm.service.AccountAuthorizationService.AuthorizationSnapshot;
+import com.htttdn.hrm.service.rbac.AccountAuthorizationService.AuthorizationSnapshot;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

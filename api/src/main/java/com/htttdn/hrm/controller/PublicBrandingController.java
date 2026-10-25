@@ -12,7 +12,7 @@ import org.springframework.web.context.request.WebRequest;
 
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.organization.BrandingResponse;
-import com.htttdn.hrm.service.CompanyProfileService;
+import com.htttdn.hrm.service.organization.CompanyProfileService;
 
 import lombok.RequiredArgsConstructor;
 

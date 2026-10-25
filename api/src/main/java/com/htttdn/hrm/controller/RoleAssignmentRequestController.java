@@ -27,8 +27,8 @@ import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.dto.response.roleassignment.RoleAssignmentOptionResponse;
 import com.htttdn.hrm.dto.response.roleassignment.RoleAssignmentRequestResponse;
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
-import com.htttdn.hrm.service.RoleAssignmentOptionService;
-import com.htttdn.hrm.service.RoleAssignmentRequestService;
+import com.htttdn.hrm.service.rbac.RoleAssignmentOptionService;
+import com.htttdn.hrm.service.rbac.RoleAssignmentRequestService;
 
 import jakarta.validation.Valid;
 

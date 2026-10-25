@@ -13,7 +13,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import com.htttdn.hrm.entity.Account;
 import com.jayway.jsonpath.JsonPath;
 import com.htttdn.hrm.security.JwtService;
-import com.htttdn.hrm.service.AccountAuthorizationService.AuthorizationSnapshot;
+import com.htttdn.hrm.service.rbac.AccountAuthorizationService.AuthorizationSnapshot;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
