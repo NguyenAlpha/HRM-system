@@ -45,8 +45,11 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class ReportService {
 
     private static final String HR_REPORT_READ = "report.hr.read";
@@ -62,22 +65,6 @@ public class ReportService {
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final Clock clock;
-
-    public ReportService(
-        EmployeeRepository employeeRepository,
-        EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository,
-        EmployeeAccessScopeService employeeAccessScopeService,
-        EmployeeAssignmentRepository employeeAssignmentRepository,
-        AttendanceRecordRepository attendanceRecordRepository,
-        Clock clock
-    ) {
-        this.employeeRepository = employeeRepository;
-        this.employeeSalaryHistoryRepository = employeeSalaryHistoryRepository;
-        this.employeeAccessScopeService = employeeAccessScopeService;
-        this.employeeAssignmentRepository = employeeAssignmentRepository;
-        this.attendanceRecordRepository = attendanceRecordRepository;
-        this.clock = clock;
-    }
 
     @PreAuthorize("hasAuthority('report.hr.read')")
     public HrWorkforceReportResponse getWorkforceReport(

@@ -26,7 +26,10 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 
 import jakarta.annotation.Nullable;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class NotificationService {
 
     private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
@@ -39,20 +42,6 @@ public class NotificationService {
     private final AccountRoleAssignmentRepository roleAssignmentRepository;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final CurrentAccountProvider currentAccountProvider;
-
-    public NotificationService(
-        NotificationRepository notificationRepository,
-        AccountRepository accountRepository,
-        AccountRoleAssignmentRepository roleAssignmentRepository,
-        EmployeeAccessScopeService employeeAccessScopeService,
-        CurrentAccountProvider currentAccountProvider
-    ) {
-        this.notificationRepository = notificationRepository;
-        this.accountRepository = accountRepository;
-        this.roleAssignmentRepository = roleAssignmentRepository;
-        this.employeeAccessScopeService = employeeAccessScopeService;
-        this.currentAccountProvider = currentAccountProvider;
-    }
 
     /** Runs in the leave submission transaction, so a failed submission never leaves a notification. */
     @Transactional(propagation = Propagation.MANDATORY)

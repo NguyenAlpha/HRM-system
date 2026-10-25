@@ -35,8 +35,11 @@ import com.htttdn.hrm.repository.specification.AccountSpecifications;
 import com.htttdn.hrm.repository.specification.SearchPatterns;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class AccountAdminService {
 
     private static final String ACCOUNT_PROVISION = "account.provision";
@@ -54,28 +57,6 @@ public class AccountAdminService {
     private final CompanyOwnerAccountGuard companyOwnerAccountGuard;
     private final AccountAuthorizationService accountAuthorizationService;
     private final AccountRoleAssignmentRepository roleAssignmentRepository;
-
-    public AccountAdminService(
-        AccountRepository accountRepository,
-        AccountProvisioningService accountProvisioningService,
-        AccountActivationService accountActivationService,
-        RefreshTokenService refreshTokenService,
-        CurrentAccountProvider currentAccountProvider,
-        EmployeeAccessScopeService employeeAccessScopeService,
-        CompanyOwnerAccountGuard companyOwnerAccountGuard,
-        AccountAuthorizationService accountAuthorizationService,
-        AccountRoleAssignmentRepository roleAssignmentRepository
-    ) {
-        this.accountRepository = accountRepository;
-        this.accountProvisioningService = accountProvisioningService;
-        this.accountActivationService = accountActivationService;
-        this.refreshTokenService = refreshTokenService;
-        this.currentAccountProvider = currentAccountProvider;
-        this.employeeAccessScopeService = employeeAccessScopeService;
-        this.companyOwnerAccountGuard = companyOwnerAccountGuard;
-        this.accountAuthorizationService = accountAuthorizationService;
-        this.roleAssignmentRepository = roleAssignmentRepository;
-    }
 
     @PreAuthorize("hasAuthority('account.provision')")
     public AccountProvisioningResponse create(CreateAccountRequest request) {

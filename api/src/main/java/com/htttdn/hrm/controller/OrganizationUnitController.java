@@ -25,15 +25,14 @@ import com.htttdn.hrm.service.OrganizationUnitService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/organization-units")
+@RequiredArgsConstructor
 public class OrganizationUnitController {
 
     private final OrganizationUnitService organizationUnitService;
-
-    public OrganizationUnitController(OrganizationUnitService organizationUnitService) {
-        this.organizationUnitService = organizationUnitService;
-    }
 
     @GetMapping
     @PreAuthorize("hasAuthority('organization.read')")

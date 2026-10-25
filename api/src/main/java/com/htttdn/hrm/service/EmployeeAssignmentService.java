@@ -38,8 +38,11 @@ import com.htttdn.hrm.repository.WorkLocationRepository;
 import com.htttdn.hrm.repository.WorkShiftRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class EmployeeAssignmentService {
 
     private static final String EMPLOYEE_CREATE = "employee.create";
@@ -59,36 +62,6 @@ public class EmployeeAssignmentService {
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final Clock clock;
-
-    public EmployeeAssignmentService(
-        EmployeeRepository employeeRepository,
-        EmployeeAssignmentRepository employeeAssignmentRepository,
-        OrganizationUnitRepository organizationUnitRepository,
-        WorkLocationRepository workLocationRepository,
-        JobPositionRepository jobPositionRepository,
-        WorkShiftRepository workShiftRepository,
-        PayrollPeriodRepository payrollPeriodRepository,
-        PayslipRepository payslipRepository,
-        PayslipItemRepository payslipItemRepository,
-        AccountRepository accountRepository,
-        CurrentAccountProvider currentAccountProvider,
-        EmployeeAccessScopeService employeeAccessScopeService,
-        Clock clock
-    ) {
-        this.employeeRepository = employeeRepository;
-        this.employeeAssignmentRepository = employeeAssignmentRepository;
-        this.organizationUnitRepository = organizationUnitRepository;
-        this.workLocationRepository = workLocationRepository;
-        this.jobPositionRepository = jobPositionRepository;
-        this.workShiftRepository = workShiftRepository;
-        this.payrollPeriodRepository = payrollPeriodRepository;
-        this.payslipRepository = payslipRepository;
-        this.payslipItemRepository = payslipItemRepository;
-        this.accountRepository = accountRepository;
-        this.currentAccountProvider = currentAccountProvider;
-        this.employeeAccessScopeService = employeeAccessScopeService;
-        this.clock = clock;
-    }
 
     @PreAuthorize("hasAuthority('employee.create')")
     public EmployeeAssignmentResponse createInitial(

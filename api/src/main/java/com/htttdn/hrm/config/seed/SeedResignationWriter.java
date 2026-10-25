@@ -19,6 +19,8 @@ import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.entity.enums.ResignationRequestStatus;
 import com.htttdn.hrm.repository.ResignationRequestRepository;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Ghi đơn xin nghỉ việc của một nhân viên được seed, như nhân viên gửi và người duyệt (quản lý trực
  * tiếp, không có thì Giám đốc) quyết định.
@@ -32,16 +34,13 @@ import com.htttdn.hrm.repository.ResignationRequestRepository;
  * duyệt, hoặc đã duyệt) phải có ngày làm việc cuối từ hôm nay trở đi, và mỗi người chỉ có một đơn mở.
  */
 @Component
+@RequiredArgsConstructor
 class SeedResignationWriter {
 
     private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final int NOTICE_DAYS = 30;
 
     private final ResignationRequestRepository resignationRequestRepository;
-
-    SeedResignationWriter(ResignationRequestRepository resignationRequestRepository) {
-        this.resignationRequestRepository = resignationRequestRepository;
-    }
 
     /** @param approverOn the account that decides the employee's requests on a date */
     void write(StaffEntry entry, Employee employee, Function<LocalDate, Account> approverOn) {

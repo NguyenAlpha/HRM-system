@@ -17,8 +17,11 @@ import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class AccountRoleAssignmentAdminService {
 
     private final AccountRepository accountRepository;
@@ -27,22 +30,6 @@ public class AccountRoleAssignmentAdminService {
     private final AccountRoleAssignmentMapper roleAssignmentMapper;
     private final CurrentAccountProvider currentAccountProvider;
     private final CompanyOwnerAccountGuard companyOwnerAccountGuard;
-
-    public AccountRoleAssignmentAdminService(
-        AccountRepository accountRepository,
-        AccountRoleAssignmentRepository roleAssignmentRepository,
-        AccountRoleAssignmentCommandService roleAssignmentCommandService,
-        AccountRoleAssignmentMapper roleAssignmentMapper,
-        CurrentAccountProvider currentAccountProvider,
-        CompanyOwnerAccountGuard companyOwnerAccountGuard
-    ) {
-        this.accountRepository = accountRepository;
-        this.roleAssignmentRepository = roleAssignmentRepository;
-        this.roleAssignmentCommandService = roleAssignmentCommandService;
-        this.roleAssignmentMapper = roleAssignmentMapper;
-        this.currentAccountProvider = currentAccountProvider;
-        this.companyOwnerAccountGuard = companyOwnerAccountGuard;
-    }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('account.read')")

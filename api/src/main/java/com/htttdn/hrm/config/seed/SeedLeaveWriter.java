@@ -40,6 +40,8 @@ import com.htttdn.hrm.service.AttendanceService;
 import com.htttdn.hrm.service.EmployeeAccessScopeService;
 import com.htttdn.hrm.service.LeaveEntitlementService;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Ghi đơn nghỉ và các ngày công khác thường của một nhân viên được seed, sau khi
  * {@link SeedAttendanceWriter} đã ghi chấm công {@code PRESENT}.
@@ -58,6 +60,7 @@ import com.htttdn.hrm.service.LeaveEntitlementService;
  * Thông báo cũ hơn một tuần đã được đọc.
  */
 @Component
+@RequiredArgsConstructor
 class SeedLeaveWriter {
 
     private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
@@ -76,28 +79,6 @@ class SeedLeaveWriter {
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final NotificationRepository notificationRepository;
-
-    SeedLeaveWriter(
-        AttendanceCalendarService attendanceCalendarService,
-        AttendanceRecordRepository attendanceRecordRepository,
-        AttendanceService attendanceService,
-        LeaveEntitlementService leaveEntitlementService,
-        LeaveRequestRepository leaveRequestRepository,
-        AccountRepository accountRepository,
-        AccountRoleAssignmentRepository accountRoleAssignmentRepository,
-        EmployeeAccessScopeService employeeAccessScopeService,
-        NotificationRepository notificationRepository
-    ) {
-        this.attendanceCalendarService = attendanceCalendarService;
-        this.attendanceRecordRepository = attendanceRecordRepository;
-        this.attendanceService = attendanceService;
-        this.leaveEntitlementService = leaveEntitlementService;
-        this.leaveRequestRepository = leaveRequestRepository;
-        this.accountRepository = accountRepository;
-        this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
-        this.employeeAccessScopeService = employeeAccessScopeService;
-        this.notificationRepository = notificationRepository;
-    }
 
     /**
      * @param approverOn the account that approves the employee's requests on a date

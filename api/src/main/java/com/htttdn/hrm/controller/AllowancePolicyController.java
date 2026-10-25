@@ -21,14 +21,13 @@ import com.htttdn.hrm.service.AllowancePolicyService.SetSeniorityAllowanceComman
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/compensation")
+@RequiredArgsConstructor
 public class AllowancePolicyController {
     private final AllowancePolicyService service;
-
-    public AllowancePolicyController(AllowancePolicyService service) {
-        this.service = service;
-    }
 
     @GetMapping("/position-allowances")
     public ApiResult<List<PositionAllowanceSummary>> positionAllowanceSummaries() {

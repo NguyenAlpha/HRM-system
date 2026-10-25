@@ -13,11 +13,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * The first layer, before authentication: the sign-in endpoints get their own per-IP quota and
  * every other {@code /api/**} request shares a wide per-IP ceiling. Created by SecurityConfig
  * rather than as a bean, so the servlet container does not register it a second time.
  */
+@RequiredArgsConstructor
 public class IpRateLimitFilter extends OncePerRequestFilter {
 
     /**
@@ -31,11 +34,6 @@ public class IpRateLimitFilter extends OncePerRequestFilter {
 
     private final RateLimitService rateLimitService;
     private final ClientIpResolver clientIpResolver;
-
-    public IpRateLimitFilter(RateLimitService rateLimitService, ClientIpResolver clientIpResolver) {
-        this.rateLimitService = rateLimitService;
-        this.clientIpResolver = clientIpResolver;
-    }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {

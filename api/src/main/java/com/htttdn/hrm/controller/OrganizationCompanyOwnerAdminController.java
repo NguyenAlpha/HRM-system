@@ -15,17 +15,14 @@ import com.htttdn.hrm.service.OrganizationCompanyOwnerProvisioningService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/system/organization/company-owner")
+@RequiredArgsConstructor
 public class OrganizationCompanyOwnerAdminController {
 
     private final OrganizationCompanyOwnerProvisioningService companyOwnerProvisioningService;
-
-    public OrganizationCompanyOwnerAdminController(
-        OrganizationCompanyOwnerProvisioningService companyOwnerProvisioningService
-    ) {
-        this.companyOwnerProvisioningService = companyOwnerProvisioningService;
-    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

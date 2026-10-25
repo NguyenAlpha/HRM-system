@@ -14,8 +14,11 @@ import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.EmployeeRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class EmployeeSensitiveDataService {
 
     private static final String SENSITIVE_READ = "employee.sensitive.read";
@@ -23,14 +26,6 @@ public class EmployeeSensitiveDataService {
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeAccessScopeService employeeAccessScopeService;
-
-    public EmployeeSensitiveDataService(
-        EmployeeRepository employeeRepository,
-        EmployeeAccessScopeService employeeAccessScopeService
-    ) {
-        this.employeeRepository = employeeRepository;
-        this.employeeAccessScopeService = employeeAccessScopeService;
-    }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('employee.sensitive.read')")

@@ -13,17 +13,16 @@ import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.service.LeaveEntitlementService;
 import com.htttdn.hrm.service.LeaveEntitlementService.BalanceView;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/leave-entitlements/employees/{employeeId}")
+@RequiredArgsConstructor
 public class LeaveEntitlementController {
 
     private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final LeaveEntitlementService leaveEntitlementService;
-
-    public LeaveEntitlementController(LeaveEntitlementService leaveEntitlementService) {
-        this.leaveEntitlementService = leaveEntitlementService;
-    }
 
     @GetMapping
     public ApiResult<BalanceView> getBalance(

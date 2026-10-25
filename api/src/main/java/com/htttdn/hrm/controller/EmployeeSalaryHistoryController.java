@@ -20,14 +20,13 @@ import com.htttdn.hrm.service.EmployeeSalaryHistoryService.SetSalaryCommand;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/compensation/employees/{employeeId}/salary-history")
+@RequiredArgsConstructor
 public class EmployeeSalaryHistoryController {
     private final EmployeeSalaryHistoryService service;
-
-    public EmployeeSalaryHistoryController(EmployeeSalaryHistoryService service) {
-        this.service = service;
-    }
 
     @GetMapping
     public ApiResult<List<SalaryHistoryView>> list(@PathVariable Long employeeId) {

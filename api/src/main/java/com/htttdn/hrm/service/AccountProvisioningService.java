@@ -30,12 +30,15 @@ import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.RoleRepository;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Internal account bootstrap component shared by administrative workflows.
  * Authorization and transaction boundaries belong to the calling workflow.
  */
 @Service
 @Transactional(propagation = Propagation.MANDATORY)
+@RequiredArgsConstructor
 public class AccountProvisioningService {
 
     private static final String DEFAULT_EMPLOYEE_ROLE = "EMPLOYEE";
@@ -50,22 +53,6 @@ public class AccountProvisioningService {
     private final AccountRoleAssignmentRepository roleAssignmentRepository;
     private final AccountActivationService accountActivationService;
     private final Clock clock;
-
-    public AccountProvisioningService(
-        AccountRepository accountRepository,
-        EmployeeRepository employeeRepository,
-        RoleRepository roleRepository,
-        AccountRoleAssignmentRepository roleAssignmentRepository,
-        AccountActivationService accountActivationService,
-        Clock clock
-    ) {
-        this.accountRepository = accountRepository;
-        this.employeeRepository = employeeRepository;
-        this.roleRepository = roleRepository;
-        this.roleAssignmentRepository = roleAssignmentRepository;
-        this.accountActivationService = accountActivationService;
-        this.clock = clock;
-    }
 
     public AccountProvisioningResponse provisionPendingAccount(
         Long employeeId,

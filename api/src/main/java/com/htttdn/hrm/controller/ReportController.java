@@ -25,23 +25,16 @@ import com.htttdn.hrm.service.ReportService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/reports")
+@RequiredArgsConstructor
 public class ReportController {
 
     private final ReportService reportService;
     private final LeaveEntitlementService leaveEntitlementService;
     private final PayrollReportService payrollReportService;
-
-    public ReportController(
-        ReportService reportService,
-        LeaveEntitlementService leaveEntitlementService,
-        PayrollReportService payrollReportService
-    ) {
-        this.reportService = reportService;
-        this.leaveEntitlementService = leaveEntitlementService;
-        this.payrollReportService = payrollReportService;
-    }
 
     @GetMapping("/hr/workforce-distribution")
     @PreAuthorize("hasAuthority('report.hr.read')")

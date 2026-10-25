@@ -25,15 +25,14 @@ import com.htttdn.hrm.service.WorkLocationService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/work-locations")
+@RequiredArgsConstructor
 public class WorkLocationController {
 
     private final WorkLocationService workLocationService;
-
-    public WorkLocationController(WorkLocationService workLocationService) {
-        this.workLocationService = workLocationService;
-    }
 
     @GetMapping
     @PreAuthorize("hasAuthority('organization.read')")

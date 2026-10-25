@@ -7,6 +7,8 @@ import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Keeps holders of account-management permissions from taking over a Company Owner or System Admin
  * account: only another Company Owner may suspend a Company Owner, issue it a new activation token, or
@@ -15,6 +17,7 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
  * locked or disabled account stays open because it cannot hand the account to someone else.
  */
 @Component
+@RequiredArgsConstructor
 public class CompanyOwnerAccountGuard {
 
     static final String COMPANY_OWNER_ROLE = "COMPANY_OWNER";
@@ -22,14 +25,6 @@ public class CompanyOwnerAccountGuard {
 
     private final AccountRoleAssignmentRepository roleAssignmentRepository;
     private final CurrentAccountProvider currentAccountProvider;
-
-    public CompanyOwnerAccountGuard(
-        AccountRoleAssignmentRepository roleAssignmentRepository,
-        CurrentAccountProvider currentAccountProvider
-    ) {
-        this.roleAssignmentRepository = roleAssignmentRepository;
-        this.currentAccountProvider = currentAccountProvider;
-    }
 
     public void requireCanManage(Long targetAccountId) {
         Long actorAccountId = currentAccountProvider.accountId();

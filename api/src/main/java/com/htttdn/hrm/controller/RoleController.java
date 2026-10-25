@@ -30,15 +30,14 @@ import com.htttdn.hrm.service.RoleService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/roles")
+@RequiredArgsConstructor
 public class RoleController {
 
     private final RoleService roleService;
-
-    public RoleController(RoleService roleService) {
-        this.roleService = roleService;
-    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

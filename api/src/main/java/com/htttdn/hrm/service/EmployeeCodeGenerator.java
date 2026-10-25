@@ -7,12 +7,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Cấp mã nhân viên theo một dãy chung {@code NV0001}, {@code NV0002}…: số lớn nhất đang có cộng một.
  * Nhân viên đã xóa mềm vẫn giữ mã nên mã không bị tái sử dụng.
  */
 @Service
 @Transactional(propagation = Propagation.MANDATORY)
+@RequiredArgsConstructor
 public class EmployeeCodeGenerator {
 
     static final String PREFIX = "NV";
@@ -27,10 +30,6 @@ public class EmployeeCodeGenerator {
         """;
 
     private final JdbcTemplate jdbcTemplate;
-
-    public EmployeeCodeGenerator(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     public String next() {
         jdbcTemplate.queryForList(LOCK_SQL);

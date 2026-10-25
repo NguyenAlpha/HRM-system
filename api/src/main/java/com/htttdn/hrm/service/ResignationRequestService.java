@@ -34,6 +34,8 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 
 import jakarta.annotation.Nullable;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Đơn nghỉ việc: nhân viên gửi, người duyệt theo tuyến quản lý (như đơn nghỉ) duyệt hoặc từ chối.
  * Đơn đã duyệt chưa kết thúc hợp đồng ngay: nhân viên vẫn làm đến hết ngày làm việc cuối, rồi
@@ -41,6 +43,7 @@ import jakarta.annotation.Nullable;
  */
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class ResignationRequestService {
 
     private static final String REQUEST_READ = "request.read";
@@ -57,24 +60,6 @@ public class ResignationRequestService {
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final ApproverResolver approverResolver;
     private final EmployeeService employeeService;
-
-    public ResignationRequestService(
-        ResignationRequestRepository resignationRequestRepository,
-        EmployeeRepository employeeRepository,
-        AccountRepository accountRepository,
-        CurrentAccountProvider currentAccountProvider,
-        EmployeeAccessScopeService employeeAccessScopeService,
-        ApproverResolver approverResolver,
-        EmployeeService employeeService
-    ) {
-        this.resignationRequestRepository = resignationRequestRepository;
-        this.employeeRepository = employeeRepository;
-        this.accountRepository = accountRepository;
-        this.currentAccountProvider = currentAccountProvider;
-        this.employeeAccessScopeService = employeeAccessScopeService;
-        this.approverResolver = approverResolver;
-        this.employeeService = employeeService;
-    }
 
     /** Sends the request to the employee's approver at once; one open request per employee. */
     @PreAuthorize("hasAnyAuthority('request.self.create', 'request.manage')")

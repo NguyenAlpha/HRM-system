@@ -14,19 +14,18 @@ import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.organization.BrandingResponse;
 import com.htttdn.hrm.service.CompanyProfileService;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Company name and logo for screens shown before sign-in. Open to anonymous callers, so it returns
  * nothing beyond what the sign-in page displays (no tax code, phone or address).
  */
 @RestController
 @RequestMapping("/api/public/branding")
+@RequiredArgsConstructor
 public class PublicBrandingController {
 
     private final CompanyProfileService service;
-
-    public PublicBrandingController(CompanyProfileService service) {
-        this.service = service;
-    }
 
     @GetMapping
     public ApiResult<BrandingResponse> get() {

@@ -20,15 +20,14 @@ import com.htttdn.hrm.service.AccountPermissionOverrideService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides")
+@RequiredArgsConstructor
 public class AccountPermissionOverrideController {
 
     private final AccountPermissionOverrideService permissionOverrideService;
-
-    public AccountPermissionOverrideController(AccountPermissionOverrideService permissionOverrideService) {
-        this.permissionOverrideService = permissionOverrideService;
-    }
 
     @GetMapping
     public ApiResult<List<AccountPermissionOverrideResponse>> list(

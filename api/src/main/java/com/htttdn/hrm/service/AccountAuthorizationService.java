@@ -28,25 +28,16 @@ import com.htttdn.hrm.repository.AccountPermissionOverrideRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.RolePermissionRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class AccountAuthorizationService {
 
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final RolePermissionRepository rolePermissionRepository;
     private final AccountPermissionOverrideRepository accountPermissionOverrideRepository;
     private final Clock clock;
-
-    public AccountAuthorizationService(
-        AccountRoleAssignmentRepository accountRoleAssignmentRepository,
-        RolePermissionRepository rolePermissionRepository,
-        AccountPermissionOverrideRepository accountPermissionOverrideRepository,
-        Clock clock
-    ) {
-        this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
-        this.rolePermissionRepository = rolePermissionRepository;
-        this.accountPermissionOverrideRepository = accountPermissionOverrideRepository;
-        this.clock = clock;
-    }
 
     @Transactional(readOnly = true)
     public AuthorizationSnapshot getSnapshot(Long accountId) {

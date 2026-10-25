@@ -39,27 +39,18 @@ import com.htttdn.hrm.repository.RoleRepository;
 import com.htttdn.hrm.security.CanManageRbac;
 import com.htttdn.hrm.service.RoleService;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
 @CanManageRbac
+@RequiredArgsConstructor
 public class RoleService {
 
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final RolePermissionRepository rolePermissionRepository;
     private final AccountRepository accountRepository;
-
-    public RoleService(
-        RoleRepository roleRepository,
-        PermissionRepository permissionRepository,
-        RolePermissionRepository rolePermissionRepository,
-        AccountRepository accountRepository
-    ) {
-        this.roleRepository = roleRepository;
-        this.permissionRepository = permissionRepository;
-        this.rolePermissionRepository = rolePermissionRepository;
-        this.accountRepository = accountRepository;
-    }
 
     public RoleResponse create(CreateRoleRequest request) {
         if (roleRepository.existsByCode(request.code())) {

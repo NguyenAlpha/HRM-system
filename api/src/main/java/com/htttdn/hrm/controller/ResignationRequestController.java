@@ -26,14 +26,13 @@ import com.htttdn.hrm.service.ResignationRequestService.ResignationRequestView;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/resignation-requests")
+@RequiredArgsConstructor
 public class ResignationRequestController {
     private final ResignationRequestService service;
-
-    public ResignationRequestController(ResignationRequestService service) {
-        this.service = service;
-    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

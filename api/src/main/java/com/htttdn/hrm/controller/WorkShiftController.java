@@ -23,15 +23,14 @@ import com.htttdn.hrm.service.WorkShiftService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/work-shifts")
+@RequiredArgsConstructor
 public class WorkShiftController {
 
     private final WorkShiftService workShiftService;
-
-    public WorkShiftController(WorkShiftService workShiftService) {
-        this.workShiftService = workShiftService;
-    }
 
     @GetMapping
     @PreAuthorize("hasAuthority('organization.read')")

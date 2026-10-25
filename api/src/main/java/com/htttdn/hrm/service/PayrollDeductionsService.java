@@ -41,8 +41,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class PayrollDeductionsService {
     private final EmployeePayrollProfileRepository profileRepository;
     private final EmployeeTaxDependentRepository dependentRepository;
@@ -56,26 +59,6 @@ public class PayrollDeductionsService {
     private final PayrollPeriodRepository periods;
     private final PayslipRepository payslips;
     private final PayslipItemRepository items;
-
-    public PayrollDeductionsService(EmployeePayrollProfileRepository profileRepository,
-        EmployeeTaxDependentRepository dependentRepository, PayrollTaxRuleRepository taxRules,
-        PayrollTaxBracketRepository taxBrackets, PayrollInsuranceRuleRepository insuranceRules,
-        AccountRepository accounts, EmployeeRepository employees, EmployeeAccessScopeService access,
-        CurrentAccountProvider actor, PayrollPeriodRepository periods, PayslipRepository payslips,
-        PayslipItemRepository items) {
-        this.profileRepository = profileRepository;
-        this.dependentRepository = dependentRepository;
-        this.taxRules = taxRules;
-        this.taxBrackets = taxBrackets;
-        this.insuranceRules = insuranceRules;
-        this.accounts = accounts;
-        this.employees = employees;
-        this.access = access;
-        this.actor = actor;
-        this.periods = periods;
-        this.payslips = payslips;
-        this.items = items;
-    }
 
     @PreAuthorize("hasAuthority('compensation.read')")
     @Transactional(readOnly = true)

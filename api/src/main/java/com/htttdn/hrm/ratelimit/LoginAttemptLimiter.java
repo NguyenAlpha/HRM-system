@@ -10,19 +10,18 @@ import org.springframework.stereotype.Component;
 
 import com.htttdn.hrm.exception.RateLimitExceededException;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Wrong passwords per account, so guessing one account's password from many addresses is still
  * slowed down. Only a wrong password uses a try; once they run out, sign-in answers 429 until the
  * bucket refills. The account itself is never locked, so nobody can lock someone else out.
  */
 @Component
+@RequiredArgsConstructor
 public class LoginAttemptLimiter {
 
     private final RateLimitService rateLimitService;
-
-    public LoginAttemptLimiter(RateLimitService rateLimitService) {
-        this.rateLimitService = rateLimitService;
-    }
 
     /**
      * {@code account:<id>} for an existing account, so its username and email share one bucket;

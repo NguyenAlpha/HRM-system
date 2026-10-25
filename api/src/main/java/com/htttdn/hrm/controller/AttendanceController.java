@@ -30,15 +30,14 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/attendance")
 @Validated
+@RequiredArgsConstructor
 public class AttendanceController {
     private final AttendanceService service;
-
-    public AttendanceController(AttendanceService service) {
-        this.service = service;
-    }
 
     @PostMapping("/prepare")
     @PreAuthorize("hasAuthority('attendance.manage')")

@@ -12,15 +12,14 @@ import com.htttdn.hrm.service.AccountActivationService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/account-activations")
+@RequiredArgsConstructor
 public class AccountActivationController {
 
     private final AccountActivationService accountActivationService;
-
-    public AccountActivationController(AccountActivationService accountActivationService) {
-        this.accountActivationService = accountActivationService;
-    }
 
     @PostMapping("/{token}/complete")
     public ApiResult<Void> complete(

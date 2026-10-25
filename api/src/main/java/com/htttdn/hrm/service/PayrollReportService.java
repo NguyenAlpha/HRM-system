@@ -22,9 +22,12 @@ import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 
+import lombok.RequiredArgsConstructor;
+
 /** Báo cáo quỹ lương, bảo hiểm và thuế; dữ liệu toàn công ty như bảng lương nên cần scope COMPANY. */
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class PayrollReportService {
 
     private static final String PAYROLL_REPORT_READ = "report.payroll.read";
@@ -32,16 +35,6 @@ public class PayrollReportService {
     private final PayslipRepository payslipRepository;
     private final PayrollPeriodRepository payrollPeriodRepository;
     private final EmployeeAccessScopeService employeeAccessScopeService;
-
-    public PayrollReportService(
-        PayslipRepository payslipRepository,
-        PayrollPeriodRepository payrollPeriodRepository,
-        EmployeeAccessScopeService employeeAccessScopeService
-    ) {
-        this.payslipRepository = payslipRepository;
-        this.payrollPeriodRepository = payrollPeriodRepository;
-        this.employeeAccessScopeService = employeeAccessScopeService;
-    }
 
     @PreAuthorize("hasAuthority('report.payroll.read')")
     public PayrollSummaryReportResponse getYearSummary(int year) {

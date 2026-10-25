@@ -23,20 +23,15 @@ import com.htttdn.hrm.timeline.TimelineRange;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/system/rate-limit")
+@RequiredArgsConstructor
 public class RateLimitStatsController {
 
     private final RateLimitService rateLimitService;
     private final RateLimitSettingsService rateLimitSettingsService;
-
-    public RateLimitStatsController(
-        RateLimitService rateLimitService,
-        RateLimitSettingsService rateLimitSettingsService
-    ) {
-        this.rateLimitService = rateLimitService;
-        this.rateLimitSettingsService = rateLimitSettingsService;
-    }
 
     @GetMapping("/stats")
     @PreAuthorize("hasAuthority('system.rate_limit.read')")

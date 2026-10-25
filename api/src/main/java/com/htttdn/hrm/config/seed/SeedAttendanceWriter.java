@@ -19,6 +19,8 @@ import com.htttdn.hrm.entity.enums.AttendanceStatus;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.service.AttendanceCalendarService;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Ghi lịch sử chấm công mẫu cho nhân viên được seed: {@code PRESENT} cho mọi ngày làm việc trong
  * khoảng, phần lớn đúng giờ, cứ 10 ngày công có một ngày đi muộn 30 phút và một ngày về sớm 30 phút.
@@ -31,6 +33,7 @@ import com.htttdn.hrm.service.AttendanceCalendarService;
  * <p>Ngày nghỉ theo đơn, vắng không phép và thiếu chấm công do {@link SeedLeaveWriter} ghi đè sau.
  */
 @Component
+@RequiredArgsConstructor
 class SeedAttendanceWriter {
 
     private static final int LATE_OR_EARLY_MINUTES = 30;
@@ -42,14 +45,6 @@ class SeedAttendanceWriter {
 
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final AttendanceCalendarService attendanceCalendarService;
-
-    SeedAttendanceWriter(
-        AttendanceRecordRepository attendanceRecordRepository,
-        AttendanceCalendarService attendanceCalendarService
-    ) {
-        this.attendanceRecordRepository = attendanceRecordRepository;
-        this.attendanceCalendarService = attendanceCalendarService;
-    }
 
     /**
      * Minutes follow {@code AttendanceService.recordPunches}: late minutes count after the shift's

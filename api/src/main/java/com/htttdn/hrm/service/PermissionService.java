@@ -13,16 +13,15 @@ import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.PermissionRepository;
 import com.htttdn.hrm.security.CanManageRbac;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
 @CanManageRbac
+@RequiredArgsConstructor
 public class PermissionService {
 
     private final PermissionRepository permissionRepository;
-
-    public PermissionService(PermissionRepository permissionRepository) {
-        this.permissionRepository = permissionRepository;
-    }
 
     @Transactional(readOnly = true)
     public PermissionResponse getById(Long id) {

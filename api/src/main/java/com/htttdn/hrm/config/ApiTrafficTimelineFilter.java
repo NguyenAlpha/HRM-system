@@ -15,6 +15,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Records every request into {@link ApiTrafficTimeline}. It runs right after Spring Boot's own
  * request metrics and before Spring Security, so it counts the same requests Micrometer does,
@@ -22,15 +24,11 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 2)
+@RequiredArgsConstructor
 public class ApiTrafficTimelineFilter extends OncePerRequestFilter {
 
     private final ApiTrafficTimeline timeline;
     private final Clock clock;
-
-    public ApiTrafficTimelineFilter(ApiTrafficTimeline timeline, Clock clock) {
-        this.timeline = timeline;
-        this.clock = clock;
-    }
 
     @Override
     protected void doFilterInternal(

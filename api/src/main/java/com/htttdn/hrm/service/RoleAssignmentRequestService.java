@@ -37,8 +37,11 @@ import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.RoleAssignmentRequestRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class RoleAssignmentRequestService {
 
     private static final String REQUEST_PERMISSION = "role.assignment.request";
@@ -56,30 +59,6 @@ public class RoleAssignmentRequestService {
     private final CurrentAccountProvider currentAccountProvider;
     private final CompanyOwnerAccountGuard companyOwnerAccountGuard;
     private final Clock clock;
-
-    public RoleAssignmentRequestService(
-        RoleAssignmentRequestRepository requestRepository,
-        AccountRepository accountRepository,
-        AccountRoleAssignmentRepository roleAssignmentRepository,
-        AccountRoleAssignmentCommandService roleAssignmentCommandService,
-        RoleAssignmentRequestMapper requestMapper,
-        AccountRoleAssignmentMapper roleAssignmentMapper,
-        EmployeeAccessScopeService employeeAccessScopeService,
-        CurrentAccountProvider currentAccountProvider,
-        CompanyOwnerAccountGuard companyOwnerAccountGuard,
-        Clock clock
-    ) {
-        this.requestRepository = requestRepository;
-        this.accountRepository = accountRepository;
-        this.roleAssignmentRepository = roleAssignmentRepository;
-        this.roleAssignmentCommandService = roleAssignmentCommandService;
-        this.requestMapper = requestMapper;
-        this.roleAssignmentMapper = roleAssignmentMapper;
-        this.employeeAccessScopeService = employeeAccessScopeService;
-        this.currentAccountProvider = currentAccountProvider;
-        this.companyOwnerAccountGuard = companyOwnerAccountGuard;
-        this.clock = clock;
-    }
 
     @PreAuthorize("hasAuthority('role.assignment.request')")
     public RoleAssignmentRequestResponse create(CreateRoleAssignmentRequest request) {

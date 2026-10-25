@@ -28,7 +28,10 @@ import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.security.JwtService;
 import com.htttdn.hrm.service.AccountAuthorizationService.AuthorizationSnapshot;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
     private final AccountRepository accountRepository;
@@ -38,24 +41,6 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final AccountAuthorizationService accountAuthorizationService;
     private final LoginAttemptLimiter loginAttemptLimiter;
-
-    public AuthService(
-        AccountRepository accountRepository,
-        AuthenticationManager authenticationManager,
-        PasswordEncoder passwordEncoder,
-        JwtService jwtService,
-        RefreshTokenService refreshTokenService,
-        AccountAuthorizationService accountAuthorizationService,
-        LoginAttemptLimiter loginAttemptLimiter
-    ) {
-        this.accountRepository = accountRepository;
-        this.authenticationManager = authenticationManager;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtService = jwtService;
-        this.refreshTokenService = refreshTokenService;
-        this.accountAuthorizationService = accountAuthorizationService;
-        this.loginAttemptLimiter = loginAttemptLimiter;
-    }
 
     @Transactional(noRollbackFor = UnauthorizedException.class)
     public AuthResponse login(LoginRequest request) {

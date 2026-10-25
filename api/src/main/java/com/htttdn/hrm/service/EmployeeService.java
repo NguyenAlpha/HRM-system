@@ -56,8 +56,11 @@ import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class EmployeeService {
 
     private static final String EMPLOYEE_READ = "employee.read";
@@ -86,42 +89,6 @@ public class EmployeeService {
     private final EmployeeAssignmentService employeeAssignmentService;
     private final EmployeeCodeGenerator employeeCodeGenerator;
     private final Clock clock;
-
-    public EmployeeService(
-        EmployeeRepository employeeRepository,
-        EmployeeAssignmentRepository employeeAssignmentRepository,
-        EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository,
-        EmployeePayrollProfileRepository employeePayrollProfileRepository,
-        EmployeeTaxDependentRepository employeeTaxDependentRepository,
-        LeaveRequestRepository leaveRequestRepository,
-        AttendanceRecordRepository attendanceRecordRepository,
-        PayslipRepository payslipRepository,
-        AccountRepository accountRepository,
-        AccountRoleAssignmentRepository accountRoleAssignmentRepository,
-        RefreshTokenService refreshTokenService,
-        CurrentAccountProvider currentAccountProvider,
-        EmployeeAccessScopeService employeeAccessScopeService,
-        EmployeeAssignmentService employeeAssignmentService,
-        EmployeeCodeGenerator employeeCodeGenerator,
-        Clock clock
-    ) {
-        this.employeeRepository = employeeRepository;
-        this.employeeAssignmentRepository = employeeAssignmentRepository;
-        this.employeeSalaryHistoryRepository = employeeSalaryHistoryRepository;
-        this.employeePayrollProfileRepository = employeePayrollProfileRepository;
-        this.employeeTaxDependentRepository = employeeTaxDependentRepository;
-        this.leaveRequestRepository = leaveRequestRepository;
-        this.attendanceRecordRepository = attendanceRecordRepository;
-        this.payslipRepository = payslipRepository;
-        this.accountRepository = accountRepository;
-        this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
-        this.refreshTokenService = refreshTokenService;
-        this.currentAccountProvider = currentAccountProvider;
-        this.employeeAccessScopeService = employeeAccessScopeService;
-        this.employeeAssignmentService = employeeAssignmentService;
-        this.employeeCodeGenerator = employeeCodeGenerator;
-        this.clock = clock;
-    }
 
     @PreAuthorize("hasAuthority('employee.create')")
     public EmployeeCreationResponse create(CreateEmployeeRequest request) {

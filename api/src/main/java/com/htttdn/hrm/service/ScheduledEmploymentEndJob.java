@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 
 import com.htttdn.hrm.repository.EmployeeRepository;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Kết thúc làm việc đã được HR lên lịch khi ngày làm việc cuối đã qua: lúc khởi động và 00:10 mỗi đêm,
  * cùng giờ với {@link ResignationCompletionJob}. Mỗi người chạy trong transaction riêng, nên một người
@@ -22,6 +24,7 @@ import com.htttdn.hrm.repository.EmployeeRepository;
 @Component
 @EnableScheduling
 @Order(1011)
+@RequiredArgsConstructor
 public class ScheduledEmploymentEndJob implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(ScheduledEmploymentEndJob.class);
@@ -30,12 +33,6 @@ public class ScheduledEmploymentEndJob implements ApplicationRunner {
     private final EmployeeRepository employeeRepository;
     private final EmployeeService employeeService;
     private final Clock clock;
-
-    public ScheduledEmploymentEndJob(EmployeeRepository employeeRepository, EmployeeService employeeService, Clock clock) {
-        this.employeeRepository = employeeRepository;
-        this.employeeService = employeeService;
-        this.clock = clock;
-    }
 
     @Override
     public void run(ApplicationArguments args) {

@@ -12,6 +12,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Kết thúc hợp đồng của các đơn nghỉ việc đã duyệt khi ngày làm việc cuối đã qua: lúc khởi động và
  * 00:10 mỗi đêm. Mỗi đơn chạy trong transaction riêng, nên một đơn lỗi không chặn các đơn khác.
@@ -19,16 +21,13 @@ import org.springframework.stereotype.Component;
 @Component
 @EnableScheduling
 @Order(1010)
+@RequiredArgsConstructor
 public class ResignationCompletionJob implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(ResignationCompletionJob.class);
     private static final String ZONE = "Asia/Ho_Chi_Minh";
 
     private final ResignationRequestService resignationRequestService;
-
-    public ResignationCompletionJob(ResignationRequestService resignationRequestService) {
-        this.resignationRequestService = resignationRequestService;
-    }
 
     @Override
     public void run(ApplicationArguments args) {

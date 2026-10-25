@@ -28,6 +28,8 @@ import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.repository.specification.EmployeeSpecifications;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Annual leave quota: 12 days a year, prorated by the months worked when the employee joined
  * part-way through the year (Bộ luật Lao động 2019, Điều 113). Nothing is stored; the balance is
@@ -37,6 +39,7 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
  */
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class LeaveEntitlementService {
 
     private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
@@ -55,22 +58,6 @@ public class LeaveEntitlementService {
     private final AccountRepository accountRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
-
-    public LeaveEntitlementService(
-        LeaveRequestRepository leaveRequestRepository,
-        EmployeeRepository employeeRepository,
-        EmployeeAssignmentRepository employeeAssignmentRepository,
-        AccountRepository accountRepository,
-        CurrentAccountProvider currentAccountProvider,
-        EmployeeAccessScopeService employeeAccessScopeService
-    ) {
-        this.leaveRequestRepository = leaveRequestRepository;
-        this.employeeRepository = employeeRepository;
-        this.employeeAssignmentRepository = employeeAssignmentRepository;
-        this.accountRepository = accountRepository;
-        this.currentAccountProvider = currentAccountProvider;
-        this.employeeAccessScopeService = employeeAccessScopeService;
-    }
 
     @Transactional(readOnly = true)
     public BalanceView getBalance(Long employeeId, int year) {

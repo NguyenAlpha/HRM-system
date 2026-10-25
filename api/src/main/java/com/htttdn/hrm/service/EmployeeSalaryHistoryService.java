@@ -31,8 +31,11 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class EmployeeSalaryHistoryService {
 
     private static final String COMPENSATION_READ = "compensation.read";
@@ -46,26 +49,6 @@ public class EmployeeSalaryHistoryService {
     private final AccountRepository accountRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
-
-    public EmployeeSalaryHistoryService(
-        EmployeeRepository employeeRepository,
-        EmployeeSalaryHistoryRepository salaryHistoryRepository,
-        PayrollPeriodRepository payrollPeriodRepository,
-        PayslipRepository payslipRepository,
-        PayslipItemRepository payslipItemRepository,
-        AccountRepository accountRepository,
-        CurrentAccountProvider currentAccountProvider,
-        EmployeeAccessScopeService employeeAccessScopeService
-    ) {
-        this.employeeRepository = employeeRepository;
-        this.salaryHistoryRepository = salaryHistoryRepository;
-        this.payrollPeriodRepository = payrollPeriodRepository;
-        this.payslipRepository = payslipRepository;
-        this.payslipItemRepository = payslipItemRepository;
-        this.accountRepository = accountRepository;
-        this.currentAccountProvider = currentAccountProvider;
-        this.employeeAccessScopeService = employeeAccessScopeService;
-    }
 
     @PreAuthorize("hasAuthority('compensation.manage')")
     public SalaryHistoryView setSalary(Long employeeId, SetSalaryCommand command) {

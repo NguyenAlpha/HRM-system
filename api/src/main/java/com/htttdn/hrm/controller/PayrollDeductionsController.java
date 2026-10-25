@@ -22,14 +22,13 @@ import com.htttdn.hrm.service.PayrollDeductionsService.ProfileCommand;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/compensation/employees/{employeeId}")
+@RequiredArgsConstructor
 public class PayrollDeductionsController {
     private final PayrollDeductionsService service;
-
-    public PayrollDeductionsController(PayrollDeductionsService service) {
-        this.service = service;
-    }
 
     @GetMapping("/payroll-profiles")
     public ApiResult<List<Profile>> profiles(@PathVariable Long employeeId) {

@@ -23,15 +23,14 @@ import com.htttdn.hrm.service.JobPositionService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/job-positions")
+@RequiredArgsConstructor
 public class JobPositionController {
 
     private final JobPositionService jobPositionService;
-
-    public JobPositionController(JobPositionService jobPositionService) {
-        this.jobPositionService = jobPositionService;
-    }
 
     @GetMapping
     @PreAuthorize("hasAuthority('organization.read')")

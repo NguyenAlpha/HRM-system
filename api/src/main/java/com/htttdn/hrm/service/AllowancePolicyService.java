@@ -34,8 +34,11 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class AllowancePolicyService {
 
     private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
@@ -48,26 +51,6 @@ public class AllowancePolicyService {
     private final PayslipItemRepository payslipItemRepository;
     private final AccountRepository accountRepository;
     private final CurrentAccountProvider currentAccountProvider;
-
-    public AllowancePolicyService(
-        PositionAllowanceRuleRepository positionRuleRepository,
-        SeniorityAllowanceRuleRepository seniorityRuleRepository,
-        JobPositionRepository jobPositionRepository,
-        PayrollPeriodRepository payrollPeriodRepository,
-        PayslipRepository payslipRepository,
-        PayslipItemRepository payslipItemRepository,
-        AccountRepository accountRepository,
-        CurrentAccountProvider currentAccountProvider
-    ) {
-        this.positionRuleRepository = positionRuleRepository;
-        this.seniorityRuleRepository = seniorityRuleRepository;
-        this.jobPositionRepository = jobPositionRepository;
-        this.payrollPeriodRepository = payrollPeriodRepository;
-        this.payslipRepository = payslipRepository;
-        this.payslipItemRepository = payslipItemRepository;
-        this.accountRepository = accountRepository;
-        this.currentAccountProvider = currentAccountProvider;
-    }
 
     @PreAuthorize("hasAuthority('compensation.manage')")
     public PositionAllowanceView setPositionAllowance(

@@ -19,6 +19,8 @@ import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Decides who approves an employee's leave and overtime: the direct manager of the current primary
  * assignment, else the Director, else the Company Owner. A candidate is skipped when it is the
@@ -28,6 +30,7 @@ import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
  */
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class ApproverResolver {
 
     static final String DIRECTOR_ROLE = "DIRECTOR";
@@ -37,18 +40,6 @@ public class ApproverResolver {
     private final AccountRepository accountRepository;
     private final AccountRoleAssignmentRepository roleAssignmentRepository;
     private final Clock clock;
-
-    public ApproverResolver(
-        EmployeeAssignmentRepository employeeAssignmentRepository,
-        AccountRepository accountRepository,
-        AccountRoleAssignmentRepository roleAssignmentRepository,
-        Clock clock
-    ) {
-        this.employeeAssignmentRepository = employeeAssignmentRepository;
-        this.accountRepository = accountRepository;
-        this.roleAssignmentRepository = roleAssignmentRepository;
-        this.clock = clock;
-    }
 
     /** The approver of the employee's requests; empty when nobody stands above them. */
     public Optional<Employee> approverFor(Employee employee) {

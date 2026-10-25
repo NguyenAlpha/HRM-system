@@ -32,8 +32,11 @@ import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.RoleAssignmentRequestRepository;
 import com.htttdn.hrm.repository.WorkLocationRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class WorkLocationService {
 
     private final WorkLocationRepository workLocationRepository;
@@ -41,20 +44,6 @@ public class WorkLocationService {
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final RoleAssignmentRequestRepository roleAssignmentRequestRepository;
     private final Clock clock;
-
-    public WorkLocationService(
-        WorkLocationRepository workLocationRepository,
-        EmployeeAssignmentRepository employeeAssignmentRepository,
-        AccountRoleAssignmentRepository accountRoleAssignmentRepository,
-        RoleAssignmentRequestRepository roleAssignmentRequestRepository,
-        Clock clock
-    ) {
-        this.workLocationRepository = workLocationRepository;
-        this.employeeAssignmentRepository = employeeAssignmentRepository;
-        this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
-        this.roleAssignmentRequestRepository = roleAssignmentRequestRepository;
-        this.clock = clock;
-    }
 
     @PreAuthorize("hasAuthority('organization.read')")
     @Transactional(readOnly = true)

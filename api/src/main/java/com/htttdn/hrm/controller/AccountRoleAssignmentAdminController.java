@@ -20,15 +20,14 @@ import com.htttdn.hrm.service.AccountRoleAssignmentAdminService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/accounts/{accountId}/role-assignments")
+@RequiredArgsConstructor
 public class AccountRoleAssignmentAdminController {
 
     private final AccountRoleAssignmentAdminService roleAssignmentAdminService;
-
-    public AccountRoleAssignmentAdminController(AccountRoleAssignmentAdminService roleAssignmentAdminService) {
-        this.roleAssignmentAdminService = roleAssignmentAdminService;
-    }
 
     @GetMapping
     @PreAuthorize("hasAuthority('account.read')")

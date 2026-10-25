@@ -25,8 +25,11 @@ import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.WorkShiftRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class WorkShiftService {
 
     private static final long MINUTES_PER_DAY = 24L * 60L;
@@ -35,18 +38,6 @@ public class WorkShiftService {
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final Clock clock;
-
-    public WorkShiftService(
-        WorkShiftRepository workShiftRepository,
-        EmployeeAssignmentRepository employeeAssignmentRepository,
-        AttendanceRecordRepository attendanceRecordRepository,
-        Clock clock
-    ) {
-        this.workShiftRepository = workShiftRepository;
-        this.employeeAssignmentRepository = employeeAssignmentRepository;
-        this.attendanceRecordRepository = attendanceRecordRepository;
-        this.clock = clock;
-    }
 
     @PreAuthorize("hasAuthority('organization.read')")
     @Transactional(readOnly = true)

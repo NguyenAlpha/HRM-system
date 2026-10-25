@@ -33,8 +33,11 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class EmployeeAccessScopeService {
 
     private final AccountAuthorizationService accountAuthorizationService;
@@ -44,24 +47,6 @@ public class EmployeeAccessScopeService {
     private final OrganizationUnitRepository organizationUnitRepository;
     private final WorkLocationRepository workLocationRepository;
     private final Clock clock;
-
-    public EmployeeAccessScopeService(
-        AccountAuthorizationService accountAuthorizationService,
-        CurrentAccountProvider currentAccountProvider,
-        AccountRepository accountRepository,
-        EmployeeRepository employeeRepository,
-        OrganizationUnitRepository organizationUnitRepository,
-        WorkLocationRepository workLocationRepository,
-        Clock clock
-    ) {
-        this.accountAuthorizationService = accountAuthorizationService;
-        this.currentAccountProvider = currentAccountProvider;
-        this.accountRepository = accountRepository;
-        this.employeeRepository = employeeRepository;
-        this.organizationUnitRepository = organizationUnitRepository;
-        this.workLocationRepository = workLocationRepository;
-        this.clock = clock;
-    }
 
     public EmployeeAccessScope resolve(String permissionCode) {
         return resolve(currentAccountProvider.accountId(), permissionCode);

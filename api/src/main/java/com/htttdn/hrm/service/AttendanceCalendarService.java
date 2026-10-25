@@ -22,21 +22,16 @@ import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.repository.CompanyHolidayRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class AttendanceCalendarService {
     private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final EmployeeAssignmentRepository assignmentRepository;
     private final CompanyHolidayRepository holidayRepository;
-
-    public AttendanceCalendarService(
-        EmployeeAssignmentRepository assignmentRepository,
-        CompanyHolidayRepository holidayRepository
-    ) {
-        this.assignmentRepository = assignmentRepository;
-        this.holidayRepository = holidayRepository;
-    }
 
     public List<ScheduledDay> scheduleFor(Long employeeId, LocalDate from, LocalDate to) {
         Set<LocalDate> holidays = holidayRepository.findByHolidayDateBetweenOrderByHolidayDate(from, to)

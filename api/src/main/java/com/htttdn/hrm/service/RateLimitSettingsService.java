@@ -20,30 +20,21 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 
 import jakarta.annotation.PostConstruct;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Rate-limit quotas edited by administrators. Each change is stored in
  * {@code rate_limit_policy_settings} and applied to {@link RateLimitService} at once; stored
  * changes are replayed when the backend starts, before it serves requests.
  */
 @Service
+@RequiredArgsConstructor
 public class RateLimitSettingsService {
 
     private final RateLimitPolicySettingRepository settingRepository;
     private final AccountRepository accountRepository;
     private final RateLimitService rateLimitService;
     private final CurrentAccountProvider currentAccountProvider;
-
-    public RateLimitSettingsService(
-        RateLimitPolicySettingRepository settingRepository,
-        AccountRepository accountRepository,
-        RateLimitService rateLimitService,
-        CurrentAccountProvider currentAccountProvider
-    ) {
-        this.settingRepository = settingRepository;
-        this.accountRepository = accountRepository;
-        this.rateLimitService = rateLimitService;
-        this.currentAccountProvider = currentAccountProvider;
-    }
 
     @PostConstruct
     void applyStoredSettings() {

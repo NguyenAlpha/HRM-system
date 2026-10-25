@@ -34,9 +34,12 @@ import com.htttdn.hrm.repository.RolePermissionRepository;
 import com.htttdn.hrm.security.CanManagePermissionOverrides;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
 @CanManagePermissionOverrides
+@RequiredArgsConstructor
 public class AccountPermissionOverrideService {
 
     private final AccountRepository accountRepository;
@@ -48,28 +51,6 @@ public class AccountPermissionOverrideService {
     private final RefreshTokenService refreshTokenService;
     private final CompanyOwnerAccountGuard companyOwnerAccountGuard;
     private final Clock clock;
-
-    public AccountPermissionOverrideService(
-        AccountRepository accountRepository,
-        AccountRoleAssignmentRepository assignmentRepository,
-        AccountPermissionOverrideRepository overrideRepository,
-        PermissionRepository permissionRepository,
-        RolePermissionRepository rolePermissionRepository,
-        CurrentAccountProvider currentAccountProvider,
-        RefreshTokenService refreshTokenService,
-        CompanyOwnerAccountGuard companyOwnerAccountGuard,
-        Clock clock
-    ) {
-        this.accountRepository = accountRepository;
-        this.assignmentRepository = assignmentRepository;
-        this.overrideRepository = overrideRepository;
-        this.permissionRepository = permissionRepository;
-        this.rolePermissionRepository = rolePermissionRepository;
-        this.currentAccountProvider = currentAccountProvider;
-        this.refreshTokenService = refreshTokenService;
-        this.companyOwnerAccountGuard = companyOwnerAccountGuard;
-        this.clock = clock;
-    }
 
     @Transactional(readOnly = true)
     public List<AccountPermissionOverrideResponse> list(Long accountId, Long assignmentId) {

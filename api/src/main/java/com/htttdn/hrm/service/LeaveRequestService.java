@@ -36,8 +36,11 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class LeaveRequestService {
 
     private static final String REQUEST_READ = "request.read";
@@ -56,28 +59,6 @@ public class LeaveRequestService {
     private final LeaveEntitlementService leaveEntitlementService;
     private final ApproverResolver approverResolver;
     private final NotificationService notificationService;
-
-    public LeaveRequestService(
-        LeaveRequestRepository leaveRequestRepository,
-        EmployeeRepository employeeRepository,
-        AccountRepository accountRepository,
-        CurrentAccountProvider currentAccountProvider,
-        EmployeeAccessScopeService employeeAccessScopeService,
-        AttendanceService attendanceService,
-        LeaveEntitlementService leaveEntitlementService,
-        ApproverResolver approverResolver,
-        NotificationService notificationService
-    ) {
-        this.leaveRequestRepository = leaveRequestRepository;
-        this.employeeRepository = employeeRepository;
-        this.accountRepository = accountRepository;
-        this.currentAccountProvider = currentAccountProvider;
-        this.employeeAccessScopeService = employeeAccessScopeService;
-        this.attendanceService = attendanceService;
-        this.leaveEntitlementService = leaveEntitlementService;
-        this.approverResolver = approverResolver;
-        this.notificationService = notificationService;
-    }
 
     /**
      * The minutes are worked out from the employee's shifts over the period, never taken from the

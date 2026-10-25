@@ -14,8 +14,11 @@ import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class OrganizationCompanyOwnerProvisioningService {
 
     private static final String COMPANY_OWNER_ROLE = "COMPANY_OWNER";
@@ -27,22 +30,6 @@ public class OrganizationCompanyOwnerProvisioningService {
     private final AccountRoleAssignmentMapper roleAssignmentMapper;
     private final CurrentAccountProvider currentAccountProvider;
     private final CompanyProfileService companyProfileService;
-
-    public OrganizationCompanyOwnerProvisioningService(
-        EmployeeProvisioningService employeeProvisioningService,
-        AccountProvisioningService accountProvisioningService,
-        AccountRoleAssignmentCommandService roleAssignmentCommandService,
-        AccountRoleAssignmentMapper roleAssignmentMapper,
-        CurrentAccountProvider currentAccountProvider,
-        CompanyProfileService companyProfileService
-    ) {
-        this.employeeProvisioningService = employeeProvisioningService;
-        this.accountProvisioningService = accountProvisioningService;
-        this.roleAssignmentCommandService = roleAssignmentCommandService;
-        this.roleAssignmentMapper = roleAssignmentMapper;
-        this.currentAccountProvider = currentAccountProvider;
-        this.companyProfileService = companyProfileService;
-    }
 
     @PreAuthorize("hasAuthority('organization.company_owner.bootstrap')")
     public OrganizationCompanyOwnerProvisioningResponse provision(

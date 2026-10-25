@@ -26,18 +26,16 @@ import com.htttdn.hrm.service.PayrollService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/payroll")
+@RequiredArgsConstructor
 public class PayrollController {
     static final String XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
     private final PayrollService service;
     private final PayrollExportService exportService;
-
-    public PayrollController(PayrollService service, PayrollExportService exportService) {
-        this.service = service;
-        this.exportService = exportService;
-    }
 
     @PostMapping("/periods")
     public ApiResult<PayrollPeriodResponse> create(@Valid @RequestBody CreatePayrollPeriodRequest request) {

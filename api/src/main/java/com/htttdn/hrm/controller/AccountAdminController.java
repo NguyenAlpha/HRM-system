@@ -29,15 +29,14 @@ import com.htttdn.hrm.service.AccountAdminService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/accounts")
+@RequiredArgsConstructor
 public class AccountAdminController {
 
     private final AccountAdminService accountAdminService;
-
-    public AccountAdminController(AccountAdminService accountAdminService) {
-        this.accountAdminService = accountAdminService;
-    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

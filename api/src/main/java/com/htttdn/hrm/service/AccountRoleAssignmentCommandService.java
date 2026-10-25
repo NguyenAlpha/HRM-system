@@ -31,6 +31,8 @@ import com.htttdn.hrm.repository.OrganizationUnitRepository;
 import com.htttdn.hrm.repository.RoleRepository;
 import com.htttdn.hrm.repository.WorkLocationRepository;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Internal command component for creating and revoking effective role assignments.
  * Authorization remains at the public workflow boundary; every entry point here
@@ -38,6 +40,7 @@ import com.htttdn.hrm.repository.WorkLocationRepository;
  */
 @Service
 @Transactional(propagation = Propagation.MANDATORY)
+@RequiredArgsConstructor
 public class AccountRoleAssignmentCommandService {
 
     private static final String COMPANY_OWNER_ROLE = "COMPANY_OWNER";
@@ -56,26 +59,6 @@ public class AccountRoleAssignmentCommandService {
     private final RoleAssignmentPolicy roleAssignmentPolicy;
     private final RefreshTokenService refreshTokenService;
     private final Clock clock;
-
-    public AccountRoleAssignmentCommandService(
-        AccountRepository accountRepository,
-        RoleRepository roleRepository,
-        AccountRoleAssignmentRepository roleAssignmentRepository,
-        OrganizationUnitRepository organizationUnitRepository,
-        WorkLocationRepository workLocationRepository,
-        RoleAssignmentPolicy roleAssignmentPolicy,
-        RefreshTokenService refreshTokenService,
-        Clock clock
-    ) {
-        this.accountRepository = accountRepository;
-        this.roleRepository = roleRepository;
-        this.roleAssignmentRepository = roleAssignmentRepository;
-        this.organizationUnitRepository = organizationUnitRepository;
-        this.workLocationRepository = workLocationRepository;
-        this.roleAssignmentPolicy = roleAssignmentPolicy;
-        this.refreshTokenService = refreshTokenService;
-        this.clock = clock;
-    }
 
     /**
      * Revokes one assignment and keeps it as history: it stops counting at once, a period that has

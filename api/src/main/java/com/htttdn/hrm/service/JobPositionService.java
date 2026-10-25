@@ -21,23 +21,16 @@ import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.JobPositionRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class JobPositionService {
 
     private final JobPositionRepository jobPositionRepository;
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
     private final Clock clock;
-
-    public JobPositionService(
-        JobPositionRepository jobPositionRepository,
-        EmployeeAssignmentRepository employeeAssignmentRepository,
-        Clock clock
-    ) {
-        this.jobPositionRepository = jobPositionRepository;
-        this.employeeAssignmentRepository = employeeAssignmentRepository;
-        this.clock = clock;
-    }
 
     @PreAuthorize("hasAuthority('organization.read')")
     @Transactional(readOnly = true)

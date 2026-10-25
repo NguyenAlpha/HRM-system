@@ -17,11 +17,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * The second layer, after the JWT is verified: each signed-in user has their own quota, so people
  * behind one address do not use up each other's. A rule below replaces the default {@code api}
  * quota for its endpoints. Requests without a valid token are left to the IP layer.
  */
+@RequiredArgsConstructor
 public class UserRateLimitFilter extends OncePerRequestFilter {
 
     private static final List<Rule> RULES = List.of(
@@ -37,10 +40,6 @@ public class UserRateLimitFilter extends OncePerRequestFilter {
     );
 
     private final RateLimitService rateLimitService;
-
-    public UserRateLimitFilter(RateLimitService rateLimitService) {
-        this.rateLimitService = rateLimitService;
-    }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {

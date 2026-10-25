@@ -20,8 +20,11 @@ import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 
+import lombok.RequiredArgsConstructor;
+
 /** Writes every payslip of one payroll period to a single XLSX sheet, one row per employee. */
 @Service
+@RequiredArgsConstructor
 public class PayrollExportService {
     private static final String MONEY_FORMAT = "#,##0";
 
@@ -55,13 +58,6 @@ public class PayrollExportService {
     private final PayrollPeriodRepository payrollPeriodRepository;
     private final PayslipRepository payslipRepository;
     private final EmployeeAccessScopeService employeeAccessScopeService;
-
-    public PayrollExportService(PayrollPeriodRepository payrollPeriodRepository,
-        PayslipRepository payslipRepository, EmployeeAccessScopeService employeeAccessScopeService) {
-        this.payrollPeriodRepository = payrollPeriodRepository;
-        this.payslipRepository = payslipRepository;
-        this.employeeAccessScopeService = employeeAccessScopeService;
-    }
 
     public record PayrollExport(String fileName, byte[] content) {}
 

@@ -32,20 +32,15 @@ import com.htttdn.hrm.service.RoleAssignmentRequestService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/role-assignment-requests")
+@RequiredArgsConstructor
 public class RoleAssignmentRequestController {
 
     private final RoleAssignmentRequestService requestService;
     private final RoleAssignmentOptionService optionService;
-
-    public RoleAssignmentRequestController(
-        RoleAssignmentRequestService requestService,
-        RoleAssignmentOptionService optionService
-    ) {
-        this.requestService = requestService;
-        this.optionService = optionService;
-    }
 
     @GetMapping("/available-roles")
     @PreAuthorize("hasAuthority('role.assignment.request')")

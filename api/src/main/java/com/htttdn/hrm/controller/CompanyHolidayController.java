@@ -22,14 +22,13 @@ import com.htttdn.hrm.service.CompanyHolidayService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/company-holidays")
+@RequiredArgsConstructor
 public class CompanyHolidayController {
     private final CompanyHolidayService service;
-
-    public CompanyHolidayController(CompanyHolidayService service) {
-        this.service = service;
-    }
 
     @GetMapping
     @PreAuthorize("hasAuthority('holiday.read')")

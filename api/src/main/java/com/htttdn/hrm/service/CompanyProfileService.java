@@ -17,12 +17,15 @@ import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.CompanyProfileRepository;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * The one company the system runs for (row {@code id = 1}). The system admin fills it in when
  * bootstrapping the first Company Owner; after the handover only the owner ({@code company.manage}) edits it.
  */
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class CompanyProfileService {
 
     static final short COMPANY_PROFILE_ID = 1;
@@ -35,10 +38,6 @@ public class CompanyProfileService {
     }
 
     private final CompanyProfileRepository companyProfileRepository;
-
-    public CompanyProfileService(CompanyProfileRepository companyProfileRepository) {
-        this.companyProfileRepository = companyProfileRepository;
-    }
 
     /** Anyone signed in may read it: it heads payslips and printed sheets. */
     @Transactional(readOnly = true)

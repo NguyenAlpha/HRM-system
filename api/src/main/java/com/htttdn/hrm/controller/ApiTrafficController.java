@@ -12,15 +12,14 @@ import com.htttdn.hrm.dto.response.traffic.ApiTrafficTimelineResponse;
 import com.htttdn.hrm.service.ApiTrafficService;
 import com.htttdn.hrm.timeline.TimelineRange;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/system/traffic")
+@RequiredArgsConstructor
 public class ApiTrafficController {
 
     private final ApiTrafficService apiTrafficService;
-
-    public ApiTrafficController(ApiTrafficService apiTrafficService) {
-        this.apiTrafficService = apiTrafficService;
-    }
 
     @GetMapping("/stats")
     @PreAuthorize("hasAuthority('system.traffic.read')")

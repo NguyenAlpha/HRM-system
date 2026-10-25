@@ -23,6 +23,8 @@ import com.htttdn.hrm.repository.PayrollAdjustmentRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Bonuses, other allowances and deductions entered by the payroll accountant for one period.
  * They only reach payslips through calculation, so changing them sends a CALCULATED period back
@@ -30,6 +32,7 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
  */
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class PayrollAdjustmentService {
     private static final String PAYROLL_CALCULATE = "payroll.calculate";
 
@@ -39,18 +42,6 @@ public class PayrollAdjustmentService {
     private final AccountRepository accountRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
-
-    public PayrollAdjustmentService(PayrollAdjustmentRepository adjustmentRepository,
-        PayrollPeriodRepository payrollPeriodRepository, EmployeeRepository employeeRepository,
-        AccountRepository accountRepository, CurrentAccountProvider currentAccountProvider,
-        EmployeeAccessScopeService employeeAccessScopeService) {
-        this.adjustmentRepository = adjustmentRepository;
-        this.payrollPeriodRepository = payrollPeriodRepository;
-        this.employeeRepository = employeeRepository;
-        this.accountRepository = accountRepository;
-        this.currentAccountProvider = currentAccountProvider;
-        this.employeeAccessScopeService = employeeAccessScopeService;
-    }
 
     @PreAuthorize("hasAuthority('payroll.calculate')")
     @Transactional(readOnly = true)

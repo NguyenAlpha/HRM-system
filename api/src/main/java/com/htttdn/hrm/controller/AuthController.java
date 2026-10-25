@@ -19,15 +19,14 @@ import com.htttdn.hrm.service.AuthService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
-
-    public AuthController(AuthService authService) {
-        this.authService = authService;
-    }
 
     @PostMapping("/login")
     public ApiResult<AuthResponse> login(@Valid @RequestBody LoginRequest request) {

@@ -59,8 +59,11 @@ import com.htttdn.hrm.repository.PositionAllowanceRuleRepository;
 import com.htttdn.hrm.repository.SeniorityAllowanceRuleRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class PayrollService {
 
     /** Dates written into payslip lines read like the rest of the app: 24/10/2026. */
@@ -81,40 +84,6 @@ public class PayrollService {
     private final AttendanceCalendarService attendanceCalendarService;
     private final PayrollDeductionsService payrollDeductionsService;
     private final PayrollAdjustmentRepository payrollAdjustmentRepository;
-
-    public PayrollService(
-        PayrollPeriodRepository payrollPeriodRepository,
-        PayslipRepository payslipRepository,
-        PayslipItemRepository payslipItemRepository,
-        EmployeeRepository employeeRepository,
-        EmployeeAssignmentRepository employeeAssignmentRepository,
-        EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository,
-        PositionAllowanceRuleRepository positionAllowanceRuleRepository,
-        SeniorityAllowanceRuleRepository seniorityAllowanceRuleRepository,
-        AttendanceRecordRepository attendanceRecordRepository,
-        AccountRepository accountRepository,
-        CurrentAccountProvider currentAccountProvider,
-        EmployeeAccessScopeService employeeAccessScopeService,
-        AttendanceCalendarService attendanceCalendarService,
-        PayrollDeductionsService payrollDeductionsService,
-        PayrollAdjustmentRepository payrollAdjustmentRepository
-    ) {
-        this.payrollPeriodRepository = payrollPeriodRepository;
-        this.payslipRepository = payslipRepository;
-        this.payslipItemRepository = payslipItemRepository;
-        this.employeeRepository = employeeRepository;
-        this.employeeAssignmentRepository = employeeAssignmentRepository;
-        this.employeeSalaryHistoryRepository = employeeSalaryHistoryRepository;
-        this.positionAllowanceRuleRepository = positionAllowanceRuleRepository;
-        this.seniorityAllowanceRuleRepository = seniorityAllowanceRuleRepository;
-        this.attendanceRecordRepository = attendanceRecordRepository;
-        this.accountRepository = accountRepository;
-        this.currentAccountProvider = currentAccountProvider;
-        this.employeeAccessScopeService = employeeAccessScopeService;
-        this.attendanceCalendarService = attendanceCalendarService;
-        this.payrollDeductionsService = payrollDeductionsService;
-        this.payrollAdjustmentRepository = payrollAdjustmentRepository;
-    }
 
     @PreAuthorize("hasAuthority('payroll.calculate')")
     public PayrollPeriodResponse createPeriod(CreatePayrollPeriodRequest request) {

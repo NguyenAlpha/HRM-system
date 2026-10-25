@@ -51,8 +51,11 @@ import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.repository.specification.EmployeeSpecifications;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class AttendanceService {
 
     private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
@@ -68,26 +71,6 @@ public class AttendanceService {
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final AttendanceCalendarService attendanceCalendarService;
     private final ApproverResolver approverResolver;
-
-    public AttendanceService(
-        AttendanceRecordRepository attendanceRecordRepository,
-        EmployeeRepository employeeRepository,
-        AccountRepository accountRepository,
-        PayrollPeriodRepository payrollPeriodRepository,
-        CurrentAccountProvider currentAccountProvider,
-        EmployeeAccessScopeService employeeAccessScopeService,
-        AttendanceCalendarService attendanceCalendarService,
-        ApproverResolver approverResolver
-    ) {
-        this.attendanceRecordRepository = attendanceRecordRepository;
-        this.employeeRepository = employeeRepository;
-        this.accountRepository = accountRepository;
-        this.payrollPeriodRepository = payrollPeriodRepository;
-        this.currentAccountProvider = currentAccountProvider;
-        this.employeeAccessScopeService = employeeAccessScopeService;
-        this.attendanceCalendarService = attendanceCalendarService;
-        this.approverResolver = approverResolver;
-    }
 
     @PreAuthorize("hasAuthority('attendance.manage')")
     public int prepareMonth(int year, int month) {

@@ -14,24 +14,19 @@ import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.EmployeeRepository;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Internal building block for workflows that must bootstrap a minimal employee.
  * Authorization belongs to the workflow service that invokes this component.
  */
 @Service
 @Transactional(propagation = Propagation.MANDATORY)
+@RequiredArgsConstructor
 public class EmployeeProvisioningService {
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeCodeGenerator employeeCodeGenerator;
-
-    public EmployeeProvisioningService(
-        EmployeeRepository employeeRepository,
-        EmployeeCodeGenerator employeeCodeGenerator
-    ) {
-        this.employeeRepository = employeeRepository;
-        this.employeeCodeGenerator = employeeCodeGenerator;
-    }
 
     public Employee createActiveMinimalEmployee(MinimalEmployeeCommand command) {
         String workEmail = command.workEmail().trim().toLowerCase(Locale.ROOT);

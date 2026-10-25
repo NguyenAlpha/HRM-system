@@ -19,14 +19,13 @@ import com.htttdn.hrm.service.PayrollAdjustmentService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/payroll/periods/{periodId}/adjustments")
+@RequiredArgsConstructor
 public class PayrollAdjustmentController {
     private final PayrollAdjustmentService service;
-
-    public PayrollAdjustmentController(PayrollAdjustmentService service) {
-        this.service = service;
-    }
 
     @GetMapping
     public ApiResult<List<PayrollAdjustmentResponse>> list(@PathVariable Long periodId) {

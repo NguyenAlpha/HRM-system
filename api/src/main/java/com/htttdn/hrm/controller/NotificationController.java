@@ -11,15 +11,14 @@ import com.htttdn.hrm.service.NotificationService;
 import com.htttdn.hrm.service.NotificationService.InboxView;
 import com.htttdn.hrm.service.NotificationService.NotificationView;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/notifications")
+@RequiredArgsConstructor
 public class NotificationController {
 
     private final NotificationService service;
-
-    public NotificationController(NotificationService service) {
-        this.service = service;
-    }
 
     @GetMapping
     public ApiResult<InboxView> inbox() {

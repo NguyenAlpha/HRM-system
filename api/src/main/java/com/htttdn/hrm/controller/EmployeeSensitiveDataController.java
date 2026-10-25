@@ -14,15 +14,14 @@ import com.htttdn.hrm.service.EmployeeSensitiveDataService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/employees/{employeeId}/sensitive")
+@RequiredArgsConstructor
 public class EmployeeSensitiveDataController {
 
     private final EmployeeSensitiveDataService employeeSensitiveDataService;
-
-    public EmployeeSensitiveDataController(EmployeeSensitiveDataService employeeSensitiveDataService) {
-        this.employeeSensitiveDataService = employeeSensitiveDataService;
-    }
 
     @GetMapping
     public ApiResult<EmployeeSensitiveResponse> get(@PathVariable Long employeeId) {

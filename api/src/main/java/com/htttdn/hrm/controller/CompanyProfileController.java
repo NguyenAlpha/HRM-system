@@ -20,15 +20,14 @@ import com.htttdn.hrm.service.CompanyProfileService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/company")
+@RequiredArgsConstructor
 public class CompanyProfileController {
 
     private final CompanyProfileService service;
-
-    public CompanyProfileController(CompanyProfileService service) {
-        this.service = service;
-    }
 
     @GetMapping
     public ApiResult<CompanyProfileResponse> get() {

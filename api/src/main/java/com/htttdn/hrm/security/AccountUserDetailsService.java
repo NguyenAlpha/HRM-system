@@ -10,14 +10,13 @@ import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.repository.AccountRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class AccountUserDetailsService implements UserDetailsService {
 
     private final AccountRepository accountRepository;
-
-    public AccountUserDetailsService(AccountRepository accountRepository) {
-        this.accountRepository = accountRepository;
-    }
 
     @Override
     public UserDetails loadUserByUsername(String usernameOrEmail) {

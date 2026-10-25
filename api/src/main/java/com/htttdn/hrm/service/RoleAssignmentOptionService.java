@@ -13,20 +13,15 @@ import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.repository.RoleRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class RoleAssignmentOptionService {
 
     private final RoleRepository roleRepository;
     private final RoleAssignmentPolicy roleAssignmentPolicy;
-
-    public RoleAssignmentOptionService(
-        RoleRepository roleRepository,
-        RoleAssignmentPolicy roleAssignmentPolicy
-    ) {
-        this.roleRepository = roleRepository;
-        this.roleAssignmentPolicy = roleAssignmentPolicy;
-    }
 
     @PreAuthorize("hasAuthority('role.assignment.request')")
     public List<RoleAssignmentOptionResponse> listAvailableRoles() {

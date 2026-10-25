@@ -17,19 +17,15 @@ import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.CompanyHolidayRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class CompanyHolidayService {
     private final CompanyHolidayRepository holidayRepository;
     private final PayrollPeriodRepository payrollPeriodRepository;
     private final EmployeeAccessScopeService accessScopeService;
-
-    public CompanyHolidayService(CompanyHolidayRepository holidayRepository,
-        PayrollPeriodRepository payrollPeriodRepository, EmployeeAccessScopeService accessScopeService) {
-        this.holidayRepository = holidayRepository;
-        this.payrollPeriodRepository = payrollPeriodRepository;
-        this.accessScopeService = accessScopeService;
-    }
 
     /** The holiday calendar is the same for the whole company, so reading it has no scope. */
     @PreAuthorize("hasAuthority('holiday.read')")

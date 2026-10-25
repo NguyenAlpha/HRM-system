@@ -25,6 +25,8 @@ import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.RoleAssignmentRequestRepository;
 import com.htttdn.hrm.repository.RoleRepository;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Ghi yêu cầu cấp role cho account của một nhân viên được seed, như HR gửi và Company Owner quyết
  * định. Chỉ role cần Owner duyệt mới có yêu cầu chờ; yêu cầu đã duyệt tạo luôn phân quyền tương ứng.
@@ -34,6 +36,7 @@ import com.htttdn.hrm.repository.RoleRepository;
  * điểm của phân công hiện hành, như role khai báo trong file seed.
  */
 @Component
+@RequiredArgsConstructor
 class SeedRoleRequestWriter {
 
     private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
@@ -42,18 +45,6 @@ class SeedRoleRequestWriter {
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final RoleAssignmentRequestRepository roleAssignmentRequestRepository;
     private final RoleRepository roleRepository;
-
-    SeedRoleRequestWriter(
-        AccountRepository accountRepository,
-        AccountRoleAssignmentRepository accountRoleAssignmentRepository,
-        RoleAssignmentRequestRepository roleAssignmentRequestRepository,
-        RoleRepository roleRepository
-    ) {
-        this.accountRepository = accountRepository;
-        this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
-        this.roleAssignmentRequestRepository = roleAssignmentRequestRepository;
-        this.roleRepository = roleRepository;
-    }
 
     void write(StaffEntry entry, Account account, OrganizationUnit unit, WorkLocation location, Account owner) {
         List<RoleRequestEntry> requests = entry.roleRequests();

@@ -14,15 +14,14 @@ import com.htttdn.hrm.dto.response.permission.PermissionResponse;
 import com.htttdn.hrm.entity.enums.PermissionModule;
 import com.htttdn.hrm.service.PermissionService;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/permissions")
+@RequiredArgsConstructor
 public class PermissionController {
 
     private final PermissionService permissionService;
-
-    public PermissionController(PermissionService permissionService) {
-        this.permissionService = permissionService;
-    }
 
     @GetMapping
     public ApiResult<PagedResult<PermissionResponse>> list(

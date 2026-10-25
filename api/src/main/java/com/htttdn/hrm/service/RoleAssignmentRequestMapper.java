@@ -7,14 +7,13 @@ import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.RoleAssignmentRequest;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class RoleAssignmentRequestMapper {
 
     private final AccountRoleAssignmentMapper roleAssignmentMapper;
-
-    public RoleAssignmentRequestMapper(AccountRoleAssignmentMapper roleAssignmentMapper) {
-        this.roleAssignmentMapper = roleAssignmentMapper;
-    }
 
     public RoleAssignmentRequestResponse toResponse(RoleAssignmentRequest request) {
         Employee employee = request.getAccount().getEmployee();

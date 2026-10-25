@@ -27,14 +27,13 @@ import com.htttdn.hrm.service.LeaveRequestService.LeaveRequestView;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/leave-requests")
+@RequiredArgsConstructor
 public class LeaveRequestController {
     private final LeaveRequestService service;
-
-    public LeaveRequestController(LeaveRequestService service) {
-        this.service = service;
-    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

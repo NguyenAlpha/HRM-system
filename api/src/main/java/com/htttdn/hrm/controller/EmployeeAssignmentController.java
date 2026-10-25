@@ -19,15 +19,14 @@ import com.htttdn.hrm.service.EmployeeAssignmentService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/employees/{employeeId}/assignments")
+@RequiredArgsConstructor
 public class EmployeeAssignmentController {
 
     private final EmployeeAssignmentService employeeAssignmentService;
-
-    public EmployeeAssignmentController(EmployeeAssignmentService employeeAssignmentService) {
-        this.employeeAssignmentService = employeeAssignmentService;
-    }
 
     @GetMapping
     @PreAuthorize("hasAuthority('employee.assignment.read')")

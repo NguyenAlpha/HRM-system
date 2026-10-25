@@ -18,6 +18,8 @@ import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.EmployeeRepository;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Prepares the current month's attendance (the same as {@code POST /api/attendance/prepare}) at
  * 00:05 every night, and once at startup in case the server was down at that time. Running daily
@@ -28,6 +30,7 @@ import com.htttdn.hrm.repository.EmployeeRepository;
 @EnableScheduling
 @Order(1000)
 @ConditionalOnProperty(name = "attendance.auto-prepare.enabled", havingValue = "true", matchIfMissing = true)
+@RequiredArgsConstructor
 public class AttendanceAutoPrepareJob implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(AttendanceAutoPrepareJob.class);
@@ -35,11 +38,6 @@ public class AttendanceAutoPrepareJob implements ApplicationRunner {
 
     private final AttendanceService attendanceService;
     private final EmployeeRepository employeeRepository;
-
-    public AttendanceAutoPrepareJob(AttendanceService attendanceService, EmployeeRepository employeeRepository) {
-        this.attendanceService = attendanceService;
-        this.employeeRepository = employeeRepository;
-    }
 
     @Override
     public void run(ApplicationArguments args) {
