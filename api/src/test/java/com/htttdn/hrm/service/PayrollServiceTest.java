@@ -350,6 +350,54 @@ class PayrollServiceTest {
         assertEquals(new BigDecimal("20000000"), captor.getValue().getContractualBaseSalary());
     }
 
+    @Test
+    void employeeLeavingMidMonthIsPaidUpToTheLastWorkingDayOverTheWholeMonthsWorkdays() {
+        LocalDate start = LocalDate.of(2026, 10, 1);
+        LocalDate end = LocalDate.of(2026, 10, 31);
+        LocalDate lastWorkingDay = LocalDate.of(2026, 10, 24);
+        LocalDate dayBefore = lastWorkingDay.minusDays(1);
+        PayrollPeriod period = PayrollPeriod.builder().id(1L).periodStart(start).periodEnd(end)
+            .taxPaymentDate(end).status(PayrollPeriodStatus.DRAFT).build();
+        Employee employee = Employee.builder().id(2L).employeeCode("EMP002").fullName("Employee Two")
+            .hireDate(start).terminationDate(lastWorkingDay)
+            .seniorityStartDate(start).build();
+        EmployeeAssignment assignment = EmployeeAssignment.builder()
+            .position(JobPosition.builder().id(3L).code("DEV").title("Developer").build())
+            .workLocation(WorkLocation.builder().name("Office").build())
+            .organizationUnit(OrganizationUnit.builder().name("Engineering").build()).build();
+        WorkShift shift = WorkShift.builder().standardWorkMinutes(480).build();
+        EmployeeSalaryHistory salary = EmployeeSalaryHistory.builder().baseSalary(new BigDecimal("27000000")).build();
+        when(payrollPeriodRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(period));
+        when(currentAccountProvider.accountId()).thenReturn(9L);
+        when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).build()));
+        when(employeeRepository.findEmployedDuring(start, end)).thenReturn(List.of(employee));
+        // Nothing after the last working day is expected or scheduled …
+        when(attendanceCalendarService.companyWorkDates(start, lastWorkingDay)).thenReturn(List.of(dayBefore, lastWorkingDay));
+        when(attendanceCalendarService.scheduleFor(2L, start, lastWorkingDay)).thenReturn(List.of(
+            new AttendanceCalendarService.ScheduledDay(dayBefore, shift, Instant.now(), Instant.now(), 480),
+            new AttendanceCalendarService.ScheduledDay(lastWorkingDay, shift, Instant.now(), Instant.now(), 480)));
+        // … but a day's pay is still a share of the whole month's workdays.
+        when(attendanceCalendarService.companyWorkdayCount(start, end)).thenReturn(27L);
+        when(attendanceRecordRepository.findByEmployeeIdAndWorkDateBetween(2L, start, end)).thenReturn(List.of(
+            AttendanceRecord.builder().workDate(dayBefore).scheduledMinutes(480).payableMinutes(480).build(),
+            AttendanceRecord.builder().workDate(lastWorkingDay).scheduledMinutes(480).payableMinutes(480).build()));
+        when(employeeSalaryHistoryRepository.findEffective(eq(2L), any(LocalDate.class))).thenReturn(Optional.of(salary));
+        when(employeeAssignmentRepository.findCurrentPrimaryCandidates(eq(2L), any(LocalDate.class)))
+            .thenReturn(List.of(assignment));
+        when(payslipRepository.save(any(Payslip.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(payslipRepository.totalsForPeriod(anyLong())).thenReturn(noTotals());
+
+        stubNoDeductions();
+
+        service().calculate(1L, new PayrollActionRequest(end));
+
+        ArgumentCaptor<Payslip> captor = ArgumentCaptor.forClass(Payslip.class);
+        verify(payslipRepository).save(captor.capture());
+        assertEquals(new BigDecimal("2000000.00"), captor.getValue().getBaseSalaryPay());
+        verify(payrollDeductionsService).calculate(eq(2L), eq(lastWorkingDay), eq(end),
+            eq(new BigDecimal("2000000.00")), eq(0L));
+    }
+
     /** The period response sums the payslips; these tests read only the period status. */
     private static PayslipRepository.PeriodTotals noTotals() {
         return new PayslipRepository.PeriodTotals() {

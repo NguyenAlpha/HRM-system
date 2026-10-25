@@ -240,8 +240,9 @@ export function monthTotals(days: Day[]) {
   const lateDays = days.filter((day) => lateOrEarly(day) > 0)
   return {
     payableDays: rows.reduce((sum, row) => sum + (row.scheduledMinutes > 0 ? row.payableMinutes / row.scheduledMinutes : 0), 0),
-    // A Sunday or holiday worked has a record but is not part of the standard month.
-    standardDays: days.filter((day) => day.record && !isOffDay(day)).length,
+    // The company's workdays of the whole month, as payroll divides by: days before hiring or after the last
+    // working day still count, and a Sunday or holiday worked has a record but is not part of the standard month.
+    standardDays: days.filter((day) => !isOffDay(day)).length,
     lateCount: lateDays.length,
     lateMinutes: lateDays.reduce((sum, day) => sum + lateOrEarly(day), 0),
     leaveDays: rows.filter((row) => FULL_DAY_LEAVE.has(row.status)).length,
