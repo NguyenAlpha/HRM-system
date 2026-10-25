@@ -224,8 +224,7 @@ class AttendanceServiceTest {
         when(attendanceCalendarService.companyWorkDates(date, date)).thenReturn(List.of(date));
         when(attendanceRecordRepository.save(org.mockito.ArgumentMatchers.any(AttendanceRecord.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
-        when(currentAccountProvider.accountId()).thenReturn(7L);
-        when(accountRepository.findById(7L)).thenReturn(Optional.of(Account.builder().id(7L).build()));
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(7L).build());
 
         var response = service().recordPunches(new RecordPunchesRequest(2L, date,
             Instant.parse("2026-01-15T01:20:00Z"), Instant.parse("2026-01-15T10:00:00Z"), null));
@@ -249,8 +248,7 @@ class AttendanceServiceTest {
         when(attendanceRecordRepository.findByEmployeeIdAndWorkDateForUpdate(2L, date)).thenReturn(Optional.of(record));
         when(attendanceCalendarService.companyWorkDates(date, date)).thenReturn(List.of(date));
         when(attendanceRecordRepository.save(record)).thenReturn(record);
-        when(currentAccountProvider.accountId()).thenReturn(7L);
-        when(accountRepository.findById(7L)).thenReturn(Optional.of(Account.builder().id(7L).build()));
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(7L).build());
 
         var response = service().recordPunches(new RecordPunchesRequest(2L, date,
             Instant.parse("2026-01-15T01:00:00Z"), Instant.parse("2026-01-15T10:00:00Z"), " Máy chấm gửi muộn "));
@@ -326,8 +324,7 @@ class AttendanceServiceTest {
     /** The signed-in account is the approver of the record's employee. */
     private void stubApproverOf(AttendanceRecord record) {
         Employee manager = Employee.builder().id(5L).build();
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).employee(manager).build()));
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).employee(manager).build());
         when(approverResolver.approverFor(record.getEmployee())).thenReturn(Optional.of(manager));
     }
 
@@ -348,8 +345,7 @@ class AttendanceServiceTest {
     }
 
     private AttendanceService service() {
-        return new AttendanceService(attendanceRecordRepository, employeeRepository,
-            accountRepository, payrollPeriodRepository,
+        return new AttendanceService(attendanceRecordRepository, employeeRepository, payrollPeriodRepository,
             currentAccountProvider, employeeAccessScopeService, attendanceCalendarService, approverResolver);
     }
 }

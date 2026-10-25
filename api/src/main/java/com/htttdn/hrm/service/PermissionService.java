@@ -5,11 +5,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.permission.PermissionResponse;
 import com.htttdn.hrm.entity.Permission;
 import com.htttdn.hrm.entity.enums.PermissionModule;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.PermissionRepository;
 import com.htttdn.hrm.security.CanManageRbac;
 
@@ -25,7 +23,7 @@ public class PermissionService {
 
     @Transactional(readOnly = true)
     public PermissionResponse getById(Long id) {
-        return toResponse(findPermissionOrThrow(id));
+        return toResponse(permissionRepository.getRequired(id));
     }
 
     @Transactional(readOnly = true)
@@ -36,12 +34,6 @@ public class PermissionService {
     @Transactional(readOnly = true)
     public Page<PermissionResponse> listByModule(PermissionModule module, Pageable pageable) {
         return permissionRepository.findByModule(module, pageable).map(this::toResponse);
-    }
-
-    private Permission findPermissionOrThrow(Long id) {
-        return permissionRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.PERMISSION_NOT_FOUND, "Permission not found: " + id));
     }
 
     private PermissionResponse toResponse(Permission permission) {

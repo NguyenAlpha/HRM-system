@@ -15,7 +15,9 @@ import org.springframework.data.repository.query.Param;
 
 import jakarta.persistence.LockModeType;
 
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
+import com.htttdn.hrm.exception.ResourceNotFoundException;
 
 public interface AccountRepository extends JpaRepository<Account, Long>, JpaSpecificationExecutor<Account> {
 
@@ -77,4 +79,25 @@ public interface AccountRepository extends JpaRepository<Account, Long>, JpaSpec
     boolean existsByEmailIgnoreCase(String email);
 
     boolean existsByEmailIgnoreCaseAndIdNot(String email, Long id);
+
+    /*
+     * "Tìm hoặc báo không thấy": default method của interface là code Java bình thường, Spring Data không
+     * sinh truy vấn cho nó mà chạy nguyên thân hàm, nên có thể gọi các hàm sinh sẵn như findById.
+     * Service gọi accountRepository.getRequired(id) thay vì tự viết findById(...).orElseThrow(...).
+     * Quy ước tên của Spring Data: find... trả Optional, get... trả entity hoặc ném lỗi.
+     */
+
+    /** Tài khoản theo id (kể cả đã xóa mềm), không có thì 404 {@code ACCOUNT_NOT_FOUND}. */
+    default Account getRequired(Long id) {
+        return findById(id).orElseThrow(() -> notFound(id));
+    }
+
+    /** Như {@link #getRequired}, kèm khóa ghi ({@link #findByIdForUpdate}). */
+    default Account getRequiredForUpdate(Long id) {
+        return findByIdForUpdate(id).orElseThrow(() -> notFound(id));
+    }
+
+    private static ResourceNotFoundException notFound(Long id) {
+        return new ResourceNotFoundException(ErrorCode.ACCOUNT_NOT_FOUND, "Account not found: " + id);
+    }
 }

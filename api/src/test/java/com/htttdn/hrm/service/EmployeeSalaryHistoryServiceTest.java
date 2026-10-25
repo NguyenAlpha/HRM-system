@@ -3,7 +3,6 @@ package com.htttdn.hrm.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,11 +56,10 @@ class EmployeeSalaryHistoryServiceTest {
             .effectiveFrom(LocalDate.of(2025, 1, 1))
             .approvedByAccount(approver)
             .build();
-        when(employeeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.getRequiredForUpdate(1L)).thenReturn(employee);
         when(salaryHistoryRepository.findOpenByEmployeeIdForUpdate(1L))
             .thenReturn(List.of(current));
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(approver));
+        when(currentAccountProvider.account()).thenReturn(approver);
         when(salaryHistoryRepository.save(any(EmployeeSalaryHistory.class))).thenAnswer(invocation -> {
             EmployeeSalaryHistory saved = invocation.getArgument(0);
             saved.setId(2L);
@@ -93,12 +91,11 @@ class EmployeeSalaryHistoryServiceTest {
             .status(PayrollPeriodStatus.CALCULATED)
             .calculatedByAccount(approver).build();
         Payslip payslip = Payslip.builder().id(11L).build();
-        when(employeeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.getRequiredForUpdate(1L)).thenReturn(employee);
         when(payrollPeriodRepository.findAffectedPeriodsForUpdate(any(), any()))
             .thenReturn(List.of(period));
         when(salaryHistoryRepository.findOpenByEmployeeIdForUpdate(1L)).thenReturn(List.of());
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(approver));
+        when(currentAccountProvider.account()).thenReturn(approver);
         when(salaryHistoryRepository.save(any(EmployeeSalaryHistory.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
         when(payslipRepository.findByPayrollPeriodId(7L)).thenReturn(List.of(payslip));
@@ -119,7 +116,7 @@ class EmployeeSalaryHistoryServiceTest {
         PayrollPeriod period = PayrollPeriod.builder()
             .id(7L).year((short) 2026).month((short) 1)
             .status(PayrollPeriodStatus.APPROVED).build();
-        when(employeeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.getRequiredForUpdate(1L)).thenReturn(employee);
         when(payrollPeriodRepository.findAffectedPeriodsForUpdate(any(), any()))
             .thenReturn(List.of(period));
 
@@ -135,7 +132,6 @@ class EmployeeSalaryHistoryServiceTest {
             payrollPeriodRepository,
             payslipRepository,
             payslipItemRepository,
-            accountRepository,
             currentAccountProvider,
             employeeAccessScopeService
         );

@@ -94,13 +94,10 @@ public class NotificationService {
 
     @Transactional(readOnly = true)
     public InboxView inbox() {
-        Long accountId = currentAccountProvider.accountId();
-        Account account = accountRepository.findById(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ACCOUNT_NOT_FOUND, "Account not found: " + accountId));
-        List<NotificationView> items = notificationRepository.findTop30ByRecipientIdOrderByCreatedAtDesc(accountId)
+        Account account = currentAccountProvider.account();
+        List<NotificationView> items = notificationRepository.findTop30ByRecipientIdOrderByCreatedAtDesc(account.getId())
             .stream().map(notification -> toView(notification, account)).toList();
-        return new InboxView(notificationRepository.countByRecipientIdAndReadAtIsNull(accountId), items);
+        return new InboxView(notificationRepository.countByRecipientIdAndReadAtIsNull(account.getId()), items);
     }
 
     @Transactional
@@ -112,10 +109,7 @@ public class NotificationService {
         if (notification.getReadAt() == null) {
             notification.setReadAt(Instant.now());
         }
-        Account account = accountRepository.findById(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ACCOUNT_NOT_FOUND, "Account not found: " + accountId));
-        return toView(notification, account);
+        return toView(notification, currentAccountProvider.account());
     }
 
     private NotificationView toView(Notification notification, Account account) {

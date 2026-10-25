@@ -25,7 +25,6 @@ import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
-import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.JobPositionRepository;
@@ -57,7 +56,6 @@ public class EmployeeAssignmentService {
     private final PayrollPeriodRepository payrollPeriodRepository;
     private final PayslipRepository payslipRepository;
     private final PayslipItemRepository payslipItemRepository;
-    private final AccountRepository accountRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final Clock clock;
@@ -70,15 +68,14 @@ public class EmployeeAssignmentService {
         validateEffectiveFrom(employee, request.effectiveFrom(), "initialAssignment.effectiveFrom");
         validateManagerIsNotSelf(employee.getId(), request.managerEmployeeId());
         AssignmentResources resources = resolveResources(request, EMPLOYEE_CREATE);
-        return toResponse(savePrimaryAssignment(employee, request, resources, findCurrentAccount()));
+        return toResponse(savePrimaryAssignment(employee, request, resources, currentAccountProvider.account()));
     }
 
     @PreAuthorize("hasAuthority('employee.assignment.manage')")
     public EmployeeAssignmentResponse assign(Long employeeId, AssignEmployeeRequest request) {
         findEmployee(employeeId);
         employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_ASSIGNMENT_MANAGE);
-        Employee employee = employeeRepository.findByIdForUpdate(employeeId)
-            .orElseThrow(() -> employeeNotFound(employeeId));
+        Employee employee = employeeRepository.getRequiredForUpdate(employeeId);
 
         if (isEmploymentEnded(employee.getEmploymentStatus())) {
             throw new ConflictException(
@@ -105,7 +102,7 @@ public class EmployeeAssignmentService {
             .ifPresent(current -> closeCurrentAssignment(current, request.effectiveFrom()));
         employeeAssignmentRepository.flush();
 
-        return toResponse(savePrimaryAssignment(employee, request, resources, findCurrentAccount()));
+        return toResponse(savePrimaryAssignment(employee, request, resources, currentAccountProvider.account()));
     }
 
     @PreAuthorize("hasAuthority('employee.assignment.read')")
@@ -262,24 +259,7 @@ public class EmployeeAssignmentService {
     }
 
     private Employee findEmployee(Long employeeId) {
-        return employeeRepository.findByIdAndDeletedAtIsNull(employeeId)
-            .orElseThrow(() -> employeeNotFound(employeeId));
-    }
-
-    private ResourceNotFoundException employeeNotFound(Long employeeId) {
-        return new ResourceNotFoundException(
-            ErrorCode.EMPLOYEE_NOT_FOUND,
-            "Employee not found: " + employeeId
-        );
-    }
-
-    private Account findCurrentAccount() {
-        Long accountId = currentAccountProvider.accountId();
-        return accountRepository.findById(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND,
-                "Account not found: " + accountId
-            ));
+        return employeeRepository.getRequired(employeeId);
     }
 
     private boolean isEmploymentEnded(EmploymentStatus status) {

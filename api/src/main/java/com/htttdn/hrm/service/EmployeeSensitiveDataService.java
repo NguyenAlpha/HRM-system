@@ -1,6 +1,5 @@
 package com.htttdn.hrm.service;
 
-
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,7 +9,6 @@ import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.employee.EmployeeSensitiveResponse;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.exception.ConflictException;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.EmployeeRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -29,14 +27,14 @@ public class EmployeeSensitiveDataService {
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('employee.sensitive.read')")
     public EmployeeSensitiveResponse get(Long employeeId) {
-        Employee employee = findEmployeeOrThrow(employeeId);
+        Employee employee = employeeRepository.getRequired(employeeId);
         employeeAccessScopeService.requireEmployeeAccess(employeeId, SENSITIVE_READ);
         return toResponse(employee);
     }
 
     @PreAuthorize("hasAuthority('employee.sensitive.manage')")
     public EmployeeSensitiveResponse update(Long employeeId, UpdateEmployeeSensitiveRequest request) {
-        Employee employee = findEmployeeOrThrow(employeeId);
+        Employee employee = employeeRepository.getRequired(employeeId);
         employeeAccessScopeService.requireEmployeeAccess(employeeId, SENSITIVE_MANAGE);
         if (request.nationalId() != null
             && employeeRepository.existsByNationalIdAndIdNot(request.nationalId(), employeeId)) {
@@ -51,14 +49,6 @@ public class EmployeeSensitiveDataService {
         employee.setBankAccountNumber(request.bankAccountNumber());
         employee.setBankAccountHolder(request.bankAccountHolder());
         return toResponse(employee);
-    }
-
-    private Employee findEmployeeOrThrow(Long id) {
-        return employeeRepository.findById(id)
-            .filter(employee -> employee.getDeletedAt() == null)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.EMPLOYEE_NOT_FOUND, "Employee not found: " + id
-            ));
     }
 
     private EmployeeSensitiveResponse toResponse(Employee employee) {

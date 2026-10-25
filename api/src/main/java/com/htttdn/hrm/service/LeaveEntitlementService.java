@@ -20,8 +20,6 @@ import com.htttdn.hrm.entity.LeaveRequest;
 import com.htttdn.hrm.entity.enums.LeaveRequestStatus;
 import com.htttdn.hrm.entity.enums.LeaveType;
 import com.htttdn.hrm.exception.ConflictException;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
-import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
@@ -55,14 +53,13 @@ public class LeaveEntitlementService {
     private final LeaveRequestRepository leaveRequestRepository;
     private final EmployeeRepository employeeRepository;
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
-    private final AccountRepository accountRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
 
     @Transactional(readOnly = true)
     public BalanceView getBalance(Long employeeId, int year) {
         requireSelfOrScopedAccess(employeeId);
-        return buildBalance(findEmployeeOrThrow(employeeId), year, null);
+        return buildBalance(employeeRepository.getRequired(employeeId), year, null);
     }
 
     /**
@@ -169,28 +166,12 @@ public class LeaveEntitlementService {
     }
 
     private void requireSelfOrScopedAccess(Long employeeId) {
-        Account account = findCurrentAccount();
+        Account account = currentAccountProvider.account();
         boolean isSelf = account.getEmployee() != null
             && account.getEmployee().getId().equals(employeeId);
         if (!isSelf) {
             employeeAccessScopeService.requireEmployeeAccess(employeeId, REQUEST_READ);
         }
-    }
-
-    private Employee findEmployeeOrThrow(Long employeeId) {
-        return employeeRepository.findById(employeeId)
-            .filter(employee -> employee.getDeletedAt() == null)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.EMPLOYEE_NOT_FOUND, "Employee not found: " + employeeId
-            ));
-    }
-
-    private Account findCurrentAccount() {
-        Long accountId = currentAccountProvider.accountId();
-        return accountRepository.findById(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + accountId
-            ));
     }
 
     /** Một dòng của báo cáo phép năm: nhân viên và số phép của năm đó. */

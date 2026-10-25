@@ -53,7 +53,7 @@ class RoleServiceTest {
 
         when(roleRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(role));
         when(permissionRepository.findAllById(any())).thenReturn(List.of(added, retained));
-        when(accountRepository.findById(99L)).thenReturn(Optional.of(actor));
+        when(accountRepository.getRequired(99L)).thenReturn(actor);
         when(rolePermissionRepository.findByIdRoleId(10L))
             .thenReturn(List.of(retainedMapping, removedMapping));
 
@@ -108,7 +108,7 @@ class RoleServiceTest {
             permission(1L, "employee.read", PermissionAssignmentPolicy.DELEGABLE)
         );
         when(roleRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(role));
-        when(accountRepository.findById(99L)).thenReturn(Optional.of(actor));
+        when(accountRepository.getRequired(99L)).thenReturn(actor);
         when(rolePermissionRepository.findByIdRoleId(10L)).thenReturn(List.of(existing));
 
         var result = service().replacePermissions(

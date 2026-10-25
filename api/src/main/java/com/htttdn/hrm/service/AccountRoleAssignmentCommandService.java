@@ -187,7 +187,7 @@ public class AccountRoleAssignmentCommandService {
     ) {
         AssignmentCandidate candidate = validateCandidate(accountId, request, flow);
 
-        Account actor = findAccount(actorAccountId);
+        Account actor = accountRepository.getRequired(actorAccountId);
         return roleAssignmentRepository.save(AccountRoleAssignment.builder()
             .account(candidate.account())
             .role(candidate.role())
@@ -206,7 +206,7 @@ public class AccountRoleAssignmentCommandService {
         AssignAccountRoleRequest request,
         AssignmentFlow flow
     ) {
-        Account account = findAccountForUpdate(accountId);
+        Account account = accountRepository.getRequiredForUpdate(accountId);
         validateTargetAccount(account);
 
         Role role = roleRepository.findByCodeForUpdate(request.roleCode())
@@ -393,22 +393,6 @@ public class AccountRoleAssignmentCommandService {
 
     private BusinessException invalidScope(String message, String field) {
         return new BusinessException(ErrorCode.VALIDATION_ERROR, message, field);
-    }
-
-    private Account findAccount(Long accountId) {
-        return accountRepository.findById(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ACCOUNT_NOT_FOUND,
-                "Account not found: " + accountId
-            ));
-    }
-
-    private Account findAccountForUpdate(Long accountId) {
-        return accountRepository.findByIdForUpdate(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ACCOUNT_NOT_FOUND,
-                "Account not found: " + accountId
-            ));
     }
 
     private enum AssignmentFlow {

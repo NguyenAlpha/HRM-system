@@ -20,7 +20,6 @@ import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.InvalidTokenException;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountActivationTokenRepository;
 import com.htttdn.hrm.repository.AccountRepository;
 
@@ -45,7 +44,7 @@ public class AccountActivationService {
      */
     @Transactional
     public IssuedActivationToken issue(Long accountId, Long createdByAccountId) {
-        Account account = findAccountForUpdate(accountId);
+        Account account = accountRepository.getRequiredForUpdate(accountId);
         if (account.getStatus() != AccountStatus.PENDING) {
             throw new ConflictException(
                 ErrorCode.ACCOUNT_ACTIVATION_NOT_ALLOWED,
@@ -53,11 +52,7 @@ public class AccountActivationService {
             );
         }
 
-        Account createdByAccount = accountRepository.findById(createdByAccountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND,
-                "Account creating the activation token was not found: " + createdByAccountId
-            ));
+        Account createdByAccount = accountRepository.getRequired(createdByAccountId);
 
         Instant now = Instant.now();
         activationTokenRepository.revokeActiveByAccountId(accountId, now);
@@ -116,14 +111,6 @@ public class AccountActivationService {
         account.setLockedUntil(null);
         activationToken.setUsedAt(now);
         activationTokenRepository.revokeOtherActiveByAccountId(account.getId(), activationToken.getId(), now);
-    }
-
-    private Account findAccountForUpdate(Long accountId) {
-        return accountRepository.findByIdForUpdate(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ACCOUNT_NOT_FOUND,
-                "Account not found: " + accountId
-            ));
     }
 
     private void validateRawToken(String rawToken) {

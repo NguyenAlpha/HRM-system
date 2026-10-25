@@ -66,8 +66,8 @@ class EmployeeAssignmentServiceTest {
     void setUp() {
         Employee employee = Employee.builder()
             .id(1L).hireDate(LocalDate.of(2024, 1, 1)).employmentStatus(EmploymentStatus.ACTIVE).build();
-        when(employeeRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(employee));
-        when(employeeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
+        when(employeeRepository.getRequiredForUpdate(1L)).thenReturn(employee);
         when(organizationUnitRepository.findById(2L))
             .thenReturn(Optional.of(OrganizationUnit.builder().id(2L).isActive(true).build()));
         when(workLocationRepository.findById(4L))
@@ -85,8 +85,7 @@ class EmployeeAssignmentServiceTest {
             .thenReturn(List.of(period));
         when(payslipRepository.findByPayrollPeriodId(7L)).thenReturn(List.of(payslip));
         when(employeeAssignmentRepository.findOpenPrimaryForUpdate(1L)).thenReturn(List.of());
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(actor));
+        when(currentAccountProvider.account()).thenReturn(actor);
         when(employeeAssignmentRepository.save(any(EmployeeAssignment.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -125,7 +124,6 @@ class EmployeeAssignmentServiceTest {
             payrollPeriodRepository,
             payslipRepository,
             payslipItemRepository,
-            accountRepository,
             currentAccountProvider,
             employeeAccessScopeService,
             Clock.systemDefaultZone()

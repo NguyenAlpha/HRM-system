@@ -48,8 +48,8 @@ class PayrollAdjustmentServiceTest {
         PayrollPeriod period = period(PayrollPeriodStatus.CALCULATED);
         period.setCalculatedAt(Instant.now());
         period.setCalculatedByAccount(Account.builder().id(9L).build());
-        when(payrollPeriodRepository.findById(1L)).thenReturn(Optional.of(period));
-        when(employeeRepository.findByIdAndDeletedAtIsNull(2L)).thenReturn(Optional.of(employee(null)));
+        when(payrollPeriodRepository.getRequired(1L)).thenReturn(period);
+        when(employeeRepository.getRequired(2L)).thenReturn(employee(null));
         when(currentAccountProvider.accountId()).thenReturn(9L);
         when(adjustmentRepository.save(any(PayrollAdjustment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -65,7 +65,7 @@ class PayrollAdjustmentServiceTest {
     @ParameterizedTest
     @EnumSource(value = PayrollPeriodStatus.class, names = { "APPROVED", "PAID", "LOCKED", "CANCELLED" })
     void adjustmentsAreFrozenOnceThePeriodLeavesCalculation(PayrollPeriodStatus status) {
-        when(payrollPeriodRepository.findById(1L)).thenReturn(Optional.of(period(status)));
+        when(payrollPeriodRepository.getRequired(1L)).thenReturn(period(status));
 
         assertThrows(ConflictException.class, () -> service().create(1L, request(2L)));
         assertThrows(ConflictException.class, () -> service().delete(1L, 5L));
@@ -73,9 +73,9 @@ class PayrollAdjustmentServiceTest {
 
     @Test
     void employeeWhoLeftBeforeThePeriodCannotReceiveAnAdjustment() {
-        when(payrollPeriodRepository.findById(1L)).thenReturn(Optional.of(period(PayrollPeriodStatus.DRAFT)));
-        when(employeeRepository.findByIdAndDeletedAtIsNull(2L))
-            .thenReturn(Optional.of(employee(LocalDate.of(2025, 12, 31))));
+        when(payrollPeriodRepository.getRequired(1L)).thenReturn(period(PayrollPeriodStatus.DRAFT));
+        when(employeeRepository.getRequired(2L))
+            .thenReturn(employee(LocalDate.of(2025, 12, 31)));
 
         BusinessException exception = assertThrows(BusinessException.class, () -> service().create(1L, request(2L)));
         assertEquals("employeeId", exception.getField());
@@ -84,7 +84,7 @@ class PayrollAdjustmentServiceTest {
     @Test
     void deletingAnAdjustmentRemovesItFromTheDraftPeriod() {
         PayrollAdjustment adjustment = PayrollAdjustment.builder().id(5L).build();
-        when(payrollPeriodRepository.findById(1L)).thenReturn(Optional.of(period(PayrollPeriodStatus.DRAFT)));
+        when(payrollPeriodRepository.getRequired(1L)).thenReturn(period(PayrollPeriodStatus.DRAFT));
         when(adjustmentRepository.findByIdAndPayrollPeriodId(5L, 1L)).thenReturn(Optional.of(adjustment));
 
         service().delete(1L, 5L);

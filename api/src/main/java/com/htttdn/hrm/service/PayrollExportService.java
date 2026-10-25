@@ -13,10 +13,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.PayrollPeriod;
 import com.htttdn.hrm.entity.Payslip;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 
@@ -65,9 +63,7 @@ public class PayrollExportService {
     @Transactional(readOnly = true)
     public PayrollExport exportPeriod(Long periodId) {
         employeeAccessScopeService.requireCompanyWide("report.payroll.read");
-        PayrollPeriod period = payrollPeriodRepository.findById(periodId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.PAYROLL_PERIOD_NOT_FOUND, "Payroll period not found: " + periodId));
+        PayrollPeriod period = payrollPeriodRepository.getRequired(periodId);
         List<Payslip> payslips = payslipRepository.findByPayrollPeriodId(periodId).stream()
             .sorted(Comparator.comparing(Payslip::getEmployeeCodeSnapshot))
             .toList();

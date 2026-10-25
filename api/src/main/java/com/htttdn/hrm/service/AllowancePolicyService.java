@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.response.common.ErrorCode;
-import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.JobPosition;
 import com.htttdn.hrm.entity.PayrollPeriod;
 import com.htttdn.hrm.entity.Payslip;
@@ -21,7 +20,6 @@ import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
-import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.JobPositionRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.repository.PayslipItemRepository;
@@ -49,7 +47,6 @@ public class AllowancePolicyService {
     private final PayrollPeriodRepository payrollPeriodRepository;
     private final PayslipRepository payslipRepository;
     private final PayslipItemRepository payslipItemRepository;
-    private final AccountRepository accountRepository;
     private final CurrentAccountProvider currentAccountProvider;
 
     @PreAuthorize("hasAuthority('compensation.manage')")
@@ -84,7 +81,7 @@ public class AllowancePolicyService {
             .jobPosition(position)
             .monthlyAmount(command.monthlyAmount())
             .effectiveFrom(command.effectiveFrom())
-            .approvedByAccount(findCurrentAccount())
+            .approvedByAccount(currentAccountProvider.account())
             .note(normalizeNullable(command.note()))
             .build();
         return toView(positionRuleRepository.save(rule));
@@ -148,7 +145,7 @@ public class AllowancePolicyService {
             .maxYears(command.maxYears())
             .percentage(command.percentage())
             .effectiveFrom(command.effectiveFrom())
-            .approvedByAccount(findCurrentAccount())
+            .approvedByAccount(currentAccountProvider.account())
             .note(normalizeNullable(command.note()))
             .build();
         return toView(seniorityRuleRepository.save(rule));
@@ -228,15 +225,6 @@ public class AllowancePolicyService {
         int normalizedLeftMax = leftMax == null ? Integer.MAX_VALUE : leftMax;
         int normalizedRightMax = rightMax == null ? Integer.MAX_VALUE : rightMax;
         return leftMin < normalizedRightMax && rightMin < normalizedLeftMax;
-    }
-
-    private Account findCurrentAccount() {
-        Long accountId = currentAccountProvider.accountId();
-        return accountRepository.findById(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND,
-                "Account not found: " + accountId
-            ));
     }
 
     private BusinessException validation(String message, String field) {

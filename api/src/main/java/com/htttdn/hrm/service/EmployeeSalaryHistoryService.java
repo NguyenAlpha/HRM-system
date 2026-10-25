@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.response.common.ErrorCode;
-import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeSalaryHistory;
 import com.htttdn.hrm.entity.PayrollPeriod;
@@ -19,7 +18,6 @@ import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
-import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
@@ -46,15 +44,13 @@ public class EmployeeSalaryHistoryService {
     private final PayrollPeriodRepository payrollPeriodRepository;
     private final PayslipRepository payslipRepository;
     private final PayslipItemRepository payslipItemRepository;
-    private final AccountRepository accountRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
 
     @PreAuthorize("hasAuthority('compensation.manage')")
     public SalaryHistoryView setSalary(Long employeeId, SetSalaryCommand command) {
         employeeAccessScopeService.requireEmployeeAccess(employeeId, COMPENSATION_MANAGE);
-        Employee employee = employeeRepository.findByIdForUpdate(employeeId)
-            .orElseThrow(() -> employeeNotFound(employeeId));
+        Employee employee = employeeRepository.getRequiredForUpdate(employeeId);
         validateCommand(employee, command);
 
         List<PayrollPeriod> affectedPeriods = payrollPeriodRepository.findAffectedPeriodsForUpdate(
@@ -94,7 +90,7 @@ public class EmployeeSalaryHistoryService {
             .employee(employee)
             .baseSalary(command.baseSalary())
             .effectiveFrom(command.effectiveFrom())
-            .approvedByAccount(findCurrentAccount())
+            .approvedByAccount(currentAccountProvider.account())
             .reason(normalizeNullable(command.reason()))
             .note(normalizeNullable(command.note()))
             .build();
@@ -144,25 +140,8 @@ public class EmployeeSalaryHistoryService {
     }
 
     private void requireReadableEmployee(Long employeeId) {
-        employeeRepository.findByIdAndDeletedAtIsNull(employeeId)
-            .orElseThrow(() -> employeeNotFound(employeeId));
+        employeeRepository.getRequired(employeeId);
         employeeAccessScopeService.requireEmployeeAccess(employeeId, COMPENSATION_READ);
-    }
-
-    private Account findCurrentAccount() {
-        Long accountId = currentAccountProvider.accountId();
-        return accountRepository.findById(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND,
-                "Account not found: " + accountId
-            ));
-    }
-
-    private ResourceNotFoundException employeeNotFound(Long employeeId) {
-        return new ResourceNotFoundException(
-            ErrorCode.EMPLOYEE_NOT_FOUND,
-            "Employee not found: " + employeeId
-        );
     }
 
     private String normalizeNullable(String value) {

@@ -129,7 +129,7 @@ public class EmployeeService {
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('employee.read')")
     public EmployeeDetailResponse getById(Long id) {
-        Employee employee = findEmployeeOrThrow(id);
+        Employee employee = employeeRepository.getRequired(id);
         employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_READ);
         return toDetailResponse(employee);
     }
@@ -216,7 +216,7 @@ public class EmployeeService {
 
     @PreAuthorize("hasAuthority('employee.update')")
     public EmployeeDetailResponse update(Long id, UpdateEmployeeRequest request) {
-        Employee employee = findEmployeeOrThrow(id);
+        Employee employee = employeeRepository.getRequired(id);
         employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_UPDATE);
 
         EmployeeBirthDateValidator.validate(request.dateOfBirth(), false);
@@ -237,7 +237,7 @@ public class EmployeeService {
 
     @PreAuthorize("hasAuthority('employee.probation.confirm')")
     public EmployeeDetailResponse confirmEmployment(Long id) {
-        Employee employee = findEmployeeOrThrow(id);
+        Employee employee = employeeRepository.getRequired(id);
         employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_PROBATION_CONFIRM);
         if (employee.getEmploymentStatus() != EmploymentStatus.PROBATION) {
             throw new ConflictException(
@@ -294,7 +294,7 @@ public class EmployeeService {
                 ErrorCode.VALIDATION_ERROR, "endStatus must be RESIGNED, TERMINATED or RETIRED", "endStatus"
             );
         }
-        Employee employee = findEmployeeOrThrow(employeeId);
+        Employee employee = employeeRepository.getRequired(employeeId);
         employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_LIFECYCLE_MANAGE);
         if (terminationDate.isBefore(employee.getHireDate())) {
             throw new BusinessException(
@@ -308,16 +308,16 @@ public class EmployeeService {
         // The last working day is still worked and paid, so a later one only schedules the end; it
         // replaces any end already scheduled.
         if (terminationDate.isAfter(LocalDate.now(clock))) {
-            scheduleEnd(employee, endStatus, terminationDate, terminationReason, findCurrentAccount());
+            scheduleEnd(employee, endStatus, terminationDate, terminationReason, currentAccountProvider.account());
         } else {
-            endEmploymentAs(employee, endStatus, terminationDate, terminationReason, findCurrentAccount());
+            endEmploymentAs(employee, endStatus, terminationDate, terminationReason, currentAccountProvider.account());
         }
         return toDetailResponse(employee);
     }
 
     @PreAuthorize("hasAuthority('employee.lifecycle.manage')")
     public EmployeeDetailResponse cancelScheduledEnd(Long employeeId) {
-        Employee employee = findEmployeeOrThrow(employeeId);
+        Employee employee = employeeRepository.getRequired(employeeId);
         employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_LIFECYCLE_MANAGE);
         if (employee.getScheduledEndStatus() == null) {
             throw new ConflictException(ErrorCode.CONFLICT, "No employment end is scheduled");
@@ -409,12 +409,12 @@ public class EmployeeService {
 
     @PreAuthorize("hasAuthority('employee.delete')")
     public void softDelete(Long id, SoftDeleteEmployeeRequest request) {
-        Employee employee = findEmployeeOrThrow(id);
+        Employee employee = employeeRepository.getRequired(id);
         employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_DELETE);
         ensureEmployeeHasNoBusinessHistory(id);
 
         employee.setDeletedAt(Instant.now());
-        employee.setDeletedByAccount(findCurrentAccount());
+        employee.setDeletedByAccount(currentAccountProvider.account());
         employee.setDeletionReason(request.deletionReason());
     }
 
@@ -476,22 +476,6 @@ public class EmployeeService {
                 "Employee has related business data and cannot be deleted; end employment instead"
             );
         }
-    }
-
-    private Account findCurrentAccount() {
-        Long accountId = currentAccountProvider.accountId();
-        return accountRepository.findById(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + accountId
-            ));
-    }
-
-    private Employee findEmployeeOrThrow(Long id) {
-        return employeeRepository.findById(id)
-            .filter(employee -> employee.getDeletedAt() == null)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.EMPLOYEE_NOT_FOUND, "Employee not found: " + id
-            ));
     }
 
     private Optional<EmployeeAssignment> findCurrentAssignment(Long employeeId) {

@@ -28,7 +28,6 @@ import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.exception.ConflictException;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.specification.AccountSpecifications;
@@ -91,12 +90,12 @@ public class AccountAdminService {
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('account.read')")
     public AccountResponse getById(Long accountId) {
-        return toResponse(findAccount(accountId));
+        return toResponse(accountRepository.getRequired(accountId));
     }
 
     @PreAuthorize("hasAuthority('account.read')")
     public List<AccountPermissionGrantResponse> getPermissionGrants(Long accountId) {
-        findAccount(accountId);
+        accountRepository.getRequired(accountId);
         return accountAuthorizationService.getPermissionGrants(accountId);
     }
 
@@ -112,7 +111,7 @@ public class AccountAdminService {
         ensureNotSelf(accountId, actorAccountId, "Administrators must use the self-service password change");
         companyOwnerAccountGuard.requireCanManage(accountId);
 
-        Account account = findAccountForUpdate(accountId);
+        Account account = accountRepository.getRequiredForUpdate(accountId);
         if (account.getStatus() != AccountStatus.ACTIVE && account.getStatus() != AccountStatus.LOCKED) {
             throw invalidTransition(account, "Password reset requires an active or locked account");
         }
@@ -130,7 +129,7 @@ public class AccountAdminService {
         ensureNotSelf(accountId, actorAccountId, "Administrators cannot suspend their own account");
         companyOwnerAccountGuard.requireCanManage(accountId);
 
-        Account account = findAccountForUpdate(accountId);
+        Account account = accountRepository.getRequiredForUpdate(accountId);
         if (account.getStatus() == AccountStatus.DISABLED) {
             return toResponse(account);
         }
@@ -147,7 +146,7 @@ public class AccountAdminService {
 
     @PreAuthorize("hasAuthority('account.manage')")
     public AccountResponse activate(Long accountId) {
-        Account account = findAccountForUpdate(accountId);
+        Account account = accountRepository.getRequiredForUpdate(accountId);
         if (account.getDeletedAt() != null) {
             throw invalidTransition(account, "A deleted account cannot be reactivated");
         }
@@ -178,7 +177,7 @@ public class AccountAdminService {
         ensureNotSelf(accountId, actorAccountId, "Administrators cannot delete their own account");
         companyOwnerAccountGuard.requireCanManage(accountId);
 
-        Account account = findAccountForUpdate(accountId);
+        Account account = accountRepository.getRequiredForUpdate(accountId);
         if (account.getDeletedAt() != null) {
             throw new ConflictException(ErrorCode.ACCOUNT_STATUS_TRANSITION_NOT_ALLOWED, "Account is already deleted");
         }
@@ -211,22 +210,6 @@ public class AccountAdminService {
             actorAccountId
         );
         return new AccountInvitationResponse(accountId, issued.rawToken(), issued.expiresAt());
-    }
-
-    private Account findAccount(Long accountId) {
-        return accountRepository.findById(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ACCOUNT_NOT_FOUND,
-                "Account not found: " + accountId
-            ));
-    }
-
-    private Account findAccountForUpdate(Long accountId) {
-        return accountRepository.findByIdForUpdate(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ACCOUNT_NOT_FOUND,
-                "Account not found: " + accountId
-            ));
     }
 
     private void ensureNotSelf(Long targetAccountId, Long actorAccountId, String message) {

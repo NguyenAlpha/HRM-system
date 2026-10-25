@@ -9,8 +9,10 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.PayrollPeriod;
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
+import com.htttdn.hrm.exception.ResourceNotFoundException;
 
 import jakarta.persistence.LockModeType;
 
@@ -66,4 +68,18 @@ public interface PayrollPeriodRepository extends JpaRepository<PayrollPeriod, Lo
         @Param("statuses") List<PayrollPeriodStatus> statuses);
 
     List<PayrollPeriod> findByYearAndStatusNot(Short year, PayrollPeriodStatus status);
+
+    /** Kỳ lương theo id, không có thì 404 {@code PAYROLL_PERIOD_NOT_FOUND}. Xem {@link AccountRepository#getRequired}. */
+    default PayrollPeriod getRequired(Long id) {
+        return findById(id).orElseThrow(() -> notFound(id));
+    }
+
+    /** Như {@link #getRequired}, kèm khóa ghi ({@link #findByIdForUpdate}). */
+    default PayrollPeriod getRequiredForUpdate(Long id) {
+        return findByIdForUpdate(id).orElseThrow(() -> notFound(id));
+    }
+
+    private static ResourceNotFoundException notFound(Long id) {
+        return new ResourceNotFoundException(ErrorCode.PAYROLL_PERIOD_NOT_FOUND, "Payroll period not found: " + id);
+    }
 }

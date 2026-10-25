@@ -46,7 +46,7 @@ public class PayrollAdjustmentService {
     @Transactional(readOnly = true)
     public List<PayrollAdjustmentResponse> list(Long periodId) {
         employeeAccessScopeService.requireCompanyWide(PAYROLL_CALCULATE);
-        findPeriod(periodId);
+        payrollPeriodRepository.getRequired(periodId);
         return adjustmentRepository.findByPayrollPeriodIdOrderByIdAsc(periodId).stream()
             .map(PayrollAdjustmentService::toResponse).toList();
     }
@@ -55,9 +55,7 @@ public class PayrollAdjustmentService {
     public PayrollAdjustmentResponse create(Long periodId, CreatePayrollAdjustmentRequest request) {
         employeeAccessScopeService.requireCompanyWide(PAYROLL_CALCULATE);
         PayrollPeriod period = findEditablePeriod(periodId);
-        Employee employee = employeeRepository.findByIdAndDeletedAtIsNull(request.employeeId())
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.EMPLOYEE_NOT_FOUND, "Employee not found: " + request.employeeId()));
+        Employee employee = employeeRepository.getRequired(request.employeeId());
         boolean employedInPeriod = !employee.getHireDate().isAfter(period.getPeriodEnd())
             && (employee.getTerminationDate() == null
                 || !employee.getTerminationDate().isBefore(period.getPeriodStart()));
@@ -89,14 +87,8 @@ public class PayrollAdjustmentService {
         invalidateCalculation(period);
     }
 
-    private PayrollPeriod findPeriod(Long periodId) {
-        return payrollPeriodRepository.findById(periodId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.PAYROLL_PERIOD_NOT_FOUND, "Payroll period not found: " + periodId));
-    }
-
     private PayrollPeriod findEditablePeriod(Long periodId) {
-        PayrollPeriod period = findPeriod(periodId);
+        PayrollPeriod period = payrollPeriodRepository.getRequired(periodId);
         if (period.getStatus() != PayrollPeriodStatus.DRAFT && period.getStatus() != PayrollPeriodStatus.CALCULATED) {
             throw new ConflictException(ErrorCode.PAYROLL_PERIOD_LOCKED,
                 "Adjustments can only change while period " + periodId + " is DRAFT or CALCULATED");

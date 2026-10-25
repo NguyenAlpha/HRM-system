@@ -85,11 +85,7 @@ public class AccountPermissionOverrideService {
         requireCanChangeOverrides(accountId);
         AccountRoleAssignment assignment = findAssignmentForUpdate(accountId, assignmentId);
         validateAssignment(assignment);
-        Permission permission = permissionRepository.findById(request.permissionId())
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.PERMISSION_NOT_FOUND,
-                "Permission not found: " + request.permissionId()
-            ));
+        Permission permission = permissionRepository.getRequired(request.permissionId());
         validatePermission(assignment, permission, request.effect());
         validatePeriod(assignment, request.effectiveFrom(), request.effectiveTo());
         if (overrideRepository.existsOverlappingActive(
@@ -104,7 +100,7 @@ public class AccountPermissionOverrideService {
             );
         }
 
-        Account actor = findAccount(currentAccountProvider.accountId());
+        Account actor = accountRepository.getRequired(currentAccountProvider.accountId());
         AccountPermissionOverride permissionOverride = AccountPermissionOverride.builder()
             .accountRoleAssignment(assignment)
             .permission(permission)
@@ -144,7 +140,7 @@ public class AccountPermissionOverrideService {
             return toResponse(permissionOverride);
         }
 
-        Account actor = findAccount(currentAccountProvider.accountId());
+        Account actor = accountRepository.getRequired(currentAccountProvider.accountId());
         permissionOverride.setRevokedByAccount(actor);
         permissionOverride.setRevokedAt(Instant.now());
         permissionOverride.setRevocationReason(request.reason().trim());
@@ -250,14 +246,6 @@ public class AccountPermissionOverrideService {
                 "effectiveTo"
             );
         }
-    }
-
-    private Account findAccount(Long accountId) {
-        return accountRepository.findById(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ACCOUNT_NOT_FOUND,
-                "Account not found: " + accountId
-            ));
     }
 
     private AccountPermissionOverrideResponse toResponse(AccountPermissionOverride permissionOverride) {

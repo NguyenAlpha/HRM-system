@@ -25,7 +25,6 @@ import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
-import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.repository.specification.EmployeeSpecifications;
@@ -52,7 +51,6 @@ public class LeaveRequestService {
 
     private final LeaveRequestRepository leaveRequestRepository;
     private final EmployeeRepository employeeRepository;
-    private final AccountRepository accountRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final AttendanceService attendanceService;
@@ -68,8 +66,7 @@ public class LeaveRequestService {
     public LeaveRequestView createDraft(CreateLeaveCommand command) {
         validateCommand(command);
         requireOwnEmployee(command.employeeId());
-        Employee employee = employeeRepository.findByIdAndDeletedAtIsNull(command.employeeId())
-            .orElseThrow(() -> employeeNotFound(command.employeeId()));
+        Employee employee = employeeRepository.getRequired(command.employeeId());
         LeaveSalaryTreatment salaryTreatment = resolveSalaryTreatment(command);
         int requestedMinutes = attendanceService.leaveMinutesFor(employee.getId(), command.startAt(), command.endAt());
         if (requestedMinutes == 0) {
@@ -185,8 +182,7 @@ public class LeaveRequestService {
     @PreAuthorize("hasAnyAuthority('request.self.read', 'request.read')")
     @Transactional(readOnly = true)
     public Page<LeaveRequestView> listByEmployee(Long employeeId, Pageable pageable) {
-        employeeRepository.findByIdAndDeletedAtIsNull(employeeId)
-            .orElseThrow(() -> employeeNotFound(employeeId));
+        employeeRepository.getRequired(employeeId);
         requireSelfOrScopedAccess(employeeId, REQUEST_READ);
         return leaveRequestRepository.findByEmployeeIdOrderByCreatedAtDesc(employeeId, pageable)
             .map(this::toView);
@@ -242,7 +238,7 @@ public class LeaveRequestService {
     @PreAuthorize("isAuthenticated()")
     @Transactional(readOnly = true)
     public Page<LeaveRequestView> listPending(Pageable pageable) {
-        Employee self = findCurrentAccount().getEmployee();
+        Employee self = currentAccountProvider.account().getEmployee();
         if (self == null) {
             return Page.empty(pageable);
         }
@@ -283,13 +279,13 @@ public class LeaveRequestService {
     ) {
         Instant now = Instant.now();
         request.setStatus(status);
-        request.setReviewedByAccount(findCurrentAccount());
+        request.setReviewedByAccount(currentAccountProvider.account());
         request.setReviewComment(normalizeNullable(reviewComment));
         request.setReviewedAt(now);
     }
 
     private boolean isApprover(LeaveRequest request) {
-        Employee self = findCurrentAccount().getEmployee();
+        Employee self = currentAccountProvider.account().getEmployee();
         return self != null && request.getApproverEmployee() != null
             && request.getApproverEmployee().getId().equals(self.getId());
     }
@@ -301,7 +297,7 @@ public class LeaveRequestService {
     }
 
     private void requireSelfOrScopedAccess(Long employeeId, String scopedPermission) {
-        Account actor = findCurrentAccount();
+        Account actor = currentAccountProvider.account();
         if (actor.getEmployee() != null && employeeId.equals(actor.getEmployee().getId())) {
             return;
         }
@@ -309,7 +305,7 @@ public class LeaveRequestService {
     }
 
     private void requireOwnEmployee(Long employeeId) {
-        Employee self = findCurrentAccount().getEmployee();
+        Employee self = currentAccountProvider.account().getEmployee();
         if (self == null || !employeeId.equals(self.getId())) {
             throw new ForbiddenException(ErrorCode.FORBIDDEN,
                 "Only the employee can create, submit, or cancel their own leave request");
@@ -329,28 +325,12 @@ public class LeaveRequestService {
         }
     }
 
-    private Account findCurrentAccount() {
-        Long accountId = currentAccountProvider.accountId();
-        return accountRepository.findById(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND,
-                "Account not found: " + accountId
-            ));
-    }
-
     private BusinessException validation(String message, String field) {
         return new BusinessException(ErrorCode.VALIDATION_ERROR, message, field);
     }
 
     private ConflictException alreadyProcessed(String message) {
         return new ConflictException(ErrorCode.REQUEST_ALREADY_PROCESSED, message);
-    }
-
-    private ResourceNotFoundException employeeNotFound(Long employeeId) {
-        return new ResourceNotFoundException(
-            ErrorCode.EMPLOYEE_NOT_FOUND,
-            "Employee not found: " + employeeId
-        );
     }
 
     private ResourceNotFoundException requestNotFound(Long requestId) {

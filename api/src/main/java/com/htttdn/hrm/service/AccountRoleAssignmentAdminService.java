@@ -10,7 +10,6 @@ import com.htttdn.hrm.dto.request.account.AssignAccountRoleRequest;
 import com.htttdn.hrm.dto.request.account.RevokeAccountRoleRequest;
 import com.htttdn.hrm.dto.response.account.AccountRoleAssignmentResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
-import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
@@ -34,7 +33,7 @@ public class AccountRoleAssignmentAdminService {
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('account.read')")
     public List<AccountRoleAssignmentResponse> list(Long accountId) {
-        findAccount(accountId);
+        accountRepository.getRequired(accountId);
         return roleAssignmentRepository.findByAccountIdOrderByCreatedAtDesc(accountId).stream()
             .map(roleAssignmentMapper::toResponse)
             .toList();
@@ -66,17 +65,9 @@ public class AccountRoleAssignmentAdminService {
             ));
         roleAssignmentCommandService.revoke(
             assignment,
-            findAccount(currentAccountProvider.accountId()),
+            accountRepository.getRequired(currentAccountProvider.accountId()),
             request.reason()
         );
         return roleAssignmentMapper.toResponse(assignment);
-    }
-
-    private Account findAccount(Long accountId) {
-        return accountRepository.findById(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ACCOUNT_NOT_FOUND,
-                "Account not found: " + accountId
-            ));
     }
 }

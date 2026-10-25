@@ -43,7 +43,7 @@ class PayrollExportServiceTest {
     @Test
     void exportWritesOneRowPerPayslipSortedByCodeAndATotalRow() throws IOException {
         PayrollPeriod period = PayrollPeriod.builder().id(3L).year((short) 2026).month((short) 1).build();
-        when(payrollPeriodRepository.findById(3L)).thenReturn(Optional.of(period));
+        when(payrollPeriodRepository.getRequired(3L)).thenReturn(period);
         when(payslipRepository.findByPayrollPeriodId(3L)).thenReturn(List.of(
             payslip("NV002", "Trần Thị B", "9000000"),
             payslip("NV001", "Nguyễn Văn A", "11000000")
@@ -74,6 +74,7 @@ class PayrollExportServiceTest {
     @Test
     void exportRejectsUnknownPeriod() {
         when(payrollPeriodRepository.findById(9L)).thenReturn(Optional.empty());
+        when(payrollPeriodRepository.getRequired(9L)).thenCallRealMethod();
 
         var exception = assertThrows(ResourceNotFoundException.class, () -> service().exportPeriod(9L));
         assertEquals(ErrorCode.PAYROLL_PERIOD_NOT_FOUND, exception.getErrorCode());

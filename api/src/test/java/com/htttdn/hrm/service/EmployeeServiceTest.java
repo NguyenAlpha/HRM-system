@@ -129,7 +129,7 @@ class EmployeeServiceTest {
     @Test
     void updateRejectsUnderageBirthDate() {
         Employee employee = employee(1L);
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
         LocalDate cutoff = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")).minusYears(17);
         UpdateEmployeeRequest request = new UpdateEmployeeRequest(
             "Employee One", cutoff.plusDays(1), null, null, null, null, null, null, null
@@ -143,7 +143,7 @@ class EmployeeServiceTest {
     @Test
     void updateRejectsWorkEmailOwnedByAnotherEmployee() {
         Employee employee = employee(1L);
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
         when(employeeRepository.existsByWorkEmailIgnoreCaseAndIdNot("duplicate@hrm.local", 1L)).thenReturn(true);
         UpdateEmployeeRequest request = new UpdateEmployeeRequest(
             "Employee One", null, null, null, null, null, null, "duplicate@hrm.local", null
@@ -155,7 +155,7 @@ class EmployeeServiceTest {
     @Test
     void softDeleteRejectsEmployeeReassignedAtLeastOnce() {
         Employee employee = employee(1L);
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
         when(accountRepository.existsByEmployeeId(1L)).thenReturn(false);
         when(employeeAssignmentRepository.countByEmployeeId(1L)).thenReturn(2L);
 
@@ -168,11 +168,10 @@ class EmployeeServiceTest {
     @Test
     void softDeleteAcceptsEmployeeHoldingOnlyTheAssignmentMadeWithTheProfile() {
         Employee employee = employee(1L);
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
         when(accountRepository.existsByEmployeeId(1L)).thenReturn(false);
         when(employeeAssignmentRepository.countByEmployeeId(1L)).thenReturn(1L);
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).build()));
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).build());
 
         service().softDelete(1L, new SoftDeleteEmployeeRequest("Created by mistake"));
 
@@ -183,10 +182,9 @@ class EmployeeServiceTest {
     void softDeleteUsesAuthenticatedAccountAsActor() {
         Employee employee = employee(1L);
         Account actor = Account.builder().id(9L).build();
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
         when(accountRepository.existsByEmployeeId(1L)).thenReturn(false);
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(actor));
+        when(currentAccountProvider.account()).thenReturn(actor);
 
         service().softDelete(1L, new SoftDeleteEmployeeRequest("Created by mistake"));
 
@@ -199,7 +197,7 @@ class EmployeeServiceTest {
     void confirmEmploymentActivatesProbationaryEmployee() {
         Employee employee = employee(1L);
         employee.setEmploymentStatus(EmploymentStatus.PROBATION);
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
 
         var result = service().confirmEmployment(1L);
 
@@ -211,7 +209,7 @@ class EmployeeServiceTest {
     @Test
     void confirmEmploymentRejectsEmployeeOutsideProbation() {
         Employee employee = employee(1L);
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
 
         ConflictException exception = assertThrows(
             ConflictException.class,
@@ -228,7 +226,7 @@ class EmployeeServiceTest {
         EmployeeAssignment assignment = EmployeeAssignment.builder().effectiveFrom(LocalDate.of(2025, 1, 1)).build();
         Account account = Account.builder().id(5L).status(AccountStatus.ACTIVE).build();
         LocalDate endDate = LocalDate.of(2026, 10, 24);
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
         when(employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(1L))
             .thenReturn(Optional.of(assignment));
         when(accountRepository.findByEmployeeId(1L)).thenReturn(Optional.of(account));
@@ -254,7 +252,7 @@ class EmployeeServiceTest {
         AccountRoleAssignment ended = roleAssignment(RoleGrantPolicy.HR_ASSIGNABLE, LocalDate.of(2025, 1, 1), LocalDate.of(2026, 3, 31));
         AccountRoleAssignment automatic = roleAssignment(RoleGrantPolicy.AUTO, LocalDate.of(2025, 1, 1), null);
         AccountRoleAssignment systemOnly = roleAssignment(RoleGrantPolicy.SYSTEM_ONLY, LocalDate.of(2025, 1, 1), null);
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
         when(accountRepository.findByEmployeeId(1L)).thenReturn(Optional.of(account));
         when(accountRoleAssignmentRepository.findByAccountIdAndRevokedAtIsNull(5L))
             .thenReturn(List.of(current, director, future, ended, automatic, systemOnly));
@@ -282,7 +280,7 @@ class EmployeeServiceTest {
         EmployeeAssignment assignment = EmployeeAssignment.builder().effectiveFrom(LocalDate.of(2025, 1, 1)).build();
         Account account = Account.builder().id(5L).status(AccountStatus.ACTIVE).build();
         LocalDate endDate = LocalDate.of(2026, 10, 27);
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
         when(employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(1L))
             .thenReturn(Optional.of(assignment));
         Account actor = stubActor();
@@ -305,7 +303,7 @@ class EmployeeServiceTest {
     void aScheduledEndMustNotFallBeforeTheCurrentAssignment() {
         Employee employee = employee(1L);
         EmployeeAssignment assignment = EmployeeAssignment.builder().effectiveFrom(LocalDate.of(2026, 11, 1)).build();
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
         when(employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(1L))
             .thenReturn(Optional.of(assignment));
         stubActor();
@@ -364,7 +362,7 @@ class EmployeeServiceTest {
         employee.setTerminationReason("Reason");
         employee.setScheduledEndStatus(EmploymentStatus.RESIGNED);
         employee.setScheduledEndByAccount(Account.builder().id(9L).build());
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
 
         var result = service().cancelScheduledEnd(1L);
 
@@ -378,7 +376,7 @@ class EmployeeServiceTest {
 
     @Test
     void cancellingWithoutAScheduleIsAConflict() {
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee(1L)));
+        when(employeeRepository.getRequired(1L)).thenReturn(employee(1L));
 
         assertThrows(ConflictException.class, () -> service().cancelScheduledEnd(1L));
     }
@@ -394,8 +392,7 @@ class EmployeeServiceTest {
 
     private Account stubActor() {
         Account actor = Account.builder().id(9L).status(AccountStatus.ACTIVE).build();
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(actor));
+        when(currentAccountProvider.account()).thenReturn(actor);
         return actor;
     }
 

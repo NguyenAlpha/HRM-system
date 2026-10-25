@@ -24,7 +24,6 @@ import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
@@ -59,7 +58,7 @@ public class AccountProvisioningService {
         String requestedUsername,
         Long actorAccountId
     ) {
-        Account actor = findAccount(actorAccountId);
+        Account actor = accountRepository.getRequired(actorAccountId);
         Employee employee = findEligibleEmployee(employeeId);
 
         if (accountRepository.findByEmployeeId(employee.getId()).isPresent()) {
@@ -103,11 +102,7 @@ public class AccountProvisioningService {
     }
 
     private Employee findEligibleEmployee(Long employeeId) {
-        Employee employee = employeeRepository.findByIdAndDeletedAtIsNull(employeeId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.EMPLOYEE_NOT_FOUND,
-                "Employee not found: " + employeeId
-            ));
+        Employee employee = employeeRepository.getRequired(employeeId);
         if (!ACCOUNT_ELIGIBLE_STATUSES.contains(employee.getEmploymentStatus())) {
             throw new ConflictException(
                 ErrorCode.ACCOUNT_PROVISIONING_NOT_ALLOWED,
@@ -141,14 +136,6 @@ public class AccountProvisioningService {
             .grantedByAccount(actor)
             .reason("Default employee access assigned during account provisioning")
             .build());
-    }
-
-    private Account findAccount(Long accountId) {
-        return accountRepository.findById(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ACCOUNT_NOT_FOUND,
-                "Account not found: " + accountId
-            ));
     }
 
     private AccountResponse toResponse(Account account, List<String> roleCodes) {

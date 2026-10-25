@@ -25,7 +25,6 @@ import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
-import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.ResignationRequestRepository;
 import com.htttdn.hrm.repository.specification.EmployeeSpecifications;
@@ -55,7 +54,6 @@ public class ResignationRequestService {
 
     private final ResignationRequestRepository resignationRequestRepository;
     private final EmployeeRepository employeeRepository;
-    private final AccountRepository accountRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final ApproverResolver approverResolver;
@@ -64,9 +62,7 @@ public class ResignationRequestService {
     /** Sends the request to the employee's approver at once; one open request per employee. */
     @PreAuthorize("hasAnyAuthority('request.self.create', 'request.manage')")
     public ResignationRequestView create(CreateResignationRequestRequest command) {
-        Employee employee = employeeRepository.findByIdAndDeletedAtIsNull(command.employeeId())
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.EMPLOYEE_NOT_FOUND, "Employee not found: " + command.employeeId()));
+        Employee employee = employeeRepository.getRequired(command.employeeId());
         requireSelfOrScopedAccess(employee.getId(), REQUEST_MANAGE);
         if (ENDED.contains(employee.getEmploymentStatus())) {
             throw new ConflictException(ErrorCode.CONFLICT, "Employee employment has already ended");
@@ -151,7 +147,7 @@ public class ResignationRequestService {
     @PreAuthorize("isAuthenticated()")
     @Transactional(readOnly = true)
     public Page<ResignationRequestView> listPending(Pageable pageable) {
-        Employee self = findCurrentAccount().getEmployee();
+        Employee self = currentAccountProvider.account().getEmployee();
         if (self == null) {
             return Page.empty(pageable);
         }
@@ -224,13 +220,13 @@ public class ResignationRequestService {
     private void review(ResignationRequest request, ResignationRequestStatus status, @Nullable String comment) {
         Instant now = Instant.now();
         request.setStatus(status);
-        request.setReviewedByAccount(findCurrentAccount());
+        request.setReviewedByAccount(currentAccountProvider.account());
         request.setReviewComment(comment == null || comment.isBlank() ? null : comment.trim());
         request.setReviewedAt(now);
     }
 
     private boolean isApprover(ResignationRequest request) {
-        Employee self = findCurrentAccount().getEmployee();
+        Employee self = currentAccountProvider.account().getEmployee();
         return self != null && request.getApproverEmployee().getId().equals(self.getId());
     }
 
@@ -248,7 +244,7 @@ public class ResignationRequestService {
     }
 
     private void requireSelfOrScopedAccess(Long employeeId, String scopedPermission) {
-        Account actor = findCurrentAccount();
+        Account actor = currentAccountProvider.account();
         if (actor.getEmployee() != null && employeeId.equals(actor.getEmployee().getId())) {
             return;
         }
@@ -257,12 +253,6 @@ public class ResignationRequestService {
 
     private ResignationRequest findForUpdate(Long requestId) {
         return resignationRequestRepository.findByIdForUpdate(requestId).orElseThrow(() -> requestNotFound(requestId));
-    }
-
-    private Account findCurrentAccount() {
-        Long accountId = currentAccountProvider.accountId();
-        return accountRepository.findById(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + accountId));
     }
 
     private static ResourceNotFoundException requestNotFound(Long requestId) {

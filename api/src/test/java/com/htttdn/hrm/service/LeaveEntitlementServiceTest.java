@@ -46,8 +46,7 @@ class LeaveEntitlementServiceTest {
 
     private LeaveEntitlementService service() {
         return new LeaveEntitlementService(
-            leaveRequestRepository, employeeRepository, employeeAssignmentRepository,
-            accountRepository, currentAccountProvider, employeeAccessScopeService
+            leaveRequestRepository, employeeRepository, employeeAssignmentRepository, currentAccountProvider, employeeAccessScopeService
         );
     }
 

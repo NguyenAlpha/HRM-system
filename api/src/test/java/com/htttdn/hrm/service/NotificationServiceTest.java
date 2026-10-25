@@ -114,7 +114,7 @@ class NotificationServiceTest {
             .leaveRequest(leave).type("LEAVE_SUBMITTED").readAt(firstRead).build();
         when(currentAccountProvider.accountId()).thenReturn(9L);
         when(notificationRepository.findByIdAndRecipientId(5L, 9L)).thenReturn(Optional.of(notification));
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(recipient));
+        when(currentAccountProvider.account()).thenReturn(recipient);
 
         assertEquals(firstRead, service().markRead(5L).readAt());
     }

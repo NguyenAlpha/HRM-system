@@ -44,7 +44,6 @@ import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
-import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
@@ -65,7 +64,6 @@ public class AttendanceService {
 
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final EmployeeRepository employeeRepository;
-    private final AccountRepository accountRepository;
     private final PayrollPeriodRepository payrollPeriodRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
@@ -221,7 +219,7 @@ public class AttendanceService {
         record.setOvertimeApprovedByAccount(null);
         record.setOvertimeApprovedAt(null);
         record.setNote(request.note() == null || request.note().isBlank() ? null : request.note().trim());
-        record.setUpdatedByAccount(findCurrentAccount());
+        record.setUpdatedByAccount(currentAccountProvider.account());
         return toResponse(attendanceRecordRepository.save(record));
     }
 
@@ -428,7 +426,7 @@ public class AttendanceService {
         record.setOvertimeMinutes(request.overtimeMinutes());
         record.setOvertimeMultiplier(request.overtimeMultiplier());
         record.setOvertimeTaxExempt(request.overtimeMinutes() > 0 && Boolean.TRUE.equals(request.taxExempt()));
-        record.setOvertimeApprovedByAccount(findCurrentAccount());
+        record.setOvertimeApprovedByAccount(currentAccountProvider.account());
         record.setOvertimeApprovedAt(now);
 
         return toResponse(record);
@@ -454,7 +452,7 @@ public class AttendanceService {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "UNAUTHORIZED_ABSENCE requires zero worked and payable minutes", "status");
         }
-        Account updatedBy = findCurrentAccount();
+        Account updatedBy = currentAccountProvider.account();
 
         record.setWorkedMinutes(request.workedMinutes());
         record.setPayableMinutes(request.payableMinutes());
@@ -543,15 +541,9 @@ public class AttendanceService {
             });
     }
 
-    private Account findCurrentAccount() {
-        Long accountId = currentAccountProvider.accountId();
-        return accountRepository.findById(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + accountId));
-    }
-
     private void requireSelfOrScopedAccess(Long employeeId, String selfPermission, String scopedPermission) {
         if (currentAccountProvider.hasAuthority(selfPermission)) {
-            Account actor = findCurrentAccount();
+            Account actor = currentAccountProvider.account();
             if (actor.getEmployee() != null && employeeId.equals(actor.getEmployee().getId())) {
                 return;
             }
@@ -566,7 +558,7 @@ public class AttendanceService {
     @PreAuthorize("isAuthenticated()")
     @Transactional(readOnly = true)
     public List<OvertimeApprovalItemResponse> listOvertimeAwaitingDecision() {
-        Employee self = findCurrentAccount().getEmployee();
+        Employee self = currentAccountProvider.account().getEmployee();
         if (self == null) {
             return List.of();
         }
@@ -589,7 +581,7 @@ public class AttendanceService {
     }
 
     private void requireOvertimeApprover(Employee employee) {
-        Employee self = findCurrentAccount().getEmployee();
+        Employee self = currentAccountProvider.account().getEmployee();
         if (self == null) {
             throw new ForbiddenException(ErrorCode.FORBIDDEN, "Only the employee's approver can decide overtime");
         }

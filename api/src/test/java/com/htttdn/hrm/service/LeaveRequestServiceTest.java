@@ -50,9 +50,8 @@ class LeaveRequestServiceTest {
     void employeeCreatesOwnDraftUsingMinuteBasedPeriod() {
         Employee employee = Employee.builder().id(1L).build();
         Account actor = Account.builder().id(9L).employee(employee).build();
-        when(employeeRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(employee));
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(actor));
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
+        when(currentAccountProvider.account()).thenReturn(actor);
         when(leaveRequestRepository.save(any(LeaveRequest.class))).thenAnswer(invocation -> {
             LeaveRequest saved = invocation.getArgument(0);
             saved.setId(3L);
@@ -81,9 +80,8 @@ class LeaveRequestServiceTest {
     void hrCannotCreateLeaveForAnotherEmployeeEvenWithManagePermission() {
         Employee applicant = Employee.builder().id(1L).build();
         Employee hr = Employee.builder().id(2L).build();
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(
-            Account.builder().id(9L).employee(hr).build()));
+        when(currentAccountProvider.account()).thenReturn(
+            Account.builder().id(9L).employee(hr).build());
 
         assertThrows(ForbiddenException.class, () -> service().createDraft(
             new LeaveRequestService.CreateLeaveCommand(
@@ -99,9 +97,8 @@ class LeaveRequestServiceTest {
         LeaveRequest request = LeaveRequest.builder().id(3L).employee(applicant)
             .status(LeaveRequestStatus.DRAFT).build();
         when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(
-            Account.builder().id(9L).employee(hr).build()));
+        when(currentAccountProvider.account()).thenReturn(
+            Account.builder().id(9L).employee(hr).build());
 
         assertThrows(ForbiddenException.class, () -> service().submit(3L));
         assertThrows(ForbiddenException.class, () -> service().cancel(3L));
@@ -116,9 +113,8 @@ class LeaveRequestServiceTest {
             .status(LeaveRequestStatus.DRAFT).build();
         when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
         when(leaveRequestRepository.saveAndFlush(request)).thenReturn(request);
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L))
-            .thenReturn(Optional.of(Account.builder().id(9L).employee(employee).build()));
+        when(currentAccountProvider.account())
+            .thenReturn(Account.builder().id(9L).employee(employee).build());
         when(approverResolver.approverFor(employee)).thenReturn(Optional.of(manager));
 
         var result = service().submit(3L);
@@ -139,8 +135,7 @@ class LeaveRequestServiceTest {
             .requestedMinutes(480).build();
         when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
         when(leaveRequestRepository.saveAndFlush(request)).thenReturn(request);
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).employee(manager).build()));
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).employee(manager).build());
 
         service().approve(3L, "Approved");
 
@@ -157,9 +152,8 @@ class LeaveRequestServiceTest {
             .status(LeaveRequestStatus.PENDING).build();
         when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
         when(leaveRequestRepository.saveAndFlush(request)).thenReturn(request);
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(
-            Account.builder().id(9L).employee(manager).build()));
+        when(currentAccountProvider.account()).thenReturn(
+            Account.builder().id(9L).employee(manager).build());
 
         service().reject(3L, "Not approved");
 
@@ -180,8 +174,7 @@ class LeaveRequestServiceTest {
             .endAt(Instant.parse("2026-01-05T05:00:00Z"))
             .build();
         when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).employee(manager).build()));
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).employee(manager).build());
         when(leaveRequestRepository.existsApprovedOverlap(
             1L, request.getStartAt(), request.getEndAt(), 3L
         )).thenReturn(true);
@@ -235,9 +228,8 @@ class LeaveRequestServiceTest {
         LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee)
             .leaveType(LeaveType.ANNUAL).status(LeaveRequestStatus.DRAFT).build();
         when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L))
-            .thenReturn(Optional.of(Account.builder().id(9L).employee(employee).build()));
+        when(currentAccountProvider.account())
+            .thenReturn(Account.builder().id(9L).employee(employee).build());
         doThrow(new ConflictException(ErrorCode.INSUFFICIENT_LEAVE_BALANCE, "not enough"))
             .when(leaveEntitlementService).requireSufficientBalance(request);
 
@@ -277,9 +269,8 @@ class LeaveRequestServiceTest {
     void requesterCannotMarkUnpaidLeaveAsEmployerPaid() {
         Employee employee = Employee.builder().id(1L).build();
         Account actor = Account.builder().id(9L).employee(employee).build();
-        when(employeeRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(employee));
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(actor));
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
+        when(currentAccountProvider.account()).thenReturn(actor);
         when(currentAccountProvider.hasAuthority("request.manage")).thenReturn(false);
 
         assertThrows(BusinessException.class, () -> service().createDraft(
@@ -295,9 +286,8 @@ class LeaveRequestServiceTest {
     void hrMayOverrideTheTreatmentForCompanyPaidSickLeave() {
         Employee employee = Employee.builder().id(1L).build();
         Account actor = Account.builder().id(9L).employee(employee).build();
-        when(employeeRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(employee));
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(actor));
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
+        when(currentAccountProvider.account()).thenReturn(actor);
         when(currentAccountProvider.hasAuthority("request.manage")).thenReturn(true);
         when(attendanceService.leaveMinutesFor(eq(1L), any(), any())).thenReturn(240);
         when(leaveRequestRepository.save(any(LeaveRequest.class))).thenAnswer(invocation -> {
@@ -327,9 +317,8 @@ class LeaveRequestServiceTest {
     private void stubOwnEmployee(int scheduledMinutes) {
         Employee employee = Employee.builder().id(1L).build();
         Account actor = Account.builder().id(9L).employee(employee).build();
-        when(employeeRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(employee));
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(actor));
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
+        when(currentAccountProvider.account()).thenReturn(actor);
         when(attendanceService.leaveMinutesFor(eq(1L), any(), any())).thenReturn(scheduledMinutes);
     }
 
@@ -342,7 +331,6 @@ class LeaveRequestServiceTest {
         return new LeaveRequestService(
             leaveRequestRepository,
             employeeRepository,
-            accountRepository,
             currentAccountProvider,
             employeeAccessScopeService,
             attendanceService,

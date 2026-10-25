@@ -82,7 +82,7 @@ public class RoleAssignmentRequestService {
         }
 
         Long actorAccountId = currentAccountProvider.accountId();
-        Account actor = findAccount(actorAccountId);
+        Account actor = accountRepository.getRequired(actorAccountId);
         Instant now = Instant.now();
         RoleAssignmentRequest roleRequest = RoleAssignmentRequest.builder()
             .account(candidate.account())
@@ -121,7 +121,7 @@ public class RoleAssignmentRequestService {
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('role.assignment.request')")
     public List<AccountRoleAssignmentResponse> listRevocableAssignments(Long accountId) {
-        Employee employee = findAccount(accountId).getEmployee();
+        Employee employee = accountRepository.getRequired(accountId).getEmployee();
         if (employee == null) {
             return List.of();
         }
@@ -165,7 +165,7 @@ public class RoleAssignmentRequestService {
         );
 
         Long actorAccountId = currentAccountProvider.accountId();
-        Account actor = findAccount(actorAccountId);
+        Account actor = accountRepository.getRequired(actorAccountId);
         Instant now = Instant.now();
         RoleAssignmentRequest roleRequest = RoleAssignmentRequest.builder()
             .requestType(RoleAssignmentRequestType.REVOKE)
@@ -237,7 +237,7 @@ public class RoleAssignmentRequestService {
         requirePending(roleRequest);
 
         Long actorAccountId = currentAccountProvider.accountId();
-        Account actor = findAccount(actorAccountId);
+        Account actor = accountRepository.getRequired(actorAccountId);
         if (roleRequest.getRequestType() == RoleAssignmentRequestType.REVOKE) {
             // Recheck the target: it may have been revoked or have expired while the request waited.
             AccountRoleAssignment target = roleAssignmentRepository
@@ -268,7 +268,7 @@ public class RoleAssignmentRequestService {
         RoleAssignmentRequest roleRequest = findRequestForUpdate(requestId);
         requirePending(roleRequest);
 
-        Account actor = findAccount(currentAccountProvider.accountId());
+        Account actor = accountRepository.getRequired(currentAccountProvider.accountId());
         Instant now = Instant.now();
         roleRequest.setStatus(RoleAssignmentRequestStatus.REJECTED);
         roleRequest.setReviewedByAccount(actor);
@@ -293,7 +293,7 @@ public class RoleAssignmentRequestService {
             );
         }
 
-        Account actor = findAccount(actorAccountId);
+        Account actor = accountRepository.getRequired(actorAccountId);
         Instant now = Instant.now();
         roleRequest.setStatus(RoleAssignmentRequestStatus.CANCELLED);
         roleRequest.setCancelledByAccount(actor);
@@ -371,14 +371,6 @@ public class RoleAssignmentRequestService {
             ErrorCode.ROLE_ASSIGNMENT_REQUEST_NOT_FOUND,
             "Role assignment request not found: " + requestId
         );
-    }
-
-    private Account findAccount(Long accountId) {
-        return accountRepository.findById(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ACCOUNT_NOT_FOUND,
-                "Account not found: " + accountId
-            ));
     }
 
     private String trimToNull(String value) {

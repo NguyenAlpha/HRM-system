@@ -62,8 +62,7 @@ class AllowancePolicyServiceTest {
             .thenReturn(List.of(period));
         when(payslipRepository.findByPayrollPeriodId(7L)).thenReturn(List.of(payslip));
         when(positionRuleRepository.findOpenByJobPositionIdForUpdate(3L)).thenReturn(List.of());
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(approver));
+        when(currentAccountProvider.account()).thenReturn(approver);
         when(positionRuleRepository.save(any(PositionAllowanceRule.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -110,7 +109,6 @@ class AllowancePolicyServiceTest {
             payrollPeriodRepository,
             payslipRepository,
             payslipItemRepository,
-            accountRepository,
             currentAccountProvider
         );
     }

@@ -12,8 +12,10 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
+import com.htttdn.hrm.exception.ResourceNotFoundException;
 
 import jakarta.persistence.LockModeType;
 
@@ -62,4 +64,21 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
     Page<Employee> findByDeletedAtIsNull(Pageable pageable);
 
     Page<Employee> findByEmploymentStatusAndDeletedAtIsNull(EmploymentStatus employmentStatus, Pageable pageable);
+
+    /**
+     * Nhân viên chưa bị xóa mềm, không có thì 404 {@code EMPLOYEE_NOT_FOUND}. Cách hoạt động: xem
+     * {@link AccountRepository#getRequired}.
+     */
+    default Employee getRequired(Long id) {
+        return findByIdAndDeletedAtIsNull(id).orElseThrow(() -> notFound(id));
+    }
+
+    /** Như {@link #getRequired}, kèm khóa ghi ({@link #findByIdForUpdate}). */
+    default Employee getRequiredForUpdate(Long id) {
+        return findByIdForUpdate(id).orElseThrow(() -> notFound(id));
+    }
+
+    private static ResourceNotFoundException notFound(Long id) {
+        return new ResourceNotFoundException(ErrorCode.EMPLOYEE_NOT_FOUND, "Employee not found: " + id);
+    }
 }

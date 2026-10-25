@@ -46,7 +46,6 @@ import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
-import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
@@ -78,7 +77,6 @@ public class PayrollService {
     private final PositionAllowanceRuleRepository positionAllowanceRuleRepository;
     private final SeniorityAllowanceRuleRepository seniorityAllowanceRuleRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
-    private final AccountRepository accountRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final AttendanceCalendarService attendanceCalendarService;
@@ -110,7 +108,7 @@ public class PayrollService {
     @PreAuthorize("hasAuthority('payroll.calculate')")
     public PayrollPeriodResponse calculate(Long periodId, PayrollActionRequest request) {
         employeeAccessScopeService.requireCompanyWide("payroll.calculate");
-        PayrollPeriod period = findPeriodForUpdateOrThrow(periodId);
+        PayrollPeriod period = payrollPeriodRepository.getRequiredForUpdate(periodId);
         if (period.getStatus() != PayrollPeriodStatus.DRAFT && period.getStatus() != PayrollPeriodStatus.CALCULATED) {
             throw new ConflictException(
                 ErrorCode.PAYROLL_PERIOD_LOCKED, "Period " + periodId + " can no longer be recalculated");
@@ -132,7 +130,7 @@ public class PayrollService {
                 "Another payroll period uses the same tax payment month; monthly tax deductions require consolidated calculation");
         }
 
-        Account calculatedBy = findCurrentAccount();
+        Account calculatedBy = currentAccountProvider.account();
 
         for (Payslip existing : payslipRepository.findByPayrollPeriodId(periodId)) {
             payslipItemRepository.deleteByPayslipId(existing.getId());
@@ -452,7 +450,7 @@ public class PayrollService {
     @PreAuthorize("hasAuthority('payroll.approve')")
     public PayrollPeriodResponse approve(Long periodId, PayrollActionRequest request) {
         employeeAccessScopeService.requireCompanyWide("payroll.approve");
-        PayrollPeriod period = findPeriodForUpdateOrThrow(periodId);
+        PayrollPeriod period = payrollPeriodRepository.getRequiredForUpdate(periodId);
         if (period.getStatus() != PayrollPeriodStatus.CALCULATED) {
             throw new ConflictException(ErrorCode.CONFLICT, "Period must be CALCULATED before it can be approved");
         }
@@ -460,7 +458,7 @@ public class PayrollService {
             period.getPeriodStart(), period.getPeriodEnd(), period.getCalculatedAt())) {
             throw new ConflictException(ErrorCode.CONFLICT, "Attendance changed after payroll calculation; recalculate first");
         }
-        Account approver = findCurrentAccount();
+        Account approver = currentAccountProvider.account();
         if (period.getCalculatedByAccount() != null && period.getCalculatedByAccount().getId().equals(approver.getId())) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "The approver must be different from the calculator");
         }
@@ -475,7 +473,7 @@ public class PayrollService {
     @PreAuthorize("hasAuthority('payroll.mark_paid')")
     public PayrollPeriodResponse markPaid(Long periodId, PayrollActionRequest request) {
         employeeAccessScopeService.requireCompanyWide("payroll.mark_paid");
-        PayrollPeriod period = findPeriodForUpdateOrThrow(periodId);
+        PayrollPeriod period = payrollPeriodRepository.getRequiredForUpdate(periodId);
         if (period.getStatus() != PayrollPeriodStatus.APPROVED) {
             throw new ConflictException(ErrorCode.CONFLICT, "Period must be APPROVED before it can be marked as paid");
         }
@@ -488,7 +486,7 @@ public class PayrollService {
                 "Actual payment month differs from the approved tax payment month; review withholding before marking paid");
         }
 
-        Account payer = findCurrentAccount();
+        Account payer = currentAccountProvider.account();
 
         period.setStatus(PayrollPeriodStatus.PAID);
         period.setTaxPaymentDate(actualPaymentDate);
@@ -501,12 +499,12 @@ public class PayrollService {
     @PreAuthorize("hasAuthority('payroll.lock')")
     public PayrollPeriodResponse lock(Long periodId, PayrollActionRequest request) {
         employeeAccessScopeService.requireCompanyWide("payroll.lock");
-        PayrollPeriod period = findPeriodForUpdateOrThrow(periodId);
+        PayrollPeriod period = payrollPeriodRepository.getRequiredForUpdate(periodId);
         if (period.getStatus() != PayrollPeriodStatus.PAID) {
             throw new ConflictException(ErrorCode.CONFLICT, "Period must be PAID before it can be locked");
         }
 
-        Account locker = findCurrentAccount();
+        Account locker = currentAccountProvider.account();
 
         period.setStatus(PayrollPeriodStatus.LOCKED);
         period.setLockedByAccount(locker);
@@ -518,7 +516,7 @@ public class PayrollService {
     @PreAuthorize("hasAuthority('payroll.calculate')")
     public PayrollPeriodResponse cancel(Long periodId) {
         employeeAccessScopeService.requireCompanyWide("payroll.calculate");
-        PayrollPeriod period = findPeriodForUpdateOrThrow(periodId);
+        PayrollPeriod period = payrollPeriodRepository.getRequiredForUpdate(periodId);
         if (period.getStatus() != PayrollPeriodStatus.DRAFT && period.getStatus() != PayrollPeriodStatus.CALCULATED) {
             throw new ConflictException(ErrorCode.CONFLICT, "Only DRAFT or CALCULATED periods can be cancelled");
         }
@@ -530,7 +528,7 @@ public class PayrollService {
     @Transactional(readOnly = true)
     public PayrollPeriodResponse getPeriodById(Long periodId) {
         employeeAccessScopeService.requireCompanyWide("report.payroll.read");
-        return toResponse(findPeriodOrThrow(periodId));
+        return toResponse(payrollPeriodRepository.getRequired(periodId));
     }
 
     @PreAuthorize("hasAuthority('report.payroll.read')")
@@ -545,7 +543,7 @@ public class PayrollService {
     @Transactional(readOnly = true)
     public List<PayslipResponse> listPayslipsForPeriod(Long periodId) {
         employeeAccessScopeService.requireCompanyWide("report.payroll.read");
-        findPeriodOrThrow(periodId);
+        payrollPeriodRepository.getRequired(periodId);
         return payslipRepository.findByPayrollPeriodIdOrderByEmployeeCodeSnapshotAsc(periodId).stream()
             .map(this::toResponse)
             .toList();
@@ -583,7 +581,7 @@ public class PayrollService {
 
     private void requirePayslipAccess(Long employeeId) {
         if (currentAccountProvider.hasAuthority("payroll.self.read")) {
-            Account actor = findCurrentAccount();
+            Account actor = currentAccountProvider.account();
             if (actor.getEmployee() != null && employeeId.equals(actor.getEmployee().getId())) {
                 return;
             }
@@ -598,22 +596,6 @@ public class PayrollService {
         return new BusinessException(ErrorCode.VALIDATION_ERROR,
             "Cannot calculate payroll for employee " + employee.getEmployeeCode()
                 + " (ID " + employee.getId() + "): missing " + input);
-    }
-
-    private Account findCurrentAccount() {
-        Long accountId = currentAccountProvider.accountId();
-        return accountRepository.findById(accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + accountId));
-    }
-
-    private PayrollPeriod findPeriodForUpdateOrThrow(Long id) {
-        return payrollPeriodRepository.findByIdForUpdate(id)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.PAYROLL_PERIOD_NOT_FOUND, "Payroll period not found: " + id));
-    }
-
-    private PayrollPeriod findPeriodOrThrow(Long id) {
-        return payrollPeriodRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.PAYROLL_PERIOD_NOT_FOUND, "Payroll period not found: " + id));
     }
 
     private PayrollPeriodResponse toResponse(PayrollPeriod period) {

@@ -80,9 +80,8 @@ class PayrollServiceTest {
             .status(PayrollPeriodStatus.DRAFT).build();
         Employee employee = Employee.builder().id(2L).employeeCode("EMP002").hireDate(holiday)
             .terminationDate(holiday).build();
-        when(payrollPeriodRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(period));
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).build()));
+        when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).build());
         when(employeeRepository.findEmployedDuring(holiday, holiday)).thenReturn(List.of(employee));
 
         BusinessException error = assertThrows(BusinessException.class,
@@ -98,9 +97,8 @@ class PayrollServiceTest {
         PayrollPeriod period = PayrollPeriod.builder().id(1L).periodStart(start).periodEnd(end)
             .status(PayrollPeriodStatus.DRAFT).build();
         Employee employee = Employee.builder().id(2L).employeeCode("EMP002").hireDate(start).build();
-        when(payrollPeriodRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(period));
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).build()));
+        when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).build());
         when(employeeRepository.findEmployedDuring(start, end))
             .thenReturn(List.of(employee));
         when(attendanceCalendarService.companyWorkDates(start, end)).thenReturn(List.of(end));
@@ -125,9 +123,8 @@ class PayrollServiceTest {
         PayrollPeriod period = PayrollPeriod.builder().id(1L).periodStart(start).periodEnd(end)
             .status(PayrollPeriodStatus.DRAFT).build();
         Employee employee = Employee.builder().id(1L).employeeCode("EMP001").hireDate(hireDate).build();
-        when(payrollPeriodRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(period));
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).build()));
+        when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).build());
         when(employeeRepository.findEmployedDuring(start, end)).thenReturn(List.of(employee));
         when(attendanceCalendarService.companyWorkDates(hireDate, end))
             .thenReturn(List.of(hireDate, assignedDate));
@@ -152,9 +149,8 @@ class PayrollServiceTest {
         Employee employee = Employee.builder().id(2L).employeeCode("EMP002").hireDate(first).build();
         AttendanceRecord attendance = AttendanceRecord.builder().workDate(first)
             .scheduledMinutes(480).payableMinutes(480).build();
-        when(payrollPeriodRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(period));
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).build()));
+        when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).build());
         when(employeeRepository.findEmployedDuring(first, second))
             .thenReturn(List.of(employee));
         when(attendanceCalendarService.companyWorkDates(first, second)).thenReturn(List.of(first, second));
@@ -180,7 +176,7 @@ class PayrollServiceTest {
         Instant calculatedAt = Instant.now();
         PayrollPeriod period = PayrollPeriod.builder().id(1L).periodStart(start).periodEnd(end)
             .calculatedAt(calculatedAt).status(PayrollPeriodStatus.CALCULATED).build();
-        when(payrollPeriodRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(period));
+        when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
         when(attendanceRecordRepository.existsByWorkDateBetweenAndUpdatedAtAfter(start, end, calculatedAt))
             .thenReturn(true);
 
@@ -230,9 +226,8 @@ class PayrollServiceTest {
             .workDate(LocalDate.of(2026, 1, 15))
             .build();
 
-        when(payrollPeriodRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(period));
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(actor));
+        when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
+        when(currentAccountProvider.account()).thenReturn(actor);
         when(employeeRepository.findEmployedDuring(start, end))
             .thenReturn(List.of(employee));
         when(attendanceCalendarService.companyWorkDates(start, end)).thenReturn(List.of(workedDate));
@@ -311,9 +306,8 @@ class PayrollServiceTest {
             .scheduledMinutes(480).payableMinutes(480).build();
         AttendanceRecord secondRecord = AttendanceRecord.builder().workDate(second)
             .scheduledMinutes(480).payableMinutes(240).build();
-        when(payrollPeriodRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(period));
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).build()));
+        when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).build());
         when(employeeRepository.findEmployedDuring(start, end)).thenReturn(List.of(employee));
         when(attendanceCalendarService.companyWorkDates(start, end)).thenReturn(List.of(first, second));
         when(attendanceCalendarService.scheduleFor(2L, start, end)).thenReturn(List.of(
@@ -367,9 +361,8 @@ class PayrollServiceTest {
             .organizationUnit(OrganizationUnit.builder().name("Engineering").build()).build();
         WorkShift shift = WorkShift.builder().standardWorkMinutes(480).build();
         EmployeeSalaryHistory salary = EmployeeSalaryHistory.builder().baseSalary(new BigDecimal("27000000")).build();
-        when(payrollPeriodRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(period));
-        when(currentAccountProvider.accountId()).thenReturn(9L);
-        when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).build()));
+        when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).build());
         when(employeeRepository.findEmployedDuring(start, end)).thenReturn(List.of(employee));
         // Nothing after the last working day is expected or scheduled …
         when(attendanceCalendarService.companyWorkDates(start, lastWorkingDay)).thenReturn(List.of(dayBefore, lastWorkingDay));
@@ -418,7 +411,6 @@ class PayrollServiceTest {
             positionAllowanceRuleRepository,
             seniorityAllowanceRuleRepository,
             attendanceRecordRepository,
-            accountRepository,
             currentAccountProvider,
             employeeAccessScopeService,
             attendanceCalendarService,
@@ -432,7 +424,7 @@ class PayrollServiceTest {
         PayrollPeriod period = PayrollPeriod.builder().id(1L)
             .taxPaymentDate(LocalDate.of(2026, 11, 5))
             .status(PayrollPeriodStatus.APPROVED).build();
-        when(payrollPeriodRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(period));
+        when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
 
         assertThrows(ConflictException.class, () -> service().markPaid(1L,
             new PayrollActionRequest(LocalDate.of(2026, 12, 1))));

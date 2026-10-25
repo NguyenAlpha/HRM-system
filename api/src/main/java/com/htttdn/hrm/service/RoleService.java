@@ -128,9 +128,7 @@ public class RoleService {
     public void grantPermission(Long roleId, GrantPermissionRequest request, Long grantedByAccountId) {
         Role role = findRoleOrThrow(roleId);
         rejectSystemRolePermissionChange(role);
-        Permission permission = permissionRepository.findById(request.permissionId())
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.PERMISSION_NOT_FOUND, "Permission not found: " + request.permissionId()));
+        Permission permission = permissionRepository.getRequired(request.permissionId());
         rejectNonDelegablePermission(permission, "permissionId");
 
         RolePermissionId id = new RolePermissionId(roleId, request.permissionId());
@@ -138,9 +136,7 @@ public class RoleService {
             throw new ConflictException(ErrorCode.CONFLICT, "Permission is already granted to this role");
         }
 
-        Account grantedBy = accountRepository.findById(grantedByAccountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + grantedByAccountId));
+        Account grantedBy = accountRepository.getRequired(grantedByAccountId);
 
         RolePermission rolePermission = RolePermission.builder()
             .id(id)
@@ -178,9 +174,7 @@ public class RoleService {
             rejectNonDelegablePermission(permission, "permissionIds");
         }
 
-        Account grantedBy = accountRepository.findById(grantedByAccountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.RESOURCE_NOT_FOUND, "Account not found: " + grantedByAccountId));
+        Account grantedBy = accountRepository.getRequired(grantedByAccountId);
         List<RolePermission> existingMappings = rolePermissionRepository.findByIdRoleId(roleId);
         Map<Long, RolePermission> existingByPermissionId = existingMappings.stream()
             .collect(Collectors.toMap(mapping -> mapping.getPermission().getId(), Function.identity()));
