@@ -15,7 +15,9 @@ import org.springframework.data.repository.query.Param;
 
 import jakarta.persistence.LockModeType;
 
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.AttendanceRecord;
+import com.htttdn.hrm.exception.ResourceNotFoundException;
 
 public interface AttendanceRecordRepository extends JpaRepository<AttendanceRecord, Long> {
 
@@ -56,4 +58,18 @@ public interface AttendanceRecordRepository extends JpaRepository<AttendanceReco
     boolean existsByEmployeeId(Long employeeId);
 
     boolean existsByShiftId(Long shiftId);
+
+    /** Ngày công theo id, không có thì 404 {@code ATTENDANCE_NOT_FOUND}. Xem {@link AccountRepository#getRequired}. */
+    default AttendanceRecord getRequired(Long id) {
+        return findById(id).orElseThrow(() -> notFound(id));
+    }
+
+    /** Như {@link #getRequired}, kèm khóa ghi ({@link #findByIdForUpdate}). */
+    default AttendanceRecord getRequiredForUpdate(Long id) {
+        return findByIdForUpdate(id).orElseThrow(() -> notFound(id));
+    }
+
+    private static ResourceNotFoundException notFound(Long id) {
+        return new ResourceNotFoundException(ErrorCode.ATTENDANCE_NOT_FOUND, "Attendance record not found: " + id);
+    }
 }

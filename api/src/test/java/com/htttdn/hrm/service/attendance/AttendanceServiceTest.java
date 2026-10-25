@@ -97,14 +97,14 @@ class AttendanceServiceTest {
         record.setCheckOutAt(Instant.now());
         record.setWorkedMinutes(480);
         record.setPayableMinutes(480);
-        when(attendanceRecordRepository.findById(1L)).thenReturn(Optional.of(record));
-        when(attendanceRecordRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(record));
+        when(attendanceRecordRepository.getRequired(1L)).thenReturn(record);
+        when(attendanceRecordRepository.getRequiredForUpdate(1L)).thenReturn(record);
         when(attendanceCalendarService.scheduleFor(2L, date, date)).thenReturn(List.of(
             new AttendanceCalendarService.ScheduledDay(date, record.getShift(),
                 record.getScheduledStartAt(), record.getScheduledEndAt(), 480)));
         stubApproverOf(record);
 
-        assertThrows(BusinessException.class, () -> service().approveOvertime(1L,
+        assertThrows(BusinessException.class, () -> overtimeService().approveOvertime(1L,
             new ApproveOvertimeRequest(60, new java.math.BigDecimal("1.5"))));
     }
 
@@ -115,12 +115,12 @@ class AttendanceServiceTest {
         record.setCheckOutAt(Instant.now());
         record.setWorkedMinutes(120);
         record.setPayableMinutes(0);
-        when(attendanceRecordRepository.findById(1L)).thenReturn(Optional.of(record));
-        when(attendanceRecordRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(record));
+        when(attendanceRecordRepository.getRequired(1L)).thenReturn(record);
+        when(attendanceRecordRepository.getRequiredForUpdate(1L)).thenReturn(record);
         when(attendanceCalendarService.isCompanyHoliday(holiday)).thenReturn(true);
         stubApproverOf(record);
 
-        assertThrows(BusinessException.class, () -> service().approveOvertime(1L,
+        assertThrows(BusinessException.class, () -> overtimeService().approveOvertime(1L,
             new ApproveOvertimeRequest(120, new java.math.BigDecimal("2.0"))));
     }
 
@@ -169,8 +169,8 @@ class AttendanceServiceTest {
         LocalDate date = LocalDate.of(2026, 1, 15);
         AttendanceRecord record = record(date);
         record.setStatus(AttendanceStatus.MISSING_PUNCH);
-        when(attendanceRecordRepository.findById(1L)).thenReturn(Optional.of(record));
-        when(attendanceRecordRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(record));
+        when(attendanceRecordRepository.getRequired(1L)).thenReturn(record);
+        when(attendanceRecordRepository.getRequiredForUpdate(1L)).thenReturn(record);
 
         assertThrows(BusinessException.class, () -> service().adjust(1L,
             new AdjustAttendanceRequest(0, 480, 0, 0, AttendanceStatus.PRESENT, "Test")));
@@ -345,7 +345,16 @@ class AttendanceServiceTest {
     }
 
     private AttendanceService service() {
-        return new AttendanceService(attendanceRecordRepository, employeeRepository, payrollPeriodRepository,
-            currentAccountProvider, employeeAccessScopeService, attendanceCalendarService, approverResolver);
+        return new AttendanceService(attendanceRecordRepository, employeeRepository, currentAccountProvider,
+            employeeAccessScopeService, attendanceCalendarService, editGuard(), new AttendanceMapper());
+    }
+
+    private OvertimeService overtimeService() {
+        return new OvertimeService(attendanceRecordRepository, employeeRepository, currentAccountProvider,
+            attendanceCalendarService, approverResolver, editGuard(), new AttendanceMapper());
+    }
+
+    private AttendanceEditGuard editGuard() {
+        return new AttendanceEditGuard(attendanceRecordRepository, payrollPeriodRepository);
     }
 }

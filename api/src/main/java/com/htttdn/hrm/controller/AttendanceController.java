@@ -24,7 +24,9 @@ import com.htttdn.hrm.dto.response.attendance.OvertimeApprovalItemResponse;
 import com.htttdn.hrm.dto.response.attendance.TimesheetRowResponse;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
+import com.htttdn.hrm.service.attendance.AttendanceQueryService;
 import com.htttdn.hrm.service.attendance.AttendanceService;
+import com.htttdn.hrm.service.attendance.OvertimeService;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -38,6 +40,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AttendanceController {
     private final AttendanceService service;
+    private final OvertimeService overtimeService;
+    private final AttendanceQueryService queryService;
 
     @PostMapping("/prepare")
     @PreAuthorize("hasAuthority('attendance.manage')")
@@ -63,7 +67,7 @@ public class AttendanceController {
     @PreAuthorize("isAuthenticated()")
     public ApiResult<AttendanceRecordResponse> approveOvertime(@PathVariable Long id,
         @Valid @RequestBody ApproveOvertimeRequest request) {
-        return ApiResult.ok(service.approveOvertime(id, request));
+        return ApiResult.ok(overtimeService.approveOvertime(id, request));
     }
 
     @GetMapping("/timesheet")
@@ -71,19 +75,19 @@ public class AttendanceController {
     public ApiResult<List<TimesheetRowResponse>> timesheet(@RequestParam @Min(2000) @Max(9999) int year,
         @RequestParam @Min(1) @Max(12) int month,
         @RequestParam(required = false) String keyword, @RequestParam(required = false) Long organizationUnitId) {
-        return ApiResult.ok(service.timesheet(year, month, keyword, organizationUnitId));
+        return ApiResult.ok(queryService.timesheet(year, month, keyword, organizationUnitId));
     }
 
     @GetMapping("/overtime/pending")
     @PreAuthorize("isAuthenticated()")
     public ApiResult<List<OvertimeApprovalItemResponse>> listOvertimeAwaitingDecision() {
-        return ApiResult.ok(service.listOvertimeAwaitingDecision());
+        return ApiResult.ok(overtimeService.listOvertimeAwaitingDecision());
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('attendance.self.read', 'attendance.read')")
     public ApiResult<AttendanceRecordResponse> getById(@PathVariable Long id) {
-        return ApiResult.ok(service.getById(id));
+        return ApiResult.ok(queryService.getById(id));
     }
 
     @GetMapping("/employees/{employeeId}")
@@ -91,6 +95,6 @@ public class AttendanceController {
     public ApiResult<PagedResult<AttendanceRecordResponse>> listByEmployee(@PathVariable Long employeeId,
         @RequestParam LocalDate from, @RequestParam LocalDate to,
         @PageableDefault(sort = "workDate", size = 20) Pageable pageable) {
-        return ApiResult.ok(PagedResult.of(service.listByEmployee(employeeId, from, to, pageable)));
+        return ApiResult.ok(PagedResult.of(queryService.listByEmployee(employeeId, from, to, pageable)));
     }
 }

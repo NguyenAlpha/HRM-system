@@ -11,7 +11,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.htttdn.hrm.service.attendance.AttendanceCalendarService;
-import com.htttdn.hrm.service.attendance.AttendanceService;
+import com.htttdn.hrm.service.attendance.AttendanceQueryService;
+import com.htttdn.hrm.service.attendance.OvertimeService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,7 +57,8 @@ class ApprovalChainIntegrationTest {
 
     @Autowired private JdbcTemplate jdbc;
     @Autowired private LeaveRequestService leaveRequestService;
-    @Autowired private AttendanceService attendanceService;
+    @Autowired private OvertimeService overtimeService;
+    @Autowired private AttendanceQueryService attendanceQueryService;
     @Autowired private AttendanceCalendarService calendarService;
     @Autowired private WorkShiftRepository workShiftRepository;
 
@@ -185,24 +187,24 @@ class ApprovalChainIntegrationTest {
         ApproveOvertimeRequest noOvertime = new ApproveOvertimeRequest(0, BigDecimal.ONE);
 
         authenticateAs(hr, "attendance.read", "attendance.manage");
-        assertThrows(ForbiddenException.class, () -> attendanceService.approveOvertime(staffDay, noOvertime));
+        assertThrows(ForbiddenException.class, () -> overtimeService.approveOvertime(staffDay, noOvertime));
         authenticateAs(staff, EMPLOYEE);
-        assertThrows(ForbiddenException.class, () -> attendanceService.approveOvertime(staffDay, noOvertime));
+        assertThrows(ForbiddenException.class, () -> overtimeService.approveOvertime(staffDay, noOvertime));
         authenticateAs(director, EMPLOYEE);
-        assertThrows(ForbiddenException.class, () -> attendanceService.approveOvertime(directorDay, noOvertime));
+        assertThrows(ForbiddenException.class, () -> overtimeService.approveOvertime(directorDay, noOvertime));
 
         authenticateAs(manager, EMPLOYEE);
-        assertEquals(staffDay, attendanceService.listOvertimeAwaitingDecision().stream()
+        assertEquals(staffDay, overtimeService.listOvertimeAwaitingDecision().stream()
             .map(OvertimeApprovalItemResponse::record).filter(record -> record.id().equals(staffDay))
             .findFirst().orElseThrow().id());
-        attendanceService.approveOvertime(staffDay, noOvertime);
-        assertTrue(attendanceService.listOvertimeAwaitingDecision().stream()
+        overtimeService.approveOvertime(staffDay, noOvertime);
+        assertTrue(overtimeService.listOvertimeAwaitingDecision().stream()
             .noneMatch(item -> item.record().id().equals(staffDay)));
 
         // The Director's overtime goes to the Owner, who has nobody above and confirms their own.
         authenticateAs(owner, EMPLOYEE);
-        attendanceService.approveOvertime(directorDay, noOvertime);
-        attendanceService.approveOvertime(ownerDay, noOvertime);
+        overtimeService.approveOvertime(directorDay, noOvertime);
+        overtimeService.approveOvertime(ownerDay, noOvertime);
     }
 
     @Test
@@ -305,17 +307,17 @@ class ApprovalChainIntegrationTest {
             """, hr.accountId(), unitId, creatorAccountId);
         authenticateAs(hr, "attendance.read");
 
-        List<TimesheetRowResponse> rows = attendanceService.timesheet(2026, 3, null, null);
+        List<TimesheetRowResponse> rows = attendanceQueryService.timesheet(2026, 3, null, null);
         assertEquals(Set.of(owner.employeeId(), director.employeeId(), manager.employeeId(), staff.employeeId(), hr.employeeId()),
             rows.stream().map(TimesheetRowResponse::employeeId).collect(Collectors.toSet()));
         assertEquals(List.of(staffDay), rows.stream().filter(row -> row.employeeId().equals(staff.employeeId()))
             .findFirst().orElseThrow().records().stream().map(record -> record.id()).toList());
 
         assertEquals(List.of(staff.employeeId()),
-            attendanceService.timesheet(2026, 3, "approval staff", null).stream().map(TimesheetRowResponse::employeeId).toList());
-        assertTrue(attendanceService.timesheet(2026, 4, "approval staff", null).getFirst().records().isEmpty());
+            attendanceQueryService.timesheet(2026, 3, "approval staff", null).stream().map(TimesheetRowResponse::employeeId).toList());
+        assertTrue(attendanceQueryService.timesheet(2026, 4, "approval staff", null).getFirst().records().isEmpty());
         // Hired in 2025-01: not on the timesheet of an earlier month.
-        assertTrue(attendanceService.timesheet(2024, 12, null, null).isEmpty());
+        assertTrue(attendanceQueryService.timesheet(2024, 12, null, null).isEmpty());
     }
 
     private List<Long> searchIds(String keyword, LeaveRequestStatus status, LocalDate day) {
