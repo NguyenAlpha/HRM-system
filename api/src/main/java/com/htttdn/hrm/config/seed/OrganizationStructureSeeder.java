@@ -4,7 +4,6 @@ import java.time.Instant;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
@@ -18,6 +17,8 @@ import com.htttdn.hrm.entity.enums.OrganizationUnitType;
 import com.htttdn.hrm.repository.OrganizationUnitRepository;
 import com.htttdn.hrm.repository.WorkLocationRepository;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Khởi tạo cơ cấu tổ chức và địa điểm làm việc tối thiểu cho doanh nghiệp mới.
  *
@@ -26,28 +27,19 @@ import com.htttdn.hrm.repository.WorkLocationRepository;
  */
 @Component
 @Order(60)
+@RequiredArgsConstructor
 public class OrganizationStructureSeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(OrganizationStructureSeeder.class);
 
     private final WorkLocationRepository workLocationRepository;
     private final OrganizationUnitRepository organizationUnitRepository;
-    private final boolean enabled;
-
-    public OrganizationStructureSeeder(
-        WorkLocationRepository workLocationRepository,
-        OrganizationUnitRepository organizationUnitRepository,
-        @Value("${company.seed.enabled:true}") boolean enabled
-    ) {
-        this.workLocationRepository = workLocationRepository;
-        this.organizationUnitRepository = organizationUnitRepository;
-        this.enabled = enabled;
-    }
+    private final CompanySeedProperties properties;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (!enabled) {
+        if (!properties.enabled()) {
             return;
         }
 

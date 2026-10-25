@@ -14,6 +14,7 @@ import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.RefreshToken;
 import com.htttdn.hrm.exception.InvalidTokenException;
 import com.htttdn.hrm.repository.RefreshTokenRepository;
+import com.htttdn.hrm.security.JwtProperties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -27,12 +28,15 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class RefreshTokenServiceTest {
 
+    /** Refresh tokens last 30 days; the other values are not read by this service. */
+    private static final JwtProperties JWT = new JwtProperties(null, "https://hrm.test", 900, 30);
+
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
 
     @Test
     void createReturnsRawTokenButStoresOnlyItsHash() {
-        RefreshTokenService service = new RefreshTokenService(refreshTokenRepository, 30);
+        RefreshTokenService service = new RefreshTokenService(refreshTokenRepository, JWT);
         Account account = Account.builder().id(7L).build();
 
         String rawToken = service.create(account);
@@ -48,7 +52,7 @@ class RefreshTokenServiceTest {
 
     @Test
     void rotateRevokesOldTokenAndIssuesANewOne() {
-        RefreshTokenService service = new RefreshTokenService(refreshTokenRepository, 30);
+        RefreshTokenService service = new RefreshTokenService(refreshTokenRepository, JWT);
         Account account = Account.builder().id(7L).build();
         RefreshToken existing = RefreshToken.builder()
             .account(account)
@@ -66,7 +70,7 @@ class RefreshTokenServiceTest {
 
     @Test
     void reusedTokenRevokesEverySessionForTheAccount() {
-        RefreshTokenService service = new RefreshTokenService(refreshTokenRepository, 30);
+        RefreshTokenService service = new RefreshTokenService(refreshTokenRepository, JWT);
         Account account = Account.builder().id(7L).build();
         RefreshToken existing = RefreshToken.builder()
             .account(account)

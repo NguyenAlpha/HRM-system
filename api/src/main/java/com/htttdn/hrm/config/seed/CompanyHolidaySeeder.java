@@ -8,7 +8,6 @@ import java.util.TreeMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
@@ -17,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.entity.CompanyHoliday;
 import com.htttdn.hrm.repository.CompanyHolidayRepository;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * Khởi tạo lịch nghỉ lễ, Tết hưởng nguyên lương năm 2025 và 2026 theo Điều 112 Bộ luật Lao động
@@ -29,6 +30,7 @@ import com.htttdn.hrm.repository.CompanyHolidayRepository;
  */
 @Component
 @Order(90)
+@RequiredArgsConstructor
 public class CompanyHolidaySeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(CompanyHolidaySeeder.class);
@@ -64,20 +66,12 @@ public class CompanyHolidaySeeder implements ApplicationRunner {
     );
 
     private final CompanyHolidayRepository companyHolidayRepository;
-    private final boolean enabled;
-
-    public CompanyHolidaySeeder(
-        CompanyHolidayRepository companyHolidayRepository,
-        @Value("${company.seed.enabled:true}") boolean enabled
-    ) {
-        this.companyHolidayRepository = companyHolidayRepository;
-        this.enabled = enabled;
-    }
+    private final CompanySeedProperties properties;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (!enabled) {
+        if (!properties.enabled()) {
             return;
         }
 

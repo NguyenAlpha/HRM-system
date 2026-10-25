@@ -22,10 +22,11 @@ class JwtServiceTest {
         String secret = Base64.getEncoder().encodeToString(
             "a-development-test-secret-with-more-than-32-bytes".getBytes(StandardCharsets.UTF_8)
         );
+        JwtProperties properties = new JwtProperties(secret, "https://hrm.test", 900, 30);
         ApplicationConfig config = new ApplicationConfig();
-        JwtEncoder encoder = config.jwtEncoder(secret);
-        JwtDecoder decoder = config.jwtDecoder(secret, "https://hrm.test");
-        JwtService jwtService = new JwtService(encoder, "https://hrm.test", 900);
+        JwtEncoder encoder = config.jwtEncoder(properties);
+        JwtDecoder decoder = config.jwtDecoder(properties);
+        JwtService jwtService = new JwtService(encoder, properties);
         Account account = Account.builder().id(42L).username("admin").build();
         AuthorizationSnapshot authorization = new AuthorizationSnapshot(
             List.of("SYSTEM_ADMIN"),

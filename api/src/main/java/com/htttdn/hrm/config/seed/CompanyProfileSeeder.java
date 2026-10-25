@@ -4,7 +4,6 @@ import java.time.Instant;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
@@ -13,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.entity.CompanyProfile;
 import com.htttdn.hrm.repository.CompanyProfileRepository;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * Khởi tạo hồ sơ doanh nghiệp duy nhất của hệ thống.
@@ -23,6 +24,7 @@ import com.htttdn.hrm.repository.CompanyProfileRepository;
  */
 @Component
 @Order(50)
+@RequiredArgsConstructor
 public class CompanyProfileSeeder implements ApplicationRunner {
 
     static final short COMPANY_PROFILE_ID = 1;
@@ -30,20 +32,12 @@ public class CompanyProfileSeeder implements ApplicationRunner {
     private static final Logger log = LoggerFactory.getLogger(CompanyProfileSeeder.class);
 
     private final CompanyProfileRepository companyProfileRepository;
-    private final boolean enabled;
-
-    public CompanyProfileSeeder(
-        CompanyProfileRepository companyProfileRepository,
-        @Value("${company.seed.enabled:true}") boolean enabled
-    ) {
-        this.companyProfileRepository = companyProfileRepository;
-        this.enabled = enabled;
-    }
+    private final CompanySeedProperties properties;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (!enabled) {
+        if (!properties.enabled()) {
             return;
         }
 

@@ -92,7 +92,7 @@ class RolePermissionSeederTest {
             roleRepository,
             permissionRepository,
             rolePermissionRepository,
-            true
+            new RbacSeedProperties(true)
         ).run(applicationArguments);
 
         ArgumentCaptor<RolePermission> captor = ArgumentCaptor.forClass(RolePermission.class);

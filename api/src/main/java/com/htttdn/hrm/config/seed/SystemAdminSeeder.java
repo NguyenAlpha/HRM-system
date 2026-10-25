@@ -8,7 +8,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
@@ -25,6 +24,8 @@ import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.RoleRepository;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Khởi tạo account quản trị hệ thống và gán role {@code SYSTEM_ADMIN} đã được seed trước đó.
  *
@@ -37,6 +38,7 @@ import com.htttdn.hrm.repository.RoleRepository;
  */
 @Component
 @Order(400)
+@RequiredArgsConstructor
 public class SystemAdminSeeder implements ApplicationRunner {
 
     static final String SYSTEM_ADMIN_ROLE_CODE = "SYSTEM_ADMIN";
@@ -47,46 +49,21 @@ public class SystemAdminSeeder implements ApplicationRunner {
     private final RoleRepository roleRepository;
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final PasswordEncoder passwordEncoder;
-    private final boolean enabled;
-    private final String username;
-    private final String email;
-    private final String password;
+    private final AdminSeedProperties properties;
     private final Clock clock;
-
-    public SystemAdminSeeder(
-        AccountRepository accountRepository,
-        RoleRepository roleRepository,
-        AccountRoleAssignmentRepository accountRoleAssignmentRepository,
-        PasswordEncoder passwordEncoder,
-        @Value("${admin.seed.enabled:false}") boolean enabled,
-        @Value("${admin.seed.username:admin}") String username,
-        @Value("${admin.seed.email:admin@hrm.local}") String email,
-        @Value("${admin.seed.password:}") String password,
-        Clock clock
-    ) {
-        this.accountRepository = accountRepository;
-        this.roleRepository = roleRepository;
-        this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.enabled = enabled;
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.clock = clock;
-    }
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (!enabled) {
+        if (!properties.enabled()) {
             return;
         }
 
         validateConfiguration();
         Role systemAdminRole = findRequiredSystemAdminRole();
         Account admin = findOrCreateAdmin(
-            username.trim(),
-            email.trim().toLowerCase(Locale.ROOT)
+            properties.username().trim(),
+            properties.email().trim().toLowerCase(Locale.ROOT)
         );
         assignRoleIfMissing(admin, systemAdminRole);
 
@@ -94,6 +71,9 @@ public class SystemAdminSeeder implements ApplicationRunner {
     }
 
     private void validateConfiguration() {
+        String username = properties.username();
+        String email = properties.email();
+        String password = properties.password();
         if (isBlank(username) || isBlank(email) || isBlank(password)) {
             throw new IllegalStateException(
                 "Admin seed requires admin.seed.username, admin.seed.email, and admin.seed.password"
@@ -136,7 +116,7 @@ public class SystemAdminSeeder implements ApplicationRunner {
         return accountRepository.save(Account.builder()
             .username(normalizedUsername)
             .email(normalizedEmail)
-            .passwordHash(passwordEncoder.encode(password))
+            .passwordHash(passwordEncoder.encode(properties.password()))
             .status(AccountStatus.ACTIVE)
             .failedLoginCount(0)
             .createdAt(now)

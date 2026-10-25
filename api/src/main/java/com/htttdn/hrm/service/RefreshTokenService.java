@@ -8,7 +8,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,23 +16,19 @@ import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.RefreshToken;
 import com.htttdn.hrm.exception.InvalidTokenException;
 import com.htttdn.hrm.repository.RefreshTokenRepository;
+import com.htttdn.hrm.security.JwtProperties;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class RefreshTokenService {
 
     private static final int TOKEN_BYTES = 64;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final RefreshTokenRepository refreshTokenRepository;
-    private final long expirationDays;
-
-    public RefreshTokenService(
-        RefreshTokenRepository refreshTokenRepository,
-        @Value("${jwt.refresh-token-expiration-days:30}") long expirationDays
-    ) {
-        this.refreshTokenRepository = refreshTokenRepository;
-        this.expirationDays = expirationDays;
-    }
+    private final JwtProperties jwt;
 
     @Transactional
     public String create(Account account) {
@@ -42,7 +37,7 @@ public class RefreshTokenService {
         refreshTokenRepository.save(RefreshToken.builder()
             .tokenHash(hash(rawToken))
             .account(account)
-            .expiresAt(now.plus(expirationDays, ChronoUnit.DAYS))
+            .expiresAt(now.plus(jwt.refreshTokenExpirationDays(), ChronoUnit.DAYS))
             .createdAt(now)
             .build());
         return rawToken;

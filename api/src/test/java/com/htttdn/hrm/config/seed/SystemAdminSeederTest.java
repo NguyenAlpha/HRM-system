@@ -171,10 +171,7 @@ class SystemAdminSeederTest {
             roleRepository,
             accountRoleAssignmentRepository,
             passwordEncoder,
-            enabled,
-            username,
-            email,
-            password,
+            new AdminSeedProperties(enabled, username, email, password),
             Clock.system(ClockConfig.BUSINESS_ZONE)
         );
     }

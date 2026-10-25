@@ -65,6 +65,6 @@ class CompanyProfileSeederTest {
     }
 
     private CompanyProfileSeeder createSeeder(boolean enabled) {
-        return new CompanyProfileSeeder(companyProfileRepository, enabled);
+        return new CompanyProfileSeeder(companyProfileRepository, new CompanySeedProperties(enabled));
     }
 }

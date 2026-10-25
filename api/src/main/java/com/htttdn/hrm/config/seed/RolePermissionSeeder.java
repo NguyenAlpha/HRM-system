@@ -6,7 +6,6 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
@@ -22,6 +21,8 @@ import com.htttdn.hrm.repository.PermissionRepository;
 import com.htttdn.hrm.repository.RolePermissionRepository;
 import com.htttdn.hrm.repository.RoleRepository;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Gán bộ permission mặc định cho các system role sau khi role và permission đã được seed.
  *
@@ -36,6 +37,7 @@ import com.htttdn.hrm.repository.RoleRepository;
  */
 @Component
 @Order(300)
+@RequiredArgsConstructor
 public class RolePermissionSeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(RolePermissionSeeder.class);
@@ -173,24 +175,12 @@ public class RolePermissionSeeder implements ApplicationRunner {
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final RolePermissionRepository rolePermissionRepository;
-    private final boolean enabled;
-
-    public RolePermissionSeeder(
-        RoleRepository roleRepository,
-        PermissionRepository permissionRepository,
-        RolePermissionRepository rolePermissionRepository,
-        @Value("${rbac.seed.enabled:true}") boolean enabled
-    ) {
-        this.roleRepository = roleRepository;
-        this.permissionRepository = permissionRepository;
-        this.rolePermissionRepository = rolePermissionRepository;
-        this.enabled = enabled;
-    }
+    private final RbacSeedProperties properties;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (!enabled) {
+        if (!properties.enabled()) {
             return;
         }
 

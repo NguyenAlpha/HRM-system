@@ -8,7 +8,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +24,10 @@ import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountActivationTokenRepository;
 import com.htttdn.hrm.repository.AccountRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class AccountActivationService {
 
     private static final int TOKEN_BYTES = 32;
@@ -35,22 +37,7 @@ public class AccountActivationService {
     private final AccountRepository accountRepository;
     private final AccountActivationTokenRepository activationTokenRepository;
     private final PasswordEncoder passwordEncoder;
-    private final long expirationHours;
-
-    public AccountActivationService(
-        AccountRepository accountRepository,
-        AccountActivationTokenRepository activationTokenRepository,
-        PasswordEncoder passwordEncoder,
-        @Value("${account.activation-token-expiration-hours:24}") long expirationHours
-    ) {
-        if (expirationHours <= 0) {
-            throw new IllegalArgumentException("Account activation token expiration must be positive");
-        }
-        this.accountRepository = accountRepository;
-        this.activationTokenRepository = activationTokenRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.expirationHours = expirationHours;
-    }
+    private final AccountActivationProperties properties;
 
     /**
      * Phát credential kích hoạt dùng một lần. Raw token chỉ được trả về cho lớp điều phối
@@ -76,7 +63,7 @@ public class AccountActivationService {
         activationTokenRepository.revokeActiveByAccountId(accountId, now);
 
         String rawToken = generateToken();
-        Instant expiresAt = now.plus(expirationHours, ChronoUnit.HOURS);
+        Instant expiresAt = now.plus(properties.activationTokenExpirationHours(), ChronoUnit.HOURS);
         activationTokenRepository.save(AccountActivationToken.builder()
             .account(account)
             .tokenHash(hash(rawToken))

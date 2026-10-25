@@ -2,7 +2,6 @@ package com.htttdn.hrm.security;
 
 import java.time.Instant;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -13,9 +12,10 @@ import org.springframework.stereotype.Service;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.service.AccountAuthorizationService.AuthorizationSnapshot;
 
-import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class JwtService {
 
     private static final JwsHeader JWT_HEADER = JwsHeader.with(MacAlgorithm.HS256)
@@ -23,28 +23,19 @@ public class JwtService {
         .build();
 
     private final JwtEncoder jwtEncoder;
-    private final String issuer;
+    private final JwtProperties jwt;
 
-    @Getter
-    private final long accessTokenExpirationSeconds;
-
-    public JwtService(
-        JwtEncoder jwtEncoder,
-        @Value("${jwt.issuer:https://hrm.local}") String issuer,
-        @Value("${jwt.access-token-expiration-seconds:900}") long accessTokenExpirationSeconds
-    ) {
-        this.jwtEncoder = jwtEncoder;
-        this.issuer = issuer;
-        this.accessTokenExpirationSeconds = accessTokenExpirationSeconds;
+    public long getAccessTokenExpirationSeconds() {
+        return jwt.accessTokenExpirationSeconds();
     }
 
     public String generateAccessToken(Account account, AuthorizationSnapshot authorization) {
         Instant now = Instant.now();
         JwtClaimsSet claims = JwtClaimsSet.builder()
-            .issuer(issuer)
+            .issuer(jwt.issuer())
             .subject(account.getUsername())
             .issuedAt(now)
-            .expiresAt(now.plusSeconds(accessTokenExpirationSeconds))
+            .expiresAt(now.plusSeconds(jwt.accessTokenExpirationSeconds()))
             .claim("accountId", account.getId())
             .claim("roles", authorization.roles())
             .claim("permissions", authorization.permissions())

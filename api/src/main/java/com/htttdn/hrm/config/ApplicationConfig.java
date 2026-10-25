@@ -9,7 +9,6 @@ import java.util.Set;
 
 import javax.crypto.spec.SecretKeySpec;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -28,6 +27,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 
 import com.htttdn.hrm.security.AccountUserDetailsService;
+import com.htttdn.hrm.security.JwtProperties;
 import com.htttdn.hrm.security.JwtService;
 import com.htttdn.hrm.service.AuthService;
 
@@ -38,8 +38,8 @@ import com.htttdn.hrm.service.AuthService;
  * <ul>
  *   <li>{@link #passwordEncoder()} — BCrypt dùng để hash mật khẩu khi tạo/đổi mật khẩu
  *       và verify mật khẩu trong luồng đăng nhập.</li>
- *   <li>{@link #jwtEncoder(String)} — ký access token HS256 do {@link JwtService} phát hành.</li>
- *   <li>{@link #jwtDecoder(String, String)} — xác minh chữ ký, thời hạn và issuer của
+ *   <li>{@link #jwtEncoder(JwtProperties)} — ký access token HS256 do {@link JwtService} phát hành.</li>
+ *   <li>{@link #jwtDecoder(JwtProperties)} — xác minh chữ ký, thời hạn và issuer của
  *       Bearer token trước khi request đi vào controller.</li>
  *   <li>{@link #jwtAuthenticationConverter()} — chuyển claims {@code roles} và
  *       {@code permissions} thành authorities trong Spring Security.</li>
@@ -76,12 +76,12 @@ public class ApplicationConfig {
      * đã được tổng hợp. Khai báo thuật toán HS256 tường minh để encoder không chọn nhầm
      * signing algorithm khi tạo JWS.
      *
-     * @param encodedSecret secret Base64, tối thiểu 32 bytes sau khi decode
+     * @param jwt cấu hình {@code jwt.*}; {@code jwt.secret} là secret Base64, tối thiểu 32 bytes sau khi decode
      * @return encoder dùng chung để ký JWT
      */
     @Bean
-    public JwtEncoder jwtEncoder(@Value("${jwt.secret}") String encodedSecret) {
-        byte[] keyBytes = decodeAndValidateJwtSecret(encodedSecret);
+    public JwtEncoder jwtEncoder(JwtProperties jwt) {
+        byte[] keyBytes = decodeAndValidateJwtSecret(jwt.secret());
         SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
         return NimbusJwtEncoder.withSecretKey(secretKey)
             .algorithm(MacAlgorithm.HS256)
@@ -96,21 +96,17 @@ public class ApplicationConfig {
      * {@link JwtValidators#createDefaultWithIssuer(String)} bắt buộc claim {@code iss}
      * khớp với cấu hình {@code jwt.issuer}.
      *
-     * @param encodedSecret cùng secret Base64 đã dùng để ký token
-     * @param issuer issuer hợp lệ mà decoder chấp nhận
+     * @param jwt cấu hình {@code jwt.*}: cùng secret Base64 đã dùng để ký token và issuer hợp lệ mà decoder chấp nhận
      * @return decoder đã cấu hình HS256 và issuer validation
      */
     @Bean
-    public JwtDecoder jwtDecoder(
-        @Value("${jwt.secret}") String encodedSecret,
-        @Value("${jwt.issuer:https://hrm.local}") String issuer
-    ) {
-        byte[] keyBytes = decodeAndValidateJwtSecret(encodedSecret);
+    public JwtDecoder jwtDecoder(JwtProperties jwt) {
+        byte[] keyBytes = decodeAndValidateJwtSecret(jwt.secret());
         SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(secretKey)
             .macAlgorithm(MacAlgorithm.HS256)
             .build();
-        decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(issuer));
+        decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(jwt.issuer()));
         return decoder;
     }
 

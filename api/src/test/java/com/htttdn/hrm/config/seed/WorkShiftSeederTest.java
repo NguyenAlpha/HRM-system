@@ -73,6 +73,6 @@ class WorkShiftSeederTest {
     }
 
     private WorkShiftSeeder createSeeder(boolean enabled) {
-        return new WorkShiftSeeder(workShiftRepository, enabled);
+        return new WorkShiftSeeder(workShiftRepository, new CompanySeedProperties(enabled));
     }
 }

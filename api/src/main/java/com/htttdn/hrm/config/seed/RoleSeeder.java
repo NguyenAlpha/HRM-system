@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
@@ -16,6 +15,8 @@ import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.repository.RoleRepository;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Khởi tạo các system role chuẩn của HRM trước khi seed permission assignment.
  *
@@ -25,6 +26,7 @@ import com.htttdn.hrm.repository.RoleRepository;
  */
 @Component
 @Order(100)
+@RequiredArgsConstructor
 public class RoleSeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(RoleSeeder.class);
@@ -81,20 +83,12 @@ public class RoleSeeder implements ApplicationRunner {
     );
 
     private final RoleRepository roleRepository;
-    private final boolean enabled;
-
-    public RoleSeeder(
-        RoleRepository roleRepository,
-        @Value("${rbac.seed.enabled:true}") boolean enabled
-    ) {
-        this.roleRepository = roleRepository;
-        this.enabled = enabled;
-    }
+    private final RbacSeedProperties properties;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (!enabled) {
+        if (!properties.enabled()) {
             return;
         }
 

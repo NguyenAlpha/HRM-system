@@ -14,7 +14,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
@@ -41,6 +40,8 @@ import com.htttdn.hrm.service.PayrollService;
 
 import jakarta.persistence.EntityManager;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Khởi tạo kỳ lương mọi tháng từ tháng nhân viên đầu tiên vào làm đến tháng trước tháng chạy seed,
  * qua đúng engine tính lương:
@@ -59,6 +60,7 @@ import jakarta.persistence.EntityManager;
  */
 @Component
 @Order(520)
+@RequiredArgsConstructor
 public class PayrollSeeder implements ApplicationRunner {
 
     private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
@@ -89,36 +91,12 @@ public class PayrollSeeder implements ApplicationRunner {
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final EntityManager entityManager;
     private final JdbcTemplate jdbc;
-    private final boolean enabled;
-
-    public PayrollSeeder(
-        PayrollService payrollService,
-        PayrollAdjustmentService payrollAdjustmentService,
-        PayrollPeriodRepository payrollPeriodRepository,
-        PayrollInsuranceRuleRepository insuranceRuleRepository,
-        PayrollTaxRuleRepository taxRuleRepository,
-        AccountRepository accountRepository,
-        AccountRoleAssignmentRepository accountRoleAssignmentRepository,
-        EntityManager entityManager,
-        JdbcTemplate jdbc,
-        @Value("${payroll.seed.enabled:true}") boolean enabled
-    ) {
-        this.payrollService = payrollService;
-        this.payrollAdjustmentService = payrollAdjustmentService;
-        this.payrollPeriodRepository = payrollPeriodRepository;
-        this.insuranceRuleRepository = insuranceRuleRepository;
-        this.taxRuleRepository = taxRuleRepository;
-        this.accountRepository = accountRepository;
-        this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
-        this.entityManager = entityManager;
-        this.jdbc = jdbc;
-        this.enabled = enabled;
-    }
+    private final PayrollSeedProperties properties;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (!enabled || payrollPeriodRepository.count() > 0) {
+        if (!properties.enabled() || payrollPeriodRepository.count() > 0) {
             return;
         }
         LocalDate today = LocalDate.now(ZONE);

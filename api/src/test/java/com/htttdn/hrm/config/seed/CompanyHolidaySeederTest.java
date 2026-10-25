@@ -44,7 +44,7 @@ class CompanyHolidaySeederTest {
         when(companyHolidayRepository.findByHolidayDateBetweenOrderByHolidayDate(
             LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31))).thenReturn(List.of());
 
-        new CompanyHolidaySeeder(companyHolidayRepository, true).run(null);
+        new CompanyHolidaySeeder(companyHolidayRepository, new CompanySeedProperties(true)).run(null);
 
         verify(companyHolidayRepository, times(CompanyHolidaySeeder.HOLIDAYS.get(2026).size()))
             .save(any(CompanyHoliday.class));

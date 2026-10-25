@@ -12,11 +12,9 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.io.Resource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +59,8 @@ import com.htttdn.hrm.service.EmployeeCodeGenerator;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Khởi tạo nhân sự mẫu từ file JSON ({@code staff.seed.file}, mặc định {@code classpath:seed/staff.json}).
  *
@@ -94,6 +94,7 @@ import tools.jackson.databind.json.JsonMapper;
  */
 @Component
 @Order(510)
+@RequiredArgsConstructor
 public class StaffSeeder implements ApplicationRunner {
 
     private static final String SEED_REASON = "Seeded staff";
@@ -256,64 +257,17 @@ public class StaffSeeder implements ApplicationRunner {
     private final EmployeeCodeGenerator employeeCodeGenerator;
     private final PasswordEncoder passwordEncoder;
     private final JsonMapper jsonMapper;
-    private final boolean enabled;
-    private final Resource file;
-
-    public StaffSeeder(
-        AccountRepository accountRepository,
-        EmployeeRepository employeeRepository,
-        EmployeeAssignmentRepository employeeAssignmentRepository,
-        EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository,
-        EmployeePayrollProfileRepository employeePayrollProfileRepository,
-        EmployeeTaxDependentRepository employeeTaxDependentRepository,
-        RoleRepository roleRepository,
-        AccountRoleAssignmentRepository accountRoleAssignmentRepository,
-        OrganizationUnitRepository organizationUnitRepository,
-        WorkLocationRepository workLocationRepository,
-        JobPositionRepository jobPositionRepository,
-        WorkShiftRepository workShiftRepository,
-        SeedAttendanceWriter seedAttendanceWriter,
-        SeedLeaveWriter seedLeaveWriter,
-        SeedRoleRequestWriter seedRoleRequestWriter,
-        SeedResignationWriter seedResignationWriter,
-        EmployeeCodeGenerator employeeCodeGenerator,
-        PasswordEncoder passwordEncoder,
-        JsonMapper jsonMapper,
-        @Value("${staff.seed.enabled:true}") boolean enabled,
-        @Value("${staff.seed.file:classpath:seed/staff.json}") Resource file
-    ) {
-        this.accountRepository = accountRepository;
-        this.employeeRepository = employeeRepository;
-        this.employeeAssignmentRepository = employeeAssignmentRepository;
-        this.employeeSalaryHistoryRepository = employeeSalaryHistoryRepository;
-        this.employeePayrollProfileRepository = employeePayrollProfileRepository;
-        this.employeeTaxDependentRepository = employeeTaxDependentRepository;
-        this.roleRepository = roleRepository;
-        this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
-        this.organizationUnitRepository = organizationUnitRepository;
-        this.workLocationRepository = workLocationRepository;
-        this.jobPositionRepository = jobPositionRepository;
-        this.workShiftRepository = workShiftRepository;
-        this.seedAttendanceWriter = seedAttendanceWriter;
-        this.seedLeaveWriter = seedLeaveWriter;
-        this.seedRoleRequestWriter = seedRoleRequestWriter;
-        this.seedResignationWriter = seedResignationWriter;
-        this.employeeCodeGenerator = employeeCodeGenerator;
-        this.passwordEncoder = passwordEncoder;
-        this.jsonMapper = jsonMapper;
-        this.enabled = enabled;
-        this.file = file;
-    }
+    private final StaffSeedProperties properties;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) throws IOException {
-        if (!enabled) {
+        if (!properties.enabled()) {
             return;
         }
 
         List<StaffEntry> entries;
-        try (InputStream input = file.getInputStream()) {
+        try (InputStream input = properties.file().getInputStream()) {
             entries = jsonMapper.readValue(input, new TypeReference<List<StaffEntry>>() { });
         }
 

@@ -9,7 +9,6 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
@@ -24,6 +23,8 @@ import com.htttdn.hrm.repository.JobPositionRepository;
 import com.htttdn.hrm.repository.PositionAllowanceRuleRepository;
 import com.htttdn.hrm.repository.SeniorityAllowanceRuleRepository;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Khởi tạo chính sách phụ cấp mẫu của công ty: phụ cấp chức vụ cố định theo tháng cho các chức danh
  * quản lý và chuyên môn, phụ cấp thâm niên theo % lương cơ bản. Đây là chính sách riêng của doanh
@@ -36,6 +37,7 @@ import com.htttdn.hrm.repository.SeniorityAllowanceRuleRepository;
  */
 @Component
 @Order(505)
+@RequiredArgsConstructor
 public class AllowancePolicySeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(AllowancePolicySeeder.class);
@@ -67,26 +69,12 @@ public class AllowancePolicySeeder implements ApplicationRunner {
     private final JobPositionRepository jobPositionRepository;
     private final PositionAllowanceRuleRepository positionAllowanceRuleRepository;
     private final SeniorityAllowanceRuleRepository seniorityAllowanceRuleRepository;
-    private final boolean enabled;
-
-    public AllowancePolicySeeder(
-        AccountRoleAssignmentRepository accountRoleAssignmentRepository,
-        JobPositionRepository jobPositionRepository,
-        PositionAllowanceRuleRepository positionAllowanceRuleRepository,
-        SeniorityAllowanceRuleRepository seniorityAllowanceRuleRepository,
-        @Value("${company.seed.enabled:true}") boolean enabled
-    ) {
-        this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
-        this.jobPositionRepository = jobPositionRepository;
-        this.positionAllowanceRuleRepository = positionAllowanceRuleRepository;
-        this.seniorityAllowanceRuleRepository = seniorityAllowanceRuleRepository;
-        this.enabled = enabled;
-    }
+    private final CompanySeedProperties properties;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (!enabled) {
+        if (!properties.enabled()) {
             return;
         }
         Account owner = accountRoleAssignmentRepository

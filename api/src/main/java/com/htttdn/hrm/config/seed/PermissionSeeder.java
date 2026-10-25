@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
@@ -17,6 +16,8 @@ import com.htttdn.hrm.entity.enums.PermissionAssignmentPolicy;
 import com.htttdn.hrm.entity.enums.PermissionModule;
 import com.htttdn.hrm.repository.PermissionRepository;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Khởi tạo catalog permission chuẩn được API sử dụng để phân quyền.
  *
@@ -26,6 +27,7 @@ import com.htttdn.hrm.repository.PermissionRepository;
  */
 @Component
 @Order(200)
+@RequiredArgsConstructor
 public class PermissionSeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(PermissionSeeder.class);
@@ -170,20 +172,12 @@ public class PermissionSeeder implements ApplicationRunner {
     );
 
     private final PermissionRepository permissionRepository;
-    private final boolean enabled;
-
-    public PermissionSeeder(
-        PermissionRepository permissionRepository,
-        @Value("${rbac.seed.enabled:true}") boolean enabled
-    ) {
-        this.permissionRepository = permissionRepository;
-        this.enabled = enabled;
-    }
+    private final RbacSeedProperties properties;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (!enabled) {
+        if (!properties.enabled()) {
             return;
         }
 

@@ -8,7 +8,6 @@ import java.time.ZonedDateTime;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
@@ -44,6 +43,8 @@ import com.htttdn.hrm.repository.WorkLocationRepository;
 import com.htttdn.hrm.repository.WorkShiftRepository;
 import com.htttdn.hrm.service.EmployeeCodeGenerator;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Khởi tạo Company Owner mẫu: nhân viên, account đã kích hoạt, role {@code COMPANY_OWNER},
  * {@code DIRECTOR}, {@code PAYROLL_APPROVER} và {@code EMPLOYEE}, cùng phân công chính tại Ban giám
@@ -67,6 +68,7 @@ import com.htttdn.hrm.service.EmployeeCodeGenerator;
  */
 @Component
 @Order(500)
+@RequiredArgsConstructor
 public class CompanyOwnerSeeder implements ApplicationRunner {
 
     private static final String USERNAME = "owner";
@@ -98,48 +100,12 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
     private final SeedAttendanceWriter seedAttendanceWriter;
     private final EmployeeCodeGenerator employeeCodeGenerator;
     private final PasswordEncoder passwordEncoder;
-    private final boolean enabled;
-
-    public CompanyOwnerSeeder(
-        AccountRepository accountRepository,
-        EmployeeRepository employeeRepository,
-        EmployeeAssignmentRepository employeeAssignmentRepository,
-        EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository,
-        EmployeePayrollProfileRepository employeePayrollProfileRepository,
-        EmployeeTaxDependentRepository employeeTaxDependentRepository,
-        RoleRepository roleRepository,
-        AccountRoleAssignmentRepository accountRoleAssignmentRepository,
-        OrganizationUnitRepository organizationUnitRepository,
-        WorkLocationRepository workLocationRepository,
-        JobPositionRepository jobPositionRepository,
-        WorkShiftRepository workShiftRepository,
-        SeedAttendanceWriter seedAttendanceWriter,
-        EmployeeCodeGenerator employeeCodeGenerator,
-        PasswordEncoder passwordEncoder,
-        @Value("${owner.seed.enabled:true}") boolean enabled
-    ) {
-        this.accountRepository = accountRepository;
-        this.employeeRepository = employeeRepository;
-        this.employeeAssignmentRepository = employeeAssignmentRepository;
-        this.employeeSalaryHistoryRepository = employeeSalaryHistoryRepository;
-        this.employeePayrollProfileRepository = employeePayrollProfileRepository;
-        this.employeeTaxDependentRepository = employeeTaxDependentRepository;
-        this.roleRepository = roleRepository;
-        this.accountRoleAssignmentRepository = accountRoleAssignmentRepository;
-        this.organizationUnitRepository = organizationUnitRepository;
-        this.workLocationRepository = workLocationRepository;
-        this.jobPositionRepository = jobPositionRepository;
-        this.workShiftRepository = workShiftRepository;
-        this.seedAttendanceWriter = seedAttendanceWriter;
-        this.employeeCodeGenerator = employeeCodeGenerator;
-        this.passwordEncoder = passwordEncoder;
-        this.enabled = enabled;
-    }
+    private final OwnerSeedProperties properties;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (!enabled) {
+        if (!properties.enabled()) {
             return;
         }
 

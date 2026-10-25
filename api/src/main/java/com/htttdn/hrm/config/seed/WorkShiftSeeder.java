@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
@@ -15,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.entity.WorkShift;
 import com.htttdn.hrm.repository.WorkShiftRepository;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * Khởi tạo danh mục ca làm việc tối thiểu cho doanh nghiệp mới.
@@ -25,6 +26,7 @@ import com.htttdn.hrm.repository.WorkShiftRepository;
  */
 @Component
 @Order(80)
+@RequiredArgsConstructor
 public class WorkShiftSeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(WorkShiftSeeder.class);
@@ -44,20 +46,12 @@ public class WorkShiftSeeder implements ApplicationRunner {
     );
 
     private final WorkShiftRepository workShiftRepository;
-    private final boolean enabled;
-
-    public WorkShiftSeeder(
-        WorkShiftRepository workShiftRepository,
-        @Value("${company.seed.enabled:true}") boolean enabled
-    ) {
-        this.workShiftRepository = workShiftRepository;
-        this.enabled = enabled;
-    }
+    private final CompanySeedProperties properties;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (!enabled) {
+        if (!properties.enabled()) {
             return;
         }
 
