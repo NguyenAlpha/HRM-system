@@ -100,9 +100,9 @@ public class AccountRoleAssignmentCommandService {
     public AccountRoleAssignment assignDirect(
         Long accountId,
         AssignAccountRoleRequest request,
-        Long actorAccountId
+        Account actor
     ) {
-        return assignInternal(accountId, request, actorAccountId, AssignmentFlow.DIRECT);
+        return assignInternal(accountId, request, actor, AssignmentFlow.DIRECT);
     }
 
     public RequestCandidate prepareRequest(Long accountId, AssignAccountRoleRequest request) {
@@ -124,7 +124,7 @@ public class AccountRoleAssignmentCommandService {
         String roleCode,
         LocalDate effectiveFrom,
         String reason,
-        Long actorAccountId
+        Account actor
     ) {
         if (!PROVISIONED_COMPANY_ROLES.contains(roleCode)) {
             throw new IllegalArgumentException("Unsupported provisioned company role: " + roleCode);
@@ -138,26 +138,26 @@ public class AccountRoleAssignmentCommandService {
             null,
             reason
         );
-        return assignInternal(accountId, request, actorAccountId, AssignmentFlow.BOOTSTRAP);
+        return assignInternal(accountId, request, actor, AssignmentFlow.BOOTSTRAP);
     }
 
     public AccountRoleAssignment assignHrAssignableRequest(
         RoleAssignmentRequest roleRequest,
-        Long actorAccountId
+        Account actor
     ) {
-        return assignRequestedRole(roleRequest, actorAccountId, AssignmentFlow.HR_ASSIGNABLE_REQUEST);
+        return assignRequestedRole(roleRequest, actor, AssignmentFlow.HR_ASSIGNABLE_REQUEST);
     }
 
     public AccountRoleAssignment assignOwnerApprovedRequest(
         RoleAssignmentRequest roleRequest,
-        Long actorAccountId
+        Account actor
     ) {
-        return assignRequestedRole(roleRequest, actorAccountId, AssignmentFlow.OWNER_APPROVED_REQUEST);
+        return assignRequestedRole(roleRequest, actor, AssignmentFlow.OWNER_APPROVED_REQUEST);
     }
 
     private AccountRoleAssignment assignRequestedRole(
         RoleAssignmentRequest roleRequest,
-        Long actorAccountId,
+        Account actor,
         AssignmentFlow flow
     ) {
         if (roleRequest.getStatus() != RoleAssignmentRequestStatus.PENDING
@@ -176,18 +176,17 @@ public class AccountRoleAssignmentCommandService {
             roleRequest.getEffectiveTo(),
             roleRequest.getReason()
         );
-        return assignInternal(roleRequest.getAccount().getId(), request, actorAccountId, flow);
+        return assignInternal(roleRequest.getAccount().getId(), request, actor, flow);
     }
 
     private AccountRoleAssignment assignInternal(
         Long accountId,
         AssignAccountRoleRequest request,
-        Long actorAccountId,
+        Account actor,
         AssignmentFlow flow
     ) {
         AssignmentCandidate candidate = validateCandidate(accountId, request, flow);
 
-        Account actor = accountRepository.getRequired(actorAccountId);
         return roleAssignmentRepository.save(AccountRoleAssignment.builder()
             .account(candidate.account())
             .role(candidate.role())

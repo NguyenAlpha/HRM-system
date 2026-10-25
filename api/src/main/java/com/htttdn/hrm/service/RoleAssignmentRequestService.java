@@ -31,7 +31,6 @@ import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ForbiddenException;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.RoleAssignmentRequestRepository;
@@ -81,8 +80,7 @@ public class RoleAssignmentRequestService {
             );
         }
 
-        Long actorAccountId = currentAccountProvider.accountId();
-        Account actor = accountRepository.getRequired(actorAccountId);
+        Account actor = currentAccountProvider.account();
         Instant now = Instant.now();
         RoleAssignmentRequest roleRequest = RoleAssignmentRequest.builder()
             .account(candidate.account())
@@ -100,16 +98,9 @@ public class RoleAssignmentRequestService {
 
         savePending(roleRequest);
         if (candidate.role().getGrantPolicy() == RoleGrantPolicy.HR_ASSIGNABLE) {
-            AccountRoleAssignment assignment = roleAssignmentCommandService.assignHrAssignableRequest(
-                roleRequest,
-                actorAccountId
-            );
-            roleRequest.setStatus(RoleAssignmentRequestStatus.APPROVED);
-            roleRequest.setReviewedByAccount(actor);
-            roleRequest.setReviewedAt(now);
-            roleRequest.setReviewNote(AUTO_APPROVAL_NOTE);
-            roleRequest.setAccountRoleAssignment(assignment);
-            requestRepository.saveAndFlush(roleRequest);
+            roleRequest.setAccountRoleAssignment(
+                roleAssignmentCommandService.assignHrAssignableRequest(roleRequest, actor));
+            markReviewed(roleRequest, RoleAssignmentRequestStatus.APPROVED, actor, now, AUTO_APPROVAL_NOTE);
         }
         return requestMapper.toResponse(roleRequest);
     }
@@ -141,11 +132,7 @@ public class RoleAssignmentRequestService {
      */
     @PreAuthorize("hasAuthority('role.assignment.request')")
     public RoleAssignmentRequestResponse createRevocation(CreateRoleRevocationRequest request) {
-        AccountRoleAssignment target = roleAssignmentRepository.findByIdForUpdate(request.assignmentId())
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ROLE_ASSIGNMENT_NOT_FOUND,
-                "Role assignment not found: " + request.assignmentId()
-            ));
+        AccountRoleAssignment target = roleAssignmentRepository.getRequiredForUpdate(request.assignmentId());
         Account account = target.getAccount();
         companyOwnerAccountGuard.requireCanManage(account.getId());
         roleAssignmentCommandService.validateRevocable(target.getRole());
@@ -164,8 +151,7 @@ public class RoleAssignmentRequestService {
             REQUEST_PERMISSION
         );
 
-        Long actorAccountId = currentAccountProvider.accountId();
-        Account actor = accountRepository.getRequired(actorAccountId);
+        Account actor = currentAccountProvider.account();
         Instant now = Instant.now();
         RoleAssignmentRequest roleRequest = RoleAssignmentRequest.builder()
             .requestType(RoleAssignmentRequestType.REVOKE)
@@ -186,11 +172,7 @@ public class RoleAssignmentRequestService {
         savePending(roleRequest);
         if (target.getRole().getGrantPolicy() == RoleGrantPolicy.HR_ASSIGNABLE) {
             roleAssignmentCommandService.revoke(target, actor, roleRequest.getReason());
-            roleRequest.setStatus(RoleAssignmentRequestStatus.APPROVED);
-            roleRequest.setReviewedByAccount(actor);
-            roleRequest.setReviewedAt(now);
-            roleRequest.setReviewNote(AUTO_APPROVAL_NOTE);
-            requestRepository.saveAndFlush(roleRequest);
+            markReviewed(roleRequest, RoleAssignmentRequestStatus.APPROVED, actor, now, AUTO_APPROVAL_NOTE);
         }
         return requestMapper.toResponse(roleRequest);
     }
@@ -223,7 +205,7 @@ public class RoleAssignmentRequestService {
     @PreAuthorize("hasAnyAuthority('role.assignment.request', 'role.assignment.approve')")
     public RoleAssignmentRequestResponse getById(Long requestId) {
         Long actorAccountId = currentAccountProvider.accountId();
-        RoleAssignmentRequest roleRequest = findRequest(requestId);
+        RoleAssignmentRequest roleRequest = requestRepository.getRequired(requestId);
         requireCanView(roleRequest, actorAccountId);
         return requestMapper.toResponse(roleRequest);
     }
@@ -233,30 +215,22 @@ public class RoleAssignmentRequestService {
         Long requestId,
         ApproveRoleAssignmentRequest request
     ) {
-        RoleAssignmentRequest roleRequest = findRequestForUpdate(requestId);
+        RoleAssignmentRequest roleRequest = requestRepository.getRequiredForUpdate(requestId);
         requirePending(roleRequest);
 
-        Long actorAccountId = currentAccountProvider.accountId();
-        Account actor = accountRepository.getRequired(actorAccountId);
+        Account actor = currentAccountProvider.account();
         if (roleRequest.getRequestType() == RoleAssignmentRequestType.REVOKE) {
             // Recheck the target: it may have been revoked or have expired while the request waited.
-            AccountRoleAssignment target = roleAssignmentRepository
-                .findByIdForUpdate(roleRequest.getTargetAssignment().getId())
-                .orElseThrow();
+            AccountRoleAssignment target =
+                roleAssignmentRepository.getRequiredForUpdate(roleRequest.getTargetAssignment().getId());
             requireStillHeld(target);
             roleAssignmentCommandService.revoke(target, actor, roleRequest.getReason());
         } else {
-            roleRequest.setAccountRoleAssignment(roleAssignmentCommandService.assignOwnerApprovedRequest(
-                roleRequest,
-                actorAccountId
-            ));
+            roleRequest.setAccountRoleAssignment(
+                roleAssignmentCommandService.assignOwnerApprovedRequest(roleRequest, actor));
         }
-        Instant now = Instant.now();
-        roleRequest.setStatus(RoleAssignmentRequestStatus.APPROVED);
-        roleRequest.setReviewedByAccount(actor);
-        roleRequest.setReviewedAt(now);
-        roleRequest.setReviewNote(trimToNull(request.note()));
-        requestRepository.saveAndFlush(roleRequest);
+        markReviewed(roleRequest, RoleAssignmentRequestStatus.APPROVED, actor, Instant.now(),
+            trimToNull(request.note()));
         return requestMapper.toResponse(roleRequest);
     }
 
@@ -265,16 +239,11 @@ public class RoleAssignmentRequestService {
         Long requestId,
         RejectRoleAssignmentRequest request
     ) {
-        RoleAssignmentRequest roleRequest = findRequestForUpdate(requestId);
+        RoleAssignmentRequest roleRequest = requestRepository.getRequiredForUpdate(requestId);
         requirePending(roleRequest);
 
-        Account actor = accountRepository.getRequired(currentAccountProvider.accountId());
-        Instant now = Instant.now();
-        roleRequest.setStatus(RoleAssignmentRequestStatus.REJECTED);
-        roleRequest.setReviewedByAccount(actor);
-        roleRequest.setReviewedAt(now);
-        roleRequest.setReviewNote(request.note().trim());
-        requestRepository.saveAndFlush(roleRequest);
+        markReviewed(roleRequest, RoleAssignmentRequestStatus.REJECTED, currentAccountProvider.account(),
+            Instant.now(), request.note().trim());
         return requestMapper.toResponse(roleRequest);
     }
 
@@ -284,7 +253,7 @@ public class RoleAssignmentRequestService {
         CancelRoleAssignmentRequest request
     ) {
         Long actorAccountId = currentAccountProvider.accountId();
-        RoleAssignmentRequest roleRequest = findRequestForUpdate(requestId);
+        RoleAssignmentRequest roleRequest = requestRepository.getRequiredForUpdate(requestId);
         requirePending(roleRequest);
         if (!roleRequest.getRequestedByAccount().getId().equals(actorAccountId)) {
             throw new ForbiddenException(
@@ -293,7 +262,7 @@ public class RoleAssignmentRequestService {
             );
         }
 
-        Account actor = accountRepository.getRequired(actorAccountId);
+        Account actor = currentAccountProvider.account();
         Instant now = Instant.now();
         roleRequest.setStatus(RoleAssignmentRequestStatus.CANCELLED);
         roleRequest.setCancelledByAccount(actor);
@@ -328,6 +297,21 @@ public class RoleAssignmentRequestService {
         }
     }
 
+    /** Ghi kết quả xét duyệt (duyệt hoặc từ chối) của một yêu cầu đang chờ và lưu ngay. */
+    private void markReviewed(
+        RoleAssignmentRequest roleRequest,
+        RoleAssignmentRequestStatus status,
+        Account reviewer,
+        Instant reviewedAt,
+        String note
+    ) {
+        roleRequest.setStatus(status);
+        roleRequest.setReviewedByAccount(reviewer);
+        roleRequest.setReviewedAt(reviewedAt);
+        roleRequest.setReviewNote(note);
+        requestRepository.saveAndFlush(roleRequest);
+    }
+
     /** Only an assignment that is not revoked and has not ended can be revoked by a request. */
     private void requireStillHeld(AccountRoleAssignment assignment) {
         if (assignment.getRevokedAt() != null
@@ -354,23 +338,6 @@ public class RoleAssignmentRequestService {
                 "Role assignment request has already been processed"
             );
         }
-    }
-
-    private RoleAssignmentRequest findRequest(Long requestId) {
-        return requestRepository.findById(requestId)
-            .orElseThrow(() -> requestNotFound(requestId));
-    }
-
-    private RoleAssignmentRequest findRequestForUpdate(Long requestId) {
-        return requestRepository.findByIdForUpdate(requestId)
-            .orElseThrow(() -> requestNotFound(requestId));
-    }
-
-    private ResourceNotFoundException requestNotFound(Long requestId) {
-        return new ResourceNotFoundException(
-            ErrorCode.ROLE_ASSIGNMENT_REQUEST_NOT_FOUND,
-            "Role assignment request not found: " + requestId
-        );
     }
 
     private String trimToNull(String value) {

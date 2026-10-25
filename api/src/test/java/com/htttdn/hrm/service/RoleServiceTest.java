@@ -1,7 +1,6 @@
 package com.htttdn.hrm.service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.StreamSupport;
 
 import org.junit.jupiter.api.Test;
@@ -51,7 +50,7 @@ class RoleServiceTest {
         RolePermission retainedMapping = mapping(role, retained);
         RolePermission removedMapping = mapping(role, removed);
 
-        when(roleRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(role));
+        when(roleRepository.getRequiredForUpdate(10L)).thenReturn(role);
         when(permissionRepository.findAllById(any())).thenReturn(List.of(added, retained));
         when(accountRepository.getRequired(99L)).thenReturn(actor);
         when(rolePermissionRepository.findByIdRoleId(10L))
@@ -81,7 +80,7 @@ class RoleServiceTest {
             "organization.company_owner.bootstrap",
             PermissionAssignmentPolicy.SYSTEM_ONLY
         );
-        when(roleRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(role));
+        when(roleRepository.getRequiredForUpdate(10L)).thenReturn(role);
         when(permissionRepository.findAllById(any())).thenReturn(List.of(permission));
 
         ConflictException exception = assertThrows(
@@ -107,7 +106,7 @@ class RoleServiceTest {
             role,
             permission(1L, "employee.read", PermissionAssignmentPolicy.DELEGABLE)
         );
-        when(roleRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(role));
+        when(roleRepository.getRequiredForUpdate(10L)).thenReturn(role);
         when(accountRepository.getRequired(99L)).thenReturn(actor);
         when(rolePermissionRepository.findByIdRoleId(10L)).thenReturn(List.of(existing));
 
@@ -124,7 +123,7 @@ class RoleServiceTest {
 
     @Test
     void replacePermissionsRejectsUnknownPermissionBeforeChangingMappings() {
-        when(roleRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(role(false)));
+        when(roleRepository.getRequiredForUpdate(10L)).thenReturn(role(false));
         when(permissionRepository.findAllById(any())).thenReturn(List.of());
 
         ResourceNotFoundException exception = assertThrows(

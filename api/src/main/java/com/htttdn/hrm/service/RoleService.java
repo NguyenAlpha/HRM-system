@@ -69,7 +69,7 @@ public class RoleService {
 
     @Transactional(readOnly = true)
     public RoleResponse getById(Long id) {
-        return toResponse(findRoleOrThrow(id));
+        return toResponse(roleRepository.getRequired(id));
     }
 
     @Transactional(readOnly = true)
@@ -106,7 +106,7 @@ public class RoleService {
     }
 
     public RoleResponse update(Long id, UpdateRoleRequest request) {
-        Role role = findRoleOrThrow(id);
+        Role role = roleRepository.getRequired(id);
         if (Boolean.TRUE.equals(role.getIsSystem())) {
             throw new ConflictException(ErrorCode.CONFLICT, "System roles cannot be modified");
         }
@@ -117,7 +117,7 @@ public class RoleService {
     }
 
     public void softDelete(Long id) {
-        Role role = findRoleOrThrow(id);
+        Role role = roleRepository.getRequired(id);
         if (Boolean.TRUE.equals(role.getIsSystem())) {
             throw new ConflictException(ErrorCode.CONFLICT, "System roles cannot be deleted");
         }
@@ -126,7 +126,7 @@ public class RoleService {
     }
 
     public void grantPermission(Long roleId, GrantPermissionRequest request, Long grantedByAccountId) {
-        Role role = findRoleOrThrow(roleId);
+        Role role = roleRepository.getRequired(roleId);
         rejectSystemRolePermissionChange(role);
         Permission permission = permissionRepository.getRequired(request.permissionId());
         rejectNonDelegablePermission(permission, "permissionId");
@@ -153,7 +153,7 @@ public class RoleService {
         ReplaceRolePermissionsRequest request,
         Long grantedByAccountId
     ) {
-        Role role = findRoleForUpdateOrThrow(roleId);
+        Role role = roleRepository.getRequiredForUpdate(roleId);
         rejectSystemRolePermissionChange(role);
 
         Set<Long> requestedIds = new LinkedHashSet<>(request.permissionIds());
@@ -205,7 +205,7 @@ public class RoleService {
     }
 
     public void revokePermission(Long roleId, Long permissionId) {
-        Role role = findRoleOrThrow(roleId);
+        Role role = roleRepository.getRequired(roleId);
         rejectSystemRolePermissionChange(role);
         RolePermissionId id = new RolePermissionId(roleId, permissionId);
         if (!rolePermissionRepository.existsById(id)) {
@@ -235,7 +235,7 @@ public class RoleService {
 
     @Transactional(readOnly = true)
     public List<PermissionResponse> listPermissions(Long roleId) {
-        findRoleOrThrow(roleId);
+        roleRepository.getRequired(roleId);
         return rolePermissionRepository.findByIdRoleId(roleId).stream()
             .map(RolePermission::getPermission)
             .map(this::toPermissionResponse)
@@ -252,17 +252,6 @@ public class RoleService {
             permission.getAssignmentPolicy(),
             permission.getIsActive()
         );
-    }
-
-    private Role findRoleOrThrow(Long id) {
-        return roleRepository.findById(id)
-            .filter(role -> role.getDeletedAt() == null)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ROLE_NOT_FOUND, "Role not found: " + id));
-    }
-
-    private Role findRoleForUpdateOrThrow(Long id) {
-        return roleRepository.findByIdForUpdate(id)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ROLE_NOT_FOUND, "Role not found: " + id));
     }
 
     private RoleResponse toResponse(Role role) {

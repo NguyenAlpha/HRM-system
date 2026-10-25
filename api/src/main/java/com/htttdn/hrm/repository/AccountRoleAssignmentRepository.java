@@ -9,9 +9,11 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
+import com.htttdn.hrm.exception.ResourceNotFoundException;
 
 import jakarta.persistence.LockModeType;
 
@@ -128,4 +130,23 @@ public interface AccountRoleAssignmentRepository extends JpaRepository<AccountRo
         @Param("accountId") Long accountId,
         @Param("date") LocalDate date
     );
+
+    /** Gán role theo id, không có thì 404 {@code ROLE_ASSIGNMENT_NOT_FOUND}. Xem {@link AccountRepository#getRequired}. */
+    default AccountRoleAssignment getRequiredForUpdate(Long id) {
+        return findByIdForUpdate(id).orElseThrow(() -> notFound(id));
+    }
+
+    /** Gán role theo id, chỉ khi thuộc đúng tài khoản {@code accountId}; khác tài khoản cũng là 404. */
+    default AccountRoleAssignment getRequired(Long id, Long accountId) {
+        return findByIdAndAccountId(id, accountId).orElseThrow(() -> notFound(id));
+    }
+
+    /** Như {@link #getRequired(Long, Long)}, kèm khóa ghi. */
+    default AccountRoleAssignment getRequiredForUpdate(Long id, Long accountId) {
+        return findByIdAndAccountIdForUpdate(id, accountId).orElseThrow(() -> notFound(id));
+    }
+
+    private static ResourceNotFoundException notFound(Long id) {
+        return new ResourceNotFoundException(ErrorCode.ROLE_ASSIGNMENT_NOT_FOUND, "Role assignment not found: " + id);
+    }
 }

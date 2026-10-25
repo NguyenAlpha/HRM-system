@@ -27,7 +27,6 @@ import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountPermissionOverrideRepository;
-import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.PermissionRepository;
 import com.htttdn.hrm.repository.RolePermissionRepository;
@@ -42,7 +41,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AccountPermissionOverrideService {
 
-    private final AccountRepository accountRepository;
     private final AccountRoleAssignmentRepository assignmentRepository;
     private final AccountPermissionOverrideRepository overrideRepository;
     private final PermissionRepository permissionRepository;
@@ -54,7 +52,7 @@ public class AccountPermissionOverrideService {
 
     @Transactional(readOnly = true)
     public List<AccountPermissionOverrideResponse> list(Long accountId, Long assignmentId) {
-        findAssignment(accountId, assignmentId);
+        assignmentRepository.getRequired(assignmentId, accountId);
         return overrideRepository.findHistoryByAssignmentId(assignmentId).stream()
             .map(this::toResponse)
             .toList();
@@ -62,7 +60,7 @@ public class AccountPermissionOverrideService {
 
     @Transactional(readOnly = true)
     public List<PermissionOverrideOptionResponse> availablePermissions(Long accountId, Long assignmentId) {
-        AccountRoleAssignment assignment = findAssignment(accountId, assignmentId);
+        AccountRoleAssignment assignment = assignmentRepository.getRequired(assignmentId, accountId);
         return permissionRepository
             .findByIsActiveTrueAndAssignmentPolicyOrderByModuleAscCodeAsc(PermissionAssignmentPolicy.DELEGABLE)
             .stream()
@@ -83,7 +81,7 @@ public class AccountPermissionOverrideService {
         CreatePermissionOverrideRequest request
     ) {
         requireCanChangeOverrides(accountId);
-        AccountRoleAssignment assignment = findAssignmentForUpdate(accountId, assignmentId);
+        AccountRoleAssignment assignment = assignmentRepository.getRequiredForUpdate(assignmentId, accountId);
         validateAssignment(assignment);
         Permission permission = permissionRepository.getRequired(request.permissionId());
         validatePermission(assignment, permission, request.effect());
@@ -100,7 +98,7 @@ public class AccountPermissionOverrideService {
             );
         }
 
-        Account actor = accountRepository.getRequired(currentAccountProvider.accountId());
+        Account actor = currentAccountProvider.account();
         AccountPermissionOverride permissionOverride = AccountPermissionOverride.builder()
             .accountRoleAssignment(assignment)
             .permission(permission)
@@ -129,7 +127,7 @@ public class AccountPermissionOverrideService {
         RevokePermissionOverrideRequest request
     ) {
         requireCanChangeOverrides(accountId);
-        findAssignmentForUpdate(accountId, assignmentId);
+        assignmentRepository.getRequiredForUpdate(assignmentId, accountId);
         AccountPermissionOverride permissionOverride = overrideRepository
             .findByIdAndAssignmentIdForUpdate(overrideId, assignmentId)
             .orElseThrow(() -> new ResourceNotFoundException(
@@ -140,7 +138,7 @@ public class AccountPermissionOverrideService {
             return toResponse(permissionOverride);
         }
 
-        Account actor = accountRepository.getRequired(currentAccountProvider.accountId());
+        Account actor = currentAccountProvider.account();
         permissionOverride.setRevokedByAccount(actor);
         permissionOverride.setRevokedAt(Instant.now());
         permissionOverride.setRevocationReason(request.reason().trim());
@@ -157,22 +155,6 @@ public class AccountPermissionOverrideService {
             );
         }
         companyOwnerAccountGuard.requireCanManage(accountId);
-    }
-
-    private AccountRoleAssignment findAssignment(Long accountId, Long assignmentId) {
-        return assignmentRepository.findByIdAndAccountId(assignmentId, accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ROLE_ASSIGNMENT_NOT_FOUND,
-                "Role assignment not found: " + assignmentId
-            ));
-    }
-
-    private AccountRoleAssignment findAssignmentForUpdate(Long accountId, Long assignmentId) {
-        return assignmentRepository.findByIdAndAccountIdForUpdate(assignmentId, accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ROLE_ASSIGNMENT_NOT_FOUND,
-                "Role assignment not found: " + assignmentId
-            ));
     }
 
     private void validateAssignment(AccountRoleAssignment assignment) {

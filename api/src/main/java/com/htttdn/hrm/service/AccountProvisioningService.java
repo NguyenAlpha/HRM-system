@@ -56,9 +56,8 @@ public class AccountProvisioningService {
     public AccountProvisioningResponse provisionPendingAccount(
         Long employeeId,
         String requestedUsername,
-        Long actorAccountId
+        Account actor
     ) {
-        Account actor = accountRepository.getRequired(actorAccountId);
         Employee employee = findEligibleEmployee(employeeId);
 
         if (accountRepository.findByEmployeeId(employee.getId()).isPresent()) {
@@ -92,7 +91,7 @@ public class AccountProvisioningService {
         assignDefaultEmployeeRole(account, actor, now);
         AccountActivationService.IssuedActivationToken issued = accountActivationService.issue(
             account.getId(),
-            actorAccountId
+            actor.getId()
         );
 
         return new AccountProvisioningResponse(

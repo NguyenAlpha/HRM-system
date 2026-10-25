@@ -63,7 +63,7 @@ public class AccountAdminService {
         return accountProvisioningService.provisionPendingAccount(
             request.employeeId(),
             request.username(),
-            currentAccountProvider.accountId()
+            currentAccountProvider.account()
         );
     }
 

@@ -9,9 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.htttdn.hrm.dto.request.account.AssignAccountRoleRequest;
 import com.htttdn.hrm.dto.request.account.RevokeAccountRoleRequest;
 import com.htttdn.hrm.dto.response.account.AccountRoleAssignmentResponse;
-import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
@@ -45,7 +43,7 @@ public class AccountRoleAssignmentAdminService {
         AccountRoleAssignment assignment = roleAssignmentCommandService.assignDirect(
             accountId,
             request,
-            currentAccountProvider.accountId()
+            currentAccountProvider.account()
         );
         return roleAssignmentMapper.toResponse(assignment);
     }
@@ -57,15 +55,10 @@ public class AccountRoleAssignmentAdminService {
         RevokeAccountRoleRequest request
     ) {
         companyOwnerAccountGuard.requireCanManage(accountId);
-        AccountRoleAssignment assignment = roleAssignmentRepository
-            .findByIdAndAccountIdForUpdate(assignmentId, accountId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ROLE_ASSIGNMENT_NOT_FOUND,
-                "Role assignment not found: " + assignmentId
-            ));
+        AccountRoleAssignment assignment = roleAssignmentRepository.getRequiredForUpdate(assignmentId, accountId);
         roleAssignmentCommandService.revoke(
             assignment,
-            accountRepository.getRequired(currentAccountProvider.accountId()),
+            currentAccountProvider.account(),
             request.reason()
         );
         return roleAssignmentMapper.toResponse(assignment);

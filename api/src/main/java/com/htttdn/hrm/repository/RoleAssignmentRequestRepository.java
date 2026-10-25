@@ -10,8 +10,10 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.RoleAssignmentRequest;
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
+import com.htttdn.hrm.exception.ResourceNotFoundException;
 
 import jakarta.persistence.LockModeType;
 
@@ -77,4 +79,21 @@ public interface RoleAssignmentRequestRepository extends JpaRepository<RoleAssig
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT request FROM RoleAssignmentRequest request WHERE request.id = :id")
     Optional<RoleAssignmentRequest> findByIdForUpdate(@Param("id") Long id);
+
+    /** Yêu cầu cấp/thu hồi role theo id, không có thì 404. Xem {@link AccountRepository#getRequired}. */
+    default RoleAssignmentRequest getRequired(Long id) {
+        return findById(id).orElseThrow(() -> notFound(id));
+    }
+
+    /** Như {@link #getRequired}, kèm khóa ghi ({@link #findByIdForUpdate}). */
+    default RoleAssignmentRequest getRequiredForUpdate(Long id) {
+        return findByIdForUpdate(id).orElseThrow(() -> notFound(id));
+    }
+
+    private static ResourceNotFoundException notFound(Long id) {
+        return new ResourceNotFoundException(
+            ErrorCode.ROLE_ASSIGNMENT_REQUEST_NOT_FOUND,
+            "Role assignment request not found: " + id
+        );
+    }
 }

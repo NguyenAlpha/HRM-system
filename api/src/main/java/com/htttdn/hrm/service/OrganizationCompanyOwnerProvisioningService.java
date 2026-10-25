@@ -10,6 +10,7 @@ import com.htttdn.hrm.dto.response.account.AccountProvisioningResponse;
 import com.htttdn.hrm.dto.response.account.AccountRoleAssignmentResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.organization.OrganizationCompanyOwnerProvisioningResponse;
+import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.security.CurrentAccountProvider;
@@ -43,13 +44,13 @@ public class OrganizationCompanyOwnerProvisioningService {
             );
         }
 
-        Long actorAccountId = currentAccountProvider.accountId();
+        Account actor = currentAccountProvider.account();
         companyProfileService.save(request.company());
         Employee employee = createCompanyOwnerEmployee(request.employee());
         AccountProvisioningResponse accountProvisioning = accountProvisioningService.provisionPendingAccount(
             employee.getId(),
             request.account().username(),
-            actorAccountId
+            actor
         );
         AccountRoleAssignmentResponse ownerAssignment = roleAssignmentMapper.toResponse(
             roleAssignmentCommandService.assignProvisionedCompanyRole(
@@ -57,7 +58,7 @@ public class OrganizationCompanyOwnerProvisioningService {
                 COMPANY_OWNER_ROLE,
                 request.effectiveFrom(),
                 request.ownershipReason(),
-                actorAccountId
+                actor
             )
         );
         AccountRoleAssignmentResponse directorAssignment = roleAssignmentMapper.toResponse(
@@ -66,7 +67,7 @@ public class OrganizationCompanyOwnerProvisioningService {
                 DIRECTOR_ROLE,
                 request.effectiveFrom(),
                 request.directorAppointmentReason(),
-                actorAccountId
+                actor
             )
         );
 

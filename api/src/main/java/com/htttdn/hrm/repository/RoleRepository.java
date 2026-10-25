@@ -10,7 +10,9 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Role;
+import com.htttdn.hrm.exception.ResourceNotFoundException;
 
 import jakarta.persistence.LockModeType;
 
@@ -33,4 +35,20 @@ public interface RoleRepository extends JpaRepository<Role, Long> {
     Page<Role> findByDeletedAtIsNull(Pageable pageable);
 
     List<Role> findByDeletedAtIsNullOrderByIdAsc();
+
+    Optional<Role> findByIdAndDeletedAtIsNull(Long id);
+
+    /** Role chưa bị xóa mềm, không có thì 404 {@code ROLE_NOT_FOUND}. Xem {@link AccountRepository#getRequired}. */
+    default Role getRequired(Long id) {
+        return findByIdAndDeletedAtIsNull(id).orElseThrow(() -> notFound(id));
+    }
+
+    /** Như {@link #getRequired}, kèm khóa ghi ({@link #findByIdForUpdate}). */
+    default Role getRequiredForUpdate(Long id) {
+        return findByIdForUpdate(id).orElseThrow(() -> notFound(id));
+    }
+
+    private static ResourceNotFoundException notFound(Long id) {
+        return new ResourceNotFoundException(ErrorCode.ROLE_NOT_FOUND, "Role not found: " + id);
+    }
 }
