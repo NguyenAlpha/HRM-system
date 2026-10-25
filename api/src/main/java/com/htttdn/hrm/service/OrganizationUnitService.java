@@ -98,15 +98,12 @@ public class OrganizationUnitService {
 
         OrganizationUnit parent = resolveActiveParent(request.parentUnitId());
         validateHierarchy(request.unitType(), parent);
-        Instant now = Instant.now();
         OrganizationUnit unit = OrganizationUnit.builder()
             .parentUnit(parent)
             .code(code)
             .name(request.name().trim())
             .unitType(request.unitType())
             .isActive(true)
-            .createdAt(now)
-            .updatedAt(now)
             .build();
         try {
             return toResponse(organizationUnitRepository.saveAndFlush(unit));
@@ -128,8 +125,7 @@ public class OrganizationUnitService {
         unit.setParentUnit(parent);
         unit.setName(request.name().trim());
         unit.setIsActive(request.isActive());
-        unit.setUpdatedAt(Instant.now());
-        return toResponse(unit);
+        return toResponse(organizationUnitRepository.saveAndFlush(unit));
     }
 
     @PreAuthorize("hasAuthority('organization.manage')")
@@ -142,7 +138,6 @@ public class OrganizationUnitService {
         Instant now = Instant.now();
         unit.setIsActive(false);
         unit.setDeletedAt(now);
-        unit.setUpdatedAt(now);
     }
 
     private void requireNoActiveChildren(Long unitId) {

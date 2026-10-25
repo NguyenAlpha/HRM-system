@@ -3,12 +3,16 @@ package com.htttdn.hrm.entity;
 import java.time.Instant;
 import java.time.LocalDate;
 
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestType;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
@@ -27,6 +31,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "role_assignment_requests")
 @Getter
 @Setter
@@ -113,6 +118,7 @@ public class RoleAssignmentRequest {
     @JoinColumn(name = "target_assignment_id")
     private AccountRoleAssignment targetAssignment;
 
+    @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 }

@@ -14,7 +14,6 @@ import com.htttdn.hrm.repository.WorkShiftRepository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -57,9 +56,6 @@ class WorkShiftSeederTest {
         assertEquals(15, shift.getGraceLateMinutes());
         assertFalse(shift.getCrossesMidnight());
         assertTrue(shift.getIsActive());
-        assertNotNull(shift.getCreatedAt());
-        assertNotNull(shift.getUpdatedAt());
-        assertEquals(shift.getCreatedAt(), shift.getUpdatedAt());
         assertNull(shift.getDeletedAt());
     }
 

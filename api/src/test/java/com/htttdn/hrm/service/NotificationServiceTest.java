@@ -111,7 +111,7 @@ class NotificationServiceTest {
         LeaveRequest leave = LeaveRequest.builder().id(40L)
             .employee(Employee.builder().id(10L).fullName("Example").build()).build();
         Notification notification = Notification.builder().id(5L).recipient(recipient)
-            .leaveRequest(leave).type("LEAVE_SUBMITTED").createdAt(firstRead).readAt(firstRead).build();
+            .leaveRequest(leave).type("LEAVE_SUBMITTED").readAt(firstRead).build();
         when(currentAccountProvider.accountId()).thenReturn(9L);
         when(notificationRepository.findByIdAndRecipientId(5L, 9L)).thenReturn(Optional.of(notification));
         when(accountRepository.findById(9L)).thenReturn(Optional.of(recipient));

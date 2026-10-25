@@ -1,6 +1,5 @@
 package com.htttdn.hrm.service;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -43,7 +42,7 @@ public class CompanyHolidayService {
             throw new ConflictException(ErrorCode.CONFLICT, "Holiday already exists on " + date);
         }
         return toResponse(holidayRepository.save(CompanyHoliday.builder()
-            .holidayDate(date).name(name.trim()).createdAt(Instant.now()).build()));
+            .holidayDate(date).name(name.trim()).build()));
     }
 
     @PreAuthorize("hasAuthority('organization.manage')")
@@ -73,7 +72,6 @@ public class CompanyHolidayService {
                     period.setStatus(PayrollPeriodStatus.DRAFT);
                     period.setCalculatedByAccount(null);
                     period.setCalculatedAt(null);
-                    period.setUpdatedAt(Instant.now());
                 }
             });
     }

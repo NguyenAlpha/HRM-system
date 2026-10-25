@@ -256,6 +256,7 @@ public class StaffSeeder implements ApplicationRunner {
     private final SeedResignationWriter seedResignationWriter;
     private final EmployeeCodeGenerator employeeCodeGenerator;
     private final PasswordEncoder passwordEncoder;
+    private final SeedTimestamps seedTimestamps;
     private final JsonMapper jsonMapper;
     private final StaffSeedProperties properties;
 
@@ -279,6 +280,7 @@ public class StaffSeeder implements ApplicationRunner {
             seed(entry);
             created++;
         }
+        seedTimestamps.apply();
         log.info("Staff seed completed: {} created, {} already present", created, entries.size() - created);
     }
 
@@ -322,9 +324,8 @@ public class StaffSeeder implements ApplicationRunner {
             .employmentStatus(status)
             .terminationDate(terminationDate)
             .terminationReason(termination == null ? null : termination.reason())
-            .createdAt(createdAt)
-            .updatedAt(endedAt != null ? endedAt : createdAt)
             .build());
+        seedTimestamps.set(employee, createdAt, endedAt != null ? endedAt : createdAt);
 
         Account account = accountRepository.save(Account.builder()
             .employee(employee)
@@ -333,16 +334,15 @@ public class StaffSeeder implements ApplicationRunner {
             .passwordHash(passwordEncoder.encode(entry.password()))
             .status(terminationDate == null ? AccountStatus.ACTIVE : AccountStatus.DISABLED)
             .failedLoginCount(0)
-            .createdAt(createdAt)
-            .updatedAt(endedAt != null ? endedAt : createdAt)
             .build());
+        seedTimestamps.set(account, createdAt, endedAt != null ? endedAt : createdAt);
 
         entry.roles().forEach((code, scope) -> {
             Role role = roleRepository.findByCodeAndDeletedAtIsNull(code).orElseThrow(() -> missing(entry, "role", code));
             // Like EmployeeService.endEmploymentAs, AUTO and SYSTEM_ONLY roles are left to their own workflows.
             boolean revoked = terminationDate != null
                 && role.getGrantPolicy() != RoleGrantPolicy.AUTO && role.getGrantPolicy() != RoleGrantPolicy.SYSTEM_ONLY;
-            accountRoleAssignmentRepository.save(AccountRoleAssignment.builder()
+            seedTimestamps.at(accountRoleAssignmentRepository.save(AccountRoleAssignment.builder()
                 .account(account)
                 .role(role)
                 .scopeType(scope)
@@ -352,18 +352,17 @@ public class StaffSeeder implements ApplicationRunner {
                 .effectiveTo(revoked ? terminationDate : null)
                 .grantedByAccount(account)
                 .reason(SEED_REASON)
-                .createdAt(createdAt)
                 .revokedByAccount(revoked ? owner : null)
                 .revokedAt(revoked ? endedAt : null)
                 .revocationReason(revoked ? "Kết thúc làm việc: " + termination.reason() : null)
-                .build());
+                .build()), createdAt);
         });
 
         // Each period ends the day before the next one starts; the last stays open until the employment ends.
         for (int i = 0; i < assignments.size(); i++) {
             ResolvedAssignment assignment = assignments.get(i);
             LocalDate effectiveTo = i + 1 < assignments.size() ? assignments.get(i + 1).effectiveFrom().minusDays(1) : terminationDate;
-            employeeAssignmentRepository.save(EmployeeAssignment.builder()
+            seedTimestamps.at(employeeAssignmentRepository.save(EmployeeAssignment.builder()
                 .employee(employee)
                 .organizationUnit(assignment.unit())
                 .workLocation(assignment.location())
@@ -376,8 +375,7 @@ public class StaffSeeder implements ApplicationRunner {
                 .isPrimary(true)
                 .reason(SEED_REASON)
                 .createdByAccount(account)
-                .createdAt(startOf(assignment.effectiveFrom()))
-                .build());
+                .build()), startOf(assignment.effectiveFrom()));
         }
 
         seedSalaries(entry, employee, owner);
@@ -449,15 +447,14 @@ public class StaffSeeder implements ApplicationRunner {
             if (salary.baseSalary() == null || salary.baseSalary().signum() <= 0) {
                 throw new IllegalStateException("Staff seed '" + entry.username() + "': baseSalary must be positive");
             }
-            employeeSalaryHistoryRepository.save(EmployeeSalaryHistory.builder()
+            seedTimestamps.at(employeeSalaryHistoryRepository.save(EmployeeSalaryHistory.builder()
                 .employee(employee)
                 .baseSalary(salary.baseSalary())
                 .effectiveFrom(starts.get(i))
                 .effectiveTo(i + 1 < salaries.size() ? starts.get(i + 1).minusDays(1) : null)
                 .approvedByAccount(owner)
                 .reason(salary.reason())
-                .createdAt(startOf(starts.get(i)))
-                .build());
+                .build()), startOf(starts.get(i)));
         }
     }
 
@@ -473,7 +470,7 @@ public class StaffSeeder implements ApplicationRunner {
                 throw new IllegalStateException("Staff seed '" + entry.username()
                     + "': insuranceSalary must be positive and wageRegion 1-4");
             }
-            employeePayrollProfileRepository.save(EmployeePayrollProfile.builder()
+            seedTimestamps.at(employeePayrollProfileRepository.save(EmployeePayrollProfile.builder()
                 .employee(employee)
                 .effectiveFrom(starts.get(i))
                 .effectiveTo(i + 1 < profiles.size() ? starts.get(i + 1).minusDays(1) : null)
@@ -484,8 +481,7 @@ public class StaffSeeder implements ApplicationRunner {
                 .insuranceSalary(profile.insuranceSalary())
                 .wageRegion(profile.wageRegion())
                 .createdByAccount(owner)
-                .createdAt(startOf(starts.get(i)))
-                .build());
+                .build()), startOf(starts.get(i)));
         }
     }
 
@@ -501,14 +497,13 @@ public class StaffSeeder implements ApplicationRunner {
                 throw new IllegalStateException("Staff seed '" + entry.username()
                     + "': a dependent needs a fullName and cannot start before the hire date");
             }
-            employeeTaxDependentRepository.save(EmployeeTaxDependent.builder()
+            seedTimestamps.at(employeeTaxDependentRepository.save(EmployeeTaxDependent.builder()
                 .employee(employee)
                 .fullName(dependent.fullName())
                 .identifier(dependent.identifier())
                 .effectiveFrom(effectiveFrom)
                 .createdByAccount(owner)
-                .createdAt(startOf(effectiveFrom))
-                .build());
+                .build()), startOf(effectiveFrom));
         }
     }
 

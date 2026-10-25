@@ -1,6 +1,5 @@
 package com.htttdn.hrm.config.seed;
 
-import java.time.Instant;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -60,16 +59,12 @@ public class JobPositionSeeder implements ApplicationRunner {
             if (jobPositionRepository.findByCodeAndDeletedAtIsNull(definition.code()).isPresent()) {
                 continue;
             }
-
-            Instant now = Instant.now();
             jobPositionRepository.save(JobPosition.builder()
                 .code(definition.code())
                 .title(definition.title())
                 .description(definition.description())
                 .isManagerial(definition.managerial())
                 .isActive(true)
-                .createdAt(now)
-                .updatedAt(now)
                 .build());
             createdCount++;
         }

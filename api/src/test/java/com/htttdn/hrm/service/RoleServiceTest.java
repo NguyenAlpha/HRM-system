@@ -1,6 +1,5 @@
 package com.htttdn.hrm.service;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
@@ -167,7 +166,6 @@ class RoleServiceTest {
             .id(new RolePermissionId(role.getId(), permission.getId()))
             .role(role)
             .permission(permission)
-            .createdAt(Instant.now())
             .build();
     }
 

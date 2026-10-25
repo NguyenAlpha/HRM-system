@@ -45,6 +45,7 @@ class SeedRoleRequestWriter {
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final RoleAssignmentRequestRepository roleAssignmentRequestRepository;
     private final RoleRepository roleRepository;
+    private final SeedTimestamps seedTimestamps;
 
     void write(StaffEntry entry, Account account, OrganizationUnit unit, WorkLocation location, Account owner) {
         List<RoleRequestEntry> requests = entry.roleRequests();
@@ -85,7 +86,6 @@ class SeedRoleRequestWriter {
                 .status(status)
                 .requestedByAccount(requester)
                 .requestedAt(requestedAt)
-                .updatedAt(status == RoleAssignmentRequestStatus.PENDING ? requestedAt : decidedAt)
                 .build();
             switch (status) {
                 case APPROVED, REJECTED -> {
@@ -101,7 +101,7 @@ class SeedRoleRequestWriter {
                 case PENDING -> { }
             }
             if (status == RoleAssignmentRequestStatus.APPROVED) {
-                request.setAccountRoleAssignment(accountRoleAssignmentRepository.save(AccountRoleAssignment.builder()
+                AccountRoleAssignment assignment = accountRoleAssignmentRepository.save(AccountRoleAssignment.builder()
                     .account(account)
                     .role(role)
                     .scopeType(item.scope())
@@ -111,10 +111,12 @@ class SeedRoleRequestWriter {
                     .effectiveTo(effectiveTo)
                     .grantedByAccount(owner)
                     .reason(item.reason())
-                    .createdAt(decidedAt)
-                    .build()));
+                    .build());
+                seedTimestamps.at(assignment, decidedAt);
+                request.setAccountRoleAssignment(assignment);
             }
             roleAssignmentRequestRepository.save(request);
+            seedTimestamps.set(request, null, status == RoleAssignmentRequestStatus.PENDING ? requestedAt : decidedAt);
         }
     }
 

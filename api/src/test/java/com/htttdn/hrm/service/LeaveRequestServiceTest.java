@@ -115,6 +115,7 @@ class LeaveRequestServiceTest {
         LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee)
             .status(LeaveRequestStatus.DRAFT).build();
         when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
+        when(leaveRequestRepository.saveAndFlush(request)).thenReturn(request);
         when(currentAccountProvider.accountId()).thenReturn(9L);
         when(accountRepository.findById(9L))
             .thenReturn(Optional.of(Account.builder().id(9L).employee(employee).build()));
@@ -137,6 +138,7 @@ class LeaveRequestServiceTest {
             .endAt(Instant.parse("2026-01-05T10:00:00Z"))
             .requestedMinutes(480).build();
         when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
+        when(leaveRequestRepository.saveAndFlush(request)).thenReturn(request);
         when(currentAccountProvider.accountId()).thenReturn(9L);
         when(accountRepository.findById(9L)).thenReturn(Optional.of(Account.builder().id(9L).employee(manager).build()));
 
@@ -154,6 +156,7 @@ class LeaveRequestServiceTest {
         LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee).approverEmployee(manager)
             .status(LeaveRequestStatus.PENDING).build();
         when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
+        when(leaveRequestRepository.saveAndFlush(request)).thenReturn(request);
         when(currentAccountProvider.accountId()).thenReturn(9L);
         when(accountRepository.findById(9L)).thenReturn(Optional.of(
             Account.builder().id(9L).employee(manager).build()));

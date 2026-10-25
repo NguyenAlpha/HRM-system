@@ -1,6 +1,5 @@
 package com.htttdn.hrm.entity;
 
-import java.time.Instant;
 import java.time.LocalDate;
 
 import jakarta.persistence.Column;
@@ -20,7 +19,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CompanyHoliday {
+public class CompanyHoliday extends CreatedAtEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -30,7 +29,4 @@ public class CompanyHoliday {
 
     @Column(nullable = false, length = 150)
     private String name;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
 }

@@ -76,8 +76,6 @@ public class LeaveRequestService {
             throw new BusinessException(ErrorCode.LEAVE_OUTSIDE_WORK_SCHEDULE,
                 "The leave period contains no scheduled work time", "endAt");
         }
-
-        Instant now = Instant.now();
         LeaveRequest request = LeaveRequest.builder()
             .employee(employee)
             .leaveType(command.leaveType())
@@ -88,8 +86,6 @@ public class LeaveRequestService {
             .reason(command.reason().trim())
             .attachmentUrl(normalizeNullable(command.attachmentUrl()))
             .status(LeaveRequestStatus.DRAFT)
-            .createdAt(now)
-            .updatedAt(now)
             .build();
         leaveEntitlementService.requireSufficientBalance(request);
         return toView(leaveRequestRepository.save(request));
@@ -111,7 +107,7 @@ public class LeaveRequestService {
         request.setSubmittedAt(now);
         if (approverResolver.isTopManagement(request.getEmployee())) {
             applyApproval(request, SELF_RECORDED_COMMENT);
-            return toView(request);
+            return toView(leaveRequestRepository.saveAndFlush(request));
         }
         Employee approver = approverResolver.approverFor(request.getEmployee())
             .orElseThrow(() -> new ConflictException(
@@ -120,9 +116,8 @@ public class LeaveRequestService {
             ));
         request.setApproverEmployee(approver);
         request.setStatus(LeaveRequestStatus.PENDING);
-        request.setUpdatedAt(now);
         notificationService.notifyLeaveSubmitted(request);
-        return toView(request);
+        return toView(leaveRequestRepository.saveAndFlush(request));
     }
 
     @PreAuthorize("hasAuthority('request.self.cancel')")
@@ -134,8 +129,7 @@ public class LeaveRequestService {
             throw alreadyProcessed("Only DRAFT or PENDING leave requests can be cancelled");
         }
         request.setStatus(LeaveRequestStatus.CANCELLED);
-        request.setUpdatedAt(Instant.now());
-        return toView(request);
+        return toView(leaveRequestRepository.saveAndFlush(request));
     }
 
     /** Only the approver fixed at submission decides; nobody is ever the approver of their own leave. */
@@ -146,7 +140,7 @@ public class LeaveRequestService {
         requireStatus(request, LeaveRequestStatus.PENDING);
         applyApproval(request, reviewComment);
         notificationService.notifyLeaveDecision(request);
-        return toView(request);
+        return toView(leaveRequestRepository.saveAndFlush(request));
     }
 
     private void applyApproval(LeaveRequest request, String reviewComment) {
@@ -174,7 +168,7 @@ public class LeaveRequestService {
         requireStatus(request, LeaveRequestStatus.PENDING);
         review(request, LeaveRequestStatus.REJECTED, reviewComment);
         notificationService.notifyLeaveDecision(request);
-        return toView(request);
+        return toView(leaveRequestRepository.saveAndFlush(request));
     }
 
     @PreAuthorize("hasAnyAuthority('request.self.read', 'request.read')")
@@ -292,7 +286,6 @@ public class LeaveRequestService {
         request.setReviewedByAccount(findCurrentAccount());
         request.setReviewComment(normalizeNullable(reviewComment));
         request.setReviewedAt(now);
-        request.setUpdatedAt(now);
     }
 
     private boolean isApprover(LeaveRequest request) {

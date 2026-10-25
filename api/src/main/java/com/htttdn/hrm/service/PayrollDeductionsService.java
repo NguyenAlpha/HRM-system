@@ -2,7 +2,6 @@ package com.htttdn.hrm.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -106,7 +105,6 @@ public class PayrollDeductionsService {
             .insuranceSalary(command.insuranceSalary())
             .wageRegion(command.wageRegion())
             .createdByAccount(accounts.getReferenceById(actor.accountId()))
-            .createdAt(Instant.now())
             .build());
         return toProfile(created);
     }
@@ -141,7 +139,6 @@ public class PayrollDeductionsService {
             .effectiveFrom(command.effectiveFrom())
             .effectiveTo(effectiveTo)
             .createdByAccount(accounts.getReferenceById(actor.accountId()))
-            .createdAt(Instant.now())
             .build());
         return toDependent(created);
     }
@@ -273,7 +270,6 @@ public class PayrollDeductionsService {
             period.setStatus(PayrollPeriodStatus.DRAFT);
             period.setCalculatedByAccount(null);
             period.setCalculatedAt(null);
-            period.setUpdatedAt(Instant.now());
         }
     }
 

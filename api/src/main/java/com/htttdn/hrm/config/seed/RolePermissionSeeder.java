@@ -1,6 +1,5 @@
 package com.htttdn.hrm.config.seed;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
@@ -219,7 +218,6 @@ public class RolePermissionSeeder implements ApplicationRunner {
                     .role(role)
                     .permission(permission)
                     .createdByAccount(null)
-                    .createdAt(Instant.now())
                     .build());
                 createdCount++;
             }

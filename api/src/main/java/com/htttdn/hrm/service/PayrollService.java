@@ -95,8 +95,6 @@ public class PayrollService {
 
         LocalDate periodStart = LocalDate.of(request.year(), request.month(), 1);
         LocalDate periodEnd = periodStart.withDayOfMonth(periodStart.lengthOfMonth());
-
-        Instant now = Instant.now();
         PayrollPeriod period = PayrollPeriod.builder()
             .year(request.year())
             .month(request.month())
@@ -104,8 +102,6 @@ public class PayrollService {
             .periodEnd(periodEnd)
             .taxPaymentDate(request.taxPaymentDate())
             .status(PayrollPeriodStatus.DRAFT)
-            .createdAt(now)
-            .updatedAt(now)
             .build();
 
         return toResponse(payrollPeriodRepository.save(period));
@@ -154,7 +150,6 @@ public class PayrollService {
         period.setStatus(PayrollPeriodStatus.CALCULATED);
         period.setCalculatedByAccount(calculatedBy);
         period.setCalculatedAt(Instant.now());
-        period.setUpdatedAt(Instant.now());
 
         return toResponse(period);
     }
@@ -291,7 +286,6 @@ public class PayrollService {
             .unitRate(effectiveHourlyRate)
             .multiplier(BigDecimal.ONE)
             .amount(basicSalaryPay)
-            .createdAt(Instant.now())
             .build());
 
         BigDecimal overtimePay = BigDecimal.ZERO;
@@ -322,7 +316,6 @@ public class PayrollService {
                 .unitRate(overtimeHourlyRate)
                 .multiplier(record.getOvertimeMultiplier())
                 .amount(amount)
-                .createdAt(Instant.now())
                 .build());
         }
 
@@ -335,7 +328,6 @@ public class PayrollService {
                 .unitRate(positionAllowancePay)
                 .multiplier(BigDecimal.ONE)
                 .amount(positionAllowancePay)
-                .createdAt(Instant.now())
                 .build());
         }
 
@@ -352,7 +344,6 @@ public class PayrollService {
                 .unitRate(basicSalary)
                 .multiplier(seniorityPercentage.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP))
                 .amount(seniorityAllowancePay)
-                .createdAt(Instant.now())
                 .build());
         }
 
@@ -378,7 +369,6 @@ public class PayrollService {
                 .unitRate(adjustment.getAmount())
                 .multiplier(BigDecimal.ONE)
                 .amount(adjustment.getAmount())
-                .createdAt(Instant.now())
                 .build());
         }
 
@@ -436,8 +426,6 @@ public class PayrollService {
             .insuranceRuleId(deduction.insuranceRuleId())
             .payrollProfileId(deduction.profileId())
             .netPay(netPay)
-            .createdAt(Instant.now())
-            .updatedAt(Instant.now())
             .build();
         Payslip savedPayslip = payslipRepository.save(payslip);
 
@@ -480,7 +468,6 @@ public class PayrollService {
         period.setStatus(PayrollPeriodStatus.APPROVED);
         period.setApprovedByAccount(approver);
         period.setApprovedAt(Instant.now());
-        period.setUpdatedAt(Instant.now());
 
         return toResponse(period);
     }
@@ -507,7 +494,6 @@ public class PayrollService {
         period.setTaxPaymentDate(actualPaymentDate);
         period.setPaidByAccount(payer);
         period.setPaidAt(Instant.now());
-        period.setUpdatedAt(Instant.now());
 
         return toResponse(period);
     }
@@ -525,7 +511,6 @@ public class PayrollService {
         period.setStatus(PayrollPeriodStatus.LOCKED);
         period.setLockedByAccount(locker);
         period.setLockedAt(Instant.now());
-        period.setUpdatedAt(Instant.now());
 
         return toResponse(period);
     }
@@ -538,7 +523,6 @@ public class PayrollService {
             throw new ConflictException(ErrorCode.CONFLICT, "Only DRAFT or CALCULATED periods can be cancelled");
         }
         period.setStatus(PayrollPeriodStatus.CANCELLED);
-        period.setUpdatedAt(Instant.now());
         return toResponse(period);
     }
 

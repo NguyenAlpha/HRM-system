@@ -20,7 +20,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CompanyProfile {
+public class CompanyProfile extends AuditedEntity {
 
     @Id
     private Short id;
@@ -55,10 +55,4 @@ public class CompanyProfile {
 
     @Column(name = "logo_updated_at")
     private Instant logoUpdatedAt;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
 }

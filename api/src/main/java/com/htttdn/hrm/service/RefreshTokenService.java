@@ -38,7 +38,6 @@ public class RefreshTokenService {
             .tokenHash(hash(rawToken))
             .account(account)
             .expiresAt(now.plus(jwt.refreshTokenExpirationDays(), ChronoUnit.DAYS))
-            .createdAt(now)
             .build());
         return rawToken;
     }

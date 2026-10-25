@@ -30,7 +30,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AccountPermissionOverride {
+public class AccountPermissionOverride extends CreatedAtEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -60,9 +60,6 @@ public class AccountPermissionOverride {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "granted_by_account_id", nullable = false)
     private Account grantedByAccount;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "revoked_by_account_id")

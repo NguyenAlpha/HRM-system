@@ -45,6 +45,7 @@ class SeedAttendanceWriter {
 
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final AttendanceCalendarService attendanceCalendarService;
+    private final SeedTimestamps seedTimestamps;
 
     /**
      * Minutes follow {@code AttendanceService.recordPunches}: late minutes count after the shift's
@@ -84,19 +85,18 @@ class SeedAttendanceWriter {
                 .earlyLeaveMinutes(earlyBy)
                 .overtimeMinutes(0)
                 .overtimeMultiplier(BigDecimal.ONE)
-                .status(AttendanceStatus.PRESENT)
-                .createdAt(recordedAt)
-                .updatedAt(recordedAt);
+                .status(AttendanceStatus.PRESENT);
+            Instant updatedAt = recordedAt;
             // Overtime of the current month waits for the approver; earlier overtime was decided the next day.
             if (overtimeBy > 0 && !currentMonthDay) {
                 Instant decidedAt = recordedAt.plus(Duration.ofDays(1));
                 record.overtimeMinutes(overtimeBy)
                     .overtimeMultiplier(WEEKDAY_OVERTIME_MULTIPLIER)
                     .overtimeApprovedByAccount(approverOn.apply(day.workDate()))
-                    .overtimeApprovedAt(decidedAt)
-                    .updatedAt(decidedAt);
+                    .overtimeApprovedAt(decidedAt);
+                updatedAt = decidedAt;
             }
-            attendanceRecordRepository.save(record.build());
+            seedTimestamps.set(attendanceRecordRepository.save(record.build()), recordedAt, updatedAt);
         }
         return days.size();
     }

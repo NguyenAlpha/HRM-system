@@ -198,7 +198,6 @@ public class AccountRoleAssignmentCommandService {
             .effectiveTo(request.effectiveTo())
             .grantedByAccount(actor)
             .reason(request.reason().trim())
-            .createdAt(Instant.now())
             .build());
     }
 

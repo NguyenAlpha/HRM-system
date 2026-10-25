@@ -1,7 +1,6 @@
 package com.htttdn.hrm.service;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -184,7 +183,6 @@ public class EmployeeAssignmentService {
             .isPrimary(true)
             .reason(request.reason())
             .createdByAccount(createdBy)
-            .createdAt(Instant.now())
             .build());
     }
 
@@ -249,7 +247,6 @@ public class EmployeeAssignmentService {
             period.setStatus(PayrollPeriodStatus.DRAFT);
             period.setCalculatedByAccount(null);
             period.setCalculatedAt(null);
-            period.setUpdatedAt(Instant.now());
         }
     }
 

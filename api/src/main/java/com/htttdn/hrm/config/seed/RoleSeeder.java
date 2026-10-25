@@ -1,6 +1,5 @@
 package com.htttdn.hrm.config.seed;
 
-import java.time.Instant;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -100,19 +99,14 @@ public class RoleSeeder implements ApplicationRunner {
                 existingRole.setName(definition.name());
                 existingRole.setDescription(definition.description());
                 existingRole.setGrantPolicy(definition.grantPolicy());
-                existingRole.setUpdatedAt(Instant.now());
                 continue;
             }
-
-            Instant now = Instant.now();
             roleRepository.save(Role.builder()
                 .code(definition.code())
                 .name(definition.name())
                 .description(definition.description())
                 .isSystem(true)
                 .grantPolicy(definition.grantPolicy())
-                .createdAt(now)
-                .updatedAt(now)
                 .build());
             createdCount++;
         }

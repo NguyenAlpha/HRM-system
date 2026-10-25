@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.dto.response.account.AccountPermissionGrantResponse;
@@ -186,13 +187,15 @@ class AccountAuthorizationServiceTest {
         Permission permission,
         PermissionOverrideEffect effect
     ) {
-        return AccountPermissionOverride.builder()
+        AccountPermissionOverride override = AccountPermissionOverride.builder()
             .id(id)
             .accountRoleAssignment(assignment)
             .permission(permission)
             .effect(effect)
-            .createdAt(Instant.now().plusMillis(id))
             .build();
+        // Overrides apply oldest first; auditing sets createdAt only when saved, so set it here.
+        ReflectionTestUtils.setField(override, "createdAt", Instant.now().plusMillis(id));
+        return override;
     }
 
     private AccountAuthorizationService service() {

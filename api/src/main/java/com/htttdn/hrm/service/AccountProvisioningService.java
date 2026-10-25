@@ -88,8 +88,6 @@ public class AccountProvisioningService {
             .passwordHash(null)
             .status(AccountStatus.PENDING)
             .failedLoginCount(0)
-            .createdAt(now)
-            .updatedAt(now)
             .build());
 
         assignDefaultEmployeeRole(account, actor, now);
@@ -142,7 +140,6 @@ public class AccountProvisioningService {
             .effectiveFrom(LocalDate.now(clock))
             .grantedByAccount(actor)
             .reason("Default employee access assigned during account provisioning")
-            .createdAt(now)
             .build());
     }
 

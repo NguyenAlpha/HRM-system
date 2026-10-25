@@ -41,6 +41,7 @@ class SeedResignationWriter {
     private static final int NOTICE_DAYS = 30;
 
     private final ResignationRequestRepository resignationRequestRepository;
+    private final SeedTimestamps seedTimestamps;
 
     /** @param approverOn the account that decides the employee's requests on a date */
     void write(StaffEntry entry, Employee employee, Function<LocalDate, Account> approverOn) {
@@ -53,7 +54,7 @@ class SeedResignationWriter {
             Instant decidedAt = submittedAt.plus(Duration.ofDays(1));
             Instant completedAt = lastWorkingDate.plusDays(1).atTime(LocalTime.of(0, 10)).atZone(ZONE).toInstant();
             Account approver = approverOn.apply(submittedOn);
-            resignationRequestRepository.save(ResignationRequest.builder()
+            seedTimestamps.set(resignationRequestRepository.save(ResignationRequest.builder()
                 .employee(employee)
                 .lastWorkingDate(lastWorkingDate)
                 .reason(termination.reason())
@@ -63,9 +64,7 @@ class SeedResignationWriter {
                 .reviewComment(termination.comment())
                 .reviewedAt(decidedAt)
                 .completedAt(completedAt)
-                .createdAt(submittedAt)
-                .updatedAt(completedAt)
-                .build());
+                .build()), submittedAt, completedAt);
         }
 
         if (entry.resignations() == null) {
@@ -100,7 +99,7 @@ class SeedResignationWriter {
             }
             Account approver = approverOn.apply(submittedOn);
             boolean reviewed = status == ResignationRequestStatus.APPROVED || status == ResignationRequestStatus.REJECTED;
-            resignationRequestRepository.save(ResignationRequest.builder()
+            seedTimestamps.set(resignationRequestRepository.save(ResignationRequest.builder()
                 .employee(employee)
                 .lastWorkingDate(lastWorkingDate)
                 .reason(item.reason())
@@ -109,9 +108,7 @@ class SeedResignationWriter {
                 .reviewedByAccount(reviewed ? approver : null)
                 .reviewComment(reviewed ? item.comment() : null)
                 .reviewedAt(reviewed ? decidedAt : null)
-                .createdAt(submittedAt)
-                .updatedAt(status == ResignationRequestStatus.PENDING ? submittedAt : decidedAt)
-                .build());
+                .build()), submittedAt, status == ResignationRequestStatus.PENDING ? submittedAt : decidedAt);
         }
     }
 

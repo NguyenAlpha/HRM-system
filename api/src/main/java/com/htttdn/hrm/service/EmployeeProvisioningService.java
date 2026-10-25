@@ -1,6 +1,5 @@
 package com.htttdn.hrm.service;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Locale;
 
@@ -37,8 +36,6 @@ public class EmployeeProvisioningService {
                 command.workEmailField()
             );
         }
-
-        Instant now = Instant.now();
         return employeeRepository.save(Employee.builder()
             .employeeCode(employeeCodeGenerator.next())
             .fullName(command.fullName().trim())
@@ -47,8 +44,6 @@ public class EmployeeProvisioningService {
             .hireDate(command.hireDate())
             .seniorityStartDate(command.hireDate())
             .employmentStatus(EmploymentStatus.ACTIVE)
-            .createdAt(now)
-            .updatedAt(now)
             .build());
     }
 

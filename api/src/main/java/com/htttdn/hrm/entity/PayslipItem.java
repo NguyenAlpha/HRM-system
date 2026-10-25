@@ -1,7 +1,6 @@
 package com.htttdn.hrm.entity;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 
 import com.htttdn.hrm.entity.enums.PayslipItemType;
 
@@ -30,7 +29,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PayslipItem {
+public class PayslipItem extends CreatedAtEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -61,7 +60,4 @@ public class PayslipItem {
 
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
 }

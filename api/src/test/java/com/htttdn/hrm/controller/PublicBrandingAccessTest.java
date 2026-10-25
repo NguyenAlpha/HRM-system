@@ -1,6 +1,5 @@
 package com.htttdn.hrm.controller;
 
-import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -50,15 +49,13 @@ class PublicBrandingAccessTest {
 
     @BeforeEach
     void companyWithoutLogo() {
-        Instant now = Instant.now();
         CompanyProfile profile = companyProfileRepository.findById((short) 1)
-            .orElseGet(() -> CompanyProfile.builder().id((short) 1).code("ACME").timezone("Asia/Ho_Chi_Minh").createdAt(now).build());
+            .orElseGet(() -> CompanyProfile.builder().id((short) 1).code("ACME").timezone("Asia/Ho_Chi_Minh").build());
         profile.setName("Công ty ACME");
         profile.setTaxCode("0101234567");
         profile.setLogo(null);
         profile.setLogoContentType(null);
         profile.setLogoUpdatedAt(null);
-        profile.setUpdatedAt(now);
         companyProfileRepository.saveAndFlush(profile);
     }
 

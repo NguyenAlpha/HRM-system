@@ -1,6 +1,5 @@
 package com.htttdn.hrm.service;
 
-import java.time.Instant;
 import java.util.List;
 
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -74,7 +73,6 @@ public class PayrollAdjustmentService {
             .description(request.description().trim())
             .amount(request.amount())
             .createdByAccount(accountRepository.getReferenceById(accountId))
-            .createdAt(Instant.now())
             .build());
         invalidateCalculation(period);
         return toResponse(adjustment);
@@ -112,7 +110,6 @@ public class PayrollAdjustmentService {
             period.setCalculatedByAccount(null);
             period.setCalculatedAt(null);
         }
-        period.setUpdatedAt(Instant.now());
     }
 
     private static PayrollAdjustmentResponse toResponse(PayrollAdjustment adjustment) {

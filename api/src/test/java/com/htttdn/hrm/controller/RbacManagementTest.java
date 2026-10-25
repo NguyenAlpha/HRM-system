@@ -1,6 +1,5 @@
 package com.htttdn.hrm.controller;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -125,9 +124,12 @@ class RbacManagementTest {
             .andExpect(jsonPath("$.data.grantPolicy").value("SYSTEM_ONLY"));
         admin(delete("/api/roles/{id}", id)).andExpect(status().isOk());
 
+        // The requests share this test's transaction, so nothing was flushed (or stamped) yet.
+        roleRepository.flush();
         Role deletedRole = roleRepository.findById(id).orElseThrow();
         assertNotNull(deletedRole.getDeletedAt());
-        assertEquals(deletedRole.getDeletedAt(), deletedRole.getUpdatedAt());
+        // Auditing stamps updatedAt when the deletion is flushed, just after deletedAt was taken.
+        assertFalse(deletedRole.getUpdatedAt().isBefore(deletedRole.getDeletedAt()));
         assertFalse(roleRepository.findByDeletedAtIsNull(Pageable.unpaged()).stream()
             .anyMatch(role -> role.getId().equals(id)));
         admin(get("/api/roles/{id}", id))
@@ -181,7 +183,6 @@ class RbacManagementTest {
             .id(new RolePermissionId(roleWithPermission.getId(), permission.getId()))
             .role(roleWithPermission)
             .permission(permission)
-            .createdAt(Instant.now())
             .build());
 
         // Roles are ordered by id, so the two created here come last after any seeded roles.
@@ -246,14 +247,12 @@ class RbacManagementTest {
                 .role(role)
                 .permission(removed)
                 .createdByAccount(actor)
-                .createdAt(Instant.now())
                 .build(),
             RolePermission.builder()
                 .id(new RolePermissionId(role.getId(), retained.getId()))
                 .role(role)
                 .permission(retained)
                 .createdByAccount(actor)
-                .createdAt(Instant.now())
                 .build()
         ));
         String path = "/api/roles/" + role.getId() + "/permissions";
@@ -363,7 +362,7 @@ class RbacManagementTest {
     private Role savedRole(boolean system) {
         return roleRepository.save(Role.builder().code(roleCode()).name("RBAC test role")
             .isSystem(system).grantPolicy(RoleGrantPolicy.OWNER_APPROVAL)
-            .createdAt(Instant.now()).updatedAt(Instant.now()).build());
+            .build());
     }
 
     private Permission savedPermission(String code) {
@@ -374,14 +373,14 @@ class RbacManagementTest {
         return permissionRepository.save(Permission.builder().code(code).name("RBAC test permission")
             .module(PermissionModule.RBAC)
             .description("RBAC test permission").assignmentPolicy(assignmentPolicy)
-            .isActive(true).createdAt(Instant.now()).updatedAt(Instant.now()).build());
+            .isActive(true).build());
     }
 
     private Account savedAccount() {
         String username = "rbac_" + UUID.randomUUID().toString().replace("-", "");
         return accountRepository.save(Account.builder().username(username).email(username + "@hrm.test")
             .passwordHash("unused-in-bearer-token-tests").status(AccountStatus.ACTIVE).failedLoginCount(0)
-            .createdAt(Instant.now()).updatedAt(Instant.now()).build());
+            .build());
     }
 
     private String roleCode() {

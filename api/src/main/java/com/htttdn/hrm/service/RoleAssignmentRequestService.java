@@ -96,7 +96,6 @@ public class RoleAssignmentRequestService {
             .status(RoleAssignmentRequestStatus.PENDING)
             .requestedByAccount(actor)
             .requestedAt(now)
-            .updatedAt(now)
             .build();
 
         savePending(roleRequest);
@@ -110,7 +109,6 @@ public class RoleAssignmentRequestService {
             roleRequest.setReviewedAt(now);
             roleRequest.setReviewNote(AUTO_APPROVAL_NOTE);
             roleRequest.setAccountRoleAssignment(assignment);
-            roleRequest.setUpdatedAt(now);
             requestRepository.saveAndFlush(roleRequest);
         }
         return requestMapper.toResponse(roleRequest);
@@ -183,7 +181,6 @@ public class RoleAssignmentRequestService {
             .status(RoleAssignmentRequestStatus.PENDING)
             .requestedByAccount(actor)
             .requestedAt(now)
-            .updatedAt(now)
             .build();
 
         savePending(roleRequest);
@@ -193,7 +190,6 @@ public class RoleAssignmentRequestService {
             roleRequest.setReviewedByAccount(actor);
             roleRequest.setReviewedAt(now);
             roleRequest.setReviewNote(AUTO_APPROVAL_NOTE);
-            roleRequest.setUpdatedAt(now);
             requestRepository.saveAndFlush(roleRequest);
         }
         return requestMapper.toResponse(roleRequest);
@@ -260,7 +256,6 @@ public class RoleAssignmentRequestService {
         roleRequest.setReviewedByAccount(actor);
         roleRequest.setReviewedAt(now);
         roleRequest.setReviewNote(trimToNull(request.note()));
-        roleRequest.setUpdatedAt(now);
         requestRepository.saveAndFlush(roleRequest);
         return requestMapper.toResponse(roleRequest);
     }
@@ -279,7 +274,6 @@ public class RoleAssignmentRequestService {
         roleRequest.setReviewedByAccount(actor);
         roleRequest.setReviewedAt(now);
         roleRequest.setReviewNote(request.note().trim());
-        roleRequest.setUpdatedAt(now);
         requestRepository.saveAndFlush(roleRequest);
         return requestMapper.toResponse(roleRequest);
     }
@@ -305,7 +299,6 @@ public class RoleAssignmentRequestService {
         roleRequest.setCancelledByAccount(actor);
         roleRequest.setCancelledAt(now);
         roleRequest.setCancellationReason(request.reason().trim());
-        roleRequest.setUpdatedAt(now);
         requestRepository.saveAndFlush(roleRequest);
         return requestMapper.toResponse(roleRequest);
     }

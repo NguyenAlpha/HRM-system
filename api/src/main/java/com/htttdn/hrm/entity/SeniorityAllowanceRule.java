@@ -1,7 +1,6 @@
 package com.htttdn.hrm.entity;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 
 import jakarta.persistence.Column;
@@ -27,7 +26,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SeniorityAllowanceRule {
+public class SeniorityAllowanceRule extends CreatedAtEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,7 +53,4 @@ public class SeniorityAllowanceRule {
 
     @Column(columnDefinition = "TEXT")
     private String note;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
 }

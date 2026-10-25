@@ -99,7 +99,6 @@ public class WorkLocationService {
 
         WorkLocation parent = resolveActiveParent(request.parentLocationId());
         validateHierarchy(request.locationType(), parent);
-        Instant now = Instant.now();
         WorkLocation location = WorkLocation.builder()
             .parentLocation(parent)
             .code(code)
@@ -108,8 +107,6 @@ public class WorkLocationService {
             .address(request.address().trim())
             .phone(normalizeNullable(request.phone()))
             .isActive(true)
-            .createdAt(now)
-            .updatedAt(now)
             .build();
         try {
             return toResponse(workLocationRepository.saveAndFlush(location));
@@ -133,8 +130,7 @@ public class WorkLocationService {
         location.setAddress(request.address().trim());
         location.setPhone(normalizeNullable(request.phone()));
         location.setIsActive(request.isActive());
-        location.setUpdatedAt(Instant.now());
-        return toResponse(location);
+        return toResponse(workLocationRepository.saveAndFlush(location));
     }
 
     @PreAuthorize("hasAuthority('organization.manage')")
@@ -147,7 +143,6 @@ public class WorkLocationService {
         Instant now = Instant.now();
         location.setIsActive(false);
         location.setDeletedAt(now);
-        location.setUpdatedAt(now);
     }
 
     private void requireNoActiveChildren(Long locationId) {

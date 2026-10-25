@@ -69,6 +69,7 @@ public class AllowancePolicySeeder implements ApplicationRunner {
     private final JobPositionRepository jobPositionRepository;
     private final PositionAllowanceRuleRepository positionAllowanceRuleRepository;
     private final SeniorityAllowanceRuleRepository seniorityAllowanceRuleRepository;
+    private final SeedTimestamps seedTimestamps;
     private final CompanySeedProperties properties;
 
     @Override
@@ -92,32 +93,31 @@ public class AllowancePolicySeeder implements ApplicationRunner {
             if (position == null || positionAllowanceRuleRepository.existsByJobPositionId(position.getId())) {
                 continue;
             }
-            positionAllowanceRuleRepository.save(PositionAllowanceRule.builder()
+            seedTimestamps.at(positionAllowanceRuleRepository.save(PositionAllowanceRule.builder()
                 .jobPosition(position)
                 .monthlyAmount(allowance.getValue())
                 .effectiveFrom(effectiveFrom)
                 .approvedByAccount(owner)
                 .note(SEED_NOTE)
-                .createdAt(createdAt)
-                .build());
+                .build()), createdAt);
             positionCount++;
         }
 
         int seniorityCount = 0;
         if (seniorityAllowanceRuleRepository.count() == 0) {
             for (SeniorityTier tier : SENIORITY_TIERS) {
-                seniorityAllowanceRuleRepository.save(SeniorityAllowanceRule.builder()
+                seedTimestamps.at(seniorityAllowanceRuleRepository.save(SeniorityAllowanceRule.builder()
                     .minYears(tier.minYears())
                     .maxYears(tier.maxYears())
                     .percentage(tier.percentage())
                     .effectiveFrom(effectiveFrom)
                     .approvedByAccount(owner)
                     .note(SEED_NOTE)
-                    .createdAt(createdAt)
-                    .build());
+                    .build()), createdAt);
                 seniorityCount++;
             }
         }
+        seedTimestamps.apply();
         log.info("Allowance policy seed completed: {} position rules, {} seniority rules created",
             positionCount, seniorityCount);
     }

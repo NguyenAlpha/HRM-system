@@ -414,8 +414,6 @@ class EmployeeServiceTest {
             .fullName("Employee One")
             .hireDate(LocalDate.of(2025, 1, 1))
             .employmentStatus(EmploymentStatus.ACTIVE)
-            .createdAt(Instant.now())
-            .updatedAt(Instant.now())
             .build();
     }
 

@@ -1,6 +1,5 @@
 package com.htttdn.hrm.config.seed;
 
-import java.time.Instant;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,8 +44,6 @@ public class CompanyProfileSeeder implements ApplicationRunner {
             log.info("Company profile seed completed: existing profile retained");
             return;
         }
-
-        Instant now = Instant.now();
         companyProfileRepository.save(CompanyProfile.builder()
             .id(COMPANY_PROFILE_ID)
             .code("HRM")
@@ -56,8 +53,6 @@ public class CompanyProfileSeeder implements ApplicationRunner {
             .email("contact@hrm.local")
             .address("Ho Chi Minh City, Vietnam")
             .timezone("Asia/Ho_Chi_Minh")
-            .createdAt(now)
-            .updatedAt(now)
             .build());
 
         log.info("Company profile seed completed: profile created");

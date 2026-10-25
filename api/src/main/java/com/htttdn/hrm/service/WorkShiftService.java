@@ -71,8 +71,6 @@ public class WorkShiftService {
             request.graceLateMinutes(),
             request.crossesMidnight()
         );
-
-        Instant now = Instant.now();
         WorkShift shift = WorkShift.builder()
             .code(code)
             .name(request.name().trim())
@@ -84,8 +82,6 @@ public class WorkShiftService {
             .graceLateMinutes(request.graceLateMinutes())
             .crossesMidnight(request.crossesMidnight())
             .isActive(true)
-            .createdAt(now)
-            .updatedAt(now)
             .build();
         try {
             return toResponse(workShiftRepository.saveAndFlush(shift));
@@ -121,8 +117,7 @@ public class WorkShiftService {
         shift.setGraceLateMinutes(request.graceLateMinutes());
         shift.setCrossesMidnight(request.crossesMidnight());
         shift.setIsActive(request.isActive());
-        shift.setUpdatedAt(Instant.now());
-        return toResponse(shift);
+        return toResponse(workShiftRepository.saveAndFlush(shift));
     }
 
     @PreAuthorize("hasAuthority('organization.manage')")
@@ -135,7 +130,6 @@ public class WorkShiftService {
         Instant now = Instant.now();
         shift.setIsActive(false);
         shift.setDeletedAt(now);
-        shift.setUpdatedAt(now);
     }
 
     private void validateSchedule(

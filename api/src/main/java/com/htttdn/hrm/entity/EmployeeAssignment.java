@@ -1,6 +1,5 @@
 package com.htttdn.hrm.entity;
 
-import java.time.Instant;
 import java.time.LocalDate;
 
 import com.htttdn.hrm.entity.enums.EmploymentType;
@@ -30,7 +29,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EmployeeAssignment {
+public class EmployeeAssignment extends CreatedAtEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -79,7 +78,4 @@ public class EmployeeAssignment {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_account_id", nullable = false)
     private Account createdByAccount;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
 }

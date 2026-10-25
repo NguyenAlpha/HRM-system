@@ -56,16 +56,12 @@ public class RoleService {
         if (roleRepository.existsByCode(request.code())) {
             throw new ConflictException(ErrorCode.CONFLICT, "Role code is already taken", "code");
         }
-
-        Instant now = Instant.now();
         Role role = Role.builder()
             .code(request.code())
             .name(request.name())
             .description(request.description())
             .isSystem(false)
             .grantPolicy(request.grantPolicy())
-            .createdAt(now)
-            .updatedAt(now)
             .build();
 
         return toResponse(roleRepository.save(role));
@@ -117,7 +113,6 @@ public class RoleService {
         role.setName(request.name());
         role.setDescription(request.description());
         role.setGrantPolicy(request.grantPolicy());
-        role.setUpdatedAt(Instant.now());
         return toResponse(role);
     }
 
@@ -128,7 +123,6 @@ public class RoleService {
         }
         Instant now = Instant.now();
         role.setDeletedAt(now);
-        role.setUpdatedAt(now);
     }
 
     public void grantPermission(Long roleId, GrantPermissionRequest request, Long grantedByAccountId) {
@@ -153,7 +147,6 @@ public class RoleService {
             .role(role)
             .permission(permission)
             .createdByAccount(grantedBy)
-            .createdAt(Instant.now())
             .build();
 
         rolePermissionRepository.save(rolePermission);
@@ -198,8 +191,6 @@ public class RoleService {
         if (!removedMappings.isEmpty()) {
             rolePermissionRepository.deleteAll(removedMappings);
         }
-
-        Instant now = Instant.now();
         List<RolePermission> addedMappings = requestedIds.stream()
             .filter(permissionId -> !existingByPermissionId.containsKey(permissionId))
             .map(permissionId -> RolePermission.builder()
@@ -207,7 +198,6 @@ public class RoleService {
                 .role(role)
                 .permission(requestedById.get(permissionId))
                 .createdByAccount(grantedBy)
-                .createdAt(now)
                 .build())
             .toList();
         if (!addedMappings.isEmpty()) {

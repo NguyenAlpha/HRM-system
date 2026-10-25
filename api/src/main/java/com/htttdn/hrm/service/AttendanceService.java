@@ -130,7 +130,6 @@ public class AttendanceService {
             if (existingDates.contains(day.workDate())) {
                 continue;
             }
-            Instant now = Instant.now();
             attendanceRecordRepository.save(AttendanceRecord.builder()
                 .employee(employee)
                 .workDate(day.workDate())
@@ -145,8 +144,6 @@ public class AttendanceService {
                 .overtimeMinutes(0)
                 .overtimeMultiplier(java.math.BigDecimal.ONE)
                 .status(AttendanceStatus.MISSING_PUNCH)
-                .createdAt(now)
-                .updatedAt(now)
                 .build());
             created++;
         }
@@ -194,7 +191,6 @@ public class AttendanceService {
             && in.isBefore(record.getLeaveRequest().getEndAt()) && out.isAfter(record.getLeaveRequest().getStartAt())) {
             throw new ConflictException(ErrorCode.CONFLICT, "Worked time overlaps approved leave");
         }
-        Instant now = Instant.now();
         if (record == null) {
             AttendanceCalendarService.ScheduledDay day = attendanceCalendarService
                 .assignedDay(employee.getId(), workDate)
@@ -213,7 +209,6 @@ public class AttendanceService {
                 .earlyLeaveMinutes(0)
                 .overtimeMinutes(0)
                 .overtimeMultiplier(java.math.BigDecimal.ONE)
-                .createdAt(now)
                 .build();
         }
         record.setCheckInAt(in);
@@ -227,7 +222,6 @@ public class AttendanceService {
         record.setOvertimeApprovedAt(null);
         record.setNote(request.note() == null || request.note().isBlank() ? null : request.note().trim());
         record.setUpdatedByAccount(findCurrentAccount());
-        record.setUpdatedAt(now);
         return toResponse(attendanceRecordRepository.save(record));
     }
 
@@ -296,7 +290,6 @@ public class AttendanceService {
                     .overtimeMinutes(0)
                     .overtimeMultiplier(java.math.BigDecimal.ONE)
                     .status(AttendanceStatus.MISSING_PUNCH)
-                    .createdAt(now)
                     .build();
             }
             record.setLeaveRequest(request);
@@ -311,7 +304,6 @@ public class AttendanceService {
                 record.setStatus(leaveMinutes == record.getScheduledMinutes()
                     ? leaveStatus(request) : AttendanceStatus.MISSING_PUNCH);
             }
-            record.setUpdatedAt(now);
             attendanceRecordRepository.save(record);
             remainingMinutes -= leaveMinutes;
         }
@@ -438,7 +430,6 @@ public class AttendanceService {
         record.setOvertimeTaxExempt(request.overtimeMinutes() > 0 && Boolean.TRUE.equals(request.taxExempt()));
         record.setOvertimeApprovedByAccount(findCurrentAccount());
         record.setOvertimeApprovedAt(now);
-        record.setUpdatedAt(now);
 
         return toResponse(record);
     }
@@ -472,7 +463,6 @@ public class AttendanceService {
         record.setStatus(request.status());
         record.setNote(request.note());
         record.setUpdatedByAccount(updatedBy);
-        record.setUpdatedAt(Instant.now());
 
         return toResponse(record);
     }

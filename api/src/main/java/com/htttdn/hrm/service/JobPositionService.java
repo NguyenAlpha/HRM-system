@@ -55,16 +55,12 @@ public class JobPositionService {
         if (jobPositionRepository.existsByCodeAndDeletedAtIsNull(code)) {
             throw codeTaken();
         }
-
-        Instant now = Instant.now();
         JobPosition position = JobPosition.builder()
             .code(code)
             .title(request.title().trim())
             .description(normalizeNullable(request.description()))
             .isManagerial(request.isManagerial())
             .isActive(true)
-            .createdAt(now)
-            .updatedAt(now)
             .build();
         try {
             return toResponse(jobPositionRepository.saveAndFlush(position));
@@ -80,8 +76,7 @@ public class JobPositionService {
         position.setDescription(normalizeNullable(request.description()));
         position.setIsManagerial(request.isManagerial());
         position.setIsActive(request.isActive());
-        position.setUpdatedAt(Instant.now());
-        return toResponse(position);
+        return toResponse(jobPositionRepository.saveAndFlush(position));
     }
 
     @PreAuthorize("hasAuthority('organization.manage')")
@@ -100,7 +95,6 @@ public class JobPositionService {
         Instant now = Instant.now();
         position.setIsActive(false);
         position.setDeletedAt(now);
-        position.setUpdatedAt(now);
     }
 
     private JobPositionResponse toResponse(JobPosition position) {

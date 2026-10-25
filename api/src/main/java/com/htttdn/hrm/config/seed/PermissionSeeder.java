@@ -1,6 +1,5 @@
 package com.htttdn.hrm.config.seed;
 
-import java.time.Instant;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -188,8 +187,6 @@ public class PermissionSeeder implements ApplicationRunner {
                 validatePermission(existingPermission, definition);
                 continue;
             }
-
-            Instant now = Instant.now();
             permissionRepository.save(Permission.builder()
                 .code(definition.code())
                 .name(definition.name())
@@ -197,8 +194,6 @@ public class PermissionSeeder implements ApplicationRunner {
                 .description(definition.description())
                 .assignmentPolicy(definition.assignmentPolicy())
                 .isActive(true)
-                .createdAt(now)
-                .updatedAt(now)
                 .build());
             createdCount++;
         }
@@ -220,7 +215,6 @@ public class PermissionSeeder implements ApplicationRunner {
         permission.setName(definition.name());
         permission.setDescription(definition.description());
         permission.setAssignmentPolicy(definition.assignmentPolicy());
-        permission.setUpdatedAt(Instant.now());
     }
 
     private static PermissionDefinition permission(

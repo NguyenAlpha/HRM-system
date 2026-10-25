@@ -1,6 +1,5 @@
 package com.htttdn.hrm.service;
 
-import java.time.Instant;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -51,7 +50,6 @@ public class EmployeeSensitiveDataService {
         employee.setBankName(request.bankName());
         employee.setBankAccountNumber(request.bankAccountNumber());
         employee.setBankAccountHolder(request.bankAccountHolder());
-        employee.setUpdatedAt(Instant.now());
         return toResponse(employee);
     }
 

@@ -65,13 +65,11 @@ public class NotificationService {
         }
 
         recipients.remove(actorId);
-        Instant now = Instant.now();
         notificationRepository.saveAll(recipients.values().stream()
             .map(account -> Notification.builder()
                 .recipient(account)
                 .leaveRequest(request)
                 .type(LEAVE_SUBMITTED)
-                .createdAt(now)
                 .build())
             .toList());
     }
@@ -91,7 +89,6 @@ public class NotificationService {
                 .recipient(account)
                 .leaveRequest(request)
                 .type(type)
-                .createdAt(Instant.now())
                 .build()));
     }
 

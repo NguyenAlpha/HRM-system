@@ -2,8 +2,12 @@ package com.htttdn.hrm.entity;
 
 import java.time.Instant;
 
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -21,6 +25,7 @@ import lombok.Setter;
  * {@code policy} is the {@link com.htttdn.hrm.ratelimit.RateLimitPolicy#key() key}.
  */
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "rate_limit_policy_settings")
 @Getter
 @Setter
@@ -46,6 +51,7 @@ public class RateLimitPolicySetting {
     @JoinColumn(name = "updated_by_account_id", nullable = false)
     private Account updatedByAccount;
 
+    @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 }

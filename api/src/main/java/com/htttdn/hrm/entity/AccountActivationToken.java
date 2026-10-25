@@ -28,7 +28,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AccountActivationToken {
+public class AccountActivationToken extends CreatedAtEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,7 +54,4 @@ public class AccountActivationToken {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by_account_id", nullable = false)
     private Account createdByAccount;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
 }

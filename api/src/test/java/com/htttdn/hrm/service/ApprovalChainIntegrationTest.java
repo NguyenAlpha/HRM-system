@@ -86,13 +86,11 @@ class ApprovalChainIntegrationTest {
             """, "APL_" + suffix);
         positionId = id("INSERT INTO job_positions(code, title) VALUES (?, 'Approval role') RETURNING id", "APP_" + suffix);
         // Saved through JPA: a TIME column written over raw JDBC reads back shifted.
-        Instant now = Instant.now();
         shiftId = workShiftRepository.saveAndFlush(WorkShift.builder()
             .code("APS_" + suffix).name("Ca hành chính")
             .startTime(LocalTime.of(8, 0)).endTime(LocalTime.of(17, 0))
             .breakMinutes(60).breakStartTime(LocalTime.of(12, 0))
             .standardWorkMinutes(480).graceLateMinutes(0).crossesMidnight(false).isActive(true)
-            .createdAt(now).updatedAt(now)
             .build()).getId();
         creatorAccountId = id("""
             INSERT INTO accounts(username, email, password_hash, status) VALUES (?, ?, 'x', 'ACTIVE') RETURNING id

@@ -86,7 +86,6 @@ public class AllowancePolicyService {
             .effectiveFrom(command.effectiveFrom())
             .approvedByAccount(findCurrentAccount())
             .note(normalizeNullable(command.note()))
-            .createdAt(Instant.now())
             .build();
         return toView(positionRuleRepository.save(rule));
     }
@@ -151,7 +150,6 @@ public class AllowancePolicyService {
             .effectiveFrom(command.effectiveFrom())
             .approvedByAccount(findCurrentAccount())
             .note(normalizeNullable(command.note()))
-            .createdAt(Instant.now())
             .build();
         return toView(seniorityRuleRepository.save(rule));
     }
@@ -204,7 +202,6 @@ public class AllowancePolicyService {
             period.setStatus(PayrollPeriodStatus.DRAFT);
             period.setCalculatedByAccount(null);
             period.setCalculatedAt(null);
-            period.setUpdatedAt(Instant.now());
         }
     }
 

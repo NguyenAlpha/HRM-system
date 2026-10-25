@@ -80,16 +80,12 @@ public class ResignationRequestService {
                 ErrorCode.APPROVER_NOT_FOUND,
                 "Nobody can approve this resignation: set a manager, or appoint a Director or Company Owner"
             ));
-
-        Instant now = Instant.now();
         return toView(resignationRequestRepository.save(ResignationRequest.builder()
             .employee(employee)
             .lastWorkingDate(command.requestedLastWorkingDate())
             .reason(command.reason().trim())
             .status(ResignationRequestStatus.PENDING)
             .approverEmployee(approver)
-            .createdAt(now)
-            .updatedAt(now)
             .build()));
     }
 
@@ -99,7 +95,6 @@ public class ResignationRequestService {
         requireSelfOrScopedAccess(request.getEmployee().getId(), REQUEST_MANAGE);
         requirePending(request);
         request.setStatus(ResignationRequestStatus.CANCELLED);
-        request.setUpdatedAt(Instant.now());
         return toView(request);
     }
 
@@ -216,7 +211,6 @@ public class ResignationRequestService {
         }
         Instant now = Instant.now();
         request.setCompletedAt(now);
-        request.setUpdatedAt(now);
     }
 
     private void requireLastWorkingDate(LocalDate lastWorkingDate, Employee employee) {
@@ -233,7 +227,6 @@ public class ResignationRequestService {
         request.setReviewedByAccount(findCurrentAccount());
         request.setReviewComment(comment == null || comment.isBlank() ? null : comment.trim());
         request.setReviewedAt(now);
-        request.setUpdatedAt(now);
     }
 
     private boolean isApprover(ResignationRequest request) {

@@ -1,6 +1,5 @@
 package com.htttdn.hrm.service;
 
-import java.time.Instant;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,7 +59,6 @@ public class RateLimitSettingsService {
         setting.setMaxRequests(request.maxRequests());
         setting.setWindowSeconds(request.windowSeconds());
         setting.setUpdatedByAccount(accountRepository.getReferenceById(currentAccountProvider.accountId()));
-        setting.setUpdatedAt(Instant.now());
         // Flushed first, so a rejected row never reaches the buckets.
         settingRepository.saveAndFlush(setting);
         apply(policy, setting);

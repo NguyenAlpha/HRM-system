@@ -31,7 +31,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AttendanceRecord {
+public class AttendanceRecord extends AuditedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -108,10 +108,4 @@ public class AttendanceRecord {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "updated_by_account_id")
     private Account updatedByAccount;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
 }

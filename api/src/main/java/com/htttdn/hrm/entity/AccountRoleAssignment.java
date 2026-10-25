@@ -30,7 +30,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AccountRoleAssignment {
+public class AccountRoleAssignment extends CreatedAtEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -68,9 +68,6 @@ public class AccountRoleAssignment {
 
     @Column(columnDefinition = "TEXT")
     private String reason;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "revoked_by_account_id")

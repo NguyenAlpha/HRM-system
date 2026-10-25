@@ -86,8 +86,7 @@ public class CompanyProfileService {
         profile.setLogo(content);
         profile.setLogoContentType(contentType);
         profile.setLogoUpdatedAt(now);
-        profile.setUpdatedAt(now);
-        return toResponse(companyProfileRepository.save(profile));
+        return toResponse(companyProfileRepository.saveAndFlush(profile));
     }
 
     @PreAuthorize("hasAuthority('company.manage')")
@@ -96,18 +95,15 @@ public class CompanyProfileService {
         profile.setLogo(null);
         profile.setLogoContentType(null);
         profile.setLogoUpdatedAt(null);
-        profile.setUpdatedAt(Instant.now());
-        return toResponse(companyProfileRepository.save(profile));
+        return toResponse(companyProfileRepository.saveAndFlush(profile));
     }
 
     /** Creates the row on first use; callers check the permission. */
     CompanyProfile save(CompanyProfileRequest request) {
-        Instant now = Instant.now();
         CompanyProfile profile = companyProfileRepository.findById(COMPANY_PROFILE_ID)
             .orElseGet(() -> CompanyProfile.builder()
                 .id(COMPANY_PROFILE_ID)
                 .timezone("Asia/Ho_Chi_Minh")
-                .createdAt(now)
                 .build());
         profile.setCode(request.code().trim());
         profile.setName(request.name().trim());
@@ -115,8 +111,7 @@ public class CompanyProfileService {
         profile.setPhone(blankToNull(request.phone()));
         profile.setEmail(blankToNull(request.email()));
         profile.setAddress(blankToNull(request.address()));
-        profile.setUpdatedAt(now);
-        return companyProfileRepository.save(profile);
+        return companyProfileRepository.saveAndFlush(profile);
     }
 
     private CompanyProfile requireProfile() {

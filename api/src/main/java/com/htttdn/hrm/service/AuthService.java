@@ -70,7 +70,6 @@ public class AuthService {
         account.setFailedLoginCount(0);
         account.setLockedUntil(null);
         account.setLastLoginAt(Instant.now());
-        account.setUpdatedAt(Instant.now());
         return issueTokenBundle(account);
     }
 
@@ -116,7 +115,6 @@ public class AuthService {
         }
 
         account.setPasswordHash(passwordEncoder.encode(request.newPassword()));
-        account.setUpdatedAt(Instant.now());
         refreshTokenService.revokeAll(accountId);
     }
 
@@ -209,7 +207,6 @@ public class AuthService {
             ? 1
             : account.getFailedLoginCount() + 1;
         account.setFailedLoginCount(failedAttempts);
-        account.setUpdatedAt(Instant.now());
     }
 
     private String normalizeLogin(String value) {

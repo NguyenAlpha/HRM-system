@@ -1,6 +1,5 @@
 package com.htttdn.hrm.config.seed;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -82,12 +81,10 @@ public class CompanyHolidaySeeder implements ApplicationRunner {
             if (yearHasHolidays) {
                 continue;
             }
-            Instant now = Instant.now();
             for (HolidayDefinition definition : year.getValue()) {
                 companyHolidayRepository.save(CompanyHoliday.builder()
                     .holidayDate(definition.date())
                     .name(definition.name())
-                    .createdAt(now)
                     .build());
                 createdCount++;
             }

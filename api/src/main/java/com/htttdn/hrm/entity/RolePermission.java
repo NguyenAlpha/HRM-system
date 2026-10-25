@@ -1,7 +1,5 @@
 package com.htttdn.hrm.entity;
 
-import java.time.Instant;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
@@ -24,7 +22,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RolePermission {
+public class RolePermission extends CreatedAtEntity {
 
     @EmbeddedId
     private RolePermissionId id;
@@ -42,7 +40,4 @@ public class RolePermission {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_account_id")
     private Account createdByAccount;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
 }

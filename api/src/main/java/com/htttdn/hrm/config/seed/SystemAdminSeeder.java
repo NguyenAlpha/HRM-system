@@ -1,7 +1,6 @@
 package com.htttdn.hrm.config.seed;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Locale;
 import java.util.Optional;
@@ -111,16 +110,12 @@ public class SystemAdminSeeder implements ApplicationRunner {
                 normalizedEmail
             );
         }
-
-        Instant now = Instant.now();
         return accountRepository.save(Account.builder()
             .username(normalizedUsername)
             .email(normalizedEmail)
             .passwordHash(passwordEncoder.encode(properties.password()))
             .status(AccountStatus.ACTIVE)
             .failedLoginCount(0)
-            .createdAt(now)
-            .updatedAt(now)
             .build());
     }
 
@@ -157,7 +152,6 @@ public class SystemAdminSeeder implements ApplicationRunner {
             .effectiveFrom(LocalDate.now(clock))
             .grantedByAccount(admin)
             .reason("Bootstrap system administrator")
-            .createdAt(Instant.now())
             .build());
     }
 

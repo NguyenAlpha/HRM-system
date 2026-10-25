@@ -99,8 +99,6 @@ public class EmployeeService {
 
         String workEmail = normalizeEmail(profile.workEmail());
         validateCreateUniqueness(workEmail);
-
-        Instant now = Instant.now();
         Employee employee = Employee.builder()
             .employeeCode(employeeCodeGenerator.next())
             .fullName(profile.fullName().trim())
@@ -115,8 +113,6 @@ public class EmployeeService {
             .hireDate(profile.hireDate())
             .seniorityStartDate(profile.hireDate())
             .employmentStatus(EmploymentStatus.PROBATION)
-            .createdAt(now)
-            .updatedAt(now)
             .build();
 
         Employee savedEmployee = employeeRepository.save(employee);
@@ -168,7 +164,6 @@ public class EmployeeService {
         employee.setMajor(trimToNull(request.major()));
         employee.setInstitution(trimToNull(request.institution()));
         employee.setGraduationYear(request.graduationYear());
-        employee.setUpdatedAt(Instant.now());
         return toSelfProfile(employee);
     }
 
@@ -237,7 +232,6 @@ public class EmployeeService {
         employee.setInstitution(request.institution());
         employee.setGraduationYear(request.graduationYear());
         employee.setPhone(request.phone());
-        employee.setUpdatedAt(now);
         return toDetailResponse(employee);
     }
 
@@ -253,7 +247,6 @@ public class EmployeeService {
         }
 
         employee.setEmploymentStatus(EmploymentStatus.ACTIVE);
-        employee.setUpdatedAt(Instant.now());
         return toDetailResponse(employee);
     }
 
@@ -282,7 +275,6 @@ public class EmployeeService {
         employee.setWorkEmail(workEmail);
         if (account != null) {
             account.setEmail(workEmail);
-            account.setUpdatedAt(now);
         }
     }
 
@@ -334,7 +326,6 @@ public class EmployeeService {
         employee.setTerminationReason(null);
         employee.setScheduledEndStatus(null);
         employee.setScheduledEndByAccount(null);
-        employee.setUpdatedAt(Instant.now());
         return toDetailResponse(employee);
     }
 
@@ -364,7 +355,6 @@ public class EmployeeService {
         employee.setTerminationReason(terminationReason);
         employee.setScheduledEndStatus(endStatus);
         employee.setScheduledEndByAccount(actor);
-        employee.setUpdatedAt(Instant.now());
     }
 
     /**
@@ -381,14 +371,12 @@ public class EmployeeService {
         employee.setTerminationReason(terminationReason);
         employee.setScheduledEndStatus(null);
         employee.setScheduledEndByAccount(null);
-        employee.setUpdatedAt(Instant.now());
 
         employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employeeId)
             .ifPresent(assignment -> closeAssignmentAtTermination(assignment, terminationDate));
         closePayrollInputsAtTermination(employeeId, terminationDate);
         accountRepository.findByEmployeeId(employeeId).ifPresent(account -> {
             account.setStatus(AccountStatus.DISABLED);
-            account.setUpdatedAt(Instant.now());
             refreshTokenService.revokeAll(account.getId());
             revokeRolesAtTermination(account.getId(), terminationDate, terminationReason, actor);
         });
@@ -426,7 +414,6 @@ public class EmployeeService {
         ensureEmployeeHasNoBusinessHistory(id);
 
         employee.setDeletedAt(Instant.now());
-        employee.setUpdatedAt(Instant.now());
         employee.setDeletedByAccount(findCurrentAccount());
         employee.setDeletionReason(request.deletionReason());
     }

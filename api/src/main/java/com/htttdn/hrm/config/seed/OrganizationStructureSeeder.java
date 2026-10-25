@@ -1,6 +1,5 @@
 package com.htttdn.hrm.config.seed;
 
-import java.time.Instant;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,7 +106,6 @@ public class OrganizationStructureSeeder implements ApplicationRunner {
     ) {
         return workLocationRepository.findByCodeAndDeletedAtIsNull(code)
             .orElseGet(() -> {
-                Instant now = Instant.now();
                 return workLocationRepository.save(WorkLocation.builder()
                     .code(code)
                     .name(name)
@@ -115,8 +113,6 @@ public class OrganizationStructureSeeder implements ApplicationRunner {
                     .address(address)
                     .parentLocation(parent)
                     .isActive(true)
-                    .createdAt(now)
-                    .updatedAt(now)
                     .build());
             });
     }
@@ -129,15 +125,12 @@ public class OrganizationStructureSeeder implements ApplicationRunner {
     ) {
         return organizationUnitRepository.findByCodeAndDeletedAtIsNull(code)
             .orElseGet(() -> {
-                Instant now = Instant.now();
                 return organizationUnitRepository.save(OrganizationUnit.builder()
                     .code(code)
                     .name(name)
                     .unitType(type)
                     .parentUnit(parent)
                     .isActive(true)
-                    .createdAt(now)
-                    .updatedAt(now)
                     .build());
             });
     }

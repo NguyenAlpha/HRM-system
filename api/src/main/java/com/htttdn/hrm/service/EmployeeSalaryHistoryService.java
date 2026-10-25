@@ -97,7 +97,6 @@ public class EmployeeSalaryHistoryService {
             .approvedByAccount(findCurrentAccount())
             .reason(normalizeNullable(command.reason()))
             .note(normalizeNullable(command.note()))
-            .createdAt(Instant.now())
             .build();
         SalaryHistoryView result = toView(salaryHistoryRepository.save(salary));
         for (PayrollPeriod period : affectedPeriods) {
@@ -108,7 +107,6 @@ public class EmployeeSalaryHistoryService {
             period.setStatus(PayrollPeriodStatus.DRAFT);
             period.setCalculatedByAccount(null);
             period.setCalculatedAt(null);
-            period.setUpdatedAt(Instant.now());
         }
         return result;
     }

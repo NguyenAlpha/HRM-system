@@ -116,13 +116,10 @@ public class AccountAdminService {
         if (account.getStatus() != AccountStatus.ACTIVE && account.getStatus() != AccountStatus.LOCKED) {
             throw invalidTransition(account, "Password reset requires an active or locked account");
         }
-
-        Instant now = Instant.now();
         account.setPasswordHash(null);
         account.setStatus(AccountStatus.PENDING);
         account.setFailedLoginCount(0);
         account.setLockedUntil(null);
-        account.setUpdatedAt(now);
         refreshTokenService.revokeAll(accountId);
         return issueInvitation(accountId, actorAccountId);
     }
@@ -143,10 +140,9 @@ public class AccountAdminService {
 
         account.setStatus(AccountStatus.DISABLED);
         account.setLockedUntil(null);
-        account.setUpdatedAt(Instant.now());
         refreshTokenService.revokeAll(accountId);
         accountActivationService.revokeAll(accountId);
-        return toResponse(account);
+        return toResponse(accountRepository.saveAndFlush(account));
     }
 
     @PreAuthorize("hasAuthority('account.manage')")
@@ -168,8 +164,7 @@ public class AccountAdminService {
         account.setStatus(AccountStatus.ACTIVE);
         account.setFailedLoginCount(0);
         account.setLockedUntil(null);
-        account.setUpdatedAt(Instant.now());
-        return toResponse(account);
+        return toResponse(accountRepository.saveAndFlush(account));
     }
 
     /**
@@ -195,7 +190,6 @@ public class AccountAdminService {
         account.setDeletedAt(now);
         account.setDeletedByAccount(actor);
         account.setDeletionReason(trimmed);
-        account.setUpdatedAt(now);
         refreshTokenService.revokeAll(accountId);
         accountActivationService.revokeAll(accountId);
         // As at termination, AUTO and SYSTEM_ONLY roles are left to their own workflows.
@@ -208,7 +202,7 @@ public class AccountAdminService {
             assignment.setRevokedAt(now);
             assignment.setRevocationReason("Xóa tài khoản: " + trimmed);
         }
-        return toResponse(account);
+        return toResponse(accountRepository.saveAndFlush(account));
     }
 
     private AccountInvitationResponse issueInvitation(Long accountId, Long actorAccountId) {

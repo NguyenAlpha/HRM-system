@@ -28,7 +28,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RefreshToken {
+public class RefreshToken extends CreatedAtEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -47,7 +47,4 @@ public class RefreshToken {
 
     @Column(name = "revoked_at")
     private Instant revokedAt;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
 }

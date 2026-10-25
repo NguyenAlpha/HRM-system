@@ -1,7 +1,6 @@
 package com.htttdn.hrm.entity;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 
 import com.htttdn.hrm.entity.enums.PayrollAdjustmentType;
 
@@ -30,7 +29,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PayrollAdjustment {
+public class PayrollAdjustment extends CreatedAtEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -57,7 +56,4 @@ public class PayrollAdjustment {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_account_id", nullable = false)
     private Account createdByAccount;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
 }

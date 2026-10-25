@@ -1,7 +1,6 @@
 package com.htttdn.hrm.entity;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,7 +25,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Payslip {
+public class Payslip extends AuditedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -129,10 +128,4 @@ public class Payslip {
 
     @Column(name = "net_pay", nullable = false, precision = 15, scale = 2)
     private BigDecimal netPay;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
 }

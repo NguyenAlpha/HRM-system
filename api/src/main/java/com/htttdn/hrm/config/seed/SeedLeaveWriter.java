@@ -79,6 +79,7 @@ class SeedLeaveWriter {
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final NotificationRepository notificationRepository;
+    private final SeedTimestamps seedTimestamps;
 
     /**
      * @param approverOn the account that approves the employee's requests on a date
@@ -101,7 +102,7 @@ class SeedLeaveWriter {
                 record.setStatus(AttendanceStatus.UNAUTHORIZED_ABSENCE);
                 record.setNote(absence.note());
                 record.setUpdatedByAccount(reconciler);
-                record.setUpdatedAt(day.endAt().plus(Duration.ofHours(16)));
+                seedTimestamps.set(record, null, day.endAt().plus(Duration.ofHours(16)));
             }
         }
         if (entry.missingPunches() != null) {
@@ -176,13 +177,13 @@ class SeedLeaveWriter {
             .reviewedByAccount(reviewed ? approver : null)
             .reviewComment(reviewed ? leave.comment() : null)
             .reviewedAt(reviewed ? decidedAt : null)
-            .createdAt(submittedAt.minus(Duration.ofMinutes(10)))
-            .updatedAt(draft ? submittedAt.minus(Duration.ofMinutes(10)) : leave.status() == LeaveRequestStatus.PENDING ? submittedAt : decidedAt)
             .build();
         if (leave.status() == LeaveRequestStatus.APPROVED || leave.status() == LeaveRequestStatus.PENDING) {
             leaveEntitlementService.requireSufficientBalance(request);
         }
         leaveRequestRepository.save(request);
+        seedTimestamps.set(request, submittedAt.minus(Duration.ofMinutes(10)),
+            draft ? submittedAt.minus(Duration.ofMinutes(10)) : leave.status() == LeaveRequestStatus.PENDING ? submittedAt : decidedAt);
         if (!draft) {
             notify(employee, request, approver, submittedAt, decidedAt);
         }
@@ -209,7 +210,8 @@ class SeedLeaveWriter {
         attendanceService.applyApprovedLeave(request);
         for (AttendanceRecord record : attendanceRecordRepository.findByEmployeeIdAndWorkDateBetween(
             employee.getId(), first.workDate(), span.getLast().workDate())) {
-            record.setUpdatedAt(decidedAt.isAfter(record.getCreatedAt()) ? decidedAt : record.getCreatedAt());
+            Instant createdAt = seedTimestamps.createdAt(record);
+            seedTimestamps.set(record, null, decidedAt.isAfter(createdAt) ? decidedAt : createdAt);
         }
     }
 
@@ -227,15 +229,17 @@ class SeedLeaveWriter {
         }
         recipients.remove(applicant.getId());
 
-        List<Notification> notifications = new ArrayList<>();
+        // Each notification with the time it was sent.
+        Map<Notification, Instant> notifications = new LinkedHashMap<>();
         for (Account recipient : recipients.values()) {
-            notifications.add(notification(recipient, request, "LEAVE_SUBMITTED", submittedAt));
+            notifications.put(notification(recipient, request, "LEAVE_SUBMITTED", submittedAt), submittedAt);
         }
         if (request.getStatus() == LeaveRequestStatus.APPROVED || request.getStatus() == LeaveRequestStatus.REJECTED) {
             String type = request.getStatus() == LeaveRequestStatus.APPROVED ? "LEAVE_APPROVED" : "LEAVE_REJECTED";
-            notifications.add(notification(applicant, request, type, decidedAt));
+            notifications.put(notification(applicant, request, type, decidedAt), decidedAt);
         }
-        notificationRepository.saveAll(notifications);
+        notificationRepository.saveAll(notifications.keySet());
+        notifications.forEach(seedTimestamps::at);
     }
 
     private static Notification notification(Account recipient, LeaveRequest request, String type, Instant createdAt) {
@@ -244,7 +248,6 @@ class SeedLeaveWriter {
             .recipient(recipient)
             .leaveRequest(request)
             .type(type)
-            .createdAt(createdAt)
             .readAt(read ? createdAt.plus(Duration.ofHours(1)) : null)
             .build();
     }

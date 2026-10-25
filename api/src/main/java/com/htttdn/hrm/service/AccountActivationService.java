@@ -69,7 +69,6 @@ public class AccountActivationService {
             .tokenHash(hash(rawToken))
             .expiresAt(expiresAt)
             .createdByAccount(createdByAccount)
-            .createdAt(now)
             .build());
 
         return new IssuedActivationToken(rawToken, expiresAt);
@@ -115,7 +114,6 @@ public class AccountActivationService {
         account.setStatus(AccountStatus.ACTIVE);
         account.setFailedLoginCount(0);
         account.setLockedUntil(null);
-        account.setUpdatedAt(now);
         activationToken.setUsedAt(now);
         activationTokenRepository.revokeOtherActiveByAccountId(account.getId(), activationToken.getId(), now);
     }

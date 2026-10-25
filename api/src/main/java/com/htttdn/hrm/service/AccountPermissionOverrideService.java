@@ -113,7 +113,6 @@ public class AccountPermissionOverrideService {
             .effectiveTo(request.effectiveTo())
             .reason(request.reason().trim())
             .grantedByAccount(actor)
-            .createdAt(Instant.now())
             .build();
         try {
             AccountPermissionOverride saved = overrideRepository.saveAndFlush(permissionOverride);

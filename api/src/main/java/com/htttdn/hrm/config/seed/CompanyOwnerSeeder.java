@@ -100,6 +100,7 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
     private final SeedAttendanceWriter seedAttendanceWriter;
     private final EmployeeCodeGenerator employeeCodeGenerator;
     private final PasswordEncoder passwordEncoder;
+    private final SeedTimestamps seedTimestamps;
     private final OwnerSeedProperties properties;
 
     @Override
@@ -140,9 +141,8 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
             .hireDate(startDate)
             .seniorityStartDate(startDate)
             .employmentStatus(EmploymentStatus.ACTIVE)
-            .createdAt(createdAt)
-            .updatedAt(createdAt)
             .build());
+        seedTimestamps.at(employee, createdAt);
 
         Account account = accountRepository.save(Account.builder()
             .employee(employee)
@@ -151,24 +151,22 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
             .passwordHash(passwordEncoder.encode(PASSWORD))
             .status(AccountStatus.ACTIVE)
             .failedLoginCount(0)
-            .createdAt(createdAt)
-            .updatedAt(createdAt)
             .build());
+        seedTimestamps.at(account, createdAt);
 
         assignRole(account, ownerRole, RoleScopeType.COMPANY, startDate, createdAt);
         assignRole(account, directorRole, RoleScopeType.COMPANY, startDate, createdAt);
         assignRole(account, payrollApproverRole, RoleScopeType.COMPANY, startDate, createdAt);
         assignRole(account, employeeRole, RoleScopeType.SELF, startDate, createdAt);
         createPrimaryAssignment(employee, account, startDate, createdAt);
-        employeeSalaryHistoryRepository.save(EmployeeSalaryHistory.builder()
+        seedTimestamps.at(employeeSalaryHistoryRepository.save(EmployeeSalaryHistory.builder()
             .employee(employee)
             .baseSalary(BASE_SALARY)
             .effectiveFrom(startDate)
             .approvedByAccount(account)
             .reason("Mức lương ban đầu")
-            .createdAt(createdAt)
-            .build());
-        employeePayrollProfileRepository.save(EmployeePayrollProfile.builder()
+            .build()), createdAt);
+        seedTimestamps.at(employeePayrollProfileRepository.save(EmployeePayrollProfile.builder()
             .employee(employee)
             .effectiveFrom(startDate)
             .taxResident(true)
@@ -178,26 +176,25 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
             .insuranceSalary(BASE_SALARY)
             .wageRegion((short) 1)
             .createdByAccount(account)
-            .createdAt(createdAt)
-            .build());
+            .build()), createdAt);
         addDependent(employee, account, "Nguyễn Minh Khang", "001224000101", startDate);
         addDependent(employee, account, "Nguyễn Bảo Ngọc", "001325000102", LocalDate.now(ZONE).minusMonths(8));
         // The Company Owner, with nobody above, confirms their own overtime.
         int attendanceDays = seedAttendanceWriter.write(employee, startDate, LocalDate.now(ZONE).minusDays(1), date -> account);
 
+        seedTimestamps.apply();
         log.info("Company owner seed completed: '{}' created as {} with {} attendance days",
             USERNAME, employee.getEmployeeCode(), attendanceDays);
     }
 
     private void addDependent(Employee employee, Account account, String fullName, String identifier, LocalDate effectiveFrom) {
-        employeeTaxDependentRepository.save(EmployeeTaxDependent.builder()
+        seedTimestamps.at(employeeTaxDependentRepository.save(EmployeeTaxDependent.builder()
             .employee(employee)
             .fullName(fullName)
             .identifier(identifier)
             .effectiveFrom(effectiveFrom)
             .createdByAccount(account)
-            .createdAt(effectiveFrom.atStartOfDay(ZONE).toInstant())
-            .build());
+            .build()), effectiveFrom.atStartOfDay(ZONE).toInstant());
     }
 
     private Role findRequiredRole(String code) {
@@ -212,15 +209,14 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
         LocalDate effectiveFrom,
         Instant createdAt
     ) {
-        accountRoleAssignmentRepository.save(AccountRoleAssignment.builder()
+        seedTimestamps.at(accountRoleAssignmentRepository.save(AccountRoleAssignment.builder()
             .account(account)
             .role(role)
             .scopeType(scopeType)
             .effectiveFrom(effectiveFrom)
             .grantedByAccount(account)
             .reason(SEED_REASON)
-            .createdAt(createdAt)
-            .build());
+            .build()), createdAt);
     }
 
     private void createPrimaryAssignment(
@@ -229,7 +225,7 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
         LocalDate effectiveFrom,
         Instant createdAt
     ) {
-        employeeAssignmentRepository.save(EmployeeAssignment.builder()
+        seedTimestamps.at(employeeAssignmentRepository.save(EmployeeAssignment.builder()
             .employee(employee)
             .organizationUnit(organizationUnitRepository.findByCodeAndDeletedAtIsNull("BOARD")
                 .orElseThrow(() -> new IllegalStateException("BOARD seed organization unit not found")))
@@ -244,7 +240,6 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
             .isPrimary(true)
             .reason(SEED_REASON)
             .createdByAccount(createdBy)
-            .createdAt(createdAt)
-            .build());
+            .build()), createdAt);
     }
 }

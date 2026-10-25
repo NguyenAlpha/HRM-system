@@ -1,6 +1,5 @@
 package com.htttdn.hrm.config.seed;
 
-import java.time.Instant;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -60,8 +59,6 @@ public class WorkShiftSeeder implements ApplicationRunner {
             if (workShiftRepository.existsByCodeAndDeletedAtIsNull(definition.code())) {
                 continue;
             }
-
-            Instant now = Instant.now();
             workShiftRepository.save(WorkShift.builder()
                 .code(definition.code())
                 .name(definition.name())
@@ -73,8 +70,6 @@ public class WorkShiftSeeder implements ApplicationRunner {
                 .graceLateMinutes(definition.graceLateMinutes())
                 .crossesMidnight(definition.crossesMidnight())
                 .isActive(true)
-                .createdAt(now)
-                .updatedAt(now)
                 .build());
             createdCount++;
         }
