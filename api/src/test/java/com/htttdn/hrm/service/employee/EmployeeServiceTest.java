@@ -234,7 +234,7 @@ class EmployeeServiceTest {
         when(accountRepository.findByEmployeeId(1L)).thenReturn(Optional.of(account));
         stubActor();
 
-        service().endEmployment(1L, endStatus, endDate, "Reason");
+        lifecycleService().endEmployment(1L, endStatus, endDate, "Reason");
 
         assertEquals(endStatus, employee.getEmploymentStatus());
         assertEquals(endDate, employee.getTerminationDate());
@@ -260,7 +260,7 @@ class EmployeeServiceTest {
             .thenReturn(List.of(current, director, future, ended, automatic, systemOnly));
         Account actor = stubActor();
 
-        service().endEmployment(1L, EmploymentStatus.RESIGNED, endDate, " Nghỉ việc ");
+        lifecycleService().endEmployment(1L, EmploymentStatus.RESIGNED, endDate, " Nghỉ việc ");
 
         assertEquals(endDate, current.getEffectiveTo());
         assertEquals(actor, current.getRevokedByAccount());
@@ -287,7 +287,7 @@ class EmployeeServiceTest {
             .thenReturn(Optional.of(assignment));
         Account actor = stubActor();
 
-        var result = service().endEmployment(1L, EmploymentStatus.TERMINATED, endDate, "Reason");
+        var result = lifecycleService().endEmployment(1L, EmploymentStatus.TERMINATED, endDate, "Reason");
 
         assertEquals(EmploymentStatus.ACTIVE, employee.getEmploymentStatus());
         assertEquals(endDate, employee.getTerminationDate());
@@ -311,7 +311,7 @@ class EmployeeServiceTest {
         stubActor();
 
         BusinessException exception = assertThrows(BusinessException.class,
-            () -> service().endEmployment(1L, EmploymentStatus.RESIGNED, LocalDate.of(2026, 10, 27), "Reason"));
+            () -> lifecycleService().endEmployment(1L, EmploymentStatus.RESIGNED, LocalDate.of(2026, 10, 27), "Reason"));
 
         assertEquals("terminationDate", exception.getField());
         assertNull(employee.getScheduledEndStatus());
@@ -334,7 +334,7 @@ class EmployeeServiceTest {
         when(accountRepository.findByEmployeeId(1L)).thenReturn(Optional.of(account));
         when(accountRoleAssignmentRepository.findByAccountIdAndRevokedAtIsNull(5L)).thenReturn(List.of(role));
 
-        service().completeScheduledEnd(1L);
+        lifecycleService().completeScheduledEnd(1L);
 
         assertEquals(EmploymentStatus.RETIRED, employee.getEmploymentStatus());
         assertEquals(LocalDate.of(2026, 10, 23), employee.getTerminationDate());
@@ -351,7 +351,7 @@ class EmployeeServiceTest {
         Employee employee = employee(1L);
         when(employeeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(employee));
 
-        service().completeScheduledEnd(1L);
+        lifecycleService().completeScheduledEnd(1L);
 
         assertEquals(EmploymentStatus.ACTIVE, employee.getEmploymentStatus());
         verify(refreshTokenService, never()).revokeAll(any());
@@ -366,7 +366,7 @@ class EmployeeServiceTest {
         employee.setScheduledEndByAccount(Account.builder().id(9L).build());
         when(employeeRepository.getRequired(1L)).thenReturn(employee);
 
-        var result = service().cancelScheduledEnd(1L);
+        var result = lifecycleService().cancelScheduledEnd(1L);
 
         assertNull(employee.getTerminationDate());
         assertNull(employee.getTerminationReason());
@@ -380,14 +380,14 @@ class EmployeeServiceTest {
     void cancellingWithoutAScheduleIsAConflict() {
         when(employeeRepository.getRequired(1L)).thenReturn(employee(1L));
 
-        assertThrows(ConflictException.class, () -> service().cancelScheduledEnd(1L));
+        assertThrows(ConflictException.class, () -> lifecycleService().cancelScheduledEnd(1L));
     }
 
     @ParameterizedTest
     @EnumSource(value = EmploymentStatus.class, names = { "PROBATION", "ACTIVE" })
     void endEmploymentRejectsStatusThatDoesNotEndEmployment(EmploymentStatus endStatus) {
         BusinessException exception = assertThrows(BusinessException.class,
-            () -> service().endEmployment(1L, endStatus, LocalDate.of(2026, 10, 31), "Reason"));
+            () -> lifecycleService().endEmployment(1L, endStatus, LocalDate.of(2026, 10, 31), "Reason"));
 
         assertEquals("endStatus", exception.getField());
     }
@@ -421,19 +421,37 @@ class EmployeeServiceTest {
             employeeRepository,
             employeeAssignmentRepository,
             employeeSalaryHistoryRepository,
-            employeePayrollProfileRepository,
-            employeeTaxDependentRepository,
             leaveRequestRepository,
             attendanceRecordRepository,
             payslipRepository,
+            accountRepository,
+            currentAccountProvider,
+            employeeAccessScopeService,
+            employeeAssignmentService,
+            employeeCodeGenerator,
+            mapper(),
+            TODAY
+        );
+    }
+
+    private EmploymentLifecycleService lifecycleService() {
+        return new EmploymentLifecycleService(
+            employeeRepository,
+            employeeAssignmentRepository,
+            employeeSalaryHistoryRepository,
+            employeePayrollProfileRepository,
+            employeeTaxDependentRepository,
             accountRepository,
             accountRoleAssignmentRepository,
             refreshTokenService,
             currentAccountProvider,
             employeeAccessScopeService,
-            employeeAssignmentService,
-            employeeCodeGenerator,
+            mapper(),
             TODAY
         );
+    }
+
+    private EmployeeMapper mapper() {
+        return new EmployeeMapper(employeeAssignmentRepository, accountRepository, TODAY);
     }
 }

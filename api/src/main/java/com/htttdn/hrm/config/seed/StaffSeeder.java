@@ -87,7 +87,7 @@ import lombok.RequiredArgsConstructor;
  * role HR gửi cho account này (xem {@link SeedRoleRequestWriter}).
  *
  * <p>{@code probation} đặt nhân viên ở trạng thái thử việc. {@code termination} cho nhân viên nghỉ việc
- * {@code monthsAgo} tháng trước như {@code EmployeeService.endEmploymentAs}: phân công hiện hành đóng
+ * {@code monthsAgo} tháng trước như {@code EmploymentLifecycleService.endEmploymentAs}: phân công hiện hành đóng
  * vào ngày đó, account bị vô hiệu hóa, role không tự cấp bị thu hồi; chấm công và lương dừng theo phân
  * công, và {@code workDaysAgo} của đơn nghỉ đếm lùi từ ngày làm việc cuối cùng. {@code resignations} là
  * đơn xin nghỉ việc (xem {@link SeedResignationWriter}).
@@ -339,7 +339,7 @@ public class StaffSeeder implements ApplicationRunner {
 
         entry.roles().forEach((code, scope) -> {
             Role role = roleRepository.findByCodeAndDeletedAtIsNull(code).orElseThrow(() -> missing(entry, "role", code));
-            // Like EmployeeService.endEmploymentAs, AUTO and SYSTEM_ONLY roles are left to their own workflows.
+            // Like EmploymentLifecycleService.endEmploymentAs, AUTO and SYSTEM_ONLY roles are left to their own workflows.
             boolean revoked = terminationDate != null
                 && role.getGrantPolicy() != RoleGrantPolicy.AUTO && role.getGrantPolicy() != RoleGrantPolicy.SYSTEM_ONLY;
             seedTimestamps.at(accountRoleAssignmentRepository.save(AccountRoleAssignment.builder()

@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 import com.htttdn.hrm.service.employee.EmployeeAssignmentService;
 import com.htttdn.hrm.service.employee.EmployeeService;
+import com.htttdn.hrm.service.employee.EmploymentLifecycleService;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -40,7 +41,7 @@ class EmployeePermissionMappingTest {
             Long.class
         );
         assertPermission(
-            EmployeeService.class,
+            EmploymentLifecycleService.class,
             "endEmployment",
             "employee.lifecycle.manage",
             Long.class,

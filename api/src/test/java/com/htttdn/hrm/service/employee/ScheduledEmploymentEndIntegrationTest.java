@@ -48,7 +48,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class ScheduledEmploymentEndIntegrationTest {
 
     @Autowired private JdbcTemplate jdbc;
-    @Autowired private EmployeeService employeeService;
+    @Autowired private EmploymentLifecycleService employmentLifecycleService;
     @Autowired private ScheduledEmploymentEndJob job;
     @Autowired private EntityManager entityManager;
     @Autowired private EmployeeSalaryHistoryService salaryService;
@@ -106,7 +106,7 @@ class ScheduledEmploymentEndIntegrationTest {
     @Test
     void aLaterLastDayKeepsTheEmployeeWorkingUntilTheJobRunsAfterIt() {
         LocalDate lastDay = today.plusDays(3);
-        var scheduled = employeeService.endEmployment(employeeId, EmploymentStatus.TERMINATED, lastDay, "Hết hợp đồng");
+        var scheduled = employmentLifecycleService.endEmployment(employeeId, EmploymentStatus.TERMINATED, lastDay, "Hết hợp đồng");
 
         assertEquals(EmploymentStatus.ACTIVE, scheduled.employmentStatus());
         assertEquals(EmploymentStatus.TERMINATED, scheduled.scheduledEndStatus());
@@ -134,9 +134,9 @@ class ScheduledEmploymentEndIntegrationTest {
 
     @Test
     void aCancelledScheduleLeavesNoEndBehind() {
-        employeeService.endEmployment(employeeId, EmploymentStatus.RESIGNED, today.plusDays(3), "Nghỉ việc");
+        employmentLifecycleService.endEmployment(employeeId, EmploymentStatus.RESIGNED, today.plusDays(3), "Nghỉ việc");
 
-        var cancelled = employeeService.cancelScheduledEnd(employeeId);
+        var cancelled = employmentLifecycleService.cancelScheduledEnd(employeeId);
 
         assertNull(cancelled.scheduledEndStatus());
         assertNull(cancelled.terminationDate());
@@ -148,7 +148,7 @@ class ScheduledEmploymentEndIntegrationTest {
 
     @Test
     void todayAsTheLastDayEndsAtOnce() {
-        var ended = employeeService.endEmployment(employeeId, EmploymentStatus.RESIGNED, today, "Nghỉ việc");
+        var ended = employmentLifecycleService.endEmployment(employeeId, EmploymentStatus.RESIGNED, today, "Nghỉ việc");
 
         assertEquals(EmploymentStatus.RESIGNED, ended.employmentStatus());
         assertNull(ended.scheduledEndStatus());
@@ -171,7 +171,7 @@ class ScheduledEmploymentEndIntegrationTest {
             VALUES (?, 'Con', '2025-01-01', ?), (?, 'Con sau', ?, ?)
             """, employeeId, hrAccountId, employeeId, today.plusDays(5), hrAccountId);
 
-        employeeService.endEmployment(employeeId, EmploymentStatus.RESIGNED, today, "Nghỉ việc");
+        employmentLifecycleService.endEmployment(employeeId, EmploymentStatus.RESIGNED, today, "Nghỉ việc");
         entityManager.flush();
 
         java.sql.Date lastDay = java.sql.Date.valueOf(today);
@@ -191,7 +191,7 @@ class ScheduledEmploymentEndIntegrationTest {
     @Test
     void nothingIsDatedAfterTheLastWorkingDay() {
         LocalDate lastDay = today.plusDays(3);
-        employeeService.endEmployment(employeeId, EmploymentStatus.RESIGNED, lastDay, "Nghỉ việc");
+        employmentLifecycleService.endEmployment(employeeId, EmploymentStatus.RESIGNED, lastDay, "Nghỉ việc");
         LocalDate after = lastDay.plusDays(1);
 
         assertAfterEnd(() -> salaryService.setSalary(employeeId,

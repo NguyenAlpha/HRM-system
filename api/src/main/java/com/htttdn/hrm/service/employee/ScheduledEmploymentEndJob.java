@@ -31,7 +31,7 @@ public class ScheduledEmploymentEndJob implements ApplicationRunner {
     private static final String ZONE = "Asia/Ho_Chi_Minh";
 
     private final EmployeeRepository employeeRepository;
-    private final EmployeeService employeeService;
+    private final EmploymentLifecycleService employmentLifecycleService;
     private final Clock clock;
 
     @Override
@@ -44,7 +44,7 @@ public class ScheduledEmploymentEndJob implements ApplicationRunner {
         int completed = 0;
         for (Long employeeId : employeeRepository.findScheduledEndsDue(LocalDate.now(clock))) {
             try {
-                employeeService.completeScheduledEnd(employeeId);
+                employmentLifecycleService.completeScheduledEnd(employeeId);
                 completed++;
             } catch (RuntimeException error) {
                 log.warn("Scheduled employment end of employee {} could not run: {}", employeeId, error.getMessage());

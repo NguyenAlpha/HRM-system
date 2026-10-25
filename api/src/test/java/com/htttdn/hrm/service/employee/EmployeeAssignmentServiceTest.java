@@ -127,6 +127,7 @@ class EmployeeAssignmentServiceTest {
             payslipItemRepository,
             currentAccountProvider,
             employeeAccessScopeService,
+            new EmployeeMapper(employeeAssignmentRepository, accountRepository, Clock.systemDefaultZone()),
             Clock.systemDefaultZone()
         );
     }

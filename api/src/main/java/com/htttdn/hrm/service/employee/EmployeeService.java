@@ -8,11 +8,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
-import com.htttdn.hrm.service.auth.RefreshTokenService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -28,30 +26,23 @@ import com.htttdn.hrm.dto.request.employee.SoftDeleteEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.UpdateSelfProfileRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
-import com.htttdn.hrm.dto.response.employee.EmployeeAccountSummaryResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeAssignmentResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeCreationResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeDetailResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeSummaryResponse;
 import com.htttdn.hrm.dto.response.employee.SelfProfileResponse;
 import com.htttdn.hrm.entity.Account;
-import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeAssignment;
-import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
-import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
-import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
-import com.htttdn.hrm.repository.EmployeePayrollProfileRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
-import com.htttdn.hrm.repository.EmployeeTaxDependentRepository;
 import com.htttdn.hrm.repository.specification.EmployeeSpecifications;
 import com.htttdn.hrm.repository.specification.SearchPatterns;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
@@ -60,6 +51,10 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Hồ sơ nhân viên: tạo, xem, danh sách, sửa, xác nhận hết thử việc, hồ sơ tự cập nhật và xóa mềm. Kết
+ * thúc làm việc nằm ở {@link EmploymentLifecycleService}, phân công ở {@link EmployeeAssignmentService}.
+ */
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -72,24 +67,20 @@ public class EmployeeService {
     );
     private static final String EMPLOYEE_UPDATE = "employee.update";
     private static final String EMPLOYEE_PROBATION_CONFIRM = "employee.probation.confirm";
-    private static final String EMPLOYEE_LIFECYCLE_MANAGE = "employee.lifecycle.manage";
     private static final String EMPLOYEE_DELETE = "employee.delete";
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
     private final EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository;
-    private final EmployeePayrollProfileRepository employeePayrollProfileRepository;
-    private final EmployeeTaxDependentRepository employeeTaxDependentRepository;
     private final LeaveRequestRepository leaveRequestRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final PayslipRepository payslipRepository;
     private final AccountRepository accountRepository;
-    private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
-    private final RefreshTokenService refreshTokenService;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final EmployeeAssignmentService employeeAssignmentService;
     private final EmployeeCodeGenerator employeeCodeGenerator;
+    private final EmployeeMapper employeeMapper;
     private final Clock clock;
 
     @PreAuthorize("hasAuthority('employee.create')")
@@ -123,7 +114,7 @@ public class EmployeeService {
             assignmentRequest
         );
         return new EmployeeCreationResponse(
-            toDetailResponse(savedEmployee),
+            employeeMapper.toDetailResponse(savedEmployee),
             initialAssignment
         );
     }
@@ -133,14 +124,14 @@ public class EmployeeService {
     public EmployeeDetailResponse getById(Long id) {
         Employee employee = employeeRepository.getRequired(id);
         employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_READ);
-        return toDetailResponse(employee);
+        return employeeMapper.toDetailResponse(employee);
     }
 
     /** Hồ sơ của chính người đăng nhập; không cần employee.read vì không đọc hồ sơ người khác. */
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('profile.self.read')")
     public EmployeeDetailResponse getSelf() {
-        return toDetailResponse(findSelf());
+        return employeeMapper.toDetailResponse(findSelf());
     }
 
     @Transactional(readOnly = true)
@@ -209,7 +200,7 @@ public class EmployeeService {
         Map<Long, EmployeeAssignment> assignmentsByEmployeeId = findCurrentAssignmentsByEmployeeId(
             employees.getContent()
         );
-        return employees.map(employee -> toSummaryResponse(
+        return employees.map(employee -> employeeMapper.toSummaryResponse(
             employee,
             assignmentsByEmployeeId.get(employee.getId()),
             accountsByEmployeeId.get(employee.getId())
@@ -234,7 +225,7 @@ public class EmployeeService {
         employee.setInstitution(request.institution());
         employee.setGraduationYear(request.graduationYear());
         employee.setPhone(request.phone());
-        return toDetailResponse(employee);
+        return employeeMapper.toDetailResponse(employee);
     }
 
     @PreAuthorize("hasAuthority('employee.probation.confirm')")
@@ -249,7 +240,7 @@ public class EmployeeService {
         }
 
         employee.setEmploymentStatus(EmploymentStatus.ACTIVE);
-        return toDetailResponse(employee);
+        return employeeMapper.toDetailResponse(employee);
     }
 
     private void updateWorkEmail(Employee employee, String requestedWorkEmail, Instant now) {
@@ -287,128 +278,6 @@ public class EmployeeService {
         return email.trim().toLowerCase(Locale.ROOT);
     }
 
-    @PreAuthorize("hasAuthority('employee.lifecycle.manage')")
-    public EmployeeDetailResponse endEmployment(
-        Long employeeId, EmploymentStatus endStatus, LocalDate terminationDate, String terminationReason
-    ) {
-        if (!isEmploymentEnded(endStatus)) {
-            throw new BusinessException(
-                ErrorCode.VALIDATION_ERROR, "endStatus must be RESIGNED, TERMINATED or RETIRED", "endStatus"
-            );
-        }
-        Employee employee = employeeRepository.getRequired(employeeId);
-        employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_LIFECYCLE_MANAGE);
-        if (terminationDate.isBefore(employee.getHireDate())) {
-            throw new BusinessException(
-                ErrorCode.VALIDATION_ERROR, "terminationDate must not be before hireDate", "terminationDate"
-            );
-        }
-        if (isEmploymentEnded(employee.getEmploymentStatus())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Employee employment has already ended");
-        }
-
-        // The last working day is still worked and paid, so a later one only schedules the end; it
-        // replaces any end already scheduled.
-        if (terminationDate.isAfter(LocalDate.now(clock))) {
-            scheduleEnd(employee, endStatus, terminationDate, terminationReason, currentAccountProvider.account());
-        } else {
-            endEmploymentAs(employee, endStatus, terminationDate, terminationReason, currentAccountProvider.account());
-        }
-        return toDetailResponse(employee);
-    }
-
-    @PreAuthorize("hasAuthority('employee.lifecycle.manage')")
-    public EmployeeDetailResponse cancelScheduledEnd(Long employeeId) {
-        Employee employee = employeeRepository.getRequired(employeeId);
-        employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_LIFECYCLE_MANAGE);
-        if (employee.getScheduledEndStatus() == null) {
-            throw new ConflictException(ErrorCode.CONFLICT, "No employment end is scheduled");
-        }
-        employee.setTerminationDate(null);
-        employee.setTerminationReason(null);
-        employee.setScheduledEndStatus(null);
-        employee.setScheduledEndByAccount(null);
-        return toDetailResponse(employee);
-    }
-
-    /**
-     * Ends a scheduled employment once its last working day has passed, acting as whoever scheduled
-     * it. Run by {@link ScheduledEmploymentEndJob}; an end cancelled in the meantime is skipped.
-     */
-    public void completeScheduledEnd(Long employeeId) {
-        Employee employee = employeeRepository.findByIdForUpdate(employeeId).orElse(null);
-        if (employee == null || employee.getScheduledEndStatus() == null) {
-            return;
-        }
-        endEmploymentAs(employee, employee.getScheduledEndStatus(), employee.getTerminationDate(),
-            employee.getTerminationReason(), employee.getScheduledEndByAccount());
-    }
-
-    /**
-     * Records the last working day and the status to take after it, leaving the employee working until
-     * then. Payroll, attendance and leave already stop at that day.
-     */
-    private void scheduleEnd(
-        Employee employee, EmploymentStatus endStatus, LocalDate terminationDate, String terminationReason, Account actor
-    ) {
-        employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employee.getId())
-            .ifPresent(assignment -> requireNotBeforeAssignment(assignment, terminationDate));
-        employee.setTerminationDate(terminationDate);
-        employee.setTerminationReason(terminationReason);
-        employee.setScheduledEndStatus(endStatus);
-        employee.setScheduledEndByAccount(actor);
-    }
-
-    /**
-     * Ends the employment without the caller's permission checks: closes the primary assignment,
-     * disables the account and revokes its business roles. Used by {@link #endEmployment} and by an
-     * approved resignation once its last working day has passed, where {@code actor} is the approver.
-     */
-    public void endEmploymentAs(
-        Employee employee, EmploymentStatus endStatus, LocalDate terminationDate, String terminationReason, Account actor
-    ) {
-        Long employeeId = employee.getId();
-        employee.setEmploymentStatus(endStatus);
-        employee.setTerminationDate(terminationDate);
-        employee.setTerminationReason(terminationReason);
-        employee.setScheduledEndStatus(null);
-        employee.setScheduledEndByAccount(null);
-
-        employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employeeId)
-            .ifPresent(assignment -> closeAssignmentAtTermination(assignment, terminationDate));
-        closePayrollInputsAtTermination(employeeId, terminationDate);
-        accountRepository.findByEmployeeId(employeeId).ifPresent(account -> {
-            account.setStatus(AccountStatus.DISABLED);
-            refreshTokenService.revokeAll(account.getId());
-            revokeRolesAtTermination(account.getId(), terminationDate, terminationReason, actor);
-        });
-    }
-
-    /**
-     * Revokes the business roles a leaving employee still holds, so they no longer count as held (a
-     * DIRECTOR assignment would otherwise block appointing the next director). Roles that already ended
-     * before the termination date stay as history. AUTO and SYSTEM_ONLY roles are left to their own
-     * workflows, as the role revoke API does.
-     */
-    private void revokeRolesAtTermination(Long accountId, LocalDate terminationDate, String terminationReason, Account actor) {
-        Instant now = Instant.now();
-        for (AccountRoleAssignment assignment : accountRoleAssignmentRepository.findByAccountIdAndRevokedAtIsNull(accountId)) {
-            RoleGrantPolicy policy = assignment.getRole().getGrantPolicy();
-            if (policy == RoleGrantPolicy.AUTO || policy == RoleGrantPolicy.SYSTEM_ONLY) {
-                continue;
-            }
-            if (assignment.getEffectiveTo() != null && assignment.getEffectiveTo().isBefore(terminationDate)) {
-                continue;
-            }
-            assignment.setRevokedByAccount(actor);
-            assignment.setRevokedAt(now);
-            assignment.setRevocationReason("Kết thúc làm việc: " + terminationReason.trim());
-            if (!assignment.getEffectiveFrom().isAfter(terminationDate)) {
-                assignment.setEffectiveTo(terminationDate);
-            }
-        }
-    }
-
     @PreAuthorize("hasAuthority('employee.delete')")
     public void softDelete(Long id, SoftDeleteEmployeeRequest request) {
         Employee employee = employeeRepository.getRequired(id);
@@ -427,42 +296,6 @@ public class EmployeeService {
         }
     }
 
-    /**
-     * Ends the salary, payroll profile and dependents still running past the last working day there,
-     * so none reads as current. Payroll already stops at that day, so no payslip changes. A record
-     * starting after the day is left as it is: it never applied.
-     */
-    private void closePayrollInputsAtTermination(Long employeeId, LocalDate terminationDate) {
-        employeeSalaryHistoryRepository.findByEmployeeIdOrderByEffectiveFromDesc(employeeId).stream()
-            .filter(salary -> runsPast(salary.getEffectiveFrom(), salary.getEffectiveTo(), terminationDate))
-            .forEach(salary -> salary.setEffectiveTo(terminationDate));
-        employeePayrollProfileRepository.findByEmployeeIdForUpdate(employeeId).stream()
-            .filter(profile -> runsPast(profile.getEffectiveFrom(), profile.getEffectiveTo(), terminationDate))
-            .forEach(profile -> profile.setEffectiveTo(terminationDate));
-        employeeTaxDependentRepository.findByEmployeeIdOrderByEffectiveFromDescIdDesc(employeeId).stream()
-            .filter(dependent -> runsPast(dependent.getEffectiveFrom(), dependent.getEffectiveTo(), terminationDate))
-            .forEach(dependent -> dependent.setEffectiveTo(terminationDate));
-    }
-
-    private static boolean runsPast(LocalDate from, LocalDate to, LocalDate terminationDate) {
-        return !from.isAfter(terminationDate) && (to == null || to.isAfter(terminationDate));
-    }
-
-    private void closeAssignmentAtTermination(EmployeeAssignment assignment, LocalDate terminationDate) {
-        requireNotBeforeAssignment(assignment, terminationDate);
-        assignment.setEffectiveTo(terminationDate);
-    }
-
-    private void requireNotBeforeAssignment(EmployeeAssignment assignment, LocalDate terminationDate) {
-        if (terminationDate.isBefore(assignment.getEffectiveFrom())) {
-            throw new BusinessException(
-                ErrorCode.VALIDATION_ERROR,
-                "terminationDate must not be before the current assignment start date",
-                "terminationDate"
-            );
-        }
-    }
-
     private void ensureEmployeeHasNoBusinessHistory(Long employeeId) {
         // The create endpoint always writes one assignment, so a single row proves nothing;
         // a second one means somebody deliberately transferred or promoted the employee.
@@ -478,17 +311,6 @@ public class EmployeeService {
                 "Employee has related business data and cannot be deleted; end employment instead"
             );
         }
-    }
-
-    private Optional<EmployeeAssignment> findCurrentAssignment(Long employeeId) {
-        return employeeAssignmentRepository.findCurrentPrimaryCandidates(employeeId, LocalDate.now(clock)).stream()
-            .findFirst();
-    }
-
-    private boolean isEmploymentEnded(EmploymentStatus status) {
-        return status == EmploymentStatus.RESIGNED
-            || status == EmploymentStatus.TERMINATED
-            || status == EmploymentStatus.RETIRED;
     }
 
     private Map<Long, Account> findAccountsByEmployeeId(List<Employee> employees) {
@@ -515,89 +337,4 @@ public class EmployeeService {
             .forEach(assignment -> assignmentsByEmployeeId.put(assignment.getEmployee().getId(), assignment));
         return assignmentsByEmployeeId;
     }
-
-    private EmployeeSummaryResponse toSummaryResponse(
-        Employee employee,
-        EmployeeAssignment currentAssignment,
-        Account account
-    ) {
-        return new EmployeeSummaryResponse(
-            employee.getId(),
-            employee.getEmployeeCode(),
-            employee.getFullName(),
-            employee.getWorkEmail(),
-            employee.getPhone(),
-            employee.getHireDate(),
-            employee.getEmploymentStatus(),
-            employee.getTerminationDate(),
-            currentAssignment == null ? null : toAssignmentResponse(currentAssignment),
-            toAccountSummaryResponse(account)
-        );
-    }
-
-    private EmployeeDetailResponse toDetailResponse(Employee employee) {
-        EmployeeAssignmentResponse currentAssignment = findCurrentAssignment(employee.getId())
-            .map(this::toAssignmentResponse)
-            .orElse(null);
-        return new EmployeeDetailResponse(
-            employee.getId(),
-            employee.getEmployeeCode(),
-            employee.getFullName(),
-            employee.getDateOfBirth(),
-            employee.getGender(),
-            employee.getHighestEducationLevel(),
-            employee.getMajor(),
-            employee.getInstitution(),
-            employee.getGraduationYear(),
-            employee.getWorkEmail(),
-            employee.getPhone(),
-            employee.getHireDate(),
-            employee.getEmploymentStatus(),
-            employee.getTerminationDate(),
-            employee.getScheduledEndStatus(),
-            currentAssignment,
-            accountRepository.findByEmployeeId(employee.getId())
-                .map(this::toAccountSummaryResponse)
-                .orElse(null)
-        );
-    }
-
-    private EmployeeAccountSummaryResponse toAccountSummaryResponse(Account account) {
-        if (account == null) {
-            return null;
-        }
-        return new EmployeeAccountSummaryResponse(
-            account.getId(),
-            account.getUsername(),
-            account.getEmail(),
-            account.getStatus()
-        );
-    }
-
-    private EmployeeAssignmentResponse toAssignmentResponse(EmployeeAssignment assignment) {
-        var unit = assignment.getOrganizationUnit();
-        var location = assignment.getWorkLocation();
-        var position = assignment.getPosition();
-        var shift = assignment.getShift();
-        var manager = assignment.getManagerEmployee();
-        return new EmployeeAssignmentResponse(
-            assignment.getId(),
-            assignment.getEmployee().getId(),
-            unit.getId(),
-            unit.getName(),
-            location.getId(),
-            location.getName(),
-            position.getId(),
-            position.getTitle(),
-            shift == null ? null : shift.getId(),
-            shift == null ? null : shift.getName(),
-            manager == null ? null : manager.getId(),
-            manager == null ? null : manager.getFullName(),
-            assignment.getEmploymentType(),
-            assignment.getEffectiveFrom(),
-            assignment.getEffectiveTo(),
-            assignment.getIsPrimary()
-        );
-    }
-
 }

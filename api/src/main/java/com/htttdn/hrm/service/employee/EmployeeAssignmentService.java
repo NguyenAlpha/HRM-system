@@ -59,6 +59,7 @@ public class EmployeeAssignmentService {
     private final PayslipItemRepository payslipItemRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
+    private final EmployeeMapper employeeMapper;
     private final Clock clock;
 
     @PreAuthorize("hasAuthority('employee.create')")
@@ -69,7 +70,7 @@ public class EmployeeAssignmentService {
         validateEffectiveFrom(employee, request.effectiveFrom(), "initialAssignment.effectiveFrom");
         validateManagerIsNotSelf(employee.getId(), request.managerEmployeeId());
         AssignmentResources resources = resolveResources(request, EMPLOYEE_CREATE);
-        return toResponse(savePrimaryAssignment(employee, request, resources, currentAccountProvider.account()));
+        return employeeMapper.toAssignmentResponse(savePrimaryAssignment(employee, request, resources, currentAccountProvider.account()));
     }
 
     @PreAuthorize("hasAuthority('employee.assignment.manage')")
@@ -103,7 +104,7 @@ public class EmployeeAssignmentService {
             .ifPresent(current -> closeCurrentAssignment(current, request.effectiveFrom()));
         employeeAssignmentRepository.flush();
 
-        return toResponse(savePrimaryAssignment(employee, request, resources, currentAccountProvider.account()));
+        return employeeMapper.toAssignmentResponse(savePrimaryAssignment(employee, request, resources, currentAccountProvider.account()));
     }
 
     @PreAuthorize("hasAuthority('employee.assignment.read')")
@@ -114,7 +115,7 @@ public class EmployeeAssignmentService {
         return employeeAssignmentRepository
             .findCurrentPrimaryCandidates(employeeId, LocalDate.now(clock)).stream()
             .findFirst()
-            .map(this::toResponse)
+            .map(employeeMapper::toAssignmentResponse)
             .orElseThrow(() -> new ResourceNotFoundException(
                 ErrorCode.EMPLOYEE_ASSIGNMENT_NOT_FOUND,
                 "No active assignment for employee: " + employeeId
@@ -127,7 +128,7 @@ public class EmployeeAssignmentService {
         findEmployee(employeeId);
         employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_ASSIGNMENT_READ);
         return employeeAssignmentRepository.findByEmployeeIdOrderByEffectiveFromDesc(employeeId).stream()
-            .map(this::toResponse)
+            .map(employeeMapper::toAssignmentResponse)
             .toList();
     }
 
@@ -267,32 +268,6 @@ public class EmployeeAssignmentService {
         return status == EmploymentStatus.RESIGNED
             || status == EmploymentStatus.TERMINATED
             || status == EmploymentStatus.RETIRED;
-    }
-
-    private EmployeeAssignmentResponse toResponse(EmployeeAssignment assignment) {
-        OrganizationUnit unit = assignment.getOrganizationUnit();
-        WorkLocation location = assignment.getWorkLocation();
-        JobPosition position = assignment.getPosition();
-        WorkShift shift = assignment.getShift();
-        Employee manager = assignment.getManagerEmployee();
-        return new EmployeeAssignmentResponse(
-            assignment.getId(),
-            assignment.getEmployee().getId(),
-            unit.getId(),
-            unit.getName(),
-            location.getId(),
-            location.getName(),
-            position.getId(),
-            position.getTitle(),
-            shift == null ? null : shift.getId(),
-            shift == null ? null : shift.getName(),
-            manager == null ? null : manager.getId(),
-            manager == null ? null : manager.getFullName(),
-            assignment.getEmploymentType(),
-            assignment.getEffectiveFrom(),
-            assignment.getEffectiveTo(),
-            assignment.getIsPrimary()
-        );
     }
 
     private record AssignmentResources(

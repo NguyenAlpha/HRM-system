@@ -28,6 +28,7 @@ import com.htttdn.hrm.dto.response.employee.EmployeeSummaryResponse;
 import com.htttdn.hrm.dto.response.employee.SelfProfileResponse;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.service.employee.EmployeeService;
+import com.htttdn.hrm.service.employee.EmploymentLifecycleService;
 
 import jakarta.validation.Valid;
 
@@ -39,6 +40,7 @@ import lombok.RequiredArgsConstructor;
 public class EmployeeController {
 
     private final EmployeeService employeeService;
+    private final EmploymentLifecycleService employmentLifecycleService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -98,14 +100,14 @@ public class EmployeeController {
         @PathVariable Long employeeId,
         @Valid @RequestBody EndEmploymentRequest request
     ) {
-        return ApiResult.ok(employeeService.endEmployment(
+        return ApiResult.ok(employmentLifecycleService.endEmployment(
             employeeId, request.endStatus(), request.terminationDate(), request.terminationReason()
         ));
     }
 
     @DeleteMapping("/{employeeId}/employment-end")
     public ApiResult<EmployeeDetailResponse> cancelScheduledEnd(@PathVariable Long employeeId) {
-        return ApiResult.ok(employeeService.cancelScheduledEnd(employeeId));
+        return ApiResult.ok(employmentLifecycleService.cancelScheduledEnd(employeeId));
     }
 
     @PostMapping("/{employeeId}/soft-delete")

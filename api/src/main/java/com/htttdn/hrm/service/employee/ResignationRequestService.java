@@ -58,7 +58,7 @@ public class ResignationRequestService {
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final ApproverResolver approverResolver;
-    private final EmployeeService employeeService;
+    private final EmploymentLifecycleService employmentLifecycleService;
 
     /** Sends the request to the employee's approver at once; one open request per employee. */
     @PreAuthorize("hasAnyAuthority('request.self.create', 'request.manage')")
@@ -203,7 +203,7 @@ public class ResignationRequestService {
         }
         Employee employee = request.getEmployee();
         if (!ENDED.contains(employee.getEmploymentStatus())) {
-            employeeService.endEmploymentAs(employee, EmploymentStatus.RESIGNED, request.getLastWorkingDate(),
+            employmentLifecycleService.endEmploymentAs(employee, EmploymentStatus.RESIGNED, request.getLastWorkingDate(),
                 request.getReason(), request.getReviewedByAccount());
         }
         Instant now = Instant.now();
