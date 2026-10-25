@@ -4,11 +4,11 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -60,7 +60,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AttendanceService {
 
-    private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     /** Set by an approved leave covering the whole day; changed only through the leave workflow. */
     private static final Set<AttendanceStatus> FULL_DAY_LEAVE = Set.of(AttendanceStatus.PAID_LEAVE,
         AttendanceStatus.UNPAID_LEAVE, AttendanceStatus.MATERNITY_LEAVE, AttendanceStatus.SICK_LEAVE);
@@ -207,7 +206,7 @@ public class AttendanceService {
         Instant in = request.checkInAt();
         Instant out = request.checkOutAt();
         // Giờ vào đổi sang ngày theo giờ Việt Nam; giờ ra có thể sang ngày sau (ca đêm), tối đa 24 giờ.
-        if (!LocalDate.ofInstant(in, ZONE).equals(workDate)) {
+        if (!LocalDate.ofInstant(in, ClockConfig.BUSINESS_ZONE).equals(workDate)) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Check-in must fall on the work date " + workDate, "checkInAt");
         }
@@ -272,9 +271,9 @@ public class AttendanceService {
      */
     @Transactional(readOnly = true)
     public int leaveMinutesFor(Long employeeId, Instant startAt, Instant endAt) {
-        LocalDate from = LocalDate.ofInstant(startAt, ZONE).minusDays(1);
+        LocalDate from = LocalDate.ofInstant(startAt, ClockConfig.BUSINESS_ZONE).minusDays(1);
         // endAt là mốc mở: nghỉ tới đúng 00:00 thì ngày hôm đó không tính → lùi 1 nano trước khi lấy ngày.
-        LocalDate to = LocalDate.ofInstant(endAt.minusNanos(1), ZONE);
+        LocalDate to = LocalDate.ofInstant(endAt.minusNanos(1), ClockConfig.BUSINESS_ZONE);
         int minutes = 0;
         for (AttendanceCalendarService.ScheduledDay day : attendanceCalendarService.scheduleFor(employeeId, from, to)) {
             minutes += Math.min(day.minutes(), workMinutes(day.startAt(), day.endAt(), day.shift(), startAt, endAt));
@@ -303,8 +302,8 @@ public class AttendanceService {
      */
     public void applyApprovedLeave(LeaveRequest request) {
         Long employeeId = request.getEmployee().getId();
-        LocalDate from = LocalDate.ofInstant(request.getStartAt(), ZONE).minusDays(1);
-        LocalDate to = LocalDate.ofInstant(request.getEndAt().minusNanos(1), ZONE);
+        LocalDate from = LocalDate.ofInstant(request.getStartAt(), ClockConfig.BUSINESS_ZONE).minusDays(1);
+        LocalDate to = LocalDate.ofInstant(request.getEndAt().minusNanos(1), ClockConfig.BUSINESS_ZONE);
         // Đếm ngược số phút của đơn: chia lần lượt cho từng ngày, hết thì các ngày sau không bị trừ.
         int remainingMinutes = request.getRequestedMinutes();
         for (AttendanceCalendarService.ScheduledDay day : attendanceCalendarService.scheduleFor(employeeId, from, to)) {

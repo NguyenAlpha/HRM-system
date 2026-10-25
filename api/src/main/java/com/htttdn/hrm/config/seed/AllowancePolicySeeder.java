@@ -3,7 +3,6 @@ package com.htttdn.hrm.config.seed;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +14,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.PositionAllowanceRule;
 import com.htttdn.hrm.entity.SeniorityAllowanceRule;
@@ -41,7 +41,6 @@ import lombok.RequiredArgsConstructor;
 public class AllowancePolicySeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(AllowancePolicySeeder.class);
-    private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final String SEED_NOTE = "Chính sách mẫu";
 
     /** Phụ cấp chức vụ theo tháng; chức danh không có trong danh sách thì không có phụ cấp. */
@@ -79,13 +78,13 @@ public class AllowancePolicySeeder implements ApplicationRunner {
             return;
         }
         Account owner = accountRoleAssignmentRepository
-            .findAccountsHoldingRole("COMPANY_OWNER", LocalDate.now(ZONE)).stream().findFirst().orElse(null);
+            .findAccountsHoldingRole("COMPANY_OWNER", LocalDate.now(ClockConfig.BUSINESS_ZONE)).stream().findFirst().orElse(null);
         if (owner == null || owner.getEmployee() == null) {
             log.info("Allowance policy seed skipped: no Company Owner to approve the rules");
             return;
         }
         LocalDate effectiveFrom = owner.getEmployee().getHireDate();
-        Instant createdAt = effectiveFrom.atStartOfDay(ZONE).toInstant();
+        Instant createdAt = effectiveFrom.atStartOfDay(ClockConfig.BUSINESS_ZONE).toInstant();
 
         int positionCount = 0;
         for (Map.Entry<String, BigDecimal> allowance : POSITION_ALLOWANCES.entrySet()) {

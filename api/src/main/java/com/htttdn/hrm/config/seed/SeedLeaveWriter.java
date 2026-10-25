@@ -6,7 +6,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.YearMonth;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -17,6 +16,7 @@ import java.util.function.Function;
 
 import org.springframework.stereotype.Component;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.config.seed.StaffSeeder.AbsenceEntry;
 import com.htttdn.hrm.config.seed.StaffSeeder.LeaveEntry;
 import com.htttdn.hrm.config.seed.StaffSeeder.StaffEntry;
@@ -63,7 +63,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 class SeedLeaveWriter {
 
-    private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final int FUTURE_DAYS = 90;
     private static final String MORNING = "MORNING";
     private static final String AFTERNOON = "AFTERNOON";
@@ -87,7 +86,7 @@ class SeedLeaveWriter {
      * @return the number of leave requests written
      */
     int write(StaffEntry entry, Employee employee, Function<LocalDate, Account> approverOn, Account reconciler) {
-        LocalDate today = LocalDate.now(ZONE);
+        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
         List<ScheduledDay> past = attendanceCalendarService.scheduleFor(employee.getId(), employee.getHireDate(), today.minusDays(1));
         List<ScheduledDay> days = new ArrayList<>(past);
         days.addAll(attendanceCalendarService.scheduleFor(employee.getId(), today.plusDays(1), today.plusDays(FUTURE_DAYS)));
@@ -153,10 +152,10 @@ class SeedLeaveWriter {
 
         Instant now = Instant.now();
         Instant submittedAt = earliest(leave.type() == LeaveType.SICK
-            ? first.workDate().atTime(LocalTime.of(7, 30)).atZone(ZONE).toInstant()
-            : first.workDate().minusDays(7).atTime(LocalTime.of(9, 0)).atZone(ZONE).toInstant(), now.minus(Duration.ofHours(1)));
+            ? first.workDate().atTime(LocalTime.of(7, 30)).atZone(ClockConfig.BUSINESS_ZONE).toInstant()
+            : first.workDate().minusDays(7).atTime(LocalTime.of(9, 0)).atZone(ClockConfig.BUSINESS_ZONE).toInstant(), now.minus(Duration.ofHours(1)));
         Instant decidedAt = earliest(submittedAt.plus(Duration.ofHours(3)), now.minus(Duration.ofMinutes(30)));
-        Account approver = approverOn.apply(LocalDate.ofInstant(submittedAt, ZONE));
+        Account approver = approverOn.apply(LocalDate.ofInstant(submittedAt, ClockConfig.BUSINESS_ZONE));
         boolean draft = leave.status() == LeaveRequestStatus.DRAFT;
         boolean reviewed = leave.status() == LeaveRequestStatus.APPROVED || leave.status() == LeaveRequestStatus.REJECTED;
         if (leave.status() == LeaveRequestStatus.REJECTED && leave.comment() == null) {
@@ -222,7 +221,7 @@ class SeedLeaveWriter {
         Map<Long, Account> recipients = new LinkedHashMap<>();
         recipients.put(approver.getId(), approver);
         for (Account hr : accountRoleAssignmentRepository.findActiveAccountsHoldingRole(
-            "HR_MANAGER", LocalDate.ofInstant(submittedAt, ZONE))) {
+            "HR_MANAGER", LocalDate.ofInstant(submittedAt, ClockConfig.BUSINESS_ZONE))) {
             if (employeeAccessScopeService.canAccountAccessEmployee(hr.getId(), employee.getId(), "request.read")) {
                 recipients.put(hr.getId(), hr);
             }

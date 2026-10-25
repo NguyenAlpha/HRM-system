@@ -3,7 +3,6 @@ package com.htttdn.hrm.config.seed;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import org.slf4j.Logger;
@@ -15,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.Employee;
@@ -81,7 +81,6 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
     private static final String EMPLOYEE_ROLE = "EMPLOYEE";
     private static final String SEED_REASON = "Seeded company owner";
     private static final BigDecimal BASE_SALARY = new BigDecimal("50000000");
-    private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private static final Logger log = LoggerFactory.getLogger(CompanyOwnerSeeder.class);
 
@@ -178,9 +177,9 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
             .createdByAccount(account)
             .build()), createdAt);
         addDependent(employee, account, "Nguyễn Minh Khang", "001224000101", startDate);
-        addDependent(employee, account, "Nguyễn Bảo Ngọc", "001325000102", LocalDate.now(ZONE).minusMonths(8));
+        addDependent(employee, account, "Nguyễn Bảo Ngọc", "001325000102", LocalDate.now(ClockConfig.BUSINESS_ZONE).minusMonths(8));
         // The Company Owner, with nobody above, confirms their own overtime.
-        int attendanceDays = seedAttendanceWriter.write(employee, startDate, LocalDate.now(ZONE).minusDays(1), date -> account);
+        int attendanceDays = seedAttendanceWriter.write(employee, startDate, LocalDate.now(ClockConfig.BUSINESS_ZONE).minusDays(1), date -> account);
 
         seedTimestamps.apply();
         log.info("Company owner seed completed: '{}' created as {} with {} attendance days",
@@ -194,7 +193,7 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
             .identifier(identifier)
             .effectiveFrom(effectiveFrom)
             .createdByAccount(account)
-            .build()), effectiveFrom.atStartOfDay(ZONE).toInstant());
+            .build()), effectiveFrom.atStartOfDay(ClockConfig.BUSINESS_ZONE).toInstant());
     }
 
     private Role findRequiredRole(String code) {

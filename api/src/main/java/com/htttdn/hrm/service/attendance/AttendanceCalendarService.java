@@ -4,7 +4,6 @@ import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -14,6 +13,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.CompanyHoliday;
 import com.htttdn.hrm.entity.EmployeeAssignment;
@@ -28,7 +28,6 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class AttendanceCalendarService {
-    private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final EmployeeAssignmentRepository assignmentRepository;
     private final CompanyHolidayRepository holidayRepository;
@@ -71,9 +70,9 @@ public class AttendanceCalendarService {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Employee " + employeeId + " has no shift on " + workDate);
         }
-        Instant start = LocalDateTime.of(workDate, shift.getStartTime()).atZone(ZONE).toInstant();
+        Instant start = LocalDateTime.of(workDate, shift.getStartTime()).atZone(ClockConfig.BUSINESS_ZONE).toInstant();
         LocalDate endDate = Boolean.TRUE.equals(shift.getCrossesMidnight()) ? workDate.plusDays(1) : workDate;
-        Instant end = LocalDateTime.of(endDate, shift.getEndTime()).atZone(ZONE).toInstant();
+        Instant end = LocalDateTime.of(endDate, shift.getEndTime()).atZone(ClockConfig.BUSINESS_ZONE).toInstant();
         return new ScheduledDay(workDate, shift, start, end, shift.getStandardWorkMinutes());
     }
 

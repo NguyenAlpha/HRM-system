@@ -2,11 +2,11 @@ package com.htttdn.hrm.service.leave;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.service.attendance.AttendanceService;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import com.htttdn.hrm.service.NotificationService;
@@ -48,7 +48,6 @@ public class LeaveRequestService {
 
     private static final String REQUEST_READ = "request.read";
     private static final String REQUEST_MANAGE = "request.manage";
-    private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final Set<String> SORTABLE_PROPERTIES = Set.of("startAt", "createdAt", "submittedAt", "status");
     private static final String SELF_RECORDED_COMMENT =
         "Tự ghi nhận: đơn nghỉ của Giám đốc hoặc Chủ sở hữu không cần duyệt";
@@ -205,7 +204,7 @@ public class LeaveRequestService {
         boolean companyWide = employeeAccessScopeService.resolve(REQUEST_READ).companyWide();
         Specification<Employee> keyword = EmployeeSpecifications.matchesKeyword(search.keyword());
         Specification<Employee> unit = EmployeeSpecifications.currentlyAssignedTo(
-            search.organizationUnitId(), null, LocalDate.now(BUSINESS_ZONE));
+            search.organizationUnitId(), null, LocalDate.now(ClockConfig.BUSINESS_ZONE));
         if (!companyWide || keyword != null || unit != null) {
             // Scope and employee filters resolve to employee ids first; the scope rules are written for Employee roots.
             Specification<Employee> employees = employeeAccessScopeService.accessibleEmployees(REQUEST_READ);
@@ -227,11 +226,11 @@ public class LeaveRequestService {
             specification = specification.and((root, query, builder) -> builder.equal(root.get("leaveType"), search.leaveType()));
         }
         if (search.from() != null) {
-            Instant fromStart = search.from().atStartOfDay(BUSINESS_ZONE).toInstant();
+            Instant fromStart = search.from().atStartOfDay(ClockConfig.BUSINESS_ZONE).toInstant();
             specification = specification.and((root, query, builder) -> builder.greaterThan(root.get("endAt"), fromStart));
         }
         if (search.to() != null) {
-            Instant toEnd = search.to().plusDays(1).atStartOfDay(BUSINESS_ZONE).toInstant();
+            Instant toEnd = search.to().plusDays(1).atStartOfDay(ClockConfig.BUSINESS_ZONE).toInstant();
             specification = specification.and((root, query, builder) -> builder.lessThan(root.get("startAt"), toEnd));
         }
         return leaveRequestRepository.findAll(specification, SearchPatterns.requireSortable(pageable, SORTABLE_PROPERTIES))

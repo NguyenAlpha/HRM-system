@@ -1,7 +1,6 @@
 package com.htttdn.hrm.controller;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -9,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.service.leave.LeaveEntitlementService;
 import com.htttdn.hrm.service.leave.LeaveEntitlementService.BalanceView;
@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LeaveEntitlementController {
 
-    private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final LeaveEntitlementService leaveEntitlementService;
 
@@ -33,6 +32,6 @@ public class LeaveEntitlementController {
     }
 
     private int resolveYear(Integer year) {
-        return year != null ? year : LocalDate.now(BUSINESS_ZONE).getYear();
+        return year != null ? year : LocalDate.now(ClockConfig.BUSINESS_ZONE).getYear();
     }
 }

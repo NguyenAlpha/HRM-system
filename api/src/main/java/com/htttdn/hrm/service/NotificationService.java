@@ -2,11 +2,11 @@ package com.htttdn.hrm.service;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -33,7 +33,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class NotificationService {
 
-    private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final String LEAVE_SUBMITTED = "LEAVE_SUBMITTED";
     private static final String LEAVE_APPROVED = "LEAVE_APPROVED";
     private static final String LEAVE_REJECTED = "LEAVE_REJECTED";
@@ -56,7 +55,7 @@ public class NotificationService {
                 .ifPresent(account -> recipients.put(account.getId(), account));
         }
 
-        LocalDate today = LocalDate.now(BUSINESS_ZONE);
+        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
         for (Account hr : roleAssignmentRepository.findActiveAccountsHoldingRole("HR_MANAGER", today)) {
             if (hr.getStatus() == AccountStatus.ACTIVE
                 && employeeAccessScopeService.canAccountAccessEmployee(

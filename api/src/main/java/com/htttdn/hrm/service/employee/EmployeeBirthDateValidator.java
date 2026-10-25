@@ -1,14 +1,13 @@
 package com.htttdn.hrm.service.employee;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.exception.BusinessException;
 
 public final class EmployeeBirthDateValidator {
 
-    private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final int MINIMUM_AGE = 17;
 
     private EmployeeBirthDateValidator() {
@@ -21,7 +20,7 @@ public final class EmployeeBirthDateValidator {
             }
             return;
         }
-        if (birthDate.isAfter(LocalDate.now(BUSINESS_ZONE).minusYears(MINIMUM_AGE))) {
+        if (birthDate.isAfter(LocalDate.now(ClockConfig.BUSINESS_ZONE).minusYears(MINIMUM_AGE))) {
             throw new BusinessException(
                 ErrorCode.VALIDATION_ERROR,
                 "Nhân sự phải đủ 17 tuổi",

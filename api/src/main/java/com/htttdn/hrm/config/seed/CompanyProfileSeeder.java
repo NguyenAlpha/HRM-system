@@ -9,6 +9,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.entity.CompanyProfile;
 import com.htttdn.hrm.repository.CompanyProfileRepository;
 
@@ -52,7 +53,7 @@ public class CompanyProfileSeeder implements ApplicationRunner {
             .phone("02812345678")
             .email("contact@hrm.local")
             .address("Ho Chi Minh City, Vietnam")
-            .timezone("Asia/Ho_Chi_Minh")
+            .timezone(ClockConfig.BUSINESS_ZONE_ID)
             .build());
 
         log.info("Company profile seed completed: profile created");

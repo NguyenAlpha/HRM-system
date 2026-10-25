@@ -6,7 +6,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.YearMonth;
-import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +24,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.dto.request.payroll.CreatePayrollAdjustmentRequest;
 import com.htttdn.hrm.dto.request.payroll.CreatePayrollPeriodRequest;
 import com.htttdn.hrm.dto.request.payroll.PayrollActionRequest;
@@ -63,7 +63,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PayrollSeeder implements ApplicationRunner {
 
-    private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final List<String> CALCULATOR_AUTHORITIES = List.of("payroll.calculate");
     private static final List<String> APPROVER_AUTHORITIES = List.of("payroll.approve", "payroll.mark_paid", "payroll.lock");
 
@@ -99,7 +98,7 @@ public class PayrollSeeder implements ApplicationRunner {
         if (!properties.enabled() || payrollPeriodRepository.count() > 0) {
             return;
         }
-        LocalDate today = LocalDate.now(ZONE);
+        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
         Optional<Account> calculator = holder("PAYROLL_ACCOUNTANT", today);
         Optional<Account> approver = holder("PAYROLL_APPROVER", today);
         if (calculator.isEmpty() || approver.isEmpty()) {
@@ -197,7 +196,7 @@ public class PayrollSeeder implements ApplicationRunner {
 
     /** {@code date} at {@code hour}, or an hour ago when that is still ahead (the 1st or 2nd of the current month). */
     private static Timestamp at(LocalDate date, int hour) {
-        Instant instant = date.atTime(LocalTime.of(hour, 0)).atZone(ZONE).toInstant();
+        Instant instant = date.atTime(LocalTime.of(hour, 0)).atZone(ClockConfig.BUSINESS_ZONE).toInstant();
         Instant latest = Instant.now().minusSeconds(3600);
         return Timestamp.from(instant.isAfter(latest) ? latest : instant);
     }

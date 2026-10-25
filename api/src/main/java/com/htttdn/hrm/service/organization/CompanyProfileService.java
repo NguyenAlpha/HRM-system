@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.dto.request.organization.CompanyProfileRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.organization.BrandingResponse;
@@ -103,7 +104,7 @@ public class CompanyProfileService {
         CompanyProfile profile = companyProfileRepository.findById(COMPANY_PROFILE_ID)
             .orElseGet(() -> CompanyProfile.builder()
                 .id(COMPANY_PROFILE_ID)
-                .timezone("Asia/Ho_Chi_Minh")
+                .timezone(ClockConfig.BUSINESS_ZONE_ID)
                 .build());
         profile.setCode(request.code().trim());
         profile.setName(request.name().trim());

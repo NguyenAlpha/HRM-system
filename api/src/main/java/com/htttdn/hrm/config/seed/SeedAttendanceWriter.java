@@ -5,13 +5,13 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Function;
 
 import org.springframework.stereotype.Component;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AttendanceRecord;
 import com.htttdn.hrm.entity.Employee;
@@ -41,7 +41,6 @@ class SeedAttendanceWriter {
     // More often in the current month, so the approver's queue has a few days to decide.
     private static final int CURRENT_MONTH_OVERTIME_ONE_IN = 3;
     private static final BigDecimal WEEKDAY_OVERTIME_MULTIPLIER = new BigDecimal("1.5");
-    private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final AttendanceCalendarService attendanceCalendarService;
@@ -56,7 +55,7 @@ class SeedAttendanceWriter {
     int write(Employee employee, LocalDate from, LocalDate to, Function<LocalDate, Account> approverOn) {
         List<AttendanceCalendarService.ScheduledDay> days = attendanceCalendarService.scheduleFor(employee.getId(), from, to);
         Random random = new Random(employee.getId());
-        YearMonth currentMonth = YearMonth.now(ZONE);
+        YearMonth currentMonth = YearMonth.now(ClockConfig.BUSINESS_ZONE);
         for (int i = 0; i < days.size(); i++) {
             AttendanceCalendarService.ScheduledDay day = days.get(i);
             int lateBy = i % 10 == 3 ? LATE_OR_EARLY_MINUTES : 0;

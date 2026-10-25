@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.repository.EmployeeRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,6 @@ import lombok.RequiredArgsConstructor;
 public class ScheduledEmploymentEndJob implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(ScheduledEmploymentEndJob.class);
-    private static final String ZONE = "Asia/Ho_Chi_Minh";
 
     private final EmployeeRepository employeeRepository;
     private final EmploymentLifecycleService employmentLifecycleService;
@@ -39,7 +39,7 @@ public class ScheduledEmploymentEndJob implements ApplicationRunner {
         completeDue();
     }
 
-    @Scheduled(cron = "0 10 0 * * *", zone = ZONE)
+    @Scheduled(cron = "0 10 0 * * *", zone = ClockConfig.BUSINESS_ZONE_ID)
     public void completeDue() {
         int completed = 0;
         for (Long employeeId : employeeRepository.findScheduledEndsDue(LocalDate.now(clock))) {

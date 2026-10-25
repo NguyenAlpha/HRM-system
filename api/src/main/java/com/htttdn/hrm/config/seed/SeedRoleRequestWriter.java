@@ -4,11 +4,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.config.seed.StaffSeeder.RoleRequestEntry;
 import com.htttdn.hrm.config.seed.StaffSeeder.StaffEntry;
 import com.htttdn.hrm.entity.Account;
@@ -39,7 +39,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 class SeedRoleRequestWriter {
 
-    private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final AccountRepository accountRepository;
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
@@ -52,7 +51,7 @@ class SeedRoleRequestWriter {
         if (requests == null) {
             return;
         }
-        LocalDate today = LocalDate.now(ZONE);
+        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
         Instant now = Instant.now();
         for (RoleRequestEntry item : requests) {
             Role role = roleRepository.findByCodeAndDeletedAtIsNull(item.role())
@@ -68,7 +67,7 @@ class SeedRoleRequestWriter {
             }
             LocalDate effectiveFrom = today.minusDays(item.effectiveFromDaysAgo());
             LocalDate effectiveTo = item.effectiveToDaysAgo() == null ? null : today.minusDays(item.effectiveToDaysAgo());
-            Instant requestedAt = today.minusDays(item.daysAgo()).atTime(LocalTime.of(10, 0)).atZone(ZONE).toInstant();
+            Instant requestedAt = today.minusDays(item.daysAgo()).atTime(LocalTime.of(10, 0)).atZone(ClockConfig.BUSINESS_ZONE).toInstant();
             Instant decidedAt = requestedAt.plus(Duration.ofDays(1));
             if (decidedAt.isAfter(now)) {
                 decidedAt = now.minus(Duration.ofMinutes(30));

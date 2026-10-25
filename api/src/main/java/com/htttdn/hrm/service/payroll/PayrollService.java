@@ -3,9 +3,9 @@ package com.htttdn.hrm.service.payroll;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.time.ZoneId;
 import java.util.List;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -151,7 +151,7 @@ public class PayrollService {
         }
 
         LocalDate actualPaymentDate = request.taxPaymentDate() == null
-            ? LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")) : request.taxPaymentDate();
+            ? LocalDate.now(ClockConfig.BUSINESS_ZONE) : request.taxPaymentDate();
         if (period.getTaxPaymentDate() == null || !YearMonth.from(actualPaymentDate)
             .equals(YearMonth.from(period.getTaxPaymentDate()))) {
             throw new ConflictException(ErrorCode.CONFLICT,

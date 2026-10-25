@@ -1,7 +1,6 @@
 package com.htttdn.hrm.service.employee;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
+import com.htttdn.hrm.config.ClockConfig;
 
 /**
  * Kết thúc hợp đồng của các đơn nghỉ việc đã duyệt khi ngày làm việc cuối đã qua: lúc khởi động và
@@ -25,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 public class ResignationCompletionJob implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(ResignationCompletionJob.class);
-    private static final String ZONE = "Asia/Ho_Chi_Minh";
 
     private final ResignationRequestService resignationRequestService;
 
@@ -34,10 +33,10 @@ public class ResignationCompletionJob implements ApplicationRunner {
         completeDue();
     }
 
-    @Scheduled(cron = "0 10 0 * * *", zone = ZONE)
+    @Scheduled(cron = "0 10 0 * * *", zone = ClockConfig.BUSINESS_ZONE_ID)
     public void completeDue() {
         int completed = 0;
-        for (Long requestId : resignationRequestService.dueIds(LocalDate.now(ZoneId.of(ZONE)))) {
+        for (Long requestId : resignationRequestService.dueIds(LocalDate.now(ClockConfig.BUSINESS_ZONE))) {
             try {
                 resignationRequestService.complete(requestId);
                 completed++;

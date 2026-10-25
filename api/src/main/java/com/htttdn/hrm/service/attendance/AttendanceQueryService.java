@@ -1,7 +1,6 @@
 package com.htttdn.hrm.service.attendance;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.dto.response.attendance.AttendanceRecordResponse;
 import com.htttdn.hrm.dto.response.attendance.TimesheetRowResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
@@ -39,7 +39,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AttendanceQueryService {
 
-    private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final EmployeeRepository employeeRepository;
@@ -97,7 +96,7 @@ public class AttendanceQueryService {
         Specification<Employee> specification = employeeAccessScopeService.accessibleEmployees("attendance.read").and(employed);
         for (Specification<Employee> filter : Arrays.asList(
             EmployeeSpecifications.matchesKeyword(keyword),
-            EmployeeSpecifications.currentlyAssignedTo(organizationUnitId, null, LocalDate.now(ZONE))
+            EmployeeSpecifications.currentlyAssignedTo(organizationUnitId, null, LocalDate.now(ClockConfig.BUSINESS_ZONE))
         )) {
             if (filter != null) {
                 specification = specification.and(filter);

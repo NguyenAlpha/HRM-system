@@ -2,11 +2,11 @@ package com.htttdn.hrm.service.employee;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -48,7 +48,6 @@ public class ResignationRequestService {
 
     private static final String REQUEST_READ = "request.read";
     private static final String REQUEST_MANAGE = "request.manage";
-    private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final Set<String> SORTABLE_PROPERTIES = Set.of("createdAt", "lastWorkingDate", "status");
     private static final Set<EmploymentStatus> ENDED = Set.of(
         EmploymentStatus.RESIGNED, EmploymentStatus.TERMINATED, EmploymentStatus.RETIRED);
@@ -164,7 +163,7 @@ public class ResignationRequestService {
         boolean companyWide = employeeAccessScopeService.resolve(REQUEST_READ).companyWide();
         Specification<Employee> keyword = EmployeeSpecifications.matchesKeyword(search.keyword());
         Specification<Employee> unit = EmployeeSpecifications.currentlyAssignedTo(
-            search.organizationUnitId(), null, LocalDate.now(BUSINESS_ZONE));
+            search.organizationUnitId(), null, LocalDate.now(ClockConfig.BUSINESS_ZONE));
         if (!companyWide || keyword != null || unit != null) {
             // Scope and employee filters resolve to employee ids first; the scope rules are written for Employee roots.
             Specification<Employee> employees = employeeAccessScopeService.accessibleEmployees(REQUEST_READ);
@@ -211,7 +210,7 @@ public class ResignationRequestService {
     }
 
     private void requireLastWorkingDate(LocalDate lastWorkingDate, Employee employee) {
-        LocalDate today = LocalDate.now(BUSINESS_ZONE);
+        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
         if (lastWorkingDate.isBefore(today) || lastWorkingDate.isBefore(employee.getHireDate())) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "The last working day must be today or later", "lastWorkingDate");

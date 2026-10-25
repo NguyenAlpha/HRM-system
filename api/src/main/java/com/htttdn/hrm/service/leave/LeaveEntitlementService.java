@@ -2,11 +2,11 @@ package com.htttdn.hrm.service.leave;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -41,7 +41,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LeaveEntitlementService {
 
-    private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     static final int ANNUAL_LEAVE_DAYS = 12;
     private static final int FALLBACK_STANDARD_DAY_MINUTES = 480;
     private static final String REQUEST_READ = "request.read";
@@ -81,14 +80,14 @@ public class LeaveEntitlementService {
                     builder.greaterThanOrEqualTo(root.get("terminationDate"), first))));
         for (Specification<Employee> filter : Arrays.asList(
             EmployeeSpecifications.matchesKeyword(keyword),
-            EmployeeSpecifications.currentlyAssignedTo(organizationUnitId, null, LocalDate.now(BUSINESS_ZONE))
+            EmployeeSpecifications.currentlyAssignedTo(organizationUnitId, null, LocalDate.now(ClockConfig.BUSINESS_ZONE))
         )) {
             if (filter != null) {
                 specification = specification.and(filter);
             }
         }
         List<Employee> employees = employeeRepository.findAll(specification, Sort.by("employeeCode"));
-        LocalDate today = LocalDate.now(BUSINESS_ZONE);
+        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
         Set<Long> visible = employeeAccessScopeService.visibleOnLastDay("report.hr.read", employees,
             last.isBefore(today) ? last : today);
         return employees.stream()
@@ -107,7 +106,7 @@ public class LeaveEntitlementService {
         if (request.getLeaveType() != LeaveType.ANNUAL) {
             return;
         }
-        int year = request.getStartAt().atZone(BUSINESS_ZONE).getYear();
+        int year = request.getStartAt().atZone(ClockConfig.BUSINESS_ZONE).getYear();
         BalanceView balance = buildBalance(request.getEmployee(), year, request.getId());
 
         if (request.getRequestedMinutes() > balance.remainingMinutes()) {
@@ -138,8 +137,8 @@ public class LeaveEntitlementService {
     private BalanceView buildBalance(Employee employee, int year, Long excludedRequestId) {
         int standardDay = standardDayMinutes(employee.getId());
         int granted = grantedMinutes(employee, year, standardDay);
-        Instant from = LocalDate.of(year, 1, 1).atStartOfDay(BUSINESS_ZONE).toInstant();
-        Instant to = LocalDate.of(year + 1, 1, 1).atStartOfDay(BUSINESS_ZONE).toInstant();
+        Instant from = LocalDate.of(year, 1, 1).atStartOfDay(ClockConfig.BUSINESS_ZONE).toInstant();
+        Instant to = LocalDate.of(year + 1, 1, 1).atStartOfDay(ClockConfig.BUSINESS_ZONE).toInstant();
         long used = leaveRequestRepository.sumMinutesByTypeAndStatuses(
             employee.getId(), LeaveType.ANNUAL, APPROVED_ONLY, from, to, excludedRequestId
         );

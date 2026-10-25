@@ -3,13 +3,13 @@ package com.htttdn.hrm.service.payroll;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.JobPosition;
 import com.htttdn.hrm.entity.PayrollPeriod;
@@ -39,7 +39,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AllowancePolicyService {
 
-    private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final PositionAllowanceRuleRepository positionRuleRepository;
     private final SeniorityAllowanceRuleRepository seniorityRuleRepository;
@@ -106,7 +105,7 @@ public class AllowancePolicyService {
     @PreAuthorize("hasAuthority('compensation.read')")
     @Transactional(readOnly = true)
     public List<PositionAllowanceSummary> listPositionAllowanceSummaries() {
-        LocalDate today = LocalDate.now(ZONE);
+        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
         return jobPositionRepository.findByDeletedAtIsNullOrderByTitleAsc().stream()
             .map(position -> {
                 PositionAllowanceRule current = positionRuleRepository.findEffective(position.getId(), today).orElse(null);

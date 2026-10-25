@@ -4,11 +4,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZoneId;
 import java.util.function.Function;
 
 import org.springframework.stereotype.Component;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.config.seed.StaffSeeder.ResignationEntry;
 import com.htttdn.hrm.config.seed.StaffSeeder.StaffEntry;
 import com.htttdn.hrm.config.seed.StaffSeeder.TerminationEntry;
@@ -37,7 +37,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 class SeedResignationWriter {
 
-    private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final int NOTICE_DAYS = 30;
 
     private final ResignationRequestRepository resignationRequestRepository;
@@ -50,9 +49,9 @@ class SeedResignationWriter {
             LocalDate lastWorkingDate = employee.getTerminationDate();
             LocalDate submittedOn = lastWorkingDate.minusDays(NOTICE_DAYS).isBefore(employee.getHireDate())
                 ? employee.getHireDate() : lastWorkingDate.minusDays(NOTICE_DAYS);
-            Instant submittedAt = submittedOn.atTime(LocalTime.of(9, 0)).atZone(ZONE).toInstant();
+            Instant submittedAt = submittedOn.atTime(LocalTime.of(9, 0)).atZone(ClockConfig.BUSINESS_ZONE).toInstant();
             Instant decidedAt = submittedAt.plus(Duration.ofDays(1));
-            Instant completedAt = lastWorkingDate.plusDays(1).atTime(LocalTime.of(0, 10)).atZone(ZONE).toInstant();
+            Instant completedAt = lastWorkingDate.plusDays(1).atTime(LocalTime.of(0, 10)).atZone(ClockConfig.BUSINESS_ZONE).toInstant();
             Account approver = approverOn.apply(submittedOn);
             seedTimestamps.set(resignationRequestRepository.save(ResignationRequest.builder()
                 .employee(employee)
@@ -74,7 +73,7 @@ class SeedResignationWriter {
             throw invalid(entry, "resignations are for staff still employed; a resignation that ended the"
                 + " employment comes from termination");
         }
-        LocalDate today = LocalDate.now(ZONE);
+        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
         Instant now = Instant.now();
         boolean open = false;
         for (ResignationEntry item : entry.resignations()) {
@@ -92,7 +91,7 @@ class SeedResignationWriter {
             }
             open = open || opens;
 
-            Instant submittedAt = submittedOn.atTime(LocalTime.of(9, 0)).atZone(ZONE).toInstant();
+            Instant submittedAt = submittedOn.atTime(LocalTime.of(9, 0)).atZone(ClockConfig.BUSINESS_ZONE).toInstant();
             Instant decidedAt = submittedAt.plus(Duration.ofDays(1));
             if (decidedAt.isAfter(now)) {
                 decidedAt = now.minus(Duration.ofMinutes(30));

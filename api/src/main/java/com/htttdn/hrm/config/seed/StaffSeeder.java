@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.Employee;
@@ -98,7 +98,6 @@ import lombok.RequiredArgsConstructor;
 public class StaffSeeder implements ApplicationRunner {
 
     private static final String SEED_REASON = "Seeded staff";
-    private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private static final Logger log = LoggerFactory.getLogger(StaffSeeder.class);
 
@@ -297,7 +296,7 @@ public class StaffSeeder implements ApplicationRunner {
         Instant endedAt = terminationDate == null ? null : startOf(terminationDate.plusDays(1));
         EmploymentStatus status = termination != null ? termination.status()
             : Boolean.TRUE.equals(entry.probation()) ? EmploymentStatus.PROBATION : EmploymentStatus.ACTIVE;
-        Account owner = accountRoleAssignmentRepository.findAccountsHoldingRole("COMPANY_OWNER", LocalDate.now(ZONE))
+        Account owner = accountRoleAssignmentRepository.findAccountsHoldingRole("COMPANY_OWNER", LocalDate.now(ClockConfig.BUSINESS_ZONE))
             .stream().findFirst()
             .orElseThrow(() -> new IllegalStateException("Staff seed: no Company Owner to enter salaries"));
 
@@ -382,7 +381,7 @@ public class StaffSeeder implements ApplicationRunner {
         seedPayrollProfiles(entry, employee, owner);
         seedDependents(entry, employee, owner);
 
-        int attendanceDays = seedAttendanceWriter.write(employee, startDate, LocalDate.now(ZONE).minusDays(1),
+        int attendanceDays = seedAttendanceWriter.write(employee, startDate, LocalDate.now(ClockConfig.BUSINESS_ZONE).minusDays(1),
             date -> overtimeApproverOn(assignments, date));
         int leaves = seedLeaveWriter.write(entry, employee, date -> overtimeApproverOn(assignments, date), reconciler(entry));
         seedRoleRequestWriter.write(entry, account, current.unit(), current.location(), owner);
@@ -400,7 +399,7 @@ public class StaffSeeder implements ApplicationRunner {
         if (termination == null) {
             return null;
         }
-        LocalDate today = LocalDate.now(ZONE);
+        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
         LocalDate date = today.minusMonths(termination.monthsAgo());
         EmploymentStatus status = termination.status();
         if (status != EmploymentStatus.RESIGNED && status != EmploymentStatus.TERMINATED && status != EmploymentStatus.RETIRED
@@ -418,7 +417,7 @@ public class StaffSeeder implements ApplicationRunner {
         if (entry.absences() == null || entry.absences().isEmpty()) {
             return null;
         }
-        return accountRoleAssignmentRepository.findAccountsHoldingRole("HR_MANAGER", LocalDate.now(ZONE)).stream().findFirst()
+        return accountRoleAssignmentRepository.findAccountsHoldingRole("HR_MANAGER", LocalDate.now(ClockConfig.BUSINESS_ZONE)).stream().findFirst()
             .orElseThrow(() -> new IllegalStateException("Staff seed: no HR Manager to record absences of '" + entry.username() + "'"));
     }
 
@@ -433,7 +432,7 @@ public class StaffSeeder implements ApplicationRunner {
             return accountRepository.findByEmployeeId(manager.getId())
                 .orElseThrow(() -> new IllegalStateException("Staff seed: manager " + manager.getEmployeeCode() + " has no account"));
         }
-        return accountRoleAssignmentRepository.findAccountsHoldingRole("DIRECTOR", LocalDate.now(ZONE)).stream().findFirst()
+        return accountRoleAssignmentRepository.findAccountsHoldingRole("DIRECTOR", LocalDate.now(ClockConfig.BUSINESS_ZONE)).stream().findFirst()
             .orElseThrow(() -> new IllegalStateException("Staff seed: no Director to approve overtime"));
     }
 
@@ -489,7 +488,7 @@ public class StaffSeeder implements ApplicationRunner {
         if (entry.dependents() == null) {
             return;
         }
-        LocalDate today = LocalDate.now(ZONE);
+        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
         for (DependentEntry dependent : entry.dependents()) {
             LocalDate effectiveFrom = today.minusMonths(dependent.monthsAgo());
             if (dependent.fullName() == null || dependent.fullName().isBlank()
@@ -515,7 +514,7 @@ public class StaffSeeder implements ApplicationRunner {
         if (monthsAgo == null || monthsAgo.isEmpty()) {
             throw new IllegalStateException("Staff seed '" + entry.username() + "': " + field + " needs at least one item");
         }
-        LocalDate today = LocalDate.now(ZONE);
+        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
         List<LocalDate> starts = monthsAgo.stream().map(today::minusMonths).toList();
         if (!starts.getFirst().equals(hireDate)) {
             throw new IllegalStateException("Staff seed '" + entry.username() + "': the first of " + field
@@ -534,7 +533,7 @@ public class StaffSeeder implements ApplicationRunner {
         if (entry.assignments() == null || entry.assignments().isEmpty()) {
             throw new IllegalStateException("Staff seed '" + entry.username() + "': at least one assignment is required");
         }
-        LocalDate today = LocalDate.now(ZONE);
+        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
         List<ResolvedAssignment> resolved = new ArrayList<>();
         for (AssignmentEntry item : entry.assignments()) {
             LocalDate effectiveFrom = today.minusMonths(item.monthsAgo());
@@ -563,7 +562,7 @@ public class StaffSeeder implements ApplicationRunner {
     }
 
     private static Instant startOf(LocalDate date) {
-        return date.atStartOfDay(ZONE).toInstant();
+        return date.atStartOfDay(ClockConfig.BUSINESS_ZONE).toInstant();
     }
 
     private static IllegalStateException missing(StaffEntry entry, String what, String code) {
