@@ -35,6 +35,18 @@ import lombok.RequiredArgsConstructor;
 /**
  * Kết thúc làm việc của nhân viên: kết thúc ngay, hẹn ngày nghỉ, hủy hẹn và hoàn tất khi đến hạn. Hồ sơ
  * nhân viên nằm ở {@link EmployeeService}.
+ *
+ * <p>Kiến thức nền: {@code terminationDate} là ngày làm việc cuối cùng — ngày đó vẫn đi làm và được trả
+ * lương. Có hai cách kết thúc:
+ * <ul>
+ *   <li><b>ngay</b> (ngày cuối là hôm nay hoặc đã qua): đổi trạng thái sang {@code RESIGNED} /
+ *       {@code TERMINATED} / {@code RETIRED}, đóng phân công và dữ liệu tính lương, khóa tài khoản, thu hồi
+ *       role ({@link #endEmploymentAs});</li>
+ *   <li><b>hẹn trước</b> (ngày cuối ở tương lai): chỉ ghi ngày cuối và trạng thái sẽ chuyển sang
+ *       ({@code scheduledEndStatus}); nhân viên vẫn làm việc bình thường tới hết ngày đó, rồi
+ *       {@link ScheduledEmploymentEndJob} hoàn tất ({@link #completeScheduledEnd}).</li>
+ * </ul>
+ * Đơn xin nghỉ việc đã duyệt cũng đi qua {@link #endEmploymentAs} (gọi từ {@link ResignationRequestService}).
  */
 @Service
 @Transactional
@@ -56,6 +68,21 @@ public class EmploymentLifecycleService {
     private final EmployeeMapper employeeMapper;
     private final Clock clock;
 
+    /**
+     * HR kết thúc làm việc của một nhân viên: ngay nếu ngày cuối là hôm nay/đã qua, hẹn trước nếu ở tương
+     * lai (gọi lại với ngày khác sẽ thay lịch hẹn cũ).
+     *
+     * @param employeeId nhân viên
+     * @param endStatus trạng thái sau khi nghỉ: {@code RESIGNED}, {@code TERMINATED} hoặc {@code RETIRED}
+     * @param terminationDate ngày làm việc cuối cùng
+     * @param terminationReason lý do, ghi vào hồ sơ và vào lý do thu hồi role
+     * @return hồ sơ sau khi kết thúc / hẹn kết thúc
+     * @throws BusinessException trạng thái không phải trạng thái nghỉ việc, ngày cuối trước ngày vào làm
+     *         hoặc trước ngày bắt đầu phân công hiện tại (→ 400)
+     * @throws com.htttdn.hrm.exception.ResourceNotFoundException không có hoặc đã xóa mềm (→ 404)
+     * @throws com.htttdn.hrm.exception.ForbiddenException ngoài phạm vi {@code employee.lifecycle.manage} (→ 403)
+     * @throws ConflictException nhân viên đã nghỉ việc rồi (→ 409)
+     */
     @PreAuthorize("hasAuthority('employee.lifecycle.manage')")
     public EmployeeDetailResponse endEmployment(
         Long employeeId, EmploymentStatus endStatus, LocalDate terminationDate, String terminationReason
@@ -86,6 +113,12 @@ public class EmploymentLifecycleService {
         return employeeMapper.toDetailResponse(employee);
     }
 
+    /**
+     * Hủy lịch hẹn kết thúc làm việc: xóa ngày cuối, lý do và trạng thái hẹn; nhân viên tiếp tục làm như
+     * chưa từng hẹn.
+     *
+     * @throws ConflictException không có lịch hẹn nào (→ 409)
+     */
     @PreAuthorize("hasAuthority('employee.lifecycle.manage')")
     public EmployeeDetailResponse cancelScheduledEnd(Long employeeId) {
         Employee employee = employeeRepository.getRequired(employeeId);
@@ -103,8 +136,12 @@ public class EmploymentLifecycleService {
     /**
      * Ends a scheduled employment once its last working day has passed, acting as whoever scheduled
      * it. Run by {@link ScheduledEmploymentEndJob}; an end cancelled in the meantime is skipped.
+     *
+     * <p>Job chỉ đưa vào các nhân viên có ngày cuối trước hôm nay ({@code findScheduledEndsDue}), mỗi người
+     * một transaction riêng; lỗi của một người được job ghi log rồi bỏ qua.
      */
     public void completeScheduledEnd(Long employeeId) {
+        // Khóa ghi rồi đọc lại: HR có thể vừa hủy lịch hẹn (hoặc xóa nhân viên) sau khi job lấy danh sách.
         Employee employee = employeeRepository.findByIdForUpdate(employeeId).orElse(null);
         if (employee == null || employee.getScheduledEndStatus() == null) {
             return;
@@ -132,6 +169,14 @@ public class EmploymentLifecycleService {
      * Ends the employment without the caller's permission checks: closes the primary assignment,
      * disables the account and revokes its business roles. Used by {@link #endEmployment} and by an
      * approved resignation once its last working day has passed, where {@code actor} is the approver.
+     *
+     * <p>Các bước: đổi trạng thái + xóa lịch hẹn → đóng phân công chính ở ngày cuối → đóng lương, hồ sơ
+     * thuế, người phụ thuộc → khóa tài khoản ({@code DISABLED}), thu hồi mọi refresh token và thu hồi role
+     * nghiệp vụ. Access token đang dùng vẫn chạy tới khi hết hạn (request không kiểm tra lại trạng thái
+     * tài khoản), sau đó không làm mới được nữa.
+     *
+     * @param actor người ghi nhận việc thu hồi role: HR thao tác, người hẹn, hoặc người duyệt đơn nghỉ việc
+     * @throws BusinessException ngày cuối trước ngày bắt đầu phân công hiện tại (→ 400)
      */
     public void endEmploymentAs(
         Employee employee, EmploymentStatus endStatus, LocalDate terminationDate, String terminationReason, Account actor

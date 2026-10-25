@@ -54,6 +54,16 @@ import lombok.RequiredArgsConstructor;
 /**
  * Hồ sơ nhân viên: tạo, xem, danh sách, sửa, xác nhận hết thử việc, hồ sơ tự cập nhật và xóa mềm. Kết
  * thúc làm việc nằm ở {@link EmploymentLifecycleService}, phân công ở {@link EmployeeAssignmentService}.
+ *
+ * <p>Kiến thức nền:
+ * <ul>
+ *   <li>Mỗi thao tác cần một permission riêng ({@code @PreAuthorize}), rồi nhân viên đích phải nằm trong
+ *       phạm vi của permission đó ({@code EmployeeAccessScopeService.requireEmployeeAccess}: toàn công ty,
+ *       theo đơn vị, theo địa điểm, hoặc chỉ bản thân) — thiếu → 403.</li>
+ *   <li>Nhân viên bị xóa mềm ({@code deletedAt}) coi như không tồn tại: {@code getRequired} trả 404.</li>
+ *   <li>Email công việc cũng là email đăng nhập của tài khoản gắn với nhân viên, nên hai bên phải luôn
+ *       khớp và không trùng (unique {@code uq_employees_work_email_lower}, {@code uq_accounts_email_lower}).</li>
+ * </ul>
  */
 @Service
 @Transactional
@@ -83,6 +93,18 @@ public class EmployeeService {
     private final EmployeeMapper employeeMapper;
     private final Clock clock;
 
+    /**
+     * Tạo hồ sơ nhân viên mới (trạng thái {@code PROBATION}) cùng phân công chính đầu tiên, trong một
+     * transaction — phân công lỗi thì hồ sơ cũng không được lưu.
+     *
+     * <p>Mã nhân viên do server sinh ({@link EmployeeCodeGenerator#next}: {@code NV} + số kế tiếp, khóa
+     * advisory để hai lần tạo cùng lúc không trùng). Ngày tính thâm niên bắt đầu bằng ngày vào làm.
+     *
+     * @param request hồ sơ và phân công đầu tiên
+     * @return hồ sơ vừa tạo và phân công đầu tiên
+     * @throws BusinessException thiếu ngày sinh hoặc chưa đủ 17 tuổi (→ 400)
+     * @throws ConflictException email công việc đã có nhân viên hoặc tài khoản dùng (→ 409 {@code EMAIL_TAKEN})
+     */
     @PreAuthorize("hasAuthority('employee.create')")
     public EmployeeCreationResponse create(CreateEmployeeRequest request) {
         CreateEmployeeProfileRequest profile = request.employee();
@@ -109,6 +131,8 @@ public class EmployeeService {
             .build();
 
         Employee savedEmployee = employeeRepository.save(employee);
+        // createInitial kiểm tra ngày hiệu lực, quản lý không phải chính nhân viên, đơn vị/địa điểm/chức danh/ca
+        // có thật và trong phạm vi employee.create của người tạo, rồi lưu phân công chính.
         EmployeeAssignmentResponse initialAssignment = employeeAssignmentService.createInitial(
             savedEmployee,
             assignmentRequest
@@ -119,6 +143,13 @@ public class EmployeeService {
         );
     }
 
+    /**
+     * Hồ sơ chi tiết của một nhân viên trong phạm vi {@code employee.read}, kèm phân công hiện tại và tài
+     * khoản.
+     *
+     * @throws com.htttdn.hrm.exception.ResourceNotFoundException không có hoặc đã xóa mềm (→ 404)
+     * @throws com.htttdn.hrm.exception.ForbiddenException ngoài phạm vi (→ 403)
+     */
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('employee.read')")
     public EmployeeDetailResponse getById(Long id) {
@@ -140,7 +171,14 @@ public class EmployeeService {
         return toSelfProfile(findSelf());
     }
 
-    /** The employee updates their own contact details and education; everything else stays with HR. */
+    /**
+     * The employee updates their own contact details and education; everything else stays with HR.
+     *
+     * <p>Ghi đè toàn bộ các trường này: trường bỏ trống → xóa giá trị cũ (null).
+     *
+     * @throws com.htttdn.hrm.exception.ResourceNotFoundException tài khoản không gắn nhân viên (→ 404)
+     * @throws BusinessException năm tốt nghiệp ngoài khoảng 1950 tới năm nay (→ 400)
+     */
     @PreAuthorize("hasAuthority('profile.self.update')")
     public SelfProfileResponse updateSelfProfile(UpdateSelfProfileRequest request) {
         Employee employee = findSelf();
@@ -160,6 +198,10 @@ public class EmployeeService {
         return toSelfProfile(employee);
     }
 
+    /**
+     * Nhân viên gắn với tài khoản đang đăng nhập. Tài khoản không gắn nhân viên (VD admin hệ thống) hoặc
+     * nhân viên đã xóa mềm → 404 {@code EMPLOYEE_NOT_FOUND}.
+     */
     private Employee findSelf() {
         Long accountId = currentAccountProvider.accountId();
         return accountRepository.findById(accountId)
@@ -179,6 +221,14 @@ public class EmployeeService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
+    /**
+     * Danh sách nhân viên trong phạm vi {@code employee.list.read}, lọc theo từ khóa (mã, tên, email),
+     * trạng thái, đơn vị/chức danh của phân công hiện tại; phân trang.
+     *
+     * @param criteria bộ lọc; trường null/rỗng → không lọc theo trường đó
+     * @param pageable trang và cách sắp xếp, chỉ cho các cột trong {@code SORTABLE_PROPERTIES}
+     * @throws BusinessException sắp xếp theo cột không cho phép (→ 400, thay vì 500 từ JPA)
+     */
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('employee.list.read')")
     public Page<EmployeeSummaryResponse> list(EmployeeSearchCriteria criteria, Pageable pageable) {
@@ -196,6 +246,7 @@ public class EmployeeService {
             specification,
             SearchPatterns.requireSortable(pageable, SORTABLE_PROPERTIES)
         );
+        // Tài khoản và phân công của cả trang lấy bằng 2 query (không query từng dòng → tránh N+1).
         Map<Long, Account> accountsByEmployeeId = findAccountsByEmployeeId(employees.getContent());
         Map<Long, EmployeeAssignment> assignmentsByEmployeeId = findCurrentAssignmentsByEmployeeId(
             employees.getContent()
@@ -207,6 +258,15 @@ public class EmployeeService {
         ));
     }
 
+    /**
+     * HR sửa hồ sơ nhân viên: thông tin cá nhân, học vấn, liên hệ và email công việc. Trạng thái, ngày
+     * vào làm và phân công không sửa ở đây.
+     *
+     * @throws com.htttdn.hrm.exception.ResourceNotFoundException không có hoặc đã xóa mềm (→ 404)
+     * @throws com.htttdn.hrm.exception.ForbiddenException ngoài phạm vi (→ 403)
+     * @throws BusinessException nhân viên chưa đủ 17 tuổi (→ 400)
+     * @throws ConflictException email bị trùng hoặc xóa email khi đã có tài khoản (→ 409)
+     */
     @PreAuthorize("hasAuthority('employee.update')")
     public EmployeeDetailResponse update(Long id, UpdateEmployeeRequest request) {
         Employee employee = employeeRepository.getRequired(id);
@@ -228,6 +288,12 @@ public class EmployeeService {
         return employeeMapper.toDetailResponse(employee);
     }
 
+    /**
+     * Xác nhận hết thử việc: {@code PROBATION} → {@code ACTIVE}.
+     *
+     * @throws ConflictException nhân viên không ở trạng thái thử việc (→ 409
+     *         {@code EMPLOYMENT_STATUS_TRANSITION_NOT_ALLOWED})
+     */
     @PreAuthorize("hasAuthority('employee.probation.confirm')")
     public EmployeeDetailResponse confirmEmployment(Long id) {
         Employee employee = employeeRepository.getRequired(id);
@@ -243,6 +309,11 @@ public class EmployeeService {
         return employeeMapper.toDetailResponse(employee);
     }
 
+    /**
+     * Đổi email công việc và đồng bộ sang email đăng nhập của tài khoản (nếu có), sau khi kiểm tra không
+     * trùng ở cả bảng nhân viên lẫn bảng tài khoản. Kiểm tra trước để trả lỗi có {@code field} cho form;
+     * unique index vẫn là chốt chặn cuối khi hai request đến cùng lúc.
+     */
     private void updateWorkEmail(Employee employee, String requestedWorkEmail, Instant now) {
         String workEmail = normalizeEmail(requestedWorkEmail);
         if (workEmail != null
@@ -250,6 +321,7 @@ public class EmployeeService {
             throw new ConflictException(ErrorCode.CONFLICT, "Work email is already taken", "workEmail");
         }
 
+        // Tài khoản cần email để đăng nhập/nhận thư kích hoạt → không cho xóa email khi đã có tài khoản.
         Account account = accountRepository.findByEmployeeId(employee.getId()).orElse(null);
         if (account != null && workEmail == null) {
             throw new ConflictException(
@@ -278,6 +350,15 @@ public class EmployeeService {
         return email.trim().toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * Xóa mềm hồ sơ tạo nhầm: chỉ được khi nhân viên chưa có dữ liệu nghiệp vụ nào. Người đã làm việc thì
+     * phải kết thúc làm việc ({@link EmploymentLifecycleService#endEmployment}) để giữ lịch sử.
+     *
+     * @throws com.htttdn.hrm.exception.ResourceNotFoundException không có hoặc đã xóa mềm (→ 404)
+     * @throws com.htttdn.hrm.exception.ForbiddenException ngoài phạm vi (→ 403)
+     * @throws ConflictException đã có tài khoản, lương, đơn nghỉ, chấm công, phiếu lương hoặc hơn một
+     *         phân công (→ 409)
+     */
     @PreAuthorize("hasAuthority('employee.delete')")
     public void softDelete(Long id, SoftDeleteEmployeeRequest request) {
         Employee employee = employeeRepository.getRequired(id);
@@ -289,6 +370,10 @@ public class EmployeeService {
         employee.setDeletionReason(request.deletionReason());
     }
 
+    /**
+     * Email công việc mới không được trùng nhân viên nào (kể cả đã xóa mềm — unique index phủ mọi dòng)
+     * hay tài khoản nào, vì sau này nó thành email đăng nhập.
+     */
     private void validateCreateUniqueness(String workEmail) {
         if (workEmail != null && (employeeRepository.existsByWorkEmailIgnoreCase(workEmail)
             || accountRepository.existsByEmailIgnoreCase(workEmail))) {
@@ -313,6 +398,7 @@ public class EmployeeService {
         }
     }
 
+    /** Tài khoản (chưa xóa) của các nhân viên trong trang, gom thành {@code Map<employeeId, Account>}. */
     private Map<Long, Account> findAccountsByEmployeeId(List<Employee> employees) {
         if (employees.isEmpty()) {
             return Map.of();
@@ -326,6 +412,7 @@ public class EmployeeService {
         return accountsByEmployeeId;
     }
 
+    /** Phân công chính đang hiệu lực hôm nay của các nhân viên trong trang, gom thành {@code Map<employeeId, phân công>}. */
     private Map<Long, EmployeeAssignment> findCurrentAssignmentsByEmployeeId(List<Employee> employees) {
         if (employees.isEmpty()) {
             return Map.of();
