@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.response.common.ErrorCode;
-import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.LeaveRequest;
 import com.htttdn.hrm.entity.enums.LeaveRequestStatus;
@@ -168,10 +167,7 @@ public class LeaveEntitlementService {
     }
 
     private void requireSelfOrScopedAccess(Long employeeId) {
-        Account account = currentAccountProvider.account();
-        boolean isSelf = account.getEmployee() != null
-            && account.getEmployee().getId().equals(employeeId);
-        if (!isSelf) {
+        if (!currentAccountProvider.account().belongsTo(employeeId)) {
             employeeAccessScopeService.requireEmployeeAccess(employeeId, REQUEST_READ);
         }
     }

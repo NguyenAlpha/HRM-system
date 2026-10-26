@@ -71,4 +71,9 @@ public class Account extends AuditedEntity {
 
     @Column(name = "deletion_reason", columnDefinition = "TEXT")
     private String deletionReason;
+
+    /** Whether this account is the one of employee {@code employeeId}; false for accounts without an employee. */
+    public boolean belongsTo(Long employeeId) {
+        return employee != null && employeeId.equals(employee.getId());
+    }
 }

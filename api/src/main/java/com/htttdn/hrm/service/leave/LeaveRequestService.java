@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.response.common.ErrorCode;
-import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.LeaveRequest;
 import com.htttdn.hrm.entity.enums.LeaveRequestStatus;
@@ -302,16 +301,13 @@ public class LeaveRequestService {
     }
 
     private void requireSelfOrScopedAccess(Long employeeId, String scopedPermission) {
-        Account actor = currentAccountProvider.account();
-        if (actor.getEmployee() != null && employeeId.equals(actor.getEmployee().getId())) {
-            return;
+        if (!currentAccountProvider.account().belongsTo(employeeId)) {
+            employeeAccessScopeService.requireEmployeeAccess(employeeId, scopedPermission);
         }
-        employeeAccessScopeService.requireEmployeeAccess(employeeId, scopedPermission);
     }
 
     private void requireOwnEmployee(Long employeeId) {
-        Employee self = currentAccountProvider.account().getEmployee();
-        if (self == null || !employeeId.equals(self.getId())) {
+        if (!currentAccountProvider.account().belongsTo(employeeId)) {
             throw new ForbiddenException(ErrorCode.FORBIDDEN,
                 "Only the employee can create, submit, or cancel their own leave request");
         }

@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.payroll.PayrollPeriodResponse;
 import com.htttdn.hrm.dto.response.payroll.PayslipResponse;
-import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Payslip;
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.ForbiddenException;
@@ -93,8 +92,7 @@ public class PayrollQueryService {
 
     private void requirePayslipAccess(Long employeeId) {
         if (currentAccountProvider.hasAuthority("payroll.self.read")) {
-            Account actor = currentAccountProvider.account();
-            if (actor.getEmployee() != null && employeeId.equals(actor.getEmployee().getId())) {
+            if (currentAccountProvider.account().belongsTo(employeeId)) {
                 return;
             }
         }

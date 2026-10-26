@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.htttdn.hrm.dto.response.attendance.AttendanceRecordResponse;
 import com.htttdn.hrm.dto.response.attendance.TimesheetRowResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
-import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AttendanceRecord;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.exception.ForbiddenException;
@@ -127,8 +126,7 @@ public class AttendanceQueryService {
      */
     private void requireSelfOrScopedAccess(Long employeeId, String selfPermission, String scopedPermission) {
         if (currentAccountProvider.hasAuthority(selfPermission)) {
-            Account actor = currentAccountProvider.account();
-            if (actor.getEmployee() != null && employeeId.equals(actor.getEmployee().getId())) {
+            if (currentAccountProvider.account().belongsTo(employeeId)) {
                 return;
             }
         }

@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.request.employeerequest.CreateResignationRequestRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
-import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.ResignationRequest;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
@@ -245,11 +244,9 @@ public class ResignationRequestService {
     }
 
     private void requireSelfOrScopedAccess(Long employeeId, String scopedPermission) {
-        Account actor = currentAccountProvider.account();
-        if (actor.getEmployee() != null && employeeId.equals(actor.getEmployee().getId())) {
-            return;
+        if (!currentAccountProvider.account().belongsTo(employeeId)) {
+            employeeAccessScopeService.requireEmployeeAccess(employeeId, scopedPermission);
         }
-        employeeAccessScopeService.requireEmployeeAccess(employeeId, scopedPermission);
     }
 
     private ResignationRequest findForUpdate(Long requestId) {
