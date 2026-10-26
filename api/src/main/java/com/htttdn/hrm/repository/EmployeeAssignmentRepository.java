@@ -55,6 +55,14 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
         @Param("date") LocalDate date
     );
 
+    /**
+     * Phân công chính hiệu lực ngày {@code date} (kèm đơn vị, địa điểm, chức vụ, ca, quản lý). Nếu dữ liệu
+     * lỡ có nhiều bản cùng hiệu lực thì lấy bản bắt đầu muộn nhất; không có → rỗng.
+     */
+    default Optional<EmployeeAssignment> findCurrentPrimary(Long employeeId, LocalDate date) {
+        return findCurrentPrimaryCandidates(employeeId, date).stream().findFirst();
+    }
+
     @Query("""
         SELECT assignment
         FROM EmployeeAssignment assignment

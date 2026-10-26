@@ -92,8 +92,8 @@ class EmployeeServiceTest {
             employee.setId(42L);
             return employee;
         });
-        when(employeeAssignmentRepository.findCurrentPrimaryCandidates(any(), any()))
-            .thenReturn(java.util.List.of());
+        when(employeeAssignmentRepository.findCurrentPrimary(any(), any()))
+            .thenReturn(java.util.Optional.empty());
 
         var result = service().create(new CreateEmployeeRequest(profile, assignment));
 

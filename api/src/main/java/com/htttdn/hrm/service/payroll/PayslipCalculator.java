@@ -374,8 +374,7 @@ public class PayslipCalculator {
             .getBaseSalary();
 
         EmployeeAssignment assignment = employeeAssignmentRepository
-            .findCurrentPrimaryCandidates(employee.getId(), lastWorkDate).stream()
-            .findFirst()
+            .findCurrentPrimary(employee.getId(), lastWorkDate)
             .orElseThrow(() -> missingPayrollInput(employee, "primary assignment"));
 
         List<AttendanceRecord> attendanceRecords = attendanceRecordRepository.findByEmployeeIdAndWorkDateBetween(
@@ -456,7 +455,7 @@ public class PayslipCalculator {
                 .divide(BigDecimal.valueOf(companyWorkdays * day.minutes()), 8, RoundingMode.HALF_UP));
 
             EmployeeAssignment dailyAssignment = employeeAssignmentRepository
-                .findCurrentPrimaryCandidates(employee.getId(), date).stream().findFirst()
+                .findCurrentPrimary(employee.getId(), date)
                 .orElseThrow(() -> missingPayrollInput(employee, "primary assignment on " + date));
             BigDecimal dailyPositionAllowance = positionAllowanceRuleRepository
                 .findEffective(dailyAssignment.getPosition().getId(), date)

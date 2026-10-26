@@ -28,8 +28,7 @@ public class EmployeeMapper {
 
     public EmployeeDetailResponse toDetailResponse(Employee employee) {
         EmployeeAssignmentResponse currentAssignment = employeeAssignmentRepository
-            .findCurrentPrimaryCandidates(employee.getId(), LocalDate.now(clock)).stream()
-            .findFirst()
+            .findCurrentPrimary(employee.getId(), LocalDate.now(clock))
             .map(this::toAssignmentResponse)
             .orElse(null);
         return new EmployeeDetailResponse(

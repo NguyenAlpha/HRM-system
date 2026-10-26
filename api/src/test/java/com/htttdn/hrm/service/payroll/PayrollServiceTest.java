@@ -160,8 +160,8 @@ class PayrollServiceTest {
         when(attendanceCalendarService.companyWorkDates(first, second)).thenReturn(List.of(first, second));
         when(employeeSalaryHistoryRepository.findEffective(2L, second))
             .thenReturn(Optional.of(EmployeeSalaryHistory.builder().build()));
-        when(employeeAssignmentRepository.findCurrentPrimaryCandidates(2L, second))
-            .thenReturn(List.of(EmployeeAssignment.builder().build()));
+        when(employeeAssignmentRepository.findCurrentPrimary(2L, second))
+            .thenReturn(Optional.of(EmployeeAssignment.builder().build()));
         when(attendanceRecordRepository.findByEmployeeIdAndWorkDateBetween(2L, first, second))
             .thenReturn(List.of(attendance));
         WorkShift shift = WorkShift.builder().standardWorkMinutes(480).build();
@@ -236,8 +236,8 @@ class PayrollServiceTest {
             .thenReturn(List.of(employee));
         when(attendanceCalendarService.companyWorkDates(start, end)).thenReturn(List.of(workedDate));
         when(employeeSalaryHistoryRepository.findEffective(2L, workedDate)).thenReturn(Optional.of(salary));
-        when(employeeAssignmentRepository.findCurrentPrimaryCandidates(2L, workedDate))
-            .thenReturn(List.of(assignment));
+        when(employeeAssignmentRepository.findCurrentPrimary(2L, workedDate))
+            .thenReturn(Optional.of(assignment));
         when(attendanceRecordRepository.findByEmployeeIdAndWorkDateBetween(2L, start, end))
             .thenReturn(List.of(attendance));
         when(attendanceCalendarService.scheduleFor(2L, start, end)).thenReturn(List.of(
@@ -324,8 +324,8 @@ class PayrollServiceTest {
             EmployeeSalaryHistory.builder().baseSalary(new BigDecimal("10000000")).build()));
         when(employeeSalaryHistoryRepository.findEffective(2L, second)).thenReturn(Optional.of(
             EmployeeSalaryHistory.builder().baseSalary(new BigDecimal("20000000")).build()));
-        when(employeeAssignmentRepository.findCurrentPrimaryCandidates(2L, first)).thenReturn(List.of(assignment));
-        when(employeeAssignmentRepository.findCurrentPrimaryCandidates(2L, second)).thenReturn(List.of(assignment));
+        when(employeeAssignmentRepository.findCurrentPrimary(2L, first)).thenReturn(Optional.of(assignment));
+        when(employeeAssignmentRepository.findCurrentPrimary(2L, second)).thenReturn(Optional.of(assignment));
         when(positionAllowanceRuleRepository.findEffective(3L, first)).thenReturn(Optional.of(
             PositionAllowanceRule.builder().monthlyAmount(new BigDecimal("1000000")).build()));
         when(positionAllowanceRuleRepository.findEffective(3L, second)).thenReturn(Optional.of(
@@ -380,8 +380,8 @@ class PayrollServiceTest {
             AttendanceRecord.builder().workDate(dayBefore).scheduledMinutes(480).payableMinutes(480).build(),
             AttendanceRecord.builder().workDate(lastWorkingDay).scheduledMinutes(480).payableMinutes(480).build()));
         when(employeeSalaryHistoryRepository.findEffective(eq(2L), any(LocalDate.class))).thenReturn(Optional.of(salary));
-        when(employeeAssignmentRepository.findCurrentPrimaryCandidates(eq(2L), any(LocalDate.class)))
-            .thenReturn(List.of(assignment));
+        when(employeeAssignmentRepository.findCurrentPrimary(eq(2L), any(LocalDate.class)))
+            .thenReturn(Optional.of(assignment));
         when(payslipRepository.save(any(Payslip.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(payslipRepository.totalsForPeriod(anyLong())).thenReturn(noTotals());
 

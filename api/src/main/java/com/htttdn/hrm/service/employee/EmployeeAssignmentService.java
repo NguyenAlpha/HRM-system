@@ -106,8 +106,7 @@ public class EmployeeAssignmentService {
         findEmployee(employeeId);
         employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_ASSIGNMENT_READ);
         return employeeAssignmentRepository
-            .findCurrentPrimaryCandidates(employeeId, LocalDate.now(clock)).stream()
-            .findFirst()
+            .findCurrentPrimary(employeeId, LocalDate.now(clock))
             .map(employeeMapper::toAssignmentResponse)
             .orElseThrow(() -> new ResourceNotFoundException(
                 ErrorCode.EMPLOYEE_ASSIGNMENT_NOT_FOUND,

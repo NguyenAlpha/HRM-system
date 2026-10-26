@@ -60,7 +60,7 @@ public class AttendanceCalendarService {
      * included, so punches on a day off can still be recorded as overtime.
      */
     public Optional<ScheduledDay> assignedDay(Long employeeId, LocalDate date) {
-        return assignmentRepository.findCurrentPrimaryCandidates(employeeId, date).stream().findFirst()
+        return assignmentRepository.findCurrentPrimary(employeeId, date)
             .map(assignment -> toScheduledDay(employeeId, date, assignment));
     }
 
