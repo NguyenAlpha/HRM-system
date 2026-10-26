@@ -271,7 +271,7 @@ kỳ ngoài phạm vi sẽ dừng với lỗi yêu cầu bổ sung quy tắc.
 | In phiếu lương tháng và bảng lương năm của mình (in qua trình duyệt, lưu PDF được) | Trang `/payslips`, cùng API trên | `payroll.self.read` |
 
 Vòng đời kỳ: `DRAFT` → `CALCULATED` → `APPROVED` → `PAID` → `LOCKED`, có thể `CANCELLED` trước
-khi duyệt. Từ `APPROVED` trở đi mọi đường sửa dữ liệu công đều bị chặn và phiếu lương là snapshot
+khi duyệt (phiếu lương đã tính của kỳ bị hủy cũng bị xóa). Từ `APPROVED` trở đi mọi đường sửa dữ liệu công đều bị chặn và phiếu lương là snapshot
 bất biến.
 
 Phiếu lương tính: lương cơ bản theo phút được trả lương, phụ cấp chức vụ, phụ cấp thâm niên, tăng

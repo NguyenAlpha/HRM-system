@@ -243,8 +243,8 @@ public class PayrollService {
     }
 
     /**
-     * Hủy kỳ chưa duyệt. Phiếu lương đã tính vẫn nằm trong DB nhưng kỳ {@code CANCELLED} không còn chặn
-     * việc tạo kỳ mới cho tháng đó (uq_payroll_periods_year_month bỏ qua kỳ đã hủy).
+     * Hủy kỳ chưa duyệt và xóa phiếu lương đã tính của nó (chưa duyệt nên chưa ai nhận). Kỳ {@code CANCELLED}
+     * không còn chặn việc tạo kỳ mới cho tháng đó (uq_payroll_periods_year_month bỏ qua kỳ đã hủy).
      *
      * @throws ConflictException kỳ đã duyệt trở đi (→ 409 {@code CONFLICT})
      */
@@ -255,6 +255,7 @@ public class PayrollService {
         if (period.getStatus() != PayrollPeriodStatus.DRAFT && period.getStatus() != PayrollPeriodStatus.CALCULATED) {
             throw new ConflictException(ErrorCode.CONFLICT, "Only DRAFT or CALCULATED periods can be cancelled");
         }
+        payrollPeriodInvalidator.deletePayslips(periodId);
         period.setStatus(PayrollPeriodStatus.CANCELLED);
         return payrollMapper.toResponse(period);
     }

@@ -434,6 +434,21 @@ class PayrollServiceTest {
     }
 
     @Test
+    void cancellingACalculatedPeriodDeletesItsPayslips() {
+        PayrollPeriod period = PayrollPeriod.builder().id(1L).status(PayrollPeriodStatus.CALCULATED).build();
+        Payslip payslip = Payslip.builder().id(5L).build();
+        when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
+        when(payslipRepository.findByPayrollPeriodId(1L)).thenReturn(List.of(payslip));
+        when(payslipRepository.totalsForPeriod(1L)).thenReturn(noTotals());
+
+        service().cancel(1L);
+
+        assertEquals(PayrollPeriodStatus.CANCELLED, period.getStatus());
+        verify(payslipItemRepository).deleteByPayslipId(5L);
+        verify(payslipRepository).delete(payslip);
+    }
+
+    @Test
     void paymentMonthChangeCannotSilentlyReuseApprovedTax() {
         PayrollPeriod period = PayrollPeriod.builder().id(1L)
             .taxPaymentDate(LocalDate.of(2026, 11, 5))
