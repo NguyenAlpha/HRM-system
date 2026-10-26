@@ -103,7 +103,7 @@ button:disabled { cursor: wait; opacity: 0.64; }
 .sidebar-account strong { font-size: 0.78rem; }
 .sidebar-account small { color: var(--muted-ink); font-size: 0.66rem; }
 /* The toggle sits after the brand text, so that text is no longer the `.brand` row's last child. */
-.sidebar-brand > span { display: grid; flex: 1; gap: 0.05rem; }
+.sidebar-brand > span:not(.brand-mark) { display: grid; flex: 1; gap: 0.05rem; }
 .sidebar-toggle { display: grid; width: 1.75rem; height: 1.75rem; flex: 0 0 auto; place-items: center; margin-left: auto; border: 0; border-radius: 0.5rem; color: var(--muted-ink); background: transparent; cursor: pointer; }
 .sidebar-toggle:hover { color: var(--foreground); background: var(--accent); }
 .sidebar-toggle svg { width: 1rem; height: 1rem; }
@@ -112,7 +112,7 @@ button:disabled { cursor: wait; opacity: 0.64; }
 .sidebar-collapsed .portal-sidebar { padding-inline: 0.5rem; }
 .sidebar-collapsed .sidebar-brand { flex-direction: column; gap: 0.5rem; padding: 0; }
 .sidebar-collapsed .sidebar-toggle { margin-left: 0; }
-.sidebar-collapsed .sidebar-brand > span, .sidebar-collapsed .nav-group-title, .sidebar-collapsed .nav-label,
+.sidebar-collapsed .sidebar-brand > span:not(.brand-mark), .sidebar-collapsed .nav-group-title, .sidebar-collapsed .nav-label,
 .sidebar-collapsed .sidebar-account > span:nth-child(2) { display: none; }
 .sidebar-collapsed .nav-item { justify-content: center; padding-inline: 0; }
 .sidebar-collapsed .sidebar-account { flex-direction: column; gap: 0.5rem; padding-inline: 0; }
