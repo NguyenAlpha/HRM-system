@@ -420,7 +420,7 @@ class PayrollServiceTest {
         return new PayrollService(
             payrollPeriodRepository,
             payslipRepository,
-            payslipItemRepository,
+            new PayrollPeriodInvalidator(payrollPeriodRepository, payslipRepository, payslipItemRepository),
             employeeRepository,
             attendanceRecordRepository,
             currentAccountProvider,

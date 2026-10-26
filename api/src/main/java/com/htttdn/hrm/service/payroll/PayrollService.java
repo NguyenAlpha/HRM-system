@@ -18,14 +18,12 @@ import com.htttdn.hrm.dto.response.payroll.PayrollPeriodResponse;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.PayrollPeriod;
-import com.htttdn.hrm.entity.Payslip;
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
-import com.htttdn.hrm.repository.PayslipItemRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
@@ -42,7 +40,7 @@ public class PayrollService {
 
     private final PayrollPeriodRepository payrollPeriodRepository;
     private final PayslipRepository payslipRepository;
-    private final PayslipItemRepository payslipItemRepository;
+    private final PayrollPeriodInvalidator payrollPeriodInvalidator;
     private final EmployeeRepository employeeRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final CurrentAccountProvider currentAccountProvider;
@@ -100,10 +98,7 @@ public class PayrollService {
 
         Account calculatedBy = currentAccountProvider.account();
 
-        for (Payslip existing : payslipRepository.findByPayrollPeriodId(periodId)) {
-            payslipItemRepository.deleteByPayslipId(existing.getId());
-            payslipRepository.delete(existing);
-        }
+        payrollPeriodInvalidator.deletePayslips(periodId);
         payslipRepository.flush();
 
         List<Employee> employees = employeeRepository.findEmployedDuring(

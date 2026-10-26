@@ -53,6 +53,14 @@ public class PayrollPeriodInvalidator {
         }
     }
 
+    /** Xóa mọi phiếu lương của kỳ cùng các dòng của chúng: khi kỳ bị vô hiệu, hoặc trước khi tính lại. */
+    public void deletePayslips(Long periodId) {
+        for (Payslip payslip : payslipRepository.findByPayrollPeriodId(periodId)) {
+            payslipItemRepository.deleteByPayslipId(payslip.getId());
+            payslipRepository.delete(payslip);
+        }
+    }
+
     private void invalidate(List<PayrollPeriod> affected) {
         for (PayrollPeriod period : affected) {
             if (period.getStatus() != PayrollPeriodStatus.CALCULATED) {
@@ -60,10 +68,7 @@ public class PayrollPeriodInvalidator {
                     "Cannot change payroll data: period " + period.getYear() + "-" + period.getMonth()
                         + " is " + period.getStatus());
             }
-            for (Payslip payslip : payslipRepository.findByPayrollPeriodId(period.getId())) {
-                payslipItemRepository.deleteByPayslipId(payslip.getId());
-                payslipRepository.delete(payslip);
-            }
+            deletePayslips(period.getId());
             period.setStatus(PayrollPeriodStatus.DRAFT);
             period.setCalculatedByAccount(null);
             period.setCalculatedAt(null);
