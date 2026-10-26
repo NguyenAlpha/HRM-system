@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service.attendance;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
@@ -14,7 +15,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.dto.response.attendance.AttendanceRecordResponse;
 import com.htttdn.hrm.dto.response.attendance.TimesheetRowResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
@@ -45,6 +45,7 @@ public class AttendanceQueryService {
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final AttendanceMapper attendanceMapper;
+    private final Clock clock;
 
     /**
      * Một ngày công. Nhân viên xem được của chính mình ({@code attendance.self.read}); HR/quản lý xem
@@ -96,7 +97,7 @@ public class AttendanceQueryService {
         Specification<Employee> specification = employeeAccessScopeService.accessibleEmployees("attendance.read").and(employed);
         for (Specification<Employee> filter : Arrays.asList(
             EmployeeSpecifications.matchesKeyword(keyword),
-            EmployeeSpecifications.currentlyAssignedTo(organizationUnitId, null, LocalDate.now(ClockConfig.BUSINESS_ZONE))
+            EmployeeSpecifications.currentlyAssignedTo(organizationUnitId, null, LocalDate.now(clock))
         )) {
             if (filter != null) {
                 specification = specification.and(filter);

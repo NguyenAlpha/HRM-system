@@ -140,7 +140,7 @@ public class WorkLocationService {
             throw resourceInUse("Work location still has child locations");
         }
         requireNotInUse(locationId);
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         location.setIsActive(false);
         location.setDeletedAt(now);
     }

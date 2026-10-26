@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service.attendance;
 
+import java.time.Clock;
 import java.time.LocalDate;
 
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ public class AttendanceAutoPrepareJob implements ApplicationRunner {
 
     private final AttendanceService attendanceService;
     private final EmployeeRepository employeeRepository;
+    private final Clock clock;
 
     @Override
     public void run(ApplicationArguments args) {
@@ -45,7 +47,7 @@ public class AttendanceAutoPrepareJob implements ApplicationRunner {
 
     @Scheduled(cron = "0 5 0 * * *", zone = ClockConfig.BUSINESS_ZONE_ID)
     public void prepareCurrentMonth() {
-        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
+        LocalDate today = LocalDate.now(clock);
         int year = today.getYear();
         int month = today.getMonthValue();
         LocalDate from = today.withDayOfMonth(1);

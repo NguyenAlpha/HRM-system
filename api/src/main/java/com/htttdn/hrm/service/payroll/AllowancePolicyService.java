@@ -1,6 +1,7 @@
 package com.htttdn.hrm.service.payroll;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -9,7 +10,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.JobPosition;
 import com.htttdn.hrm.entity.PositionAllowanceRule;
@@ -39,6 +39,7 @@ public class AllowancePolicyService {
     private final JobPositionRepository jobPositionRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final PayrollPeriodInvalidator payrollPeriodInvalidator;
+    private final Clock clock;
 
     @PreAuthorize("hasAuthority('compensation.manage')")
     public PositionAllowanceView setPositionAllowance(
@@ -97,7 +98,7 @@ public class AllowancePolicyService {
     @PreAuthorize("hasAuthority('compensation.read')")
     @Transactional(readOnly = true)
     public List<PositionAllowanceSummary> listPositionAllowanceSummaries() {
-        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
+        LocalDate today = LocalDate.now(clock);
         return jobPositionRepository.findByDeletedAtIsNullOrderByTitleAsc().stream()
             .map(position -> {
                 PositionAllowanceRule current = positionRuleRepository.findEffective(position.getId(), today).orElse(null);

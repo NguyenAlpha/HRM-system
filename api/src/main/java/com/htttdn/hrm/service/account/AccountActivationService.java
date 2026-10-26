@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
@@ -37,6 +38,7 @@ public class AccountActivationService {
     private final AccountActivationTokenRepository activationTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final AccountActivationProperties properties;
+    private final Clock clock;
 
     /**
      * Phát credential kích hoạt dùng một lần. Raw token chỉ được trả về cho lớp điều phối
@@ -52,7 +54,7 @@ public class AccountActivationService {
             );
         }
 
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         activationTokenRepository.revokeActiveByAccountId(accountId, now);
 
         String rawToken = generateToken();
@@ -69,7 +71,7 @@ public class AccountActivationService {
 
     @Transactional
     public void revokeAll(Long accountId) {
-        activationTokenRepository.revokeActiveByAccountId(accountId, Instant.now());
+        activationTokenRepository.revokeActiveByAccountId(accountId, Instant.now(clock));
     }
 
     @Transactional
@@ -87,7 +89,7 @@ public class AccountActivationService {
             .findByTokenHashForUpdate(hash(rawToken))
             .orElseThrow(this::invalidToken);
 
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         if (activationToken.getUsedAt() != null || activationToken.getRevokedAt() != null) {
             throw invalidToken();
         }

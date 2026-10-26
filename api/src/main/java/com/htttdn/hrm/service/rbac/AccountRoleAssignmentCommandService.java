@@ -73,7 +73,7 @@ public class AccountRoleAssignmentCommandService {
         }
         LocalDate today = LocalDate.now(clock);
         assignment.setRevokedByAccount(actor);
-        assignment.setRevokedAt(Instant.now());
+        assignment.setRevokedAt(Instant.now(clock));
         assignment.setRevocationReason(reason.trim());
         if (!assignment.getEffectiveFrom().isAfter(today)
             && (assignment.getEffectiveTo() == null || assignment.getEffectiveTo().isAfter(today))) {

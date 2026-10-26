@@ -1,6 +1,8 @@
 package com.htttdn.hrm.security;
 
+import com.htttdn.hrm.config.ClockConfig;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.util.Base64;
 import java.util.List;
 
@@ -26,7 +28,7 @@ class JwtServiceTest {
         ApplicationConfig config = new ApplicationConfig();
         JwtEncoder encoder = config.jwtEncoder(properties);
         JwtDecoder decoder = config.jwtDecoder(properties);
-        JwtService jwtService = new JwtService(encoder, properties);
+        JwtService jwtService = new JwtService(encoder, properties, Clock.system(ClockConfig.BUSINESS_ZONE));
         Account account = Account.builder().id(42L).username("admin").build();
         AuthorizationSnapshot authorization = new AuthorizationSnapshot(
             List.of("SYSTEM_ADMIN"),

@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service.employee;
 
+import java.time.Clock;
 import java.time.LocalDate;
 
 import org.slf4j.Logger;
@@ -27,6 +28,7 @@ public class ResignationCompletionJob implements ApplicationRunner {
     private static final Logger log = LoggerFactory.getLogger(ResignationCompletionJob.class);
 
     private final ResignationRequestService resignationRequestService;
+    private final Clock clock;
 
     @Override
     public void run(ApplicationArguments args) {
@@ -36,7 +38,7 @@ public class ResignationCompletionJob implements ApplicationRunner {
     @Scheduled(cron = "0 10 0 * * *", zone = ClockConfig.BUSINESS_ZONE_ID)
     public void completeDue() {
         int completed = 0;
-        for (Long requestId : resignationRequestService.dueIds(LocalDate.now(ClockConfig.BUSINESS_ZONE))) {
+        for (Long requestId : resignationRequestService.dueIds(LocalDate.now(clock))) {
             try {
                 resignationRequestService.complete(requestId);
                 completed++;

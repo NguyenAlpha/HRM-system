@@ -1,6 +1,8 @@
 package com.htttdn.hrm.service.payroll;
 
+import com.htttdn.hrm.config.ClockConfig;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -107,7 +109,8 @@ class AllowancePolicyServiceTest {
             seniorityRuleRepository,
             jobPositionRepository,
             currentAccountProvider,
-            new PayrollPeriodInvalidator(payrollPeriodRepository, payslipRepository, payslipItemRepository)
+            new PayrollPeriodInvalidator(payrollPeriodRepository, payslipRepository, payslipItemRepository),
+            Clock.system(ClockConfig.BUSINESS_ZONE)
         );
     }
 }

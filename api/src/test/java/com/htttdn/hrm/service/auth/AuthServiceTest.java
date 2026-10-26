@@ -1,5 +1,7 @@
 package com.htttdn.hrm.service.auth;
 
+import com.htttdn.hrm.config.ClockConfig;
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 
@@ -160,7 +162,8 @@ class AuthServiceTest {
             jwtService,
             refreshTokenService,
             accountAuthorizationService,
-            loginAttemptLimiter
+            loginAttemptLimiter,
+            Clock.system(ClockConfig.BUSINESS_ZONE)
         );
     }
 

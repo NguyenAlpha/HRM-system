@@ -78,7 +78,7 @@ public class AccountProvisioningService {
             throw new ConflictException(ErrorCode.EMAIL_TAKEN, "Email is already taken", "employeeId");
         }
 
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         Account account = accountRepository.save(Account.builder()
             .employee(employee)
             .username(username)

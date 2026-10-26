@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
@@ -29,11 +30,12 @@ public class RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtProperties jwt;
+    private final Clock clock;
 
     @Transactional
     public String create(Account account) {
         String rawToken = generateToken();
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         refreshTokenRepository.save(RefreshToken.builder()
             .tokenHash(hash(rawToken))
             .account(account)
@@ -51,7 +53,7 @@ public class RefreshTokenService {
                 "Invalid refresh token"
             ));
 
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         int revoked = refreshTokenRepository.revokeIfActive(tokenHash, now);
         if (revoked == 0) {
             refreshTokenRepository.revokeAllByAccountId(existing.getAccount().getId(), now);
@@ -74,12 +76,12 @@ public class RefreshTokenService {
 
     @Transactional
     public void revoke(String rawToken, Long accountId) {
-        refreshTokenRepository.revokeForAccount(hash(rawToken), accountId, Instant.now());
+        refreshTokenRepository.revokeForAccount(hash(rawToken), accountId, Instant.now(clock));
     }
 
     @Transactional
     public void revokeAll(Long accountId) {
-        refreshTokenRepository.revokeAllByAccountId(accountId, Instant.now());
+        refreshTokenRepository.revokeAllByAccountId(accountId, Instant.now(clock));
     }
 
     private String generateToken() {

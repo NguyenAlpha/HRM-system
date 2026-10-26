@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service.rbac;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -50,6 +51,7 @@ public class RoleService {
     private final PermissionRepository permissionRepository;
     private final RolePermissionRepository rolePermissionRepository;
     private final CurrentAccountProvider currentAccountProvider;
+    private final Clock clock;
 
     public RoleResponse create(CreateRoleRequest request) {
         if (roleRepository.existsByCode(request.code())) {
@@ -120,7 +122,7 @@ public class RoleService {
         if (Boolean.TRUE.equals(role.getIsSystem())) {
             throw new ConflictException(ErrorCode.CONFLICT, "System roles cannot be deleted");
         }
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         role.setDeletedAt(now);
     }
 

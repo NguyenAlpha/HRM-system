@@ -82,7 +82,7 @@ public class RoleAssignmentRequestService {
         }
 
         Account actor = currentAccountProvider.account();
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         RoleAssignmentRequest roleRequest = RoleAssignmentRequest.builder()
             .account(candidate.account())
             .role(candidate.role())
@@ -153,7 +153,7 @@ public class RoleAssignmentRequestService {
         );
 
         Account actor = currentAccountProvider.account();
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         RoleAssignmentRequest roleRequest = RoleAssignmentRequest.builder()
             .requestType(RoleAssignmentRequestType.REVOKE)
             .targetAssignment(target)
@@ -230,7 +230,7 @@ public class RoleAssignmentRequestService {
             roleRequest.setAccountRoleAssignment(
                 roleAssignmentCommandService.assignOwnerApprovedRequest(roleRequest, actor));
         }
-        markReviewed(roleRequest, RoleAssignmentRequestStatus.APPROVED, actor, Instant.now(),
+        markReviewed(roleRequest, RoleAssignmentRequestStatus.APPROVED, actor, Instant.now(clock),
             trimToNull(request.note()));
         return requestMapper.toResponse(roleRequest);
     }
@@ -244,7 +244,7 @@ public class RoleAssignmentRequestService {
         requirePending(roleRequest);
 
         markReviewed(roleRequest, RoleAssignmentRequestStatus.REJECTED, currentAccountProvider.account(),
-            Instant.now(), request.note().trim());
+            Instant.now(clock), request.note().trim());
         return requestMapper.toResponse(roleRequest);
     }
 
@@ -264,7 +264,7 @@ public class RoleAssignmentRequestService {
         }
 
         Account actor = currentAccountProvider.account();
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         roleRequest.setStatus(RoleAssignmentRequestStatus.CANCELLED);
         roleRequest.setCancelledByAccount(actor);
         roleRequest.setCancelledAt(now);

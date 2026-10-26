@@ -9,6 +9,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.htttdn.hrm.config.ClockConfig;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -50,7 +52,7 @@ class AttendanceAutoPrepareJobTest {
         when(attendanceService.autoPrepareEmployee(eq(1L), anyInt(), anyInt()))
             .thenThrow(new BusinessException(ErrorCode.VALIDATION_ERROR, "missing primary assignment"));
 
-        new AttendanceAutoPrepareJob(attendanceService, employeeRepository).prepareCurrentMonth();
+        new AttendanceAutoPrepareJob(attendanceService, employeeRepository, Clock.system(ClockConfig.BUSINESS_ZONE)).prepareCurrentMonth();
 
         verify(attendanceService).autoPrepareEmployee(eq(2L), anyInt(), anyInt());
     }
@@ -62,7 +64,7 @@ class AttendanceAutoPrepareJobTest {
         when(attendanceService.autoPrepareEmployee(eq(1L), anyInt(), anyInt()))
             .thenThrow(new ConflictException(ErrorCode.PAYROLL_PERIOD_LOCKED, "locked"));
 
-        new AttendanceAutoPrepareJob(attendanceService, employeeRepository).prepareCurrentMonth();
+        new AttendanceAutoPrepareJob(attendanceService, employeeRepository, Clock.system(ClockConfig.BUSINESS_ZONE)).prepareCurrentMonth();
 
         verify(attendanceService, never()).autoPrepareEmployee(eq(2L), anyInt(), anyInt());
     }
@@ -71,7 +73,7 @@ class AttendanceAutoPrepareJobTest {
     void repositoryFailureDoesNotEscape() {
         when(employeeRepository.findEmployedDuring(any(), any())).thenThrow(new IllegalStateException("db down"));
 
-        new AttendanceAutoPrepareJob(attendanceService, employeeRepository).prepareCurrentMonth();
+        new AttendanceAutoPrepareJob(attendanceService, employeeRepository, Clock.system(ClockConfig.BUSINESS_ZONE)).prepareCurrentMonth();
 
         verify(attendanceService, never()).autoPrepareEmployee(anyLong(), anyInt(), anyInt());
     }

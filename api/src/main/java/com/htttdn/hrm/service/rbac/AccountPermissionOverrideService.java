@@ -142,7 +142,7 @@ public class AccountPermissionOverrideService {
 
         Account actor = currentAccountProvider.account();
         permissionOverride.setRevokedByAccount(actor);
-        permissionOverride.setRevokedAt(Instant.now());
+        permissionOverride.setRevokedAt(Instant.now(clock));
         permissionOverride.setRevocationReason(request.reason().trim());
         refreshTokenService.revokeAll(accountId);
         return toResponse(permissionOverride);

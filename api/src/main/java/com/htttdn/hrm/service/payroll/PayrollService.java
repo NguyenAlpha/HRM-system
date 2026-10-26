@@ -1,11 +1,11 @@
 package com.htttdn.hrm.service.payroll;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 
-import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -49,6 +49,7 @@ public class PayrollService {
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final PayslipCalculator payslipCalculator;
     private final PayrollMapper payrollMapper;
+    private final Clock clock;
 
     @PreAuthorize("hasAuthority('payroll.calculate')")
     public PayrollPeriodResponse createPeriod(CreatePayrollPeriodRequest request) {
@@ -114,7 +115,7 @@ public class PayrollService {
 
         period.setStatus(PayrollPeriodStatus.CALCULATED);
         period.setCalculatedByAccount(calculatedBy);
-        period.setCalculatedAt(Instant.now());
+        period.setCalculatedAt(Instant.now(clock));
 
         return payrollMapper.toResponse(period);
     }
@@ -137,7 +138,7 @@ public class PayrollService {
 
         period.setStatus(PayrollPeriodStatus.APPROVED);
         period.setApprovedByAccount(approver);
-        period.setApprovedAt(Instant.now());
+        period.setApprovedAt(Instant.now(clock));
 
         return payrollMapper.toResponse(period);
     }
@@ -151,7 +152,7 @@ public class PayrollService {
         }
 
         LocalDate actualPaymentDate = request.taxPaymentDate() == null
-            ? LocalDate.now(ClockConfig.BUSINESS_ZONE) : request.taxPaymentDate();
+            ? LocalDate.now(clock) : request.taxPaymentDate();
         if (period.getTaxPaymentDate() == null || !YearMonth.from(actualPaymentDate)
             .equals(YearMonth.from(period.getTaxPaymentDate()))) {
             throw new ConflictException(ErrorCode.CONFLICT,
@@ -163,7 +164,7 @@ public class PayrollService {
         period.setStatus(PayrollPeriodStatus.PAID);
         period.setTaxPaymentDate(actualPaymentDate);
         period.setPaidByAccount(payer);
-        period.setPaidAt(Instant.now());
+        period.setPaidAt(Instant.now(clock));
 
         return payrollMapper.toResponse(period);
     }
@@ -180,7 +181,7 @@ public class PayrollService {
 
         period.setStatus(PayrollPeriodStatus.LOCKED);
         period.setLockedByAccount(locker);
-        period.setLockedAt(Instant.now());
+        period.setLockedAt(Instant.now(clock));
 
         return payrollMapper.toResponse(period);
     }

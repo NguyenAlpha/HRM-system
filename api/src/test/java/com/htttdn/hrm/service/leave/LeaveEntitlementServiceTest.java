@@ -1,5 +1,7 @@
 package com.htttdn.hrm.service.leave;
 
+import com.htttdn.hrm.config.ClockConfig;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -47,7 +49,8 @@ class LeaveEntitlementServiceTest {
 
     private LeaveEntitlementService service() {
         return new LeaveEntitlementService(
-            leaveRequestRepository, employeeRepository, employeeAssignmentRepository, currentAccountProvider, employeeAccessScopeService
+            leaveRequestRepository, employeeRepository, employeeAssignmentRepository, currentAccountProvider, employeeAccessScopeService,
+            Clock.system(ClockConfig.BUSINESS_ZONE)
         );
     }
 

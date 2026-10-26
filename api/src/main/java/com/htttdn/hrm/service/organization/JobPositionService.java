@@ -92,7 +92,7 @@ public class JobPositionService {
             );
         }
 
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         position.setIsActive(false);
         position.setDeletedAt(now);
     }

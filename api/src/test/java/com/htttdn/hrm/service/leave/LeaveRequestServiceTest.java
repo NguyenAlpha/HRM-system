@@ -1,5 +1,7 @@
 package com.htttdn.hrm.service.leave;
 
+import com.htttdn.hrm.config.ClockConfig;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -340,7 +342,8 @@ class LeaveRequestServiceTest {
             attendanceService,
             leaveEntitlementService,
             approverResolver,
-            notificationService
+            notificationService,
+            Clock.system(ClockConfig.BUSINESS_ZONE)
         );
     }
 }

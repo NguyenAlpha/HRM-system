@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service.account;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,6 +60,7 @@ public class AccountAdminService {
     private final CompanyOwnerAccountGuard companyOwnerAccountGuard;
     private final AccountAuthorizationService accountAuthorizationService;
     private final AccountRoleAssignmentRepository roleAssignmentRepository;
+    private final Clock clock;
 
     @PreAuthorize("hasAuthority('account.provision')")
     public AccountProvisioningResponse create(CreateAccountRequest request) {
@@ -184,7 +186,7 @@ public class AccountAdminService {
         if (account.getDeletedAt() != null) {
             throw new ConflictException(ErrorCode.ACCOUNT_STATUS_TRANSITION_NOT_ALLOWED, "Account is already deleted");
         }
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         Account actor = accountRepository.getReferenceById(actorAccountId);
         String trimmed = reason.trim();
         account.setStatus(AccountStatus.DISABLED);

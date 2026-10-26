@@ -1,5 +1,6 @@
 package com.htttdn.hrm.security;
 
+import java.time.Clock;
 import java.time.Instant;
 
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -24,13 +25,14 @@ public class JwtService {
 
     private final JwtEncoder jwtEncoder;
     private final JwtProperties jwt;
+    private final Clock clock;
 
     public long getAccessTokenExpirationSeconds() {
         return jwt.accessTokenExpirationSeconds();
     }
 
     public String generateAccessToken(Account account, AuthorizationSnapshot authorization) {
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         JwtClaimsSet claims = JwtClaimsSet.builder()
             .issuer(jwt.issuer())
             .subject(account.getUsername())

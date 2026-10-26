@@ -1,5 +1,7 @@
 package com.htttdn.hrm.service;
 
+import com.htttdn.hrm.config.ClockConfig;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -122,6 +124,7 @@ class NotificationServiceTest {
 
     private NotificationService service() {
         return new NotificationService(notificationRepository, accountRepository,
-            roleAssignmentRepository, employeeAccessScopeService, currentAccountProvider);
+            roleAssignmentRepository, employeeAccessScopeService, currentAccountProvider,
+            Clock.system(ClockConfig.BUSINESS_ZONE));
     }
 }

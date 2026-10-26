@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service.leave;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -55,6 +56,7 @@ public class LeaveEntitlementService {
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
+    private final Clock clock;
 
     @Transactional(readOnly = true)
     public BalanceView getBalance(Long employeeId, int year) {
@@ -80,14 +82,14 @@ public class LeaveEntitlementService {
                     builder.greaterThanOrEqualTo(root.get("terminationDate"), first))));
         for (Specification<Employee> filter : Arrays.asList(
             EmployeeSpecifications.matchesKeyword(keyword),
-            EmployeeSpecifications.currentlyAssignedTo(organizationUnitId, null, LocalDate.now(ClockConfig.BUSINESS_ZONE))
+            EmployeeSpecifications.currentlyAssignedTo(organizationUnitId, null, LocalDate.now(clock))
         )) {
             if (filter != null) {
                 specification = specification.and(filter);
             }
         }
         List<Employee> employees = employeeRepository.findAll(specification, Sort.by("employeeCode"));
-        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
+        LocalDate today = LocalDate.now(clock);
         Set<Long> visible = employeeAccessScopeService.visibleOnLastDay("report.hr.read", employees,
             last.isBefore(today) ? last : today);
         return employees.stream()

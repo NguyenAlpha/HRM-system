@@ -1,12 +1,12 @@
 package com.htttdn.hrm.service.employee;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -58,6 +58,7 @@ public class ResignationRequestService {
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final ApproverResolver approverResolver;
     private final EmploymentLifecycleService employmentLifecycleService;
+    private final Clock clock;
 
     /** Sends the request to the employee's approver at once; one open request per employee. */
     @PreAuthorize("hasAnyAuthority('request.self.create', 'request.manage')")
@@ -163,7 +164,7 @@ public class ResignationRequestService {
         boolean companyWide = employeeAccessScopeService.resolve(REQUEST_READ).companyWide();
         Specification<Employee> keyword = EmployeeSpecifications.matchesKeyword(search.keyword());
         Specification<Employee> unit = EmployeeSpecifications.currentlyAssignedTo(
-            search.organizationUnitId(), null, LocalDate.now(ClockConfig.BUSINESS_ZONE));
+            search.organizationUnitId(), null, LocalDate.now(clock));
         if (!companyWide || keyword != null || unit != null) {
             // Scope and employee filters resolve to employee ids first; the scope rules are written for Employee roots.
             Specification<Employee> employees = employeeAccessScopeService.accessibleEmployees(REQUEST_READ);
@@ -205,12 +206,12 @@ public class ResignationRequestService {
             employmentLifecycleService.endEmploymentAs(employee, EmploymentStatus.RESIGNED, request.getLastWorkingDate(),
                 request.getReason(), request.getReviewedByAccount());
         }
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         request.setCompletedAt(now);
     }
 
     private void requireLastWorkingDate(LocalDate lastWorkingDate, Employee employee) {
-        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
+        LocalDate today = LocalDate.now(clock);
         if (lastWorkingDate.isBefore(today) || lastWorkingDate.isBefore(employee.getHireDate())) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "The last working day must be today or later", "lastWorkingDate");
@@ -218,7 +219,7 @@ public class ResignationRequestService {
     }
 
     private void review(ResignationRequest request, ResignationRequestStatus status, @Nullable String comment) {
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         request.setStatus(status);
         request.setReviewedByAccount(currentAccountProvider.account());
         request.setReviewComment(comment == null || comment.isBlank() ? null : comment.trim());

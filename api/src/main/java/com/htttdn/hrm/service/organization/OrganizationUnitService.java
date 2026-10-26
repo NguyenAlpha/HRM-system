@@ -135,7 +135,7 @@ public class OrganizationUnitService {
             throw resourceInUse("Organization unit still has child units");
         }
         requireNotInUse(unitId);
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         unit.setIsActive(false);
         unit.setDeletedAt(now);
     }

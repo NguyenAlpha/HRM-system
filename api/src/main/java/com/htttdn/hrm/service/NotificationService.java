@@ -1,12 +1,12 @@
 package com.htttdn.hrm.service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -42,6 +42,7 @@ public class NotificationService {
     private final AccountRoleAssignmentRepository roleAssignmentRepository;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final CurrentAccountProvider currentAccountProvider;
+    private final Clock clock;
 
     /** Runs in the leave submission transaction, so a failed submission never leaves a notification. */
     @Transactional(propagation = Propagation.MANDATORY)
@@ -55,7 +56,7 @@ public class NotificationService {
                 .ifPresent(account -> recipients.put(account.getId(), account));
         }
 
-        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
+        LocalDate today = LocalDate.now(clock);
         for (Account hr : roleAssignmentRepository.findActiveAccountsHoldingRole("HR_MANAGER", today)) {
             if (hr.getStatus() == AccountStatus.ACTIVE
                 && employeeAccessScopeService.canAccountAccessEmployee(
@@ -107,7 +108,7 @@ public class NotificationService {
             .orElseThrow(() -> new ResourceNotFoundException(
                 ErrorCode.RESOURCE_NOT_FOUND, "Notification not found: " + id));
         if (notification.getReadAt() == null) {
-            notification.setReadAt(Instant.now());
+            notification.setReadAt(Instant.now(clock));
         }
         return toView(notification, currentAccountProvider.account());
     }

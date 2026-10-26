@@ -1,5 +1,7 @@
 package com.htttdn.hrm.service.rbac;
 
+import com.htttdn.hrm.config.ClockConfig;
+import java.time.Clock;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
@@ -169,7 +171,8 @@ class RoleServiceTest {
             roleRepository,
             permissionRepository,
             rolePermissionRepository,
-            currentAccountProvider
+            currentAccountProvider,
+            Clock.system(ClockConfig.BUSINESS_ZONE)
         );
     }
 }

@@ -1,5 +1,7 @@
 package com.htttdn.hrm.service.auth;
 
+import com.htttdn.hrm.config.ClockConfig;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -36,7 +38,7 @@ class RefreshTokenServiceTest {
 
     @Test
     void createReturnsRawTokenButStoresOnlyItsHash() {
-        RefreshTokenService service = new RefreshTokenService(refreshTokenRepository, JWT);
+        RefreshTokenService service = new RefreshTokenService(refreshTokenRepository, JWT, Clock.system(ClockConfig.BUSINESS_ZONE));
         Account account = Account.builder().id(7L).build();
 
         String rawToken = service.create(account);
@@ -52,7 +54,7 @@ class RefreshTokenServiceTest {
 
     @Test
     void rotateRevokesOldTokenAndIssuesANewOne() {
-        RefreshTokenService service = new RefreshTokenService(refreshTokenRepository, JWT);
+        RefreshTokenService service = new RefreshTokenService(refreshTokenRepository, JWT, Clock.system(ClockConfig.BUSINESS_ZONE));
         Account account = Account.builder().id(7L).build();
         RefreshToken existing = RefreshToken.builder()
             .account(account)
@@ -70,7 +72,7 @@ class RefreshTokenServiceTest {
 
     @Test
     void reusedTokenRevokesEverySessionForTheAccount() {
-        RefreshTokenService service = new RefreshTokenService(refreshTokenRepository, JWT);
+        RefreshTokenService service = new RefreshTokenService(refreshTokenRepository, JWT, Clock.system(ClockConfig.BUSINESS_ZONE));
         Account account = Account.builder().id(7L).build();
         RefreshToken existing = RefreshToken.builder()
             .account(account)

@@ -127,7 +127,7 @@ public class WorkShiftService {
             throw resourceInUse("Work shift is used by a current or future employee assignment");
         }
 
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         shift.setIsActive(false);
         shift.setDeletedAt(now);
     }

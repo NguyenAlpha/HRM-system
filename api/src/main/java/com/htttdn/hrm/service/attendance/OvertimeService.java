@@ -1,6 +1,7 @@
 package com.htttdn.hrm.service.attendance;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -48,6 +49,7 @@ public class OvertimeService {
     private final ApproverResolver approverResolver;
     private final AttendanceEditGuard attendanceEditGuard;
     private final AttendanceMapper attendanceMapper;
+    private final Clock clock;
 
     /**
      * The approver of the employee (direct manager, else Director, else Company Owner) decides the
@@ -96,7 +98,7 @@ public class OvertimeService {
                 "overtimeMultiplier");
         }
         // The decision is recorded even for zero minutes, so the day leaves the approver's queue.
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         record.setOvertimeMinutes(request.overtimeMinutes());
         record.setOvertimeMultiplier(request.overtimeMultiplier());
         record.setOvertimeTaxExempt(request.overtimeMinutes() > 0 && Boolean.TRUE.equals(request.taxExempt()));

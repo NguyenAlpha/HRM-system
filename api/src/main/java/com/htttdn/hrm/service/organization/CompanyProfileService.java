@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service.organization;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Optional;
@@ -39,6 +40,7 @@ public class CompanyProfileService {
     }
 
     private final CompanyProfileRepository companyProfileRepository;
+    private final Clock clock;
 
     /** Anyone signed in may read it: it heads payslips and printed sheets. */
     @Transactional(readOnly = true)
@@ -82,7 +84,7 @@ public class CompanyProfileService {
         if (contentType == null) {
             throw new BusinessException(ErrorCode.COMPANY_LOGO_INVALID, "Logo must be a PNG, JPEG or WebP image", "file");
         }
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         CompanyProfile profile = requireProfile();
         profile.setLogo(content);
         profile.setLogoContentType(contentType);

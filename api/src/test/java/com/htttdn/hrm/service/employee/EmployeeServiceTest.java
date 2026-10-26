@@ -3,7 +3,6 @@ package com.htttdn.hrm.service.employee;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -104,7 +103,7 @@ class EmployeeServiceTest {
 
     @Test
     void createRejectsMissingOrUnderageBirthDate() {
-        LocalDate cutoff = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")).minusYears(17);
+        LocalDate cutoff = LocalDate.now(TODAY).minusYears(17);
         var assignment = new AssignEmployeeRequest(
             1L, 1L, 7L, null, null, EmploymentType.FULL_TIME,
             LocalDate.of(2026, 10, 5), null
@@ -124,15 +123,15 @@ class EmployeeServiceTest {
 
     @Test
     void birthDateExactlySeventeenYearsAgoIsAllowed() {
-        LocalDate cutoff = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")).minusYears(17);
-        EmployeeBirthDateValidator.validate(cutoff, true);
+        LocalDate cutoff = LocalDate.now(TODAY).minusYears(17);
+        EmployeeBirthDateValidator.validate(cutoff, true, LocalDate.now(TODAY));
     }
 
     @Test
     void updateRejectsUnderageBirthDate() {
         Employee employee = employee(1L);
         when(employeeRepository.getRequired(1L)).thenReturn(employee);
-        LocalDate cutoff = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")).minusYears(17);
+        LocalDate cutoff = LocalDate.now(TODAY).minusYears(17);
         UpdateEmployeeRequest request = new UpdateEmployeeRequest(
             "Employee One", cutoff.plusDays(1), null, null, null, null, null, null, null
         );

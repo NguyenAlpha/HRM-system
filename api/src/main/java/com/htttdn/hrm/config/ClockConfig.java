@@ -9,7 +9,8 @@ import org.springframework.context.annotation.Configuration;
 /**
  * The business clock: "today" is the date in Vietnam whatever time zone the server runs in, so an
  * effective date starts at midnight Vietnam time. Inject it and call {@code LocalDate.now(clock)}
- * instead of {@code LocalDate.now()}. Instants are unaffected and stay in UTC.
+ * instead of {@code LocalDate.now()}, and {@code Instant.now(clock)} instead of {@code Instant.now()},
+ * so tests can fix the time with {@code Clock.fixed}. Instants are unaffected and stay in UTC.
  */
 @Configuration
 public class ClockConfig {

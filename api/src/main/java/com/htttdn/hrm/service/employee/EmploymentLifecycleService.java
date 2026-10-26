@@ -205,7 +205,7 @@ public class EmploymentLifecycleService {
      * workflows, as the role revoke API does.
      */
     private void revokeRolesAtTermination(Long accountId, LocalDate terminationDate, String terminationReason, Account actor) {
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         for (AccountRoleAssignment assignment : accountRoleAssignmentRepository.findByAccountIdAndRevokedAtIsNull(accountId)) {
             RoleGrantPolicy policy = assignment.getRole().getGrantPolicy();
             if (policy == RoleGrantPolicy.AUTO || policy == RoleGrantPolicy.SYSTEM_ONLY) {

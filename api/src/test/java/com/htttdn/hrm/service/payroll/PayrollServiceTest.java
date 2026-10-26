@@ -1,6 +1,8 @@
 package com.htttdn.hrm.service.payroll;
 
+import com.htttdn.hrm.config.ClockConfig;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -424,7 +426,8 @@ class PayrollServiceTest {
             currentAccountProvider,
             employeeAccessScopeService,
             payslipCalculator,
-            new PayrollMapper(payslipRepository, payslipItemRepository)
+            new PayrollMapper(payslipRepository, payslipItemRepository),
+            Clock.system(ClockConfig.BUSINESS_ZONE)
         );
     }
 

@@ -110,7 +110,7 @@ public class EmployeeService {
         CreateEmployeeProfileRequest profile = request.employee();
         AssignEmployeeRequest assignmentRequest = request.initialAssignment();
 
-        EmployeeBirthDateValidator.validate(profile.dateOfBirth(), true);
+        EmployeeBirthDateValidator.validate(profile.dateOfBirth(), true, LocalDate.now(clock));
 
         String workEmail = normalizeEmail(profile.workEmail());
         validateCreateUniqueness(workEmail);
@@ -272,9 +272,9 @@ public class EmployeeService {
         Employee employee = employeeRepository.getRequired(id);
         employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_UPDATE);
 
-        EmployeeBirthDateValidator.validate(request.dateOfBirth(), false);
+        EmployeeBirthDateValidator.validate(request.dateOfBirth(), false, LocalDate.now(clock));
 
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         updateWorkEmail(employee, request.workEmail(), now);
 
         employee.setFullName(request.fullName());
@@ -365,7 +365,7 @@ public class EmployeeService {
         employeeAccessScopeService.requireEmployeeAccess(id, EMPLOYEE_DELETE);
         ensureEmployeeHasNoBusinessHistory(id);
 
-        employee.setDeletedAt(Instant.now());
+        employee.setDeletedAt(Instant.now(clock));
         employee.setDeletedByAccount(currentAccountProvider.account());
         employee.setDeletionReason(request.deletionReason());
     }

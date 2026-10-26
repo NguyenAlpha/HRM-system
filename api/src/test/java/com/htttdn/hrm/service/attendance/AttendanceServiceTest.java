@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
+import com.htttdn.hrm.config.ClockConfig;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -351,7 +353,7 @@ class AttendanceServiceTest {
 
     private OvertimeService overtimeService() {
         return new OvertimeService(attendanceRecordRepository, employeeRepository, currentAccountProvider,
-            attendanceCalendarService, approverResolver, editGuard(), new AttendanceMapper());
+            attendanceCalendarService, approverResolver, editGuard(), new AttendanceMapper(), Clock.system(ClockConfig.BUSINESS_ZONE));
     }
 
     private AttendanceEditGuard editGuard() {

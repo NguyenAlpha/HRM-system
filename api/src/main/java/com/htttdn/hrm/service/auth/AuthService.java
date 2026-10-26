@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service.auth;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Locale;
 
@@ -42,6 +43,7 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final AccountAuthorizationService accountAuthorizationService;
     private final LoginAttemptLimiter loginAttemptLimiter;
+    private final Clock clock;
 
     @Transactional(noRollbackFor = UnauthorizedException.class)
     public AuthResponse login(LoginRequest request) {
@@ -70,7 +72,7 @@ public class AuthService {
 
         account.setFailedLoginCount(0);
         account.setLockedUntil(null);
-        account.setLastLoginAt(Instant.now());
+        account.setLastLoginAt(Instant.now(clock));
         return issueTokenBundle(account);
     }
 

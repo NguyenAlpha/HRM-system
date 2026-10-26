@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service.leave;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -60,6 +61,7 @@ public class LeaveRequestService {
     private final LeaveEntitlementService leaveEntitlementService;
     private final ApproverResolver approverResolver;
     private final NotificationService notificationService;
+    private final Clock clock;
 
     /**
      * The minutes are worked out from the employee's shifts over the period, never taken from the
@@ -103,7 +105,7 @@ public class LeaveRequestService {
         // Other requests may have been submitted or approved since this draft was created.
         leaveEntitlementService.requireSufficientBalance(request);
 
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         request.setSubmittedAt(now);
         if (approverResolver.isTopManagement(request.getEmployee())) {
             applyApproval(request, SELF_RECORDED_COMMENT);
@@ -204,7 +206,7 @@ public class LeaveRequestService {
         boolean companyWide = employeeAccessScopeService.resolve(REQUEST_READ).companyWide();
         Specification<Employee> keyword = EmployeeSpecifications.matchesKeyword(search.keyword());
         Specification<Employee> unit = EmployeeSpecifications.currentlyAssignedTo(
-            search.organizationUnitId(), null, LocalDate.now(ClockConfig.BUSINESS_ZONE));
+            search.organizationUnitId(), null, LocalDate.now(clock));
         if (!companyWide || keyword != null || unit != null) {
             // Scope and employee filters resolve to employee ids first; the scope rules are written for Employee roots.
             Specification<Employee> employees = employeeAccessScopeService.accessibleEmployees(REQUEST_READ);
@@ -280,7 +282,7 @@ public class LeaveRequestService {
         LeaveRequestStatus status,
         String reviewComment
     ) {
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         request.setStatus(status);
         request.setReviewedByAccount(currentAccountProvider.account());
         request.setReviewComment(normalizeNullable(reviewComment));
