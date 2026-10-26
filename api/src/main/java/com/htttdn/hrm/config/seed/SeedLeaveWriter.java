@@ -36,7 +36,7 @@ import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.repository.NotificationRepository;
 import com.htttdn.hrm.service.attendance.AttendanceCalendarService;
 import com.htttdn.hrm.service.attendance.AttendanceCalendarService.ScheduledDay;
-import com.htttdn.hrm.service.attendance.AttendanceService;
+import com.htttdn.hrm.service.attendance.LeaveAttendanceService;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import com.htttdn.hrm.service.leave.LeaveEntitlementService;
 
@@ -50,7 +50,7 @@ import lombok.RequiredArgsConstructor;
  * việc gần nhất), số âm là ngày làm việc sắp tới (-1 là ngày làm việc đầu tiên sau hôm nay). Nhờ vậy
  * ngày luôn rơi vào ngày làm việc, không vào cuối tuần hay ngày lễ.
  *
- * <p>Đơn đã duyệt đi qua {@link AttendanceService#applyApprovedLeave} như khi người duyệt bấm duyệt,
+ * <p>Đơn đã duyệt đi qua {@link LeaveAttendanceService#applyApprovedLeave} như khi người duyệt bấm duyệt,
  * nên trạng thái và số phút của ngày công khớp với luồng thật; đơn phép năm phải còn đủ phép. Ngày
  * vắng không phép là ngày HR đối soát; ngày thiếu chấm công chỉ ghi trong tháng hiện tại, để các
  * tháng trước vẫn tính lương được.
@@ -71,7 +71,7 @@ class SeedLeaveWriter {
 
     private final AttendanceCalendarService attendanceCalendarService;
     private final AttendanceRecordRepository attendanceRecordRepository;
-    private final AttendanceService attendanceService;
+    private final LeaveAttendanceService leaveAttendanceService;
     private final LeaveEntitlementService leaveEntitlementService;
     private final LeaveRequestRepository leaveRequestRepository;
     private final AccountRepository accountRepository;
@@ -206,7 +206,7 @@ class SeedLeaveWriter {
                 record.setStatus(AttendanceStatus.PRESENT);
             }
         }
-        attendanceService.applyApprovedLeave(request);
+        leaveAttendanceService.applyApprovedLeave(request);
         for (AttendanceRecord record : attendanceRecordRepository.findByEmployeeIdAndWorkDateBetween(
             employee.getId(), first.workDate(), span.getLast().workDate())) {
             Instant createdAt = seedTimestamps.createdAt(record);
@@ -271,7 +271,7 @@ class SeedLeaveWriter {
         record.setOvertimeApprovedAt(null);
     }
 
-    /** Start of the shift break on {@code day}, as AttendanceService places it. */
+    /** Start of the shift break on {@code day}, as AttendanceMinutes.breakMinutesWithin places it. */
     private static Instant breakStart(StaffEntry entry, ScheduledDay day) {
         WorkShift shift = day.shift();
         if (shift.getBreakStartTime() == null) {

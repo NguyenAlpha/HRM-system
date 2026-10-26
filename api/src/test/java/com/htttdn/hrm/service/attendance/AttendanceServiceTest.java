@@ -70,7 +70,7 @@ class AttendanceServiceTest {
         when(attendanceRecordRepository.findByEmployeeIdAndWorkDateForUpdate(2L, date))
             .thenReturn(Optional.of(record));
 
-        service().applyApprovedLeave(leave);
+        leaveService().applyApprovedLeave(leave);
 
         assertEquals(AttendanceStatus.PAID_LEAVE, record.getStatus());
         assertEquals(480, record.getPayableMinutes());
@@ -86,7 +86,7 @@ class AttendanceServiceTest {
             .thenReturn(List.of(officeDay(monday, shift), officeDay(monday.plusDays(1), shift), officeDay(monday.plusDays(2), shift)));
 
         // Monday 13:00 to Wednesday 12:00 (UTC+7).
-        int minutes = service().leaveMinutesFor(2L,
+        int minutes = leaveService().leaveMinutesFor(2L,
             Instant.parse("2026-01-12T06:00:00Z"), Instant.parse("2026-01-14T05:00:00Z"));
 
         assertEquals(240 + 480 + 240, minutes);
@@ -186,7 +186,7 @@ class AttendanceServiceTest {
         LeaveRequest leave = leave(record, "2026-01-15T01:00:00Z", "2026-01-15T05:00:00Z");
         stubOfficeDay(record, date);
 
-        service().applyApprovedLeave(leave);
+        leaveService().applyApprovedLeave(leave);
 
         assertEquals(240, record.getLeaveMinutes());
         assertEquals(0, record.getLateMinutes());
@@ -204,7 +204,7 @@ class AttendanceServiceTest {
         LeaveRequest leave = leave(record, "2026-01-15T05:00:00Z", "2026-01-15T10:00:00Z");
         stubOfficeDay(record, date);
 
-        service().applyApprovedLeave(leave);
+        leaveService().applyApprovedLeave(leave);
 
         assertEquals(240, record.getLeaveMinutes());
         assertEquals(0, record.getEarlyLeaveMinutes());
@@ -348,7 +348,13 @@ class AttendanceServiceTest {
 
     private AttendanceService service() {
         return new AttendanceService(attendanceRecordRepository, employeeRepository, currentAccountProvider,
-            employeeAccessScopeService, attendanceCalendarService, editGuard(), new AttendanceMapper());
+            employeeAccessScopeService, attendanceCalendarService, editGuard(), new AttendanceMapper(),
+            new AttendanceDayCalculator(attendanceCalendarService));
+    }
+
+    private LeaveAttendanceService leaveService() {
+        return new LeaveAttendanceService(attendanceRecordRepository, attendanceCalendarService, editGuard(),
+            new AttendanceDayCalculator(attendanceCalendarService));
     }
 
     private OvertimeService overtimeService() {

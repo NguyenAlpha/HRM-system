@@ -22,11 +22,7 @@ import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AttendanceRecord;
 import com.htttdn.hrm.entity.Employee;
-import com.htttdn.hrm.entity.LeaveRequest;
-import com.htttdn.hrm.entity.WorkShift;
 import com.htttdn.hrm.entity.enums.AttendanceStatus;
-import com.htttdn.hrm.entity.enums.LeaveSalaryTreatment;
-import com.htttdn.hrm.entity.enums.LeaveType;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
@@ -38,8 +34,9 @@ import com.htttdn.hrm.util.Strings;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Ghi công: tạo sẵn ngày công của tháng, ghi giờ vào/ra, áp đơn nghỉ đã duyệt và HR chỉnh công. Tăng ca
- * nằm ở {@link OvertimeService}, phần chỉ đọc ở {@link AttendanceQueryService}.
+ * Ghi công: tạo sẵn ngày công của tháng, ghi giờ vào/ra và HR chỉnh công. Áp đơn nghỉ đã duyệt nằm ở
+ * {@link LeaveAttendanceService}, tăng ca ở {@link OvertimeService}, phần chỉ đọc ở
+ * {@link AttendanceQueryService}; cách tính phút từ giờ vào/ra ở {@link AttendanceDayCalculator}.
  *
  * <p>Kiến thức nền: mỗi nhân viên có tối đa một {@link AttendanceRecord} mỗi ngày (unique
  * {@code uq_attendance_records_employee_date}). Lịch làm của ngày (ca, giờ bắt đầu/kết thúc, số phút
@@ -72,6 +69,7 @@ public class AttendanceService {
     private final AttendanceCalendarService attendanceCalendarService;
     private final AttendanceEditGuard attendanceEditGuard;
     private final AttendanceMapper attendanceMapper;
+    private final AttendanceDayCalculator attendanceDayCalculator;
 
     /**
      * Tạo sẵn ngày công trống ({@code MISSING_PUNCH}) cho mọi ngày có lịch làm trong tháng, của mọi
@@ -174,7 +172,7 @@ public class AttendanceService {
             if (existingDates.contains(day.workDate())) {
                 continue;
             }
-            attendanceRecordRepository.save(newRecord(employee, day));
+            attendanceRecordRepository.save(AttendanceDayCalculator.newRecord(employee, day));
             created++;
         }
         return created;
@@ -188,7 +186,7 @@ public class AttendanceService {
      * Approved overtime is cleared because it was approved against the old punches.
      *
      * <p>Thứ tự: kiểm tra phạm vi → kiểm tra giờ hợp lệ → nhân viên còn làm ngày đó → kỳ lương chưa
-     * chốt → ngày không bị đơn nghỉ chiếm → tính phút ({@link #applyPunches}) → lưu.
+     * chốt → ngày không bị đơn nghỉ chiếm → tính phút ({@link AttendanceDayCalculator#applyPunches}) → lưu.
      *
      * @param request nhân viên, ngày công, giờ vào/ra (Instant) và ghi chú
      * @return ngày công sau khi ghi
@@ -240,11 +238,11 @@ public class AttendanceService {
                 .assignedDay(employee.getId(), workDate)
                 .orElseThrow(() -> new BusinessException(ErrorCode.VALIDATION_ERROR,
                     "Employee has no primary assignment on " + workDate, "workDate"));
-            record = newRecord(employee, day);
+            record = AttendanceDayCalculator.newRecord(employee, day);
         }
         record.setCheckInAt(in);
         record.setCheckOutAt(out);
-        applyPunches(record);
+        attendanceDayCalculator.applyPunches(record);
         record.setStatus(AttendanceStatus.PRESENT);
         // Xóa quyết định tăng ca cũ → ngày quay lại hàng chờ của người duyệt nếu vẫn làm dư giờ.
         record.setOvertimeMinutes(0);
@@ -255,202 +253,6 @@ public class AttendanceService {
         record.setNote(Strings.trimToNull(request.note()));
         record.setUpdatedByAccount(currentAccountProvider.account());
         return attendanceMapper.toResponse(attendanceRecordRepository.save(record));
-    }
-
-    /**
-     * The scheduled work minutes a leave from {@code startAt} to {@code endAt} takes: the shift
-     * time it covers on each work day, without breaks, Sundays and company holidays. The day
-     * before {@code startAt} is read too, for a night shift that ends inside the leave.
-     *
-     * <p>{@code LeaveRequestService} dùng con số này làm số phút của đơn nghỉ (0 phút → đơn bị từ
-     * chối vì không chạm giờ làm nào).
-     *
-     * @param employeeId nhân viên xin nghỉ
-     * @param startAt bắt đầu nghỉ
-     * @param endAt kết thúc nghỉ (không tính chính thời điểm này)
-     * @return tổng phút làm việc theo lịch nằm trong khoảng nghỉ
-     */
-    @Transactional(readOnly = true)
-    public int leaveMinutesFor(Long employeeId, Instant startAt, Instant endAt) {
-        LocalDate from = LocalDate.ofInstant(startAt, ClockConfig.BUSINESS_ZONE).minusDays(1);
-        // endAt là mốc mở: nghỉ tới đúng 00:00 thì ngày hôm đó không tính → lùi 1 nano trước khi lấy ngày.
-        LocalDate to = LocalDate.ofInstant(endAt.minusNanos(1), ClockConfig.BUSINESS_ZONE);
-        int minutes = 0;
-        for (AttendanceCalendarService.ScheduledDay day : attendanceCalendarService.scheduleFor(employeeId, from, to)) {
-            minutes += Math.min(day.minutes(), workMinutes(day.startAt(), day.endAt(), day.shift(), startAt, endAt));
-        }
-        return minutes;
-    }
-
-    /**
-     * Ghi một đơn nghỉ vừa được duyệt vào các ngày công nó chạm tới; gọi từ
-     * {@code LeaveRequestService} khi duyệt đơn (và từ seeder), trong cùng transaction.
-     *
-     * <p>Mỗi ngày có lịch: tính số phút nghỉ của ngày (không vượt ca, không vượt số phút đơn còn lại),
-     * gắn đơn vào ngày công rồi cập nhật:
-     * <ul>
-     *   <li>ngày đã chấm giờ (nghỉ một phần ngày) → tính lại phút qua {@link #applyPunches};</li>
-     *   <li>ngày chưa chấm giờ → nghỉ có lương ({@code EMPLOYER_PAID}) cộng phút nghỉ vào
-     *       {@code payableMinutes}; nghỉ trọn ca thì đổi trạng thái theo loại nghỉ
-     *       ({@link #leaveStatus}), nghỉ một phần thì vẫn {@code MISSING_PUNCH} chờ chấm phần còn lại.</li>
-     * </ul>
-     *
-     * @param request đơn nghỉ đã duyệt, có {@code requestedMinutes} tính từ {@link #leaveMinutesFor}
-     * @throws com.htttdn.hrm.exception.ConflictException kỳ lương đã chốt, ngày đã gắn đơn nghỉ khác,
-     *         ngày đang chấm dở (có giờ vào chưa có giờ ra) hoặc giờ đã làm chồng lên giờ nghỉ (→ 409)
-     * @throws BusinessException đơn dài hơn tổng giờ làm theo lịch hiện tại (→ 400), VD lịch đã đổi
-     *         sau khi nộp đơn
-     */
-    public void applyApprovedLeave(LeaveRequest request) {
-        Long employeeId = request.getEmployee().getId();
-        LocalDate from = LocalDate.ofInstant(request.getStartAt(), ClockConfig.BUSINESS_ZONE).minusDays(1);
-        LocalDate to = LocalDate.ofInstant(request.getEndAt().minusNanos(1), ClockConfig.BUSINESS_ZONE);
-        // Đếm ngược số phút của đơn: chia lần lượt cho từng ngày, hết thì các ngày sau không bị trừ.
-        int remainingMinutes = request.getRequestedMinutes();
-        for (AttendanceCalendarService.ScheduledDay day : attendanceCalendarService.scheduleFor(employeeId, from, to)) {
-            Instant overlapStart = request.getStartAt().isAfter(day.startAt()) ? request.getStartAt() : day.startAt();
-            Instant overlapEnd = request.getEndAt().isBefore(day.endAt()) ? request.getEndAt() : day.endAt();
-            int overlapMinutes = workMinutes(day.startAt(), day.endAt(), day.shift(),
-                request.getStartAt(), request.getEndAt());
-            int leaveMinutes = Math.min(remainingMinutes, Math.min(day.minutes(), overlapMinutes));
-            if (leaveMinutes <= 0) {
-                continue;
-            }
-            attendanceEditGuard.requireEditable(day.workDate());
-            AttendanceRecord record = attendanceRecordRepository
-                .findByEmployeeIdAndWorkDateForUpdate(employeeId, day.workDate()).orElse(null);
-            if (record != null && record.getLeaveRequest() != null) {
-                // Ngày đã gắn chính đơn này (áp lại lần nữa) → chỉ trừ phút, không ghi lại.
-                if (record.getLeaveRequest().getId().equals(request.getId())) {
-                    remainingMinutes -= leaveMinutes;
-                    continue;
-                }
-                throw new ConflictException(ErrorCode.CONFLICT,
-                    "Attendance already references another leave request on " + day.workDate());
-            }
-            if (record != null && record.getCheckInAt() != null && record.getCheckOutAt() == null) {
-                throw new ConflictException(ErrorCode.CONFLICT, "Complete attendance before approving leave on " + day.workDate());
-            }
-            if (record != null && record.getCheckInAt() != null && record.getCheckOutAt() != null
-                && record.getCheckInAt().isBefore(overlapEnd) && record.getCheckOutAt().isAfter(overlapStart)) {
-                throw new ConflictException(ErrorCode.CONFLICT,
-                    "Leave overlaps worked time on " + day.workDate());
-            }
-            if (record == null) {
-                record = newRecord(request.getEmployee(), day);
-            }
-            record.setLeaveRequest(request);
-            record.setLeaveMinutes(leaveMinutes);
-            if (record.getCheckInAt() != null) {
-                // The other part of the day was worked: late, early and payable now exclude the leave.
-                applyPunches(record);
-            } else if (request.getSalaryTreatment() == LeaveSalaryTreatment.EMPLOYER_PAID) {
-                record.setPayableMinutes(Math.min(record.getScheduledMinutes(), record.getPayableMinutes() + leaveMinutes));
-            }
-            if (record.getCheckInAt() == null) {
-                record.setStatus(leaveMinutes == record.getScheduledMinutes()
-                    ? leaveStatus(request) : AttendanceStatus.MISSING_PUNCH);
-            }
-            attendanceRecordRepository.save(record);
-            remainingMinutes -= leaveMinutes;
-        }
-        if (remainingMinutes > 0) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
-                "Requested leave exceeds scheduled work time by " + remainingMinutes + " minutes");
-        }
-    }
-
-    /**
-     * Trạng thái của ngày nghỉ trọn ca: công ty trả lương → {@code PAID_LEAVE}; BHXH trả → thai sản
-     * hoặc ốm theo loại nghỉ; còn lại (không lương, hoặc BHXH với loại khác) → {@code UNPAID_LEAVE}.
-     */
-    private AttendanceStatus leaveStatus(LeaveRequest request) {
-        if (request.getSalaryTreatment() == LeaveSalaryTreatment.EMPLOYER_PAID) {
-            return AttendanceStatus.PAID_LEAVE;
-        }
-        if (request.getSalaryTreatment() == LeaveSalaryTreatment.SOCIAL_INSURANCE) {
-            if (request.getLeaveType() == LeaveType.MATERNITY) {
-                return AttendanceStatus.MATERNITY_LEAVE;
-            }
-            if (request.getLeaveType() == LeaveType.SICK) {
-                return AttendanceStatus.SICK_LEAVE;
-            }
-        }
-        return AttendanceStatus.UNPAID_LEAVE;
-    }
-
-    /**
-     * Derives late, worked, payable and early-leave minutes from the punches. The shift break and
-     * an approved leave on the same day are not counted as missing time, so half a day of leave
-     * plus the other half worked adds up to the full scheduled day.
-     */
-    private void applyPunches(AttendanceRecord record) {
-        WorkShift shift = record.getShift();
-        Instant start = record.getScheduledStartAt();
-        Instant end = record.getScheduledEndAt();
-        Instant in = record.getCheckInAt();
-        LeaveRequest leave = record.getLeaveRequest();
-        // Đi muộn = phút làm từ đầu ca tới giờ vào, trừ phần đã xin nghỉ và trừ số phút ân hạn của ca.
-        record.setLateMinutes(Math.max(0,
-            uncoveredWorkMinutes(start, end, shift, leave, start, in) - shift.getGraceLateMinutes()));
-        Instant out = record.getCheckOutAt();
-        if (out == null) {
-            return;
-        }
-        // Được trả = phút làm trong khung ca + phút nghỉ có lương, không vượt ca; làm ngoài khung ca không
-        // tính ở đây mà chờ duyệt tăng ca.
-        int paidLeaveMinutes = leave != null && leave.getSalaryTreatment() == LeaveSalaryTreatment.EMPLOYER_PAID
-            ? record.getLeaveMinutes() : 0;
-        int payableMinutes = Math.min(record.getScheduledMinutes(),
-            workMinutes(start, end, shift, in, out) + paidLeaveMinutes);
-        if (attendanceCalendarService.companyWorkDates(record.getWorkDate(), record.getWorkDate()).isEmpty()) {
-            // Chủ nhật / ngày lễ: không có lương ngày thường, toàn bộ giờ làm chỉ được trả qua tăng ca.
-            payableMinutes = 0;
-        }
-        record.setWorkedMinutes((int) Math.max(0,
-            Duration.between(in, out).toMinutes() - breakMinutesWithin(start, shift, in, out)));
-        record.setPayableMinutes(payableMinutes);
-        record.setEarlyLeaveMinutes(uncoveredWorkMinutes(start, end, shift, leave, out, end));
-    }
-
-    /** Scheduled work minutes in [from, to) covered by neither the shift break nor the leave. */
-    private static int uncoveredWorkMinutes(Instant scheduledStart, Instant scheduledEnd, WorkShift shift,
-        LeaveRequest leave, Instant from, Instant to) {
-        int minutes = workMinutes(scheduledStart, scheduledEnd, shift, from, to);
-        if (leave != null) {
-            Instant leaveFrom = leave.getStartAt().isAfter(from) ? leave.getStartAt() : from;
-            Instant leaveTo = leave.getEndAt().isBefore(to) ? leave.getEndAt() : to;
-            minutes -= workMinutes(scheduledStart, scheduledEnd, shift, leaveFrom, leaveTo);
-        }
-        return Math.max(0, minutes);
-    }
-
-    /** Minutes of [from, to) inside the scheduled window, minus the part that falls in the shift break. */
-    private static int workMinutes(Instant scheduledStart, Instant scheduledEnd, WorkShift shift,
-        Instant from, Instant to) {
-        return Math.max(0, overlapMinutes(from, to, scheduledStart, scheduledEnd)
-            - breakMinutesWithin(scheduledStart, shift, from, to));
-    }
-
-    /**
-     * Số phút của [from, to) rơi vào giờ nghỉ giữa ca. Giờ nghỉ được đặt theo khoảng cách từ đầu ca
-     * ({@code floorMod} 24 giờ) → đúng cả với ca đêm có giờ nghỉ sau nửa đêm.
-     */
-    private static int breakMinutesWithin(Instant scheduledStart, WorkShift shift, Instant from, Instant to) {
-        if (shift.getBreakStartTime() == null) {
-            return 0;
-        }
-        long offset = Math.floorMod(
-            Duration.between(shift.getStartTime(), shift.getBreakStartTime()).toMinutes(), 24L * 60L);
-        Instant breakStart = scheduledStart.plus(Duration.ofMinutes(offset));
-        return overlapMinutes(from, to, breakStart, breakStart.plus(Duration.ofMinutes(shift.getBreakMinutes())));
-    }
-
-    /** Số phút chung của hai khoảng [from, to) và [windowStart, windowEnd); không giao nhau → 0. */
-    private static int overlapMinutes(Instant from, Instant to, Instant windowStart, Instant windowEnd) {
-        Instant start = from.isAfter(windowStart) ? from : windowStart;
-        Instant end = to.isBefore(windowEnd) ? to : windowEnd;
-        return (int) Math.max(0, Duration.between(start, end).toMinutes());
     }
 
     /**
@@ -498,24 +300,5 @@ public class AttendanceService {
         record.setUpdatedByAccount(updatedBy);
 
         return attendanceMapper.toResponse(record);
-    }
-
-    /** Ngày công trống theo lịch làm: chưa chấm giờ, chưa có phút nào, trạng thái thiếu chấm công. */
-    private static AttendanceRecord newRecord(Employee employee, AttendanceCalendarService.ScheduledDay day) {
-        return AttendanceRecord.builder()
-            .employee(employee)
-            .workDate(day.workDate())
-            .shift(day.shift())
-            .scheduledStartAt(day.startAt())
-            .scheduledEndAt(day.endAt())
-            .scheduledMinutes(day.minutes())
-            .workedMinutes(0)
-            .payableMinutes(0)
-            .lateMinutes(0)
-            .earlyLeaveMinutes(0)
-            .overtimeMinutes(0)
-            .overtimeMultiplier(BigDecimal.ONE)
-            .status(AttendanceStatus.MISSING_PUNCH)
-            .build();
     }
 }

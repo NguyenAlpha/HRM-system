@@ -5,7 +5,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.Optional;
 
-import com.htttdn.hrm.service.attendance.AttendanceService;
+import com.htttdn.hrm.service.attendance.LeaveAttendanceService;
 import com.htttdn.hrm.service.employee.ApproverResolver;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.junit.jupiter.api.Test;
@@ -47,7 +47,7 @@ class LeaveRequestServiceTest {
     @Mock private AccountRepository accountRepository;
     @Mock private CurrentAccountProvider currentAccountProvider;
     @Mock private EmployeeAccessScopeService employeeAccessScopeService;
-    @Mock private AttendanceService attendanceService;
+    @Mock private LeaveAttendanceService leaveAttendanceService;
     @Mock private LeaveEntitlementService leaveEntitlementService;
     @Mock private ApproverResolver approverResolver;
     @Mock private NotificationService notificationService;
@@ -66,7 +66,7 @@ class LeaveRequestServiceTest {
 
         Instant startAt = Instant.parse("2026-01-05T01:00:00Z");
         Instant endAt = Instant.parse("2026-01-05T05:00:00Z");
-        when(attendanceService.leaveMinutesFor(1L, startAt, endAt)).thenReturn(240);
+        when(leaveAttendanceService.leaveMinutesFor(1L, startAt, endAt)).thenReturn(240);
         var result = service().createDraft(new LeaveRequestService.CreateLeaveCommand(
             1L,
             LeaveType.ANNUAL,
@@ -145,7 +145,7 @@ class LeaveRequestServiceTest {
 
         service().approve(3L, "Approved");
 
-        verify(attendanceService).applyApprovedLeave(request);
+        verify(leaveAttendanceService).applyApprovedLeave(request);
         verify(notificationService).notifyLeaveDecision(request);
         assertEquals(LeaveRequestStatus.APPROVED, request.getStatus());
     }
@@ -295,7 +295,7 @@ class LeaveRequestServiceTest {
         when(employeeRepository.getRequired(1L)).thenReturn(employee);
         when(currentAccountProvider.account()).thenReturn(actor);
         when(currentAccountProvider.hasAuthority("request.manage")).thenReturn(true);
-        when(attendanceService.leaveMinutesFor(eq(1L), any(), any())).thenReturn(240);
+        when(leaveAttendanceService.leaveMinutesFor(eq(1L), any(), any())).thenReturn(240);
         when(leaveRequestRepository.save(any(LeaveRequest.class))).thenAnswer(invocation -> {
             LeaveRequest saved = invocation.getArgument(0);
             saved.setId(4L);
@@ -325,7 +325,7 @@ class LeaveRequestServiceTest {
         Account actor = Account.builder().id(9L).employee(employee).build();
         when(employeeRepository.getRequired(1L)).thenReturn(employee);
         when(currentAccountProvider.account()).thenReturn(actor);
-        when(attendanceService.leaveMinutesFor(eq(1L), any(), any())).thenReturn(scheduledMinutes);
+        when(leaveAttendanceService.leaveMinutesFor(eq(1L), any(), any())).thenReturn(scheduledMinutes);
     }
 
     private static LeaveRequestService.CreateLeaveCommand annualLeave(String startAt, String endAt) {
@@ -338,7 +338,7 @@ class LeaveRequestServiceTest {
             leaveRequestRepository,
             employeeRepository,
             currentAccountProvider,
-            attendanceService,
+            leaveAttendanceService,
             leaveEntitlementService,
             approverResolver,
             notificationService,

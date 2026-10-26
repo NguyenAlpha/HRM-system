@@ -3,7 +3,7 @@ package com.htttdn.hrm.service.leave;
 import java.time.Clock;
 import java.time.Instant;
 
-import com.htttdn.hrm.service.attendance.AttendanceService;
+import com.htttdn.hrm.service.attendance.LeaveAttendanceService;
 import com.htttdn.hrm.service.NotificationService;
 import com.htttdn.hrm.service.employee.ApproverResolver;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,7 +35,7 @@ import lombok.RequiredArgsConstructor;
  * ({@code APPROVED}) hoặc từ chối ({@code REJECTED}); nhân viên hủy được khi còn nháp hoặc chờ duyệt
  * ({@code CANCELLED}). Phần chỉ đọc nằm ở {@link LeaveRequestQueryService}.
  *
- * <p>Duyệt đơn ghi ngày nghỉ vào chấm công ({@code AttendanceService.applyApprovedLeave}) và trừ vào quỹ phép
+ * <p>Duyệt đơn ghi ngày nghỉ vào chấm công ({@code LeaveAttendanceService.applyApprovedLeave}) và trừ vào quỹ phép
  * năm ({@link LeaveEntitlementService}); người duyệt được chọn lúc gửi ({@code ApproverResolver}) và nhận
  * thông báo ({@code NotificationService}).
  */
@@ -51,7 +51,7 @@ public class LeaveRequestService {
     private final LeaveRequestRepository leaveRequestRepository;
     private final EmployeeRepository employeeRepository;
     private final CurrentAccountProvider currentAccountProvider;
-    private final AttendanceService attendanceService;
+    private final LeaveAttendanceService leaveAttendanceService;
     private final LeaveEntitlementService leaveEntitlementService;
     private final ApproverResolver approverResolver;
     private final NotificationService notificationService;
@@ -76,7 +76,7 @@ public class LeaveRequestService {
         requireOwnEmployee(command.employeeId());
         Employee employee = employeeRepository.getRequired(command.employeeId());
         LeaveSalaryTreatment salaryTreatment = resolveSalaryTreatment(command);
-        int requestedMinutes = attendanceService.leaveMinutesFor(employee.getId(), command.startAt(), command.endAt());
+        int requestedMinutes = leaveAttendanceService.leaveMinutesFor(employee.getId(), command.startAt(), command.endAt());
         if (requestedMinutes == 0) {
             throw new BusinessException(ErrorCode.LEAVE_OUTSIDE_WORK_SCHEDULE,
                 "The leave period contains no scheduled work time", "endAt");
@@ -171,7 +171,7 @@ public class LeaveRequestService {
      * Chốt đơn là đã duyệt: dùng cho cả người duyệt bấm duyệt lẫn đơn tự ghi nhận của lãnh đạo.
      *
      * <p>Thứ tự: không trùng đơn đã duyệt khác → còn đủ quỹ phép → ghi vào chấm công
-     * ({@code AttendanceService.applyApprovedLeave}) → ghi người duyệt, thời điểm. Lỗi ở bước nào thì cả
+     * ({@code LeaveAttendanceService.applyApprovedLeave}) → ghi người duyệt, thời điểm. Lỗi ở bước nào thì cả
      * transaction rollback, đơn giữ trạng thái cũ.
      *
      * @throws ConflictException trùng đơn đã duyệt (→ 409 {@code CONFLICT}), quỹ phép không đủ (→ 409
@@ -192,7 +192,7 @@ public class LeaveRequestService {
         }
 
         leaveEntitlementService.requireSufficientBalance(request);
-        attendanceService.applyApprovedLeave(request);
+        leaveAttendanceService.applyApprovedLeave(request);
         review(request, LeaveRequestStatus.APPROVED, reviewComment);
     }
 
