@@ -3,7 +3,6 @@ package com.htttdn.hrm.service.employee;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,12 +69,12 @@ class EmployeeAssignmentServiceTest {
             .id(1L).hireDate(LocalDate.of(2024, 1, 1)).employmentStatus(EmploymentStatus.ACTIVE).build();
         when(employeeRepository.getRequired(1L)).thenReturn(employee);
         when(employeeRepository.getRequiredForUpdate(1L)).thenReturn(employee);
-        when(organizationUnitRepository.findById(2L))
-            .thenReturn(Optional.of(OrganizationUnit.builder().id(2L).isActive(true).build()));
-        when(workLocationRepository.findById(4L))
-            .thenReturn(Optional.of(WorkLocation.builder().id(4L).isActive(true).build()));
-        when(jobPositionRepository.findById(3L))
-            .thenReturn(Optional.of(JobPosition.builder().id(3L).isActive(true).build()));
+        when(organizationUnitRepository.getRequiredActive(2L))
+            .thenReturn(OrganizationUnit.builder().id(2L).isActive(true).build());
+        when(workLocationRepository.getRequiredActive(4L))
+            .thenReturn(WorkLocation.builder().id(4L).isActive(true).build());
+        when(jobPositionRepository.getRequiredActive(3L))
+            .thenReturn(JobPosition.builder().id(3L).isActive(true).build());
     }
 
     @Test

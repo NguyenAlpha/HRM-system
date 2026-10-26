@@ -17,7 +17,6 @@ import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.jobposition.JobPositionResponse;
 import com.htttdn.hrm.entity.JobPosition;
 import com.htttdn.hrm.exception.ConflictException;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.JobPositionRepository;
 import com.htttdn.hrm.util.Strings;
@@ -47,7 +46,7 @@ public class JobPositionService {
     @PreAuthorize("hasAuthority('organization.read')")
     @Transactional(readOnly = true)
     public JobPositionResponse getById(Long positionId) {
-        return toResponse(findPosition(positionId));
+        return toResponse(jobPositionRepository.getRequired(positionId));
     }
 
     @PreAuthorize("hasAuthority('organization.manage')")
@@ -72,7 +71,7 @@ public class JobPositionService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public JobPositionResponse update(Long positionId, UpdateJobPositionRequest request) {
-        JobPosition position = findPositionForUpdate(positionId);
+        JobPosition position = jobPositionRepository.getRequiredForUpdate(positionId);
         position.setTitle(request.title().trim());
         position.setDescription(Strings.trimToNull(request.description()));
         position.setIsManagerial(request.isManagerial());
@@ -82,7 +81,7 @@ public class JobPositionService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public void softDelete(Long positionId) {
-        JobPosition position = findPositionForUpdate(positionId);
+        JobPosition position = jobPositionRepository.getRequiredForUpdate(positionId);
         if (employeeAssignmentRepository.existsCurrentOrFutureByPositionId(
             positionId,
             LocalDate.now(clock)
@@ -108,23 +107,6 @@ public class JobPositionService {
             position.getIsActive(),
             position.getCreatedAt(),
             position.getUpdatedAt()
-        );
-    }
-
-    private JobPosition findPosition(Long positionId) {
-        return jobPositionRepository.findByIdAndDeletedAtIsNull(positionId)
-            .orElseThrow(() -> positionNotFound(positionId));
-    }
-
-    private JobPosition findPositionForUpdate(Long positionId) {
-        return jobPositionRepository.findByIdForUpdate(positionId)
-            .orElseThrow(() -> positionNotFound(positionId));
-    }
-
-    private ResourceNotFoundException positionNotFound(Long positionId) {
-        return new ResourceNotFoundException(
-            ErrorCode.JOB_POSITION_NOT_FOUND,
-            "Job position not found: " + positionId
         );
     }
 

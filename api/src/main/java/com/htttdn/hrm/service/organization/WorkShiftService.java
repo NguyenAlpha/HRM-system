@@ -20,7 +20,6 @@ import com.htttdn.hrm.dto.response.workshift.WorkShiftResponse;
 import com.htttdn.hrm.entity.WorkShift;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.WorkShiftRepository;
@@ -53,7 +52,7 @@ public class WorkShiftService {
     @PreAuthorize("hasAuthority('organization.read')")
     @Transactional(readOnly = true)
     public WorkShiftResponse getById(Long shiftId) {
-        return toResponse(findShift(shiftId));
+        return toResponse(workShiftRepository.getRequired(shiftId));
     }
 
     @PreAuthorize("hasAuthority('organization.manage')")
@@ -92,7 +91,7 @@ public class WorkShiftService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public WorkShiftResponse update(Long shiftId, UpdateWorkShiftRequest request) {
-        WorkShift shift = findShiftForUpdate(shiftId);
+        WorkShift shift = workShiftRepository.getRequiredForUpdate(shiftId);
         validateSchedule(
             request.startTime(),
             request.endTime(),
@@ -122,7 +121,7 @@ public class WorkShiftService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public void softDelete(Long shiftId) {
-        WorkShift shift = findShiftForUpdate(shiftId);
+        WorkShift shift = workShiftRepository.getRequiredForUpdate(shiftId);
         if (employeeAssignmentRepository.existsCurrentOrFutureByShiftId(shiftId, LocalDate.now(clock))) {
             throw resourceInUse("Work shift is used by a current or future employee assignment");
         }
@@ -203,23 +202,6 @@ public class WorkShiftService {
             shift.getIsActive(),
             shift.getCreatedAt(),
             shift.getUpdatedAt()
-        );
-    }
-
-    private WorkShift findShift(Long shiftId) {
-        return workShiftRepository.findByIdAndDeletedAtIsNull(shiftId)
-            .orElseThrow(() -> shiftNotFound(shiftId));
-    }
-
-    private WorkShift findShiftForUpdate(Long shiftId) {
-        return workShiftRepository.findByIdForUpdate(shiftId)
-            .orElseThrow(() -> shiftNotFound(shiftId));
-    }
-
-    private ResourceNotFoundException shiftNotFound(Long shiftId) {
-        return new ResourceNotFoundException(
-            ErrorCode.WORK_SHIFT_NOT_FOUND,
-            "Work shift not found: " + shiftId
         );
     }
 

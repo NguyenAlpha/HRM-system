@@ -26,7 +26,6 @@ import com.htttdn.hrm.entity.enums.LocationType;
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.RoleAssignmentRequestRepository;
@@ -88,7 +87,7 @@ public class WorkLocationService {
     @PreAuthorize("hasAuthority('organization.read')")
     @Transactional(readOnly = true)
     public WorkLocationResponse getById(Long locationId) {
-        return toResponse(findLocation(locationId));
+        return toResponse(workLocationRepository.getRequired(locationId));
     }
 
     @PreAuthorize("hasAuthority('organization.manage')")
@@ -118,7 +117,7 @@ public class WorkLocationService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public WorkLocationResponse update(Long locationId, UpdateWorkLocationRequest request) {
-        WorkLocation location = findLocationForUpdate(locationId);
+        WorkLocation location = workLocationRepository.getRequiredForUpdate(locationId);
         WorkLocation parent = resolveActiveParent(request.parentLocationId());
         validateNoCycle(location, parent);
         validateHierarchy(location.getLocationType(), parent);
@@ -136,7 +135,7 @@ public class WorkLocationService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public void softDelete(Long locationId) {
-        WorkLocation location = findLocationForUpdate(locationId);
+        WorkLocation location = workLocationRepository.getRequiredForUpdate(locationId);
         if (workLocationRepository.existsByParentLocationIdAndDeletedAtIsNull(locationId)) {
             throw resourceInUse("Work location still has child locations");
         }
@@ -175,7 +174,7 @@ public class WorkLocationService {
         if (parentLocationId == null) {
             return null;
         }
-        WorkLocation parent = findLocation(parentLocationId);
+        WorkLocation parent = workLocationRepository.getRequired(parentLocationId);
         if (!Boolean.TRUE.equals(parent.getIsActive())) {
             throw hierarchyInvalid("Parent work location must be active", "parentLocationId");
         }
@@ -247,23 +246,6 @@ public class WorkLocationService {
             location.getIsActive(),
             location.getCreatedAt(),
             location.getUpdatedAt()
-        );
-    }
-
-    private WorkLocation findLocation(Long locationId) {
-        return workLocationRepository.findByIdAndDeletedAtIsNull(locationId)
-            .orElseThrow(() -> locationNotFound(locationId));
-    }
-
-    private WorkLocation findLocationForUpdate(Long locationId) {
-        return workLocationRepository.findByIdForUpdate(locationId)
-            .orElseThrow(() -> locationNotFound(locationId));
-    }
-
-    private ResourceNotFoundException locationNotFound(Long locationId) {
-        return new ResourceNotFoundException(
-            ErrorCode.LOCATION_NOT_FOUND,
-            "Work location not found: " + locationId
         );
     }
 

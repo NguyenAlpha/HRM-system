@@ -26,7 +26,6 @@ import com.htttdn.hrm.entity.enums.OrganizationUnitType;
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.OrganizationUnitRepository;
@@ -86,7 +85,7 @@ public class OrganizationUnitService {
     @PreAuthorize("hasAuthority('organization.read')")
     @Transactional(readOnly = true)
     public OrganizationUnitResponse getById(Long unitId) {
-        return toResponse(findUnit(unitId));
+        return toResponse(organizationUnitRepository.getRequired(unitId));
     }
 
     @PreAuthorize("hasAuthority('organization.manage')")
@@ -114,7 +113,7 @@ public class OrganizationUnitService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public OrganizationUnitResponse update(Long unitId, UpdateOrganizationUnitRequest request) {
-        OrganizationUnit unit = findUnitForUpdate(unitId);
+        OrganizationUnit unit = organizationUnitRepository.getRequiredForUpdate(unitId);
         OrganizationUnit parent = resolveActiveParent(request.parentUnitId());
         validateNoCycle(unit, parent);
         validateHierarchy(unit.getUnitType(), parent);
@@ -130,7 +129,7 @@ public class OrganizationUnitService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public void softDelete(Long unitId) {
-        OrganizationUnit unit = findUnitForUpdate(unitId);
+        OrganizationUnit unit = organizationUnitRepository.getRequiredForUpdate(unitId);
         if (organizationUnitRepository.existsByParentUnitIdAndDeletedAtIsNull(unitId)) {
             throw resourceInUse("Organization unit still has child units");
         }
@@ -169,7 +168,7 @@ public class OrganizationUnitService {
         if (parentUnitId == null) {
             return null;
         }
-        OrganizationUnit parent = findUnit(parentUnitId);
+        OrganizationUnit parent = organizationUnitRepository.getRequired(parentUnitId);
         if (!Boolean.TRUE.equals(parent.getIsActive())) {
             throw hierarchyInvalid("Parent organization unit must be active", "parentUnitId");
         }
@@ -234,23 +233,6 @@ public class OrganizationUnitService {
             unit.getIsActive(),
             unit.getCreatedAt(),
             unit.getUpdatedAt()
-        );
-    }
-
-    private OrganizationUnit findUnit(Long unitId) {
-        return organizationUnitRepository.findByIdAndDeletedAtIsNull(unitId)
-            .orElseThrow(() -> unitNotFound(unitId));
-    }
-
-    private OrganizationUnit findUnitForUpdate(Long unitId) {
-        return organizationUnitRepository.findByIdForUpdate(unitId)
-            .orElseThrow(() -> unitNotFound(unitId));
-    }
-
-    private ResourceNotFoundException unitNotFound(Long unitId) {
-        return new ResourceNotFoundException(
-            ErrorCode.ORGANIZATION_UNIT_NOT_FOUND,
-            "Organization unit not found: " + unitId
         );
     }
 

@@ -130,24 +130,9 @@ public class EmployeeAssignmentService {
             request.organizationUnitId(), request.workLocationId(), permissionCode
         );
 
-        OrganizationUnit organizationUnit = organizationUnitRepository.findById(request.organizationUnitId())
-            .filter(unit -> unit.getDeletedAt() == null && Boolean.TRUE.equals(unit.getIsActive()))
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.ORGANIZATION_UNIT_NOT_FOUND,
-                "Active organization unit not found: " + request.organizationUnitId()
-            ));
-        WorkLocation workLocation = workLocationRepository.findById(request.workLocationId())
-            .filter(location -> location.getDeletedAt() == null && Boolean.TRUE.equals(location.getIsActive()))
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.LOCATION_NOT_FOUND,
-                "Active work location not found: " + request.workLocationId()
-            ));
-        JobPosition position = jobPositionRepository.findById(request.positionId())
-            .filter(value -> value.getDeletedAt() == null && Boolean.TRUE.equals(value.getIsActive()))
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.JOB_POSITION_NOT_FOUND,
-                "Active job position not found: " + request.positionId()
-            ));
+        OrganizationUnit organizationUnit = organizationUnitRepository.getRequiredActive(request.organizationUnitId());
+        WorkLocation workLocation = workLocationRepository.getRequiredActive(request.workLocationId());
+        JobPosition position = jobPositionRepository.getRequiredActive(request.positionId());
         return new AssignmentResources(
             organizationUnit,
             workLocation,
@@ -182,12 +167,7 @@ public class EmployeeAssignmentService {
         if (shiftId == null) {
             return null;
         }
-        return workShiftRepository.findById(shiftId)
-            .filter(shift -> shift.getDeletedAt() == null && Boolean.TRUE.equals(shift.getIsActive()))
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.WORK_SHIFT_NOT_FOUND,
-                "Active work shift not found: " + shiftId
-            ));
+        return workShiftRepository.getRequiredActive(shiftId);
     }
 
     private Employee findManager(Long managerEmployeeId, String permissionCode) {

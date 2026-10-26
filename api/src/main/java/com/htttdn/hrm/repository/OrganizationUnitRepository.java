@@ -11,7 +11,9 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.OrganizationUnit;
+import com.htttdn.hrm.exception.ResourceNotFoundException;
 
 import jakarta.persistence.LockModeType;
 
@@ -35,4 +37,27 @@ public interface OrganizationUnitRepository extends JpaRepository<OrganizationUn
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT unit FROM OrganizationUnit unit WHERE unit.id = :id AND unit.deletedAt IS NULL")
     Optional<OrganizationUnit> findByIdForUpdate(@Param("id") Long id);
+
+    /** Đơn vị chưa xóa theo id, không có thì 404 {@code ORGANIZATION_UNIT_NOT_FOUND}. Xem {@link AccountRepository#getRequired}. */
+    default OrganizationUnit getRequired(Long id) {
+        return findByIdAndDeletedAtIsNull(id).orElseThrow(() -> notFound(id));
+    }
+
+    /** Như {@link #getRequired}, kèm khóa ghi ({@link #findByIdForUpdate}). */
+    default OrganizationUnit getRequiredForUpdate(Long id) {
+        return findByIdForUpdate(id).orElseThrow(() -> notFound(id));
+    }
+
+    /**
+     * Như {@link #getRequired}, nhưng đang ngưng hoạt động ({@code isActive = false}) cũng → 404: dùng khi gán
+     * nhân viên, role hay phụ cấp mới vào.
+     */
+    default OrganizationUnit getRequiredActive(Long id) {
+        return findByIdAndDeletedAtIsNull(id).filter(unit -> Boolean.TRUE.equals(unit.getIsActive()))
+            .orElseThrow(() -> notFound(id));
+    }
+
+    private static ResourceNotFoundException notFound(Long id) {
+        return new ResourceNotFoundException(ErrorCode.ORGANIZATION_UNIT_NOT_FOUND, "Organization unit not found: " + id);
+    }
 }

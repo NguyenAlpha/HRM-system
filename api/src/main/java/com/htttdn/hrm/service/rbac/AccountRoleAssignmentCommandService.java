@@ -291,13 +291,7 @@ public class AccountRoleAssignmentCommandService {
                         "organizationUnitId"
                     );
                 }
-                OrganizationUnit unit = organizationUnitRepository
-                    .findByIdAndDeletedAtIsNull(request.organizationUnitId())
-                    .filter(candidate -> Boolean.TRUE.equals(candidate.getIsActive()))
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                        ErrorCode.ORGANIZATION_UNIT_NOT_FOUND,
-                        "Active organization unit not found: " + request.organizationUnitId()
-                    ));
+                OrganizationUnit unit = organizationUnitRepository.getRequiredActive(request.organizationUnitId());
                 yield new ScopeTarget(unit, null);
             }
             case LOCATION -> {
@@ -307,13 +301,7 @@ public class AccountRoleAssignmentCommandService {
                         "workLocationId"
                     );
                 }
-                WorkLocation location = workLocationRepository
-                    .findByIdAndDeletedAtIsNull(request.workLocationId())
-                    .filter(candidate -> Boolean.TRUE.equals(candidate.getIsActive()))
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                        ErrorCode.LOCATION_NOT_FOUND,
-                        "Active work location not found: " + request.workLocationId()
-                    ));
+                WorkLocation location = workLocationRepository.getRequiredActive(request.workLocationId());
                 yield new ScopeTarget(null, location);
             }
         };

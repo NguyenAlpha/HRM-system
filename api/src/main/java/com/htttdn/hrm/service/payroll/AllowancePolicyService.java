@@ -49,12 +49,7 @@ public class AllowancePolicyService {
     ) {
         validateAmount(command.monthlyAmount(), "monthlyAmount");
         requireDate(command.effectiveFrom());
-        JobPosition position = jobPositionRepository.findByIdForUpdate(jobPositionId)
-            .filter(value -> Boolean.TRUE.equals(value.getIsActive()))
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ErrorCode.JOB_POSITION_NOT_FOUND,
-                "Active job position not found: " + jobPositionId
-            ));
+        JobPosition position = jobPositionRepository.getRequiredActiveForUpdate(jobPositionId);
         payrollPeriodInvalidator.invalidateFrom(command.effectiveFrom());
 
         List<PositionAllowanceRule> openRules = positionRuleRepository

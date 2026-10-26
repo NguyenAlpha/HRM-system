@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,7 +58,7 @@ class AllowancePolicyServiceTest {
         PayrollPeriod period = period(PayrollPeriodStatus.CALCULATED);
         period.setCalculatedByAccount(approver);
         Payslip payslip = Payslip.builder().id(11L).build();
-        when(jobPositionRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(position));
+        when(jobPositionRepository.getRequiredActiveForUpdate(3L)).thenReturn(position);
         when(payrollPeriodRepository.findAffectedPeriodsForUpdate(eq(SEPTEMBER), any()))
             .thenReturn(List.of(period));
         when(payslipRepository.findByPayrollPeriodId(7L)).thenReturn(List.of(payslip));
@@ -80,7 +79,7 @@ class AllowancePolicyServiceTest {
     @Test
     void setPositionAllowanceRejectsChangeAffectingApprovedPeriod() {
         JobPosition position = JobPosition.builder().id(3L).isActive(true).build();
-        when(jobPositionRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(position));
+        when(jobPositionRepository.getRequiredActiveForUpdate(3L)).thenReturn(position);
         when(payrollPeriodRepository.findAffectedPeriodsForUpdate(eq(SEPTEMBER), any()))
             .thenReturn(List.of(period(PayrollPeriodStatus.APPROVED)));
 
