@@ -338,11 +338,11 @@ class LeaveRequestServiceTest {
             leaveRequestRepository,
             employeeRepository,
             currentAccountProvider,
-            employeeAccessScopeService,
             attendanceService,
             leaveEntitlementService,
             approverResolver,
             notificationService,
+            new LeaveRequestMapper(),
             Clock.system(ClockConfig.BUSINESS_ZONE)
         );
     }

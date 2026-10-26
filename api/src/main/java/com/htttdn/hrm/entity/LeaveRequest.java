@@ -85,4 +85,9 @@ public class LeaveRequest extends AuditedEntity {
 
     @Column(name = "reviewed_at")
     private Instant reviewedAt;
+
+    /** Whether {@code account} belongs to the approver fixed when the request was submitted; false before that. */
+    public boolean isApprover(Account account) {
+        return approverEmployee != null && account.belongsTo(approverEmployee.getId());
+    }
 }

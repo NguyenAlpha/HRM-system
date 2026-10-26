@@ -2,19 +2,10 @@ package com.htttdn.hrm.service.leave;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
 
-import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.service.attendance.AttendanceService;
-import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import com.htttdn.hrm.service.NotificationService;
 import com.htttdn.hrm.service.employee.ApproverResolver;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,8 +21,6 @@ import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
-import com.htttdn.hrm.repository.specification.EmployeeSpecifications;
-import com.htttdn.hrm.repository.specification.SearchPatterns;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 import com.htttdn.hrm.util.Strings;
 
@@ -41,30 +30,45 @@ import jakarta.validation.constraints.NotNull;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Vòng đời đơn nghỉ phép: nhân viên tạo nháp → gửi duyệt ({@code PENDING}) → người duyệt duyệt
+ * ({@code APPROVED}) hoặc từ chối ({@code REJECTED}); nhân viên hủy được khi còn nháp hoặc chờ duyệt
+ * ({@code CANCELLED}). Phần chỉ đọc nằm ở {@link LeaveRequestQueryService}.
+ *
+ * <p>Duyệt đơn ghi ngày nghỉ vào chấm công ({@code AttendanceService.applyApprovedLeave}) và trừ vào quỹ phép
+ * năm ({@link LeaveEntitlementService}); người duyệt được chọn lúc gửi ({@code ApproverResolver}) và nhận
+ * thông báo ({@code NotificationService}).
+ */
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class LeaveRequestService {
 
-    private static final String REQUEST_READ = "request.read";
     private static final String REQUEST_MANAGE = "request.manage";
-    private static final Set<String> SORTABLE_PROPERTIES = Set.of("startAt", "createdAt", "submittedAt", "status");
     private static final String SELF_RECORDED_COMMENT =
         "Tự ghi nhận: đơn nghỉ của Giám đốc hoặc Chủ sở hữu không cần duyệt";
 
     private final LeaveRequestRepository leaveRequestRepository;
     private final EmployeeRepository employeeRepository;
     private final CurrentAccountProvider currentAccountProvider;
-    private final EmployeeAccessScopeService employeeAccessScopeService;
     private final AttendanceService attendanceService;
     private final LeaveEntitlementService leaveEntitlementService;
     private final ApproverResolver approverResolver;
     private final NotificationService notificationService;
+    private final LeaveRequestMapper leaveRequestMapper;
     private final Clock clock;
 
     /**
-     * The minutes are worked out from the employee's shifts over the period, never taken from the
+     * Nhân viên tạo đơn nghỉ nháp cho chính mình.
+     *
+     * <p>The minutes are worked out from the employee's shifts over the period, never taken from the
      * client, so the period and the time drawn from the annual balance cannot disagree.
+     *
+     * @throws BusinessException kết thúc không sau bắt đầu, chọn cách trả lương khác mặc định mà thiếu
+     *         {@code request.manage} (→ 400 {@code VALIDATION_ERROR}), hoặc khoảng nghỉ không có giờ làm
+     *         theo lịch (→ 400 {@code LEAVE_OUTSIDE_WORK_SCHEDULE})
+     * @throws com.htttdn.hrm.exception.ForbiddenException tạo đơn cho người khác (→ 403)
+     * @throws ConflictException nghỉ phép năm vượt quỹ còn lại (→ 409 {@code INSUFFICIENT_LEAVE_BALANCE})
      */
     @PreAuthorize("hasAuthority('request.self.create')")
     public LeaveRequestView createDraft(CreateLeaveCommand command) {
@@ -89,12 +93,17 @@ public class LeaveRequestService {
             .status(LeaveRequestStatus.DRAFT)
             .build();
         leaveEntitlementService.requireSufficientBalance(request);
-        return toView(leaveRequestRepository.save(request));
+        return leaveRequestMapper.toView(leaveRequestRepository.save(request));
     }
 
     /**
      * Sends a draft to its approver: the direct manager, else the Director, else the Company Owner.
      * Leave of the Director or Company Owner needs no approval and is recorded as approved at once.
+     *
+     * @throws com.htttdn.hrm.exception.ForbiddenException gửi đơn của người khác (→ 403)
+     * @throws ConflictException đơn không còn nháp (→ 409 {@code REQUEST_ALREADY_PROCESSED}), quỹ phép không
+     *         đủ (→ 409 {@code INSUFFICIENT_LEAVE_BALANCE}), hoặc không ai duyệt được (→ 409
+     *         {@code APPROVER_NOT_FOUND})
      */
     @PreAuthorize("hasAuthority('request.self.create')")
     public LeaveRequestView submit(Long requestId) {
@@ -108,7 +117,7 @@ public class LeaveRequestService {
         request.setSubmittedAt(now);
         if (approverResolver.isTopManagement(request.getEmployee())) {
             applyApproval(request, SELF_RECORDED_COMMENT);
-            return toView(leaveRequestRepository.saveAndFlush(request));
+            return leaveRequestMapper.toView(leaveRequestRepository.saveAndFlush(request));
         }
         Employee approver = approverResolver.approverFor(request.getEmployee())
             .orElseThrow(() -> new ConflictException(
@@ -118,9 +127,15 @@ public class LeaveRequestService {
         request.setApproverEmployee(approver);
         request.setStatus(LeaveRequestStatus.PENDING);
         notificationService.notifyLeaveSubmitted(request);
-        return toView(leaveRequestRepository.saveAndFlush(request));
+        return leaveRequestMapper.toView(leaveRequestRepository.saveAndFlush(request));
     }
 
+    /**
+     * Nhân viên rút đơn của mình khi còn nháp hoặc đang chờ duyệt.
+     *
+     * @throws com.htttdn.hrm.exception.ForbiddenException rút đơn của người khác (→ 403)
+     * @throws ConflictException đơn đã duyệt/từ chối/hủy (→ 409 {@code REQUEST_ALREADY_PROCESSED})
+     */
     @PreAuthorize("hasAuthority('request.self.cancel')")
     public LeaveRequestView cancel(Long requestId) {
         LeaveRequest request = leaveRequestRepository.getRequiredForUpdate(requestId);
@@ -130,10 +145,18 @@ public class LeaveRequestService {
             throw alreadyProcessed("Only DRAFT or PENDING leave requests can be cancelled");
         }
         request.setStatus(LeaveRequestStatus.CANCELLED);
-        return toView(leaveRequestRepository.saveAndFlush(request));
+        return leaveRequestMapper.toView(leaveRequestRepository.saveAndFlush(request));
     }
 
-    /** Only the approver fixed at submission decides; nobody is ever the approver of their own leave. */
+    /**
+     * Only the approver fixed at submission decides; nobody is ever the approver of their own leave.
+     *
+     * <p>Duyệt thì ghi ngày nghỉ vào chấm công ({@link #applyApproval}) rồi báo cho nhân viên.
+     *
+     * @throws com.htttdn.hrm.exception.ForbiddenException không phải người duyệt của đơn (→ 403)
+     * @throws ConflictException đơn không còn chờ duyệt (→ 409 {@code REQUEST_ALREADY_PROCESSED}), hoặc lỗi
+     *         khi áp vào chấm công/quỹ phép (xem {@link #applyApproval})
+     */
     @PreAuthorize("isAuthenticated()")
     public LeaveRequestView approve(Long requestId, String reviewComment) {
         LeaveRequest request = leaveRequestRepository.getRequiredForUpdate(requestId);
@@ -141,9 +164,20 @@ public class LeaveRequestService {
         requireStatus(request, LeaveRequestStatus.PENDING);
         applyApproval(request, reviewComment);
         notificationService.notifyLeaveDecision(request);
-        return toView(leaveRequestRepository.saveAndFlush(request));
+        return leaveRequestMapper.toView(leaveRequestRepository.saveAndFlush(request));
     }
 
+    /**
+     * Chốt đơn là đã duyệt: dùng cho cả người duyệt bấm duyệt lẫn đơn tự ghi nhận của lãnh đạo.
+     *
+     * <p>Thứ tự: không trùng đơn đã duyệt khác → còn đủ quỹ phép → ghi vào chấm công
+     * ({@code AttendanceService.applyApprovedLeave}) → ghi người duyệt, thời điểm. Lỗi ở bước nào thì cả
+     * transaction rollback, đơn giữ trạng thái cũ.
+     *
+     * @throws ConflictException trùng đơn đã duyệt (→ 409 {@code CONFLICT}), quỹ phép không đủ (→ 409
+     *         {@code INSUFFICIENT_LEAVE_BALANCE}), hoặc chấm công không nhận được ngày nghỉ, VD kỳ lương đã
+     *         chốt (→ 409)
+     */
     private void applyApproval(LeaveRequest request, String reviewComment) {
         if (leaveRequestRepository.existsApprovedOverlap(
             request.getEmployee().getId(),
@@ -162,6 +196,12 @@ public class LeaveRequestService {
         review(request, LeaveRequestStatus.APPROVED, reviewComment);
     }
 
+    /**
+     * Người duyệt từ chối đơn đang chờ; chấm công và quỹ phép không đổi.
+     *
+     * @throws com.htttdn.hrm.exception.ForbiddenException không phải người duyệt của đơn (→ 403)
+     * @throws ConflictException đơn không còn chờ duyệt (→ 409 {@code REQUEST_ALREADY_PROCESSED})
+     */
     @PreAuthorize("isAuthenticated()")
     public LeaveRequestView reject(Long requestId, String reviewComment) {
         LeaveRequest request = leaveRequestRepository.getRequiredForUpdate(requestId);
@@ -169,84 +209,7 @@ public class LeaveRequestService {
         requireStatus(request, LeaveRequestStatus.PENDING);
         review(request, LeaveRequestStatus.REJECTED, reviewComment);
         notificationService.notifyLeaveDecision(request);
-        return toView(leaveRequestRepository.saveAndFlush(request));
-    }
-
-    @PreAuthorize("hasAnyAuthority('request.self.read', 'request.read')")
-    @Transactional(readOnly = true)
-    public LeaveRequestView getById(Long requestId) {
-        LeaveRequest request = leaveRequestRepository.getRequired(requestId);
-        if (!isApprover(request)) {
-            requireSelfOrScopedAccess(request.getEmployee().getId(), REQUEST_READ);
-        }
-        return toView(request);
-    }
-
-    @PreAuthorize("hasAnyAuthority('request.self.read', 'request.read')")
-    @Transactional(readOnly = true)
-    public Page<LeaveRequestView> listByEmployee(Long employeeId, Pageable pageable) {
-        employeeRepository.getRequired(employeeId);
-        requireSelfOrScopedAccess(employeeId, REQUEST_READ);
-        return leaveRequestRepository.findByEmployeeIdOrderByCreatedAtDesc(employeeId, pageable)
-            .map(this::toView);
-    }
-
-    /**
-     * Đơn nghỉ của mọi nhân viên trong scope {@code request.read}. Đơn nháp là của riêng người tạo
-     * nên không bao giờ xuất hiện. {@code from}/{@code to} giữ các đơn có giao với khoảng ngày đó.
-     */
-    @PreAuthorize("hasAuthority('request.read')")
-    @Transactional(readOnly = true)
-    public Page<LeaveRequestView> search(LeaveRequestSearch search, Pageable pageable) {
-        Specification<LeaveRequest> specification = (root, query, builder) ->
-            builder.notEqual(root.get("status"), LeaveRequestStatus.DRAFT);
-
-        boolean companyWide = employeeAccessScopeService.resolve(REQUEST_READ).companyWide();
-        Specification<Employee> keyword = EmployeeSpecifications.matchesKeyword(search.keyword());
-        Specification<Employee> unit = EmployeeSpecifications.currentlyAssignedTo(
-            search.organizationUnitId(), null, LocalDate.now(clock));
-        if (!companyWide || keyword != null || unit != null) {
-            // Scope and employee filters resolve to employee ids first; the scope rules are written for Employee roots.
-            Specification<Employee> employees = employeeAccessScopeService.accessibleEmployees(REQUEST_READ);
-            for (Specification<Employee> filter : Arrays.asList(keyword, unit)) {
-                if (filter != null) {
-                    employees = employees.and(filter);
-                }
-            }
-            List<Long> employeeIds = employeeRepository.findAll(employees).stream().map(Employee::getId).toList();
-            if (employeeIds.isEmpty()) {
-                return Page.empty(pageable);
-            }
-            specification = specification.and((root, query, builder) -> root.get("employee").get("id").in(employeeIds));
-        }
-        if (search.status() != null) {
-            specification = specification.and((root, query, builder) -> builder.equal(root.get("status"), search.status()));
-        }
-        if (search.leaveType() != null) {
-            specification = specification.and((root, query, builder) -> builder.equal(root.get("leaveType"), search.leaveType()));
-        }
-        if (search.from() != null) {
-            Instant fromStart = search.from().atStartOfDay(ClockConfig.BUSINESS_ZONE).toInstant();
-            specification = specification.and((root, query, builder) -> builder.greaterThan(root.get("endAt"), fromStart));
-        }
-        if (search.to() != null) {
-            Instant toEnd = search.to().plusDays(1).atStartOfDay(ClockConfig.BUSINESS_ZONE).toInstant();
-            specification = specification.and((root, query, builder) -> builder.lessThan(root.get("startAt"), toEnd));
-        }
-        return leaveRequestRepository.findAll(specification, SearchPatterns.requireSortable(pageable, SORTABLE_PROPERTIES))
-            .map(this::toView);
-    }
-
-    /** The pending requests waiting for the signed-in employee's decision. */
-    @PreAuthorize("isAuthenticated()")
-    @Transactional(readOnly = true)
-    public Page<LeaveRequestView> listPending(Pageable pageable) {
-        Employee self = currentAccountProvider.account().getEmployee();
-        if (self == null) {
-            return Page.empty(pageable);
-        }
-        return leaveRequestRepository.findByApproverEmployeeIdAndStatusOrderByCreatedAtDesc(
-            self.getId(), LeaveRequestStatus.PENDING, pageable).map(this::toView);
+        return leaveRequestMapper.toView(leaveRequestRepository.saveAndFlush(request));
     }
 
     private void validateCommand(CreateLeaveCommand command) {
@@ -275,6 +238,7 @@ public class LeaveRequestService {
         return command.salaryTreatment();
     }
 
+    /** Ghi kết quả xét đơn: trạng thái, tài khoản người xét, ý kiến (rỗng → null) và thời điểm. */
     private void review(
         LeaveRequest request,
         LeaveRequestStatus status,
@@ -287,21 +251,9 @@ public class LeaveRequestService {
         request.setReviewedAt(now);
     }
 
-    private boolean isApprover(LeaveRequest request) {
-        Employee self = currentAccountProvider.account().getEmployee();
-        return self != null && request.getApproverEmployee() != null
-            && request.getApproverEmployee().getId().equals(self.getId());
-    }
-
     private void requireApprover(LeaveRequest request) {
-        if (!isApprover(request)) {
+        if (!request.isApprover(currentAccountProvider.account())) {
             throw new ForbiddenException(ErrorCode.FORBIDDEN, "Only the approver of this leave request can decide it");
-        }
-    }
-
-    private void requireSelfOrScopedAccess(Long employeeId, String scopedPermission) {
-        if (!currentAccountProvider.account().belongsTo(employeeId)) {
-            employeeAccessScopeService.requireEmployeeAccess(employeeId, scopedPermission);
         }
     }
 
@@ -327,41 +279,6 @@ public class LeaveRequestService {
     private ConflictException alreadyProcessed(String message) {
         return new ConflictException(ErrorCode.REQUEST_ALREADY_PROCESSED, message);
     }
-
-    private LeaveRequestView toView(LeaveRequest request) {
-        return new LeaveRequestView(
-            request.getId(),
-            request.getEmployee().getId(),
-            request.getEmployee().getEmployeeCode(),
-            request.getEmployee().getFullName(),
-            request.getLeaveType(),
-            request.getSalaryTreatment(),
-            request.getStartAt(),
-            request.getEndAt(),
-            request.getRequestedMinutes(),
-            request.getReason(),
-            request.getAttachmentUrl(),
-            request.getStatus(),
-            request.getSubmittedAt(),
-            request.getApproverEmployee() == null ? null : request.getApproverEmployee().getId(),
-            request.getApproverEmployee() == null ? null : request.getApproverEmployee().getFullName(),
-            request.getReviewedByAccount() == null ? null : request.getReviewedByAccount().getId(),
-            request.getReviewComment(),
-            request.getReviewedAt(),
-            request.getCreatedAt(),
-            request.getUpdatedAt()
-        );
-    }
-
-    /** Bộ lọc danh sách đơn nghỉ; trường null là không lọc. */
-    public record LeaveRequestSearch(
-        @Nullable String keyword,
-        @Nullable Long organizationUnitId,
-        @Nullable LeaveRequestStatus status,
-        @Nullable LeaveType leaveType,
-        @Nullable LocalDate from,
-        @Nullable LocalDate to
-    ) { }
 
     public record CreateLeaveCommand(
         @NotNull Long employeeId,

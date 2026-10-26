@@ -57,6 +57,7 @@ class ApprovalChainIntegrationTest {
 
     @Autowired private JdbcTemplate jdbc;
     @Autowired private LeaveRequestService leaveRequestService;
+    @Autowired private LeaveRequestQueryService leaveRequestQueryService;
     @Autowired private OvertimeService overtimeService;
     @Autowired private AttendanceQueryService attendanceQueryService;
     @Autowired private AttendanceCalendarService calendarService;
@@ -135,7 +136,7 @@ class ApprovalChainIntegrationTest {
         assertThrows(ForbiddenException.class, () -> leaveRequestService.approve(pending.id(), null));
 
         authenticateAs(manager, EMPLOYEE);
-        assertEquals(pending.id(), leaveRequestService.listPending(org.springframework.data.domain.Pageable.unpaged())
+        assertEquals(pending.id(), leaveRequestQueryService.listPending(org.springframework.data.domain.Pageable.unpaged())
             .getContent().getFirst().id());
         assertEquals(LeaveRequestStatus.APPROVED, leaveRequestService.approve(pending.id(), "OK").status());
     }
@@ -321,8 +322,8 @@ class ApprovalChainIntegrationTest {
     }
 
     private List<Long> searchIds(String keyword, LeaveRequestStatus status, LocalDate day) {
-        return leaveRequestService.search(
-                new LeaveRequestService.LeaveRequestSearch(keyword, null, status, null, day, day),
+        return leaveRequestQueryService.search(
+                new LeaveRequestQueryService.LeaveRequestSearch(keyword, null, status, null, day, day),
                 org.springframework.data.domain.Pageable.unpaged())
             .map(LeaveRequestView::id).getContent();
     }

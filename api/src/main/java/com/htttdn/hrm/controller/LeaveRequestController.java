@@ -21,7 +21,8 @@ import com.htttdn.hrm.service.leave.LeaveRequestService;
 import com.htttdn.hrm.entity.enums.LeaveRequestStatus;
 import com.htttdn.hrm.entity.enums.LeaveType;
 import com.htttdn.hrm.service.leave.LeaveRequestService.CreateLeaveCommand;
-import com.htttdn.hrm.service.leave.LeaveRequestService.LeaveRequestSearch;
+import com.htttdn.hrm.service.leave.LeaveRequestQueryService;
+import com.htttdn.hrm.service.leave.LeaveRequestQueryService.LeaveRequestSearch;
 import com.htttdn.hrm.service.leave.LeaveRequestService.LeaveRequestView;
 
 import jakarta.annotation.Nullable;
@@ -34,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LeaveRequestController {
     private final LeaveRequestService service;
+    private final LeaveRequestQueryService queryService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -52,23 +54,23 @@ public class LeaveRequestController {
         @PageableDefault(size = 20, sort = "startAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         LeaveRequestSearch search = new LeaveRequestSearch(keyword, organizationUnitId, status, leaveType, from, to);
-        return ApiResult.ok(PagedResult.of(service.search(search, pageable)));
+        return ApiResult.ok(PagedResult.of(queryService.search(search, pageable)));
     }
 
     @GetMapping("/employees/{employeeId}")
     public ApiResult<PagedResult<LeaveRequestView>> list(@PathVariable Long employeeId,
         @PageableDefault(size = 20) Pageable pageable) {
-        return ApiResult.ok(PagedResult.of(service.listByEmployee(employeeId, pageable)));
+        return ApiResult.ok(PagedResult.of(queryService.listByEmployee(employeeId, pageable)));
     }
 
     @GetMapping("/pending")
     public ApiResult<PagedResult<LeaveRequestView>> pending(@PageableDefault(size = 20) Pageable pageable) {
-        return ApiResult.ok(PagedResult.of(service.listPending(pageable)));
+        return ApiResult.ok(PagedResult.of(queryService.listPending(pageable)));
     }
 
     @GetMapping("/{id}")
     public ApiResult<LeaveRequestView> get(@PathVariable Long id) {
-        return ApiResult.ok(service.getById(id));
+        return ApiResult.ok(queryService.getById(id));
     }
 
     @PostMapping("/{id}/submit")
