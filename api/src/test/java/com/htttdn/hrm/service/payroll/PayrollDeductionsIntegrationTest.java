@@ -26,6 +26,7 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -62,14 +63,30 @@ class PayrollDeductionsIntegrationTest {
     }
 
     @Test
-    void missingFutureTaxRuleAndFourteenUnpaidDaysStopCalculation() {
+    void missingFutureTaxRuleStopsCalculation() {
         Long employeeId = seedEmployee();
         assertThrows(BusinessException.class, () -> calculator.calculate(employeeId,
             LocalDate.of(2026, 10, 31), LocalDate.of(2027, 1, 5),
             new BigDecimal("40000000"), 0));
-        assertThrows(BusinessException.class, () -> calculator.calculate(employeeId,
-            LocalDate.of(2026, 10, 31), LocalDate.of(2026, 11, 5),
-            new BigDecimal("40000000"), 14));
+    }
+
+    @Test
+    void fourteenDaysNotWorkedMeansNoInsuranceThatMonth() {
+        Long employeeId = seedEmployee();
+        LocalDate workEnd = LocalDate.of(2026, 10, 31);
+        LocalDate payDate = LocalDate.of(2026, 11, 5);
+
+        InsuranceTaxCalculator.Deduction contributing = calculator.calculate(employeeId, workEnd, payDate,
+            new BigDecimal("40000000"), InsuranceTaxCalculator.MIN_DAYS_NOT_WORKED_WITHOUT_INSURANCE - 1);
+        InsuranceTaxCalculator.Deduction exempt = calculator.calculate(employeeId, workEnd, payDate,
+            new BigDecimal("40000000"), InsuranceTaxCalculator.MIN_DAYS_NOT_WORKED_WITHOUT_INSURANCE);
+
+        assertTrue(contributing.social().signum() > 0);
+        assertEquals(0, exempt.social().signum());
+        assertEquals(0, exempt.health().signum());
+        assertEquals(0, exempt.unemployment().signum());
+        // Tax still applies, on pay no longer reduced by insurance.
+        assertTrue(exempt.taxableIncome().compareTo(contributing.taxableIncome()) > 0);
     }
 
     @Test

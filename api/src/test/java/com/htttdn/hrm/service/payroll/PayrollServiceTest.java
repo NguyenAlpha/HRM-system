@@ -375,6 +375,7 @@ class PayrollServiceTest {
             new AttendanceCalendarService.ScheduledDay(lastWorkingDay, shift, Instant.now(), Instant.now(), 480)));
         // … but a day's pay is still a share of the whole month's workdays.
         when(attendanceCalendarService.companyWorkdayCount(start, end)).thenReturn(27L);
+        when(attendanceCalendarService.companyWorkdayCount(lastWorkingDay.plusDays(1), end)).thenReturn(25L);
         when(attendanceRecordRepository.findByEmployeeIdAndWorkDateBetween(2L, start, end)).thenReturn(List.of(
             AttendanceRecord.builder().workDate(dayBefore).scheduledMinutes(480).payableMinutes(480).build(),
             AttendanceRecord.builder().workDate(lastWorkingDay).scheduledMinutes(480).payableMinutes(480).build()));
@@ -391,8 +392,9 @@ class PayrollServiceTest {
         ArgumentCaptor<Payslip> captor = ArgumentCaptor.forClass(Payslip.class);
         verify(payslipRepository).save(captor.capture());
         assertEquals(new BigDecimal("2000000.00"), captor.getValue().getBaseSalaryPay());
+        // 25 of the month's 27 workdays fall after the last working day: no insurance this month.
         verify(insuranceTaxCalculator).calculate(eq(2L), eq(lastWorkingDay), eq(end),
-            eq(new BigDecimal("2000000.00")), eq(0L));
+            eq(new BigDecimal("2000000.00")), eq(25L));
     }
 
     /** The period response sums the payslips; these tests read only the period status. */

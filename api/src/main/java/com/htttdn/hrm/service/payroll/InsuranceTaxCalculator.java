@@ -24,12 +24,18 @@ import lombok.RequiredArgsConstructor;
  * Tính bảo hiểm bắt buộc và thuế TNCN người lao động phải nộp trong một tháng, từ hồ sơ bảo hiểm/thuế
  * ({@link PayrollDeductionsService} quản lý), số người phụ thuộc và luật bảo hiểm, thuế đang hiệu lực.
  *
+ * <p>Tháng người lao động không làm việc từ {@value #MIN_DAYS_NOT_WORKED_WITHOUT_INSURANCE} ngày làm việc
+ * trở lên (nghỉ không lương, vắng, hoặc chưa vào làm/đã nghỉ việc) thì không đóng BHXH, BHYT, BHTN tháng
+ * đó: các khoản bảo hiểm bằng 0 như người không tham gia, thuế vẫn tính bình thường.
+ *
  * <p>Là {@code @Component} như {@link PayslipCalculator}: chỉ được gọi khi tính phiếu lương, chạy trong
  * transaction và quyền của {@link PayrollService#calculate}.
  */
 @Component
 @RequiredArgsConstructor
 public class InsuranceTaxCalculator {
+    static final int MIN_DAYS_NOT_WORKED_WITHOUT_INSURANCE = 14;
+
     private final EmployeePayrollProfileRepository profileRepository;
     private final EmployeeTaxDependentRepository dependentRepository;
     private final PayrollTaxRuleRepository taxRules;
@@ -40,11 +46,12 @@ public class InsuranceTaxCalculator {
      * @param workMonthEnd ngày làm việc cuối của tháng: chọn hồ sơ bảo hiểm và luật bảo hiểm
      * @param paymentDate ngày trả lương: chọn luật thuế và số người phụ thuộc
      * @param taxableGrossPay tổng thu nhập chịu thuế (đã trừ phần miễn thuế)
-     * @param unpaidDays số ngày nghỉ không lương; từ 14 ngày thì HR phải tự quyết việc đóng bảo hiểm
+     * @param daysNotWorked số ngày làm việc của tháng mà người lao động không làm việc; từ 14 ngày thì
+     *        tháng đó không trừ bảo hiểm
      * @throws BusinessException thiếu hồ sơ, luật hoặc dữ liệu không hợp lệ (→ 400)
      */
     public Deduction calculate(Long employeeId, LocalDate workMonthEnd, LocalDate paymentDate,
-        BigDecimal taxableGrossPay, long unpaidDays) {
+        BigDecimal taxableGrossPay, long daysNotWorked) {
         EmployeePayrollProfile profile = profileRepository.findEffective(employeeId, workMonthEnd)
             .orElseThrow(() -> new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Employee " + employeeId + ": missing payroll profile on " + workMonthEnd));
@@ -52,13 +59,10 @@ public class InsuranceTaxCalculator {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Employee " + employeeId + ": non-resident tax calculation is not configured");
         }
-        boolean socialInsurance = profile.getSocialInsurance();
-        boolean healthInsurance = profile.getHealthInsurance();
-        boolean unemploymentInsurance = profile.getUnemploymentInsurance();
-        if (unpaidDays >= 14 && (socialInsurance || healthInsurance || unemploymentInsurance)) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
-                "Employee " + employeeId + ": 14 or more unpaid workdays; HR must set the month's insurance participation explicitly");
-        }
+        boolean contributes = daysNotWorked < MIN_DAYS_NOT_WORKED_WITHOUT_INSURANCE;
+        boolean socialInsurance = contributes && profile.getSocialInsurance();
+        boolean healthInsurance = contributes && profile.getHealthInsurance();
+        boolean unemploymentInsurance = contributes && profile.getUnemploymentInsurance();
         PayrollInsuranceRule insurance = insuranceRules.findEffective(workMonthEnd)
             .orElseThrow(() -> new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Missing insurance rules for " + workMonthEnd));

@@ -79,7 +79,8 @@ public class PayslipCalculator {
         BigDecimal basicSalary,
         EmployeeAssignment assignment,
         long scheduledWorkMinutes,
-        long companyWorkdays
+        long companyWorkdays,
+        long daysNotEmployed
     ) {
     }
 
@@ -276,8 +277,9 @@ public class PayslipCalculator {
     }
 
     /**
-     * Bảo hiểm và thuế TNCN của tháng ({@link InsuranceTaxCalculator#calculate}); số ngày nghỉ không lương
-     * quyết định có phải xử lý bảo hiểm thủ công không. Lỗi thiếu hồ sơ được báo kèm mã nhân viên.
+     * Bảo hiểm và thuế TNCN của tháng ({@link InsuranceTaxCalculator#calculate}). Ngày không làm việc gồm
+     * ngày nghỉ không lương, vắng không phép và ngày công của tháng trước khi vào làm hoặc sau khi nghỉ
+     * việc; đủ 14 ngày thì tháng đó không trừ bảo hiểm. Lỗi thiếu hồ sơ được báo kèm mã nhân viên.
      */
     private InsuranceTaxCalculator.Deduction deductions(PayrollPeriod period, Employee employee, Inputs inputs,
         BigDecimal taxableGrossPay) {
@@ -288,7 +290,7 @@ public class PayslipCalculator {
         }).count();
         try {
             return insuranceTaxCalculator.calculate(employee.getId(), inputs.employedTo(),
-                period.getTaxPaymentDate(), taxableGrossPay, unpaidDays);
+                period.getTaxPaymentDate(), taxableGrossPay, unpaidDays + inputs.daysNotEmployed());
         } catch (BusinessException error) {
             throw missingPayrollInput(employee, error.getMessage());
         }
@@ -361,9 +363,17 @@ public class PayslipCalculator {
         if (companyWorkdays <= 0) {
             throw missingPayrollInput(employee, "company workdays");
         }
+        // Ngày công của kỳ trước ngày vào làm và sau ngày nghỉ việc: tính là không làm việc (xem deductions).
+        long daysNotEmployed = 0;
+        if (employedFrom.isAfter(period.getPeriodStart())) {
+            daysNotEmployed += attendanceCalendarService.companyWorkdayCount(period.getPeriodStart(), employedFrom.minusDays(1));
+        }
+        if (employedTo.isBefore(period.getPeriodEnd())) {
+            daysNotEmployed += attendanceCalendarService.companyWorkdayCount(employedTo.plusDays(1), period.getPeriodEnd());
+        }
 
         return new Inputs(employedTo, scheduledDays, attendanceRecords, attendanceByDate, lastWorkDate,
-            basicSalary, assignment, scheduledWorkMinutes, companyWorkdays);
+            basicSalary, assignment, scheduledWorkMinutes, companyWorkdays, daysNotEmployed);
     }
 
     /**
