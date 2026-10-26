@@ -3,7 +3,6 @@ package com.htttdn.hrm.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,14 +29,12 @@ public class AccountRoleAssignmentAdminController {
     private final AccountRoleAssignmentAdminService roleAssignmentAdminService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('account.read')")
     public ApiResult<List<AccountRoleAssignmentResponse>> list(@PathVariable Long accountId) {
         return ApiResult.ok(roleAssignmentAdminService.list(accountId));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('account.role.assign')")
     public ApiResult<AccountRoleAssignmentResponse> assign(
         @PathVariable Long accountId,
         @Valid @RequestBody AssignAccountRoleRequest request
@@ -46,7 +43,6 @@ public class AccountRoleAssignmentAdminController {
     }
 
     @PostMapping("/{assignmentId}/revoke")
-    @PreAuthorize("hasAuthority('account.role.assign')")
     public ApiResult<AccountRoleAssignmentResponse> revoke(
         @PathVariable Long accountId,
         @PathVariable Long assignmentId,

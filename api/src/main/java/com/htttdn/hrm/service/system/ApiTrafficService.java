@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import com.htttdn.hrm.dto.response.traffic.ApiTrafficResponse;
@@ -39,6 +40,7 @@ public class ApiTrafficService {
         this.startedAt = clock.instant();
     }
 
+    @PreAuthorize("hasAuthority('system.traffic.read')")
     public ApiTrafficResponse stats() {
         Map<Route, Totals> byRoute = new LinkedHashMap<>();
         for (Timer timer : meterRegistry.find(REQUEST_METRIC).timers()) {
@@ -60,6 +62,7 @@ public class ApiTrafficService {
     }
 
     /** Requests, errors and mean processing time of the whole API over the range. */
+    @PreAuthorize("hasAuthority('system.traffic.read')")
     public ApiTrafficTimelineResponse timeline(TimelineRange range) {
         return new ApiTrafficTimelineResponse(
             range.name(),

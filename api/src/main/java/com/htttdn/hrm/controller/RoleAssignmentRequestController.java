@@ -6,7 +6,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,20 +42,17 @@ public class RoleAssignmentRequestController {
     private final RoleAssignmentOptionService optionService;
 
     @GetMapping("/available-roles")
-    @PreAuthorize("hasAuthority('role.assignment.request')")
     public ApiResult<List<RoleAssignmentOptionResponse>> listAvailableRoles() {
         return ApiResult.ok(optionService.listAvailableRoles());
     }
 
     @GetMapping("/revocable-assignments")
-    @PreAuthorize("hasAuthority('role.assignment.request')")
     public ApiResult<List<AccountRoleAssignmentResponse>> listRevocableAssignments(@RequestParam Long accountId) {
         return ApiResult.ok(requestService.listRevocableAssignments(accountId));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('role.assignment.request')")
     public ApiResult<RoleAssignmentRequestResponse> create(
         @Valid @RequestBody CreateRoleAssignmentRequest request
     ) {
@@ -65,7 +61,6 @@ public class RoleAssignmentRequestController {
 
     @PostMapping("/revocations")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('role.assignment.request')")
     public ApiResult<RoleAssignmentRequestResponse> createRevocation(
         @Valid @RequestBody CreateRoleRevocationRequest request
     ) {
@@ -73,7 +68,6 @@ public class RoleAssignmentRequestController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('role.assignment.request', 'role.assignment.approve')")
     public ApiResult<PagedResult<RoleAssignmentRequestResponse>> list(
         @RequestParam(required = false) RoleAssignmentRequestStatus status,
         @PageableDefault(
@@ -86,13 +80,11 @@ public class RoleAssignmentRequestController {
     }
 
     @GetMapping("/{requestId}")
-    @PreAuthorize("hasAnyAuthority('role.assignment.request', 'role.assignment.approve')")
     public ApiResult<RoleAssignmentRequestResponse> getById(@PathVariable Long requestId) {
         return ApiResult.ok(requestService.getById(requestId));
     }
 
     @PostMapping("/{requestId}/approve")
-    @PreAuthorize("hasAuthority('role.assignment.approve')")
     public ApiResult<RoleAssignmentRequestResponse> approve(
         @PathVariable Long requestId,
         @Valid @RequestBody ApproveRoleAssignmentRequest request
@@ -101,7 +93,6 @@ public class RoleAssignmentRequestController {
     }
 
     @PostMapping("/{requestId}/reject")
-    @PreAuthorize("hasAuthority('role.assignment.approve')")
     public ApiResult<RoleAssignmentRequestResponse> reject(
         @PathVariable Long requestId,
         @Valid @RequestBody RejectRoleAssignmentRequest request
@@ -110,7 +101,6 @@ public class RoleAssignmentRequestController {
     }
 
     @PostMapping("/{requestId}/cancel")
-    @PreAuthorize("hasAuthority('role.assignment.request')")
     public ApiResult<RoleAssignmentRequestResponse> cancel(
         @PathVariable Long requestId,
         @Valid @RequestBody CancelRoleAssignmentRequest request

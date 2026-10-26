@@ -1,7 +1,6 @@
 package com.htttdn.hrm.controller;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,7 +25,6 @@ public class OrganizationCompanyOwnerAdminController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('organization.company_owner.bootstrap')")
     public ApiResult<OrganizationCompanyOwnerProvisioningResponse> provision(
         @Valid @RequestBody CreateOrganizationCompanyOwnerRequest request
     ) {

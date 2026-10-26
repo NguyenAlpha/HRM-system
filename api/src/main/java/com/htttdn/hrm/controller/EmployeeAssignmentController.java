@@ -3,7 +3,6 @@ package com.htttdn.hrm.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,20 +28,17 @@ public class EmployeeAssignmentController {
     private final EmployeeAssignmentService employeeAssignmentService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('employee.assignment.read')")
     public ApiResult<List<EmployeeAssignmentResponse>> list(@PathVariable Long employeeId) {
         return ApiResult.ok(employeeAssignmentService.list(employeeId));
     }
 
     @GetMapping("/current")
-    @PreAuthorize("hasAuthority('employee.assignment.read')")
     public ApiResult<EmployeeAssignmentResponse> getCurrent(@PathVariable Long employeeId) {
         return ApiResult.ok(employeeAssignmentService.getCurrent(employeeId));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('employee.assignment.manage')")
     public ApiResult<EmployeeAssignmentResponse> assign(
         @PathVariable Long employeeId,
         @Valid @RequestBody AssignEmployeeRequest request

@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,20 +30,17 @@ public class CompanyHolidayController {
     private final CompanyHolidayService service;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('holiday.read')")
     public ApiResult<List<CompanyHolidayResponse>> list(@RequestParam LocalDate from, @RequestParam LocalDate to) {
         return ApiResult.ok(service.list(from, to));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('organization.manage')")
     public ApiResult<CompanyHolidayResponse> create(@Valid @RequestBody CompanyHolidayRequest request) {
         return ApiResult.ok(service.create(request.date(), request.name()));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('organization.manage')")
     public ApiResult<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ApiResult.ok();

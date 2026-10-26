@@ -3,7 +3,6 @@ package com.htttdn.hrm.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,7 +34,6 @@ public class OrganizationUnitController {
     private final OrganizationUnitService organizationUnitService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('organization.read')")
     public ApiResult<List<OrganizationUnitResponse>> list(
         @RequestParam(required = false) Boolean active,
         @RequestParam(required = false) OrganizationUnitType unitType,
@@ -45,7 +43,6 @@ public class OrganizationUnitController {
     }
 
     @GetMapping("/tree")
-    @PreAuthorize("hasAuthority('organization.read')")
     public ApiResult<List<OrganizationUnitTreeResponse>> tree(
         @RequestParam(defaultValue = "false") boolean includeInactive
     ) {
@@ -53,14 +50,12 @@ public class OrganizationUnitController {
     }
 
     @GetMapping("/{unitId}")
-    @PreAuthorize("hasAuthority('organization.read')")
     public ApiResult<OrganizationUnitResponse> getById(@PathVariable Long unitId) {
         return ApiResult.ok(organizationUnitService.getById(unitId));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('organization.manage')")
     public ApiResult<OrganizationUnitResponse> create(
         @Valid @RequestBody CreateOrganizationUnitRequest request
     ) {
@@ -68,7 +63,6 @@ public class OrganizationUnitController {
     }
 
     @PutMapping("/{unitId}")
-    @PreAuthorize("hasAuthority('organization.manage')")
     public ApiResult<OrganizationUnitResponse> update(
         @PathVariable Long unitId,
         @Valid @RequestBody UpdateOrganizationUnitRequest request
@@ -77,7 +71,6 @@ public class OrganizationUnitController {
     }
 
     @DeleteMapping("/{unitId}")
-    @PreAuthorize("hasAuthority('organization.manage')")
     public ApiResult<Void> delete(@PathVariable Long unitId) {
         organizationUnitService.softDelete(unitId);
         return ApiResult.ok();

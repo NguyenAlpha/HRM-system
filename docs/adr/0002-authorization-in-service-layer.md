@@ -25,6 +25,8 @@ nghiệp vụ còn được gọi từ nhiều nơi ngoài controller: job đị
 - Gọi service từ job hoặc seeder (không có người dùng đăng nhập) phải đi đường riêng không có `@PreAuthorize`, ví dụ
   `ResignationRequestService.complete`, hoặc ghi trực tiếp qua repository như seeder.
 - Gọi một method khác **trong cùng class** không đi qua proxy nên không kích hoạt `@PreAuthorize` của method đó.
+- Bean hạ tầng được gọi nội bộ (như `RateLimitService` của bộ lọc request) không gắn quyền; trang quản trị đọc nó qua
+  một service có quyền (`RateLimitSettingsService.stats`, `.timeline`).
 
 ## Phương án đã cân nhắc
 

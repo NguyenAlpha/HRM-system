@@ -3,7 +3,6 @@ package com.htttdn.hrm.controller;
 import java.io.IOException;
 
 import org.springframework.http.MediaType;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -35,20 +34,17 @@ public class CompanyProfileController {
     }
 
     @PutMapping
-    @PreAuthorize("hasAuthority('company.manage')")
     public ApiResult<CompanyProfileResponse> update(@Valid @RequestBody CompanyProfileRequest request) {
         return ApiResult.ok(service.update(request));
     }
 
     /** Replaces the logo with the uploaded PNG, JPEG or WebP (at most 512 KB); served by {@link PublicBrandingController}. */
     @PutMapping(path = "/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAuthority('company.manage')")
     public ApiResult<CompanyProfileResponse> updateLogo(@RequestPart("file") MultipartFile file) throws IOException {
         return ApiResult.ok(service.updateLogo(file.getBytes()));
     }
 
     @DeleteMapping("/logo")
-    @PreAuthorize("hasAuthority('company.manage')")
     public ApiResult<CompanyProfileResponse> deleteLogo() {
         return ApiResult.ok(service.deleteLogo());
     }

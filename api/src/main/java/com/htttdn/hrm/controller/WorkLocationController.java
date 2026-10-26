@@ -3,7 +3,6 @@ package com.htttdn.hrm.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,7 +34,6 @@ public class WorkLocationController {
     private final WorkLocationService workLocationService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('organization.read')")
     public ApiResult<List<WorkLocationResponse>> list(
         @RequestParam(required = false) Boolean active,
         @RequestParam(required = false) LocationType locationType,
@@ -45,7 +43,6 @@ public class WorkLocationController {
     }
 
     @GetMapping("/tree")
-    @PreAuthorize("hasAuthority('organization.read')")
     public ApiResult<List<WorkLocationTreeResponse>> tree(
         @RequestParam(defaultValue = "false") boolean includeInactive
     ) {
@@ -53,14 +50,12 @@ public class WorkLocationController {
     }
 
     @GetMapping("/{locationId}")
-    @PreAuthorize("hasAuthority('organization.read')")
     public ApiResult<WorkLocationResponse> getById(@PathVariable Long locationId) {
         return ApiResult.ok(workLocationService.getById(locationId));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('organization.manage')")
     public ApiResult<WorkLocationResponse> create(
         @Valid @RequestBody CreateWorkLocationRequest request
     ) {
@@ -68,7 +63,6 @@ public class WorkLocationController {
     }
 
     @PutMapping("/{locationId}")
-    @PreAuthorize("hasAuthority('organization.manage')")
     public ApiResult<WorkLocationResponse> update(
         @PathVariable Long locationId,
         @Valid @RequestBody UpdateWorkLocationRequest request
@@ -77,7 +71,6 @@ public class WorkLocationController {
     }
 
     @DeleteMapping("/{locationId}")
-    @PreAuthorize("hasAuthority('organization.manage')")
     public ApiResult<Void> delete(@PathVariable Long locationId) {
         workLocationService.softDelete(locationId);
         return ApiResult.ok();

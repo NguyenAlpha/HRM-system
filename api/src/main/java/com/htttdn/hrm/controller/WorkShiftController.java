@@ -3,7 +3,6 @@ package com.htttdn.hrm.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,7 +32,6 @@ public class WorkShiftController {
     private final WorkShiftService workShiftService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('organization.read')")
     public ApiResult<List<WorkShiftResponse>> list(
         @RequestParam(required = false) Boolean active,
         @RequestParam(required = false) Boolean crossesMidnight
@@ -42,14 +40,12 @@ public class WorkShiftController {
     }
 
     @GetMapping("/{shiftId}")
-    @PreAuthorize("hasAuthority('organization.read')")
     public ApiResult<WorkShiftResponse> getById(@PathVariable Long shiftId) {
         return ApiResult.ok(workShiftService.getById(shiftId));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('organization.manage')")
     public ApiResult<WorkShiftResponse> create(
         @Valid @RequestBody CreateWorkShiftRequest request
     ) {
@@ -57,7 +53,6 @@ public class WorkShiftController {
     }
 
     @PutMapping("/{shiftId}")
-    @PreAuthorize("hasAuthority('organization.manage')")
     public ApiResult<WorkShiftResponse> update(
         @PathVariable Long shiftId,
         @Valid @RequestBody UpdateWorkShiftRequest request
@@ -66,7 +61,6 @@ public class WorkShiftController {
     }
 
     @DeleteMapping("/{shiftId}")
-    @PreAuthorize("hasAuthority('organization.manage')")
     public ApiResult<Void> delete(@PathVariable Long shiftId) {
         workShiftService.softDelete(shiftId);
         return ApiResult.ok();

@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,13 +39,11 @@ public class AccountAdminController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('account.provision')")
     public ApiResult<AccountProvisioningResponse> create(@Valid @RequestBody CreateAccountRequest request) {
         return ApiResult.ok(accountAdminService.create(request));
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('account.read')")
     public ApiResult<PagedResult<AccountResponse>> list(
         @RequestParam(required = false) String keyword,
         @RequestParam(required = false) AccountStatus status,
@@ -59,43 +56,36 @@ public class AccountAdminController {
     }
 
     @GetMapping("/{accountId}")
-    @PreAuthorize("hasAuthority('account.read')")
     public ApiResult<AccountResponse> getById(@PathVariable Long accountId) {
         return ApiResult.ok(accountAdminService.getById(accountId));
     }
 
     @GetMapping("/{accountId}/permissions")
-    @PreAuthorize("hasAuthority('account.read')")
     public ApiResult<List<AccountPermissionGrantResponse>> getPermissions(@PathVariable Long accountId) {
         return ApiResult.ok(accountAdminService.getPermissionGrants(accountId));
     }
 
     @PostMapping("/{accountId}/invitations/resend")
-    @PreAuthorize("hasAuthority('account.activation.manage')")
     public ApiResult<AccountInvitationResponse> resendInvitation(@PathVariable Long accountId) {
         return ApiResult.ok(accountAdminService.resendInvitation(accountId));
     }
 
     @PostMapping("/{accountId}/password-reset")
-    @PreAuthorize("hasAuthority('account.activation.manage')")
     public ApiResult<AccountInvitationResponse> initiatePasswordReset(@PathVariable Long accountId) {
         return ApiResult.ok(accountAdminService.initiatePasswordReset(accountId));
     }
 
     @PostMapping("/{accountId}/suspend")
-    @PreAuthorize("hasAuthority('account.manage')")
     public ApiResult<AccountResponse> suspend(@PathVariable Long accountId) {
         return ApiResult.ok(accountAdminService.suspend(accountId));
     }
 
     @PostMapping("/{accountId}/activate")
-    @PreAuthorize("hasAuthority('account.manage')")
     public ApiResult<AccountResponse> activate(@PathVariable Long accountId) {
         return ApiResult.ok(accountAdminService.activate(accountId));
     }
 
     @PostMapping("/{accountId}/delete")
-    @PreAuthorize("hasAuthority('account.manage')")
     public ApiResult<AccountResponse> delete(@PathVariable Long accountId, @Valid @RequestBody DeleteAccountRequest request) {
         return ApiResult.ok(accountAdminService.delete(accountId, request.reason()));
     }

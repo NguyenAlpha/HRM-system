@@ -3,7 +3,6 @@ package com.htttdn.hrm.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,7 +32,6 @@ public class JobPositionController {
     private final JobPositionService jobPositionService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('organization.read')")
     public ApiResult<List<JobPositionResponse>> list(
         @RequestParam(required = false) Boolean active,
         @RequestParam(required = false) Boolean managerial
@@ -42,14 +40,12 @@ public class JobPositionController {
     }
 
     @GetMapping("/{positionId}")
-    @PreAuthorize("hasAuthority('organization.read')")
     public ApiResult<JobPositionResponse> getById(@PathVariable Long positionId) {
         return ApiResult.ok(jobPositionService.getById(positionId));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('organization.manage')")
     public ApiResult<JobPositionResponse> create(
         @Valid @RequestBody CreateJobPositionRequest request
     ) {
@@ -57,7 +53,6 @@ public class JobPositionController {
     }
 
     @PutMapping("/{positionId}")
-    @PreAuthorize("hasAuthority('organization.manage')")
     public ApiResult<JobPositionResponse> update(
         @PathVariable Long positionId,
         @Valid @RequestBody UpdateJobPositionRequest request
@@ -66,7 +61,6 @@ public class JobPositionController {
     }
 
     @DeleteMapping("/{positionId}")
-    @PreAuthorize("hasAuthority('organization.manage')")
     public ApiResult<Void> delete(@PathVariable Long positionId) {
         jobPositionService.softDelete(positionId);
         return ApiResult.ok();
