@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +70,7 @@ import lombok.RequiredArgsConstructor;
  * Owner mẫu).
  *
  * <p>{@code assignments} liệt kê các giai đoạn phân công chính từ cũ đến mới; mỗi giai đoạn bắt đầu
- * {@code monthsAgo} tháng trước ngày chạy seed và kết thúc ngay trước giai đoạn sau, giai đoạn cuối
+ * ngày 1 của tháng cách ngày chạy seed {@code monthsAgo} tháng và kết thúc ngay trước giai đoạn sau, giai đoạn cuối
  * là phân công hiện hành. Ngày vào làm là ngày bắt đầu giai đoạn đầu tiên; role có hiệu lực từ ngày
  * đó. Scope {@code ORG_UNIT} và {@code LOCATION} lấy đơn vị và địa điểm của phân công hiện hành.
  *
@@ -87,7 +88,7 @@ import lombok.RequiredArgsConstructor;
  * role HR gửi cho account này (xem {@link SeedRoleRequestWriter}).
  *
  * <p>{@code probation} đặt nhân viên ở trạng thái thử việc. {@code termination} cho nhân viên nghỉ việc
- * {@code monthsAgo} tháng trước như {@code EmploymentLifecycleService.endEmploymentAs}: phân công hiện hành đóng
+ * vào ngày cuối của tháng cách đây {@code monthsAgo} tháng như {@code EmploymentLifecycleService.endEmploymentAs}: phân công hiện hành đóng
  * vào ngày đó, account bị vô hiệu hóa, role không tự cấp bị thu hồi; chấm công và lương dừng theo phân
  * công, và {@code workDaysAgo} của đơn nghỉ đếm lùi từ ngày làm việc cuối cùng. {@code resignations} là
  * đơn xin nghỉ việc (xem {@link SeedResignationWriter}).
@@ -124,7 +125,7 @@ public class StaffSeeder implements ApplicationRunner {
     }
 
     /**
-     * The end of the employment {@code monthsAgo} months ago: {@code RESIGNED}, {@code TERMINATED} or
+     * The end of the employment on the last day of the month {@code monthsAgo} months ago: {@code RESIGNED}, {@code TERMINATED} or
      * {@code RETIRED}. {@code comment} is the approver's on the resignation request of a resignation.
      */
     record TerminationEntry(EmploymentStatus status, int monthsAgo, String reason, String comment) {
@@ -400,7 +401,7 @@ public class StaffSeeder implements ApplicationRunner {
             return null;
         }
         LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
-        LocalDate date = today.minusMonths(termination.monthsAgo());
+        LocalDate date = YearMonth.from(today).minusMonths(termination.monthsAgo()).atEndOfMonth();
         EmploymentStatus status = termination.status();
         if (status != EmploymentStatus.RESIGNED && status != EmploymentStatus.TERMINATED && status != EmploymentStatus.RETIRED
             || termination.reason() == null || Boolean.TRUE.equals(entry.probation())
@@ -488,9 +489,8 @@ public class StaffSeeder implements ApplicationRunner {
         if (entry.dependents() == null) {
             return;
         }
-        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
         for (DependentEntry dependent : entry.dependents()) {
-            LocalDate effectiveFrom = today.minusMonths(dependent.monthsAgo());
+            LocalDate effectiveFrom = monthStart(dependent.monthsAgo());
             if (dependent.fullName() == null || dependent.fullName().isBlank()
                 || effectiveFrom.isBefore(employee.getHireDate())) {
                 throw new IllegalStateException("Staff seed '" + entry.username()
@@ -507,6 +507,16 @@ public class StaffSeeder implements ApplicationRunner {
     }
 
     /**
+     * The 1st of the month {@code monthsAgo} months ago. Histories start on whole months so every seeded
+     * payroll month is a full one whatever day the seed runs: a hire late in a month (or on a holiday)
+     * would leave a few paid days against a full month of insurance, a negative net pay that stops
+     * {@link PayrollSeeder}.
+     */
+    private static LocalDate monthStart(int monthsAgo) {
+        return YearMonth.now(ClockConfig.BUSINESS_ZONE).minusMonths(monthsAgo).atDay(1);
+    }
+
+    /**
      * Start dates of a dated history given as {@code monthsAgo}, oldest first. The first must be the
      * hire date, or payroll finds worked days the history does not cover.
      */
@@ -514,8 +524,7 @@ public class StaffSeeder implements ApplicationRunner {
         if (monthsAgo == null || monthsAgo.isEmpty()) {
             throw new IllegalStateException("Staff seed '" + entry.username() + "': " + field + " needs at least one item");
         }
-        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
-        List<LocalDate> starts = monthsAgo.stream().map(today::minusMonths).toList();
+        List<LocalDate> starts = monthsAgo.stream().map(StaffSeeder::monthStart).toList();
         if (!starts.getFirst().equals(hireDate)) {
             throw new IllegalStateException("Staff seed '" + entry.username() + "': the first of " + field
                 + " must start on the hire date (same monthsAgo as the first assignment)");
@@ -533,10 +542,9 @@ public class StaffSeeder implements ApplicationRunner {
         if (entry.assignments() == null || entry.assignments().isEmpty()) {
             throw new IllegalStateException("Staff seed '" + entry.username() + "': at least one assignment is required");
         }
-        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
         List<ResolvedAssignment> resolved = new ArrayList<>();
         for (AssignmentEntry item : entry.assignments()) {
-            LocalDate effectiveFrom = today.minusMonths(item.monthsAgo());
+            LocalDate effectiveFrom = monthStart(item.monthsAgo());
             if (!resolved.isEmpty() && !effectiveFrom.isAfter(resolved.getLast().effectiveFrom())) {
                 throw new IllegalStateException("Staff seed '" + entry.username()
                     + "': assignments must go from oldest to newest (monthsAgo decreasing)");
