@@ -12,8 +12,10 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.ResignationRequest;
 import com.htttdn.hrm.entity.enums.ResignationRequestStatus;
+import com.htttdn.hrm.exception.ResourceNotFoundException;
 
 import jakarta.persistence.LockModeType;
 
@@ -59,4 +61,18 @@ public interface ResignationRequestRepository
         WHERE request.id = :id
         """)
     Optional<ResignationRequest> findByIdForUpdate(@Param("id") Long id);
+
+    /** Đơn nghỉ việc theo id, không có thì 404 {@code REQUEST_NOT_FOUND}. Xem {@link AccountRepository#getRequired}. */
+    default ResignationRequest getRequired(Long id) {
+        return findById(id).orElseThrow(() -> notFound(id));
+    }
+
+    /** Như {@link #getRequired}, kèm khóa ghi ({@link #findByIdForUpdate}). */
+    default ResignationRequest getRequiredForUpdate(Long id) {
+        return findByIdForUpdate(id).orElseThrow(() -> notFound(id));
+    }
+
+    private static ResourceNotFoundException notFound(Long id) {
+        return new ResourceNotFoundException(ErrorCode.REQUEST_NOT_FOUND, "Resignation request not found: " + id);
+    }
 }

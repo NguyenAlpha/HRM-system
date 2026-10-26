@@ -24,7 +24,6 @@ import com.htttdn.hrm.entity.enums.ResignationRequestStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ForbiddenException;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.ResignationRequestRepository;
 import com.htttdn.hrm.repository.specification.EmployeeSpecifications;
@@ -88,7 +87,7 @@ public class ResignationRequestService {
 
     @PreAuthorize("hasAnyAuthority('request.self.cancel', 'request.manage')")
     public ResignationRequestView cancel(Long requestId) {
-        ResignationRequest request = findForUpdate(requestId);
+        ResignationRequest request = resignationRequestRepository.getRequiredForUpdate(requestId);
         requireSelfOrScopedAccess(request.getEmployee().getId(), REQUEST_MANAGE);
         requirePending(request);
         request.setStatus(ResignationRequestStatus.CANCELLED);
@@ -101,7 +100,7 @@ public class ResignationRequestService {
      */
     @PreAuthorize("isAuthenticated()")
     public ResignationRequestView approve(Long requestId, @Nullable String comment, @Nullable LocalDate lastWorkingDate) {
-        ResignationRequest request = findForUpdate(requestId);
+        ResignationRequest request = resignationRequestRepository.getRequiredForUpdate(requestId);
         requireApprover(request);
         requirePending(request);
         if (ENDED.contains(request.getEmployee().getEmploymentStatus())) {
@@ -116,7 +115,7 @@ public class ResignationRequestService {
 
     @PreAuthorize("isAuthenticated()")
     public ResignationRequestView reject(Long requestId, String comment) {
-        ResignationRequest request = findForUpdate(requestId);
+        ResignationRequest request = resignationRequestRepository.getRequiredForUpdate(requestId);
         requireApprover(request);
         requirePending(request);
         if (comment == null || comment.isBlank()) {
@@ -129,8 +128,7 @@ public class ResignationRequestService {
     @PreAuthorize("hasAnyAuthority('request.self.read', 'request.read')")
     @Transactional(readOnly = true)
     public ResignationRequestView getById(Long requestId) {
-        ResignationRequest request = resignationRequestRepository.findById(requestId)
-            .orElseThrow(() -> requestNotFound(requestId));
+        ResignationRequest request = resignationRequestRepository.getRequired(requestId);
         if (!isApprover(request)) {
             requireSelfOrScopedAccess(request.getEmployee().getId(), REQUEST_READ);
         }
@@ -197,7 +195,7 @@ public class ResignationRequestService {
      * approver who decided it. Employment already ended by HR in the meantime is left as it is.
      */
     public void complete(Long requestId) {
-        ResignationRequest request = findForUpdate(requestId);
+        ResignationRequest request = resignationRequestRepository.getRequiredForUpdate(requestId);
         if (request.getStatus() != ResignationRequestStatus.APPROVED || request.getCompletedAt() != null) {
             return;
         }
@@ -248,14 +246,6 @@ public class ResignationRequestService {
         if (!currentAccountProvider.account().belongsTo(employeeId)) {
             employeeAccessScopeService.requireEmployeeAccess(employeeId, scopedPermission);
         }
-    }
-
-    private ResignationRequest findForUpdate(Long requestId) {
-        return resignationRequestRepository.findByIdForUpdate(requestId).orElseThrow(() -> requestNotFound(requestId));
-    }
-
-    private static ResourceNotFoundException requestNotFound(Long requestId) {
-        return new ResourceNotFoundException(ErrorCode.REQUEST_NOT_FOUND, "Resignation request not found: " + requestId);
     }
 
     private ResignationRequestView toView(ResignationRequest request) {

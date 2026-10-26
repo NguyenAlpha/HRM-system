@@ -102,7 +102,7 @@ class LeaveRequestServiceTest {
         Employee hr = Employee.builder().id(2L).build();
         LeaveRequest request = LeaveRequest.builder().id(3L).employee(applicant)
             .status(LeaveRequestStatus.DRAFT).build();
-        when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
+        when(leaveRequestRepository.getRequiredForUpdate(3L)).thenReturn(request);
         when(currentAccountProvider.account()).thenReturn(
             Account.builder().id(9L).employee(hr).build());
 
@@ -117,7 +117,7 @@ class LeaveRequestServiceTest {
         Employee manager = Employee.builder().id(5L).fullName("Manager").build();
         LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee)
             .status(LeaveRequestStatus.DRAFT).build();
-        when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
+        when(leaveRequestRepository.getRequiredForUpdate(3L)).thenReturn(request);
         when(leaveRequestRepository.saveAndFlush(request)).thenReturn(request);
         when(currentAccountProvider.account())
             .thenReturn(Account.builder().id(9L).employee(employee).build());
@@ -139,7 +139,7 @@ class LeaveRequestServiceTest {
             .startAt(Instant.parse("2026-01-05T01:00:00Z"))
             .endAt(Instant.parse("2026-01-05T10:00:00Z"))
             .requestedMinutes(480).build();
-        when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
+        when(leaveRequestRepository.getRequiredForUpdate(3L)).thenReturn(request);
         when(leaveRequestRepository.saveAndFlush(request)).thenReturn(request);
         when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).employee(manager).build());
 
@@ -156,7 +156,7 @@ class LeaveRequestServiceTest {
         Employee manager = Employee.builder().id(5L).build();
         LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee).approverEmployee(manager)
             .status(LeaveRequestStatus.PENDING).build();
-        when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
+        when(leaveRequestRepository.getRequiredForUpdate(3L)).thenReturn(request);
         when(leaveRequestRepository.saveAndFlush(request)).thenReturn(request);
         when(currentAccountProvider.account()).thenReturn(
             Account.builder().id(9L).employee(manager).build());
@@ -179,7 +179,7 @@ class LeaveRequestServiceTest {
             .startAt(Instant.parse("2026-01-05T01:00:00Z"))
             .endAt(Instant.parse("2026-01-05T05:00:00Z"))
             .build();
-        when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
+        when(leaveRequestRepository.getRequiredForUpdate(3L)).thenReturn(request);
         when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).employee(manager).build());
         when(leaveRequestRepository.existsApprovedOverlap(
             1L, request.getStartAt(), request.getEndAt(), 3L
@@ -233,7 +233,7 @@ class LeaveRequestServiceTest {
         Employee employee = Employee.builder().id(1L).build();
         LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee)
             .leaveType(LeaveType.ANNUAL).status(LeaveRequestStatus.DRAFT).build();
-        when(leaveRequestRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(request));
+        when(leaveRequestRepository.getRequiredForUpdate(3L)).thenReturn(request);
         when(currentAccountProvider.account())
             .thenReturn(Account.builder().id(9L).employee(employee).build());
         doThrow(new ConflictException(ErrorCode.INSUFFICIENT_LEAVE_BALANCE, "not enough"))

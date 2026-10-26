@@ -11,8 +11,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Payslip;
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
+import com.htttdn.hrm.exception.ResourceNotFoundException;
 
 public interface PayslipRepository extends JpaRepository<Payslip, Long> {
 
@@ -56,4 +58,13 @@ public interface PayslipRepository extends JpaRepository<Payslip, Long> {
           AND period.status <> com.htttdn.hrm.entity.enums.PayrollPeriodStatus.CANCELLED
         """)
     List<Payslip> findForReportYear(@Param("year") short year);
+
+    /** Phiếu lương theo id, không có thì 404 {@code PAYSLIP_NOT_FOUND}. Xem {@link AccountRepository#getRequired}. */
+    default Payslip getRequired(Long id) {
+        return findById(id).orElseThrow(() -> notFound(id));
+    }
+
+    private static ResourceNotFoundException notFound(Long id) {
+        return new ResourceNotFoundException(ErrorCode.PAYSLIP_NOT_FOUND, "Payslip not found: " + id);
+    }
 }

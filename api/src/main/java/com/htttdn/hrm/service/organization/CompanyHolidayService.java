@@ -12,7 +12,6 @@ import com.htttdn.hrm.dto.response.attendance.CompanyHolidayResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.CompanyHoliday;
 import com.htttdn.hrm.exception.ConflictException;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.CompanyHolidayRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.service.payroll.PayrollPeriodInvalidator;
@@ -50,8 +49,7 @@ public class CompanyHolidayService {
     @PreAuthorize("hasAuthority('organization.manage')")
     public void delete(Long id) {
         accessScopeService.requireCompanyWide("organization.manage");
-        CompanyHoliday holiday = holidayRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND, "Holiday not found: " + id));
+        CompanyHoliday holiday = holidayRepository.getRequired(id);
         invalidateCalculatedPeriodOrReject(holiday.getHolidayDate());
         holidayRepository.delete(holiday);
     }

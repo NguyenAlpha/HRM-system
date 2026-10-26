@@ -28,7 +28,6 @@ import com.htttdn.hrm.entity.enums.LeaveType;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ForbiddenException;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.repository.specification.EmployeeSpecifications;
@@ -99,7 +98,7 @@ public class LeaveRequestService {
      */
     @PreAuthorize("hasAuthority('request.self.create')")
     public LeaveRequestView submit(Long requestId) {
-        LeaveRequest request = findForUpdate(requestId);
+        LeaveRequest request = leaveRequestRepository.getRequiredForUpdate(requestId);
         requireOwnEmployee(request.getEmployee().getId());
         requireStatus(request, LeaveRequestStatus.DRAFT);
         // Other requests may have been submitted or approved since this draft was created.
@@ -124,7 +123,7 @@ public class LeaveRequestService {
 
     @PreAuthorize("hasAuthority('request.self.cancel')")
     public LeaveRequestView cancel(Long requestId) {
-        LeaveRequest request = findForUpdate(requestId);
+        LeaveRequest request = leaveRequestRepository.getRequiredForUpdate(requestId);
         requireOwnEmployee(request.getEmployee().getId());
         if (request.getStatus() != LeaveRequestStatus.DRAFT
             && request.getStatus() != LeaveRequestStatus.PENDING) {
@@ -137,7 +136,7 @@ public class LeaveRequestService {
     /** Only the approver fixed at submission decides; nobody is ever the approver of their own leave. */
     @PreAuthorize("isAuthenticated()")
     public LeaveRequestView approve(Long requestId, String reviewComment) {
-        LeaveRequest request = findForUpdate(requestId);
+        LeaveRequest request = leaveRequestRepository.getRequiredForUpdate(requestId);
         requireApprover(request);
         requireStatus(request, LeaveRequestStatus.PENDING);
         applyApproval(request, reviewComment);
@@ -165,7 +164,7 @@ public class LeaveRequestService {
 
     @PreAuthorize("isAuthenticated()")
     public LeaveRequestView reject(Long requestId, String reviewComment) {
-        LeaveRequest request = findForUpdate(requestId);
+        LeaveRequest request = leaveRequestRepository.getRequiredForUpdate(requestId);
         requireApprover(request);
         requireStatus(request, LeaveRequestStatus.PENDING);
         review(request, LeaveRequestStatus.REJECTED, reviewComment);
@@ -176,8 +175,7 @@ public class LeaveRequestService {
     @PreAuthorize("hasAnyAuthority('request.self.read', 'request.read')")
     @Transactional(readOnly = true)
     public LeaveRequestView getById(Long requestId) {
-        LeaveRequest request = leaveRequestRepository.findById(requestId)
-            .orElseThrow(() -> requestNotFound(requestId));
+        LeaveRequest request = leaveRequestRepository.getRequired(requestId);
         if (!isApprover(request)) {
             requireSelfOrScopedAccess(request.getEmployee().getId(), REQUEST_READ);
         }
@@ -314,11 +312,6 @@ public class LeaveRequestService {
         }
     }
 
-    private LeaveRequest findForUpdate(Long requestId) {
-        return leaveRequestRepository.findByIdForUpdate(requestId)
-            .orElseThrow(() -> requestNotFound(requestId));
-    }
-
     private void requireStatus(LeaveRequest request, LeaveRequestStatus expected) {
         if (request.getStatus() != expected) {
             throw alreadyProcessed(
@@ -333,13 +326,6 @@ public class LeaveRequestService {
 
     private ConflictException alreadyProcessed(String message) {
         return new ConflictException(ErrorCode.REQUEST_ALREADY_PROCESSED, message);
-    }
-
-    private ResourceNotFoundException requestNotFound(Long requestId) {
-        return new ResourceNotFoundException(
-            ErrorCode.REQUEST_NOT_FOUND,
-            "Leave request not found: " + requestId
-        );
     }
 
     private LeaveRequestView toView(LeaveRequest request) {

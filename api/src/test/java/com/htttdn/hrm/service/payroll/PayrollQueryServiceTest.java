@@ -1,7 +1,6 @@
 package com.htttdn.hrm.service.payroll;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.junit.jupiter.api.Test;
@@ -81,7 +80,7 @@ class PayrollQueryServiceTest {
             .employee(Employee.builder().id(employeeId).build())
             .payrollPeriod(PayrollPeriod.builder().id(1L).status(status).build())
             .build();
-        when(payslipRepository.findById(5L)).thenReturn(Optional.of(payslip));
+        when(payslipRepository.getRequired(5L)).thenReturn(payslip);
     }
 
     private PayrollQueryService service() {

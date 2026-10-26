@@ -15,7 +15,6 @@ import com.htttdn.hrm.dto.response.payroll.PayslipResponse;
 import com.htttdn.hrm.entity.Payslip;
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.ForbiddenException;
-import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
@@ -64,8 +63,7 @@ public class PayrollQueryService {
 
     @PreAuthorize("hasAnyAuthority('payroll.self.read', 'report.payroll.read')")
     public PayslipResponse getPayslip(Long payslipId) {
-        Payslip payslip = payslipRepository.findById(payslipId)
-            .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.PAYSLIP_NOT_FOUND, "Payslip not found: " + payslipId));
+        Payslip payslip = payslipRepository.getRequired(payslipId);
         requirePayslipAccess(payslip.getEmployee().getId());
         if (!currentAccountProvider.hasAuthority("report.payroll.read")
             && !isReleased(payslip.getPayrollPeriod().getStatus())) {

@@ -12,9 +12,11 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.LeaveRequest;
 import com.htttdn.hrm.entity.enums.LeaveRequestStatus;
 import com.htttdn.hrm.entity.enums.LeaveType;
+import com.htttdn.hrm.exception.ResourceNotFoundException;
 
 import jakarta.persistence.LockModeType;
 
@@ -85,4 +87,18 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
         @Param("to") Instant to,
         @Param("excludedRequestId") Long excludedRequestId
     );
+
+    /** Đơn nghỉ phép theo id, không có thì 404 {@code REQUEST_NOT_FOUND}. Xem {@link AccountRepository#getRequired}. */
+    default LeaveRequest getRequired(Long id) {
+        return findById(id).orElseThrow(() -> notFound(id));
+    }
+
+    /** Như {@link #getRequired}, kèm khóa ghi ({@link #findByIdForUpdate}). */
+    default LeaveRequest getRequiredForUpdate(Long id) {
+        return findByIdForUpdate(id).orElseThrow(() -> notFound(id));
+    }
+
+    private static ResourceNotFoundException notFound(Long id) {
+        return new ResourceNotFoundException(ErrorCode.REQUEST_NOT_FOUND, "Leave request not found: " + id);
+    }
 }
