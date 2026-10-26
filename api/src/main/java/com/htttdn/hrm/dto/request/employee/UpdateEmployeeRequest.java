@@ -28,7 +28,7 @@ public record UpdateEmployeeRequest(
     @Nullable
     String major,
 
-    @Size(max = 30)
+    @Size(max = 60)
     @Nullable
     String institution,
 
