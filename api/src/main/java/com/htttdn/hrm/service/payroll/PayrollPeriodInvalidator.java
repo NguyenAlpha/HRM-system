@@ -53,7 +53,7 @@ public class PayrollPeriodInvalidator {
         }
     }
 
-    /** Xóa mọi phiếu lương của kỳ cùng các dòng của chúng: khi kỳ bị vô hiệu, hoặc trước khi tính lại. */
+    /** Xóa mọi phiếu lương của kỳ cùng các dòng của chúng: khi kỳ bị vô hiệu, trước khi tính lại, hoặc khi hủy kỳ. */
     public void deletePayslips(Long periodId) {
         for (Payslip payslip : payslipRepository.findByPayrollPeriodId(periodId)) {
             payslipItemRepository.deleteByPayslipId(payslip.getId());

@@ -54,8 +54,8 @@ public class InsuranceTaxCalculator {
      * @param taxableGrossPay tổng thu nhập chịu thuế (đã trừ phần miễn thuế)
      * @param daysNotWorked số ngày làm việc của tháng mà người lao động không làm việc; từ 14 ngày thì
      *        tháng đó không trừ bảo hiểm
-     * @return các khoản bảo hiểm, căn cứ đóng, thu nhập tính thuế, thuế, và id hồ sơ/luật đã dùng (lưu lên
-     *         phiếu lương để đối chiếu sau)
+     * @return các khoản bảo hiểm, căn cứ đóng (0 khi tháng không đóng), thu nhập tính thuế, thuế, và id
+     *         hồ sơ/luật đã dùng (lưu lên phiếu lương để đối chiếu sau)
      * @throws BusinessException thiếu hồ sơ, luật hoặc dữ liệu không hợp lệ (→ 400)
      */
     public Deduction calculate(Long employeeId, LocalDate workMonthEnd, LocalDate paymentDate,
