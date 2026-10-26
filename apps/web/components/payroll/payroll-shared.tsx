@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
+import { logoUrl } from "@/lib/branding"
 import { money, workforceApi } from "@/components/workforce/workforce-shared"
 import { PAYROLL_PERIOD_STATUS_LABELS, type CompanyProfile, type PayrollPeriodStatus, type Payslip } from "@/lib/workforce"
 
@@ -78,7 +79,7 @@ function Line({ label, amount, sign = "", strong = false }: { label: string; amo
 }
 
 /** One employee's payslip laid out like a printed slip: who, earnings, deductions, net pay; "In" prints just the slip. */
-/** The company's name, tax code and address heading a printed sheet; shown only on paper. */
+/** The company's logo, name, tax code and address heading a printed sheet; shown only on paper. */
 export function CompanyPrintHeader() {
   const [company, setCompany] = useState<CompanyProfile | null>(null)
 
@@ -92,11 +93,17 @@ export function CompanyPrintHeader() {
   }, [])
 
   if (!company) return null
+  const logo = logoUrl(company.logoUpdatedAt)
   return (
-    <div className="hidden border-b pb-2 text-sm print:block">
-      <p className="font-semibold uppercase">{company.name}</p>
-      {company.taxCode && <p>Mã số thuế: {company.taxCode}</p>}
-      {company.address && <p>{company.address}</p>}
+    <div className="hidden items-center gap-3 border-b pb-2 text-sm print:flex">
+      {/* A plain <img>, as in BrandMark; without a logo the header is just the text. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {logo && <img src={logo} alt="" className="size-14 object-contain" />}
+      <div>
+        <p className="font-semibold uppercase">{company.name}</p>
+        {company.taxCode && <p>Mã số thuế: {company.taxCode}</p>}
+        {company.address && <p>{company.address}</p>}
+      </div>
     </div>
   )
 }
