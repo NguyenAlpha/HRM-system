@@ -441,7 +441,7 @@ class PayrollServiceTest {
         when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
 
         assertThrows(ConflictException.class, () -> service().markPaid(1L,
-            new PayrollActionRequest(LocalDate.of(2026, 12, 1))));
+            LocalDate.of(2026, 12, 1)));
         assertEquals(PayrollPeriodStatus.APPROVED, period.getStatus());
     }
 

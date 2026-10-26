@@ -27,6 +27,8 @@ import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
+import jakarta.annotation.Nullable;
+
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -187,12 +189,12 @@ public class PayrollService {
     /**
      * Ghi nhận đã trả lương và chốt ngày trả thực tế.
      *
-     * @param request {@code taxPaymentDate} là ngày trả thực tế (null → hôm nay)
+     * @param paidOn ngày trả thực tế (null → hôm nay); thành ngày trả lương của kỳ
      * @throws ConflictException kỳ chưa duyệt, hoặc ngày trả thực tế khác tháng với ngày trả đã dùng để
      *         tính thuế (→ 409 {@code CONFLICT})
      */
     @PreAuthorize("hasAuthority('payroll.mark_paid')")
-    public PayrollPeriodResponse markPaid(Long periodId, PayrollActionRequest request) {
+    public PayrollPeriodResponse markPaid(Long periodId, @Nullable LocalDate paidOn) {
         employeeAccessScopeService.requireCompanyWide("payroll.mark_paid");
         PayrollPeriod period = payrollPeriodRepository.getRequiredForUpdate(periodId);
         if (period.getStatus() != PayrollPeriodStatus.APPROVED) {
@@ -201,8 +203,7 @@ public class PayrollService {
 
         // Thuế đã tính theo ngày trả dự kiến (luật thuế, số người phụ thuộc, tháng nộp thuế): trả lệch sang
         // tháng khác thì số thuế có thể sai, phải tính lại trước. Cùng tháng thì chỉ cập nhật ngày.
-        LocalDate actualPaymentDate = request.taxPaymentDate() == null
-            ? LocalDate.now(clock) : request.taxPaymentDate();
+        LocalDate actualPaymentDate = paidOn == null ? LocalDate.now(clock) : paidOn;
         if (period.getTaxPaymentDate() == null || !YearMonth.from(actualPaymentDate)
             .equals(YearMonth.from(period.getTaxPaymentDate()))) {
             throw new ConflictException(ErrorCode.CONFLICT,

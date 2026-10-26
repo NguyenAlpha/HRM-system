@@ -152,7 +152,7 @@ public class PayrollSeeder implements ApplicationRunner {
         if (monthsAgo >= 2) {
             authenticate(approver, APPROVER_AUTHORITIES);
             payrollService.approve(periodId);
-            payrollService.markPaid(periodId, new PayrollActionRequest(taxPaymentDate));
+            payrollService.markPaid(periodId, taxPaymentDate);
             if (monthsAgo >= 3) {
                 payrollService.lock(periodId);
             }

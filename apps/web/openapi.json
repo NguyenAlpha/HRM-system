@@ -3096,7 +3096,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/PayrollActionRequest"
+                "$ref" : "#/components/schemas/MarkPayrollPaidRequest"
               }
             }
           }
@@ -8768,6 +8768,15 @@
           }
         },
         "required" : [ "refreshToken" ]
+      },
+      "MarkPayrollPaidRequest" : {
+        "type" : "object",
+        "properties" : {
+          "paidOn" : {
+            "type" : [ "string", "null" ],
+            "format" : "date"
+          }
+        }
       },
       "MonthlyHrStatusReportResponse" : {
         "type" : "object",

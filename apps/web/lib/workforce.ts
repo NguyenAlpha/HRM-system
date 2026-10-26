@@ -35,7 +35,7 @@ export type WorkforceBody = Pick<Schemas,
   | "CompanyHolidayRequest" | "CreateLeaveCommand" | "ReviewBody"
   | "CreateResignationRequestRequest" | "ApproveResignationBody" | "RejectResignationBody"
   | "SetSalaryCommand" | "ProfileCommand" | "DependentCommand" | "EndDependentCommand"
-  | "CreatePayrollPeriodRequest" | "PayrollActionRequest" | "CreatePayrollAdjustmentRequest"
+  | "CreatePayrollPeriodRequest" | "PayrollActionRequest" | "MarkPayrollPaidRequest" | "CreatePayrollAdjustmentRequest"
   | "SetPositionAllowanceCommand" | "SetSeniorityAllowanceCommand" | "CompanyProfileRequest"
 >
 

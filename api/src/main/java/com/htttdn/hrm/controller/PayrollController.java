@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.htttdn.hrm.dto.request.payroll.CreatePayrollPeriodRequest;
+import com.htttdn.hrm.dto.request.payroll.MarkPayrollPaidRequest;
 import com.htttdn.hrm.dto.request.payroll.PayrollActionRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
@@ -76,8 +77,8 @@ public class PayrollController {
 
     @PostMapping("/periods/{id}/mark-paid")
     public ApiResult<PayrollPeriodResponse> markPaid(@PathVariable Long id,
-        @RequestBody(required = false) PayrollActionRequest request) {
-        return ApiResult.ok(service.markPaid(id, request == null ? new PayrollActionRequest() : request));
+        @RequestBody(required = false) MarkPayrollPaidRequest request) {
+        return ApiResult.ok(service.markPaid(id, request == null ? null : request.paidOn()));
     }
 
     @PostMapping("/periods/{id}/lock")

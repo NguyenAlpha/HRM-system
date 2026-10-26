@@ -323,7 +323,7 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
       {markingPaid && period && (
         <MarkPaidDialog period={period} busy={busy} onClose={() => setMarkingPaid(false)}
           onSubmit={(paidOn) => action("mark-paid", "Đã ghi nhận trả lương",
-            { taxPaymentDate: paidOn } satisfies WorkforceBody["PayrollActionRequest"])} />
+            { paidOn } satisfies WorkforceBody["MarkPayrollPaidRequest"])} />
       )}
 
       <AlertDialog open={confirm !== null} onOpenChange={(open) => { if (!open && !busy) setConfirm(null) }}>

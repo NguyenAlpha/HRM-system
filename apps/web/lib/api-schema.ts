@@ -3048,6 +3048,10 @@ export interface components {
         LogoutRequest: {
             refreshToken: string;
         };
+        MarkPayrollPaidRequest: {
+            /** Format: date */
+            paidOn?: string | null;
+        };
         MonthlyHrStatusReportResponse: {
             /** Format: int64 */
             absentDays: number;
@@ -6304,7 +6308,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["PayrollActionRequest"];
+                "application/json": components["schemas"]["MarkPayrollPaidRequest"];
             };
         };
         responses: {
