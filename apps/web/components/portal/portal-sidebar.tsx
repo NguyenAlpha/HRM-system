@@ -23,6 +23,8 @@ import {
   LayoutDashboard,
   LogOut,
   Network,
+  PanelLeftClose,
+  PanelLeftOpen,
   Receipt,
   ShieldCheck,
   ShieldPlus,
@@ -77,7 +79,14 @@ function NavIcon({ href }: { href: string }) {
 /** A titled block of the menu; a null title is the untitled block at the top. */
 type NavGroup = { title: string | null; links: NavLink[] }
 
-export function PortalSidebar({ portal, account, branding }: { portal: Portal; account: AccountSummary; branding: Branding }) {
+/** The menu down the left; `collapsed` leaves only the icons, each naming its page on hover. */
+export function PortalSidebar({ portal, account, branding, collapsed, onToggle }: {
+  portal: Portal
+  account: AccountSummary
+  branding: Branding
+  collapsed: boolean
+  onToggle: () => void
+}) {
   const admin = portal === "admin"
   const pathname = usePathname()
   const router = useRouter()
@@ -189,13 +198,19 @@ export function PortalSidebar({ portal, account, branding }: { portal: Portal; a
       <div className="brand sidebar-brand">
         <BrandMark branding={branding} />
         <span className="min-w-0"><strong className="truncate">{branding.name}</strong><small>{admin ? "Admin Console" : "People Workspace"}</small></span>
+        <button type="button" className="sidebar-toggle" onClick={onToggle}
+          aria-label={collapsed ? "Mở rộng menu" : "Thu gọn menu"} title={collapsed ? "Mở rộng menu" : "Thu gọn menu"}>
+          {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+        </button>
       </div>
       <nav aria-label="Điều hướng chính">
         {groups.map((navGroup) => (
           <div key={navGroup.title ?? "main"} className="nav-group">
             {navGroup.title && <p className="nav-group-title">{navGroup.title}</p>}
             {navGroup.links.map((link) => (
-              <Link key={link.href} className={navClass(link.href)} href={link.href}><NavIcon href={link.href} />{link.label}</Link>
+              <Link key={link.href} className={navClass(link.href)} href={link.href} title={collapsed ? link.label : undefined}>
+                <NavIcon href={link.href} /><span className="nav-label">{link.label}</span>
+              </Link>
             ))}
           </div>
         ))}

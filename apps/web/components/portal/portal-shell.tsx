@@ -20,6 +20,9 @@ interface PortalSessionValue {
   onSessionExpired: () => void
 }
 
+/** Remembers, per browser, whether the sidebar was left collapsed. */
+const SIDEBAR_COLLAPSED_KEY = "hrm.sidebar-collapsed"
+
 const PortalSessionContext = createContext<PortalSessionValue | null>(null)
 
 /** Session of the portal layout the calling page is rendered in. */
@@ -35,10 +38,21 @@ export function PortalShell({ portal, branding, children }: { portal: Portal; br
   const { loginPath } = PORTAL_CONFIG[portal]
   const [session, setSession] = useState<SessionData | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // The sidebar only renders once the session has loaded in the browser, so reading storage here never
+  // disagrees with the server render.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => typeof window !== "undefined" && localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true",
+  )
   const onSessionExpired = useCallback(() => {
     router.replace(loginPath)
     router.refresh()
   }, [router, loginPath])
+
+  function toggleSidebar() {
+    const next = !sidebarCollapsed
+    setSidebarCollapsed(next)
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(next))
+  }
 
   useEffect(() => {
     let active = true
@@ -67,8 +81,9 @@ export function PortalShell({ portal, branding, children }: { portal: Portal; br
 
   return (
     <PortalSessionContext.Provider value={{ portal, session, setSession, onSessionExpired }}>
-      <main className={`portal-shell ${portal === "admin" ? "admin-shell" : "hrm-shell"}`}>
-        <PortalSidebar portal={portal} account={session.account} branding={branding} />
+      <main className={`portal-shell ${portal === "admin" ? "admin-shell" : "hrm-shell"} ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
+        <PortalSidebar portal={portal} account={session.account} branding={branding}
+          collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
         <section className="portal-content">{children}</section>
       </main>
     </PortalSessionContext.Provider>
