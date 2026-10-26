@@ -1,7 +1,6 @@
 package com.htttdn.hrm.service.payroll;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -15,8 +14,6 @@ import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeePayrollProfile;
 import com.htttdn.hrm.entity.EmployeeTaxDependent;
-import com.htttdn.hrm.entity.PayrollInsuranceRule;
-import com.htttdn.hrm.entity.PayrollTaxRule;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
@@ -24,9 +21,6 @@ import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeePayrollProfileRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeTaxDependentRepository;
-import com.htttdn.hrm.repository.PayrollInsuranceRuleRepository;
-import com.htttdn.hrm.repository.PayrollTaxBracketRepository;
-import com.htttdn.hrm.repository.PayrollTaxRuleRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 import com.htttdn.hrm.util.Strings;
 
@@ -45,9 +39,6 @@ import lombok.RequiredArgsConstructor;
 public class PayrollDeductionsService {
     private final EmployeePayrollProfileRepository profileRepository;
     private final EmployeeTaxDependentRepository dependentRepository;
-    private final PayrollTaxRuleRepository taxRules;
-    private final PayrollTaxBracketRepository taxBrackets;
-    private final PayrollInsuranceRuleRepository insuranceRules;
     private final AccountRepository accounts;
     private final EmployeeRepository employees;
     private final EmployeeAccessScopeService access;
@@ -154,90 +145,6 @@ public class PayrollDeductionsService {
         return toDependent(current);
     }
 
-    @Transactional(readOnly = true)
-    public Deduction calculate(Long employeeId, LocalDate workMonthEnd, LocalDate paymentDate,
-        BigDecimal taxableGrossPay, long unpaidDays) {
-        Profile profile = profileRepository.findEffective(employeeId, workMonthEnd)
-            .map(PayrollDeductionsService::toProfile)
-            .orElseThrow(() -> new BusinessException(ErrorCode.VALIDATION_ERROR,
-                "Employee " + employeeId + ": missing payroll profile on " + workMonthEnd));
-        if (!profile.taxResident()) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
-                "Employee " + employeeId + ": non-resident tax calculation is not configured");
-        }
-        if (unpaidDays >= 14 && (profile.socialInsurance() || profile.healthInsurance()
-            || profile.unemploymentInsurance())) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
-                "Employee " + employeeId + ": 14 or more unpaid workdays; HR must set the month's insurance participation explicitly");
-        }
-        PayrollInsuranceRule insurance = insuranceRules.findEffective(workMonthEnd)
-            .orElseThrow(() -> new BusinessException(ErrorCode.VALIDATION_ERROR,
-                "Missing insurance rules for " + workMonthEnd));
-        if ((profile.socialInsurance() || profile.healthInsurance() || profile.unemploymentInsurance())
-            && profile.insuranceSalary().compareTo(insurance.regionMinimum(profile.wageRegion())) < 0) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
-                "Employee " + employeeId + ": insuranceSalary is below region " + profile.wageRegion()
-                    + " minimum on " + workMonthEnd);
-        }
-        BigDecimal regionMinimum = insurance.regionMinimum(profile.wageRegion());
-        BigDecimal socialBase = profile.insuranceSalary().min(insurance.getSocialHealthCap());
-        BigDecimal unemploymentBase = profile.insuranceSalary().min(regionMinimum
-            .multiply(BigDecimal.valueOf(insurance.getUnemploymentCapMultiplier())));
-        BigDecimal social = profile.socialInsurance() ? money(socialBase.multiply(insurance.getSocialRate())) : BigDecimal.ZERO;
-        BigDecimal health = profile.healthInsurance() ? money(socialBase.multiply(insurance.getHealthRate())) : BigDecimal.ZERO;
-        BigDecimal unemployment = profile.unemploymentInsurance()
-            ? money(unemploymentBase.multiply(insurance.getUnemploymentRate())) : BigDecimal.ZERO;
-        PayrollTaxRule tax = taxRules.findEffective(paymentDate)
-            .orElseThrow(() -> new BusinessException(ErrorCode.VALIDATION_ERROR,
-                "Missing resident income tax rules for payment date " + paymentDate));
-        long dependentCount = dependentRepository.countEffective(employeeId, paymentDate);
-        if (taxableGrossPay.signum() < 0) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Taxable pay cannot be negative");
-        }
-        BigDecimal taxableIncome = taxableGrossPay.subtract(social).subtract(health).subtract(unemployment)
-            .subtract(tax.getPersonalDeduction())
-            .subtract(tax.getDependentDeduction().multiply(BigDecimal.valueOf(dependentCount)))
-            .max(BigDecimal.ZERO);
-        List<TaxBracket> brackets = taxBrackets.findByIdTaxRuleIdOrderByIdLowerBound(tax.getId()).stream()
-            .map(bracket -> new TaxBracket(bracket.getId().getLowerBound(), bracket.getUpperBound(), bracket.getRate()))
-            .toList();
-        if (brackets.isEmpty()) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Tax rule has no brackets: " + tax.getId());
-        }
-        return new Deduction(profile.id(), insurance.getId(), tax.getId(), socialBase, unemploymentBase,
-            social, health, unemployment, taxableIncome, progressiveTax(taxableIncome, brackets));
-    }
-
-    static BigDecimal progressiveTax(BigDecimal taxableIncome, List<TaxBracket> brackets) {
-        if (brackets.isEmpty()) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Tax rule has no brackets");
-        }
-        BigDecimal pit = BigDecimal.ZERO;
-        BigDecimal expectedLower = BigDecimal.ZERO;
-        for (TaxBracket bracket : brackets) {
-            if (bracket.lowerBound().compareTo(expectedLower) != 0
-                || bracket.rate().signum() < 0 || bracket.rate().compareTo(BigDecimal.ONE) > 0
-                || bracket.upperBound() != null && bracket.upperBound().compareTo(bracket.lowerBound()) <= 0) {
-                throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Tax brackets have a gap or overlap");
-            }
-            BigDecimal upper = bracket.upperBound() == null ? taxableIncome : bracket.upperBound().min(taxableIncome);
-            if (upper.compareTo(bracket.lowerBound()) > 0) {
-                pit = pit.add(upper.subtract(bracket.lowerBound()).multiply(bracket.rate()));
-            }
-            if (bracket.upperBound() == null) {
-                if (bracket != brackets.get(brackets.size() - 1)) {
-                    throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Open tax bracket must be last");
-                }
-            } else {
-                expectedLower = bracket.upperBound();
-            }
-        }
-        if (brackets.get(brackets.size() - 1).upperBound() != null) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Tax brackets must cover all income");
-        }
-        return money(pit);
-    }
-
     private static Profile toProfile(EmployeePayrollProfile profile) {
         return new Profile(profile.getId(), profile.getEmployee().getId(), profile.getEffectiveFrom(),
             profile.getEffectiveTo(), profile.getTaxResident(), profile.getSocialInsurance(),
@@ -258,8 +165,6 @@ public class PayrollDeductionsService {
         return employee;
     }
 
-    private static BigDecimal money(BigDecimal value) { return value.setScale(2, RoundingMode.HALF_UP); }
-
     public record ProfileCommand(@NotNull LocalDate effectiveFrom, @NotNull Boolean taxResident,
         @NotNull Boolean socialInsurance, @NotNull Boolean healthInsurance,
         @NotNull Boolean unemploymentInsurance, @NotNull @PositiveOrZero BigDecimal insuranceSalary,
@@ -272,9 +177,4 @@ public class PayrollDeductionsService {
     public record Dependent(Long id, Long employeeId, String fullName, @Nullable String identifier,
         LocalDate effectiveFrom, @Nullable LocalDate effectiveTo) {}
     public record EndDependentCommand(@NotNull LocalDate effectiveTo) {}
-    public record Deduction(Long profileId, Long insuranceRuleId, Long taxRuleId,
-        BigDecimal insuranceSalaryBase, BigDecimal unemploymentInsuranceBase,
-        BigDecimal social, BigDecimal health,
-        BigDecimal unemployment, BigDecimal taxableIncome, BigDecimal incomeTax) {}
-    static record TaxBracket(BigDecimal lowerBound, BigDecimal upperBound, BigDecimal rate) {}
 }

@@ -18,10 +18,7 @@ import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeePayrollProfileRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeTaxDependentRepository;
-import com.htttdn.hrm.repository.PayrollInsuranceRuleRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
-import com.htttdn.hrm.repository.PayrollTaxBracketRepository;
-import com.htttdn.hrm.repository.PayrollTaxRuleRepository;
 import com.htttdn.hrm.repository.PayslipItemRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
@@ -40,14 +37,11 @@ import static org.mockito.Mockito.when;
 @Transactional
 class PayrollDeductionsIntegrationTest {
     @Autowired private JdbcTemplate jdbc;
-    @Autowired private PayrollDeductionsService service;
+    @Autowired private InsuranceTaxCalculator calculator;
     @Autowired private EmployeeRepository employees;
     @Autowired private AccountRepository accounts;
     @Autowired private EmployeePayrollProfileRepository profiles;
     @Autowired private EmployeeTaxDependentRepository dependents;
-    @Autowired private PayrollTaxRuleRepository taxRules;
-    @Autowired private PayrollTaxBracketRepository taxBrackets;
-    @Autowired private PayrollInsuranceRuleRepository insuranceRules;
 
     @Test
     void employeeInsuranceUsesSeparateCapsAndDependentDeduction() {
@@ -55,7 +49,7 @@ class PayrollDeductionsIntegrationTest {
         LocalDate workEnd = LocalDate.of(2026, 10, 31);
         LocalDate payDate = LocalDate.of(2026, 11, 5);
 
-        PayrollDeductionsService.Deduction result = service.calculate(employeeId, workEnd,
+        InsuranceTaxCalculator.Deduction result = calculator.calculate(employeeId, workEnd,
             payDate, new BigDecimal("40000000"), 0);
 
         assertEquals(new BigDecimal("50600000.00"), result.insuranceSalaryBase());
@@ -70,10 +64,10 @@ class PayrollDeductionsIntegrationTest {
     @Test
     void missingFutureTaxRuleAndFourteenUnpaidDaysStopCalculation() {
         Long employeeId = seedEmployee();
-        assertThrows(BusinessException.class, () -> service.calculate(employeeId,
+        assertThrows(BusinessException.class, () -> calculator.calculate(employeeId,
             LocalDate.of(2026, 10, 31), LocalDate.of(2027, 1, 5),
             new BigDecimal("40000000"), 0));
-        assertThrows(BusinessException.class, () -> service.calculate(employeeId,
+        assertThrows(BusinessException.class, () -> calculator.calculate(employeeId,
             LocalDate.of(2026, 10, 31), LocalDate.of(2026, 11, 5),
             new BigDecimal("40000000"), 14));
     }
@@ -116,7 +110,7 @@ class PayrollDeductionsIntegrationTest {
     private PayrollDeductionsService subjectWith(PayrollPeriodRepository periods) {
         CurrentAccountProvider actor = mock(CurrentAccountProvider.class);
         when(actor.accountId()).thenReturn(jdbc.queryForObject("SELECT id FROM accounts ORDER BY id LIMIT 1", Long.class));
-        return new PayrollDeductionsService(profiles, dependents, taxRules, taxBrackets, insuranceRules,
+        return new PayrollDeductionsService(profiles, dependents,
             accounts, employees, mock(EmployeeAccessScopeService.class), actor,
             new PayrollPeriodInvalidator(periods, mock(PayslipRepository.class), mock(PayslipItemRepository.class)));
     }

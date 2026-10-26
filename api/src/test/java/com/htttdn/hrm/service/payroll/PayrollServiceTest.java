@@ -75,7 +75,7 @@ class PayrollServiceTest {
     @Mock private CurrentAccountProvider currentAccountProvider;
     @Mock private EmployeeAccessScopeService employeeAccessScopeService;
     @Mock private AttendanceCalendarService attendanceCalendarService;
-    @Mock private PayrollDeductionsService payrollDeductionsService;
+    @Mock private InsuranceTaxCalculator insuranceTaxCalculator;
 
     @Test
     void employeeWithOnlyHolidayDatesRequiresManualPayrollReview() {
@@ -281,7 +281,7 @@ class PayrollServiceTest {
         assertEquals(new BigDecimal("600000"), payslip.getOtherEarningsPay());
         assertEquals(new BigDecimal("100000"), payslip.getTaxExemptOtherEarnings());
         assertEquals(new BigDecimal("1114423.07"), payslip.getGrossPay());
-        verify(payrollDeductionsService).calculate(eq(2L), eq(end), eq(end),
+        verify(insuranceTaxCalculator).calculate(eq(2L), eq(end), eq(end),
             eq(new BigDecimal("942307.69")), eq(0L));
         // The deduction comes off after tax.
         assertEquals(new BigDecimal("200000"), payslip.getOtherDeductions());
@@ -391,7 +391,7 @@ class PayrollServiceTest {
         ArgumentCaptor<Payslip> captor = ArgumentCaptor.forClass(Payslip.class);
         verify(payslipRepository).save(captor.capture());
         assertEquals(new BigDecimal("2000000.00"), captor.getValue().getBaseSalaryPay());
-        verify(payrollDeductionsService).calculate(eq(2L), eq(lastWorkingDay), eq(end),
+        verify(insuranceTaxCalculator).calculate(eq(2L), eq(lastWorkingDay), eq(end),
             eq(new BigDecimal("2000000.00")), eq(0L));
     }
 
@@ -414,7 +414,7 @@ class PayrollServiceTest {
             seniorityAllowanceRuleRepository,
             attendanceRecordRepository,
             attendanceCalendarService,
-            payrollDeductionsService,
+            insuranceTaxCalculator,
             payrollAdjustmentRepository
         );
         return new PayrollService(
@@ -449,9 +449,9 @@ class PayrollServiceTest {
     }
 
     private void stubNoDeductions() {
-        when(payrollDeductionsService.calculate(anyLong(), any(LocalDate.class), any(LocalDate.class),
+        when(insuranceTaxCalculator.calculate(anyLong(), any(LocalDate.class), any(LocalDate.class),
             any(BigDecimal.class), anyLong())).thenReturn(
-                new PayrollDeductionsService.Deduction(1L, 1L, 1L, BigDecimal.ZERO, BigDecimal.ZERO,
+                new InsuranceTaxCalculator.Deduction(1L, 1L, 1L, BigDecimal.ZERO, BigDecimal.ZERO,
                     BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO));
     }
 }

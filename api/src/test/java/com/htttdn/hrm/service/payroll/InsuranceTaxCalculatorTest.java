@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class PayrollDeductionsServiceTest {
-    private final List<PayrollDeductionsService.TaxBracket> rules2026 = List.of(
+class InsuranceTaxCalculatorTest {
+    private final List<InsuranceTaxCalculator.TaxBracket> rules2026 = List.of(
         bracket("0", "10000000", "0.05"),
         bracket("10000000", "30000000", "0.10"),
         bracket("30000000", "60000000", "0.20"),
@@ -27,11 +27,11 @@ class PayrollDeductionsServiceTest {
     }
 
     private BigDecimal tax(String taxable) {
-        return PayrollDeductionsService.progressiveTax(new BigDecimal(taxable), rules2026);
+        return InsuranceTaxCalculator.progressiveTax(new BigDecimal(taxable), rules2026);
     }
 
-    private PayrollDeductionsService.TaxBracket bracket(String lower, String upper, String rate) {
-        return new PayrollDeductionsService.TaxBracket(new BigDecimal(lower),
+    private InsuranceTaxCalculator.TaxBracket bracket(String lower, String upper, String rate) {
+        return new InsuranceTaxCalculator.TaxBracket(new BigDecimal(lower),
             upper == null ? null : new BigDecimal(upper), new BigDecimal(rate));
     }
 }

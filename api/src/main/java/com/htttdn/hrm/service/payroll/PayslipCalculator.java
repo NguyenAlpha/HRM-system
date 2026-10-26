@@ -66,7 +66,7 @@ public class PayslipCalculator {
     private final SeniorityAllowanceRuleRepository seniorityAllowanceRuleRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final AttendanceCalendarService attendanceCalendarService;
-    private final PayrollDeductionsService payrollDeductionsService;
+    private final InsuranceTaxCalculator insuranceTaxCalculator;
     private final PayrollAdjustmentRepository payrollAdjustmentRepository;
 
     /** Dữ liệu đầu vào đã kiểm tra đủ của một nhân viên trong kỳ. */
@@ -113,7 +113,7 @@ public class PayslipCalculator {
 
         BigDecimal allowancePay = prorated.positionAllowance().add(prorated.seniorityAllowance());
         BigDecimal grossPay = prorated.basicSalary().add(allowancePay).add(overtime.amount()).add(adjustments.earnings());
-        PayrollDeductionsService.Deduction deduction = deductions(period, employee, inputs,
+        InsuranceTaxCalculator.Deduction deduction = deductions(period, employee, inputs,
             grossPay.subtract(overtime.taxExempt()).subtract(adjustments.taxExempt()));
         BigDecimal netPay = grossPay.subtract(deduction.social()).subtract(deduction.health())
             .subtract(deduction.unemployment()).subtract(deduction.incomeTax()).subtract(adjustments.deductions());
@@ -276,10 +276,10 @@ public class PayslipCalculator {
     }
 
     /**
-     * Bảo hiểm và thuế TNCN của tháng ({@link PayrollDeductionsService#calculate}); số ngày nghỉ không lương
+     * Bảo hiểm và thuế TNCN của tháng ({@link InsuranceTaxCalculator#calculate}); số ngày nghỉ không lương
      * quyết định có phải xử lý bảo hiểm thủ công không. Lỗi thiếu hồ sơ được báo kèm mã nhân viên.
      */
-    private PayrollDeductionsService.Deduction deductions(PayrollPeriod period, Employee employee, Inputs inputs,
+    private InsuranceTaxCalculator.Deduction deductions(PayrollPeriod period, Employee employee, Inputs inputs,
         BigDecimal taxableGrossPay) {
         long unpaidDays = inputs.scheduledDays().stream().filter(day -> {
             AttendanceRecord record = inputs.attendanceByDate().get(day.workDate());
@@ -287,7 +287,7 @@ public class PayslipCalculator {
                 || record.getStatus() == AttendanceStatus.UNAUTHORIZED_ABSENCE);
         }).count();
         try {
-            return payrollDeductionsService.calculate(employee.getId(), inputs.employedTo(),
+            return insuranceTaxCalculator.calculate(employee.getId(), inputs.employedTo(),
                 period.getTaxPaymentDate(), taxableGrossPay, unpaidDays);
         } catch (BusinessException error) {
             throw missingPayrollInput(employee, error.getMessage());
