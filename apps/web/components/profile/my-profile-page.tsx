@@ -81,12 +81,12 @@ export function MyProfilePage() {
         title="Hồ sơ của tôi"
         description="Thông tin nhân sự công ty đang lưu về bạn. Bạn tự sửa được liên hệ và học vấn; thông tin khác hãy liên hệ phòng Nhân sự."
         actions={(
-          <>
+          <div className="flex flex-wrap gap-2">
             {canEdit && profile && (
               <Button type="button" variant="outline" onClick={() => setEditing(true)}><PencilLine /> Sửa thông tin</Button>
             )}
             <Button type="button" variant="outline" onClick={() => setChangingPassword(true)}><KeyRound /> Đổi mật khẩu</Button>
-          </>
+          </div>
         )}
       />
 
