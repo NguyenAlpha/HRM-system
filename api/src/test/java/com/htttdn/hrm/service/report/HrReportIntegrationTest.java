@@ -32,7 +32,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class HrReportIntegrationTest {
 
     @Autowired private JdbcTemplate jdbc;
-    @Autowired private ReportService reportService;
+    @Autowired private TurnoverReportService turnoverReportService;
+    @Autowired private MonthlyHrStatusReportService monthlyHrStatusReportService;
     @Autowired private LeaveEntitlementService leaveEntitlementService;
 
     private Long unitId;
@@ -78,7 +79,7 @@ class HrReportIntegrationTest {
 
     @Test
     void countsHiresAndLeaversOfTheReadersUnitMonthByMonth() {
-        TurnoverReportResponse report = reportService.getTurnoverReport(2025);
+        TurnoverReportResponse report = turnoverReportService.getTurnoverReport(2025);
 
         assertEquals(12, report.months().size());
         // Start of each month = end of the month before; leavers drop out on their last day.
@@ -125,7 +126,7 @@ class HrReportIntegrationTest {
         attendance(stayingId, shiftId, "2025-06-10", sickId, 480, "SICK_LEAVE");
         attendance(leavingId, shiftId, "2025-06-04", null, 0, "UNAUTHORIZED_ABSENCE");
 
-        MonthlyHrStatusReportResponse report = reportService.getMonthlyStatusReport(2025, 6);
+        MonthlyHrStatusReportResponse report = monthlyHrStatusReportService.getMonthlyStatusReport(2025, 6);
 
         assertEquals(2, report.headcountStart());
         assertEquals(0, report.hires());
@@ -148,7 +149,7 @@ class HrReportIntegrationTest {
         assertEquals("Turnover unit", leaving.organizationUnitName());
         assertEquals(1, leaving.absentDays());
 
-        assertEquals("NEW_HIRE", row(reportService.getMonthlyStatusReport(2025, 3), leavingId).status());
+        assertEquals("NEW_HIRE", row(monthlyHrStatusReportService.getMonthlyStatusReport(2025, 3), leavingId).status());
     }
 
     private static MonthlyHrStatusReportResponse.Row row(MonthlyHrStatusReportResponse report, Long employeeId) {

@@ -18,8 +18,6 @@ import com.htttdn.hrm.entity.EmployeeSalaryHistory;
 import com.htttdn.hrm.entity.enums.EducationLevel;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.exception.BusinessException;
-import com.htttdn.hrm.repository.AttendanceRecordRepository;
-import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
 
@@ -32,13 +30,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class ReportServiceTest {
+class ReportServicesTest {
 
     @Mock private EmployeeRepository employeeRepository;
     @Mock private EmployeeSalaryHistoryRepository employeeSalaryHistoryRepository;
     @Mock private EmployeeAccessScopeService employeeAccessScopeService;
-    @Mock private EmployeeAssignmentRepository employeeAssignmentRepository;
-    @Mock private AttendanceRecordRepository attendanceRecordRepository;
 
     @Test
     void workforceReportGroupsEducationSeniorityAndMissingData() {
@@ -47,7 +43,7 @@ class ReportServiceTest {
         Employee missingEducation = employee(2L, LocalDate.of(2020, 1, 1), null);
         stubEmployees("report.hr.read", asOfDate, List.of(bachelor, missingEducation));
 
-        var report = service().getWorkforceReport(asOfDate, null, null, null);
+        var report = workforce().getWorkforceReport(asOfDate, null, null, null);
 
         assertEquals(2, report.totalEmployees());
         assertEquals(new BigDecimal("3.5"), report.averageSeniorityYears());
@@ -74,7 +70,7 @@ class ReportServiceTest {
                 salary(higherSalary, "20000000")
             ));
 
-        var report = service().getSalaryReport(asOfDate, null, null, null);
+        var report = salary().getSalaryReport(asOfDate, null, null, null);
 
         assertEquals(3, report.totalEmployees());
         assertEquals(2, report.employeesWithBasicSalary());
@@ -95,7 +91,7 @@ class ReportServiceTest {
         when(employeeSalaryHistoryRepository.findEffectiveForEmployees(anyList(), eq(asOfDate)))
             .thenReturn(List.of());
 
-        var report = service().getSalaryReport(asOfDate, null, null, null);
+        var report = salary().getSalaryReport(asOfDate, null, null, null);
 
         assertNull(report.averageBasicSalary());
         assertNull(report.minimumBasicSalary());
@@ -107,7 +103,7 @@ class ReportServiceTest {
     void reportRejectsFutureDate() {
         assertThrows(
             BusinessException.class,
-            () -> service().getWorkforceReport(LocalDate.now(ClockConfig.BUSINESS_ZONE).plusDays(1), null, null, null)
+            () -> workforce().getWorkforceReport(LocalDate.now(ClockConfig.BUSINESS_ZONE).plusDays(1), null, null, null)
         );
     }
 
@@ -154,14 +150,15 @@ class ReportServiceTest {
         return items.stream().filter(item -> item.key().equals(key)).findFirst().orElseThrow().percentage();
     }
 
-    private ReportService service() {
-        return new ReportService(
-            employeeRepository,
-            employeeSalaryHistoryRepository,
-            employeeAccessScopeService,
-            employeeAssignmentRepository,
-            attendanceRecordRepository,
-            Clock.system(ClockConfig.BUSINESS_ZONE)
-        );
+    private ReportSupport support() {
+        return new ReportSupport(employeeRepository, employeeAccessScopeService, Clock.system(ClockConfig.BUSINESS_ZONE));
+    }
+
+    private WorkforceReportService workforce() {
+        return new WorkforceReportService(support());
+    }
+
+    private SalaryReportService salary() {
+        return new SalaryReportService(employeeSalaryHistoryRepository, support());
     }
 }

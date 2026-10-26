@@ -20,7 +20,10 @@ import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.service.leave.LeaveEntitlementService;
 import com.htttdn.hrm.service.leave.LeaveEntitlementService.EmployeeBalanceView;
 import com.htttdn.hrm.service.payroll.PayrollReportService;
-import com.htttdn.hrm.service.report.ReportService;
+import com.htttdn.hrm.service.report.MonthlyHrStatusReportService;
+import com.htttdn.hrm.service.report.SalaryReportService;
+import com.htttdn.hrm.service.report.TurnoverReportService;
+import com.htttdn.hrm.service.report.WorkforceReportService;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -32,7 +35,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ReportController {
 
-    private final ReportService reportService;
+    private final WorkforceReportService workforceReportService;
+    private final SalaryReportService salaryReportService;
+    private final TurnoverReportService turnoverReportService;
+    private final MonthlyHrStatusReportService monthlyHrStatusReportService;
     private final LeaveEntitlementService leaveEntitlementService;
     private final PayrollReportService payrollReportService;
 
@@ -45,7 +51,7 @@ public class ReportController {
         @RequestParam(required = false) Long workLocationId,
         @RequestParam(required = false) EmploymentStatus employmentStatus
     ) {
-        return ApiResult.ok(reportService.getWorkforceReport(
+        return ApiResult.ok(workforceReportService.getWorkforceReport(
             asOfDate, organizationUnitId, workLocationId, employmentStatus
         ));
     }
@@ -53,7 +59,7 @@ public class ReportController {
     @GetMapping("/hr/turnover")
     @PreAuthorize("hasAuthority('report.hr.read')")
     public ApiResult<TurnoverReportResponse> turnover(@RequestParam @Min(2000) @Max(9999) int year) {
-        return ApiResult.ok(reportService.getTurnoverReport(year));
+        return ApiResult.ok(turnoverReportService.getTurnoverReport(year));
     }
 
     @GetMapping("/hr/monthly-status")
@@ -62,7 +68,7 @@ public class ReportController {
         @RequestParam @Min(2000) @Max(9999) int year,
         @RequestParam @Min(1) @Max(12) int month
     ) {
-        return ApiResult.ok(reportService.getMonthlyStatusReport(year, month));
+        return ApiResult.ok(monthlyHrStatusReportService.getMonthlyStatusReport(year, month));
     }
 
     @GetMapping("/hr/leave-balances")
@@ -84,7 +90,7 @@ public class ReportController {
         @RequestParam(required = false) Long workLocationId,
         @RequestParam(required = false) EmploymentStatus employmentStatus
     ) {
-        return ApiResult.ok(reportService.getSalaryReport(
+        return ApiResult.ok(salaryReportService.getSalaryReport(
             asOfDate, organizationUnitId, workLocationId, employmentStatus
         ));
     }
