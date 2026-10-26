@@ -58,10 +58,7 @@ public class PayrollAdjustmentService {
         employeeAccessScopeService.requireCompanyWide(PAYROLL_CALCULATE);
         PayrollPeriod period = findEditablePeriod(periodId);
         Employee employee = employeeRepository.getRequired(request.employeeId());
-        boolean employedInPeriod = !employee.getHireDate().isAfter(period.getPeriodEnd())
-            && (employee.getTerminationDate() == null
-                || !employee.getTerminationDate().isBefore(period.getPeriodStart()));
-        if (!employedInPeriod) {
+        if (!employee.isEmployedDuring(period.getPeriodStart(), period.getPeriodEnd())) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Employee is not employed during this payroll period", "employeeId");
         }

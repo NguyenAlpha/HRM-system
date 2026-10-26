@@ -128,4 +128,19 @@ public class Employee extends AuditedEntity {
 
     @Column(name = "deletion_reason", columnDefinition = "TEXT")
     private String deletionReason;
+
+    /** The first day worked in a period starting {@code periodStart}: the hire date when it is later. */
+    public LocalDate employedFrom(LocalDate periodStart) {
+        return hireDate.isAfter(periodStart) ? hireDate : periodStart;
+    }
+
+    /** The last day worked in a period ending {@code periodEnd}: the last working day when it is earlier. */
+    public LocalDate employedTo(LocalDate periodEnd) {
+        return terminationDate != null && terminationDate.isBefore(periodEnd) ? terminationDate : periodEnd;
+    }
+
+    /** Whether the employee works at least one day in [{@code from}, {@code to}]. */
+    public boolean isEmployedDuring(LocalDate from, LocalDate to) {
+        return !hireDate.isAfter(to) && (terminationDate == null || !terminationDate.isBefore(from));
+    }
 }

@@ -126,13 +126,10 @@ public class EmployeeAccessScopeService {
         if (scope.companyWide()) {
             return employees.stream().map(Employee::getId).collect(Collectors.toSet());
         }
-        Map<LocalDate, List<Long>> idsByDay = employees.stream().collect(Collectors.groupingBy(employee -> {
-            LocalDate day = date;
-            if (employee.getTerminationDate() != null && employee.getTerminationDate().isBefore(day)) {
-                day = employee.getTerminationDate();
-            }
-            return employee.getHireDate().isAfter(day) ? employee.getHireDate() : day;
-        }, Collectors.mapping(Employee::getId, Collectors.toList())));
+        // Ngày cuối còn làm tính đến date (không sớm hơn ngày vào làm) → nhóm theo ngày đó.
+        Map<LocalDate, List<Long>> idsByDay = employees.stream().collect(Collectors.groupingBy(
+            employee -> employee.employedFrom(employee.employedTo(date)),
+            Collectors.mapping(Employee::getId, Collectors.toList())));
         Set<Long> visible = new LinkedHashSet<>();
         idsByDay.forEach((day, ids) -> employeeRepository.findAll(notDeleted()
                 .and(scope.toSpecification(day))

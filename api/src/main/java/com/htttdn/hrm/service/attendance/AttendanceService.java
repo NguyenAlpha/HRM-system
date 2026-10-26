@@ -141,9 +141,8 @@ public class AttendanceService {
      */
     private int prepareEmployee(Employee employee, LocalDate from, LocalDate to) {
         int created = 0;
-        LocalDate employedFrom = employee.getHireDate().isAfter(from) ? employee.getHireDate() : from;
-        LocalDate employedTo = employee.getTerminationDate() != null
-            && employee.getTerminationDate().isBefore(to) ? employee.getTerminationDate() : to;
+        LocalDate employedFrom = employee.employedFrom(from);
+        LocalDate employedTo = employee.employedTo(to);
         List<AttendanceCalendarService.ScheduledDay> scheduledDays;
         try {
             scheduledDays = attendanceCalendarService.scheduleFor(employee.getId(), employedFrom, employedTo);
@@ -214,8 +213,7 @@ public class AttendanceService {
                 "Check-out must be after check-in and within 24 hours", "checkOutAt");
         }
         Employee employee = employeeRepository.getRequired(request.employeeId());
-        if (employee.getHireDate().isAfter(workDate)
-            || employee.getTerminationDate() != null && employee.getTerminationDate().isBefore(workDate)) {
+        if (!employee.isEmployedDuring(workDate, workDate)) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Employee is not employed on " + workDate, "workDate");
         }

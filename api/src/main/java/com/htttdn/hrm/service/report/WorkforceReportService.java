@@ -106,11 +106,7 @@ public class WorkforceReportService {
 
     /** Số tháng thâm niên tròn từ {@code seniorityStartDate} đến ngày chốt (hoặc ngày nghỉ việc nếu sớm hơn). */
     private long seniorityMonths(Employee employee, LocalDate asOfDate) {
-        LocalDate endDate = employee.getTerminationDate() != null
-            && employee.getTerminationDate().isBefore(asOfDate)
-                ? employee.getTerminationDate()
-                : asOfDate;
-        return Math.max(0, ChronoUnit.MONTHS.between(employee.getSeniorityStartDate(), endDate));
+        return Math.max(0, ChronoUnit.MONTHS.between(employee.getSeniorityStartDate(), employee.employedTo(asOfDate)));
     }
 
     private String seniorityBucket(long months) {

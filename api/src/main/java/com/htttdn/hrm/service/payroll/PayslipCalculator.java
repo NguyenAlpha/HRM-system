@@ -340,11 +340,8 @@ public class PayslipCalculator {
      * @throws BusinessException dữ liệu nào thiếu thì thông báo nêu đúng dữ liệu đó (→ 400 {@code VALIDATION_ERROR})
      */
     private Inputs loadInputs(PayrollPeriod period, Employee employee) {
-        LocalDate employedFrom = employee.getHireDate().isAfter(period.getPeriodStart())
-            ? employee.getHireDate() : period.getPeriodStart();
-        LocalDate employedTo = employee.getTerminationDate() != null
-            && employee.getTerminationDate().isBefore(period.getPeriodEnd())
-                ? employee.getTerminationDate() : period.getPeriodEnd();
+        LocalDate employedFrom = employee.employedFrom(period.getPeriodStart());
+        LocalDate employedTo = employee.employedTo(period.getPeriodEnd());
         // Không có ngày công nào (VD vào làm rồi nghỉ trong mấy ngày lễ) → không có gì để chia lương theo ngày.
         List<LocalDate> expectedWorkDates = attendanceCalendarService.companyWorkDates(employedFrom, employedTo);
         if (expectedWorkDates.isEmpty()) {
