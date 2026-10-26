@@ -33,6 +33,7 @@ import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
+import com.htttdn.hrm.util.Strings;
 
 import lombok.RequiredArgsConstructor;
 
@@ -251,7 +252,7 @@ public class AttendanceService {
         record.setOvertimeTaxExempt(false);
         record.setOvertimeApprovedByAccount(null);
         record.setOvertimeApprovedAt(null);
-        record.setNote(request.note() == null || request.note().isBlank() ? null : request.note().trim());
+        record.setNote(Strings.trimToNull(request.note()));
         record.setUpdatedByAccount(currentAccountProvider.account());
         return attendanceMapper.toResponse(attendanceRecordRepository.save(record));
     }

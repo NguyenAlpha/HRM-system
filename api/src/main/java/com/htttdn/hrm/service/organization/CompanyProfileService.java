@@ -18,6 +18,7 @@ import com.htttdn.hrm.entity.CompanyProfile;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.CompanyProfileRepository;
+import com.htttdn.hrm.util.Strings;
 
 import lombok.RequiredArgsConstructor;
 
@@ -110,10 +111,10 @@ public class CompanyProfileService {
                 .build());
         profile.setCode(request.code().trim());
         profile.setName(request.name().trim());
-        profile.setTaxCode(blankToNull(request.taxCode()));
-        profile.setPhone(blankToNull(request.phone()));
-        profile.setEmail(blankToNull(request.email()));
-        profile.setAddress(blankToNull(request.address()));
+        profile.setTaxCode(Strings.trimToNull(request.taxCode()));
+        profile.setPhone(Strings.trimToNull(request.phone()));
+        profile.setEmail(Strings.trimToNull(request.email()));
+        profile.setAddress(Strings.trimToNull(request.address()));
         return companyProfileRepository.saveAndFlush(profile);
     }
 
@@ -150,9 +151,5 @@ public class CompanyProfileService {
             expected[index] = (byte) signature[index];
         }
         return Arrays.equals(content, offset, offset + signature.length, expected, 0, signature.length);
-    }
-
-    private static String blankToNull(String value) {
-        return value == null || value.isBlank() ? null : value.trim();
     }
 }

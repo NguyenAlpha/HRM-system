@@ -20,6 +20,7 @@ import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.JobPositionRepository;
+import com.htttdn.hrm.util.Strings;
 
 import lombok.RequiredArgsConstructor;
 
@@ -58,7 +59,7 @@ public class JobPositionService {
         JobPosition position = JobPosition.builder()
             .code(code)
             .title(request.title().trim())
-            .description(normalizeNullable(request.description()))
+            .description(Strings.trimToNull(request.description()))
             .isManagerial(request.isManagerial())
             .isActive(true)
             .build();
@@ -73,7 +74,7 @@ public class JobPositionService {
     public JobPositionResponse update(Long positionId, UpdateJobPositionRequest request) {
         JobPosition position = findPositionForUpdate(positionId);
         position.setTitle(request.title().trim());
-        position.setDescription(normalizeNullable(request.description()));
+        position.setDescription(Strings.trimToNull(request.description()));
         position.setIsManagerial(request.isManagerial());
         position.setIsActive(request.isActive());
         return toResponse(jobPositionRepository.saveAndFlush(position));
@@ -133,12 +134,5 @@ public class JobPositionService {
             "Job position code is already taken",
             "code"
         );
-    }
-
-    private String normalizeNullable(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        return value.trim();
     }
 }

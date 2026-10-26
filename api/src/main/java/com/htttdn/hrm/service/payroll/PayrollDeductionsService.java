@@ -28,6 +28,7 @@ import com.htttdn.hrm.repository.PayrollInsuranceRuleRepository;
 import com.htttdn.hrm.repository.PayrollTaxBracketRepository;
 import com.htttdn.hrm.repository.PayrollTaxRuleRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
+import com.htttdn.hrm.util.Strings;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Max;
@@ -129,7 +130,7 @@ public class PayrollDeductionsService {
         EmployeeTaxDependent created = dependentRepository.save(EmployeeTaxDependent.builder()
             .employee(employee)
             .fullName(command.fullName().trim())
-            .identifier(blankToNull(command.identifier()))
+            .identifier(Strings.trimToNull(command.identifier()))
             .effectiveFrom(command.effectiveFrom())
             .effectiveTo(effectiveTo)
             .createdByAccount(accounts.getReferenceById(actor.accountId()))
@@ -257,7 +258,6 @@ public class PayrollDeductionsService {
         return employee;
     }
 
-    private static String blankToNull(String value) { return value == null || value.isBlank() ? null : value.trim(); }
     private static BigDecimal money(BigDecimal value) { return value.setScale(2, RoundingMode.HALF_UP); }
 
     public record ProfileCommand(@NotNull LocalDate effectiveFrom, @NotNull Boolean taxResident,

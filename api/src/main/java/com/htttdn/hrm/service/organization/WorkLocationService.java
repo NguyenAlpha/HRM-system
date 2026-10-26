@@ -31,6 +31,7 @@ import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.RoleAssignmentRequestRepository;
 import com.htttdn.hrm.repository.WorkLocationRepository;
+import com.htttdn.hrm.util.Strings;
 
 import lombok.RequiredArgsConstructor;
 
@@ -105,7 +106,7 @@ public class WorkLocationService {
             .name(request.name().trim())
             .locationType(request.locationType())
             .address(request.address().trim())
-            .phone(normalizeNullable(request.phone()))
+            .phone(Strings.trimToNull(request.phone()))
             .isActive(true)
             .build();
         try {
@@ -128,7 +129,7 @@ public class WorkLocationService {
         location.setParentLocation(parent);
         location.setName(request.name().trim());
         location.setAddress(request.address().trim());
-        location.setPhone(normalizeNullable(request.phone()));
+        location.setPhone(Strings.trimToNull(request.phone()));
         location.setIsActive(request.isActive());
         return toResponse(workLocationRepository.saveAndFlush(location));
     }
@@ -280,12 +281,5 @@ public class WorkLocationService {
 
     private ConflictException resourceInUse(String message) {
         return new ConflictException(ErrorCode.ORGANIZATION_RESOURCE_IN_USE, message);
-    }
-
-    private String normalizeNullable(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        return value.trim();
     }
 }

@@ -21,6 +21,7 @@ import com.htttdn.hrm.repository.JobPositionRepository;
 import com.htttdn.hrm.repository.PositionAllowanceRuleRepository;
 import com.htttdn.hrm.repository.SeniorityAllowanceRuleRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
+import com.htttdn.hrm.util.Strings;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -74,7 +75,7 @@ public class AllowancePolicyService {
             .monthlyAmount(command.monthlyAmount())
             .effectiveFrom(command.effectiveFrom())
             .approvedByAccount(currentAccountProvider.account())
-            .note(normalizeNullable(command.note()))
+            .note(Strings.trimToNull(command.note()))
             .build();
         return toView(positionRuleRepository.save(rule));
     }
@@ -138,7 +139,7 @@ public class AllowancePolicyService {
             .percentage(command.percentage())
             .effectiveFrom(command.effectiveFrom())
             .approvedByAccount(currentAccountProvider.account())
-            .note(normalizeNullable(command.note()))
+            .note(Strings.trimToNull(command.note()))
             .build();
         return toView(seniorityRuleRepository.save(rule));
     }
@@ -201,10 +202,6 @@ public class AllowancePolicyService {
 
     private BusinessException validation(String message, String field) {
         return new BusinessException(ErrorCode.VALIDATION_ERROR, message, field);
-    }
-
-    private String normalizeNullable(String value) {
-        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private PositionAllowanceView toView(PositionAllowanceRule rule) {

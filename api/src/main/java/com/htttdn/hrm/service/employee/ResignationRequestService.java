@@ -30,6 +30,7 @@ import com.htttdn.hrm.repository.ResignationRequestRepository;
 import com.htttdn.hrm.repository.specification.EmployeeSpecifications;
 import com.htttdn.hrm.repository.specification.SearchPatterns;
 import com.htttdn.hrm.security.CurrentAccountProvider;
+import com.htttdn.hrm.util.Strings;
 
 import jakarta.annotation.Nullable;
 
@@ -221,7 +222,7 @@ public class ResignationRequestService {
         Instant now = Instant.now(clock);
         request.setStatus(status);
         request.setReviewedByAccount(currentAccountProvider.account());
-        request.setReviewComment(comment == null || comment.isBlank() ? null : comment.trim());
+        request.setReviewComment(Strings.trimToNull(comment));
         request.setReviewedAt(now);
     }
 

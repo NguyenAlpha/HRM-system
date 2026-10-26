@@ -36,6 +36,7 @@ import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.RoleAssignmentRequestRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
+import com.htttdn.hrm.util.Strings;
 
 import lombok.RequiredArgsConstructor;
 
@@ -231,7 +232,7 @@ public class RoleAssignmentRequestService {
                 roleAssignmentCommandService.assignOwnerApprovedRequest(roleRequest, actor));
         }
         markReviewed(roleRequest, RoleAssignmentRequestStatus.APPROVED, actor, Instant.now(clock),
-            trimToNull(request.note()));
+            Strings.trimToNull(request.note()));
         return requestMapper.toResponse(roleRequest);
     }
 
@@ -339,12 +340,5 @@ public class RoleAssignmentRequestService {
                 "Role assignment request has already been processed"
             );
         }
-    }
-
-    private String trimToNull(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        return value.trim();
     }
 }

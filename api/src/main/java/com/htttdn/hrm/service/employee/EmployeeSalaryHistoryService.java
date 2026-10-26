@@ -20,6 +20,7 @@ import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
+import com.htttdn.hrm.util.Strings;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -75,8 +76,8 @@ public class EmployeeSalaryHistoryService {
             .baseSalary(command.baseSalary())
             .effectiveFrom(command.effectiveFrom())
             .approvedByAccount(currentAccountProvider.account())
-            .reason(normalizeNullable(command.reason()))
-            .note(normalizeNullable(command.note()))
+            .reason(Strings.trimToNull(command.reason()))
+            .note(Strings.trimToNull(command.note()))
             .build();
         SalaryHistoryView result = toView(salaryHistoryRepository.save(salary));
         return result;
@@ -117,10 +118,6 @@ public class EmployeeSalaryHistoryService {
     private void requireReadableEmployee(Long employeeId) {
         employeeRepository.getRequired(employeeId);
         employeeAccessScopeService.requireEmployeeAccess(employeeId, COMPENSATION_READ);
-    }
-
-    private String normalizeNullable(String value) {
-        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private SalaryHistoryView toView(EmployeeSalaryHistory salary) {

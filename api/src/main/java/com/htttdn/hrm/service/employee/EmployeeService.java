@@ -48,6 +48,7 @@ import com.htttdn.hrm.repository.specification.SearchPatterns;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
+import com.htttdn.hrm.util.Strings;
 
 import lombok.RequiredArgsConstructor;
 
@@ -188,12 +189,12 @@ public class EmployeeService {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "graduationYear must be between 1950 and " + currentYear, "graduationYear");
         }
-        employee.setPhone(trimToNull(request.phone()));
+        employee.setPhone(Strings.trimToNull(request.phone()));
         employee.setPersonalEmail(normalizeEmail(request.personalEmail()));
-        employee.setAddress(trimToNull(request.address()));
+        employee.setAddress(Strings.trimToNull(request.address()));
         employee.setHighestEducationLevel(request.highestEducationLevel());
-        employee.setMajor(trimToNull(request.major()));
-        employee.setInstitution(trimToNull(request.institution()));
+        employee.setMajor(Strings.trimToNull(request.major()));
+        employee.setInstitution(Strings.trimToNull(request.institution()));
         employee.setGraduationYear(request.graduationYear());
         return toSelfProfile(employee);
     }
@@ -215,10 +216,6 @@ public class EmployeeService {
     private static SelfProfileResponse toSelfProfile(Employee employee) {
         return new SelfProfileResponse(employee.getPhone(), employee.getPersonalEmail(), employee.getAddress(),
             employee.getHighestEducationLevel(), employee.getMajor(), employee.getInstitution(), employee.getGraduationYear());
-    }
-
-    private static String trimToNull(String value) {
-        return value == null || value.isBlank() ? null : value.trim();
     }
 
     /**

@@ -34,6 +34,7 @@ import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.repository.specification.EmployeeSpecifications;
 import com.htttdn.hrm.repository.specification.SearchPatterns;
 import com.htttdn.hrm.security.CurrentAccountProvider;
+import com.htttdn.hrm.util.Strings;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
@@ -85,7 +86,7 @@ public class LeaveRequestService {
             .endAt(command.endAt())
             .requestedMinutes(requestedMinutes)
             .reason(command.reason().trim())
-            .attachmentUrl(normalizeNullable(command.attachmentUrl()))
+            .attachmentUrl(Strings.trimToNull(command.attachmentUrl()))
             .status(LeaveRequestStatus.DRAFT)
             .build();
         leaveEntitlementService.requireSufficientBalance(request);
@@ -284,7 +285,7 @@ public class LeaveRequestService {
         Instant now = Instant.now(clock);
         request.setStatus(status);
         request.setReviewedByAccount(currentAccountProvider.account());
-        request.setReviewComment(normalizeNullable(reviewComment));
+        request.setReviewComment(Strings.trimToNull(reviewComment));
         request.setReviewedAt(now);
     }
 
@@ -339,10 +340,6 @@ public class LeaveRequestService {
             ErrorCode.REQUEST_NOT_FOUND,
             "Leave request not found: " + requestId
         );
-    }
-
-    private String normalizeNullable(String value) {
-        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private LeaveRequestView toView(LeaveRequest request) {

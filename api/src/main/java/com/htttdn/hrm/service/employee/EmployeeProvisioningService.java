@@ -12,6 +12,7 @@ import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.EmployeeRepository;
+import com.htttdn.hrm.util.Strings;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,18 +41,11 @@ public class EmployeeProvisioningService {
             .employeeCode(employeeCodeGenerator.next())
             .fullName(command.fullName().trim())
             .workEmail(workEmail)
-            .phone(normalizeNullable(command.phone()))
+            .phone(Strings.trimToNull(command.phone()))
             .hireDate(command.hireDate())
             .seniorityStartDate(command.hireDate())
             .employmentStatus(EmploymentStatus.ACTIVE)
             .build());
-    }
-
-    private String normalizeNullable(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        return value.trim();
     }
 
     public record MinimalEmployeeCommand(
