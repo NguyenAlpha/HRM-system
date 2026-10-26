@@ -3,6 +3,7 @@ package com.htttdn.hrm.service.payroll;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
@@ -18,6 +19,7 @@ import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.PayrollAdjustment;
 import com.htttdn.hrm.entity.PayrollPeriod;
+import com.htttdn.hrm.entity.Payslip;
 import com.htttdn.hrm.entity.enums.PayrollAdjustmentType;
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.BusinessException;
@@ -26,6 +28,8 @@ import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.PayrollAdjustmentRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
+import com.htttdn.hrm.repository.PayslipItemRepository;
+import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,6 +47,8 @@ class PayrollAdjustmentServiceTest {
     @Mock private AccountRepository accountRepository;
     @Mock private CurrentAccountProvider currentAccountProvider;
     @Mock private EmployeeAccessScopeService employeeAccessScopeService;
+    @Mock private PayslipRepository payslipRepository;
+    @Mock private PayslipItemRepository payslipItemRepository;
 
     @Test
     void addingAnAdjustmentSendsACalculatedPeriodBackToDraft() {
@@ -53,6 +59,8 @@ class PayrollAdjustmentServiceTest {
         when(employeeRepository.getRequired(2L)).thenReturn(employee(null));
         when(currentAccountProvider.accountId()).thenReturn(9L);
         when(adjustmentRepository.save(any(PayrollAdjustment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        Payslip stale = Payslip.builder().id(5L).build();
+        when(payslipRepository.findByPayrollPeriodId(period.getId())).thenReturn(List.of(stale));
 
         var result = service().create(1L, request(2L));
 
@@ -61,6 +69,8 @@ class PayrollAdjustmentServiceTest {
         assertEquals(PayrollPeriodStatus.DRAFT, period.getStatus());
         assertNull(period.getCalculatedAt());
         assertNull(period.getCalculatedByAccount());
+        verify(payslipItemRepository).deleteByPayslipId(5L);
+        verify(payslipRepository).delete(stale);
     }
 
     @ParameterizedTest
@@ -110,6 +120,7 @@ class PayrollAdjustmentServiceTest {
 
     private PayrollAdjustmentService service() {
         return new PayrollAdjustmentService(adjustmentRepository, payrollPeriodRepository, employeeRepository,
-            accountRepository, currentAccountProvider, employeeAccessScopeService);
+            accountRepository, currentAccountProvider, employeeAccessScopeService,
+            new PayrollPeriodInvalidator(payrollPeriodRepository, payslipRepository, payslipItemRepository));
     }
 }

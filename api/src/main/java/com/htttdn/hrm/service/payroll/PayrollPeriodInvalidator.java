@@ -17,7 +17,7 @@ import com.htttdn.hrm.repository.PayslipRepository;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Khi một dữ liệu đầu vào của lương (phân công, lương, phụ cấp, hồ sơ thuế…) đổi từ một ngày, các kỳ
+ * Khi một dữ liệu đầu vào của lương (phân công, lương, phụ cấp, hồ sơ thuế, ngày lễ, khoản điều chỉnh…) đổi, các kỳ
  * lương bị ảnh hưởng phải được xử lý trước: kỳ đã duyệt/trả/khóa → từ chối (409
  * {@code PAYROLL_PERIOD_LOCKED}); kỳ đã tính → xóa phiếu lương và đưa về {@code DRAFT} để tính lại.
  *
@@ -44,6 +44,13 @@ public class PayrollPeriodInvalidator {
     /** Các kỳ có ngày nộp thuế trong [{@code from}, {@code to}]; {@code to} null → không giới hạn. */
     public void invalidateTaxPaymentsBetween(LocalDate from, LocalDate to) {
         invalidate(payrollPeriodRepository.findAffectedPaymentPeriodsForUpdate(from, to, CALCULATED_OR_RELEASED));
+    }
+
+    /** Một kỳ cụ thể mà bên gọi đã tải (nên khóa ghi); kỳ chưa tính hoặc đã hủy → không làm gì. */
+    public void invalidatePeriod(PayrollPeriod period) {
+        if (CALCULATED_OR_RELEASED.contains(period.getStatus())) {
+            invalidate(List.of(period));
+        }
     }
 
     private void invalidate(List<PayrollPeriod> affected) {

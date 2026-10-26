@@ -11,11 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.htttdn.hrm.dto.response.attendance.CompanyHolidayResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.CompanyHoliday;
-import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.CompanyHolidayRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
+import com.htttdn.hrm.service.payroll.PayrollPeriodInvalidator;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,6 +26,7 @@ public class CompanyHolidayService {
     private final CompanyHolidayRepository holidayRepository;
     private final PayrollPeriodRepository payrollPeriodRepository;
     private final EmployeeAccessScopeService accessScopeService;
+    private final PayrollPeriodInvalidator payrollPeriodInvalidator;
 
     /** The holiday calendar is the same for the whole company, so reading it has no scope. */
     @PreAuthorize("hasAuthority('holiday.read')")
@@ -62,18 +63,6 @@ public class CompanyHolidayService {
 
     private void invalidateCalculatedPeriodOrReject(LocalDate date) {
         payrollPeriodRepository.findContainingDateForUpdate(date)
-            .ifPresent(period -> {
-                if (period.getStatus() == PayrollPeriodStatus.APPROVED
-                    || period.getStatus() == PayrollPeriodStatus.PAID
-                    || period.getStatus() == PayrollPeriodStatus.LOCKED) {
-                    throw new ConflictException(ErrorCode.PAYROLL_PERIOD_LOCKED,
-                        "Holiday belongs to approved payroll period " + period.getId());
-                }
-                if (period.getStatus() == PayrollPeriodStatus.CALCULATED) {
-                    period.setStatus(PayrollPeriodStatus.DRAFT);
-                    period.setCalculatedByAccount(null);
-                    period.setCalculatedAt(null);
-                }
-            });
+            .ifPresent(payrollPeriodInvalidator::invalidatePeriod);
     }
 }

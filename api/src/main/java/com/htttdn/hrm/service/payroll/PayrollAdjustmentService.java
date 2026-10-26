@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * Bonuses, other allowances and deductions entered by the payroll accountant for one period.
  * They only reach payslips through calculation, so changing them sends a CALCULATED period back
- * to DRAFT; from APPROVED onwards they are frozen like the payslips themselves.
+ * to DRAFT and deletes its payslips; from APPROVED onwards they are frozen like the payslips themselves.
  */
 @Service
 @Transactional
@@ -42,6 +42,7 @@ public class PayrollAdjustmentService {
     private final AccountRepository accountRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
+    private final PayrollPeriodInvalidator payrollPeriodInvalidator;
 
     @PreAuthorize("hasAuthority('payroll.calculate')")
     @Transactional(readOnly = true)
@@ -73,7 +74,7 @@ public class PayrollAdjustmentService {
             .amount(request.amount())
             .createdByAccount(accountRepository.getReferenceById(accountId))
             .build());
-        invalidateCalculation(period);
+        payrollPeriodInvalidator.invalidatePeriod(period);
         return toResponse(adjustment);
     }
 
@@ -85,7 +86,7 @@ public class PayrollAdjustmentService {
             .orElseThrow(() -> new ResourceNotFoundException(
                 ErrorCode.RESOURCE_NOT_FOUND, "Payroll adjustment not found: " + adjustmentId));
         adjustmentRepository.delete(adjustment);
-        invalidateCalculation(period);
+        payrollPeriodInvalidator.invalidatePeriod(period);
     }
 
     private PayrollPeriod findEditablePeriod(Long periodId) {
@@ -95,14 +96,6 @@ public class PayrollAdjustmentService {
                 "Adjustments can only change while period " + periodId + " is DRAFT or CALCULATED");
         }
         return period;
-    }
-
-    private static void invalidateCalculation(PayrollPeriod period) {
-        if (period.getStatus() == PayrollPeriodStatus.CALCULATED) {
-            period.setStatus(PayrollPeriodStatus.DRAFT);
-            period.setCalculatedByAccount(null);
-            period.setCalculatedAt(null);
-        }
     }
 
     private static PayrollAdjustmentResponse toResponse(PayrollAdjustment adjustment) {
