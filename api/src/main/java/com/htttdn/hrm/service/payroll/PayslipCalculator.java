@@ -48,7 +48,8 @@ import lombok.RequiredArgsConstructor;
  * transaction và quyền đã kiểm tra ở đó.
  *
  * <p>Các bước: {@link #loadInputs} kiểm tra đủ dữ liệu đầu vào, {@link #prorate} chia lương và phụ cấp
- * theo từng ngày công, rồi {@link #calculate} thêm tăng ca, điều chỉnh, khấu trừ và lưu phiếu.
+ * theo từng ngày công, {@link #overtime} và {@link #adjustments} tính tăng ca và điều chỉnh,
+ * {@link #deductions} tính bảo hiểm và thuế, rồi {@link #calculate} ghép lại và lưu phiếu.
  */
 @Component
 @RequiredArgsConstructor
@@ -86,32 +87,90 @@ public class PayslipCalculator {
     private record ProratedPay(BigDecimal basicSalary, BigDecimal positionAllowance, BigDecimal seniorityAllowance) {
     }
 
+    /** Tăng ca đã duyệt trong kỳ: tổng phút, tổng tiền, phần miễn thuế và mỗi ngày một dòng phiếu lương. */
+    private record OvertimePay(long minutes, BigDecimal amount, BigDecimal taxExempt, List<PayslipItem> items) {
+    }
+
+    /** Các khoản điều chỉnh của kỳ: khoản cộng, phần cộng miễn thuế, khoản trừ và các dòng phiếu lương. */
+    private record AdjustmentTotals(BigDecimal earnings, BigDecimal taxExempt, BigDecimal deductions,
+        List<PayslipItem> items) {
+    }
+
     public void calculate(PayrollPeriod period, Employee employee) {
         Inputs inputs = loadInputs(period, employee);
         ProratedPay prorated = prorate(employee, inputs);
-        List<AttendanceRecord> attendanceRecords = inputs.attendanceRecords();
-        Map<LocalDate, AttendanceRecord> attendanceByDate = inputs.attendanceByDate();
-        EmployeeAssignment assignment = inputs.assignment();
-        BigDecimal basicSalary = inputs.basicSalary();
-        long companyWorkdays = inputs.companyWorkdays();
-
         long payableWorkMinutes = inputs.scheduledDays().stream()
-            .mapToLong(day -> attendanceByDate.get(day.workDate()).getPayableMinutes()).sum();
-        long approvedOvertimeMinutes = attendanceRecords.stream()
-            .filter(this::hasApprovedOvertime)
-            .mapToLong(AttendanceRecord::getOvertimeMinutes)
-            .sum();
+            .mapToLong(day -> inputs.attendanceByDate().get(day.workDate()).getPayableMinutes()).sum();
+        OvertimePay overtime = overtime(employee, inputs);
+        AdjustmentTotals adjustments = adjustments(period, employee);
 
-        BigDecimal basicSalaryPay = prorated.basicSalary();
-        BigDecimal positionAllowancePay = prorated.positionAllowance();
-        BigDecimal seniorityAllowancePay = prorated.seniorityAllowance();
+        // Thứ tự dòng trên phiếu: lương cơ bản, tăng ca, phụ cấp, điều chỉnh.
+        List<PayslipItem> items = new ArrayList<>();
+        items.add(baseSalaryItem(prorated.basicSalary(), payableWorkMinutes));
+        items.addAll(overtime.items());
+        items.addAll(allowanceItems(employee, inputs, prorated));
+        items.addAll(adjustments.items());
+
+        BigDecimal allowancePay = prorated.positionAllowance().add(prorated.seniorityAllowance());
+        BigDecimal grossPay = prorated.basicSalary().add(allowancePay).add(overtime.amount()).add(adjustments.earnings());
+        PayrollDeductionsService.Deduction deduction = deductions(period, employee, inputs,
+            grossPay.subtract(overtime.taxExempt()).subtract(adjustments.taxExempt()));
+        BigDecimal netPay = grossPay.subtract(deduction.social()).subtract(deduction.health())
+            .subtract(deduction.unemployment()).subtract(deduction.incomeTax()).subtract(adjustments.deductions());
+        if (netPay.signum() < 0) {
+            throw missingPayrollInput(employee, "manual settlement: deductions exceed gross pay");
+        }
+
+        EmployeeAssignment assignment = inputs.assignment();
+        Payslip payslip = Payslip.builder()
+            .payrollPeriod(period)
+            .employee(employee)
+            .employeeCodeSnapshot(employee.getEmployeeCode())
+            .employeeNameSnapshot(employee.getFullName())
+            .positionSnapshot(assignment.getPosition().getTitle())
+            .workLocationSnapshot(assignment.getWorkLocation().getName())
+            .organizationUnitSnapshot(assignment.getOrganizationUnit().getName())
+            .contractualBaseSalary(inputs.basicSalary())
+            .scheduledWorkMinutes((int) inputs.scheduledWorkMinutes())
+            .payableWorkMinutes((int) payableWorkMinutes)
+            .approvedOvertimeMinutes((int) overtime.minutes())
+            .baseSalaryPay(prorated.basicSalary())
+            .positionAllowancePay(prorated.positionAllowance())
+            .seniorityAllowancePay(prorated.seniorityAllowance())
+            .allowancePay(allowancePay)
+            .overtimePay(overtime.amount())
+            .taxExemptOvertimePay(overtime.taxExempt())
+            .otherEarningsPay(adjustments.earnings())
+            .taxExemptOtherEarnings(adjustments.taxExempt())
+            .grossPay(grossPay)
+            .insuranceSalaryBase(deduction.insuranceSalaryBase())
+            .unemploymentInsuranceBase(deduction.unemploymentInsuranceBase())
+            .employeeSocialInsurance(deduction.social())
+            .employeeHealthInsurance(deduction.health())
+            .employeeUnemploymentInsurance(deduction.unemployment())
+            .taxableIncome(deduction.taxableIncome())
+            .personalIncomeTax(deduction.incomeTax())
+            .otherDeductions(adjustments.deductions())
+            .taxRuleId(deduction.taxRuleId())
+            .insuranceRuleId(deduction.insuranceRuleId())
+            .payrollProfileId(deduction.profileId())
+            .netPay(netPay)
+            .build();
+        Payslip savedPayslip = payslipRepository.save(payslip);
+
+        for (PayslipItem item : items) {
+            item.setPayslip(savedPayslip);
+        }
+        payslipItemRepository.saveAll(items);
+    }
+
+    /** Dòng lương cơ bản: số giờ được trả, đơn giá = lương đã chia / số giờ đó. */
+    private static PayslipItem baseSalaryItem(BigDecimal basicSalaryPay, long payableWorkMinutes) {
         BigDecimal payableHours = BigDecimal.valueOf(payableWorkMinutes)
             .divide(BigDecimal.valueOf(60), 4, RoundingMode.HALF_UP);
         BigDecimal effectiveHourlyRate = payableHours.signum() == 0 ? BigDecimal.ZERO
             : basicSalaryPay.divide(payableHours, 6, RoundingMode.HALF_UP);
-
-        List<PayslipItem> items = new ArrayList<>();
-        items.add(PayslipItem.builder()
+        return PayslipItem.builder()
             .componentType(PayslipItemType.BASE_SALARY)
             .componentCode("BASE_SALARY")
             .description("Lương cơ bản")
@@ -119,21 +178,30 @@ public class PayslipCalculator {
             .unitRate(effectiveHourlyRate)
             .multiplier(BigDecimal.ONE)
             .amount(basicSalaryPay)
-            .build());
+            .build();
+    }
 
+    /**
+     * Mỗi ngày có tăng ca đã duyệt: đơn giá giờ = lương hiệu lực ngày đó / (số ngày công cả tháng × giờ ca),
+     * nhân số giờ và hệ số tăng ca.
+     */
+    private OvertimePay overtime(Employee employee, Inputs inputs) {
+        long minutes = 0;
         BigDecimal overtimePay = BigDecimal.ZERO;
         BigDecimal taxExemptOvertimePay = BigDecimal.ZERO;
-        for (AttendanceRecord record : attendanceRecords) {
+        List<PayslipItem> items = new ArrayList<>();
+        for (AttendanceRecord record : inputs.attendanceRecords()) {
             if (!hasApprovedOvertime(record)) {
                 continue;
             }
+            minutes += record.getOvertimeMinutes();
             BigDecimal hours = BigDecimal.valueOf(record.getOvertimeMinutes()).divide(BigDecimal.valueOf(60), 4, RoundingMode.HALF_UP);
             BigDecimal overtimeSalary = employeeSalaryHistoryRepository
                 .findEffective(employee.getId(), record.getWorkDate())
                 .orElseThrow(() -> missingPayrollInput(employee, "salary history on " + record.getWorkDate()))
                 .getBaseSalary();
             BigDecimal overtimeHourlyRate = overtimeSalary
-                .divide(BigDecimal.valueOf(companyWorkdays * record.getScheduledMinutes()), 6, RoundingMode.HALF_UP)
+                .divide(BigDecimal.valueOf(inputs.companyWorkdays() * record.getScheduledMinutes()), 6, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(60));
             BigDecimal amount = overtimeHourlyRate.multiply(hours).multiply(record.getOvertimeMultiplier())
                 .setScale(2, RoundingMode.HALF_UP);
@@ -151,13 +219,21 @@ public class PayslipCalculator {
                 .amount(amount)
                 .build());
         }
+        return new OvertimePay(minutes, overtimePay, taxExemptOvertimePay, items);
+    }
 
-        if (positionAllowancePay.signum() > 0) {
+    /** Dòng phụ cấp chức vụ và thâm niên (khoản bằng 0 thì không có dòng); số tiền đã chia ở {@link #prorate}. */
+    private List<PayslipItem> allowanceItems(Employee employee, Inputs inputs, ProratedPay prorated) {
+        List<PayslipItem> items = new ArrayList<>();
+        EmployeeAssignment assignment = inputs.assignment();
+        if (prorated.positionAllowance().signum() > 0) {
             items.add(lumpSum(PayslipItemType.POSITION_ALLOWANCE,
                 "POSITION_ALLOWANCE_" + assignment.getPosition().getCode(),
-                "Phụ cấp chức vụ " + assignment.getPosition().getTitle(), positionAllowancePay));
+                "Phụ cấp chức vụ " + assignment.getPosition().getTitle(), prorated.positionAllowance()));
         }
 
+        BigDecimal basicSalary = inputs.basicSalary();
+        BigDecimal seniorityAllowancePay = prorated.seniorityAllowance();
         int seniorityYears = seniorityYears(employee, inputs.lastWorkDate());
         BigDecimal seniorityPercentage = basicSalary.signum() == 0 ? BigDecimal.ZERO
             : seniorityAllowancePay.multiply(BigDecimal.valueOf(100))
@@ -173,10 +249,15 @@ public class PayslipCalculator {
                 .amount(seniorityAllowancePay)
                 .build());
         }
+        return items;
+    }
 
+    /** Thưởng, phụ cấp khác và khoản trừ kế toán nhập cho nhân viên trong kỳ ({@link PayrollAdjustmentService}). */
+    private AdjustmentTotals adjustments(PayrollPeriod period, Employee employee) {
         BigDecimal otherEarningsPay = BigDecimal.ZERO;
         BigDecimal taxExemptOtherEarnings = BigDecimal.ZERO;
         BigDecimal otherDeductions = BigDecimal.ZERO;
+        List<PayslipItem> items = new ArrayList<>();
         for (PayrollAdjustment adjustment : payrollAdjustmentRepository
             .findByPayrollPeriodIdAndEmployeeIdOrderByIdAsc(period.getId(), employee.getId())) {
             PayrollAdjustmentType type = adjustment.getAdjustmentType();
@@ -191,68 +272,26 @@ public class PayslipCalculator {
             items.add(lumpSum(PayslipItemType.valueOf(type.name()), "ADJUSTMENT_" + adjustment.getId(),
                 adjustment.getDescription(), adjustment.getAmount()));
         }
+        return new AdjustmentTotals(otherEarningsPay, taxExemptOtherEarnings, otherDeductions, items);
+    }
 
-        BigDecimal allowancePay = positionAllowancePay.add(seniorityAllowancePay);
-        BigDecimal grossPay = basicSalaryPay.add(allowancePay).add(overtimePay).add(otherEarningsPay);
+    /**
+     * Bảo hiểm và thuế TNCN của tháng ({@link PayrollDeductionsService#calculate}); số ngày nghỉ không lương
+     * quyết định có phải xử lý bảo hiểm thủ công không. Lỗi thiếu hồ sơ được báo kèm mã nhân viên.
+     */
+    private PayrollDeductionsService.Deduction deductions(PayrollPeriod period, Employee employee, Inputs inputs,
+        BigDecimal taxableGrossPay) {
         long unpaidDays = inputs.scheduledDays().stream().filter(day -> {
-            AttendanceRecord record = attendanceByDate.get(day.workDate());
+            AttendanceRecord record = inputs.attendanceByDate().get(day.workDate());
             return record.getPayableMinutes() == 0 && (record.getStatus() == AttendanceStatus.UNPAID_LEAVE
                 || record.getStatus() == AttendanceStatus.UNAUTHORIZED_ABSENCE);
         }).count();
-        PayrollDeductionsService.Deduction deduction;
         try {
-            deduction = payrollDeductionsService.calculate(employee.getId(), inputs.employedTo(),
-                period.getTaxPaymentDate(), grossPay.subtract(taxExemptOvertimePay).subtract(taxExemptOtherEarnings),
-                unpaidDays);
+            return payrollDeductionsService.calculate(employee.getId(), inputs.employedTo(),
+                period.getTaxPaymentDate(), taxableGrossPay, unpaidDays);
         } catch (BusinessException error) {
             throw missingPayrollInput(employee, error.getMessage());
         }
-        BigDecimal netPay = grossPay.subtract(deduction.social()).subtract(deduction.health())
-            .subtract(deduction.unemployment()).subtract(deduction.incomeTax()).subtract(otherDeductions);
-        if (netPay.signum() < 0) {
-            throw missingPayrollInput(employee, "manual settlement: deductions exceed gross pay");
-        }
-
-        Payslip payslip = Payslip.builder()
-            .payrollPeriod(period)
-            .employee(employee)
-            .employeeCodeSnapshot(employee.getEmployeeCode())
-            .employeeNameSnapshot(employee.getFullName())
-            .positionSnapshot(assignment.getPosition().getTitle())
-            .workLocationSnapshot(assignment.getWorkLocation().getName())
-            .organizationUnitSnapshot(assignment.getOrganizationUnit().getName())
-            .contractualBaseSalary(basicSalary)
-            .scheduledWorkMinutes((int) inputs.scheduledWorkMinutes())
-            .payableWorkMinutes((int) payableWorkMinutes)
-            .approvedOvertimeMinutes((int) approvedOvertimeMinutes)
-            .baseSalaryPay(basicSalaryPay)
-            .positionAllowancePay(positionAllowancePay)
-            .seniorityAllowancePay(seniorityAllowancePay)
-            .allowancePay(allowancePay)
-            .overtimePay(overtimePay)
-            .taxExemptOvertimePay(taxExemptOvertimePay)
-            .otherEarningsPay(otherEarningsPay)
-            .taxExemptOtherEarnings(taxExemptOtherEarnings)
-            .grossPay(grossPay)
-            .insuranceSalaryBase(deduction.insuranceSalaryBase())
-            .unemploymentInsuranceBase(deduction.unemploymentInsuranceBase())
-            .employeeSocialInsurance(deduction.social())
-            .employeeHealthInsurance(deduction.health())
-            .employeeUnemploymentInsurance(deduction.unemployment())
-            .taxableIncome(deduction.taxableIncome())
-            .personalIncomeTax(deduction.incomeTax())
-            .otherDeductions(otherDeductions)
-            .taxRuleId(deduction.taxRuleId())
-            .insuranceRuleId(deduction.insuranceRuleId())
-            .payrollProfileId(deduction.profileId())
-            .netPay(netPay)
-            .build();
-        Payslip savedPayslip = payslipRepository.save(payslip);
-
-        for (PayslipItem item : items) {
-            item.setPayslip(savedPayslip);
-        }
-        payslipItemRepository.saveAll(items);
     }
 
     /** Thiếu bất kỳ dữ liệu nào (lịch làm, lương, phân công, chấm công) thì báo lỗi, không tính dở. */
