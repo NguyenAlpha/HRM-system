@@ -85,6 +85,8 @@ class PayrollDeductionsIntegrationTest {
         assertEquals(0, exempt.social().signum());
         assertEquals(0, exempt.health().signum());
         assertEquals(0, exempt.unemployment().signum());
+        assertEquals(0, exempt.insuranceSalaryBase().signum());
+        assertEquals(0, exempt.unemploymentInsuranceBase().signum());
         // Tax still applies, on pay no longer reduced by insurance.
         assertTrue(exempt.taxableIncome().compareTo(contributing.taxableIncome()) > 0);
     }

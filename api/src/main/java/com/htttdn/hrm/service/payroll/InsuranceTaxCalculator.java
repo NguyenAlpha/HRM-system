@@ -82,7 +82,7 @@ public class InsuranceTaxCalculator {
                     + " minimum on " + workMonthEnd);
         }
         // Hai mức trần khác nhau: BHXH/BHYT theo socialHealthCap, BHTN theo unemploymentCapMultiplier × lương
-        // tối thiểu vùng. Căn cứ đóng vẫn được trả về (và ghi lên phiếu) cả khi tháng đó không đóng.
+        // tối thiểu vùng. Tháng không đóng thì căn cứ ghi lên phiếu là 0, khớp với các khoản bảo hiểm bằng 0.
         BigDecimal regionMinimum = insurance.regionMinimum(profile.getWageRegion());
         BigDecimal socialBase = profile.getInsuranceSalary().min(insurance.getSocialHealthCap());
         BigDecimal unemploymentBase = profile.getInsuranceSalary().min(regionMinimum
@@ -109,7 +109,8 @@ public class InsuranceTaxCalculator {
         if (brackets.isEmpty()) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Tax rule has no brackets: " + tax.getId());
         }
-        return new Deduction(profile.getId(), insurance.getId(), tax.getId(), socialBase, unemploymentBase,
+        return new Deduction(profile.getId(), insurance.getId(), tax.getId(),
+            contributes ? socialBase : BigDecimal.ZERO, contributes ? unemploymentBase : BigDecimal.ZERO,
             social, health, unemployment, taxableIncome, progressiveTax(taxableIncome, brackets));
     }
 
