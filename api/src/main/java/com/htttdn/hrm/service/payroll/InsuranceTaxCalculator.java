@@ -106,9 +106,6 @@ public class InsuranceTaxCalculator {
         List<TaxBracket> brackets = taxBrackets.findByIdTaxRuleIdOrderByIdLowerBound(tax.getId()).stream()
             .map(bracket -> new TaxBracket(bracket.getId().getLowerBound(), bracket.getUpperBound(), bracket.getRate()))
             .toList();
-        if (brackets.isEmpty()) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Tax rule has no brackets: " + tax.getId());
-        }
         return new Deduction(profile.getId(), insurance.getId(), tax.getId(),
             contributes ? socialBase : BigDecimal.ZERO, contributes ? unemploymentBase : BigDecimal.ZERO,
             social, health, unemployment, taxableIncome, progressiveTax(taxableIncome, brackets));
