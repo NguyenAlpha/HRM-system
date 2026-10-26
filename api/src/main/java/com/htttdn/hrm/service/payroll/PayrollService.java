@@ -155,13 +155,12 @@ public class PayrollService {
      * Duyệt bảng lương đã tính. Từ đây phiếu lương hiện cho nhân viên và dữ liệu ảnh hưởng tới kỳ bị khóa
      * (đổi lương, phụ cấp, chấm công… của kỳ sẽ bị từ chối 409 {@code PAYROLL_PERIOD_LOCKED}).
      *
-     * @param request không dùng
      * @throws ConflictException kỳ chưa ở {@code CALCULATED}, hoặc chấm công trong kỳ đã sửa sau lúc tính
      *         (→ 409 {@code CONFLICT})
      * @throws BusinessException người duyệt cũng là người tính (→ 400 {@code VALIDATION_ERROR})
      */
     @PreAuthorize("hasAuthority('payroll.approve')")
-    public PayrollPeriodResponse approve(Long periodId, PayrollActionRequest request) {
+    public PayrollPeriodResponse approve(Long periodId) {
         employeeAccessScopeService.requireCompanyWide("payroll.approve");
         PayrollPeriod period = payrollPeriodRepository.getRequiredForUpdate(periodId);
         if (period.getStatus() != PayrollPeriodStatus.CALCULATED) {
@@ -223,11 +222,10 @@ public class PayrollService {
     /**
      * Khóa kỳ đã trả: trạng thái cuối, không đổi được nữa.
      *
-     * @param request không dùng
      * @throws ConflictException kỳ chưa ở {@code PAID} (→ 409 {@code CONFLICT})
      */
     @PreAuthorize("hasAuthority('payroll.lock')")
-    public PayrollPeriodResponse lock(Long periodId, PayrollActionRequest request) {
+    public PayrollPeriodResponse lock(Long periodId) {
         employeeAccessScopeService.requireCompanyWide("payroll.lock");
         PayrollPeriod period = payrollPeriodRepository.getRequiredForUpdate(periodId);
         if (period.getStatus() != PayrollPeriodStatus.PAID) {

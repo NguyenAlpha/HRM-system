@@ -71,7 +71,7 @@ public class PayrollController {
 
     @PostMapping("/periods/{id}/approve")
     public ApiResult<PayrollPeriodResponse> approve(@PathVariable Long id) {
-        return ApiResult.ok(service.approve(id, new PayrollActionRequest()));
+        return ApiResult.ok(service.approve(id));
     }
 
     @PostMapping("/periods/{id}/mark-paid")
@@ -82,7 +82,7 @@ public class PayrollController {
 
     @PostMapping("/periods/{id}/lock")
     public ApiResult<PayrollPeriodResponse> lock(@PathVariable Long id) {
-        return ApiResult.ok(service.lock(id, new PayrollActionRequest()));
+        return ApiResult.ok(service.lock(id));
     }
 
     @PostMapping("/periods/{id}/cancel")

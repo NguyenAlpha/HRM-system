@@ -184,7 +184,7 @@ class PayrollServiceTest {
         when(attendanceRecordRepository.existsByWorkDateBetweenAndUpdatedAtAfter(start, end, calculatedAt))
             .thenReturn(true);
 
-        assertThrows(ConflictException.class, () -> service().approve(1L, new PayrollActionRequest()));
+        assertThrows(ConflictException.class, () -> service().approve(1L));
         assertEquals(PayrollPeriodStatus.CALCULATED, period.getStatus());
     }
 
