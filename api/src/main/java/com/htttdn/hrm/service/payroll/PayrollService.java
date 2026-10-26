@@ -32,6 +32,14 @@ import lombok.RequiredArgsConstructor;
 /**
  * Vòng đời kỳ lương: tạo, tính, duyệt, đánh dấu đã trả, khóa và hủy. Cách tính một phiếu lương nằm ở
  * {@link PayslipCalculator}, phần chỉ đọc nằm ở {@link PayrollQueryService}.
+ *
+ * <p>Trạng thái đi một chiều: {@code DRAFT} → {@code CALCULATED} → {@code APPROVED} → {@code PAID} →
+ * {@code LOCKED}; chỉ {@code DRAFT}/{@code CALCULATED} được tính lại hoặc hủy ({@code CANCELLED}). Kỳ đã tính
+ * mà dữ liệu đầu vào đổi thì quay về {@code DRAFT} qua {@link PayrollPeriodInvalidator}.
+ *
+ * <p>Mọi thao tác cần quyền phạm vi toàn công ty ({@code EmployeeAccessScopeService.requireCompanyWide},
+ * thiếu → 403) và khóa ghi kỳ lương ({@code getRequiredForUpdate}, không có → 404
+ * {@code PAYROLL_PERIOD_NOT_FOUND}) để hai người không cùng đổi một kỳ.
  */
 @Service
 @Transactional
@@ -49,9 +57,17 @@ public class PayrollService {
     private final PayrollMapper payrollMapper;
     private final Clock clock;
 
+    /**
+     * Mở kỳ lương {@code DRAFT} cho một tháng, từ ngày 1 đến ngày cuối tháng.
+     *
+     * @param request năm, tháng và ngày trả lương dự kiến (có thể để trống, bắt buộc khi tính)
+     * @throws ConflictException tháng đó đã có kỳ chưa hủy (→ 409 {@code CONFLICT})
+     */
     @PreAuthorize("hasAuthority('payroll.calculate')")
     public PayrollPeriodResponse createPeriod(CreatePayrollPeriodRequest request) {
         employeeAccessScopeService.requireCompanyWide("payroll.calculate");
+        // Kiểm tra trước để báo lỗi rõ; uq_payroll_periods_year_month (bỏ qua kỳ CANCELLED) vẫn chặn khi hai
+        // request tạo cùng lúc.
         if (payrollPeriodRepository.existsByYearAndMonthAndStatusNot(request.year(), request.month(),
             PayrollPeriodStatus.CANCELLED)) {
             throw new ConflictException(ErrorCode.CONFLICT, "Payroll period already exists for " + request.year() + "-" + request.month());
@@ -71,6 +87,20 @@ public class PayrollService {
         return payrollMapper.toResponse(payrollPeriodRepository.save(period));
     }
 
+    /**
+     * Tính (hoặc tính lại) phiếu lương cho mọi nhân viên có làm việc trong kỳ, rồi chuyển kỳ sang
+     * {@code CALCULATED}.
+     *
+     * <p>Thứ tự: kiểm tra trạng thái → chốt ngày trả lương → xóa phiếu cũ → mỗi nhân viên một phiếu qua
+     * {@link PayslipCalculator#calculate}. Cả kỳ chạy trong một transaction: một nhân viên thiếu dữ liệu
+     * thì không phiếu nào được lưu và kỳ giữ nguyên trạng thái.
+     *
+     * @param request {@code taxPaymentDate} ghi đè ngày trả lương của kỳ (null → giữ ngày đã có)
+     * @return kỳ đã tính, kèm tổng số phiếu, tổng thu nhập và thực nhận
+     * @throws ConflictException kỳ đã duyệt/trả/khóa/hủy (→ 409 {@code PAYROLL_PERIOD_LOCKED})
+     * @throws BusinessException thiếu ngày trả lương, trùng tháng nộp thuế với kỳ khác, hoặc một nhân viên
+     *         thiếu dữ liệu tính lương (→ 400 {@code VALIDATION_ERROR}, thông báo kèm mã nhân viên)
+     */
     @PreAuthorize("hasAuthority('payroll.calculate')")
     public PayrollPeriodResponse calculate(Long periodId, PayrollActionRequest request) {
         employeeAccessScopeService.requireCompanyWide("payroll.calculate");
@@ -80,6 +110,7 @@ public class PayrollService {
                 ErrorCode.PAYROLL_PERIOD_LOCKED, "Period " + periodId + " can no longer be recalculated");
         }
 
+        // Ngày trả lương quyết định luật thuế và số người phụ thuộc áp dụng (xem InsuranceTaxCalculator).
         if (request.taxPaymentDate() != null) {
             period.setTaxPaymentDate(request.taxPaymentDate());
         }
@@ -87,6 +118,8 @@ public class PayrollService {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "taxPaymentDate is required to calculate payroll withholding");
         }
+        // Thuế TNCN tính theo từng tháng trả lương: hai kỳ đã tính trả cùng một tháng thì mỗi kỳ được giảm
+        // trừ gia cảnh một lần, thuế bị tính thiếu → chặn, vì hệ thống chưa gộp thu nhập nhiều kỳ.
         LocalDate paymentMonthStart = period.getTaxPaymentDate().withDayOfMonth(1);
         if (payrollPeriodRepository.existsOtherInPaymentMonth(periodId, paymentMonthStart,
             paymentMonthStart.withDayOfMonth(paymentMonthStart.lengthOfMonth()),
@@ -99,8 +132,11 @@ public class PayrollService {
         Account calculatedBy = currentAccountProvider.account();
 
         payrollPeriodInvalidator.deletePayslips(periodId);
+        // Đẩy lệnh xóa xuống DB ngay: Hibernate chạy INSERT trước DELETE khi flush, phiếu mới sẽ vấp
+        // uq_payslips_period_employee với phiếu cũ chưa xóa.
         payslipRepository.flush();
 
+        // Nhân viên chưa xóa, vào làm trước cuối kỳ và chưa nghỉ trước đầu kỳ, theo mã nhân viên.
         List<Employee> employees = employeeRepository.findEmployedDuring(
             period.getPeriodStart(), period.getPeriodEnd());
 
@@ -115,6 +151,15 @@ public class PayrollService {
         return payrollMapper.toResponse(period);
     }
 
+    /**
+     * Duyệt bảng lương đã tính. Từ đây phiếu lương hiện cho nhân viên và dữ liệu ảnh hưởng tới kỳ bị khóa
+     * (đổi lương, phụ cấp, chấm công… của kỳ sẽ bị từ chối 409 {@code PAYROLL_PERIOD_LOCKED}).
+     *
+     * @param request không dùng
+     * @throws ConflictException kỳ chưa ở {@code CALCULATED}, hoặc chấm công trong kỳ đã sửa sau lúc tính
+     *         (→ 409 {@code CONFLICT})
+     * @throws BusinessException người duyệt cũng là người tính (→ 400 {@code VALIDATION_ERROR})
+     */
     @PreAuthorize("hasAuthority('payroll.approve')")
     public PayrollPeriodResponse approve(Long periodId, PayrollActionRequest request) {
         employeeAccessScopeService.requireCompanyWide("payroll.approve");
@@ -122,11 +167,13 @@ public class PayrollService {
         if (period.getStatus() != PayrollPeriodStatus.CALCULATED) {
             throw new ConflictException(ErrorCode.CONFLICT, "Period must be CALCULATED before it can be approved");
         }
+        // Chấm công sửa sau lúc tính (updated_at mới hơn calculatedAt) → bảng lương có thể đã lỗi thời.
         if (attendanceRecordRepository.existsByWorkDateBetweenAndUpdatedAtAfter(
             period.getPeriodStart(), period.getPeriodEnd(), period.getCalculatedAt())) {
             throw new ConflictException(ErrorCode.CONFLICT, "Attendance changed after payroll calculation; recalculate first");
         }
         Account approver = currentAccountProvider.account();
+        // Tách người tính và người duyệt (four-eyes): một người không tự duyệt bảng lương mình tính.
         if (period.getCalculatedByAccount() != null && period.getCalculatedByAccount().getId().equals(approver.getId())) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "The approver must be different from the calculator");
         }
@@ -138,6 +185,13 @@ public class PayrollService {
         return payrollMapper.toResponse(period);
     }
 
+    /**
+     * Ghi nhận đã trả lương và chốt ngày trả thực tế.
+     *
+     * @param request {@code taxPaymentDate} là ngày trả thực tế (null → hôm nay)
+     * @throws ConflictException kỳ chưa duyệt, hoặc ngày trả thực tế khác tháng với ngày trả đã dùng để
+     *         tính thuế (→ 409 {@code CONFLICT})
+     */
     @PreAuthorize("hasAuthority('payroll.mark_paid')")
     public PayrollPeriodResponse markPaid(Long periodId, PayrollActionRequest request) {
         employeeAccessScopeService.requireCompanyWide("payroll.mark_paid");
@@ -146,6 +200,8 @@ public class PayrollService {
             throw new ConflictException(ErrorCode.CONFLICT, "Period must be APPROVED before it can be marked as paid");
         }
 
+        // Thuế đã tính theo ngày trả dự kiến (luật thuế, số người phụ thuộc, tháng nộp thuế): trả lệch sang
+        // tháng khác thì số thuế có thể sai, phải tính lại trước. Cùng tháng thì chỉ cập nhật ngày.
         LocalDate actualPaymentDate = request.taxPaymentDate() == null
             ? LocalDate.now(clock) : request.taxPaymentDate();
         if (period.getTaxPaymentDate() == null || !YearMonth.from(actualPaymentDate)
@@ -164,6 +220,12 @@ public class PayrollService {
         return payrollMapper.toResponse(period);
     }
 
+    /**
+     * Khóa kỳ đã trả: trạng thái cuối, không đổi được nữa.
+     *
+     * @param request không dùng
+     * @throws ConflictException kỳ chưa ở {@code PAID} (→ 409 {@code CONFLICT})
+     */
     @PreAuthorize("hasAuthority('payroll.lock')")
     public PayrollPeriodResponse lock(Long periodId, PayrollActionRequest request) {
         employeeAccessScopeService.requireCompanyWide("payroll.lock");
@@ -181,6 +243,12 @@ public class PayrollService {
         return payrollMapper.toResponse(period);
     }
 
+    /**
+     * Hủy kỳ chưa duyệt. Phiếu lương đã tính vẫn nằm trong DB nhưng kỳ {@code CANCELLED} không còn chặn
+     * việc tạo kỳ mới cho tháng đó (uq_payroll_periods_year_month bỏ qua kỳ đã hủy).
+     *
+     * @throws ConflictException kỳ đã duyệt trở đi (→ 409 {@code CONFLICT})
+     */
     @PreAuthorize("hasAuthority('payroll.calculate')")
     public PayrollPeriodResponse cancel(Long periodId) {
         employeeAccessScopeService.requireCompanyWide("payroll.calculate");

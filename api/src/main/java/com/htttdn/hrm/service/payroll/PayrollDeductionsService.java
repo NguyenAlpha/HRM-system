@@ -33,6 +33,18 @@ import jakarta.validation.constraints.PositiveOrZero;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * HR quản lý dữ liệu khấu trừ của từng nhân viên: hồ sơ bảo hiểm/thuế (tham gia loại bảo hiểm nào, lương
+ * đóng bảo hiểm, vùng lương) và người phụ thuộc giảm trừ gia cảnh. Việc tính tiền bảo hiểm và thuế từ dữ
+ * liệu này nằm ở {@link InsuranceTaxCalculator}.
+ *
+ * <p>Cả hai là lịch sử theo thời gian: mỗi bản ghi có {@code effectiveFrom}/{@code effectiveTo}, không sửa
+ * bản ghi cũ mà đóng nó lại rồi thêm bản mới. Mọi thay đổi làm các kỳ lương đã tính bị ảnh hưởng quay về
+ * {@code DRAFT}, và bị từ chối nếu kỳ đã duyệt ({@link PayrollPeriodInvalidator}).
+ *
+ * <p>Mọi method kiểm tra nhân viên tồn tại (không có → 404 {@code EMPLOYEE_NOT_FOUND}) và nằm trong phạm vi
+ * quyền của người thao tác (ngoài phạm vi → 403).
+ */
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -45,6 +57,7 @@ public class PayrollDeductionsService {
     private final CurrentAccountProvider actor;
     private final PayrollPeriodInvalidator invalidator;
 
+    /** Lịch sử hồ sơ bảo hiểm/thuế của nhân viên, mới nhất trước. */
     @PreAuthorize("hasAuthority('compensation.read')")
     @Transactional(readOnly = true)
     public List<Profile> profiles(Long employeeId) {
@@ -53,6 +66,15 @@ public class PayrollDeductionsService {
             .map(PayrollDeductionsService::toProfile).toList();
     }
 
+    /**
+     * Áp hồ sơ bảo hiểm/thuế mới từ {@code effectiveFrom}: hồ sơ đang mở được đóng vào ngày hôm trước.
+     *
+     * @throws BusinessException ngày hiệu lực trước ngày vào làm, không sau hồ sơ hiện tại, nhân viên không
+     *         cư trú, hoặc bật bảo hiểm mà lương đóng bảo hiểm bằng 0 (→ 400 {@code VALIDATION_ERROR}); ngày
+     *         hiệu lực sau ngày làm việc cuối (→ 400 {@code AFTER_EMPLOYMENT_END})
+     * @throws com.htttdn.hrm.exception.ConflictException có kỳ lương đã duyệt từ ngày hiệu lực (→ 409
+     *         {@code PAYROLL_PERIOD_LOCKED})
+     */
     @PreAuthorize("hasAuthority('compensation.manage')")
     public Profile setProfile(Long employeeId, ProfileCommand command) {
         Employee employee = requireEmployee(employeeId, "compensation.manage");
@@ -68,6 +90,7 @@ public class PayrollDeductionsService {
             && command.insuranceSalary().signum() == 0) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "insuranceSalary is required when insurance is enabled");
         }
+        // Kỳ lương kết thúc từ ngày hiệu lực trở đi: đã tính → về DRAFT, đã duyệt → 409.
         invalidator.invalidateFrom(command.effectiveFrom());
         EmployeePayrollProfile open = profileRepository.findByEmployeeIdForUpdate(employeeId).stream()
             .filter(profile -> profile.getEffectiveTo() == null).findFirst().orElse(null);
@@ -95,6 +118,7 @@ public class PayrollDeductionsService {
         return toProfile(created);
     }
 
+    /** Người phụ thuộc của nhân viên (cả đã kết thúc), mới nhất trước. */
     @PreAuthorize("hasAuthority('compensation.read')")
     @Transactional(readOnly = true)
     public List<Dependent> dependents(Long employeeId) {
@@ -103,6 +127,16 @@ public class PayrollDeductionsService {
             .map(PayrollDeductionsService::toDependent).toList();
     }
 
+    /**
+     * Đăng ký người phụ thuộc được giảm trừ trong khoảng {@code effectiveFrom}–{@code effectiveTo}.
+     *
+     * <p>Thuế tính theo ngày trả lương, nên chỉ các kỳ có ngày trả lương trong khoảng đó bị tính lại.
+     *
+     * @throws BusinessException khoảng ngày không hợp lệ (→ 400 {@code VALIDATION_ERROR}), hoặc bắt đầu sau
+     *         ngày làm việc cuối (→ 400 {@code AFTER_EMPLOYMENT_END})
+     * @throws ConflictException người cùng tên đã có khoảng chồng lấn (→ 409 {@code CONFLICT}), hoặc có kỳ
+     *         lương đã duyệt trả trong khoảng đó (→ 409 {@code PAYROLL_PERIOD_LOCKED})
+     */
     @PreAuthorize("hasAuthority('compensation.manage')")
     public Dependent addDependent(Long employeeId, DependentCommand command) {
         Employee employee = requireEmployee(employeeId, "compensation.manage");
@@ -129,6 +163,16 @@ public class PayrollDeductionsService {
         return toDependent(created);
     }
 
+    /**
+     * Kết thúc (hoặc rút ngắn) thời gian giảm trừ của một người phụ thuộc, tính đến hết {@code effectiveTo}.
+     *
+     * @throws com.htttdn.hrm.exception.ResourceNotFoundException người phụ thuộc không có hoặc thuộc nhân viên
+     *         khác (→ 404 {@code RESOURCE_NOT_FOUND})
+     * @throws BusinessException ngày kết thúc trước ngày bắt đầu hoặc không sớm hơn ngày kết thúc hiện tại
+     *         (→ 400 {@code VALIDATION_ERROR})
+     * @throws ConflictException có kỳ lương đã duyệt trả sau ngày kết thúc mới (→ 409
+     *         {@code PAYROLL_PERIOD_LOCKED})
+     */
     @PreAuthorize("hasAuthority('compensation.manage')")
     public Dependent endDependent(Long employeeId, Long dependentId, LocalDate effectiveTo) {
         requireEmployee(employeeId, "compensation.manage");
@@ -140,6 +184,7 @@ public class PayrollDeductionsService {
             || current.getEffectiveTo() != null && !effectiveTo.isBefore(current.getEffectiveTo())) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Invalid dependent end date");
         }
+        // Chỉ phần bị cắt bớt (sau ngày kết thúc mới) thay đổi; getEffectiveTo() null → tới vô hạn.
         invalidator.invalidateTaxPaymentsBetween(effectiveTo.plusDays(1), current.getEffectiveTo());
         current.setEffectiveTo(effectiveTo);
         return toDependent(current);

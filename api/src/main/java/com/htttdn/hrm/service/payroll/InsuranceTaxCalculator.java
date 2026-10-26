@@ -43,11 +43,19 @@ public class InsuranceTaxCalculator {
     private final PayrollInsuranceRuleRepository insuranceRules;
 
     /**
-     * @param workMonthEnd ngày làm việc cuối của tháng: chọn hồ sơ bảo hiểm và luật bảo hiểm
+     * Bảo hiểm (BHXH, BHYT, BHTN) và thuế TNCN người lao động nộp trong tháng.
+     *
+     * <p>Thứ tự: chọn hồ sơ bảo hiểm/thuế → tính bảo hiểm theo lương đóng bảo hiểm (có trần) → thu nhập
+     * tính thuế = thu nhập chịu thuế − bảo hiểm − giảm trừ bản thân − giảm trừ người phụ thuộc (không âm) →
+     * thuế lũy tiến ({@link #progressiveTax}).
+     *
+     * @param workMonthEnd ngày cuối nhân viên còn làm trong tháng: chọn hồ sơ bảo hiểm và luật bảo hiểm
      * @param paymentDate ngày trả lương: chọn luật thuế và số người phụ thuộc
      * @param taxableGrossPay tổng thu nhập chịu thuế (đã trừ phần miễn thuế)
      * @param daysNotWorked số ngày làm việc của tháng mà người lao động không làm việc; từ 14 ngày thì
      *        tháng đó không trừ bảo hiểm
+     * @return các khoản bảo hiểm, căn cứ đóng, thu nhập tính thuế, thuế, và id hồ sơ/luật đã dùng (lưu lên
+     *         phiếu lương để đối chiếu sau)
      * @throws BusinessException thiếu hồ sơ, luật hoặc dữ liệu không hợp lệ (→ 400)
      */
     public Deduction calculate(Long employeeId, LocalDate workMonthEnd, LocalDate paymentDate,
@@ -59,6 +67,7 @@ public class InsuranceTaxCalculator {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Employee " + employeeId + ": non-resident tax calculation is not configured");
         }
+        // Tháng không đóng bảo hiểm: coi như hồ sơ tắt cả ba loại, nên cũng bỏ qua kiểm tra lương tối thiểu vùng.
         boolean contributes = daysNotWorked < MIN_DAYS_NOT_WORKED_WITHOUT_INSURANCE;
         boolean socialInsurance = contributes && profile.getSocialInsurance();
         boolean healthInsurance = contributes && profile.getHealthInsurance();
@@ -72,6 +81,8 @@ public class InsuranceTaxCalculator {
                 "Employee " + employeeId + ": insuranceSalary is below region " + profile.getWageRegion()
                     + " minimum on " + workMonthEnd);
         }
+        // Hai mức trần khác nhau: BHXH/BHYT theo socialHealthCap, BHTN theo unemploymentCapMultiplier × lương
+        // tối thiểu vùng. Căn cứ đóng vẫn được trả về (và ghi lên phiếu) cả khi tháng đó không đóng.
         BigDecimal regionMinimum = insurance.regionMinimum(profile.getWageRegion());
         BigDecimal socialBase = profile.getInsuranceSalary().min(insurance.getSocialHealthCap());
         BigDecimal unemploymentBase = profile.getInsuranceSalary().min(regionMinimum
@@ -83,6 +94,7 @@ public class InsuranceTaxCalculator {
         PayrollTaxRule tax = taxRules.findEffective(paymentDate)
             .orElseThrow(() -> new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Missing resident income tax rules for payment date " + paymentDate));
+        // Người phụ thuộc đếm theo ngày trả lương, cùng mốc với luật thuế.
         long dependentCount = dependentRepository.countEffective(employeeId, paymentDate);
         if (taxableGrossPay.signum() < 0) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Taxable pay cannot be negative");
@@ -101,6 +113,16 @@ public class InsuranceTaxCalculator {
             social, health, unemployment, taxableIncome, progressiveTax(taxableIncome, brackets));
     }
 
+    /**
+     * Thuế lũy tiến từng phần: mỗi bậc đánh thuế phần thu nhập vượt cận dưới, tối đa tới cận trên, theo
+     * thuế suất của bậc, rồi cộng lại, làm tròn 2 chữ số.
+     *
+     * <p>Kiểm tra luôn bảng bậc lấy từ DB: bậc đầu từ 0, các bậc nối liền không hở/chồng, thuế suất trong
+     * [0, 1], chỉ bậc cuối không có cận trên. Package-private để unit test gọi thẳng.
+     *
+     * @param brackets các bậc theo cận dưới tăng dần
+     * @throws BusinessException bảng bậc rỗng hoặc sai cấu trúc (→ 400 {@code VALIDATION_ERROR})
+     */
     static BigDecimal progressiveTax(BigDecimal taxableIncome, List<TaxBracket> brackets) {
         if (brackets.isEmpty()) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Tax rule has no brackets");

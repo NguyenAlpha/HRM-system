@@ -69,7 +69,14 @@ public class PayslipCalculator {
     private final InsuranceTaxCalculator insuranceTaxCalculator;
     private final PayrollAdjustmentRepository payrollAdjustmentRepository;
 
-    /** Dữ liệu đầu vào đã kiểm tra đủ của một nhân viên trong kỳ. */
+    /**
+     * Dữ liệu đầu vào đã kiểm tra đủ của một nhân viên trong kỳ.
+     *
+     * <p>{@code employedTo}: ngày cuối nhân viên còn làm trong kỳ (ngày nghỉ việc hoặc cuối kỳ);
+     * {@code lastWorkDate}: ngày có lịch làm cuối cùng, dùng chọn lương và phân công ghi lên phiếu;
+     * {@code companyWorkdays}: số ngày công cả tháng của công ty (mẫu số khi chia lương theo ngày);
+     * {@code daysNotEmployed}: ngày công của kỳ trước khi vào làm hoặc sau khi nghỉ việc.
+     */
     private record Inputs(
         LocalDate employedTo,
         List<AttendanceCalendarService.ScheduledDay> scheduledDays,
@@ -97,6 +104,16 @@ public class PayslipCalculator {
         List<PayslipItem> items) {
     }
 
+    /**
+     * Tính và lưu phiếu lương (kèm các dòng chi tiết) của một nhân viên trong kỳ.
+     *
+     * <p>Thu nhập = lương cơ bản + phụ cấp + tăng ca + khoản cộng điều chỉnh; thực nhận = thu nhập − bảo
+     * hiểm − thuế TNCN − khoản trừ điều chỉnh. Phiếu lưu kèm ảnh chụp tên, chức vụ, đơn vị và id luật
+     * thuế/bảo hiểm lúc tính, để phiếu cũ không đổi khi dữ liệu gốc đổi sau này.
+     *
+     * @throws BusinessException thiếu dữ liệu đầu vào hoặc khoản trừ lớn hơn thu nhập (→ 400
+     *         {@code VALIDATION_ERROR}, thông báo kèm mã nhân viên)
+     */
     public void calculate(PayrollPeriod period, Employee employee) {
         Inputs inputs = loadInputs(period, employee);
         ProratedPay prorated = prorate(employee, inputs);
@@ -114,10 +131,13 @@ public class PayslipCalculator {
 
         BigDecimal allowancePay = prorated.positionAllowance().add(prorated.seniorityAllowance());
         BigDecimal grossPay = prorated.basicSalary().add(allowancePay).add(overtime.amount()).add(adjustments.earnings());
+        // Thu nhập chịu thuế: bỏ phần tăng ca và phụ cấp được miễn thuế.
         InsuranceTaxCalculator.Deduction deduction = deductions(period, employee, inputs,
             grossPay.subtract(overtime.taxExempt()).subtract(adjustments.taxExempt()));
         BigDecimal netPay = grossPay.subtract(deduction.social()).subtract(deduction.health())
             .subtract(deduction.unemployment()).subtract(deduction.incomeTax()).subtract(adjustments.deductions());
+        // Thực nhận âm (khoản trừ điều chỉnh hoặc bảo hiểm lớn hơn thu nhập) → kế toán phải xử lý tay, không
+        // lưu phiếu âm; lỗi này làm hỏng cả lần tính kỳ (xem PayrollService.calculate).
         if (netPay.signum() < 0) {
             throw missingPayrollInput(employee, "manual settlement: deductions exceed gross pay");
         }
@@ -159,6 +179,7 @@ public class PayslipCalculator {
             .build();
         Payslip savedPayslip = payslipRepository.save(payslip);
 
+        // Dòng phiếu được dựng trước khi có phiếu; gắn phiếu đã lưu (có id) rồi mới lưu các dòng.
         for (PayslipItem item : items) {
             item.setPayslip(savedPayslip);
         }
@@ -185,6 +206,12 @@ public class PayslipCalculator {
     /**
      * Mỗi ngày có tăng ca đã duyệt: đơn giá giờ = lương hiệu lực ngày đó / (số ngày công cả tháng × giờ ca),
      * nhân số giờ và hệ số tăng ca.
+     *
+     * <p>Số phút, hệ số và việc miễn thuế do người duyệt chọn khi duyệt tăng ca
+     * ({@code OvertimeService}). Một query lương cho mỗi ngày tăng ca: chấp nhận được vì mỗi người chỉ có
+     * vài ngày tăng ca một tháng.
+     *
+     * @throws BusinessException không có lương hiệu lực vào ngày tăng ca (→ 400 {@code VALIDATION_ERROR})
      */
     private OvertimePay overtime(Employee employee, Inputs inputs) {
         long minutes = 0;
@@ -223,7 +250,12 @@ public class PayslipCalculator {
         return new OvertimePay(minutes, overtimePay, taxExemptOvertimePay, items);
     }
 
-    /** Dòng phụ cấp chức vụ và thâm niên (khoản bằng 0 thì không có dòng); số tiền đã chia ở {@link #prorate}. */
+    /**
+     * Dòng phụ cấp chức vụ và thâm niên (khoản bằng 0 thì không có dòng); số tiền đã chia ở {@link #prorate}.
+     *
+     * <p>Dòng thâm niên ghi số năm và tỉ lệ thực nhận (tiền phụ cấp / lương cơ bản của hợp đồng), nên khi tỉ
+     * lệ đổi giữa tháng, tỉ lệ trên phiếu là tỉ lệ bình quân của tháng.
+     */
     private List<PayslipItem> allowanceItems(Employee employee, Inputs inputs, ProratedPay prorated) {
         List<PayslipItem> items = new ArrayList<>();
         EmployeeAssignment assignment = inputs.assignment();
@@ -283,6 +315,7 @@ public class PayslipCalculator {
      */
     private InsuranceTaxCalculator.Deduction deductions(PayrollPeriod period, Employee employee, Inputs inputs,
         BigDecimal taxableGrossPay) {
+        // Chỉ đếm ngày nghỉ trọn ngày (0 phút được trả); nghỉ nửa ngày vẫn tính là có làm việc.
         long unpaidDays = inputs.scheduledDays().stream().filter(day -> {
             AttendanceRecord record = inputs.attendanceByDate().get(day.workDate());
             return record.getPayableMinutes() == 0 && (record.getStatus() == AttendanceStatus.UNPAID_LEAVE
@@ -292,23 +325,35 @@ public class PayslipCalculator {
             return insuranceTaxCalculator.calculate(employee.getId(), inputs.employedTo(),
                 period.getTaxPaymentDate(), taxableGrossPay, unpaidDays + inputs.daysNotEmployed());
         } catch (BusinessException error) {
+            // Bọc lại để thông báo có mã nhân viên; vẫn là BusinessException → 400 VALIDATION_ERROR.
             throw missingPayrollInput(employee, error.getMessage());
         }
     }
 
-    /** Thiếu bất kỳ dữ liệu nào (lịch làm, lương, phân công, chấm công) thì báo lỗi, không tính dở. */
+    /**
+     * Thiếu bất kỳ dữ liệu nào (lịch làm, lương, phân công, chấm công) thì báo lỗi, không tính dở.
+     *
+     * <p>Chỉ xét phần kỳ nhân viên còn làm ([{@code employedFrom}, {@code employedTo}]). Ngày công của công ty
+     * là mọi ngày trừ Chủ nhật và ngày lễ ({@code AttendanceCalendarService.companyWorkDates}); mỗi ngày đó
+     * phải có phân công chính kèm ca, và có ngày công đã chốt.
+     *
+     * @throws BusinessException dữ liệu nào thiếu thì thông báo nêu đúng dữ liệu đó (→ 400 {@code VALIDATION_ERROR})
+     */
     private Inputs loadInputs(PayrollPeriod period, Employee employee) {
         LocalDate employedFrom = employee.getHireDate().isAfter(period.getPeriodStart())
             ? employee.getHireDate() : period.getPeriodStart();
         LocalDate employedTo = employee.getTerminationDate() != null
             && employee.getTerminationDate().isBefore(period.getPeriodEnd())
                 ? employee.getTerminationDate() : period.getPeriodEnd();
+        // Không có ngày công nào (VD vào làm rồi nghỉ trong mấy ngày lễ) → không có gì để chia lương theo ngày.
         List<LocalDate> expectedWorkDates = attendanceCalendarService.companyWorkDates(employedFrom, employedTo);
         if (expectedWorkDates.isEmpty()) {
             throw missingPayrollInput(employee, "company workdays between " + employedFrom + " and "
                 + employedTo + "; review holiday or rest-day pay manually");
         }
 
+        // scheduleFor: ngày công kèm ca của phân công chính hiệu lực ngày đó; bỏ qua ngày không có phân công,
+        // ném lỗi khi phân công thiếu ca. Ngày bị bỏ qua được bắt ở vòng lặp ngay sau.
         List<AttendanceCalendarService.ScheduledDay> scheduledDays;
         try {
             scheduledDays = attendanceCalendarService.scheduleFor(employee.getId(), employedFrom, employedTo);
@@ -322,6 +367,7 @@ public class PayslipCalculator {
                 throw missingPayrollInput(employee, "primary assignment and work shift on " + date);
             }
         }
+        // Lương và phân công ghi lên phiếu là của ngày làm cuối cùng; tiền thì vẫn chia theo từng ngày ở prorate.
         LocalDate lastWorkDate = scheduledDays.get(scheduledDays.size() - 1).workDate();
         BigDecimal basicSalary = employeeSalaryHistoryRepository.findEffective(employee.getId(), lastWorkDate)
             .orElseThrow(() -> missingPayrollInput(employee, "salary history on " + lastWorkDate))
@@ -348,6 +394,7 @@ public class PayslipCalculator {
                 throw missingPayrollInput(employee, "resolved attendance on " + day.workDate());
             }
         }
+        // Có giờ vào mà chưa có giờ ra (kể cả ngày ngoài lịch, VD tăng ca Chủ nhật) → ngày công chưa xong.
         if (attendanceRecords.stream().anyMatch(record -> record.getCheckInAt() != null
             && record.getCheckOutAt() == null)) {
             throw missingPayrollInput(employee, "completed attendance");
@@ -379,6 +426,16 @@ public class PayslipCalculator {
     /**
      * Mỗi ngày công được hưởng phần (phút được trả / phút ca) của 1/(số ngày công cả tháng) khoản tháng,
      * theo lương, chức vụ và thâm niên đang hiệu lực đúng ngày đó.
+     *
+     * <p>Mẫu số là số ngày công cả tháng của công ty, không phải số ngày của nhân viên: làm đủ mọi ngày công
+     * thì nhận đủ lương tháng, vào làm giữa tháng thì nhận theo số ngày đã làm. Ngày lễ không phải ngày
+     * công nên không làm giảm lương. Cộng dồn với 8 chữ số thập phân, làm tròn 2 chữ số một lần ở cuối.
+     *
+     * <p>Mỗi ngày vài query (lương, phân công, phụ cấp): khoảng 26 ngày × vài query mỗi nhân viên, chấp nhận
+     * được với quy mô công ty hiện tại.
+     *
+     * @throws BusinessException thiếu lương/phân công một ngày, hoặc phút được trả vượt phút ca (→ 400
+     *         {@code VALIDATION_ERROR})
      */
     private ProratedPay prorate(Employee employee, Inputs inputs) {
         long companyWorkdays = inputs.companyWorkdays();
@@ -408,6 +465,7 @@ public class PayslipCalculator {
                 .multiply(BigDecimal.valueOf(payableMinutes))
                 .divide(BigDecimal.valueOf(companyWorkdays * day.minutes()), 8, RoundingMode.HALF_UP));
 
+            // Phụ cấp thâm niên là % lương cơ bản (percentage tính theo trăm, nên chia thêm 100).
             int dailySeniorityYears = seniorityYears(employee, date);
             BigDecimal dailySeniorityPercentage = seniorityAllowanceRuleRepository
                 .findEffective(dailySeniorityYears, date)
@@ -436,6 +494,7 @@ public class PayslipCalculator {
             .build();
     }
 
+    /** Ngày có tăng ca được trả: người duyệt đã duyệt (có người và thời điểm duyệt) với số phút lớn hơn 0. */
     private boolean hasApprovedOvertime(AttendanceRecord record) {
         return record.getOvertimeMinutes() != null
             && record.getOvertimeMinutes() > 0
@@ -443,6 +502,7 @@ public class PayslipCalculator {
             && record.getOvertimeApprovedAt() != null;
     }
 
+    /** Số năm thâm niên tròn tính từ {@code seniorityStartDate} đến {@code asOfDate}; chưa tới ngày bắt đầu → 0. */
     private int seniorityYears(Employee employee, LocalDate asOfDate) {
         return (int) Math.max(
             0,
@@ -450,6 +510,7 @@ public class PayslipCalculator {
         );
     }
 
+    /** Lỗi 400 {@code VALIDATION_ERROR} nêu nhân viên (mã, id) và dữ liệu còn thiếu, để HR biết sửa ở đâu. */
     private BusinessException missingPayrollInput(Employee employee, String input) {
         return new BusinessException(ErrorCode.VALIDATION_ERROR,
             "Cannot calculate payroll for employee " + employee.getEmployeeCode()
