@@ -84,13 +84,16 @@ public class RoleAssignmentRequestService {
      *
      * @param request tài khoản, role, phạm vi, thời hạn, lý do
      * @return yêu cầu vừa tạo ({@code PENDING} hoặc đã {@code APPROVED} kèm lần gán)
-     * @throws com.htttdn.hrm.exception.ForbiddenException nhân viên hoặc đích ngoài phạm vi (→ 403)
+     * @throws com.htttdn.hrm.exception.ForbiddenException bị {@code CompanyOwnerAccountGuard} chặn, hoặc nhân
+     *         viên / đích ngoài phạm vi (→ 403)
      * @throws BusinessException bắt đầu trước ngày vào làm, phạm vi/thời hạn sai (→ 400 {@code VALIDATION_ERROR})
      * @throws ConflictException role không cấp được qua yêu cầu, trùng lần gán, hoặc đã có yêu cầu chờ chồng thời
      *         gian (→ 409 {@code ROLE_ASSIGNMENT_REQUEST_EXISTS}…)
      */
     @PreAuthorize("hasAuthority('role.assignment.request')")
     public RoleAssignmentRequestResponse create(CreateRoleAssignmentRequest request) {
+        // Như createRevocation: không đổi role của Company Owner/System Admin nếu người đề nghị không cùng vai trò đó.
+        companyOwnerAccountGuard.requireCanManage(request.accountId());
         AssignAccountRoleRequest assignmentRequest = toAssignmentRequest(request);
         AccountRoleAssignmentCommandService.RequestCandidate candidate =
             roleAssignmentCommandService.prepareRequest(request.accountId(), assignmentRequest);

@@ -1,5 +1,6 @@
 package com.htttdn.hrm.service.rbac;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -17,6 +18,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.request.roleassignment.ApproveRoleAssignmentRequest;
+import com.htttdn.hrm.dto.request.roleassignment.CreateRoleAssignmentRequest;
 import com.htttdn.hrm.dto.request.roleassignment.CreateRoleRevocationRequest;
 import com.htttdn.hrm.dto.request.roleassignment.RejectRoleAssignmentRequest;
 import com.htttdn.hrm.dto.response.account.AccountRoleAssignmentResponse;
@@ -24,7 +26,9 @@ import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.roleassignment.RoleAssignmentRequestResponse;
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestType;
+import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.exception.ConflictException;
+import com.htttdn.hrm.exception.ForbiddenException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -168,6 +172,22 @@ class RoleRevocationRequestIntegrationTest {
             new CreateRoleRevocationRequest(assignmentId, "Lần hai")));
 
         assertEquals(ErrorCode.ROLE_ASSIGNMENT_REQUEST_EXISTS, duplicate.getErrorCode());
+    }
+
+    /** Like a revocation, a grant request cannot touch a Company Owner account unless the requester is one. */
+    @Test
+    void grantRequestForACompanyOwnerNeedsACompanyOwner() {
+        Long ownerRoleId = jdbc.queryForObject("""
+            INSERT INTO roles(code, name, grant_policy, is_system) VALUES ('COMPANY_OWNER', 'Company Owner', 'SYSTEM_ONLY', true)
+            ON CONFLICT (code) DO UPDATE SET code = EXCLUDED.code RETURNING id
+            """, Long.class);
+        insertAssignment(targetAccountId, ownerRoleId);
+        Long roleId = insertRole("HR_ASSIGNABLE");
+        String roleCode = jdbc.queryForObject("SELECT code FROM roles WHERE id = ?", String.class, roleId);
+        authenticateAs(requesterId, "role.assignment.request");
+
+        assertThrows(ForbiddenException.class, () -> requestService.create(new CreateRoleAssignmentRequest(
+            targetAccountId, roleCode, RoleScopeType.COMPANY, null, null, LocalDate.of(2026, 1, 1), null, "x")));
     }
 
     private Long insertRole(String grantPolicy) {

@@ -182,10 +182,11 @@ public class EmployeeAccessScopeService {
      * ({@link RoleAssignmentRequestService}).
      *
      * <p>Đạt nếu phạm vi là {@code COMPANY}, hoặc đơn vị <i>hoặc</i> địa điểm đích nằm trong phạm vi
-     * (kể cả cấp con). Phạm vi {@code SELF} không cho đích nào.
+     * (kể cả cấp con). Phạm vi {@code SELF} không cho đích nào. Không có đích (cả hai {@code null}, VD gán role
+     * phạm vi {@code SELF}/{@code COMPANY}) thì chỉ phạm vi {@code COMPANY} mới đạt.
      *
-     * @param organizationUnitId đơn vị đích
-     * @param workLocationId     địa điểm đích
+     * @param organizationUnitId đơn vị đích, {@code null} nếu không có
+     * @param workLocationId     địa điểm đích, {@code null} nếu không có
      * @param permissionCode     mã permission của thao tác
      * @throws ForbiddenException đích ngoài phạm vi (→ 403 {@code FORBIDDEN})
      */
@@ -300,9 +301,10 @@ public class EmployeeAccessScopeService {
 
         /** Đơn vị hoặc địa điểm đích có nằm trong phạm vi không (xem {@link #requireDestinationAccess}). */
         public boolean allowsDestination(Long organizationUnitId, Long workLocationId) {
+            // Kiểm tra null trước: contains(null) trên set bất biến (Set.copyOf) ném NullPointerException.
             return companyWide
-                || organizationUnitIds.contains(organizationUnitId)
-                || workLocationIds.contains(workLocationId);
+                || organizationUnitId != null && organizationUnitIds.contains(organizationUnitId)
+                || workLocationId != null && workLocationIds.contains(workLocationId);
         }
 
         /**
