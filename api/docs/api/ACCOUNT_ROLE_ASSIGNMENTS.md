@@ -127,7 +127,7 @@ Gán thêm một role nghiệp vụ cho account.
 | `scopeType` | enum | ✅ | `SELF`, `COMPANY`, `ORG_UNIT`, `LOCATION` |
 | `organizationUnitId` | long | Theo scope | Chỉ dùng với `ORG_UNIT` |
 | `workLocationId` | long | Theo scope | Chỉ dùng với `LOCATION` |
-| `effectiveFrom` | date | ✅ | Ngày bắt đầu hiệu lực |
+| `effectiveFrom` | date | ✅ | Ngày bắt đầu hiệu lực; không được trước ngày vào làm của employee |
 | `effectiveTo` | date | ❌ | Không được trước `effectiveFrom` |
 | `reason` | string | ✅ | Không rỗng, tối đa 500 ký tự |
 

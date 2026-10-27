@@ -78,9 +78,9 @@ public class RoleAssignmentRequestService {
     /**
      * Đề nghị cấp role cho một tài khoản.
      *
-     * <p>Thứ tự: kiểm tra như khi gán thật ({@link AccountRoleAssignmentCommandService#prepareRequest}) →
-     * nhân viên và đơn vị/địa điểm đích trong phạm vi người đề nghị → không bắt đầu trước ngày vào làm → lưu
-     * {@code PENDING} → nếu role {@code HR_ASSIGNABLE} thì gán luôn và chuyển {@code APPROVED}.
+     * <p>Thứ tự: kiểm tra như khi gán thật, gồm cả ngày vào làm ({@link AccountRoleAssignmentCommandService#prepareRequest})
+     * → nhân viên và đơn vị/địa điểm đích trong phạm vi người đề nghị → lưu {@code PENDING} → nếu role
+     * {@code HR_ASSIGNABLE} thì gán luôn và chuyển {@code APPROVED}.
      *
      * @param request tài khoản, role, phạm vi, thời hạn, lý do
      * @return yêu cầu vừa tạo ({@code PENDING} hoặc đã {@code APPROVED} kèm lần gán)
@@ -110,13 +110,6 @@ public class RoleAssignmentRequestService {
             request.workLocationId(),
             REQUEST_PERMISSION
         );
-        if (request.effectiveFrom().isBefore(employee.getHireDate())) {
-            throw new BusinessException(
-                ErrorCode.VALIDATION_ERROR,
-                "effectiveFrom must not be before employee hireDate",
-                "effectiveFrom"
-            );
-        }
 
         Account actor = currentAccountProvider.account();
         Instant now = Instant.now(clock);

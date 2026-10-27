@@ -288,13 +288,14 @@ public class AccountRoleAssignmentCommandService {
      *
      * <p>Thứ tự: khóa tài khoản → tài khoản còn dùng được và gắn nhân viên → khóa role → role được phép
      * cấp qua luồng này → phạm vi hợp lệ với role ({@link RoleAssignmentPolicy#validateScope}) → khoảng hiệu
-     * lực → đơn vị/địa điểm khớp loại phạm vi và đang hoạt động → không trùng lần gán cũ → ràng buộc riêng của
+     * lực (không trước ngày vào làm) → đơn vị/địa điểm khớp loại phạm vi và đang hoạt động → không trùng lần gán cũ → ràng buộc riêng của
      * {@code DIRECTOR} (một người tại một thời điểm) và {@code COMPANY_OWNER} (chỉ một).
      *
      * @throws ResourceNotFoundException tài khoản / role / đơn vị / địa điểm không tồn tại (→ 404)
      * @throws ConflictException tài khoản bị khóa hoặc chưa gắn nhân viên, role không cấp được qua luồng này,
      *         trùng lần gán, trùng Director/Owner (→ 409)
-     * @throws BusinessException phạm vi hoặc khoảng hiệu lực sai (→ 400 {@code VALIDATION_ERROR})
+     * @throws BusinessException phạm vi hoặc khoảng hiệu lực sai, bắt đầu trước ngày vào làm
+     *         (→ 400 {@code VALIDATION_ERROR})
      */
     private AssignmentCandidate validateCandidate(
         Long accountId,
@@ -315,7 +316,7 @@ public class AccountRoleAssignmentCommandService {
             ));
         validateGrantPolicy(role, flow);
         roleAssignmentPolicy.validateScope(role, request.scopeType());
-        validatePeriod(request.effectiveFrom(), request.effectiveTo());
+        validatePeriod(account.getEmployee().getHireDate(), request.effectiveFrom(), request.effectiveTo());
 
         ScopeTarget scopeTarget = resolveScopeTarget(request);
         ensureNoDuplicateAssignment(account, role, request, scopeTarget);
@@ -370,7 +371,18 @@ public class AccountRoleAssignmentCommandService {
         }
     }
 
-    private void validatePeriod(LocalDate effectiveFrom, LocalDate effectiveTo) {
+    /**
+     * Lần gán không bắt đầu trước ngày nhân viên vào làm, và không kết thúc trước khi bắt đầu
+     * (→ 400 {@code VALIDATION_ERROR}).
+     */
+    private void validatePeriod(LocalDate hireDate, LocalDate effectiveFrom, LocalDate effectiveTo) {
+        if (effectiveFrom.isBefore(hireDate)) {
+            throw new BusinessException(
+                ErrorCode.VALIDATION_ERROR,
+                "effectiveFrom must not be before employee hireDate",
+                "effectiveFrom"
+            );
+        }
         if (effectiveTo != null && effectiveTo.isBefore(effectiveFrom)) {
             throw new BusinessException(
                 ErrorCode.VALIDATION_ERROR,

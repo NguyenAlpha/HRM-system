@@ -17,6 +17,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htttdn.hrm.dto.request.account.AssignAccountRoleRequest;
 import com.htttdn.hrm.dto.request.roleassignment.ApproveRoleAssignmentRequest;
 import com.htttdn.hrm.dto.request.roleassignment.CreateRoleAssignmentRequest;
 import com.htttdn.hrm.dto.request.roleassignment.CreateRoleRevocationRequest;
@@ -27,6 +28,7 @@ import com.htttdn.hrm.dto.response.roleassignment.RoleAssignmentRequestResponse;
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestType;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
+import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ForbiddenException;
 
@@ -46,6 +48,7 @@ class RoleRevocationRequestIntegrationTest {
 
     @Autowired private JdbcTemplate jdbc;
     @Autowired private RoleAssignmentRequestService requestService;
+    @Autowired private AccountRoleAssignmentAdminService adminService;
 
     private Long requesterId;
     private Long approverId;
@@ -206,6 +209,19 @@ class RoleRevocationRequestIntegrationTest {
 
         assertThrows(ForbiddenException.class, () -> requestService.create(new CreateRoleAssignmentRequest(
             targetAccountId, roleCode, RoleScopeType.COMPANY, null, null, LocalDate.of(2026, 1, 1), null, "x")));
+    }
+
+    /** Every way of granting a role, not only the request, refuses a start before the employee was hired. */
+    @Test
+    void directGrantCannotStartBeforeTheHireDate() {
+        Long roleId = insertRole("HR_ASSIGNABLE");
+        String roleCode = jdbc.queryForObject("SELECT code FROM roles WHERE id = ?", String.class, roleId);
+        authenticateAs(approverId, "account.role.assign");
+
+        BusinessException exception = assertThrows(BusinessException.class, () -> adminService.assign(targetAccountId,
+            new AssignAccountRoleRequest(roleCode, RoleScopeType.COMPANY, null, null, LocalDate.of(2024, 12, 31), null, "x")));
+
+        assertEquals("effectiveFrom", exception.getField());
     }
 
     private Long insertRole(String grantPolicy) {
