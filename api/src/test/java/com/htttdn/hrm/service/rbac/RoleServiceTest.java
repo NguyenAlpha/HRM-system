@@ -10,7 +10,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.htttdn.hrm.dto.request.role.CreateRoleRequest;
 import com.htttdn.hrm.dto.request.role.ReplaceRolePermissionsRequest;
+import com.htttdn.hrm.dto.request.role.UpdateRoleRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Permission;
@@ -19,6 +21,8 @@ import com.htttdn.hrm.entity.RolePermission;
 import com.htttdn.hrm.entity.RolePermissionId;
 import com.htttdn.hrm.entity.enums.PermissionAssignmentPolicy;
 import com.htttdn.hrm.entity.enums.PermissionModule;
+import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
+import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.PermissionRepository;
@@ -136,6 +140,23 @@ class RoleServiceTest {
         assertEquals(ErrorCode.PERMISSION_NOT_FOUND, exception.getErrorCode());
         verify(rolePermissionRepository, never()).deleteAll(any());
         verify(rolePermissionRepository, never()).saveAll(any());
+    }
+
+    /** No workflow grants or revokes AUTO and SYSTEM_ONLY roles, so a custom role with one would be stuck. */
+    @Test
+    void customRolesTakeOnlyAGrantPolicyAWorkflowCanUse() {
+        when(roleRepository.getRequired(10L)).thenReturn(role(false));
+
+        for (RoleGrantPolicy policy : List.of(RoleGrantPolicy.AUTO, RoleGrantPolicy.SYSTEM_ONLY)) {
+            BusinessException created = assertThrows(BusinessException.class,
+                () -> service().create(new CreateRoleRequest("CUSTOM_ROLE", "Custom", null, policy)));
+            BusinessException updated = assertThrows(BusinessException.class,
+                () -> service().update(10L, new UpdateRoleRequest("Custom", null, policy)));
+
+            assertEquals("grantPolicy", created.getField());
+            assertEquals("grantPolicy", updated.getField());
+        }
+        verify(roleRepository, never()).save(any());
     }
 
     private Role role(boolean system) {

@@ -186,11 +186,11 @@ Tạo role tùy chỉnh. Role mới luôn có `isSystem=false`.
 | `code` | string | ✅ | Tối đa 50 ký tự; bắt đầu bằng `A-Z`; chỉ gồm `A-Z`, `0-9`, `_`; không bắt đầu bằng `ROLE_` |
 | `name` | string | ✅ | Không rỗng, tối đa 150 ký tự |
 | `description` | string | ❌ | Mô tả role, có thể bỏ qua hoặc để `null` |
-| `grantPolicy` | string | ✅ | `AUTO`, `HR_ASSIGNABLE`, `OWNER_APPROVAL` hoặc `SYSTEM_ONLY` |
+| `grantPolicy` | string | ✅ | `HR_ASSIGNABLE` hoặc `OWNER_APPROVAL` (`AUTO`/`SYSTEM_ONLY` → `400 VALIDATION_ERROR`) |
 
 `code` là duy nhất và không thể thay đổi sau khi tạo. Client dùng code không có prefix `ROLE_`; Spring Security tự chuyển role trong JWT thành authority có prefix này.
 
-`grantPolicy` quyết định workflow cấp role: đề xuất của HR được tự động chấp thuận với `HR_ASSIGNABLE`, phải chờ Company Owner duyệt với `OWNER_APPROVAL`, hoặc không thể cấp qua API đề xuất/gán trực tiếp hiện hành với `AUTO` và `SYSTEM_ONLY`.
+`grantPolicy` quyết định workflow cấp role: đề xuất của HR được tự động chấp thuận với `HR_ASSIGNABLE`, phải chờ Company Owner duyệt với `OWNER_APPROVAL`. `AUTO` và `SYSTEM_ONLY` chỉ dành cho role hệ thống: không workflow nào cấp hay thu hồi role mang hai policy này (kể cả khi nghỉ việc hoặc xóa tài khoản), nên role tùy chỉnh không được dùng chúng, cả khi tạo lẫn khi sửa.
 
 ### Response `201 Created`
 
@@ -327,7 +327,7 @@ Cập nhật tên, mô tả và chính sách cấp của custom role. System rol
 |:------|:-----|:--------:|:----------|
 | `name` | string | ✅ | Không rỗng, tối đa 150 ký tự |
 | `description` | string | ❌ | Mô tả mới, có thể là `null` |
-| `grantPolicy` | string | ✅ | `AUTO`, `HR_ASSIGNABLE`, `OWNER_APPROVAL` hoặc `SYSTEM_ONLY` |
+| `grantPolicy` | string | ✅ | `HR_ASSIGNABLE` hoặc `OWNER_APPROVAL` (`AUTO`/`SYSTEM_ONLY` → `400 VALIDATION_ERROR`) |
 
 ### Response `200 OK`
 

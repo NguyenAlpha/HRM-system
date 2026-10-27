@@ -69,13 +69,14 @@ import {
 } from "@/lib/rbac"
 
 const CODE_PATTERN = /^(?!ROLE_)[A-Z][A-Z0-9_]*$/
-const ROLE_GRANT_POLICIES = ["AUTO", "HR_ASSIGNABLE", "OWNER_APPROVAL", "SYSTEM_ONLY"] as const
-const ROLE_GRANT_POLICY_LABELS: Record<(typeof ROLE_GRANT_POLICIES)[number], string> = {
+const ROLE_GRANT_POLICY_LABELS: Record<Role["grantPolicy"], string> = {
   AUTO: "Tự động qua workflow hệ thống",
   HR_ASSIGNABLE: "HR có thể cấp ngay",
   OWNER_APPROVAL: "Cần Company Owner phê duyệt",
   SYSTEM_ONLY: "Chỉ workflow nội bộ",
 }
+// Role tùy chỉnh chỉ nhận hai chính sách này (API từ chối AUTO và SYSTEM_ONLY).
+const CUSTOM_ROLE_GRANT_POLICIES = ["HR_ASSIGNABLE", "OWNER_APPROVAL"] as const
 
 const roleSchema = z.object({
   code: z
@@ -86,7 +87,7 @@ const roleSchema = z.object({
     .regex(CODE_PATTERN, "Chữ hoa, số, gạch dưới; bắt đầu bằng chữ cái; không bắt đầu bằng ROLE_"),
   name: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự"),
   description: z.string().max(1000, "Tối đa 1000 ký tự").optional(),
-  grantPolicy: z.enum(ROLE_GRANT_POLICIES),
+  grantPolicy: z.enum(CUSTOM_ROLE_GRANT_POLICIES, "Chọn HR cấp ngay hoặc cần Company Owner phê duyệt"),
 })
 
 type RoleValues = z.infer<typeof roleSchema>
@@ -163,7 +164,8 @@ export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSe
       code: role.code,
       name: role.name,
       description: role.description ?? "",
-      grantPolicy: role.grantPolicy,
+      // Role tùy chỉnh cũ đang AUTO/SYSTEM_ONLY: đề xuất OWNER_APPROVAL, lưu lại mới có hiệu lực.
+      grantPolicy: role.grantPolicy === "HR_ASSIGNABLE" ? "HR_ASSIGNABLE" : "OWNER_APPROVAL",
     })
     setDialogOpen(true)
   }
@@ -356,7 +358,7 @@ export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSe
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {ROLE_GRANT_POLICIES.map((policy) => (
+                        {CUSTOM_ROLE_GRANT_POLICIES.map((policy) => (
                           <SelectItem key={policy} value={policy}>
                             {ROLE_GRANT_POLICY_LABELS[policy]}
                           </SelectItem>
@@ -366,7 +368,7 @@ export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSe
                   )}
                 />
                 <p className="text-xs text-muted-foreground">
-                  AUTO và SYSTEM_ONLY không thể cấp qua API đề xuất hoặc gán trực tiếp hiện tại.
+                  Role tùy chỉnh chỉ được cấp bởi HR hoặc sau khi Company Owner phê duyệt.
                 </p>
                 {errors.grantPolicy && <p className="text-xs font-medium text-destructive">{errors.grantPolicy.message}</p>}
               </div>

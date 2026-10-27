@@ -31,6 +31,8 @@ import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.RolePermission;
 import com.htttdn.hrm.entity.RolePermissionId;
 import com.htttdn.hrm.entity.enums.PermissionAssignmentPolicy;
+import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
+import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.PermissionRepository;
@@ -46,7 +48,7 @@ import lombok.RequiredArgsConstructor;
  *
  * <p>Hai loại role: role hệ thống ({@code isSystem = true}, do seeder tạo, ứng dụng dựa vào mã của chúng)
  * không sửa, xóa hay đổi permission được; role tự tạo thì được, nhưng chỉ nhận permission
- * {@code DELEGABLE}. {@link CanManageRbac} trên class → mọi method cần {@code rbac.manage}.
+ * {@code DELEGABLE} và chính sách cấp {@code HR_ASSIGNABLE}/{@code OWNER_APPROVAL}. {@link CanManageRbac} trên class → mọi method cần {@code rbac.manage}.
  *
  * <p>Đổi permission của role không thu hồi token: người đang giữ role thấy thay đổi ở access token kế tiếp,
  * còn kiểm tra phạm vi ({@link EmployeeAccessScopeService}) đọc database nên áp dụng ngay.
@@ -69,8 +71,10 @@ public class RoleService {
      * @param request mã, tên, mô tả và chính sách cấp role
      * @return role vừa tạo
      * @throws ConflictException mã đã dùng, kể cả bởi role đã xóa mềm (→ 409 {@code CONFLICT}, field {@code code})
+     * @throws BusinessException chính sách cấp {@code AUTO}/{@code SYSTEM_ONLY} (→ 400 {@code VALIDATION_ERROR})
      */
     public RoleResponse create(CreateRoleRequest request) {
+        requireWorkflowGrantPolicy(request.grantPolicy());
         // existsByCode xét cả role đã xóa mềm, khớp với UNIQUE trên roles.code: mã đã dùng thì không dùng lại.
         if (roleRepository.existsByCode(request.code())) {
             throw new ConflictException(ErrorCode.CONFLICT, "Role code is already taken", "code");
@@ -137,12 +141,14 @@ public class RoleService {
      *
      * @throws com.htttdn.hrm.exception.ResourceNotFoundException role không có hoặc đã xóa (→ 404 {@code ROLE_NOT_FOUND})
      * @throws ConflictException role hệ thống (→ 409 {@code CONFLICT})
+     * @throws BusinessException chính sách cấp {@code AUTO}/{@code SYSTEM_ONLY} (→ 400 {@code VALIDATION_ERROR})
      */
     public RoleResponse update(Long id, UpdateRoleRequest request) {
         Role role = roleRepository.getRequired(id);
         if (Boolean.TRUE.equals(role.getIsSystem())) {
             throw new ConflictException(ErrorCode.CONFLICT, "System roles cannot be modified");
         }
+        requireWorkflowGrantPolicy(request.grantPolicy());
         // Không gọi save: role là entity đang được quản lý trong transaction, Hibernate tự UPDATE khi commit.
         role.setName(request.name());
         role.setDescription(request.description());
@@ -294,6 +300,21 @@ public class RoleService {
             throw new ConflictException(
                 ErrorCode.CONFLICT,
                 "System role permissions are defined by the application and cannot be modified"
+            );
+        }
+    }
+
+    /**
+     * Role tự tạo chỉ được cấp qua HR ({@code HR_ASSIGNABLE}) hoặc Company Owner duyệt ({@code OWNER_APPROVAL}).
+     * Không luồng nào cấp hay thu hồi role {@code AUTO}/{@code SYSTEM_ONLY}, kể cả khi nghỉ việc hoặc xóa tài
+     * khoản, nên lần gán của một role tự tạo đổi sang hai chính sách đó sẽ không gỡ được nữa (→ 400).
+     */
+    private void requireWorkflowGrantPolicy(RoleGrantPolicy grantPolicy) {
+        if (grantPolicy != RoleGrantPolicy.HR_ASSIGNABLE && grantPolicy != RoleGrantPolicy.OWNER_APPROVAL) {
+            throw new BusinessException(
+                ErrorCode.VALIDATION_ERROR,
+                "Custom roles must be HR_ASSIGNABLE or OWNER_APPROVAL",
+                "grantPolicy"
             );
         }
     }
