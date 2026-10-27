@@ -190,6 +190,24 @@ class RoleRevocationRequestIntegrationTest {
             targetAccountId, roleCode, RoleScopeType.COMPANY, null, null, LocalDate.of(2026, 1, 1), null, "x")));
     }
 
+    /** An HR_ASSIGNABLE request is approved at once, so asking for a role on your own account is a self-grant. */
+    @Test
+    void nobodyRequestsARoleForTheirOwnAccount() {
+        // An HR-like requester: role.assignment.request at COMPANY scope, so every scope check passes.
+        Long hrRoleId = insertRole("OWNER_APPROVAL");
+        jdbc.update("""
+            INSERT INTO role_permissions(role_id, permission_id)
+            SELECT ?, id FROM permissions WHERE code = 'role.assignment.request'
+            """, hrRoleId);
+        insertAssignment(targetAccountId, hrRoleId);
+        Long roleId = insertRole("HR_ASSIGNABLE");
+        String roleCode = jdbc.queryForObject("SELECT code FROM roles WHERE id = ?", String.class, roleId);
+        authenticateAs(targetAccountId, "role.assignment.request");
+
+        assertThrows(ForbiddenException.class, () -> requestService.create(new CreateRoleAssignmentRequest(
+            targetAccountId, roleCode, RoleScopeType.COMPANY, null, null, LocalDate.of(2026, 1, 1), null, "x")));
+    }
+
     private Long insertRole(String grantPolicy) {
         String code = "IT_REV_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         return jdbc.queryForObject("""
