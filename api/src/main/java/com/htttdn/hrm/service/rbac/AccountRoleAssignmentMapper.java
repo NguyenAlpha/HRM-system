@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import com.htttdn.hrm.dto.response.account.AccountRoleAssignmentResponse;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
 
+/** Đổi {@link AccountRoleAssignment} thành response; dùng chung cho quản trị, yêu cầu cấp role và khởi tạo công ty. */
 @Component
 public class AccountRoleAssignmentMapper {
 

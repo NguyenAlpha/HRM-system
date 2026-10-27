@@ -9,12 +9,20 @@ import com.htttdn.hrm.entity.RoleAssignmentRequest;
 
 import lombok.RequiredArgsConstructor;
 
+/** Đổi {@link RoleAssignmentRequest} thành response, kèm thông tin nhân viên và người xử lý cho màn danh sách. */
 @Component
 @RequiredArgsConstructor
 public class RoleAssignmentRequestMapper {
 
     private final AccountRoleAssignmentMapper roleAssignmentMapper;
 
+    /**
+     * Các quan hệ ({@code account.employee}, role, người duyệt…) được đọc lazy; các query danh sách của
+     * {@code RoleAssignmentRequestRepository} đã {@code @EntityGraph} chúng để tránh N+1.
+     *
+     * @return response; {@code accountRoleAssignment} chỉ có khi yêu cầu cấp đã được duyệt,
+     *         {@code targetAssignment} chỉ có ở yêu cầu thu hồi
+     */
     public RoleAssignmentRequestResponse toResponse(RoleAssignmentRequest request) {
         Employee employee = request.getAccount().getEmployee();
         Account reviewer = request.getReviewedByAccount();

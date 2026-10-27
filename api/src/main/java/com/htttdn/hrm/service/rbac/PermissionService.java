@@ -13,6 +13,12 @@ import com.htttdn.hrm.security.CanManageRbac;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Danh mục permission (chỉ đọc) cho màn quản lý role.
+ *
+ * <p>Permission do ứng dụng định nghĩa và nạp sẵn bằng seeder, không tạo/sửa qua API. {@link CanManageRbac}
+ * trên class → mọi method cần {@code rbac.manage}.
+ */
 @Service
 @Transactional
 @CanManageRbac
@@ -21,11 +27,13 @@ public class PermissionService {
 
     private final PermissionRepository permissionRepository;
 
+    /** @throws com.htttdn.hrm.exception.ResourceNotFoundException không có permission (→ 404 {@code PERMISSION_NOT_FOUND}) */
     @Transactional(readOnly = true)
     public PermissionResponse getById(Long id) {
         return toResponse(permissionRepository.getRequired(id));
     }
 
+    /** Mọi permission, kể cả đã tắt và {@code SYSTEM_ONLY}. */
     @Transactional(readOnly = true)
     public Page<PermissionResponse> list(Pageable pageable) {
         return permissionRepository.findAll(pageable).map(this::toResponse);

@@ -11,6 +11,13 @@ import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.exception.BusinessException;
 
+/**
+ * Quy tắc tĩnh về role nào được đề nghị cấp và được gán với phạm vi nào.
+ *
+ * <p>Role hệ thống có nghĩa nghiệp vụ cố định nên bị khóa phạm vi (VD {@code PAYROLL_ACCOUNTANT} chỉ
+ * {@code COMPANY} vì kỳ lương là của cả công ty; {@code MANAGER} chỉ theo đơn vị/địa điểm). Role tự tạo
+ * (không có trong {@code SYSTEM_ROLE_SCOPES}) được chọn mọi phạm vi.
+ */
 @Component
 public class RoleAssignmentPolicy {
 
@@ -35,14 +42,22 @@ public class RoleAssignmentPolicy {
         "COMPANY_OWNER", Set.of(RoleScopeType.COMPANY)
     );
 
+    /** Role chưa xóa và cấp được qua yêu cầu ({@code HR_ASSIGNABLE} hoặc {@code OWNER_APPROVAL}). */
     public boolean isRequestable(Role role) {
         return role.getDeletedAt() == null && REQUESTABLE_POLICIES.contains(role.getGrantPolicy());
     }
 
+    /** Phạm vi được phép của role: theo bảng role hệ thống, role khác được mọi phạm vi. */
     public Set<RoleScopeType> allowedScopes(Role role) {
         return SYSTEM_ROLE_SCOPES.getOrDefault(role.getCode(), ALL_SCOPES);
     }
 
+    /**
+     * Chặn gán role với phạm vi không hợp lệ.
+     *
+     * @throws BusinessException phạm vi không thuộc {@link #allowedScopes} (→ 400 {@code VALIDATION_ERROR},
+     *         field {@code scopeType})
+     */
     public void validateScope(Role role, RoleScopeType scopeType) {
         Set<RoleScopeType> allowedScopes = allowedScopes(role);
         if (!allowedScopes.contains(scopeType)) {

@@ -37,6 +37,17 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Ngoại lệ quyền: thêm hoặc bớt một permission trên <i>một lần gán role</i> của tài khoản, có thời hạn,
+ * mà không phải tạo role mới.
+ *
+ * <p>{@code GRANT} thêm permission role không có; {@code REVOKE} bớt permission role đang có. Ngoại lệ chỉ
+ * tác động lên lần gán chứa nó, nên phạm vi đi theo lần gán đó, và REVOKE không lấy đi permission mà lần gán
+ * khác của cùng tài khoản vẫn cho (cách tính: {@link AccountAuthorizationService}). Chỉ permission
+ * {@code DELEGABLE} được dùng. Ngoại lệ không bị xóa, chỉ thu hồi để giữ lịch sử.
+ *
+ * <p>{@link CanManagePermissionOverrides} trên class → mọi method cần {@code account.permission.override.manage}.
+ */
 @Service
 @Transactional
 @CanManagePermissionOverrides
@@ -52,14 +63,36 @@ public class AccountPermissionOverrideService {
     private final CompanyOwnerAccountGuard companyOwnerAccountGuard;
     private final Clock clock;
 
+    /**
+     * Lịch sử ngoại lệ của một lần gán (kể cả đã thu hồi, đã hết hạn), mới nhất trước.
+     *
+     * @param accountId    tài khoản sở hữu lần gán
+     * @param assignmentId lần gán cần xem
+     * @return danh sách ngoại lệ kèm trạng thái tính theo hôm nay
+     * @throws com.htttdn.hrm.exception.ResourceNotFoundException lần gán không có hoặc thuộc tài khoản khác
+     *         (→ 404 {@code ROLE_ASSIGNMENT_NOT_FOUND})
+     */
     @Transactional(readOnly = true)
     public List<AccountPermissionOverrideResponse> list(Long accountId, Long assignmentId) {
+        // Chỉ để kiểm tra lần gán thuộc đúng tài khoản trên URL; khác tài khoản cũng 404.
         assignmentRepository.getRequired(assignmentId, accountId);
         return overrideRepository.findHistoryByAssignmentId(assignmentId).stream()
             .map(this::toResponse)
             .toList();
     }
 
+    /**
+     * Các permission có thể tạo ngoại lệ trên lần gán, kèm loại ngoại lệ duy nhất hợp lệ cho từng cái.
+     *
+     * <p>Mỗi permission được hỏi riêng xem role có nó không (1 query/permission). Chấp nhận được vì chỉ dùng
+     * khi mở form ngoại lệ và số permission ít.
+     *
+     * @param accountId    tài khoản sở hữu lần gán
+     * @param assignmentId lần gán
+     * @return permission {@code DELEGABLE} đang active, theo module rồi mã; {@code REVOKE} nếu role đã có,
+     *         {@code GRANT} nếu chưa
+     * @throws com.htttdn.hrm.exception.ResourceNotFoundException lần gán không có hoặc thuộc tài khoản khác (→ 404)
+     */
     @Transactional(readOnly = true)
     public List<PermissionOverrideOptionResponse> availablePermissions(Long accountId, Long assignmentId) {
         AccountRoleAssignment assignment = assignmentRepository.getRequired(assignmentId, accountId);
@@ -77,17 +110,38 @@ public class AccountPermissionOverrideService {
             .toList();
     }
 
+    /**
+     * Tạo ngoại lệ GRANT/REVOKE cho một permission trên lần gán.
+     *
+     * <p>Thứ tự: không tự sửa quyền mình và qua guard Company Owner/System Admin → khóa lần gán → lần gán còn
+     * dùng được → permission hợp lệ và hiệu ứng đúng chiều → thời hạn nằm trong lần gán → không chồng ngoại lệ
+     * khác → lưu, rồi thu hồi refresh token để tài khoản lấy quyền mới khi đăng nhập lại.
+     *
+     * @param accountId    tài khoản sở hữu lần gán
+     * @param assignmentId lần gán nhận ngoại lệ
+     * @param request      permission, hiệu ứng, thời hạn, lý do
+     * @return ngoại lệ vừa tạo
+     * @throws ForbiddenException sửa chính tài khoản mình, hoặc bị {@code CompanyOwnerAccountGuard} chặn (→ 403)
+     * @throws ResourceNotFoundException lần gán hoặc permission không có (→ 404)
+     * @throws ConflictException lần gán đã thu hồi/role đã xóa/tài khoản bị khóa, permission không hợp lệ, hiệu
+     *         ứng không đổi gì, hoặc trùng ngoại lệ (→ 409 {@code PERMISSION_OVERRIDE_NOT_ALLOWED} /
+     *         {@code PERMISSION_OVERRIDE_EXISTS})
+     * @throws BusinessException thời hạn sai hoặc ra ngoài lần gán (→ 400 {@code VALIDATION_ERROR})
+     */
     public AccountPermissionOverrideResponse create(
         Long accountId,
         Long assignmentId,
         CreatePermissionOverrideRequest request
     ) {
         requireCanChangeOverrides(accountId);
+        // Khóa ghi lần gán: hai request tạo ngoại lệ cùng lúc chạy lần lượt.
         AccountRoleAssignment assignment = assignmentRepository.getRequiredForUpdate(assignmentId, accountId);
         validateAssignment(assignment);
         Permission permission = permissionRepository.getRequired(request.permissionId());
         validatePermission(assignment, permission, request.effect());
         validatePeriod(assignment, request.effectiveFrom(), request.effectiveTo());
+        // Kiểm tra trước để báo lỗi rõ; constraint excl_active_permission_override_overlap vẫn chặn ở database
+        // (bắt DataIntegrityViolationException bên dưới).
         if (overrideRepository.existsOverlappingActive(
             assignmentId,
             permission.getId(),
@@ -111,7 +165,9 @@ public class AccountPermissionOverrideService {
             .grantedByAccount(actor)
             .build();
         try {
+            // saveAndFlush: INSERT ngay để vi phạm constraint ném lỗi tại đây (bắt được), không phải lúc commit.
             AccountPermissionOverride saved = overrideRepository.saveAndFlush(permissionOverride);
+            // Quyền trong JWT đã cũ → buộc đăng nhập lại để lấy token có quyền mới.
             refreshTokenService.revokeAll(accountId);
             return toResponse(saved);
         } catch (DataIntegrityViolationException exception) {
@@ -122,6 +178,18 @@ public class AccountPermissionOverrideService {
         }
     }
 
+    /**
+     * Thu hồi một ngoại lệ (giữ lại làm lịch sử): quyền của lần gán quay về mặc định của role.
+     *
+     * @param accountId    tài khoản sở hữu lần gán
+     * @param assignmentId lần gán chứa ngoại lệ
+     * @param overrideId   ngoại lệ cần thu hồi
+     * @param request      lý do thu hồi
+     * @return ngoại lệ sau khi thu hồi; đã thu hồi từ trước thì trả nguyên, không lỗi
+     * @throws ForbiddenException như {@link #create} (→ 403)
+     * @throws ResourceNotFoundException lần gán hoặc ngoại lệ không có, hoặc không thuộc nhau
+     *         (→ 404 {@code ROLE_ASSIGNMENT_NOT_FOUND} / {@code PERMISSION_OVERRIDE_NOT_FOUND})
+     */
     public AccountPermissionOverrideResponse revoke(
         Long accountId,
         Long assignmentId,
@@ -129,6 +197,7 @@ public class AccountPermissionOverrideService {
         RevokePermissionOverrideRequest request
     ) {
         requireCanChangeOverrides(accountId);
+        // Kiểm tra lần gán thuộc tài khoản và khóa nó, cùng thứ tự khóa với create.
         assignmentRepository.getRequiredForUpdate(assignmentId, accountId);
         AccountPermissionOverride permissionOverride = overrideRepository
             .findByIdAndAssignmentIdForUpdate(overrideId, assignmentId)
@@ -159,6 +228,7 @@ public class AccountPermissionOverrideService {
         companyOwnerAccountGuard.requireCanManage(accountId);
     }
 
+    /** Lần gán đã thu hồi, role đã xóa, hoặc tài khoản bị vô hiệu hóa thì không nhận ngoại lệ mới (→ 409). */
     private void validateAssignment(AccountRoleAssignment assignment) {
         if (assignment.getRevokedAt() != null || assignment.getRole().getDeletedAt() != null) {
             throw new ConflictException(
@@ -174,6 +244,10 @@ public class AccountPermissionOverrideService {
         }
     }
 
+    /**
+     * Permission phải active, {@code DELEGABLE}, và hiệu ứng phải thật sự đổi gì đó: GRANT cái role chưa có,
+     * REVOKE cái role đang có (→ 409 {@code PERMISSION_OVERRIDE_NOT_ALLOWED}).
+     */
     private void validatePermission(
         AccountRoleAssignment assignment,
         Permission permission,
@@ -195,6 +269,7 @@ public class AccountPermissionOverrideService {
         }
     }
 
+    /** Hiệu ứng ngoại lệ có nghĩa với permission này: role có sẵn → {@code REVOKE}, chưa có → {@code GRANT}. */
     private PermissionOverrideEffect defaultEffect(AccountRoleAssignment assignment, Permission permission) {
         boolean grantedByRole = rolePermissionRepository.existsByIdRoleIdAndIdPermissionId(
             assignment.getRole().getId(),
@@ -203,6 +278,10 @@ public class AccountPermissionOverrideService {
         return grantedByRole ? PermissionOverrideEffect.REVOKE : PermissionOverrideEffect.GRANT;
     }
 
+    /**
+     * Thời hạn ngoại lệ phải hợp lệ và nằm trọn trong thời hạn lần gán: lần gán có ngày kết thúc thì ngoại lệ
+     * cũng phải có và không vượt quá (→ 400 {@code VALIDATION_ERROR}).
+     */
     private void validatePeriod(
         AccountRoleAssignment assignment,
         LocalDate effectiveFrom,
@@ -234,6 +313,7 @@ public class AccountPermissionOverrideService {
 
     private AccountPermissionOverrideResponse toResponse(AccountPermissionOverride permissionOverride) {
         LocalDate today = LocalDate.now(clock);
+        // Trạng thái không lưu trong database mà tính theo hôm nay: thu hồi > chưa tới hạn > hết hạn > đang áp dụng.
         PermissionOverrideStatus status;
         if (permissionOverride.getRevokedAt() != null) {
             status = PermissionOverrideStatus.REVOKED;

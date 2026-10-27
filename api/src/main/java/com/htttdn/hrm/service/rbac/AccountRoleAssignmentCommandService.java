@@ -38,6 +38,21 @@ import lombok.RequiredArgsConstructor;
  * Internal command component for creating and revoking effective role assignments.
  * Authorization remains at the public workflow boundary; every entry point here
  * enforces the grant policy of the workflow that invoked it.
+ *
+ * <p>Nơi duy nhất ghi vào {@code account_role_assignments}. Ba luồng gọi vào đây, mỗi luồng ứng với một
+ * {@link AssignmentFlow} và chỉ được cấp role có {@link RoleGrantPolicy} tương ứng
+ * (xem {@link #validateGrantPolicy}):
+ * <ul>
+ *   <li>Gán trực tiếp bởi quản trị: {@link AccountRoleAssignmentAdminService} → {@link #assignDirect}</li>
+ *   <li>Yêu cầu cấp role: {@link RoleAssignmentRequestService} → {@link #prepareRequest}, rồi
+ *       {@link #assignHrAssignableRequest} (tự duyệt) hoặc {@link #assignOwnerApprovedRequest} (Owner duyệt)</li>
+ *   <li>Khởi tạo công ty: {@code OrganizationCompanyOwnerProvisioningService} →
+ *       {@link #assignProvisionedCompanyRole} cho {@code COMPANY_OWNER} và {@code DIRECTOR}</li>
+ * </ul>
+ *
+ * <p>{@code Propagation.MANDATORY}: mọi method phải được gọi bên trong transaction của service gọi tới
+ * (nếu không sẽ ném {@code IllegalTransactionStateException}), để việc gán role và việc ghi yêu cầu/hồ sơ
+ * đi kèm cùng commit hoặc cùng rollback.
  */
 @Service
 @Transactional(propagation = Propagation.MANDATORY)
@@ -65,9 +80,19 @@ public class AccountRoleAssignmentCommandService {
      * Revokes one assignment and keeps it as history: it stops counting at once, a period that has
      * started closes today and the account's refresh tokens are revoked. An assignment that is already
      * revoked is left as it is.
+     *
+     * <p>Lần gán chưa bắt đầu (effectiveFrom sau hôm nay) giữ nguyên khoảng hiệu lực; chỉ revokedAt khiến nó
+     * không bao giờ có hiệu lực. Access token đã cấp vẫn mang role/permission cũ tới khi hết hạn, nhưng phạm vi
+     * ({@link EmployeeAccessScopeService}) đọc database nên mất ngay.
+     *
+     * @param assignment lần gán cần thu hồi (nên đã khóa ghi bởi nơi gọi)
+     * @param actor      người thu hồi, ghi vào revokedByAccount
+     * @param reason     lý do thu hồi
+     * @throws ConflictException role {@code AUTO}/{@code SYSTEM_ONLY} (→ 409 {@code ROLE_ASSIGNMENT_NOT_ALLOWED})
      */
     public void revoke(AccountRoleAssignment assignment, Account actor, String reason) {
         validateRevocable(assignment.getRole());
+        // Thu hồi hai lần không lỗi: lần sau không đổi gì (idempotent).
         if (assignment.getRevokedAt() != null) {
             return;
         }
@@ -79,10 +104,15 @@ public class AccountRoleAssignmentCommandService {
             && (assignment.getEffectiveTo() == null || assignment.getEffectiveTo().isAfter(today))) {
             assignment.setEffectiveTo(today);
         }
+        // Thu hồi mọi refresh token → người bị thu hồi phải đăng nhập lại, token mới không còn role này.
         refreshTokenService.revokeAll(assignment.getAccount().getId());
     }
 
-    /** AUTO and SYSTEM_ONLY roles are managed by their own workflows, never by a revocation. */
+    /**
+     * AUTO and SYSTEM_ONLY roles are managed by their own workflows, never by a revocation.
+     *
+     * @throws ConflictException role không thu hồi được (→ 409 {@code ROLE_ASSIGNMENT_NOT_ALLOWED})
+     */
     public void validateRevocable(Role role) {
         if (role.getGrantPolicy() == RoleGrantPolicy.AUTO) {
             throw new ConflictException(
@@ -98,6 +128,15 @@ public class AccountRoleAssignmentCommandService {
         }
     }
 
+    /**
+     * Gán role ngay, không qua yêu cầu: cho role {@code HR_ASSIGNABLE} hoặc {@code OWNER_APPROVAL}.
+     *
+     * @param accountId tài khoản nhận role
+     * @param request   role, phạm vi, thời gian hiệu lực và lý do
+     * @param actor     người gán, ghi vào grantedByAccount
+     * @return lần gán vừa lưu
+     * @throws ConflictException / BusinessException / ResourceNotFoundException xem {@link #validateCandidate}
+     */
     public AccountRoleAssignment assignDirect(
         Long accountId,
         AssignAccountRoleRequest request,
@@ -106,6 +145,15 @@ public class AccountRoleAssignmentCommandService {
         return assignInternal(accountId, request, actor, AssignmentFlow.DIRECT);
     }
 
+    /**
+     * Kiểm tra trước một yêu cầu cấp role (cùng bộ kiểm tra như khi gán thật) nhưng chưa ghi gì, để từ chối
+     * yêu cầu sai ngay lúc tạo thay vì lúc duyệt.
+     *
+     * @param accountId tài khoản được đề nghị cấp role
+     * @param request   role, phạm vi, thời gian hiệu lực và lý do
+     * @return tài khoản, role và đơn vị/địa điểm đã nạp, để {@link RoleAssignmentRequestService} dựng yêu cầu
+     * @throws ConflictException / BusinessException / ResourceNotFoundException xem {@link #validateCandidate}
+     */
     public RequestCandidate prepareRequest(Long accountId, AssignAccountRoleRequest request) {
         AssignmentCandidate candidate = validateCandidate(
             accountId,
@@ -120,6 +168,21 @@ public class AccountRoleAssignmentCommandService {
         );
     }
 
+    /**
+     * Gán {@code COMPANY_OWNER} hoặc {@code DIRECTOR} phạm vi {@code COMPANY}, không thời hạn, lúc khởi tạo
+     * công ty ({@code OrganizationCompanyOwnerProvisioningService}). Hai role này không đi qua luồng gán/yêu cầu
+     * thông thường.
+     *
+     * @param accountId     tài khoản vừa cấp cho chủ doanh nghiệp
+     * @param roleCode      {@code COMPANY_OWNER} hoặc {@code DIRECTOR}
+     * @param effectiveFrom ngày bắt đầu
+     * @param reason        lý do (quyết định sở hữu / bổ nhiệm)
+     * @param actor         người khởi tạo
+     * @return lần gán vừa lưu
+     * @throws IllegalArgumentException roleCode khác hai role trên — lỗi lập trình, không đến từ người dùng
+     * @throws ConflictException đã có Company Owner (→ 409 {@code COMPANY_OWNER_ALREADY_EXISTS}) hoặc đã có
+     *         Director trùng thời gian (→ 409 {@code ROLE_ASSIGNMENT_EXISTS})
+     */
     public AccountRoleAssignment assignProvisionedCompanyRole(
         Long accountId,
         String roleCode,
@@ -142,6 +205,15 @@ public class AccountRoleAssignmentCommandService {
         return assignInternal(accountId, request, actor, AssignmentFlow.BOOTSTRAP);
     }
 
+    /**
+     * Thực hiện yêu cầu cấp role {@code HR_ASSIGNABLE}: được gọi ngay khi tạo yêu cầu (tự duyệt).
+     *
+     * @param roleRequest yêu cầu đang {@code PENDING}, đã lưu
+     * @param actor       người tạo yêu cầu, cũng là người gán
+     * @return lần gán vừa lưu
+     * @throws ConflictException yêu cầu không còn PENDING hoặc đã có lần gán (→ 409 {@code CONFLICT}), role không
+     *         phải HR_ASSIGNABLE, hoặc các lỗi của {@link #validateCandidate}
+     */
     public AccountRoleAssignment assignHrAssignableRequest(
         RoleAssignmentRequest roleRequest,
         Account actor
@@ -149,6 +221,15 @@ public class AccountRoleAssignmentCommandService {
         return assignRequestedRole(roleRequest, actor, AssignmentFlow.HR_ASSIGNABLE_REQUEST);
     }
 
+    /**
+     * Thực hiện yêu cầu cấp role {@code OWNER_APPROVAL} khi Company Owner duyệt. Mọi điều kiện được kiểm tra
+     * lại tại thời điểm duyệt, vì dữ liệu có thể đã đổi từ lúc tạo yêu cầu.
+     *
+     * @param roleRequest yêu cầu đang {@code PENDING}
+     * @param actor       người duyệt, ghi vào grantedByAccount
+     * @return lần gán vừa lưu
+     * @throws ConflictException như {@link #assignHrAssignableRequest}
+     */
     public AccountRoleAssignment assignOwnerApprovedRequest(
         RoleAssignmentRequest roleRequest,
         Account actor
@@ -168,6 +249,7 @@ public class AccountRoleAssignmentCommandService {
                 "Only a pending role assignment request without an assignment can be processed"
             );
         }
+        // Dựng lại request từ yêu cầu đã lưu để đi chung đường kiểm tra với gán trực tiếp.
         AssignAccountRoleRequest request = new AssignAccountRoleRequest(
             roleRequest.getRole().getCode(),
             roleRequest.getScopeType(),
@@ -201,14 +283,31 @@ public class AccountRoleAssignmentCommandService {
             .build());
     }
 
+    /**
+     * Mọi kiểm tra trước khi gán một role, dùng chung cho mọi luồng.
+     *
+     * <p>Thứ tự: khóa tài khoản → tài khoản còn dùng được và gắn nhân viên → khóa role → role được phép
+     * cấp qua luồng này → phạm vi hợp lệ với role ({@link RoleAssignmentPolicy#validateScope}) → khoảng hiệu
+     * lực → đơn vị/địa điểm khớp loại phạm vi và đang hoạt động → không trùng lần gán cũ → ràng buộc riêng của
+     * {@code DIRECTOR} (một người tại một thời điểm) và {@code COMPANY_OWNER} (chỉ một).
+     *
+     * @throws ResourceNotFoundException tài khoản / role / đơn vị / địa điểm không tồn tại (→ 404)
+     * @throws ConflictException tài khoản bị khóa hoặc chưa gắn nhân viên, role không cấp được qua luồng này,
+     *         trùng lần gán, trùng Director/Owner (→ 409)
+     * @throws BusinessException phạm vi hoặc khoảng hiệu lực sai (→ 400 {@code VALIDATION_ERROR})
+     */
     private AssignmentCandidate validateCandidate(
         Long accountId,
         AssignAccountRoleRequest request,
         AssignmentFlow flow
     ) {
+        // Khóa ghi (SELECT … FOR UPDATE) tài khoản và role: hai request gán đồng thời cho cùng tài khoản hoặc
+        // cùng role (VD hai Director) phải chờ nhau, nên các kiểm tra trùng bên dưới không bị race. Bảng
+        // account_role_assignments không có unique/exclusion constraint chống trùng, chỉ dựa vào khóa này.
         Account account = accountRepository.getRequiredForUpdate(accountId);
         validateTargetAccount(account);
 
+        // findByCodeForUpdate chỉ lấy role chưa xóa mềm.
         Role role = roleRepository.findByCodeForUpdate(request.roleCode())
             .orElseThrow(() -> new ResourceNotFoundException(
                 ErrorCode.ROLE_NOT_FOUND,
@@ -229,6 +328,7 @@ public class AccountRoleAssignmentCommandService {
         return new AssignmentCandidate(account, role, scopeTarget);
     }
 
+    /** Tài khoản bị vô hiệu hóa hoặc chưa gắn nhân viên không nhận role (→ 409 {@code ROLE_ASSIGNMENT_NOT_ALLOWED}). */
     private void validateTargetAccount(Account account) {
         if (account.getStatus() == AccountStatus.DISABLED) {
             throw new ConflictException(
@@ -244,6 +344,13 @@ public class AccountRoleAssignmentCommandService {
         }
     }
 
+    /**
+     * Luồng gọi có được cấp role với chính sách này không. {@code AUTO} (role nền tự gán khi cấp tài khoản)
+     * và {@code SYSTEM_ONLY} không luồng nào ở đây cấp được, trừ {@code COMPANY_OWNER}/{@code DIRECTOR} qua
+     * {@code BOOTSTRAP}.
+     *
+     * @throws ConflictException không được phép (→ 409 {@code ROLE_ASSIGNMENT_NOT_ALLOWED})
+     */
     private void validateGrantPolicy(Role role, AssignmentFlow flow) {
         RoleGrantPolicy policy = role.getGrantPolicy();
         boolean allowed = switch (flow) {
@@ -273,6 +380,14 @@ public class AccountRoleAssignmentCommandService {
         }
     }
 
+    /**
+     * Nạp đơn vị/địa điểm theo loại phạm vi, đúng quy tắc của ràng buộc {@code chk_account_role_assignments_scope}:
+     * {@code SELF}/{@code COMPANY} không có đích, {@code ORG_UNIT} chỉ có đơn vị, {@code LOCATION} chỉ có địa điểm.
+     * Kiểm tra trước ở đây để trả 400 có tên field thay vì lỗi constraint.
+     *
+     * @throws BusinessException thiếu hoặc thừa id (→ 400 {@code VALIDATION_ERROR})
+     * @throws ResourceNotFoundException đơn vị/địa điểm không tồn tại, đã xóa hoặc đã tắt (→ 404)
+     */
     private ScopeTarget resolveScopeTarget(AssignAccountRoleRequest request) {
         return switch (request.scopeType()) {
             case SELF, COMPANY -> {
@@ -307,6 +422,12 @@ public class AccountRoleAssignmentCommandService {
         };
     }
 
+    /**
+     * Không cho hai lần gán chưa thu hồi cùng tài khoản, role, loại phạm vi và đích mà thời gian chồng nhau.
+     * Cùng role nhưng khác phạm vi (VD {@code MANAGER} ở hai đơn vị) thì được.
+     *
+     * @throws ConflictException đã có lần gán chồng (→ 409 {@code ROLE_ASSIGNMENT_EXISTS})
+     */
     private void ensureNoDuplicateAssignment(
         Account account,
         Role role,
@@ -331,6 +452,7 @@ public class AccountRoleAssignmentCommandService {
         }
     }
 
+    /** Công ty chỉ có một Director tại mỗi thời điểm: chặn lần gán chồng thời gian với Director hiện có (→ 409). */
     private void ensureSingleDirector(Role role, LocalDate effectiveFrom, LocalDate effectiveTo) {
         boolean conflict = roleAssignmentRepository.findByRoleIdAndRevokedAtIsNull(role.getId()).stream()
             .anyMatch(existing -> periodsOverlap(
@@ -347,6 +469,7 @@ public class AccountRoleAssignmentCommandService {
         }
     }
 
+    /** Chỉ một Company Owner: còn lần gán chưa thu hồi nào (kể cả đã hết hạn) là chặn (→ 409). */
     private void ensureCompanyOwnerDoesNotExist(Role role) {
         if (!roleAssignmentRepository.findByRoleIdAndRevokedAtIsNull(role.getId()).isEmpty()) {
             throw new ConflictException(
@@ -369,6 +492,7 @@ public class AccountRoleAssignmentCommandService {
             && Objects.equals(existingLocationId, requestedLocationId);
     }
 
+    /** Hai khoảng ngày (bao cả hai đầu, {@code null} ở cuối = không thời hạn) có giao nhau không. */
     private boolean periodsOverlap(
         LocalDate firstFrom,
         LocalDate firstTo,
@@ -383,6 +507,10 @@ public class AccountRoleAssignmentCommandService {
         return new BusinessException(ErrorCode.VALIDATION_ERROR, message, field);
     }
 
+    /**
+     * Luồng đang gán role, quyết định chính sách cấp nào được chấp nhận ({@link #validateGrantPolicy}).
+     * {@code REQUEST_SUBMISSION} là lúc tạo yêu cầu (chỉ kiểm tra, chưa gán).
+     */
     private enum AssignmentFlow {
         DIRECT,
         BOOTSTRAP,
