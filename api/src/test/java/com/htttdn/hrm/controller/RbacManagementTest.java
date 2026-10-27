@@ -118,10 +118,10 @@ class RbacManagementTest {
         admin(put("/api/roles/{id}", id), Map.of(
             "name", "Updated role",
             "description", "Updated description",
-            "grantPolicy", "SYSTEM_ONLY"
+            "grantPolicy", "OWNER_APPROVAL"
         )).andExpect(status().isOk())
             .andExpect(jsonPath("$.data.name").value("Updated role"))
-            .andExpect(jsonPath("$.data.grantPolicy").value("SYSTEM_ONLY"));
+            .andExpect(jsonPath("$.data.grantPolicy").value("OWNER_APPROVAL"));
         admin(delete("/api/roles/{id}", id)).andExpect(status().isOk());
 
         // The requests share this test's transaction, so nothing was flushed (or stamped) yet.
