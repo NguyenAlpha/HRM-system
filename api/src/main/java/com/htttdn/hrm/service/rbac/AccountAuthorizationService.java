@@ -174,8 +174,8 @@ public class AccountAuthorizationService {
             .filter(assignment -> effectivePermissions(assignment, context).contains(permissionCode))
             .map(assignment -> new AuthorizationScope(
                 assignment.getScopeType(),
-                assignment.getOrganizationUnit() == null ? null : assignment.getOrganizationUnit().getId(),
-                assignment.getWorkLocation() == null ? null : assignment.getWorkLocation().getId()
+                assignment.organizationUnitId(),
+                assignment.workLocationId()
             ))
             .distinct()
             .toList();
@@ -297,9 +297,9 @@ public class AccountAuthorizationService {
             assignment.getRole().getCode(),
             assignment.getRole().getName(),
             assignment.getScopeType(),
-            assignment.getOrganizationUnit() == null ? null : assignment.getOrganizationUnit().getId(),
+            assignment.organizationUnitId(),
             assignment.getOrganizationUnit() == null ? null : assignment.getOrganizationUnit().getName(),
-            assignment.getWorkLocation() == null ? null : assignment.getWorkLocation().getId(),
+            assignment.workLocationId(),
             assignment.getWorkLocation() == null ? null : assignment.getWorkLocation().getName()
         );
     }

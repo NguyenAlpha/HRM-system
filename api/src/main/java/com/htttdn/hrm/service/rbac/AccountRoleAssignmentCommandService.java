@@ -283,8 +283,8 @@ public class AccountRoleAssignmentCommandService {
         AssignAccountRoleRequest request = new AssignAccountRoleRequest(
             roleRequest.getRole().getCode(),
             roleRequest.getScopeType(),
-            roleRequest.getOrganizationUnit() == null ? null : roleRequest.getOrganizationUnit().getId(),
-            roleRequest.getWorkLocation() == null ? null : roleRequest.getWorkLocation().getId(),
+            roleRequest.organizationUnitId(),
+            roleRequest.workLocationId(),
             roleRequest.getEffectiveFrom(),
             roleRequest.getEffectiveTo(),
             roleRequest.getReason()
@@ -522,16 +522,10 @@ public class AccountRoleAssignmentCommandService {
     }
 
     private boolean sameTarget(AccountRoleAssignment assignment, ScopeTarget target) {
-        Long existingUnitId = assignment.getOrganizationUnit() == null
-            ? null
-            : assignment.getOrganizationUnit().getId();
         Long requestedUnitId = target.organizationUnit() == null ? null : target.organizationUnit().getId();
-        Long existingLocationId = assignment.getWorkLocation() == null
-            ? null
-            : assignment.getWorkLocation().getId();
         Long requestedLocationId = target.workLocation() == null ? null : target.workLocation().getId();
-        return Objects.equals(existingUnitId, requestedUnitId)
-            && Objects.equals(existingLocationId, requestedLocationId);
+        return Objects.equals(assignment.organizationUnitId(), requestedUnitId)
+            && Objects.equals(assignment.workLocationId(), requestedLocationId);
     }
 
     /** Hai khoảng ngày (bao cả hai đầu, {@code null} ở cuối = không thời hạn) có giao nhau không. */

@@ -121,4 +121,14 @@ public class RoleAssignmentRequest {
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    /** Id of the scope's organization unit; {@code null} unless the scope is {@code ORG_UNIT}. */
+    public Long organizationUnitId() {
+        return organizationUnit == null ? null : organizationUnit.getId();
+    }
+
+    /** Id of the scope's work location; {@code null} unless the scope is {@code LOCATION}. */
+    public Long workLocationId() {
+        return workLocation == null ? null : workLocation.getId();
+    }
 }

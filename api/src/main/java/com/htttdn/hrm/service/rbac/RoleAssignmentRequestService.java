@@ -195,8 +195,8 @@ public class RoleAssignmentRequestService {
         // Phạm vi của lần gán bị thu hồi cũng phải nằm trong phạm vi người đề nghị: người đề nghị chỉ có phạm vi
         // một chi nhánh không thu hồi được lần gán MANAGER ở chi nhánh khác của cùng nhân viên.
         employeeAccessScopeService.requireDestinationAccess(
-            target.getOrganizationUnit() == null ? null : target.getOrganizationUnit().getId(),
-            target.getWorkLocation() == null ? null : target.getWorkLocation().getId(),
+            target.organizationUnitId(),
+            target.workLocationId(),
             REQUEST_PERMISSION
         );
 
