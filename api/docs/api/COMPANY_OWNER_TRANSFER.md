@@ -38,7 +38,7 @@ Khi thành công, trong cùng một transaction:
 
 Chỉ `COMPANY_OWNER` được chuyển. Owner cũ giữ nguyên các role khác (ví dụ `DIRECTOR`, `PAYROLL_APPROVER`); đổi Giám đốc làm riêng bằng cách thu hồi assignment `DIRECTOR` hiện tại rồi gán cho người mới ([Account Role Assignments](./ACCOUNT_ROLE_ASSIGNMENTS.md)). Người duyệt đơn nghỉ/tăng ca và người duyệt đề xuất role được tính theo người đang giữ role nên đổi theo ngay.
 
-Người nhận phải là account `ACTIVE` (đã kích hoạt, đăng nhập được) gắn với nhân viên chưa xóa, đang `ACTIVE` hoặc `PROBATION` và không có lịch kết thúc làm việc, để doanh nghiệp không rơi vào cảnh có Owner mà không ai dùng được.
+Người nhận phải là account `ACTIVE` (đã kích hoạt, đăng nhập được) gắn với nhân viên chưa xóa, đang `ACTIVE` hoặc `PROBATION`, không có lịch kết thúc làm việc và không có đơn nghỉ việc còn mở (chờ duyệt, hoặc đã duyệt mà chưa tới ngày nghỉ), để doanh nghiệp không rơi vào cảnh có Owner mà không ai dùng được.
 
 Response `200` là `AccountRoleAssignmentResponse` của assignment `COMPANY_OWNER` mới.
 
@@ -52,4 +52,4 @@ Không luồng nào thu hồi `COMPANY_OWNER`, nên người đang là Owner kh�
 | 400 | `INVALID_CREDENTIALS` | Sai mật khẩu (field `password`); không có gì thay đổi |
 | 403 | `FORBIDDEN` | Token không mang `COMPANY_OWNER`, hoặc account không còn giữ `COMPANY_OWNER` |
 | 404 | `ACCOUNT_NOT_FOUND` | Account nhận không tồn tại |
-| 409 | `ROLE_ASSIGNMENT_NOT_ALLOWED` | Account nhận không `ACTIVE`, không gắn nhân viên, hoặc nhân viên đã/sắp nghỉ |
+| 409 | `ROLE_ASSIGNMENT_NOT_ALLOWED` | Account nhận không `ACTIVE`, không gắn nhân viên, nhân viên đã/sắp nghỉ hoặc có đơn nghỉ việc còn mở |

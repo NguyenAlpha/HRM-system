@@ -165,10 +165,13 @@ function ConfirmTransferDialog({ recipient, accountId, reason, onClose, onTransf
       })
       onTransferred()
     } catch (caught) {
-      // The shared message for INVALID_CREDENTIALS speaks of a username, which this form does not have.
-      setError(caught instanceof AuthApiError && caught.code === "INVALID_CREDENTIALS"
+      // The shared messages speak of a username and of assigning a role, neither of which fits here.
+      const code = caught instanceof AuthApiError ? caught.code : null
+      setError(code === "INVALID_CREDENTIALS"
         ? "Mật khẩu không đúng."
-        : apiErrorMessage(caught))
+        : code === "ROLE_ASSIGNMENT_NOT_ALLOWED"
+          ? "Người nhận không đủ điều kiện: phải đang làm việc, tài khoản đã kích hoạt và không có đơn nghỉ việc còn mở."
+          : apiErrorMessage(caught))
       setBusy(false)
     }
   }

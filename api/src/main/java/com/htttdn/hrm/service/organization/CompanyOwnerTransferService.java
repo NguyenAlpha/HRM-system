@@ -9,7 +9,11 @@ import com.htttdn.hrm.dto.request.organization.TransferCompanyOwnerRequest;
 import com.htttdn.hrm.dto.response.account.AccountRoleAssignmentResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
+import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.exception.BusinessException;
+import com.htttdn.hrm.exception.ConflictException;
+import com.htttdn.hrm.repository.AccountRepository;
+import com.htttdn.hrm.repository.ResignationRequestRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 import com.htttdn.hrm.service.rbac.AccountRoleAssignmentCommandService;
 import com.htttdn.hrm.service.rbac.AccountRoleAssignmentMapper;
@@ -33,6 +37,8 @@ public class CompanyOwnerTransferService {
     private final AccountRoleAssignmentMapper roleAssignmentMapper;
     private final CurrentAccountProvider currentAccountProvider;
     private final PasswordEncoder passwordEncoder;
+    private final AccountRepository accountRepository;
+    private final ResignationRequestRepository resignationRequestRepository;
 
     /**
      * @param request tài khoản nhận, mật khẩu của Owner hiện tại, lý do
@@ -41,7 +47,8 @@ public class CompanyOwnerTransferService {
      *         hoặc sai mật khẩu (→ 400 {@code INVALID_CREDENTIALS}, field {@code password})
      * @throws com.htttdn.hrm.exception.ForbiddenException người gọi không còn giữ {@code COMPANY_OWNER} (→ 403)
      * @throws com.htttdn.hrm.exception.ConflictException người nhận không dùng được (→ 409, xem
-     *         {@link AccountRoleAssignmentCommandService#transferCompanyOwner})
+     *         {@link AccountRoleAssignmentCommandService#transferCompanyOwner}), hoặc đang có đơn nghỉ việc chờ
+     *         duyệt / đã duyệt chưa tới ngày nghỉ (→ 409 {@code ROLE_ASSIGNMENT_NOT_ALLOWED})
      */
     @PreAuthorize("hasRole('COMPANY_OWNER')")
     public AccountRoleAssignmentResponse transfer(TransferCompanyOwnerRequest request) {
@@ -56,6 +63,14 @@ public class CompanyOwnerTransferService {
         // 400 chứ không phải 401: phiên vẫn hợp lệ, chỉ mật khẩu xác nhận sai.
         if (owner.getPasswordHash() == null || !passwordEncoder.matches(request.password(), owner.getPasswordHash())) {
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS, "Password is incorrect", "password");
+        }
+        // Đơn còn mở sẽ kết thúc việc làm của Owner mới, mà việc đó bị chặn khi họ giữ COMPANY_OWNER.
+        Employee recipient = accountRepository.findById(request.accountId()).map(Account::getEmployee).orElse(null);
+        if (recipient != null && resignationRequestRepository.existsOpen(recipient.getId())) {
+            throw new ConflictException(
+                ErrorCode.ROLE_ASSIGNMENT_NOT_ALLOWED,
+                "Company ownership cannot go to an employee with an open resignation request"
+            );
         }
         return roleAssignmentMapper.toResponse(
             roleAssignmentCommandService.transferCompanyOwner(owner, request.accountId(), request.reason()));

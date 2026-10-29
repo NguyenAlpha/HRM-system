@@ -114,8 +114,13 @@ class CompanyOwnerTransferIntegrationTest {
                 scheduled_end_by_account_id = ?
             WHERE id = (SELECT employee_id FROM accounts WHERE id = ?)
             """, ownerId, leavingId);
+        // A resignation still open would end the new owner's employment, which is refused once they own.
+        Long resigningId = account("resigning", employee(), "ACTIVE");
+        Long askingId = account("asking", employee(), "ACTIVE");
+        resignation(resigningId, "APPROVED");
+        resignation(askingId, "PENDING");
 
-        for (Long recipient : new Long[] { pendingId, noEmployeeId, leavingId }) {
+        for (Long recipient : new Long[] { pendingId, noEmployeeId, leavingId, resigningId, askingId }) {
             ConflictException exception = assertThrows(ConflictException.class,
                 () -> transferService.transfer(new TransferCompanyOwnerRequest(recipient, PASSWORD, "x")));
             assertEquals(ErrorCode.ROLE_ASSIGNMENT_NOT_ALLOWED, exception.getErrorCode());
@@ -150,6 +155,13 @@ class CompanyOwnerTransferIntegrationTest {
             INSERT INTO account_role_assignments(account_id, role_id, scope_type, effective_from, granted_by_account_id)
             SELECT ?, id, 'COMPANY', '2025-01-01', ? FROM roles WHERE code = ?
             """, accountId, accountId, roleCode);
+    }
+
+    private void resignation(Long accountId, String status) {
+        jdbc.update("""
+            INSERT INTO resignation_requests(employee_id, last_working_date, reason, status, approver_employee_id)
+            SELECT employee_id, '2099-12-31', 'Nghỉ', ?, employee_id FROM accounts WHERE id = ?
+            """, status, accountId);
     }
 
     private Long employee() {
