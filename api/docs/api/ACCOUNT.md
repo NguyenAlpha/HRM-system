@@ -231,7 +231,7 @@ Trả `AccountResponse` với `status = DISABLED`.
 
 ## POST `/api/accounts/{accountId}/activate`
 
-Kích hoạt lại account `DISABLED` hoặc `LOCKED` đã có mật khẩu, đồng thời xóa trạng thái khóa và bộ đếm đăng nhập sai. Account đã xóa mềm không kích hoạt lại được. Nếu account đã `ACTIVE`, endpoint trả thành công mà không thay đổi dữ liệu.
+Kích hoạt lại account `DISABLED` hoặc `LOCKED` đã có mật khẩu, đồng thời xóa trạng thái khóa và bộ đếm đăng nhập sai. Account đã xóa mềm, hoặc account của nhân viên đã kết thúc làm việc (`RESIGNED`, `TERMINATED`, `RETIRED`), không kích hoạt lại được (`409 ACCOUNT_STATUS_TRANSITION_NOT_ALLOWED`). Nếu account đã `ACTIVE`, endpoint trả thành công mà không thay đổi dữ liệu.
 
 Endpoint không được bỏ qua bước đặt mật khẩu của account `PENDING`. Account `PENDING` chỉ có thể chuyển sang `ACTIVE` qua:
 

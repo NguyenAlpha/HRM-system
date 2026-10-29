@@ -124,6 +124,20 @@ class AccountDeletionIntegrationTest {
     }
 
     @Test
+    void aFormerEmployeesAccountIsNotReactivated() {
+        Long formerId = account(marker + "_former", employeeId, "DISABLED");
+        jdbc.update("""
+            UPDATE employees SET employment_status = 'RESIGNED', termination_date = '2026-01-31', termination_reason = 'Nghỉ'
+            WHERE id = ?
+            """, employeeId);
+        authenticateAs(adminId);
+
+        // Otherwise the person who left could sign in again with their own access.
+        assertThrows(ConflictException.class, () -> accountAdminService.activate(formerId));
+        assertEquals(AccountStatus.DISABLED, accountRepository.findById(formerId).orElseThrow().getStatus());
+    }
+
+    @Test
     void nobodyDeletesTheirOwnAccountOrACompanyOwner() {
         Long ownerId = account(marker + "_owner", null, "ACTIVE");
         jdbc.update("""
