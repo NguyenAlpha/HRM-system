@@ -1,5 +1,7 @@
 package com.htttdn.hrm.service.account;
 
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -46,6 +48,7 @@ class AccountDeletionIntegrationTest {
     @Autowired private EntityManager entityManager;
     @Autowired private AccountAdminService accountAdminService;
     @Autowired private AccountRepository accountRepository;
+    @Autowired private Clock clock;
 
     private String marker;
     private Long adminId;
@@ -105,6 +108,9 @@ class AccountDeletionIntegrationTest {
             SELECT count(*) FROM account_role_assignments ra JOIN roles r ON r.id = ra.role_id
             WHERE ra.account_id = ? AND r.code = 'HR_MANAGER' AND ra.revoked_at IS NULL
             """, Integer.class, activeId));
+        // As with revoking one role, a period that has started closes on the day of deletion.
+        assertEquals(LocalDate.now(clock), jdbc.queryForObject(
+            "SELECT effective_to FROM account_role_assignments WHERE account_id = ?", LocalDate.class, activeId));
         assertEquals(0, jdbc.queryForObject(
             "SELECT count(*) FROM refresh_tokens WHERE account_id = ? AND revoked_at IS NULL", Integer.class, activeId));
     }

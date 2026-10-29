@@ -3,10 +3,10 @@ package com.htttdn.hrm.service.employee;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
 import com.htttdn.hrm.service.auth.RefreshTokenService;
+import com.htttdn.hrm.service.rbac.AccountRoleAssignmentCommandService;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,18 +23,14 @@ import com.htttdn.hrm.dto.request.employee.AssignEmployeeRequest;
 import com.htttdn.hrm.dto.request.employee.UpdateEmployeeRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
-import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeAssignment;
-import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.entity.enums.EmploymentType;
-import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.repository.AccountRepository;
-import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeePayrollProfileRepository;
@@ -69,7 +65,7 @@ class EmployeeServiceTest {
     @Mock private AttendanceRecordRepository attendanceRecordRepository;
     @Mock private PayslipRepository payslipRepository;
     @Mock private AccountRepository accountRepository;
-    @Mock private AccountRoleAssignmentRepository accountRoleAssignmentRepository;
+    @Mock private AccountRoleAssignmentCommandService roleAssignmentCommandService;
     @Mock private RefreshTokenService refreshTokenService;
     @Mock private CurrentAccountProvider currentAccountProvider;
     @Mock private EmployeeAccessScopeService employeeAccessScopeService;
@@ -247,32 +243,13 @@ class EmployeeServiceTest {
         Employee employee = employee(1L);
         Account account = Account.builder().id(5L).status(AccountStatus.ACTIVE).build();
         LocalDate endDate = LocalDate.of(2026, 10, 20);
-        AccountRoleAssignment current = roleAssignment(RoleGrantPolicy.HR_ASSIGNABLE, LocalDate.of(2025, 1, 1), null);
-        AccountRoleAssignment director = roleAssignment(RoleGrantPolicy.OWNER_APPROVAL, LocalDate.of(2025, 1, 1), LocalDate.of(2027, 1, 1));
-        AccountRoleAssignment future = roleAssignment(RoleGrantPolicy.HR_ASSIGNABLE, LocalDate.of(2026, 12, 1), null);
-        AccountRoleAssignment ended = roleAssignment(RoleGrantPolicy.HR_ASSIGNABLE, LocalDate.of(2025, 1, 1), LocalDate.of(2026, 3, 31));
-        AccountRoleAssignment automatic = roleAssignment(RoleGrantPolicy.AUTO, LocalDate.of(2025, 1, 1), null);
-        AccountRoleAssignment systemOnly = roleAssignment(RoleGrantPolicy.SYSTEM_ONLY, LocalDate.of(2025, 1, 1), null);
         when(employeeRepository.getRequired(1L)).thenReturn(employee);
         when(accountRepository.findByEmployeeId(1L)).thenReturn(Optional.of(account));
-        when(accountRoleAssignmentRepository.findByAccountIdAndRevokedAtIsNull(5L))
-            .thenReturn(List.of(current, director, future, ended, automatic, systemOnly));
         Account actor = stubActor();
 
         lifecycleService().endEmployment(1L, EmploymentStatus.RESIGNED, endDate, " Nghỉ việc ");
 
-        assertEquals(endDate, current.getEffectiveTo());
-        assertEquals(actor, current.getRevokedByAccount());
-        assertNotNull(current.getRevokedAt());
-        assertEquals("Kết thúc làm việc: Nghỉ việc", current.getRevocationReason());
-        assertEquals(endDate, director.getEffectiveTo());
-        assertNotNull(director.getRevokedAt());
-        // A role that had not started yet is revoked but keeps its own dates.
-        assertNotNull(future.getRevokedAt());
-        assertNull(future.getEffectiveTo());
-        assertNull(ended.getRevokedAt());
-        assertNull(automatic.getRevokedAt());
-        assertNull(systemOnly.getRevokedAt());
+        verify(roleAssignmentCommandService).revokeHeldRoles(5L, endDate, actor, "Kết thúc làm việc: Nghỉ việc");
     }
 
     @Test
@@ -326,12 +303,10 @@ class EmployeeServiceTest {
         employee.setScheduledEndByAccount(scheduler);
         EmployeeAssignment assignment = EmployeeAssignment.builder().effectiveFrom(LocalDate.of(2025, 1, 1)).build();
         Account account = Account.builder().id(5L).status(AccountStatus.ACTIVE).build();
-        AccountRoleAssignment role = roleAssignment(RoleGrantPolicy.HR_ASSIGNABLE, LocalDate.of(2025, 1, 1), null);
         when(employeeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(employee));
         when(employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(1L))
             .thenReturn(Optional.of(assignment));
         when(accountRepository.findByEmployeeId(1L)).thenReturn(Optional.of(account));
-        when(accountRoleAssignmentRepository.findByAccountIdAndRevokedAtIsNull(5L)).thenReturn(List.of(role));
 
         lifecycleService().completeScheduledEnd(1L);
 
@@ -341,7 +316,7 @@ class EmployeeServiceTest {
         assertNull(employee.getScheduledEndByAccount());
         assertEquals(LocalDate.of(2026, 10, 23), assignment.getEffectiveTo());
         assertEquals(AccountStatus.DISABLED, account.getStatus());
-        assertEquals(scheduler, role.getRevokedByAccount());
+        verify(roleAssignmentCommandService).revokeHeldRoles(5L, LocalDate.of(2026, 10, 23), scheduler, "Kết thúc làm việc: Hết hợp đồng");
         verify(refreshTokenService).revokeAll(5L);
     }
 
@@ -397,13 +372,6 @@ class EmployeeServiceTest {
         return actor;
     }
 
-    private AccountRoleAssignment roleAssignment(RoleGrantPolicy policy, LocalDate from, LocalDate to) {
-        AccountRoleAssignment assignment = new AccountRoleAssignment();
-        assignment.setRole(Role.builder().grantPolicy(policy).build());
-        assignment.setEffectiveFrom(from);
-        assignment.setEffectiveTo(to);
-        return assignment;
-    }
 
     private Employee employee(Long id) {
         return Employee.builder()
@@ -441,7 +409,7 @@ class EmployeeServiceTest {
             employeePayrollProfileRepository,
             employeeTaxDependentRepository,
             accountRepository,
-            accountRoleAssignmentRepository,
+            roleAssignmentCommandService,
             refreshTokenService,
             currentAccountProvider,
             employeeAccessScopeService,

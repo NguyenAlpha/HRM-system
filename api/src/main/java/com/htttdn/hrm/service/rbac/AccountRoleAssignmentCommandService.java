@@ -96,16 +96,46 @@ public class AccountRoleAssignmentCommandService {
         if (assignment.getRevokedAt() != null) {
             return;
         }
-        LocalDate today = LocalDate.now(clock);
+        close(assignment, LocalDate.now(clock), actor, reason);
+        // Thu hồi mọi refresh token → người bị thu hồi phải đăng nhập lại, token mới không còn role này.
+        refreshTokenService.revokeAll(assignment.getAccount().getId());
+    }
+
+    /**
+     * Revokes the business roles an account still holds on {@code endDate}, when the employee leaves or the
+     * account is deleted, so they no longer count as held (a DIRECTOR assignment would otherwise block
+     * appointing the next director). Roles that already ended before that day stay as history. AUTO and
+     * SYSTEM_ONLY roles are left to their own workflows, as {@link #revoke} refuses them.
+     *
+     * <p>Không thu hồi refresh token: nơi gọi đã khóa cả tài khoản nên tự làm việc đó.
+     *
+     * @param accountId tài khoản bị thu hồi role
+     * @param endDate   ngày cuối còn giữ role (ngày nghỉ việc / ngày xóa tài khoản)
+     * @param actor     người thực hiện, ghi vào revokedByAccount
+     * @param reason    lý do thu hồi
+     */
+    public void revokeHeldRoles(Long accountId, LocalDate endDate, Account actor, String reason) {
+        for (AccountRoleAssignment assignment : roleAssignmentRepository.findByAccountIdAndRevokedAtIsNull(accountId)) {
+            RoleGrantPolicy policy = assignment.getRole().getGrantPolicy();
+            if (policy == RoleGrantPolicy.AUTO || policy == RoleGrantPolicy.SYSTEM_ONLY) {
+                continue;
+            }
+            if (assignment.getEffectiveTo() != null && assignment.getEffectiveTo().isBefore(endDate)) {
+                continue;
+            }
+            close(assignment, endDate, actor, reason);
+        }
+    }
+
+    /** Đánh dấu thu hồi; khoảng hiệu lực đã bắt đầu và còn chạy qua {@code endDate} thì kết thúc tại {@code endDate}. */
+    private void close(AccountRoleAssignment assignment, LocalDate endDate, Account actor, String reason) {
         assignment.setRevokedByAccount(actor);
         assignment.setRevokedAt(Instant.now(clock));
         assignment.setRevocationReason(reason.trim());
-        if (!assignment.getEffectiveFrom().isAfter(today)
-            && (assignment.getEffectiveTo() == null || assignment.getEffectiveTo().isAfter(today))) {
-            assignment.setEffectiveTo(today);
+        if (!assignment.getEffectiveFrom().isAfter(endDate)
+            && (assignment.getEffectiveTo() == null || assignment.getEffectiveTo().isAfter(endDate))) {
+            assignment.setEffectiveTo(endDate);
         }
-        // Thu hồi mọi refresh token → người bị thu hồi phải đăng nhập lại, token mới không còn role này.
-        refreshTokenService.revokeAll(assignment.getAccount().getId());
     }
 
     /**

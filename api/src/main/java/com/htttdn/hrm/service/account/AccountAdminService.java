@@ -2,6 +2,7 @@ package com.htttdn.hrm.service.account;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.htttdn.hrm.service.rbac.AccountAuthorizationService;
+import com.htttdn.hrm.service.rbac.AccountRoleAssignmentCommandService;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import com.htttdn.hrm.service.auth.RefreshTokenService;
 import org.springframework.data.domain.Page;
@@ -28,9 +30,7 @@ import com.htttdn.hrm.dto.response.account.AccountProvisioningResponse;
 import com.htttdn.hrm.dto.response.account.AccountResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
-import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.enums.AccountStatus;
-import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
@@ -60,6 +60,7 @@ public class AccountAdminService {
     private final CompanyOwnerAccountGuard companyOwnerAccountGuard;
     private final AccountAuthorizationService accountAuthorizationService;
     private final AccountRoleAssignmentRepository roleAssignmentRepository;
+    private final AccountRoleAssignmentCommandService roleAssignmentCommandService;
     private final Clock clock;
 
     @PreAuthorize("hasAuthority('account.provision')")
@@ -197,15 +198,7 @@ public class AccountAdminService {
         refreshTokenService.revokeAll(accountId);
         accountActivationService.revokeAll(accountId);
         // As at termination, AUTO and SYSTEM_ONLY roles are left to their own workflows.
-        for (AccountRoleAssignment assignment : roleAssignmentRepository.findByAccountIdAndRevokedAtIsNull(accountId)) {
-            RoleGrantPolicy policy = assignment.getRole().getGrantPolicy();
-            if (policy == RoleGrantPolicy.AUTO || policy == RoleGrantPolicy.SYSTEM_ONLY) {
-                continue;
-            }
-            assignment.setRevokedByAccount(actor);
-            assignment.setRevokedAt(now);
-            assignment.setRevocationReason("Xóa tài khoản: " + trimmed);
-        }
+        roleAssignmentCommandService.revokeHeldRoles(accountId, LocalDate.now(clock), actor, "Xóa tài khoản: " + trimmed);
         return toResponse(accountRepository.saveAndFlush(account));
     }
 

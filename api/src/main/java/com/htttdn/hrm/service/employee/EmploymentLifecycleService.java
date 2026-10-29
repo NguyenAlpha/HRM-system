@@ -1,7 +1,6 @@
 package com.htttdn.hrm.service.employee;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDate;
 
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -11,16 +10,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.employee.EmployeeDetailResponse;
 import com.htttdn.hrm.entity.Account;
-import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeAssignment;
 import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
-import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AccountRepository;
-import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeePayrollProfileRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
@@ -28,6 +24,7 @@ import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
 import com.htttdn.hrm.repository.EmployeeTaxDependentRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 import com.htttdn.hrm.service.auth.RefreshTokenService;
+import com.htttdn.hrm.service.rbac.AccountRoleAssignmentCommandService;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 
 import lombok.RequiredArgsConstructor;
@@ -61,7 +58,7 @@ public class EmploymentLifecycleService {
     private final EmployeePayrollProfileRepository employeePayrollProfileRepository;
     private final EmployeeTaxDependentRepository employeeTaxDependentRepository;
     private final AccountRepository accountRepository;
-    private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
+    private final AccountRoleAssignmentCommandService roleAssignmentCommandService;
     private final RefreshTokenService refreshTokenService;
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
@@ -194,33 +191,9 @@ public class EmploymentLifecycleService {
         accountRepository.findByEmployeeId(employeeId).ifPresent(account -> {
             account.setStatus(AccountStatus.DISABLED);
             refreshTokenService.revokeAll(account.getId());
-            revokeRolesAtTermination(account.getId(), terminationDate, terminationReason, actor);
+            roleAssignmentCommandService.revokeHeldRoles(
+                account.getId(), terminationDate, actor, "Kết thúc làm việc: " + terminationReason.trim());
         });
-    }
-
-    /**
-     * Revokes the business roles a leaving employee still holds, so they no longer count as held (a
-     * DIRECTOR assignment would otherwise block appointing the next director). Roles that already ended
-     * before the termination date stay as history. AUTO and SYSTEM_ONLY roles are left to their own
-     * workflows, as the role revoke API does.
-     */
-    private void revokeRolesAtTermination(Long accountId, LocalDate terminationDate, String terminationReason, Account actor) {
-        Instant now = Instant.now(clock);
-        for (AccountRoleAssignment assignment : accountRoleAssignmentRepository.findByAccountIdAndRevokedAtIsNull(accountId)) {
-            RoleGrantPolicy policy = assignment.getRole().getGrantPolicy();
-            if (policy == RoleGrantPolicy.AUTO || policy == RoleGrantPolicy.SYSTEM_ONLY) {
-                continue;
-            }
-            if (assignment.getEffectiveTo() != null && assignment.getEffectiveTo().isBefore(terminationDate)) {
-                continue;
-            }
-            assignment.setRevokedByAccount(actor);
-            assignment.setRevokedAt(now);
-            assignment.setRevocationReason("Kết thúc làm việc: " + terminationReason.trim());
-            if (!assignment.getEffectiveFrom().isAfter(terminationDate)) {
-                assignment.setEffectiveTo(terminationDate);
-            }
-        }
     }
 
     /**

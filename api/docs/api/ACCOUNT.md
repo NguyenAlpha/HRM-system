@@ -251,7 +251,9 @@ Xóa mềm account, dùng cho account tạo nhầm (kể cả `PENDING` chưa k�
 
 `reason` bắt buộc, tối đa 500 ký tự. Account chuyển `DISABLED` vĩnh viễn với `deletedAt`, người xóa và lý do;
 mọi refresh token và mã kích hoạt bị thu hồi; các role nghiệp vụ còn giữ bị thu hồi với lý do
-`Xóa tài khoản: …` (role `AUTO`/`SYSTEM_ONLY` giữ nguyên như khi nghỉ việc). Dòng dữ liệu vẫn còn nên mọi
+`Xóa tài khoản: …` theo đúng quy tắc khi nghỉ việc, lấy ngày xóa làm ngày kết thúc: assignment đã bắt đầu
+được đóng `effectiveTo` tại ngày xóa, assignment đã kết thúc trước đó giữ nguyên làm lịch sử, role
+`AUTO`/`SYSTEM_ONLY` giữ nguyên. Dòng dữ liệu vẫn còn nên mọi
 bản ghi account đã duyệt hay ghi nhận vẫn trỏ đúng người, và username/email không được dùng lại.
 Nhân viên của account được cấp account mới.
 
