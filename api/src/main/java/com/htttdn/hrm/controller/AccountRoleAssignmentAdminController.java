@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.htttdn.hrm.dto.request.account.AppointDirectorRequest;
 import com.htttdn.hrm.dto.request.account.AssignAccountRoleRequest;
 import com.htttdn.hrm.dto.request.account.RevokeAccountRoleRequest;
 import com.htttdn.hrm.dto.response.account.AccountRoleAssignmentResponse;
@@ -40,6 +41,15 @@ public class AccountRoleAssignmentAdminController {
         @Valid @RequestBody AssignAccountRoleRequest request
     ) {
         return ApiResult.ok(roleAssignmentAdminService.assign(accountId, request));
+    }
+
+    @PostMapping("/director")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResult<AccountRoleAssignmentResponse> appointDirector(
+        @PathVariable Long accountId,
+        @Valid @RequestBody AppointDirectorRequest request
+    ) {
+        return ApiResult.ok(roleAssignmentAdminService.appointDirector(accountId, request));
     }
 
     @PostMapping("/{assignmentId}/revoke")

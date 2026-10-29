@@ -10,6 +10,7 @@ Gán role nghiệp vụ cho account theo phạm vi và thời gian hiệu lực.
 |:---------|:-----------|:------|
 | `GET /api/accounts/{accountId}/role-assignments` | `account.read` | Lấy toàn bộ lịch sử role assignment của một account |
 | `POST /api/accounts/{accountId}/role-assignments` | `account.role.assign` | Company Owner gán trực tiếp một role nghiệp vụ cho account theo scope và thời gian hiệu lực |
+| `POST /api/accounts/{accountId}/role-assignments/director` | `account.role.assign` | Bổ nhiệm Giám đốc mới từ một ngày bàn giao, Giám đốc hiện tại làm tới ngày trước đó |
 | `POST /api/accounts/{accountId}/role-assignments/{assignmentId}/revoke` | `account.role.assign` | Thu hồi một role assignment, giữ lại đầy đủ lịch sử và thông tin audit |
 
 Các endpoint ngoại lệ quyền dưới `/role-assignments/{assignmentId}/permission-overrides` được mô tả tại [Account Permission Overrides](./ACCOUNT_PERMISSION_OVERRIDES.md).
@@ -45,7 +46,7 @@ Mọi đường tạo assignment dùng chung `AccountRoleAssignmentCommandServic
 
 Component command không phải API công khai và không tự thay thế authorization ở workflow gọi nó. Nó chịu trách nhiệm khóa account/role, kiểm tra account đích, chính sách cấp role, scope, thời gian, assignment chồng lấn, invariant Director/Company Owner và ghi nhận actor. Nhờ đó controller và workflow không tự viết lại logic tạo `AccountRoleAssignment`.
 
-Company Owner đầu tiên đã mang role `DIRECTOR`. Khi chuyển giao chức vụ, HR tạo employee, cấp account và gửi đề xuất `DIRECTOR`; Company Owner phê duyệt khi assignment cũ không còn chồng thời gian. Company Owner vẫn có thể dùng API quản trị này để gán trực tiếp khi cần xử lý đặc biệt.
+Company Owner đầu tiên đã mang role `DIRECTOR`. Khi chuyển giao chức vụ, Company Owner [bổ nhiệm Giám đốc mới](#post-apiaccountsaccountidrole-assignmentsdirector) trong một bước; hoặc HR gửi đề xuất thu hồi `DIRECTOR` cũ rồi đề xuất `DIRECTOR` cho người mới, Company Owner duyệt lần lượt. Company Owner vẫn có thể dùng API quản trị này để gán trực tiếp khi cần xử lý đặc biệt.
 
 ### Quy tắc scope
 
@@ -155,6 +156,32 @@ Trả một `AccountRoleAssignmentResponse` như cấu trúc trong endpoint danh
 | 409 | `ROLE_ASSIGNMENT_EXISTS` | Assignment bị trùng/chồng thời gian |
 | 409 | `DIRECTOR_ALREADY_ASSIGNED` | Gán `DIRECTOR` khi doanh nghiệp đã có Director chồng khoảng hiệu lực; thu hồi assignment `DIRECTOR` hiện tại trước |
 | 409 | `ROLE_ASSIGNMENT_NOT_ALLOWED` | Account hoặc role không được phép gán qua API này |
+
+---
+
+## POST `/api/accounts/{accountId}/role-assignments/director`
+
+Bổ nhiệm account làm Giám đốc từ ngày bàn giao, thay cho việc tự thu hồi rồi gán:
+
+```json
+{ "handoverDate": "2027-01-01", "reason": "Bổ nhiệm theo quyết định 12/QĐ" }
+```
+
+| Field | Type | Required | Rule |
+|:------|:-----|:--------:|:-----|
+| `handoverDate` | date | ✅ | Ngày Giám đốc mới bắt đầu; không trước hôm nay, không trước ngày vào làm của người nhận |
+| `reason` | string | ✅ | Không rỗng, tối đa 100 ký tự |
+
+Assignment `DIRECTOR` hiện tại còn chạy tới ngày bàn giao được đặt `effectiveTo` là ngày trước đó; nó **không** bị thu hồi, nên Giám đốc hiện tại giữ quyền tới hết ngày đó (bàn giao hôm nay thì refresh token của họ bị thu hồi). Người nhận được gán `DIRECTOR` scope `COMPANY` từ `handoverDate`, không thời hạn, qua cùng các kiểm tra như gán trực tiếp. Người duyệt đơn đổi theo đúng ngày bàn giao.
+
+Response `201` là `AccountRoleAssignmentResponse` của assignment mới.
+
+| HTTP | Code | Khi nào |
+|:----:|:-----|:--------|
+| 400 | `VALIDATION_ERROR` | `handoverDate` đã qua hoặc trước ngày vào làm; người nhận đã là Giám đốc vào ngày bàn giao (field `accountId`) |
+| 403 | `FORBIDDEN` | Không có `account.role.assign`, hoặc bị guard Company Owner/System Admin chặn |
+| 409 | `DIRECTOR_ALREADY_ASSIGNED` | Đã có một lần bổ nhiệm khác bắt đầu từ ngày bàn giao trở đi; thu hồi nó trước |
+| 409 | `ROLE_ASSIGNMENT_NOT_ALLOWED` | Account nhận bị vô hiệu hóa hoặc không gắn employee |
 
 ---
 

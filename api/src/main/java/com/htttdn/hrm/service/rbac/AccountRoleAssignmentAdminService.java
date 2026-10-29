@@ -7,6 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htttdn.hrm.dto.request.account.AppointDirectorRequest;
 import com.htttdn.hrm.dto.request.account.AssignAccountRoleRequest;
 import com.htttdn.hrm.dto.request.account.RevokeAccountRoleRequest;
 import com.htttdn.hrm.dto.response.account.AccountRoleAssignmentResponse;
@@ -72,6 +73,27 @@ public class AccountRoleAssignmentAdminService {
             accountId,
             request,
             currentAccountProvider.account()
+        );
+        return roleAssignmentMapper.toResponse(assignment);
+    }
+
+    /**
+     * Bổ nhiệm Giám đốc mới từ ngày bàn giao; Giám đốc hiện tại làm tới ngày trước đó
+     * (xem {@link AccountRoleAssignmentCommandService#appointDirector}).
+     *
+     * @param accountId tài khoản được bổ nhiệm
+     * @param request   ngày bàn giao và lý do
+     * @return lần gán {@code DIRECTOR} mới
+     * @throws com.htttdn.hrm.exception.ForbiddenException như {@link #assign} (→ 403)
+     */
+    @PreAuthorize("hasAuthority('account.role.assign')")
+    public AccountRoleAssignmentResponse appointDirector(Long accountId, AppointDirectorRequest request) {
+        companyOwnerAccountGuard.requireCanManage(accountId);
+        AccountRoleAssignment assignment = roleAssignmentCommandService.appointDirector(
+            accountId,
+            request.handoverDate(),
+            currentAccountProvider.account(),
+            request.reason()
         );
         return roleAssignmentMapper.toResponse(assignment);
     }

@@ -54,6 +54,7 @@ import lombok.RequiredArgsConstructor;
  *   <li>Khởi tạo công ty: {@code OrganizationCompanyOwnerProvisioningService} →
  *       {@link #assignProvisionedCompanyRole} cho {@code COMPANY_OWNER} và {@code DIRECTOR}</li>
  *   <li>Chuyển giao Company Owner: {@code CompanyOwnerTransferService} → {@link #transferCompanyOwner}</li>
+ *   <li>Bổ nhiệm Giám đốc mới: {@link AccountRoleAssignmentAdminService} → {@link #appointDirector}</li>
  * </ul>
  *
  * <p>{@code Propagation.MANDATORY}: mọi method phải được gọi bên trong transaction của service gọi tới
@@ -332,6 +333,65 @@ public class AccountRoleAssignmentCommandService {
             reason
         );
         return assignInternal(recipientAccountId, request, owner, AssignmentFlow.OWNER_TRANSFER);
+    }
+
+    /**
+     * Appoints the next Director from {@code handoverDate} in one step: the current Director's assignment
+     * ends the day before and a new one starts on that day, so the one-Director rule holds throughout.
+     * The current assignment is shortened, not revoked, because revoking would end it at once and the
+     * handover may lie ahead. A handover today revokes the current Director's refresh tokens.
+     *
+     * <p>Lần gán mới đi qua cùng bộ kiểm tra như gán trực tiếp ({@link #validateCandidate}), nên người nhận
+     * phải có tài khoản dùng được và ngày bàn giao không trước ngày vào làm.
+     *
+     * @param accountId    tài khoản được bổ nhiệm
+     * @param handoverDate ngày Giám đốc mới bắt đầu, không trước hôm nay
+     * @param actor        người bổ nhiệm, ghi vào grantedByAccount
+     * @param reason       lý do bổ nhiệm
+     * @return lần gán {@code DIRECTOR} mới
+     * @throws BusinessException ngày bàn giao đã qua (field {@code handoverDate}) hoặc người nhận đã là Giám đốc
+     *         lúc đó (field {@code accountId}) (→ 400 {@code VALIDATION_ERROR}), hoặc các lỗi của {@link #validateCandidate}
+     * @throws ConflictException đã có lần bổ nhiệm khác bắt đầu từ ngày bàn giao trở đi
+     *         (→ 409 {@code DIRECTOR_ALREADY_ASSIGNED})
+     */
+    public AccountRoleAssignment appointDirector(Long accountId, LocalDate handoverDate, Account actor, String reason) {
+        LocalDate today = LocalDate.now(clock);
+        if (handoverDate.isBefore(today)) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "handoverDate must not be in the past", "handoverDate");
+        }
+        // Khóa role trước khi đọc các lần gán: hai lần bổ nhiệm cùng lúc chạy lần lượt.
+        Role directorRole = roleRepository.findByCodeForUpdate(SystemRoles.DIRECTOR)
+            .orElseThrow(() -> new IllegalStateException("DIRECTOR role is missing"));
+        for (AccountRoleAssignment current : roleAssignmentRepository.findByRoleIdAndRevokedAtIsNull(directorRole.getId())) {
+            if (current.getEffectiveTo() != null && current.getEffectiveTo().isBefore(handoverDate)) {
+                continue;
+            }
+            if (current.getAccount().getId().equals(accountId)) {
+                throw new BusinessException(
+                    ErrorCode.VALIDATION_ERROR, "The account is already the Director on the handover date", "accountId");
+            }
+            // Một lần bổ nhiệm đã lên lịch từ ngày đó trở đi không bị thay âm thầm; thu hồi nó trước.
+            if (!current.getEffectiveFrom().isBefore(handoverDate)) {
+                throw new ConflictException(
+                    ErrorCode.DIRECTOR_ALREADY_ASSIGNED,
+                    "Another Director appointment already starts on or after the handover date"
+                );
+            }
+            current.setEffectiveTo(handoverDate.minusDays(1));
+            if (!handoverDate.isAfter(today)) {
+                refreshTokenService.revokeAll(current.getAccount().getId());
+            }
+        }
+        AssignAccountRoleRequest request = new AssignAccountRoleRequest(
+            SystemRoles.DIRECTOR,
+            RoleScopeType.COMPANY,
+            null,
+            null,
+            handoverDate,
+            null,
+            reason
+        );
+        return assignInternal(accountId, request, actor, AssignmentFlow.DIRECT);
     }
 
     /** Người nhận Company Owner phải đăng nhập được và là nhân viên đang làm, không có lịch nghỉ (→ 409). */
