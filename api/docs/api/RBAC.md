@@ -360,7 +360,7 @@ Cập nhật tên, mô tả và chính sách cấp của custom role. System rol
 
 ## DELETE `/api/roles/{id}`
 
-Xóa mềm một role tùy chỉnh. Hệ thống đặt `deletedAt` và cập nhật `updatedAt`; dữ liệu role và lịch sử phân quyền vẫn được giữ trong database.
+Xóa mềm một role tùy chỉnh. Hệ thống đặt `deletedAt` và cập nhật `updatedAt`; dữ liệu role và lịch sử phân quyền vẫn được giữ trong database. Các role assignment của role còn chạy bị thu hồi từ hôm nay với lý do `Role đã bị xóa` (assignment đã kết thúc giữ nguyên làm lịch sử), và đề xuất role đang `PENDING` cho role này chuyển `CANCELLED`; người thu hồi/hủy là người xóa. Nhờ vậy role đã xóa không còn hiện trong `roleCodes` của account và không chặn việc xóa đơn vị/địa điểm.
 
 ### Response `200 OK`
 

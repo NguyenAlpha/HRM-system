@@ -122,7 +122,10 @@ class RbacManagementTest {
         )).andExpect(status().isOk())
             .andExpect(jsonPath("$.data.name").value("Updated role"))
             .andExpect(jsonPath("$.data.grantPolicy").value("OWNER_APPROVAL"));
-        admin(delete("/api/roles/{id}", id)).andExpect(status().isOk());
+        // Deleting revokes the role's assignments, which records who did it, so the actor must exist.
+        String deleter = token(savedAccount().getId(), List.of("COMPANY_OWNER"), List.of("rbac.manage"));
+        mockMvc.perform(delete("/api/roles/{id}", id).header(HttpHeaders.AUTHORIZATION, "Bearer " + deleter))
+            .andExpect(status().isOk());
 
         // The requests share this test's transaction, so nothing was flushed (or stamped) yet.
         roleRepository.flush();

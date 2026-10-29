@@ -80,6 +80,25 @@ class AccountRoleAssignmentCommandServiceTest {
         assertEquals("Xóa tài khoản: Trùng", pending.getCancellationReason());
     }
 
+    @Test
+    void deletingARoleRevokesItsRunningAssignmentsAndCancelsItsPendingRequests() {
+        Account actor = Account.builder().id(9L).build();
+        Role role = Role.builder().id(3L).grantPolicy(RoleGrantPolicy.HR_ASSIGNABLE).build();
+        AccountRoleAssignment current = roleAssignment(RoleGrantPolicy.HR_ASSIGNABLE, LocalDate.of(2025, 1, 1), null);
+        AccountRoleAssignment ended = roleAssignment(RoleGrantPolicy.HR_ASSIGNABLE, LocalDate.of(2025, 1, 1), LocalDate.of(2026, 3, 31));
+        RoleAssignmentRequest pending = RoleAssignmentRequest.builder().status(RoleAssignmentRequestStatus.PENDING).build();
+        when(roleAssignmentRepository.findByRoleIdAndRevokedAtIsNull(3L)).thenReturn(List.of(current, ended));
+        when(requestRepository.findByRoleIdAndStatusForUpdate(3L, RoleAssignmentRequestStatus.PENDING))
+            .thenReturn(List.of(pending));
+
+        commandService().revokeDeletedRole(role, actor, "Role đã bị xóa");
+
+        assertEquals(LocalDate.of(2026, 10, 24), current.getEffectiveTo());
+        assertEquals("Role đã bị xóa", current.getRevocationReason());
+        assertNull(ended.getRevokedAt());
+        assertEquals(RoleAssignmentRequestStatus.CANCELLED, pending.getStatus());
+    }
+
     private AccountRoleAssignmentCommandService commandService() {
         return new AccountRoleAssignmentCommandService(
             null, null, roleAssignmentRepository, requestRepository, null, null, null, refreshTokenService, TODAY

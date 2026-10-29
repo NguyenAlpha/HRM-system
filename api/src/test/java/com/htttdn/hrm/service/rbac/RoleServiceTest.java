@@ -45,6 +45,7 @@ class RoleServiceTest {
     @Mock private PermissionRepository permissionRepository;
     @Mock private RolePermissionRepository rolePermissionRepository;
     @Mock private CurrentAccountProvider currentAccountProvider;
+    @Mock private AccountRoleAssignmentCommandService roleAssignmentCommandService;
 
     @Test
     void replacePermissionsAddsAndRemovesMappingsInOneOperation() {
@@ -159,6 +160,18 @@ class RoleServiceTest {
         verify(roleRepository, never()).save(any());
     }
 
+    @Test
+    void deletingACustomRoleRevokesItsAssignmentsAndPendingRequests() {
+        Role role = role(false);
+        Account actor = Account.builder().id(99L).build();
+        when(roleRepository.getRequired(10L)).thenReturn(role);
+        when(currentAccountProvider.account()).thenReturn(actor);
+
+        service().softDelete(10L);
+
+        verify(roleAssignmentCommandService).revokeDeletedRole(role, actor, "Role đã bị xóa");
+    }
+
     private Role role(boolean system) {
         return Role.builder().id(10L).code("CUSTOM_ROLE").name("Custom role").isSystem(system).build();
     }
@@ -193,6 +206,7 @@ class RoleServiceTest {
             permissionRepository,
             rolePermissionRepository,
             currentAccountProvider,
+            roleAssignmentCommandService,
             Clock.system(ClockConfig.BUSINESS_ZONE)
         );
     }

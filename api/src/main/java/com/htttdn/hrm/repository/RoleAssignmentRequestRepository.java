@@ -85,6 +85,14 @@ public interface RoleAssignmentRequestRepository extends JpaRepository<RoleAssig
         @Param("status") RoleAssignmentRequestStatus status
     );
 
+    /** Như {@link #findByAccountIdAndStatusForUpdate}, theo role. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT request FROM RoleAssignmentRequest request WHERE request.role.id = :roleId AND request.status = :status")
+    List<RoleAssignmentRequest> findByRoleIdAndStatusForUpdate(
+        @Param("roleId") Long roleId,
+        @Param("status") RoleAssignmentRequestStatus status
+    );
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT request FROM RoleAssignmentRequest request WHERE request.id = :id")
     Optional<RoleAssignmentRequest> findByIdForUpdate(@Param("id") Long id);

@@ -117,7 +117,43 @@ public class AccountRoleAssignmentCommandService {
      * @param reason    lý do thu hồi
      */
     public void revokeHeldRoles(Long accountId, LocalDate endDate, Account actor, String reason) {
-        for (AccountRoleAssignment assignment : roleAssignmentRepository.findByAccountIdAndRevokedAtIsNull(accountId)) {
+        revokeStillRunning(roleAssignmentRepository.findByAccountIdAndRevokedAtIsNull(accountId), endDate, actor, reason);
+        cancelPendingRequests(
+            requestRepository.findByAccountIdAndStatusForUpdate(accountId, RoleAssignmentRequestStatus.PENDING),
+            actor,
+            reason
+        );
+    }
+
+    /**
+     * Revokes today the assignments of a custom role being deleted and cancels the requests waiting for it,
+     * so the deleted role neither shows as held nor blocks deleting its unit or location. Assignments that
+     * already ended stay as history, as in {@link #revokeHeldRoles}.
+     *
+     * <p>Không thu hồi refresh token: như khi đổi permission của role, người giữ mất quyền ở access token kế tiếp.
+     *
+     * @param role   role tự tạo đang bị xóa mềm
+     * @param actor  người xóa, ghi vào revokedByAccount / cancelledByAccount
+     * @param reason lý do thu hồi và hủy
+     */
+    public void revokeDeletedRole(Role role, Account actor, String reason) {
+        revokeStillRunning(
+            roleAssignmentRepository.findByRoleIdAndRevokedAtIsNull(role.getId()), LocalDate.now(clock), actor, reason);
+        cancelPendingRequests(
+            requestRepository.findByRoleIdAndStatusForUpdate(role.getId(), RoleAssignmentRequestStatus.PENDING),
+            actor,
+            reason
+        );
+    }
+
+    /** Thu hồi các lần gán còn chạy tới {@code endDate}, bỏ qua role {@code AUTO}/{@code SYSTEM_ONLY} và lần gán đã kết thúc. */
+    private void revokeStillRunning(
+        List<AccountRoleAssignment> assignments,
+        LocalDate endDate,
+        Account actor,
+        String reason
+    ) {
+        for (AccountRoleAssignment assignment : assignments) {
             RoleGrantPolicy policy = assignment.getRole().getGrantPolicy();
             if (policy == RoleGrantPolicy.AUTO || policy == RoleGrantPolicy.SYSTEM_ONLY) {
                 continue;
@@ -127,11 +163,6 @@ public class AccountRoleAssignmentCommandService {
             }
             close(assignment, endDate, actor, reason);
         }
-        cancelPendingRequests(
-            requestRepository.findByAccountIdAndStatusForUpdate(accountId, RoleAssignmentRequestStatus.PENDING),
-            actor,
-            reason
-        );
     }
 
     /** Hủy các yêu cầu đang chờ không còn duyệt được; người hủy và lý do như khi người tạo tự hủy. */

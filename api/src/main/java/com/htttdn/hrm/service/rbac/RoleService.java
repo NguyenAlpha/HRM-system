@@ -63,6 +63,7 @@ public class RoleService {
     private final PermissionRepository permissionRepository;
     private final RolePermissionRepository rolePermissionRepository;
     private final CurrentAccountProvider currentAccountProvider;
+    private final AccountRoleAssignmentCommandService roleAssignmentCommandService;
     private final Clock clock;
 
     /**
@@ -159,9 +160,9 @@ public class RoleService {
     /**
      * Xóa mềm role tự tạo.
      *
-     * <p>Lần gán role này vẫn còn trong database nhưng không còn được tính khi nạp quyền: query
-     * {@code findActiveWithRoleByAccountId} bỏ qua role có {@code deletedAt} (phạm vi mất ngay, permission trong
-     * JWT mất ở token kế tiếp).
+     * <p>Lần gán role này còn chạy bị thu hồi từ hôm nay và yêu cầu đang chờ bị hủy
+     * ({@link AccountRoleAssignmentCommandService#revokeDeletedRole}). Query {@code findActiveWithRoleByAccountId}
+     * cũng bỏ qua role có {@code deletedAt} (phạm vi mất ngay, permission trong JWT mất ở token kế tiếp).
      *
      * @throws com.htttdn.hrm.exception.ResourceNotFoundException role không có hoặc đã xóa (→ 404 {@code ROLE_NOT_FOUND})
      * @throws ConflictException role hệ thống (→ 409 {@code CONFLICT})
@@ -173,6 +174,7 @@ public class RoleService {
         }
         Instant now = Instant.now(clock);
         role.setDeletedAt(now);
+        roleAssignmentCommandService.revokeDeletedRole(role, currentAccountProvider.account(), "Role đã bị xóa");
     }
 
     /**
