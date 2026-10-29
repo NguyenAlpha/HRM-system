@@ -59,7 +59,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   ROLE_ASSIGNMENT_NOT_FOUND: "Không tìm thấy lần gán vai trò.",
   ROLE_ASSIGNMENT_EXISTS: "Tài khoản đã có vai trò này trong khoảng thời gian đó.",
   DIRECTOR_ALREADY_ASSIGNED:
-    "Công ty đã có Giám đốc trong khoảng thời gian này. Hãy dùng \"Bổ nhiệm Giám đốc mới\", hoặc thu hồi lần gán Giám đốc đang chồng thời gian trước.",
+    "Công ty đã có Giám đốc trong khoảng thời gian này. Hãy thu hồi vai trò Giám đốc hiện tại trước khi bổ nhiệm người mới.",
   ROLE_ASSIGNMENT_NOT_ALLOWED: "Không được phép gán vai trò này.",
   ROLE_ASSIGNMENT_REQUEST_NOT_FOUND: "Không tìm thấy đề xuất.",
   ROLE_ASSIGNMENT_REQUEST_EXISTS: "Đã có đề xuất tương tự đang chờ duyệt.",

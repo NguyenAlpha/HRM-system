@@ -363,43 +363,6 @@
         "tags" : [ "account-role-assignment-admin-controller" ]
       }
     },
-    "/api/accounts/{accountId}/role-assignments/director" : {
-      "post" : {
-        "operationId" : "appointDirector",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "accountId",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/AppointDirectorRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "201" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ApiResultAccountRoleAssignmentResponse"
-                }
-              }
-            },
-            "description" : "Created"
-          }
-        },
-        "tags" : [ "account-role-assignment-admin-controller" ]
-      }
-    },
     "/api/accounts/{accountId}/role-assignments/{assignmentId}/permission-overrides" : {
       "get" : {
         "operationId" : "list_14",
@@ -7221,21 +7184,6 @@
           }
         },
         "required" : [ "points", "range", "slotSeconds", "startedAt" ]
-      },
-      "AppointDirectorRequest" : {
-        "type" : "object",
-        "properties" : {
-          "handoverDate" : {
-            "type" : "string",
-            "format" : "date"
-          },
-          "reason" : {
-            "type" : "string",
-            "maxLength" : 100,
-            "minLength" : 0
-          }
-        },
-        "required" : [ "handoverDate", "reason" ]
       },
       "ApproveOvertimeRequest" : {
         "type" : "object",
