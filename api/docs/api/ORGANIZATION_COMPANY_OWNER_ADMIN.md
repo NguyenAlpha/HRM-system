@@ -161,7 +161,7 @@ Raw activation token chỉ xuất hiện trong response này. System admin phả
 | 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
 | 403 | `FORBIDDEN` | Không có `organization.company_owner.bootstrap` |
 | 409 | `COMPANY_OWNER_ALREADY_EXISTS` | Đã tồn tại assignment `COMPANY_OWNER` chưa bị thu hồi |
-| 409 | `ROLE_ASSIGNMENT_EXISTS` | Đã tồn tại assignment `DIRECTOR` chồng khoảng hiệu lực |
+| 409 | `DIRECTOR_ALREADY_ASSIGNED` | Đã tồn tại assignment `DIRECTOR` chồng khoảng hiệu lực |
 | 409 | `EMPLOYEE_CODE_TAKEN` | Mã employee đã tồn tại |
 | 409 | `EMAIL_TAKEN` | Work email đã tồn tại ở employee hoặc account |
 | 409 | `USERNAME_TAKEN` | Username đã tồn tại |

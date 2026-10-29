@@ -187,6 +187,7 @@ Mọi response request đều có thêm `requestType` (`GRANT`/`REVOKE`) và `ta
 | 404 | `ORGANIZATION_UNIT_NOT_FOUND` | Đơn vị không tồn tại hoặc không active |
 | 404 | `LOCATION_NOT_FOUND` | Địa điểm không tồn tại hoặc không active |
 | 409 | `ROLE_ASSIGNMENT_EXISTS` | Đã có assignment chồng thời gian |
+| 409 | `DIRECTOR_ALREADY_ASSIGNED` | Đề xuất `DIRECTOR` chồng thời gian với Director hiện có |
 | 409 | `ROLE_ASSIGNMENT_REQUEST_EXISTS` | Đã có request `PENDING` trùng account, role, scope và chồng thời gian |
 | 409 | `ROLE_ASSIGNMENT_NOT_ALLOWED` | Account đích hoặc chính sách role không cho phép workflow này |
 
@@ -313,6 +314,7 @@ Ngoài lỗi xác thực/tài nguyên/validation giống endpoint tạo, endpoin
 |:----:|:-------------|:-----------|
 | 409 | `ROLE_ASSIGNMENT_REQUEST_ALREADY_PROCESSED` | Request không còn `PENDING` |
 | 409 | `ROLE_ASSIGNMENT_EXISTS` | Dữ liệu hiện tại đã có assignment xung đột |
+| 409 | `DIRECTOR_ALREADY_ASSIGNED` | Doanh nghiệp đã có Director chồng thời gian với đề xuất `DIRECTOR` |
 | 409 | `ROLE_ASSIGNMENT_NOT_ALLOWED` | Grant policy hiện tại không còn cho phép Owner phê duyệt, hoặc assignment đích của `REVOKE` đã bị thu hồi/hết hạn |
 
 ---

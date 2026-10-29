@@ -260,7 +260,7 @@ public class AccountRoleAssignmentCommandService {
      * @return lần gán vừa lưu
      * @throws IllegalArgumentException roleCode khác hai role trên — lỗi lập trình, không đến từ người dùng
      * @throws ConflictException đã có Company Owner (→ 409 {@code COMPANY_OWNER_ALREADY_EXISTS}) hoặc đã có
-     *         Director trùng thời gian (→ 409 {@code ROLE_ASSIGNMENT_EXISTS})
+     *         Director trùng thời gian (→ 409 {@code DIRECTOR_ALREADY_ASSIGNED})
      */
     public AccountRoleAssignment assignProvisionedCompanyRole(
         Long accountId,
@@ -543,7 +543,10 @@ public class AccountRoleAssignmentCommandService {
         }
     }
 
-    /** Công ty chỉ có một Director tại mỗi thời điểm: chặn lần gán chồng thời gian với Director hiện có (→ 409). */
+    /**
+     * Công ty chỉ có một Director tại mỗi thời điểm: chặn lần gán chồng thời gian với Director hiện có
+     * (→ 409 {@code DIRECTOR_ALREADY_ASSIGNED}, mã riêng vì người đang giữ thường là tài khoản khác).
+     */
     private void ensureSingleDirector(Role role, LocalDate effectiveFrom, LocalDate effectiveTo) {
         boolean conflict = roleAssignmentRepository.findByRoleIdAndRevokedAtIsNull(role.getId()).stream()
             .anyMatch(existing -> periodsOverlap(
@@ -554,7 +557,7 @@ public class AccountRoleAssignmentCommandService {
             ));
         if (conflict) {
             throw new ConflictException(
-                ErrorCode.ROLE_ASSIGNMENT_EXISTS,
+                ErrorCode.DIRECTOR_ALREADY_ASSIGNED,
                 "A DIRECTOR assignment already exists for the requested period"
             );
         }

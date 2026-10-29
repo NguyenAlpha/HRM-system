@@ -224,6 +224,19 @@ class RoleRevocationRequestIntegrationTest {
         assertEquals("effectiveFrom", exception.getField());
     }
 
+    @Test
+    void aSecondDirectorIsRefusedWithItsOwnErrorCode() {
+        Long directorRoleId = jdbc.queryForObject("SELECT id FROM roles WHERE code = 'DIRECTOR'", Long.class);
+        insertAssignment(approverId, directorRoleId);
+        authenticateAs(approverId, "account.role.assign");
+
+        ConflictException exception = assertThrows(ConflictException.class, () -> adminService.assign(targetAccountId,
+            new AssignAccountRoleRequest("DIRECTOR", RoleScopeType.COMPANY, null, null, LocalDate.of(2026, 2, 1), null, "x")));
+
+        // Not ROLE_ASSIGNMENT_EXISTS: the target holds no DIRECTOR role, somebody else does.
+        assertEquals(ErrorCode.DIRECTOR_ALREADY_ASSIGNED, exception.getErrorCode());
+    }
+
     private Long insertRole(String grantPolicy) {
         String code = "IT_REV_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         return jdbc.queryForObject("""

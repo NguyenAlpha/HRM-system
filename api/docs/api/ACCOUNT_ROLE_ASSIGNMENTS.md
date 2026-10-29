@@ -153,6 +153,7 @@ Trả một `AccountRoleAssignmentResponse` như cấu trúc trong endpoint danh
 | 404 | `ORGANIZATION_UNIT_NOT_FOUND` | Đơn vị không tồn tại hoặc inactive |
 | 404 | `LOCATION_NOT_FOUND` | Địa điểm không tồn tại hoặc inactive |
 | 409 | `ROLE_ASSIGNMENT_EXISTS` | Assignment bị trùng/chồng thời gian |
+| 409 | `DIRECTOR_ALREADY_ASSIGNED` | Gán `DIRECTOR` khi doanh nghiệp đã có Director chồng khoảng hiệu lực; thu hồi assignment `DIRECTOR` hiện tại trước |
 | 409 | `ROLE_ASSIGNMENT_NOT_ALLOWED` | Account hoặc role không được phép gán qua API này |
 
 ---
