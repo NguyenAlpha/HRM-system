@@ -16,6 +16,8 @@ Các endpoint ngoại lệ quyền dưới `/role-assignments/{assignmentId}/per
 
 Tất cả endpoint yêu cầu Bearer token. Chỉ `COMPANY_OWNER` được seed sẵn các permission trên. `SYSTEM_ADMIN` quản trị tài khoản nhưng không cấp role, để role `OWNER_APPROVAL` luôn do Company Owner quyết định; account của `SYSTEM_ADMIN` cũng không liên kết employee nên không tự nhận được role nghiệp vụ. Role của account đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được gán hoặc thu hồi; account đang giữ `SYSTEM_ADMIN` chỉ một System Admin khác. Actor cấp hoặc thu hồi role luôn được lấy từ JWT/Security Context, không nhận từ request.
 
+Khác với [đề xuất role](./ROLE_ASSIGNMENT_REQUESTS.md) và [ngoại lệ quyền](./ACCOUNT_PERMISSION_OVERRIDES.md) (không ai được làm trên chính account của mình), Company Owner được gán và thu hồi role cho chính mình qua API này: Owner là người sở hữu doanh nghiệp, mọi lần gán vẫn ghi người gán, thời điểm và lý do, và việc tính lương vẫn chặn người tính tự duyệt kỳ lương của chính mình.
+
 API gán trực tiếp chỉ chấp nhận role có `grantPolicy=HR_ASSIGNABLE` hoặc `OWNER_APPROVAL`. Vì người gọi có `account.role.assign` là Company Owner, thao tác này được xem là quyết định cấp role trực tiếp của Owner. Role `AUTO` và `SYSTEM_ONLY` luôn bị từ chối tại command component ngay cả khi caller có permission endpoint.
 
 ---
