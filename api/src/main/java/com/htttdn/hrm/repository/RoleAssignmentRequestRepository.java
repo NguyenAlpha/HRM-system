@@ -1,5 +1,6 @@
 package com.htttdn.hrm.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -74,6 +75,14 @@ public interface RoleAssignmentRequestRepository extends JpaRepository<RoleAssig
         Long requestedByAccountId,
         RoleAssignmentRequestStatus status,
         Pageable pageable
+    );
+
+    /** Requests of the account in {@code status}, locked as approving one locks it, so the two never race. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT request FROM RoleAssignmentRequest request WHERE request.account.id = :accountId AND request.status = :status")
+    List<RoleAssignmentRequest> findByAccountIdAndStatusForUpdate(
+        @Param("accountId") Long accountId,
+        @Param("status") RoleAssignmentRequestStatus status
     );
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

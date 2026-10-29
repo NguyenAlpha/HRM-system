@@ -3,6 +3,7 @@ package com.htttdn.hrm.service.rbac;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -29,6 +30,7 @@ import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.OrganizationUnitRepository;
+import com.htttdn.hrm.repository.RoleAssignmentRequestRepository;
 import com.htttdn.hrm.repository.RoleRepository;
 import com.htttdn.hrm.repository.WorkLocationRepository;
 
@@ -67,6 +69,7 @@ public class AccountRoleAssignmentCommandService {
     private final AccountRepository accountRepository;
     private final RoleRepository roleRepository;
     private final AccountRoleAssignmentRepository roleAssignmentRepository;
+    private final RoleAssignmentRequestRepository requestRepository;
     private final OrganizationUnitRepository organizationUnitRepository;
     private final WorkLocationRepository workLocationRepository;
     private final RoleAssignmentPolicy roleAssignmentPolicy;
@@ -102,7 +105,9 @@ public class AccountRoleAssignmentCommandService {
      * Revokes the business roles an account still holds on {@code endDate}, when the employee leaves or the
      * account is deleted, so they no longer count as held (a DIRECTOR assignment would otherwise block
      * appointing the next director). Roles that already ended before that day stay as history. AUTO and
-     * SYSTEM_ONLY roles are left to their own workflows, as {@link #revoke} refuses them.
+     * SYSTEM_ONLY roles are left to their own workflows, as {@link #revoke} refuses them. Requests still
+     * waiting for the account are cancelled with the same reason: approving them would fail on the disabled
+     * account or the revoked assignment.
      *
      * <p>Không thu hồi refresh token: nơi gọi đã khóa cả tài khoản nên tự làm việc đó.
      *
@@ -121,6 +126,22 @@ public class AccountRoleAssignmentCommandService {
                 continue;
             }
             close(assignment, endDate, actor, reason);
+        }
+        cancelPendingRequests(
+            requestRepository.findByAccountIdAndStatusForUpdate(accountId, RoleAssignmentRequestStatus.PENDING),
+            actor,
+            reason
+        );
+    }
+
+    /** Hủy các yêu cầu đang chờ không còn duyệt được; người hủy và lý do như khi người tạo tự hủy. */
+    private void cancelPendingRequests(List<RoleAssignmentRequest> requests, Account actor, String reason) {
+        Instant now = Instant.now(clock);
+        for (RoleAssignmentRequest request : requests) {
+            request.setStatus(RoleAssignmentRequestStatus.CANCELLED);
+            request.setCancelledByAccount(actor);
+            request.setCancelledAt(now);
+            request.setCancellationReason(reason.trim());
         }
     }
 

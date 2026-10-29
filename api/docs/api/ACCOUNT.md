@@ -253,7 +253,7 @@ Xóa mềm account, dùng cho account tạo nhầm (kể cả `PENDING` chưa k�
 mọi refresh token và mã kích hoạt bị thu hồi; các role nghiệp vụ còn giữ bị thu hồi với lý do
 `Xóa tài khoản: …` theo đúng quy tắc khi nghỉ việc, lấy ngày xóa làm ngày kết thúc: assignment đã bắt đầu
 được đóng `effectiveTo` tại ngày xóa, assignment đã kết thúc trước đó giữ nguyên làm lịch sử, role
-`AUTO`/`SYSTEM_ONLY` giữ nguyên. Dòng dữ liệu vẫn còn nên mọi
+`AUTO`/`SYSTEM_ONLY` giữ nguyên; đề xuất role đang `PENDING` của account chuyển `CANCELLED` với cùng lý do. Dòng dữ liệu vẫn còn nên mọi
 bản ghi account đã duyệt hay ghi nhận vẫn trỏ đúng người, và username/email không được dùng lại.
 Nhân viên của account được cấp account mới.
 

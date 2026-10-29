@@ -99,6 +99,11 @@ class AccountDeletionIntegrationTest {
             INSERT INTO account_role_assignments(account_id, role_id, scope_type, effective_from, granted_by_account_id)
             SELECT ?, id, 'COMPANY', '2025-01-01', ? FROM roles WHERE code = 'HR_MANAGER'
             """, activeId, adminId);
+        jdbc.update("""
+            INSERT INTO role_assignment_requests(account_id, role_id, scope_type, effective_from, reason, status,
+                requested_by_account_id, requested_at)
+            SELECT ?, id, 'COMPANY', '2025-02-01', 'Kiêm kế toán', 'PENDING', ?, now() FROM roles WHERE code = 'PAYROLL_ACCOUNTANT'
+            """, activeId, adminId);
         authenticateAs(adminId);
 
         accountAdminService.delete(activeId, "Tài khoản trùng");
@@ -113,6 +118,9 @@ class AccountDeletionIntegrationTest {
             "SELECT effective_to FROM account_role_assignments WHERE account_id = ?", LocalDate.class, activeId));
         assertEquals(0, jdbc.queryForObject(
             "SELECT count(*) FROM refresh_tokens WHERE account_id = ? AND revoked_at IS NULL", Integer.class, activeId));
+        // A request still waiting could never be approved for a deleted account.
+        assertEquals("CANCELLED", jdbc.queryForObject(
+            "SELECT status FROM role_assignment_requests WHERE account_id = ?", String.class, activeId));
     }
 
     @Test

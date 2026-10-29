@@ -343,6 +343,8 @@ Người đã gửi hủy request của chính mình khi request còn `PENDING`.
 
 `reason` bắt buộc, không rỗng, tối đa 500 ký tự. Request chuyển sang `CANCELLED`; không tạo assignment. Account khác có quyền đề xuất nhưng không phải người tạo sẽ nhận `403 FORBIDDEN`.
 
+Hệ thống cũng tự hủy đề xuất `PENDING` không còn duyệt được, với người hủy là người thực hiện thao tác: khi nhân sự [kết thúc làm việc](./EMPLOYEE.md#post-apiemployeesemployeeidemployment-end) hoặc account bị [xóa](./ACCOUNT.md#post-apiaccountsaccountiddelete) (lý do như khi thu hồi role).
+
 ---
 
 ## Đồng thời và hiệu lực quyền

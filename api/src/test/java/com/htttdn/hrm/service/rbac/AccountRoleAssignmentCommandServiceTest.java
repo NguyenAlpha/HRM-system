@@ -14,8 +14,11 @@ import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.Role;
+import com.htttdn.hrm.entity.RoleAssignmentRequest;
+import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
 import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
+import com.htttdn.hrm.repository.RoleAssignmentRequestRepository;
 import com.htttdn.hrm.service.auth.RefreshTokenService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,6 +32,7 @@ class AccountRoleAssignmentCommandServiceTest {
     private static final Clock TODAY = Clock.fixed(Instant.parse("2026-10-24T05:00:00Z"), ClockConfig.BUSINESS_ZONE);
 
     @Mock private AccountRoleAssignmentRepository roleAssignmentRepository;
+    @Mock private RoleAssignmentRequestRepository requestRepository;
     @Mock private RefreshTokenService refreshTokenService;
 
     @Test
@@ -60,9 +64,25 @@ class AccountRoleAssignmentCommandServiceTest {
         assertNull(systemOnly.getRevokedAt());
     }
 
+    @Test
+    void revokingHeldRolesCancelsTheRequestsStillWaitingForTheAccount() {
+        Account actor = Account.builder().id(9L).build();
+        RoleAssignmentRequest pending = RoleAssignmentRequest.builder().status(RoleAssignmentRequestStatus.PENDING).build();
+        when(requestRepository.findByAccountIdAndStatusForUpdate(5L, RoleAssignmentRequestStatus.PENDING))
+            .thenReturn(List.of(pending));
+
+        commandService().revokeHeldRoles(5L, LocalDate.of(2026, 10, 20), actor, "Xóa tài khoản: Trùng");
+
+        // Approving it would fail on the disabled account, so it no longer waits for the Company Owner.
+        assertEquals(RoleAssignmentRequestStatus.CANCELLED, pending.getStatus());
+        assertEquals(actor, pending.getCancelledByAccount());
+        assertNotNull(pending.getCancelledAt());
+        assertEquals("Xóa tài khoản: Trùng", pending.getCancellationReason());
+    }
+
     private AccountRoleAssignmentCommandService commandService() {
         return new AccountRoleAssignmentCommandService(
-            null, null, roleAssignmentRepository, null, null, null, refreshTokenService, TODAY
+            null, null, roleAssignmentRepository, requestRepository, null, null, null, refreshTokenService, TODAY
         );
     }
 
