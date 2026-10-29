@@ -22,7 +22,7 @@ trong [RBAC.md](../api/RBAC.md); phạm vi dữ liệu của một lần gán n�
 | `PAYROLL_ACCOUNTANT` | `OWNER_APPROVAL` | `COMPANY` | HR đề xuất, Company Owner duyệt |
 | `PAYROLL_APPROVER` | `OWNER_APPROVAL` | `COMPANY` | HR đề xuất, Company Owner duyệt |
 | `DIRECTOR` | `OWNER_APPROVAL` | `COMPANY` | HR đề xuất, Company Owner duyệt; hoặc gán lúc khởi tạo doanh nghiệp |
-| `COMPANY_OWNER` | `SYSTEM_ONLY` | `COMPANY` | Chỉ qua workflow khởi tạo doanh nghiệp của System Admin |
+| `COMPANY_OWNER` | `SYSTEM_ONLY` | `COMPANY` | Workflow khởi tạo doanh nghiệp của System Admin; sau đó chỉ Owner hiện tại [chuyển giao](../api/COMPANY_OWNER_TRANSFER.md) |
 | `SYSTEM_ADMIN` | `SYSTEM_ONLY` | — | Chỉ seeder |
 
 Scope cho phép của system role khai báo trong `RoleAssignmentPolicy.SYSTEM_ROLE_SCOPES`. Custom role (do Company Owner
@@ -46,6 +46,7 @@ flowchart LR
 | Duyệt đề xuất | `role.assignment.approve` (COMPANY_OWNER) | `OWNER_APPROVAL` | Đề xuất phải còn `PENDING` |
 | Gán trực tiếp (`/api/accounts/{id}/role-assignments`) | `account.role.assign` (COMPANY_OWNER) | `HR_ASSIGNABLE`, `OWNER_APPROVAL` | Guard bảo vệ Company Owner / System Admin (mục 5). System Admin không có permission này, nên không ai cấp role `OWNER_APPROVAL` mà không qua Company Owner |
 | Khởi tạo doanh nghiệp | `organization.company_owner.bootstrap` (SYSTEM_ADMIN) | `COMPANY_OWNER`, `DIRECTOR` | Chỉ dùng một lần khi doanh nghiệp chưa có Company Owner |
+| Chuyển giao Owner (`/api/company-owner/transfer`) | Owner hiện tại (`ROLE_COMPANY_OWNER`, kiểm tra lại trong database) | `COMPANY_OWNER` | Xác nhận bằng mật khẩu; người nhận là account `ACTIVE` của nhân viên đang làm, hiệu lực ngay |
 | Cấp account cho nhân viên | `account.provision` | `EMPLOYEE` (`AUTO`) | — |
 
 Mọi đường đều kiểm tra chung: account không `DISABLED`, account có liên kết nhân viên, scope hợp lệ với role, không

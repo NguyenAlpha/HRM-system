@@ -15,17 +15,20 @@ import org.springframework.transaction.annotation.Transactional;
 import com.htttdn.hrm.dto.request.account.AssignAccountRoleRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
+import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
 import com.htttdn.hrm.entity.OrganizationUnit;
 import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.RoleAssignmentRequest;
 import com.htttdn.hrm.entity.WorkLocation;
 import com.htttdn.hrm.entity.enums.AccountStatus;
+import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.entity.enums.RoleAssignmentRequestStatus;
 import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
+import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
@@ -50,6 +53,7 @@ import lombok.RequiredArgsConstructor;
  *       {@link #assignHrAssignableRequest} (tự duyệt) hoặc {@link #assignOwnerApprovedRequest} (Owner duyệt)</li>
  *   <li>Khởi tạo công ty: {@code OrganizationCompanyOwnerProvisioningService} →
  *       {@link #assignProvisionedCompanyRole} cho {@code COMPANY_OWNER} và {@code DIRECTOR}</li>
+ *   <li>Chuyển giao Company Owner: {@code CompanyOwnerTransferService} → {@link #transferCompanyOwner}</li>
  * </ul>
  *
  * <p>{@code Propagation.MANDATORY}: mọi method phải được gọi bên trong transaction của service gọi tới
@@ -285,6 +289,68 @@ public class AccountRoleAssignmentCommandService {
     }
 
     /**
+     * Moves {@code COMPANY_OWNER} from the current owner to another account, effective today: the owner's
+     * assignment is revoked and closed today, a new one starts today for the recipient, and the owner's
+     * refresh tokens are revoked so their next token no longer carries the role. Other roles stay as they are.
+     *
+     * <p>Người nhận phải là tài khoản {@code ACTIVE} (đăng nhập được) của nhân viên đang làm việc và chưa có lịch
+     * nghỉ, vì công ty không được rơi vào cảnh có Owner mà không ai dùng được. Khóa role {@code COMPANY_OWNER}
+     * trước, nên hai lần chuyển giao cùng lúc chạy lần lượt và lần sau thấy người gọi không còn là Owner.
+     *
+     * @param owner              Owner hiện tại, người thực hiện
+     * @param recipientAccountId tài khoản nhận
+     * @param reason             lý do, ghi vào cả lần thu hồi và lần gán mới
+     * @return lần gán {@code COMPANY_OWNER} mới
+     * @throws ForbiddenException người gọi không còn giữ {@code COMPANY_OWNER} (→ 403)
+     * @throws ResourceNotFoundException tài khoản nhận không có (→ 404 {@code ACCOUNT_NOT_FOUND})
+     * @throws ConflictException người nhận không {@code ACTIVE}, không gắn nhân viên hoặc nhân viên không còn
+     *         làm việc / sắp nghỉ (→ 409 {@code ROLE_ASSIGNMENT_NOT_ALLOWED})
+     */
+    public AccountRoleAssignment transferCompanyOwner(Account owner, Long recipientAccountId, String reason) {
+        Role ownerRole = roleRepository.findByCodeForUpdate(SystemRoles.COMPANY_OWNER)
+            .orElseThrow(() -> new IllegalStateException("COMPANY_OWNER role is missing"));
+        AccountRoleAssignment current = roleAssignmentRepository.findByRoleIdAndRevokedAtIsNull(ownerRole.getId()).stream()
+            .filter(assignment -> assignment.getAccount().getId().equals(owner.getId()))
+            .findFirst()
+            // Token vẫn mang ROLE_COMPANY_OWNER tới khi hết hạn dù đã chuyển giao, nên kiểm tra lại ở database.
+            .orElseThrow(() -> new ForbiddenException(
+                ErrorCode.FORBIDDEN,
+                "Only the current Company Owner can transfer company ownership"
+            ));
+        validateTransferRecipient(accountRepository.getRequired(recipientAccountId));
+
+        LocalDate today = LocalDate.now(clock);
+        close(current, today, owner, reason);
+        refreshTokenService.revokeAll(owner.getId());
+        AssignAccountRoleRequest request = new AssignAccountRoleRequest(
+            SystemRoles.COMPANY_OWNER,
+            RoleScopeType.COMPANY,
+            null,
+            null,
+            today,
+            null,
+            reason
+        );
+        return assignInternal(recipientAccountId, request, owner, AssignmentFlow.OWNER_TRANSFER);
+    }
+
+    /** Người nhận Company Owner phải đăng nhập được và là nhân viên đang làm, không có lịch nghỉ (→ 409). */
+    private void validateTransferRecipient(Account recipient) {
+        Employee employee = recipient.getEmployee();
+        boolean working = employee != null
+            && employee.getDeletedAt() == null
+            && (employee.getEmploymentStatus() == EmploymentStatus.ACTIVE
+                || employee.getEmploymentStatus() == EmploymentStatus.PROBATION)
+            && employee.getScheduledEndStatus() == null;
+        if (recipient.getStatus() != AccountStatus.ACTIVE || !working) {
+            throw new ConflictException(
+                ErrorCode.ROLE_ASSIGNMENT_NOT_ALLOWED,
+                "Company ownership goes only to an active account of an employee who is still working"
+            );
+        }
+    }
+
+    /**
      * Thực hiện yêu cầu cấp role {@code HR_ASSIGNABLE}: được gọi ngay khi tạo yêu cầu (tự duyệt).
      *
      * @param roleRequest yêu cầu đang {@code PENDING}, đã lưu
@@ -427,7 +493,7 @@ public class AccountRoleAssignmentCommandService {
     /**
      * Luồng gọi có được cấp role với chính sách này không. {@code AUTO} (role nền tự gán khi cấp tài khoản)
      * và {@code SYSTEM_ONLY} không luồng nào ở đây cấp được, trừ {@code COMPANY_OWNER}/{@code DIRECTOR} qua
-     * {@code BOOTSTRAP}.
+     * {@code BOOTSTRAP}, và {@code COMPANY_OWNER} qua {@code OWNER_TRANSFER}.
      *
      * @throws ConflictException không được phép (→ 409 {@code ROLE_ASSIGNMENT_NOT_ALLOWED})
      */
@@ -437,6 +503,7 @@ public class AccountRoleAssignmentCommandService {
             case DIRECT -> policy == RoleGrantPolicy.HR_ASSIGNABLE
                 || policy == RoleGrantPolicy.OWNER_APPROVAL;
             case BOOTSTRAP -> PROVISIONED_COMPANY_ROLES.contains(role.getCode());
+            case OWNER_TRANSFER -> SystemRoles.COMPANY_OWNER.equals(role.getCode());
             case REQUEST_SUBMISSION -> policy == RoleGrantPolicy.HR_ASSIGNABLE
                 || policy == RoleGrantPolicy.OWNER_APPROVAL;
             case HR_ASSIGNABLE_REQUEST -> policy == RoleGrantPolicy.HR_ASSIGNABLE;
@@ -602,6 +669,7 @@ public class AccountRoleAssignmentCommandService {
     private enum AssignmentFlow {
         DIRECT,
         BOOTSTRAP,
+        OWNER_TRANSFER,
         REQUEST_SUBMISSION,
         HR_ASSIGNABLE_REQUEST,
         OWNER_APPROVED_REQUEST

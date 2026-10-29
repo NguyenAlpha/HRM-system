@@ -1151,6 +1151,34 @@
         "tags" : [ "company-holiday-controller" ]
       }
     },
+    "/api/company-owner/transfer" : {
+      "post" : {
+        "operationId" : "transfer",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TransferCompanyOwnerRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultAccountRoleAssignmentResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "company-owner-transfer-controller" ]
+      }
+    },
     "/api/company/logo" : {
       "delete" : {
         "operationId" : "deleteLogo",
@@ -7762,7 +7790,7 @@
           },
           "institution" : {
             "type" : [ "string", "null" ],
-            "maxLength" : 30,
+            "maxLength" : 60,
             "minLength" : 0
           },
           "major" : {
@@ -10676,6 +10704,26 @@
         },
         "required" : [ "clientErrors", "meanMillis", "requests", "serverErrors", "start" ]
       },
+      "TransferCompanyOwnerRequest" : {
+        "type" : "object",
+        "properties" : {
+          "accountId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "password" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "reason" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "accountId", "password", "reason" ]
+      },
       "TurnoverEvent" : {
         "type" : "object",
         "properties" : {
@@ -10802,7 +10850,7 @@
           },
           "institution" : {
             "type" : [ "string", "null" ],
-            "maxLength" : 30,
+            "maxLength" : 60,
             "minLength" : 0
           },
           "major" : {
@@ -10936,7 +10984,7 @@
           },
           "institution" : {
             "type" : [ "string", "null" ],
-            "maxLength" : 30,
+            "maxLength" : 60,
             "minLength" : 0
           },
           "major" : {

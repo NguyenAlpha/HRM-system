@@ -1,6 +1,6 @@
 # API Reference — Organization Company Owner Bootstrap
 
-Khởi tạo Chủ sở hữu doanh nghiệp đầu tiên từ tài khoản quản trị hệ thống. Đây là cầu nối từ lớp vận hành nền tảng sang lớp quản trị nội bộ doanh nghiệp; Ngoài workflow này, `SYSTEM_ADMIN` quản trị *truy cập* (tài khoản, role, permission override, danh mục tổ chức) và chỉ *xem* hồ sơ nhân sự; nghiệp vụ nhân sự, chấm công, lương, báo cáo và dữ liệu nhạy cảm thuộc các role nghiệp vụ. Tài khoản đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được khóa, phát mã kích hoạt, đổi role hoặc permission override, và tài khoản đang giữ `SYSTEM_ADMIN` cũng chỉ một System Admin khác được làm các việc đó (mở khóa vẫn được phép), nên người quản trị truy cập không chiếm được quyền chủ doanh nghiệp và ngược lại.
+Khởi tạo Chủ sở hữu doanh nghiệp đầu tiên từ tài khoản quản trị hệ thống. Đây là cầu nối từ lớp vận hành nền tảng sang lớp quản trị nội bộ doanh nghiệp; Ngoài workflow này, `SYSTEM_ADMIN` quản trị *truy cập* (tài khoản, định nghĩa role, danh mục tổ chức; cấp role và permission override thuộc Company Owner) và chỉ *xem* hồ sơ nhân sự; nghiệp vụ nhân sự, chấm công, lương, báo cáo và dữ liệu nhạy cảm thuộc các role nghiệp vụ. Tài khoản đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được khóa, phát mã kích hoạt, đổi role hoặc permission override, và tài khoản đang giữ `SYSTEM_ADMIN` cũng chỉ một System Admin khác được làm các việc đó (mở khóa vẫn được phép), nên người quản trị truy cập không chiếm được quyền chủ doanh nghiệp và ngược lại.
 
 ---
 
@@ -177,4 +177,4 @@ Workflow này không:
 - Đặt mật khẩu thay Company Owner.
 - Tạo một employee/account Director riêng; workflow chỉ gán role `DIRECTOR` cho chính Company Owner vừa tạo.
 - Tạo HR Manager hoặc các nhân sự cấp dưới.
-- Thực hiện chuyển giao hay thu hồi quyền sở hữu; các thao tác đó cần workflow riêng có audit và quy tắc chống mất owner.
+- Thực hiện chuyển giao quyền sở hữu; Owner hiện tại tự chuyển giao qua [Company Owner Transfer](./COMPANY_OWNER_TRANSFER.md).

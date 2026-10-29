@@ -468,6 +468,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/company-owner/transfer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["transfer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/company/logo": {
         parameters: {
             query?: never;
@@ -3791,6 +3807,12 @@ export interface components {
             /** Format: date-time */
             start: string;
         };
+        TransferCompanyOwnerRequest: {
+            /** Format: int64 */
+            accountId: number;
+            password: string;
+            reason: string;
+        };
         TurnoverEvent: {
             /** Format: date */
             date: string;
@@ -4796,6 +4818,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultVoid"];
+                };
+            };
+        };
+    };
+    transfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransferCompanyOwnerRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAccountRoleAssignmentResponse"];
                 };
             };
         };
