@@ -340,7 +340,7 @@ function EditProfileDialog({ profile, onClose, onSaved }: {
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="self-institution">Trường / đơn vị đào tạo</Label>
-              <Input id="self-institution" maxLength={30} value={institution}
+              <Input id="self-institution" maxLength={60} value={institution}
                 onChange={(event) => setInstitution(event.target.value)} />
             </div>
             {error && <p role="alert" className="text-sm text-destructive sm:col-span-2">{error}</p>}

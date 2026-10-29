@@ -59,7 +59,7 @@ const employeeEditSchema = z
     gender: z.string(),
     highestEducationLevel: z.string(),
     major: z.string().max(30, "Tối đa 30 ký tự").optional(),
-    institution: z.string().max(30, "Tối đa 30 ký tự").optional(),
+    institution: z.string().max(60, "Tối đa 60 ký tự").optional(),
     graduationYear: z.string().optional(),
     workEmail: z.string().max(30, "Tối đa 30 ký tự").optional(),
     phone: phoneSchema,
