@@ -314,6 +314,8 @@ Báo cáo lương chỉ trả số liệu tổng hợp theo khoảng, không tr�
 - Chưa hỗ trợ người không cư trú thuế.
 - Chưa tính phần bảo hiểm doanh nghiệp đóng và tổng chi phí nhân sự; thiết kế để làm sau ở
   [Mở rộng: bảo hiểm doanh nghiệp đóng](extensions/EMPLOYER_INSURANCE.md).
+- Ngoại lệ quyền chỉ Company Owner tạo được; HR chưa đề nghị được để Owner duyệt. Thiết kế để làm sau ở
+  [Mở rộng: HR đề nghị ngoại lệ quyền](extensions/PERMISSION_OVERRIDE_REQUESTS.md).
 - Quy tắc thuế và bảo hiểm chỉ nạp từ 2020 đến hết 2026, phải thêm bằng migration khi chính sách đổi.
   Seed lương bỏ qua (kèm cảnh báo trong log) các tháng chưa có quy tắc, nên vẫn chạy được sau 2026.
 - Phép năm không cộng theo thâm niên (Điều 114) và không chuyển phép dư sang năm sau.
