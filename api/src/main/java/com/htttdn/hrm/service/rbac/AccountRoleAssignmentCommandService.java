@@ -59,12 +59,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AccountRoleAssignmentCommandService {
 
-    private static final String COMPANY_OWNER_ROLE = "COMPANY_OWNER";
-    private static final String DIRECTOR_ROLE = "DIRECTOR";
-
     private static final Set<String> PROVISIONED_COMPANY_ROLES = Set.of(
-        COMPANY_OWNER_ROLE,
-        DIRECTOR_ROLE
+        SystemRoles.COMPANY_OWNER,
+        SystemRoles.DIRECTOR
     );
 
     private final AccountRepository accountRepository;
@@ -350,10 +347,10 @@ public class AccountRoleAssignmentCommandService {
 
         ScopeTarget scopeTarget = resolveScopeTarget(request);
         ensureNoDuplicateAssignment(account, role, request, scopeTarget);
-        if (DIRECTOR_ROLE.equals(role.getCode())) {
+        if (SystemRoles.DIRECTOR.equals(role.getCode())) {
             ensureSingleDirector(role, request.effectiveFrom(), request.effectiveTo());
         }
-        if (COMPANY_OWNER_ROLE.equals(role.getCode())) {
+        if (SystemRoles.COMPANY_OWNER.equals(role.getCode())) {
             ensureCompanyOwnerDoesNotExist(role);
         }
         return new AssignmentCandidate(account, role, scopeTarget);

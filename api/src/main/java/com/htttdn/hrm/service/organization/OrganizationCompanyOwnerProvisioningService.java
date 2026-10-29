@@ -18,6 +18,7 @@ import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.security.CurrentAccountProvider;
+import com.htttdn.hrm.service.rbac.SystemRoles;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,9 +26,6 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 @RequiredArgsConstructor
 public class OrganizationCompanyOwnerProvisioningService {
-
-    private static final String COMPANY_OWNER_ROLE = "COMPANY_OWNER";
-    private static final String DIRECTOR_ROLE = "DIRECTOR";
 
     private final EmployeeProvisioningService employeeProvisioningService;
     private final AccountProvisioningService accountProvisioningService;
@@ -59,7 +57,7 @@ public class OrganizationCompanyOwnerProvisioningService {
         AccountRoleAssignmentResponse ownerAssignment = roleAssignmentMapper.toResponse(
             roleAssignmentCommandService.assignProvisionedCompanyRole(
                 accountProvisioning.account().id(),
-                COMPANY_OWNER_ROLE,
+                SystemRoles.COMPANY_OWNER,
                 request.effectiveFrom(),
                 request.ownershipReason(),
                 actor
@@ -68,7 +66,7 @@ public class OrganizationCompanyOwnerProvisioningService {
         AccountRoleAssignmentResponse directorAssignment = roleAssignmentMapper.toResponse(
             roleAssignmentCommandService.assignProvisionedCompanyRole(
                 accountProvisioning.account().id(),
-                DIRECTOR_ROLE,
+                SystemRoles.DIRECTOR,
                 request.effectiveFrom(),
                 request.directorAppointmentReason(),
                 actor

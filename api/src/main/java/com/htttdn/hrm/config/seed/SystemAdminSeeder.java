@@ -22,6 +22,7 @@ import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.RoleRepository;
+import com.htttdn.hrm.service.rbac.SystemRoles;
 
 import lombok.RequiredArgsConstructor;
 
@@ -39,8 +40,6 @@ import lombok.RequiredArgsConstructor;
 @Order(400)
 @RequiredArgsConstructor
 public class SystemAdminSeeder implements ApplicationRunner {
-
-    static final String SYSTEM_ADMIN_ROLE_CODE = "SYSTEM_ADMIN";
 
     private static final Logger log = LoggerFactory.getLogger(SystemAdminSeeder.class);
 
@@ -90,7 +89,7 @@ public class SystemAdminSeeder implements ApplicationRunner {
     }
 
     private Role findRequiredSystemAdminRole() {
-        Role role = roleRepository.findByCodeAndDeletedAtIsNull(SYSTEM_ADMIN_ROLE_CODE)
+        Role role = roleRepository.findByCodeAndDeletedAtIsNull(SystemRoles.SYSTEM_ADMIN)
             .orElseThrow(() -> new IllegalStateException("SYSTEM_ADMIN seed role not found"));
         if (!Boolean.TRUE.equals(role.getIsSystem())) {
             throw new IllegalStateException("SYSTEM_ADMIN role must be a system role");

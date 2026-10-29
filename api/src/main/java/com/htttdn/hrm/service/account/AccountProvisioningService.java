@@ -28,6 +28,7 @@ import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.RoleRepository;
+import com.htttdn.hrm.service.rbac.SystemRoles;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,7 +41,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AccountProvisioningService {
 
-    private static final String DEFAULT_EMPLOYEE_ROLE = "EMPLOYEE";
     private static final Set<EmploymentStatus> ACCOUNT_ELIGIBLE_STATUSES = Set.of(
         EmploymentStatus.PROBATION,
         EmploymentStatus.ACTIVE
@@ -95,7 +95,7 @@ public class AccountProvisioningService {
         );
 
         return new AccountProvisioningResponse(
-            toResponse(account, List.of(DEFAULT_EMPLOYEE_ROLE)),
+            toResponse(account, List.of(SystemRoles.EMPLOYEE)),
             new AccountInvitationResponse(account.getId(), issued.rawToken(), issued.expiresAt())
         );
     }
@@ -124,7 +124,7 @@ public class AccountProvisioningService {
     }
 
     private void assignDefaultEmployeeRole(Account account, Account actor, Instant now) {
-        Role role = roleRepository.findByCodeAndDeletedAtIsNull(DEFAULT_EMPLOYEE_ROLE)
+        Role role = roleRepository.findByCodeAndDeletedAtIsNull(SystemRoles.EMPLOYEE)
             .orElseThrow(() -> new IllegalStateException("EMPLOYEE seed role not found"));
 
         roleAssignmentRepository.save(AccountRoleAssignment.builder()

@@ -6,6 +6,7 @@ import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
+import com.htttdn.hrm.service.rbac.SystemRoles;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,21 +21,18 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CompanyOwnerAccountGuard {
 
-    static final String COMPANY_OWNER_ROLE = "COMPANY_OWNER";
-    static final String SYSTEM_ADMIN_ROLE = "SYSTEM_ADMIN";
-
     private final AccountRoleAssignmentRepository roleAssignmentRepository;
     private final CurrentAccountProvider currentAccountProvider;
 
     public void requireCanManage(Long targetAccountId) {
         Long actorAccountId = currentAccountProvider.accountId();
-        if (hasRole(targetAccountId, COMPANY_OWNER_ROLE) && !hasRole(actorAccountId, COMPANY_OWNER_ROLE)) {
+        if (hasRole(targetAccountId, SystemRoles.COMPANY_OWNER) && !hasRole(actorAccountId, SystemRoles.COMPANY_OWNER)) {
             throw new ForbiddenException(
                 ErrorCode.FORBIDDEN,
                 "Only a Company Owner can change the access of a Company Owner account"
             );
         }
-        if (hasRole(targetAccountId, SYSTEM_ADMIN_ROLE) && !hasRole(actorAccountId, SYSTEM_ADMIN_ROLE)) {
+        if (hasRole(targetAccountId, SystemRoles.SYSTEM_ADMIN) && !hasRole(actorAccountId, SystemRoles.SYSTEM_ADMIN)) {
             throw new ForbiddenException(
                 ErrorCode.FORBIDDEN,
                 "Only a System Admin can change the access of a System Admin account"

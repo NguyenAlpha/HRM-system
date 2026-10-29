@@ -20,6 +20,7 @@ import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.RoleRepository;
+import com.htttdn.hrm.service.rbac.SystemRoles;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -83,7 +84,7 @@ class SystemAdminSeederTest {
 
     @Test
     void rejectsMissingSystemAdminRoleBeforeCreatingAccount() {
-        when(roleRepository.findByCodeAndDeletedAtIsNull(SystemAdminSeeder.SYSTEM_ADMIN_ROLE_CODE))
+        when(roleRepository.findByCodeAndDeletedAtIsNull(SystemRoles.SYSTEM_ADMIN))
             .thenReturn(Optional.empty());
 
         var exception = assertThrows(
@@ -98,7 +99,7 @@ class SystemAdminSeederTest {
     @Test
     void createsAdminAndAssignsExistingSystemRole() {
         Role role = systemAdminRole();
-        when(roleRepository.findByCodeAndDeletedAtIsNull(SystemAdminSeeder.SYSTEM_ADMIN_ROLE_CODE))
+        when(roleRepository.findByCodeAndDeletedAtIsNull(SystemRoles.SYSTEM_ADMIN))
             .thenReturn(Optional.of(role));
         when(accountRepository.findByUsername("admin")).thenReturn(Optional.empty());
         when(accountRepository.findByEmail("admin@hrm.local")).thenReturn(Optional.empty());
@@ -138,7 +139,7 @@ class SystemAdminSeederTest {
             .build();
         Role role = systemAdminRole();
 
-        when(roleRepository.findByCodeAndDeletedAtIsNull(SystemAdminSeeder.SYSTEM_ADMIN_ROLE_CODE))
+        when(roleRepository.findByCodeAndDeletedAtIsNull(SystemRoles.SYSTEM_ADMIN))
             .thenReturn(Optional.of(role));
         when(accountRepository.findByUsername("admin")).thenReturn(Optional.of(account));
         when(accountRepository.findByEmail("admin@hrm.local")).thenReturn(Optional.of(account));
@@ -155,7 +156,7 @@ class SystemAdminSeederTest {
     private Role systemAdminRole() {
         return Role.builder()
             .id(2L)
-            .code(SystemAdminSeeder.SYSTEM_ADMIN_ROLE_CODE)
+            .code(SystemRoles.SYSTEM_ADMIN)
             .isSystem(true)
             .build();
     }

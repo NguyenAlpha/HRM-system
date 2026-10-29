@@ -18,6 +18,7 @@ import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
+import com.htttdn.hrm.service.rbac.SystemRoles;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,9 +34,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ApproverResolver {
 
-    static final String DIRECTOR_ROLE = "DIRECTOR";
-    static final String COMPANY_OWNER_ROLE = "COMPANY_OWNER";
-
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
     private final AccountRepository accountRepository;
     private final AccountRoleAssignmentRepository roleAssignmentRepository;
@@ -43,13 +41,13 @@ public class ApproverResolver {
 
     /** The approver of the employee's requests; empty when nobody stands above them. */
     public Optional<Employee> approverFor(Employee employee) {
-        return approverFor(employee, roleHolder(DIRECTOR_ROLE), roleHolder(COMPANY_OWNER_ROLE));
+        return approverFor(employee, roleHolder(SystemRoles.DIRECTOR), roleHolder(SystemRoles.COMPANY_OWNER));
     }
 
     /** Ids of the given employees whose approver is {@code approver}. */
     public List<Long> decidedBy(Employee approver, List<Employee> employees) {
-        Employee director = roleHolder(DIRECTOR_ROLE);
-        Employee owner = roleHolder(COMPANY_OWNER_ROLE);
+        Employee director = roleHolder(SystemRoles.DIRECTOR);
+        Employee owner = roleHolder(SystemRoles.COMPANY_OWNER);
         return employees.stream()
             .filter(employee -> approverFor(employee, director, owner)
                 .map(candidate -> candidate.getId().equals(approver.getId()))
@@ -77,7 +75,7 @@ public class ApproverResolver {
     /** Director and Company Owner record their own leave without approval. */
     public boolean isTopManagement(Employee employee) {
         return accountRepository.findByEmployeeId(employee.getId())
-            .map(account -> holdsRole(account, DIRECTOR_ROLE) || holdsRole(account, COMPANY_OWNER_ROLE))
+            .map(account -> holdsRole(account, SystemRoles.DIRECTOR) || holdsRole(account, SystemRoles.COMPANY_OWNER))
             .orElse(false);
     }
 

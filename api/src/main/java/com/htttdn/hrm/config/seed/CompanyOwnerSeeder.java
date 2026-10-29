@@ -42,6 +42,7 @@ import com.htttdn.hrm.repository.RoleRepository;
 import com.htttdn.hrm.repository.WorkLocationRepository;
 import com.htttdn.hrm.repository.WorkShiftRepository;
 import com.htttdn.hrm.service.employee.EmployeeCodeGenerator;
+import com.htttdn.hrm.service.rbac.SystemRoles;
 
 import lombok.RequiredArgsConstructor;
 
@@ -75,10 +76,6 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
     private static final String PASSWORD = "password";
     private static final String EMAIL = "owner@hrm.local";
     private static final String FULL_NAME = "Nguyễn Văn An";
-    private static final String COMPANY_OWNER_ROLE = "COMPANY_OWNER";
-    private static final String DIRECTOR_ROLE = "DIRECTOR";
-    private static final String PAYROLL_APPROVER_ROLE = "PAYROLL_APPROVER";
-    private static final String EMPLOYEE_ROLE = "EMPLOYEE";
     private static final String SEED_REASON = "Seeded company owner";
     private static final BigDecimal BASE_SALARY = new BigDecimal("50000000");
 
@@ -109,10 +106,10 @@ public class CompanyOwnerSeeder implements ApplicationRunner {
             return;
         }
 
-        Role ownerRole = findRequiredRole(COMPANY_OWNER_ROLE);
-        Role directorRole = findRequiredRole(DIRECTOR_ROLE);
-        Role payrollApproverRole = findRequiredRole(PAYROLL_APPROVER_ROLE);
-        Role employeeRole = findRequiredRole(EMPLOYEE_ROLE);
+        Role ownerRole = findRequiredRole(SystemRoles.COMPANY_OWNER);
+        Role directorRole = findRequiredRole(SystemRoles.DIRECTOR);
+        Role payrollApproverRole = findRequiredRole(SystemRoles.PAYROLL_APPROVER);
+        Role employeeRole = findRequiredRole(SystemRoles.EMPLOYEE);
         if (!accountRoleAssignmentRepository.findByRoleIdAndRevokedAtIsNull(ownerRole.getId()).isEmpty()) {
             log.info("Company owner seed completed: existing company owner retained");
             return;
