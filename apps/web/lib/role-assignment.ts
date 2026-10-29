@@ -16,6 +16,7 @@ export type RoleAssignmentRequest = Schemas["RoleAssignmentRequestResponse"]
 export type CreatePermissionOverrideInput = Schemas["CreatePermissionOverrideRequest"]
 export type CreateRoleAssignmentRequestInput = Schemas["CreateRoleAssignmentRequest"]
 export type DirectRoleAssignmentInput = Schemas["AssignAccountRoleRequest"]
+export type AppointDirectorInput = Schemas["AppointDirectorRequest"]
 
 export type RoleScopeType = AccountRoleAssignment["scopeType"]
 export type RoleGrantPolicy = RoleAssignmentRequest["grantPolicy"]
@@ -115,6 +116,15 @@ export function listAccountRoleAssignments(portal: Portal, accountId: number): P
 
 export function assignAccountRoleDirect(portal: Portal, accountId: number, input: DirectRoleAssignmentInput): Promise<AccountRoleAssignment> {
   return accountRoleAssignmentApi<AccountRoleAssignment>(portal, accountId, "", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  })
+}
+
+/** Appoints the account as Director from the handover day; the current Director works until the day before. */
+export function appointDirector(portal: Portal, accountId: number, input: AppointDirectorInput): Promise<AccountRoleAssignment> {
+  return accountRoleAssignmentApi<AccountRoleAssignment>(portal, accountId, "/director", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),

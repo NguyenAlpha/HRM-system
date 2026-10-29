@@ -50,7 +50,7 @@ Menu chia nhóm Nhân sự, Chấm công & nghỉ, Lương, Báo cáo, Hệ th�
 
 Mọi bảng báo cáo có nút **Xuất CSV** (UTF-8 có BOM, mở thẳng bằng Excel).
 | `/company` | Thông tin doanh nghiệp (`GET /api/company`); menu chỉ hiện và nút sửa (popup, `PUT /api/company`) chỉ có với Company Owner (`company.manage`); thẻ "Chuyển giao Company Owner" chỉ hiện với người giữ role `COMPANY_OWNER` (`POST /api/company-owner/transfer`, xác nhận bằng mật khẩu trong popup, xong thì đăng xuất) |
-| `/rbac`, `/role-grant`, `/role-requests` | Quản lý quyền nghiệp vụ theo permission được cấp |
+| `/rbac`, `/role-grant`, `/role-requests` | Quản lý quyền nghiệp vụ theo permission được cấp; `/role-grant` có thêm thẻ "Bổ nhiệm Giám đốc mới" (`POST /api/accounts/{id}/role-assignments/director`, chọn ngày bàn giao) |
 
 ### Admin Console
 
