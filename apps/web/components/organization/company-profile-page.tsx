@@ -7,6 +7,7 @@ import { toast } from "sonner"
 
 import { PhoneInput } from "@/components/common/phone-input"
 import { InfoField } from "@/components/employee/employee-detail-page"
+import { CompanyOwnerTransferCard } from "@/components/organization/company-owner-transfer-card"
 import { BrandMark } from "@/components/portal/brand-mark"
 import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
@@ -46,6 +47,7 @@ export function CompanyProfilePage() {
   const router = useRouter()
   const { session } = usePortalSession()
   const canManage = session.account.permissions.some((permission) => permission.code === "company.manage")
+  const isCompanyOwner = session.account.roles.some((role) => role.code === "COMPANY_OWNER")
   const [company, setCompany] = useState<CompanyProfile | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [revision, setRevision] = useState(0)
@@ -101,6 +103,7 @@ export function CompanyProfilePage() {
             </CardContent>
           </Card>
         )}
+        {isCompanyOwner && <CompanyOwnerTransferCard ownAccountId={session.account.accountId} />}
       </div>
 
       {editing && company && (
