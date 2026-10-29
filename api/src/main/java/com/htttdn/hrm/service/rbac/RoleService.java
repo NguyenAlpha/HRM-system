@@ -118,7 +118,7 @@ public class RoleService {
         rolePermissionRepository.findAllByRoleIds(roleIds).forEach(rolePermission ->
             permissionsByRole
                 .computeIfAbsent(rolePermission.getId().getRoleId(), ignored -> new ArrayList<>())
-                .add(toPermissionResponse(rolePermission.getPermission()))
+                .add(PermissionService.toResponse(rolePermission.getPermission()))
         );
 
         return roles.stream()
@@ -274,7 +274,7 @@ public class RoleService {
 
         return requestedPermissions.stream()
             .sorted(Comparator.comparing(Permission::getCode))
-            .map(this::toPermissionResponse)
+            .map(PermissionService::toResponse)
             .toList();
     }
 
@@ -336,21 +336,10 @@ public class RoleService {
         roleRepository.getRequired(roleId);
         return rolePermissionRepository.findByIdRoleId(roleId).stream()
             .map(RolePermission::getPermission)
-            .map(this::toPermissionResponse)
+            .map(PermissionService::toResponse)
             .toList();
     }
 
-    private PermissionResponse toPermissionResponse(Permission permission) {
-        return new PermissionResponse(
-            permission.getId(),
-            permission.getCode(),
-            permission.getName(),
-            permission.getModule(),
-            permission.getDescription(),
-            permission.getAssignmentPolicy(),
-            permission.getIsActive()
-        );
-    }
 
     private RoleResponse toResponse(Role role) {
         return new RoleResponse(

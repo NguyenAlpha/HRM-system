@@ -36,15 +36,16 @@ public class PermissionService {
     /** Mọi permission, kể cả đã tắt và {@code SYSTEM_ONLY}. */
     @Transactional(readOnly = true)
     public Page<PermissionResponse> list(Pageable pageable) {
-        return permissionRepository.findAll(pageable).map(this::toResponse);
+        return permissionRepository.findAll(pageable).map(PermissionService::toResponse);
     }
 
     @Transactional(readOnly = true)
     public Page<PermissionResponse> listByModule(PermissionModule module, Pageable pageable) {
-        return permissionRepository.findByModule(module, pageable).map(this::toResponse);
+        return permissionRepository.findByModule(module, pageable).map(PermissionService::toResponse);
     }
 
-    private PermissionResponse toResponse(Permission permission) {
+    /** Static so {@link RoleService} maps permissions the same way without going through the secured bean. */
+    static PermissionResponse toResponse(Permission permission) {
         return new PermissionResponse(
             permission.getId(),
             permission.getCode(),
