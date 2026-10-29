@@ -532,6 +532,7 @@ chỉ lên lịch, `employmentStatus` giữ nguyên và `scheduledEndStatus` là
 | 403 | `FORBIDDEN` | Thiếu `employee.lifecycle.manage` hoặc employee nằm ngoài scope được giao |
 | 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
 | 409 | `CONFLICT` | Employee đã kết thúc làm việc trước đó |
+| 409 | `COMPANY_OWNER_TRANSFER_REQUIRED` | Account của employee đang giữ `COMPANY_OWNER`: phải [chuyển giao Company Owner](./COMPANY_OWNER_TRANSFER.md) trước, cả khi lên lịch lẫn khi kết thúc ngay. Lịch đã đến hạn hoặc đơn nghỉ việc đã duyệt của người vẫn là Owner cũng không được thực hiện |
 
 ---
 

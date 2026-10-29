@@ -17,6 +17,7 @@ import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AccountRepository;
+import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeePayrollProfileRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
@@ -26,6 +27,7 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 import com.htttdn.hrm.service.auth.RefreshTokenService;
 import com.htttdn.hrm.service.rbac.AccountRoleAssignmentCommandService;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
+import com.htttdn.hrm.service.rbac.SystemRoles;
 
 import lombok.RequiredArgsConstructor;
 
@@ -58,6 +60,7 @@ public class EmploymentLifecycleService {
     private final EmployeePayrollProfileRepository employeePayrollProfileRepository;
     private final EmployeeTaxDependentRepository employeeTaxDependentRepository;
     private final AccountRepository accountRepository;
+    private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final AccountRoleAssignmentCommandService roleAssignmentCommandService;
     private final RefreshTokenService refreshTokenService;
     private final CurrentAccountProvider currentAccountProvider;
@@ -78,7 +81,8 @@ public class EmploymentLifecycleService {
      *         hoặc trước ngày bắt đầu phân công hiện tại (→ 400)
      * @throws com.htttdn.hrm.exception.ResourceNotFoundException không có hoặc đã xóa mềm (→ 404)
      * @throws com.htttdn.hrm.exception.ForbiddenException ngoài phạm vi {@code employee.lifecycle.manage} (→ 403)
-     * @throws ConflictException nhân viên đã nghỉ việc rồi (→ 409)
+     * @throws ConflictException nhân viên đã nghỉ việc rồi (→ 409), hoặc đang là Company Owner
+     *         (→ 409 {@code COMPANY_OWNER_TRANSFER_REQUIRED})
      */
     @PreAuthorize("hasAuthority('employee.lifecycle.manage')")
     public EmployeeDetailResponse endEmployment(
@@ -154,6 +158,7 @@ public class EmploymentLifecycleService {
     private void scheduleEnd(
         Employee employee, EmploymentStatus endStatus, LocalDate terminationDate, String terminationReason, Account actor
     ) {
+        requireNotCompanyOwner(employee);
         employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employee.getId())
             .ifPresent(assignment -> requireNotBeforeAssignment(assignment, terminationDate));
         employee.setTerminationDate(terminationDate);
@@ -174,10 +179,12 @@ public class EmploymentLifecycleService {
      *
      * @param actor người ghi nhận việc thu hồi role: HR thao tác, người hẹn, hoặc người duyệt đơn nghỉ việc
      * @throws BusinessException ngày cuối trước ngày bắt đầu phân công hiện tại (→ 400)
+     * @throws ConflictException nhân viên đang là Company Owner (→ 409 {@code COMPANY_OWNER_TRANSFER_REQUIRED})
      */
     public void endEmploymentAs(
         Employee employee, EmploymentStatus endStatus, LocalDate terminationDate, String terminationReason, Account actor
     ) {
+        requireNotCompanyOwner(employee);
         Long employeeId = employee.getId();
         employee.setEmploymentStatus(endStatus);
         employee.setTerminationDate(terminationDate);
@@ -194,6 +201,24 @@ public class EmploymentLifecycleService {
             roleAssignmentCommandService.revokeHeldRoles(
                 account.getId(), terminationDate, actor, "Kết thúc làm việc: " + terminationReason.trim());
         });
+    }
+
+    /**
+     * The Company Owner hands ownership over first: no workflow revokes COMPANY_OWNER, so ending their
+     * employment would leave the company with an owner nobody can sign in as. Checked when an end is
+     * scheduled and again when it happens, since ownership may move in between.
+     */
+    private void requireNotCompanyOwner(Employee employee) {
+        boolean owner = accountRepository.findByEmployeeId(employee.getId())
+            .map(account -> accountRoleAssignmentRepository
+                .existsByAccountIdAndRoleCodeAndRevokedAtIsNull(account.getId(), SystemRoles.COMPANY_OWNER))
+            .orElse(false);
+        if (owner) {
+            throw new ConflictException(
+                ErrorCode.COMPANY_OWNER_TRANSFER_REQUIRED,
+                "Transfer company ownership before ending the Company Owner's employment"
+            );
+        }
     }
 
     /**

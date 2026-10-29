@@ -42,6 +42,8 @@ Người nhận phải là account `ACTIVE` (đã kích hoạt, đăng nhập đ
 
 Response `200` là `AccountRoleAssignmentResponse` của assignment `COMPANY_OWNER` mới.
 
+Không luồng nào thu hồi `COMPANY_OWNER`, nên người đang là Owner không được [kết thúc làm việc](./EMPLOYEE.md#post-apiemployeesemployeeidemployment-end) (`409 COMPANY_OWNER_TRANSFER_REQUIRED`) cho tới khi chuyển giao xong.
+
 ### Lỗi
 
 | HTTP | Code | Khi nào |

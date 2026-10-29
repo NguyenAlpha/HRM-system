@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -31,6 +32,7 @@ import com.htttdn.hrm.entity.enums.EmploymentType;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.repository.AccountRepository;
+import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeePayrollProfileRepository;
@@ -65,6 +67,7 @@ class EmployeeServiceTest {
     @Mock private AttendanceRecordRepository attendanceRecordRepository;
     @Mock private PayslipRepository payslipRepository;
     @Mock private AccountRepository accountRepository;
+    @Mock private AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     @Mock private AccountRoleAssignmentCommandService roleAssignmentCommandService;
     @Mock private RefreshTokenService refreshTokenService;
     @Mock private CurrentAccountProvider currentAccountProvider;
@@ -252,6 +255,26 @@ class EmployeeServiceTest {
         verify(roleAssignmentCommandService).revokeHeldRoles(5L, endDate, actor, "Kết thúc làm việc: Nghỉ việc");
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "2026-10-24", "2026-11-30" })
+    void theCompanyOwnerHandsOwnershipOverBeforeTheirEmploymentEnds(String lastDay) {
+        Employee employee = employee(1L);
+        Account account = Account.builder().id(5L).status(AccountStatus.ACTIVE).build();
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
+        when(accountRepository.findByEmployeeId(1L)).thenReturn(Optional.of(account));
+        when(accountRoleAssignmentRepository.existsByAccountIdAndRoleCodeAndRevokedAtIsNull(5L, "COMPANY_OWNER"))
+            .thenReturn(true);
+
+        ConflictException exception = assertThrows(ConflictException.class, () -> lifecycleService()
+            .endEmployment(1L, EmploymentStatus.RESIGNED, LocalDate.parse(lastDay), "Reason"));
+
+        // Otherwise the company keeps an owner nobody can sign in as; nothing is ended or scheduled.
+        assertEquals(ErrorCode.COMPANY_OWNER_TRANSFER_REQUIRED, exception.getErrorCode());
+        assertEquals(EmploymentStatus.ACTIVE, employee.getEmploymentStatus());
+        assertNull(employee.getTerminationDate());
+        assertEquals(AccountStatus.ACTIVE, account.getStatus());
+    }
+
     @Test
     void aLaterLastWorkingDayOnlySchedulesTheEnd() {
         Employee employee = employee(1L);
@@ -409,6 +432,7 @@ class EmployeeServiceTest {
             employeePayrollProfileRepository,
             employeeTaxDependentRepository,
             accountRepository,
+            accountRoleAssignmentRepository,
             roleAssignmentCommandService,
             refreshTokenService,
             currentAccountProvider,
