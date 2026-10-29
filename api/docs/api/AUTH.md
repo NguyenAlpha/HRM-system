@@ -237,10 +237,11 @@ Spring Security chuyển role code thành authority có prefix `ROLE_`; ví dụ
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Request body hoặc field không hợp lệ |
-| 401 | `INVALID_CREDENTIALS` | Không tìm thấy account hoặc sai mật khẩu |
-| 401 | `ACCOUNT_PENDING` | Account chưa được kích hoạt |
-| 401 | `ACCOUNT_LOCKED` | Account đang bị quản trị viên khóa |
-| 401 | `ACCOUNT_DISABLED` | Account đã bị vô hiệu hóa |
+| 401 | `INVALID_CREDENTIALS` | Không tìm thấy account hoặc sai mật khẩu, với mọi trạng thái account. Account `PENDING` chưa có mật khẩu nên luôn nhận lỗi này |
+| 401 | `ACCOUNT_LOCKED` | Đúng mật khẩu nhưng account đang bị quản trị viên khóa |
+| 401 | `ACCOUNT_DISABLED` | Đúng mật khẩu nhưng account đã bị vô hiệu hóa |
+
+Trạng thái account chỉ được báo cho người nhập đúng mật khẩu, nên đoán tên đăng nhập không cho biết account có tồn tại hay đang ở trạng thái nào. Sai mật khẩu ở account không `ACTIVE` cũng tính một lượt sai.
 | 429 | `RATE_LIMIT_EXCEEDED` | Quá 20 lần đăng nhập / phút từ một IP, hoặc hết lượt sai mật khẩu của tài khoản |
 
 ---

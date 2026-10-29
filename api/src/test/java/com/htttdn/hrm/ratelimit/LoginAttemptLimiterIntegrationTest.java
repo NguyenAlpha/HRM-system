@@ -89,13 +89,14 @@ class LoginAttemptLimiterIntegrationTest {
     }
 
     @Test
-    void aLockedAccountDoesNotUseTries() throws Exception {
+    void aLockedAccountIsToldOnlyToWhoeverKnowsThePassword() throws Exception {
         String locked = "rl_locked_" + UUID.randomUUID().toString().substring(0, 8);
         insertAccount(locked, locked + "@hrm.local", "LOCKED");
-        for (int i = 0; i < 5; i++) {
-            login(locked, "wrong").andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error.code").value("ACCOUNT_LOCKED"));
-        }
+        // A wrong password reads like any other, so guessing usernames reveals no account status.
+        login(locked, "wrong").andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.error.code").value("INVALID_CREDENTIALS"));
+        login(locked, PASSWORD).andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.error.code").value("ACCOUNT_LOCKED"));
     }
 
     private ResultActions login(String login, String password) throws Exception {

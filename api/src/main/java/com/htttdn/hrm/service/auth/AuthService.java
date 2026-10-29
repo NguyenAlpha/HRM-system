@@ -52,7 +52,13 @@ public class AuthService {
         String attemptKey = LoginAttemptLimiter.key(account == null ? null : account.getId(), login);
         loginAttemptLimiter.check(attemptKey);
 
-        if (account != null) {
+        // The status is told only to whoever knows the password, so a guessed username reveals nothing:
+        // a wrong password always answers INVALID_CREDENTIALS. A pending account has no password yet.
+        if (account != null && account.getStatus() != AccountStatus.ACTIVE) {
+            if (account.getPasswordHash() == null || !passwordEncoder.matches(request.password(), account.getPasswordHash())) {
+                loginAttemptLimiter.recordFailure(attemptKey);
+                throw new UnauthorizedException(ErrorCode.INVALID_CREDENTIALS, "Invalid username or password");
+            }
             ensureLoginAllowed(account);
         }
 

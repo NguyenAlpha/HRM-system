@@ -114,6 +114,38 @@ class AuthServiceTest {
     }
 
     @Test
+    void aWrongPasswordDoesNotTellWhetherTheAccountIsDisabled() {
+        Account account = activeAccount();
+        account.setStatus(AccountStatus.DISABLED);
+        when(accountRepository.findBySignInName("admin")).thenReturn(Optional.of(account));
+        when(passwordEncoder.matches("wrong-password", "password-hash")).thenReturn(false);
+
+        UnauthorizedException exception = assertThrows(
+            UnauthorizedException.class,
+            () -> service().login(new LoginRequest("admin", "wrong-password"))
+        );
+
+        // Same answer as for any wrong password, so a guessed username reveals nothing about the account.
+        assertEquals(ErrorCode.INVALID_CREDENTIALS, exception.getErrorCode());
+        verify(loginAttemptLimiter).recordFailure(any());
+    }
+
+    @Test
+    void theRightPasswordLearnsThatTheAccountIsDisabled() {
+        Account account = activeAccount();
+        account.setStatus(AccountStatus.DISABLED);
+        when(accountRepository.findBySignInName("admin")).thenReturn(Optional.of(account));
+        when(passwordEncoder.matches("Admin@123", "password-hash")).thenReturn(true);
+
+        UnauthorizedException exception = assertThrows(
+            UnauthorizedException.class,
+            () -> service().login(new LoginRequest("admin", "Admin@123"))
+        );
+
+        assertEquals(ErrorCode.ACCOUNT_DISABLED, exception.getErrorCode());
+    }
+
+    @Test
     void refreshRevokesRotatedTokenWhenAccountIsDisabled() {
         Account account = activeAccount();
         account.setStatus(AccountStatus.DISABLED);
