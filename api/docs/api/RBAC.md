@@ -709,10 +709,10 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 | `account.manage` | | | | | | | ✓ | ✓ |
 | `account.provision` | | ✓ | | | | | ✓ | ✓ |
 | `account.activation.manage` | | | | | | | ✓ | ✓ |
-| `account.role.assign` | | | | | | | ✓ | ✓ |
+| `account.role.assign` | | | | | | | ✓ | |
 | `role.assignment.request` | | ✓ | | | | | | |
 | `role.assignment.approve` `(S)` | | | | | | | ✓ | |
-| `account.permission.override.manage` `(S)` | | | | | | | ✓ | ✓ |
+| `account.permission.override.manage` `(S)` | | | | | | | ✓ | |
 | `system.rate_limit.read` `(S)` | | | | | | | | ✓ |
 | `system.rate_limit.manage` `(S)` | | | | | | | | ✓ |
 | `system.traffic.read` `(S)` | | | | | | | | ✓ |

@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * An account-management administrator (the seeded SYSTEM_ADMIN permission set) manages ordinary
+ * An account-management administrator (holding every account permission, as a Company Owner does) manages ordinary
  * accounts but cannot take over a Company Owner account, a Company Owner cannot take over a
  * System Admin account either, and nobody overrides their own permissions.
  * Uses its own Company Owner inside a rolled-back transaction, so it runs on an empty or seeded database.

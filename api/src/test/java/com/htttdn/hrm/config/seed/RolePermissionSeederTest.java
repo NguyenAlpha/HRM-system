@@ -61,6 +61,16 @@ class RolePermissionSeederTest {
         );
     }
 
+    @Test
+    void systemAdminManagesAccountsButGrantsNoBusinessAccess() {
+        Set<String> adminPermissions = seededPermissionsOf("SYSTEM_ADMIN");
+
+        // Roles and permission overrides are granted by the Company Owner, so OWNER_APPROVAL is never bypassed.
+        assertTrue(adminPermissions.stream()
+            .noneMatch(code -> code.equals("account.role.assign") || code.equals("account.permission.override.manage")));
+        assertTrue(adminPermissions.containsAll(Set.of("account.manage", "account.provision", "rbac.manage")));
+    }
+
     /** Runs the seeder against empty mappings and returns the permission codes it saved for {@code roleCode}. */
     private Set<String> seededPermissionsOf(String roleCode) {
         AtomicLong roleIds = new AtomicLong();

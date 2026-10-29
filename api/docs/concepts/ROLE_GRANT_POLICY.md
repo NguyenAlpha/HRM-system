@@ -37,14 +37,14 @@ flowchart LR
   req -->|OWNER_APPROVAL| pending["Đề xuất PENDING"]
   pending -->|"Company Owner<br/>role.assignment.approve"| done["Gán role"]
   pending -->|từ chối / HR hủy| closed["REJECTED / CANCELLED"]
-  direct["Company Owner, System Admin<br/>account.role.assign"] -->|gán trực tiếp| done
+  direct["Company Owner<br/>account.role.assign"] -->|gán trực tiếp| done
 ```
 
 | Đường | Permission | Role được phép | Kiểm tra thêm |
 |:------|:-----------|:---------------|:--------------|
 | Đề xuất (`/api/role-assignment-requests`) | `role.assignment.request` (HR_MANAGER) | `HR_ASSIGNABLE`, `OWNER_APPROVAL` | Nhân viên đích và đơn vị/địa điểm của scope phải nằm trong phạm vi của HR; `effective_from` không trước ngày vào làm |
 | Duyệt đề xuất | `role.assignment.approve` (COMPANY_OWNER) | `OWNER_APPROVAL` | Đề xuất phải còn `PENDING` |
-| Gán trực tiếp (`/api/accounts/{id}/role-assignments`) | `account.role.assign` (COMPANY_OWNER, SYSTEM_ADMIN) | `HR_ASSIGNABLE`, `OWNER_APPROVAL` | Guard bảo vệ Company Owner / System Admin (mục 5) |
+| Gán trực tiếp (`/api/accounts/{id}/role-assignments`) | `account.role.assign` (COMPANY_OWNER) | `HR_ASSIGNABLE`, `OWNER_APPROVAL` | Guard bảo vệ Company Owner / System Admin (mục 5). System Admin không có permission này, nên không ai cấp role `OWNER_APPROVAL` mà không qua Company Owner |
 | Khởi tạo doanh nghiệp | `organization.company_owner.bootstrap` (SYSTEM_ADMIN) | `COMPANY_OWNER`, `DIRECTOR` | Chỉ dùng một lần khi doanh nghiệp chưa có Company Owner |
 | Cấp account cho nhân viên | `account.provision` | `EMPLOYEE` (`AUTO`) | — |
 
@@ -76,7 +76,7 @@ bằng cách reset mật khẩu hay tự cấp thêm role.
 ## 6. Permission override
 
 Ngoài role, mỗi lần gán role có thể có override `GRANT` (cấp thêm) hoặc `REVOKE` (bớt đi) **một** permission, kèm
-lý do và thời hạn. Cần `account.permission.override.manage` (`SYSTEM_ONLY`, Company Owner và System Admin có). Tạo hoặc thu hồi
+lý do và thời hạn. Cần `account.permission.override.manage` (`SYSTEM_ONLY`, chỉ Company Owner có). Tạo hoặc thu hồi
 override đều thu hồi refresh token của account. Endpoint: [ACCOUNT_PERMISSION_OVERRIDES.md](../api/ACCOUNT_PERMISSION_OVERRIDES.md).
 
 ## Code

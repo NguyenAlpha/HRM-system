@@ -151,7 +151,6 @@ export function PortalSidebar({ portal, account, branding, collapsed, onToggle }
       [canReadEmployees, "Nhân sự", "/admin/employees"],
       [canReadAccounts, "Tài khoản", "/admin/accounts"],
       [true, "Vai trò & quyền", "/admin/rbac"],
-      [canAssignRoleDirect, "Cấp quyền trực tiếp", "/admin/role-grant"],
       [canReadOrganization, "Danh mục tổ chức", "/admin/organization"],
       [canBootstrapCompanyOwner, "Company Owner", "/admin/company-owner"],
       [canReadRateLimit, "Giới hạn truy cập", "/admin/rate-limit"],

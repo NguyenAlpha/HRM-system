@@ -62,7 +62,6 @@ Mọi bảng báo cáo có nút **Xuất CSV** (UTF-8 có BOM, mở thẳng bằ
 | `/admin/company-owner` | Khởi tạo Company Owner đầu tiên, nhập luôn thông tin doanh nghiệp |
 | `/admin/organization` | Dữ liệu tổ chức phục vụ bootstrap |
 | `/admin/rbac` | CRUD custom role, xem permission và đồng bộ quyền |
-| `/admin/role-grant` | Gán hoặc thu hồi role và permission override theo chính sách backend |
 
 Danh sách nhân sự và tài khoản có ô tìm kiếm, bộ lọc nâng cao (trạng thái, đơn vị, vị trí, vai trò) và sắp xếp theo cột; tìm kiếm và lọc chạy ở API nên áp dụng trên toàn bộ dữ liệu, không chỉ trang đang xem.
 
