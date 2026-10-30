@@ -153,7 +153,21 @@ class EmployeeServiceTest {
             "Employee One", null, null, null, null, null, null, "duplicate@hrm.local", null
         );
 
-        assertThrows(ConflictException.class, () -> service().update(1L, request));
+        ConflictException exception = assertThrows(ConflictException.class, () -> service().update(1L, request));
+        assertEquals(ErrorCode.EMAIL_TAKEN, exception.getErrorCode());
+    }
+
+    @Test
+    void theWorkEmailStaysWhileTheEmployeeHasAnAccount() {
+        when(employeeRepository.getRequired(1L)).thenReturn(employee(1L));
+        when(accountRepository.findByEmployeeId(1L)).thenReturn(Optional.of(Account.builder().id(5L).build()));
+        UpdateEmployeeRequest request = new UpdateEmployeeRequest(
+            "Employee One", null, null, null, null, null, null, null, null
+        );
+
+        // It is the address the account signs in with.
+        ConflictException exception = assertThrows(ConflictException.class, () -> service().update(1L, request));
+        assertEquals(ErrorCode.WORK_EMAIL_REQUIRED, exception.getErrorCode());
     }
 
     @Test
@@ -163,10 +177,11 @@ class EmployeeServiceTest {
         when(accountRepository.existsByEmployeeId(1L)).thenReturn(false);
         when(employeeAssignmentRepository.countByEmployeeId(1L)).thenReturn(2L);
 
-        assertThrows(
+        ConflictException exception = assertThrows(
             ConflictException.class,
             () -> service().softDelete(1L, new SoftDeleteEmployeeRequest("Created by mistake"))
         );
+        assertEquals(ErrorCode.EMPLOYEE_HAS_BUSINESS_DATA, exception.getErrorCode());
     }
 
     @Test
@@ -381,7 +396,19 @@ class EmployeeServiceTest {
     void cancellingWithoutAScheduleIsAConflict() {
         when(employeeRepository.getRequired(1L)).thenReturn(employee(1L));
 
-        assertThrows(ConflictException.class, () -> lifecycleService().cancelScheduledEnd(1L));
+        ConflictException exception = assertThrows(ConflictException.class, () -> lifecycleService().cancelScheduledEnd(1L));
+        assertEquals(ErrorCode.EMPLOYMENT_END_NOT_SCHEDULED, exception.getErrorCode());
+    }
+
+    @Test
+    void anEmploymentAlreadyEndedIsNotEndedAgain() {
+        Employee employee = employee(1L);
+        employee.setEmploymentStatus(EmploymentStatus.RESIGNED);
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
+
+        ConflictException exception = assertThrows(ConflictException.class, () -> lifecycleService()
+            .endEmployment(1L, EmploymentStatus.TERMINATED, LocalDate.of(2026, 10, 1), "Reason"));
+        assertEquals(ErrorCode.EMPLOYMENT_ALREADY_ENDED, exception.getErrorCode());
     }
 
     @ParameterizedTest

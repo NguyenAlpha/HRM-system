@@ -454,7 +454,8 @@ Trả `EmployeeDetailResponse` giống [API lấy chi tiết employee](#get-apie
 | 401 | `UNAUTHORIZED` | Thiếu access token hoặc access token không hợp lệ |
 | 403 | `FORBIDDEN` | Không có permission `employee.update` hoặc employee nằm ngoài scope được giao |
 | 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
-| 409 | `CONFLICT` | `workEmail` trùng employee khác hoặc cố xóa email khi employee đã có account |
+| 409 | `EMAIL_TAKEN` | `workEmail` trùng employee khác hoặc email đăng nhập của account khác |
+| 409 | `WORK_EMAIL_REQUIRED` | Cố xóa email công việc khi employee đã có account |
 | 409 | `EMAIL_TAKEN` | `workEmail` đã được account khác sử dụng |
 
 ---
@@ -531,7 +532,7 @@ chỉ lên lịch, `employmentStatus` giữ nguyên và `scheduledEndStatus` là
 | 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
 | 403 | `FORBIDDEN` | Thiếu `employee.lifecycle.manage` hoặc employee nằm ngoài scope được giao |
 | 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
-| 409 | `CONFLICT` | Employee đã kết thúc làm việc trước đó |
+| 409 | `EMPLOYMENT_ALREADY_ENDED` | Employee đã kết thúc làm việc trước đó |
 | 409 | `PAYROLL_PERIOD_LOCKED` | `terminationDate` đã qua nằm trong (hoặc trước) một kỳ lương đã duyệt, đã trả hoặc đã khóa có phiếu lương của employee |
 | 409 | `COMPANY_OWNER_TRANSFER_REQUIRED` | Account của employee đang giữ `COMPANY_OWNER`: phải [chuyển giao Company Owner](./COMPANY_OWNER_TRANSFER.md) trước, cả khi lên lịch lẫn khi kết thúc ngay. Lịch đã đến hạn hoặc đơn nghỉ việc đã duyệt của người vẫn là Owner cũng không được thực hiện |
 
@@ -549,7 +550,7 @@ hoàn tất của nhân viên chuyển `CANCELLED`, vì nếu không nó vẫn k
 | 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
 | 403 | `FORBIDDEN` | Thiếu `employee.lifecycle.manage` hoặc employee nằm ngoài scope được giao |
 | 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
-| 409 | `CONFLICT` | Employee không có lịch kết thúc nào (chưa lên lịch, hoặc đã kết thúc) |
+| 409 | `EMPLOYMENT_END_NOT_SCHEDULED` | Employee không có lịch kết thúc nào (chưa lên lịch, hoặc đã kết thúc) |
 
 ---
 
@@ -601,7 +602,8 @@ Quy tắc:
 | 400 | `VALIDATION_ERROR` | Ngày làm việc cuối trong quá khứ, hoặc từ chối không có lý do |
 | 403 | `FORBIDDEN` | Nộp/xem đơn ngoài scope, hoặc người gọi không phải người duyệt của đơn |
 | 404 | `REQUEST_NOT_FOUND` / `EMPLOYEE_NOT_FOUND` | Đơn hoặc nhân viên không tồn tại |
-| 409 | `CONFLICT` | Đã có đơn còn mở, hoặc nhân viên đã nghỉ |
+| 409 | `RESIGNATION_ALREADY_OPEN` | Đã có đơn còn mở |
+| 409 | `EMPLOYMENT_ALREADY_ENDED` | Nhân viên đã nghỉ |
 | 409 | `REQUEST_ALREADY_PROCESSED` | Duyệt, từ chối hoặc rút đơn không còn `PENDING` |
 | 409 | `APPROVER_NOT_FOUND` | Không có người duyệt |
 
@@ -651,7 +653,7 @@ Hồ sơ bị xóa mềm được ghi `deletedAt`, người xóa và lý do; sau
 | 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
 | 403 | `FORBIDDEN` | Thiếu `employee.delete` hoặc employee nằm ngoài scope được giao |
 | 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
-| 409 | `CONFLICT` | Employee đã phát sinh dữ liệu nghiệp vụ; dùng luồng nghỉ việc thay vì xóa |
+| 409 | `EMPLOYEE_HAS_BUSINESS_DATA` | Employee đã phát sinh dữ liệu nghiệp vụ; dùng luồng nghỉ việc thay vì xóa |
 
 ---
 
@@ -770,7 +772,9 @@ API này chỉ cập nhật lịch sử công việc trong `employee_assignments
 | 404 | `WORK_SHIFT_NOT_FOUND` | Ca làm việc không tồn tại hoặc không active |
 | 404 | `RESOURCE_NOT_FOUND` | Account thao tác không tồn tại |
 | 400 | `AFTER_EMPLOYMENT_END` | Employee đã được lên lịch kết thúc và `effectiveFrom` sau ngày làm việc cuối |
-| 409 | `CONFLICT` | Employee đã kết thúc làm việc hoặc dữ liệu phân công hiện tại không nhất quán |
+| 409 | `EMPLOYMENT_ALREADY_ENDED` | Employee đã kết thúc làm việc |
+| 409 | `MANAGER_NOT_EMPLOYED` | Quản lý được chọn đã kết thúc làm việc (`field: managerEmployeeId`) |
+| 409 | `CONFLICT` | Dữ liệu phân công hiện tại không nhất quán (nhiều phân công chính đang mở) |
 
 ---
 
@@ -851,4 +855,4 @@ Trả về nguyên trạng thái sau khi cập nhật, cùng cấu trúc với `
 | 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
 | 403 | `FORBIDDEN` | Thiếu `employee.sensitive.manage`, hoặc employee nằm ngoài scope được giao |
 | 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
-| 409 | `CONFLICT` | `nationalId` đã thuộc về employee khác |
+| 409 | `NATIONAL_ID_TAKEN` | `nationalId` đã thuộc về employee khác |

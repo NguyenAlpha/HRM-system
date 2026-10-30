@@ -19,6 +19,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.request.employeerequest.CreateResignationRequestRequest;
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.entity.enums.ResignationRequestStatus;
 import com.htttdn.hrm.exception.BusinessException;
@@ -181,7 +182,8 @@ class ResignationRequestIntegrationTest {
     @Test
     void oneOpenRequestAtATimeAndARejectionNeedsAReason() {
         ResignationRequestView pending = resign(staff, today.plusDays(5));
-        assertThrows(ConflictException.class, () -> resign(staff, today.plusDays(6)));
+        ConflictException open = assertThrows(ConflictException.class, () -> resign(staff, today.plusDays(6)));
+        assertEquals(ErrorCode.RESIGNATION_ALREADY_OPEN, open.getErrorCode());
 
         authenticateAs(manager, EMPLOYEE);
         assertThrows(BusinessException.class, () -> service.reject(pending.id(), " "));

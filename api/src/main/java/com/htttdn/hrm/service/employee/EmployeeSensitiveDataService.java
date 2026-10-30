@@ -39,7 +39,7 @@ public class EmployeeSensitiveDataService {
         employeeAccessScopeService.requireEmployeeAccess(employeeId, SENSITIVE_MANAGE);
         if (request.nationalId() != null
             && employeeRepository.existsByNationalIdAndIdNot(request.nationalId(), employeeId)) {
-            throw new ConflictException(ErrorCode.CONFLICT, "National ID is already taken", "nationalId");
+            throw new ConflictException(ErrorCode.NATIONAL_ID_TAKEN, "National ID is already taken", "nationalId");
         }
 
         employee.setNationalId(request.nationalId());

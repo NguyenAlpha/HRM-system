@@ -74,7 +74,7 @@ public class EmployeeAssignmentService {
 
         if (isEmploymentEnded(employee.getEmploymentStatus())) {
             throw new ConflictException(
-                ErrorCode.CONFLICT,
+                ErrorCode.EMPLOYMENT_ALREADY_ENDED,
                 "Cannot assign an employee whose employment has ended"
             );
         }
@@ -176,7 +176,7 @@ public class EmployeeAssignmentService {
         Employee manager = findEmployee(managerEmployeeId);
         employeeAccessScopeService.requireEmployeeAccess(managerEmployeeId, permissionCode);
         if (isEmploymentEnded(manager.getEmploymentStatus())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Manager is no longer employed");
+            throw new ConflictException(ErrorCode.MANAGER_NOT_EMPLOYED, "Manager is no longer employed", "managerEmployeeId");
         }
         return manager;
     }

@@ -86,7 +86,7 @@ public class EmploymentLifecycleService {
      *         hoặc trước ngày bắt đầu phân công hiện tại (→ 400)
      * @throws com.htttdn.hrm.exception.ResourceNotFoundException không có hoặc đã xóa mềm (→ 404)
      * @throws com.htttdn.hrm.exception.ForbiddenException ngoài phạm vi {@code employee.lifecycle.manage} (→ 403)
-     * @throws ConflictException nhân viên đã nghỉ việc rồi (→ 409), hoặc đang là Company Owner
+     * @throws ConflictException nhân viên đã nghỉ việc rồi (→ 409 {@code EMPLOYMENT_ALREADY_ENDED}), hoặc đang là Company Owner
      *         (→ 409 {@code COMPANY_OWNER_TRANSFER_REQUIRED})
      */
     @PreAuthorize("hasAuthority('employee.lifecycle.manage')")
@@ -106,7 +106,7 @@ public class EmploymentLifecycleService {
             );
         }
         if (isEmploymentEnded(employee.getEmploymentStatus())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Employee employment has already ended");
+            throw new ConflictException(ErrorCode.EMPLOYMENT_ALREADY_ENDED, "Employee employment has already ended");
         }
 
         // The last working day is still worked and paid, so a later one only schedules the end; it
@@ -129,14 +129,14 @@ public class EmploymentLifecycleService {
      * Hủy lịch hẹn kết thúc làm việc: xóa ngày cuối, lý do và trạng thái hẹn; nhân viên tiếp tục làm như
      * chưa từng hẹn. Đơn nghỉ việc đã duyệt đặt lịch này cũng bị hủy, nếu không nó vẫn kết thúc hợp đồng.
      *
-     * @throws ConflictException không có lịch hẹn nào (→ 409)
+     * @throws ConflictException không có lịch hẹn nào (→ 409 {@code EMPLOYMENT_END_NOT_SCHEDULED})
      */
     @PreAuthorize("hasAuthority('employee.lifecycle.manage')")
     public EmployeeDetailResponse cancelScheduledEnd(Long employeeId) {
         Employee employee = employeeRepository.getRequired(employeeId);
         employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_LIFECYCLE_MANAGE);
         if (employee.getScheduledEndStatus() == null) {
-            throw new ConflictException(ErrorCode.CONFLICT, "No employment end is scheduled");
+            throw new ConflictException(ErrorCode.EMPLOYMENT_END_NOT_SCHEDULED, "No employment end is scheduled");
         }
         employee.setTerminationDate(null);
         employee.setTerminationReason(null);

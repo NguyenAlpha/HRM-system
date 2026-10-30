@@ -65,11 +65,11 @@ public class ResignationRequestService {
         Employee employee = employeeRepository.getRequired(command.employeeId());
         requireSelfOrScopedAccess(employee.getId(), REQUEST_MANAGE);
         if (ENDED.contains(employee.getEmploymentStatus())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Employee employment has already ended");
+            throw new ConflictException(ErrorCode.EMPLOYMENT_ALREADY_ENDED, "Employee employment has already ended");
         }
         requireLastWorkingDate(command.requestedLastWorkingDate(), employee);
         if (resignationRequestRepository.existsOpen(employee.getId())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Employee already has an open resignation request");
+            throw new ConflictException(ErrorCode.RESIGNATION_ALREADY_OPEN, "Employee already has an open resignation request");
         }
         Employee approver = approverResolver.approverFor(employee)
             .orElseThrow(() -> new ConflictException(
@@ -104,7 +104,7 @@ public class ResignationRequestService {
         requireApprover(request);
         requirePending(request);
         if (ENDED.contains(request.getEmployee().getEmploymentStatus())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Employee employment has already ended");
+            throw new ConflictException(ErrorCode.EMPLOYMENT_ALREADY_ENDED, "Employee employment has already ended");
         }
         LocalDate effective = lastWorkingDate != null ? lastWorkingDate : request.getLastWorkingDate();
         requireLastWorkingDate(effective, request.getEmployee());

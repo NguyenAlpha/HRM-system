@@ -262,7 +262,8 @@ public class EmployeeService {
      * @throws com.htttdn.hrm.exception.ResourceNotFoundException không có hoặc đã xóa mềm (→ 404)
      * @throws com.htttdn.hrm.exception.ForbiddenException ngoài phạm vi (→ 403)
      * @throws BusinessException nhân viên chưa đủ 17 tuổi (→ 400)
-     * @throws ConflictException email bị trùng hoặc xóa email khi đã có tài khoản (→ 409)
+     * @throws ConflictException email bị trùng (→ 409 {@code EMAIL_TAKEN}) hoặc xóa email khi đã có tài khoản
+     *         (→ 409 {@code WORK_EMAIL_REQUIRED})
      */
     @PreAuthorize("hasAuthority('employee.update')")
     public EmployeeDetailResponse update(Long id, UpdateEmployeeRequest request) {
@@ -315,14 +316,14 @@ public class EmployeeService {
         String workEmail = normalizeEmail(requestedWorkEmail);
         if (workEmail != null
             && employeeRepository.existsByWorkEmailIgnoreCaseAndIdNot(workEmail, employee.getId())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Work email is already taken", "workEmail");
+            throw new ConflictException(ErrorCode.EMAIL_TAKEN, "Work email is already taken", "workEmail");
         }
 
         // Tài khoản cần email để đăng nhập/nhận thư kích hoạt → không cho xóa email khi đã có tài khoản.
         Account account = accountRepository.findByEmployeeId(employee.getId()).orElse(null);
         if (account != null && workEmail == null) {
             throw new ConflictException(
-                ErrorCode.CONFLICT,
+                ErrorCode.WORK_EMAIL_REQUIRED,
                 "Work email cannot be removed while the employee has an account",
                 "workEmail"
             );
@@ -354,7 +355,7 @@ public class EmployeeService {
      * @throws com.htttdn.hrm.exception.ResourceNotFoundException không có hoặc đã xóa mềm (→ 404)
      * @throws com.htttdn.hrm.exception.ForbiddenException ngoài phạm vi (→ 403)
      * @throws ConflictException đã có tài khoản, lương, đơn nghỉ, chấm công, phiếu lương hoặc hơn một
-     *         phân công (→ 409)
+     *         phân công (→ 409 {@code EMPLOYEE_HAS_BUSINESS_DATA})
      */
     @PreAuthorize("hasAuthority('employee.delete')")
     public void softDelete(Long id, SoftDeleteEmployeeRequest request) {
@@ -389,7 +390,7 @@ public class EmployeeService {
             || payslipRepository.existsByEmployeeId(employeeId);
         if (hasHistory) {
             throw new ConflictException(
-                ErrorCode.CONFLICT,
+                ErrorCode.EMPLOYEE_HAS_BUSINESS_DATA,
                 "Employee has related business data and cannot be deleted; end employment instead"
             );
         }
