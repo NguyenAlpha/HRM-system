@@ -74,7 +74,8 @@ public class LeaveRequestService {
      *         theo lịch (→ 400 {@code LEAVE_OUTSIDE_WORK_SCHEDULE}), hoặc có ngày trước ngày vào làm hay sau ngày
      *         làm việc cuối (→ 400 {@code LEAVE_OUTSIDE_EMPLOYMENT})
      * @throws com.htttdn.hrm.exception.ForbiddenException tạo đơn cho người khác (→ 403)
-     * @throws ConflictException nghỉ phép năm vượt quỹ còn lại (→ 409 {@code INSUFFICIENT_LEAVE_BALANCE})
+     * @throws ConflictException nghỉ phép năm vượt quỹ còn lại (→ 409 {@code INSUFFICIENT_LEAVE_BALANCE}), hoặc
+     *         một ngày trong khoảng nghỉ đã có đơn chờ duyệt/đã duyệt khác (→ 409 {@code LEAVE_DAY_TAKEN})
      */
     @PreAuthorize("hasAuthority('request.self.create')")
     public LeaveRequestView createDraft(CreateLeaveCommand command) {
@@ -82,6 +83,7 @@ public class LeaveRequestService {
         requireOwnEmployee(command.employeeId());
         Employee employee = employeeRepository.getRequired(command.employeeId());
         requireWithinEmployment(employee, command.startAt(), command.endAt());
+        requireNoOtherLeaveOnTheSameDays(employee.getId(), command.startAt(), command.endAt(), null);
         LeaveSalaryTreatment salaryTreatment = resolveSalaryTreatment(command);
         int requestedMinutes = leaveAttendanceService.leaveMinutesFor(employee.getId(), command.startAt(), command.endAt());
         if (requestedMinutes == 0) {
@@ -108,9 +110,9 @@ public class LeaveRequestService {
      * Leave of the Director or Company Owner needs no approval and is recorded as approved at once.
      *
      * @throws com.htttdn.hrm.exception.ForbiddenException gửi đơn của người khác (→ 403)
-     * @throws ConflictException đơn không còn nháp (→ 409 {@code REQUEST_ALREADY_PROCESSED}), quỹ phép không
-     *         đủ (→ 409 {@code INSUFFICIENT_LEAVE_BALANCE}), hoặc không ai duyệt được (→ 409
-     *         {@code APPROVER_NOT_FOUND})
+     * @throws ConflictException đơn không còn nháp (→ 409 {@code REQUEST_ALREADY_PROCESSED}), ngày nghỉ đã có
+     *         đơn khác (→ 409 {@code LEAVE_DAY_TAKEN}), quỹ phép không đủ (→ 409
+     *         {@code INSUFFICIENT_LEAVE_BALANCE}), hoặc không ai duyệt được (→ 409 {@code APPROVER_NOT_FOUND})
      */
     @PreAuthorize("hasAuthority('request.self.create')")
     public LeaveRequestView submit(Long requestId) {
@@ -118,6 +120,8 @@ public class LeaveRequestService {
         requireOwnEmployee(request.getEmployee().getId());
         requireStatus(request, LeaveRequestStatus.DRAFT);
         // Other requests may have been submitted or approved since this draft was created.
+        requireNoOtherLeaveOnTheSameDays(
+            request.getEmployee().getId(), request.getStartAt(), request.getEndAt(), request.getId());
         leaveEntitlementService.requireSufficientBalance(request);
 
         Instant now = Instant.now(clock);
@@ -258,6 +262,24 @@ public class LeaveRequestService {
         if (!employee.isEmployedThroughout(firstDay, lastDay)) {
             throw new BusinessException(ErrorCode.LEAVE_OUTSIDE_EMPLOYMENT,
                 "Leave must fall between the hire date and the last working day", "endAt");
+        }
+    }
+
+    /**
+     * Mỗi ngày công chỉ gắn được một đơn nghỉ ({@code LeaveAttendanceService.applyApprovedLeave}), nên hai đơn
+     * cùng ngày, kể cả sáng một đơn chiều một đơn, chỉ duyệt được một. Chặn từ lúc tạo và gửi để nhân viên
+     * biết ngay, thay vì đơn thứ hai hỏng lúc duyệt. Chỉ tính đơn chờ duyệt và đã duyệt: nháp là của riêng
+     * nhân viên, khi gửi sẽ được kiểm tra lại.
+     */
+    private void requireNoOtherLeaveOnTheSameDays(Long employeeId, Instant startAt, Instant endAt, Long excludedId) {
+        Instant firstDayStart = LocalDate.ofInstant(startAt, ClockConfig.BUSINESS_ZONE)
+            .atStartOfDay(ClockConfig.BUSINESS_ZONE).toInstant();
+        Instant lastDayEnd = LocalDate.ofInstant(endAt.minusNanos(1), ClockConfig.BUSINESS_ZONE).plusDays(1)
+            .atStartOfDay(ClockConfig.BUSINESS_ZONE).toInstant();
+        if (leaveRequestRepository.existsInStatusesBetween(employeeId,
+            List.of(LeaveRequestStatus.PENDING, LeaveRequestStatus.APPROVED), firstDayStart, lastDayEnd, excludedId)) {
+            throw new ConflictException(ErrorCode.LEAVE_DAY_TAKEN,
+                "Another pending or approved leave request already covers one of these days");
         }
     }
 

@@ -66,6 +66,24 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
 
     boolean existsByEmployeeId(Long employeeId);
 
+    /** Whether another request of the employee in {@code statuses} touches [{@code from}, {@code to}). */
+    @Query("""
+        SELECT CASE WHEN COUNT(request) > 0 THEN true ELSE false END
+        FROM LeaveRequest request
+        WHERE request.employee.id = :employeeId
+          AND request.status IN :statuses
+          AND request.startAt < :to
+          AND request.endAt > :from
+          AND (:excludedRequestId IS NULL OR request.id <> :excludedRequestId)
+        """)
+    boolean existsInStatusesBetween(
+        @Param("employeeId") Long employeeId,
+        @Param("statuses") Collection<LeaveRequestStatus> statuses,
+        @Param("from") Instant from,
+        @Param("to") Instant to,
+        @Param("excludedRequestId") Long excludedRequestId
+    );
+
     /** Requests of the employee in {@code statuses} still running after {@code after}, locked as deciding one locks it. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""

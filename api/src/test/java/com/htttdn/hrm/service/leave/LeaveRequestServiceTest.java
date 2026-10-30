@@ -4,6 +4,7 @@ import com.htttdn.hrm.config.ClockConfig;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import com.htttdn.hrm.service.attendance.LeaveAttendanceService;
@@ -119,7 +120,8 @@ class LeaveRequestServiceTest {
         Employee employee = Employee.builder().id(1L).hireDate(HIRED).fullName("Employee").build();
         Employee manager = Employee.builder().id(5L).fullName("Manager").build();
         LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee)
-            .status(LeaveRequestStatus.DRAFT).build();
+            .status(LeaveRequestStatus.DRAFT)
+            .startAt(Instant.parse("2026-01-05T01:00:00Z")).endAt(Instant.parse("2026-01-05T05:00:00Z")).build();
         when(leaveRequestRepository.getRequiredForUpdate(3L)).thenReturn(request);
         when(leaveRequestRepository.saveAndFlush(request)).thenReturn(request);
         when(currentAccountProvider.account())
@@ -269,6 +271,47 @@ class LeaveRequestServiceTest {
     }
 
     @Test
+    void draftOnADayAlreadyTakenByAnotherLeaveIsRejected() {
+        Employee employee = Employee.builder().id(1L).hireDate(HIRED).build();
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).employee(employee).build());
+        // Morning already requested; the afternoon of the same day is a second request.
+        Instant startAt = Instant.parse("2026-11-12T06:00:00Z");
+        Instant endAt = Instant.parse("2026-11-12T10:00:00Z");
+        when(leaveRequestRepository.existsInStatusesBetween(1L,
+            List.of(LeaveRequestStatus.PENDING, LeaveRequestStatus.APPROVED),
+            Instant.parse("2026-11-11T17:00:00Z"), Instant.parse("2026-11-12T17:00:00Z"), null)).thenReturn(true);
+
+        ConflictException thrown = assertThrows(ConflictException.class,
+            () -> service().createDraft(new LeaveRequestService.CreateLeaveCommand(
+                1L, LeaveType.ANNUAL, null, startAt, endAt, "Afternoon", null)));
+
+        assertEquals(ErrorCode.LEAVE_DAY_TAKEN, thrown.getErrorCode());
+        verify(leaveRequestRepository, never()).save(any());
+    }
+
+    @Test
+    void submitRechecksTheDaysAgainstOtherRequests() {
+        Employee employee = Employee.builder().id(1L).hireDate(HIRED).build();
+        LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee)
+            .leaveType(LeaveType.ANNUAL).status(LeaveRequestStatus.DRAFT)
+            .startAt(Instant.parse("2026-11-12T01:00:00Z"))
+            .endAt(Instant.parse("2026-11-13T10:00:00Z")).build();
+        when(leaveRequestRepository.getRequiredForUpdate(3L)).thenReturn(request);
+        when(currentAccountProvider.account())
+            .thenReturn(Account.builder().id(9L).employee(employee).build());
+        // Two whole days, excluding the request itself.
+        when(leaveRequestRepository.existsInStatusesBetween(1L,
+            List.of(LeaveRequestStatus.PENDING, LeaveRequestStatus.APPROVED),
+            Instant.parse("2026-11-11T17:00:00Z"), Instant.parse("2026-11-13T17:00:00Z"), 3L)).thenReturn(true);
+
+        ConflictException thrown = assertThrows(ConflictException.class, () -> service().submit(3L));
+
+        assertEquals(ErrorCode.LEAVE_DAY_TAKEN, thrown.getErrorCode());
+        assertEquals(LeaveRequestStatus.DRAFT, request.getStatus());
+    }
+
+    @Test
     void draftBeyondTheAnnualBalanceIsRejectedBeforeItIsSaved() {
         stubOwnEmployee(12 * 480);
         doThrow(new ConflictException(ErrorCode.INSUFFICIENT_LEAVE_BALANCE, "not enough"))
@@ -285,7 +328,8 @@ class LeaveRequestServiceTest {
     void submitRechecksTheAnnualBalance() {
         Employee employee = Employee.builder().id(1L).hireDate(HIRED).build();
         LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee)
-            .leaveType(LeaveType.ANNUAL).status(LeaveRequestStatus.DRAFT).build();
+            .leaveType(LeaveType.ANNUAL).status(LeaveRequestStatus.DRAFT)
+            .startAt(Instant.parse("2026-01-05T01:00:00Z")).endAt(Instant.parse("2026-01-05T05:00:00Z")).build();
         when(leaveRequestRepository.getRequiredForUpdate(3L)).thenReturn(request);
         when(currentAccountProvider.account())
             .thenReturn(Account.builder().id(9L).employee(employee).build());

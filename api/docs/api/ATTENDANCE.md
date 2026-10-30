@@ -503,12 +503,16 @@ Cách trả lương của đơn **do server suy ra từ loại nghỉ**, không 
 | 403 | `FORBIDDEN` | `employeeId` không thuộc account đang đăng nhập |
 | 404 | `EMPLOYEE_NOT_FOUND` | Nhân viên không tồn tại hoặc đã bị xóa mềm |
 | 409 | `INSUFFICIENT_LEAVE_BALANCE` | Đơn `ANNUAL` vượt số dư phép năm còn lại |
+| 409 | `LEAVE_DAY_TAKEN` | Một ngày trong khoảng nghỉ đã có đơn `PENDING` hoặc `APPROVED` khác |
+
+Mỗi ngày chỉ có một đơn nghỉ, kể cả nghỉ nửa ngày, vì mỗi ngày công chỉ gắn được một đơn. Muốn nghỉ cả
+sáng lẫn chiều thì tạo một đơn cho cả ngày. Đơn nháp khác không chặn; khi gửi đơn được kiểm tra lại.
 
 ---
 
 ## POST `/api/leave-requests/{id}/submit` và `/cancel`
 
-- `submit` ghi `submittedAt`, chốt [người duyệt](#người-duyệt) vào `approverEmployeeId` và chuyển đơn `DRAFT` sang `PENDING`. Đơn của Giám đốc hoặc Chủ sở hữu chuyển thẳng sang `APPROVED` (tự ghi nhận, kiểm tra như khi duyệt). Không tìm được người duyệt trả `409 APPROVER_NOT_FOUND`. Đơn `ANNUAL` được kiểm tra lại số dư phép năm, vì các đơn khác có thể đã gửi hoặc được duyệt sau khi lưu nháp; vượt số dư trả `409 INSUFFICIENT_LEAVE_BALANCE`.
+- `submit` ghi `submittedAt`, chốt [người duyệt](#người-duyệt) vào `approverEmployeeId` và chuyển đơn `DRAFT` sang `PENDING`. Đơn của Giám đốc hoặc Chủ sở hữu chuyển thẳng sang `APPROVED` (tự ghi nhận, kiểm tra như khi duyệt). Không tìm được người duyệt trả `409 APPROVER_NOT_FOUND`. Đơn `ANNUAL` được kiểm tra lại số dư phép năm, vì các đơn khác có thể đã gửi hoặc được duyệt sau khi lưu nháp; vượt số dư trả `409 INSUFFICIENT_LEAVE_BALANCE`. Vì lý do đó ngày nghỉ cũng được kiểm tra lại; đã có đơn chờ duyệt hoặc đã duyệt khác cùng ngày trả `409 LEAVE_DAY_TAKEN`.
 - `cancel` chuyển đơn `DRAFT` hoặc `PENDING` sang `CANCELLED`. Hệ thống cũng tự hủy đơn `DRAFT`/`PENDING` có ngày nghỉ sau ngày làm việc cuối, ngay khi HR hẹn hoặc chốt ngày đó (xem [EMPLOYEE.md](./EMPLOYEE.md)).
 
 Cả hai không có body và trả `LeaveRequestView`. Chỉ chủ đơn được gửi hoặc hủy; quyền `request.manage`
