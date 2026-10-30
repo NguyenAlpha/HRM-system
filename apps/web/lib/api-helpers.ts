@@ -53,6 +53,13 @@ const ERROR_MESSAGES: Record<string, string> = {
   ATTENDANCE_NOT_FOUND: "Không tìm thấy dữ liệu chấm công.",
   PAYROLL_PERIOD_NOT_FOUND: "Không tìm thấy kỳ lương.",
   PAYROLL_PERIOD_LOCKED: "Kỳ lương đã duyệt hoặc khóa nên không thể thay đổi.",
+  // The API's own message names the employee and the missing data; this is only the fallback.
+  PAYROLL_INPUT_MISSING: "Chưa tính được lương vì một nhân viên còn thiếu dữ liệu.",
+  PAYROLL_PAYMENT_DATE_REQUIRED: "Cần đặt ngày trả lương trước khi tính lương.",
+  PAYROLL_PAYMENT_MONTH_TAKEN: "Đã có kỳ lương khác trả lương trong cùng tháng. Hãy chọn ngày trả lương ở tháng khác.",
+  PAYROLL_APPROVER_IS_CALCULATOR: "Người duyệt bảng lương phải khác người đã tính lương.",
+  PAYROLL_RECALCULATION_REQUIRED: "Chấm công đã thay đổi sau lần tính lương. Vui lòng tính lại trước khi duyệt.",
+  PAYROLL_PAYMENT_MONTH_MISMATCH: "Ngày trả thực tế phải cùng tháng với ngày trả lương dự kiến của kỳ, vì thuế đã tính theo tháng đó.",
   PAYSLIP_NOT_FOUND: "Không tìm thấy phiếu lương.",
   ROLE_NOT_FOUND: "Không tìm thấy vai trò.",
   ROLE_ASSIGNMENT_NOT_FOUND: "Không tìm thấy lần gán vai trò.",
