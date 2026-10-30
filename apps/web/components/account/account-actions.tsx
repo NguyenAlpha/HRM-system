@@ -34,14 +34,12 @@ import { formatDateTime } from "@/lib/format-date"
 export const ACCOUNT_STATUS_LABELS: Record<Account["status"], string> = {
   PENDING: "Chờ kích hoạt",
   ACTIVE: "Đang hoạt động",
-  LOCKED: "Đang khóa",
   DISABLED: "Đã vô hiệu hóa",
 }
 
 export const ACCOUNT_STATUS_VARIANTS: Record<Account["status"], "default" | "secondary" | "destructive" | "outline"> = {
   PENDING: "secondary",
   ACTIVE: "secondary",
-  LOCKED: "destructive",
   DISABLED: "outline",
 }
 
@@ -133,9 +131,9 @@ export function availableAccountActions(account: Account, viewer: AccountViewer)
   // Reactivating stays allowed on a protected account, so only the other actions are dropped.
   const guarded = isGuardedAccount(account, viewer)
   if (viewer.canManageActivation && !guarded && account.status === "PENDING") actions.push("invitations/resend")
-  if (viewer.canManageActivation && !guarded && !self && (account.status === "ACTIVE" || account.status === "LOCKED")) actions.push("password-reset")
-  if (viewer.canManage && (account.status === "DISABLED" || account.status === "LOCKED")) actions.push("activate")
-  if (viewer.canManage && !guarded && !self && (account.status === "ACTIVE" || account.status === "LOCKED")) actions.push("suspend")
+  if (viewer.canManageActivation && !guarded && !self && account.status === "ACTIVE") actions.push("password-reset")
+  if (viewer.canManage && account.status === "DISABLED") actions.push("activate")
+  if (viewer.canManage && !guarded && !self && account.status === "ACTIVE") actions.push("suspend")
   if (viewer.canManage && !guarded && !self) actions.push("delete")
   return actions
 }

@@ -43,7 +43,7 @@ export function listAccounts(portal: Portal, page: number, filters: AccountFilte
   return authorizedRequest<AccountPage>(portal, `/accounts?${params}`, { cache: "no-store" })
 }
 
-/** Resend an invitation (PENDING) or start a password reset (ACTIVE/LOCKED); both return a new one-time token. */
+/** Resend an invitation (PENDING) or start a password reset (ACTIVE); both return a new one-time token. */
 export function issueAccountInvitation(
   portal: Portal,
   accountId: number,

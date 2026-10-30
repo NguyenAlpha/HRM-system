@@ -192,7 +192,6 @@ export function AccountDetailPage({ accountId: rawAccountId }: { accountId: stri
                   </InfoField>
                   <InfoField label="Đăng nhập gần nhất">{formatDateTime(account.lastLoginAt)}</InfoField>
                   <InfoField label="Đăng nhập sai liên tiếp">{String(account.failedLoginCount)}</InfoField>
-                  {account.lockedUntil && <InfoField label="Khóa đến">{formatDateTime(account.lockedUntil)}</InfoField>}
                   <InfoField label="Ngày tạo">{formatDateTime(account.createdAt)}</InfoField>
                   <InfoField label="Cập nhật gần nhất">{formatDateTime(account.updatedAt)}</InfoField>
                   {account.deletedAt && (

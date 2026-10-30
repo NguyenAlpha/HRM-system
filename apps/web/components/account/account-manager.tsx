@@ -226,9 +226,6 @@ export function AccountManager({ portal, viewer, onSessionExpired }: {
                           {formatDateTime(account.deletedAt)} · {account.deletionReason}
                         </span>
                       )}
-                      {account.lockedUntil && (
-                        <span className="mt-1 block text-xs text-muted-foreground">Khóa đến {formatDateTime(account.lockedUntil)}</span>
-                      )}
                     </TableCell>
                     <TableCell className="text-sm">{formatDateTime(account.lastLoginAt)}</TableCell>
                     <RowActionsCell label={account.username}>

@@ -65,7 +65,6 @@ import { formatDate } from "@/lib/format-date"
 const ACCOUNT_STATUS_LABELS: Record<string, string> = {
   PENDING: "Chờ kích hoạt",
   ACTIVE: "Đang hoạt động",
-  LOCKED: "Đang khóa",
   DISABLED: "Đã vô hiệu hóa",
 }
 

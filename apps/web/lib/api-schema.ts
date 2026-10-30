@@ -1981,11 +1981,9 @@ export interface components {
             id: number;
             /** Format: date-time */
             lastLoginAt: string | null;
-            /** Format: date-time */
-            lockedUntil: string | null;
             roleCodes: string[];
             /** @enum {string} */
-            status: "PENDING" | "ACTIVE" | "LOCKED" | "DISABLED";
+            status: "PENDING" | "ACTIVE" | "DISABLED";
             /** Format: date-time */
             updatedAt: string;
             username: string;
@@ -2560,7 +2558,7 @@ export interface components {
             permissions: components["schemas"]["AuthPermissionResponse"][];
             roles: components["schemas"]["AuthRoleResponse"][];
             /** @enum {string} */
-            status: "PENDING" | "ACTIVE" | "LOCKED" | "DISABLED";
+            status: "PENDING" | "ACTIVE" | "DISABLED";
             username: string;
         };
         AuthEmployeeResponse: {
@@ -2865,7 +2863,7 @@ export interface components {
             /** Format: int64 */
             id: number;
             /** @enum {string} */
-            status: "PENDING" | "ACTIVE" | "LOCKED" | "DISABLED";
+            status: "PENDING" | "ACTIVE" | "DISABLED";
             username: string;
         };
         EmployeeAssignmentResponse: {
@@ -4021,7 +4019,7 @@ export interface operations {
         parameters: {
             query: {
                 keyword?: string;
-                status?: "PENDING" | "ACTIVE" | "LOCKED" | "DISABLED";
+                status?: "PENDING" | "ACTIVE" | "DISABLED";
                 roleCode?: string;
                 deleted?: boolean;
                 pageable: components["schemas"]["Pageable"];
