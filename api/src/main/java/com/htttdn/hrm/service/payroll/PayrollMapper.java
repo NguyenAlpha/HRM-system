@@ -40,6 +40,9 @@ public class PayrollMapper {
             period.getPaidAt(),
             period.getLockedByAccount() != null ? period.getLockedByAccount().getId() : null,
             period.getLockedAt(),
+            period.getReopenedByAccount() != null ? period.getReopenedByAccount().getId() : null,
+            period.getReopenedAt(),
+            period.getReopenReason(),
             totals.getPayslipCount(),
             totals.getTotalGrossPay(),
             totals.getTotalNetPay()

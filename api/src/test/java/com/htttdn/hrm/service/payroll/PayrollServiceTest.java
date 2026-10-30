@@ -12,6 +12,8 @@ import com.htttdn.hrm.service.attendance.AttendanceCalendarService;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -51,6 +53,8 @@ import com.htttdn.hrm.repository.SeniorityAllowanceRuleRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -484,6 +488,43 @@ class PayrollServiceTest {
         assertEquals(PayrollPeriodStatus.CANCELLED, period.getStatus());
         verify(payslipItemRepository).deleteByPayslipId(5L);
         verify(payslipRepository).delete(payslip);
+    }
+
+    @Test
+    void reopeningAnApprovedPeriodSendsItBackToDraftWithoutItsPayslips() {
+        Account accountant = Account.builder().id(8L).build();
+        Account approver = Account.builder().id(9L).build();
+        PayrollPeriod period = PayrollPeriod.builder().id(1L).status(PayrollPeriodStatus.APPROVED)
+            .calculatedByAccount(accountant).calculatedAt(Instant.now())
+            .approvedByAccount(approver).approvedAt(Instant.now()).build();
+        Payslip payslip = Payslip.builder().id(5L).build();
+        when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
+        when(payslipRepository.findByPayrollPeriodId(1L)).thenReturn(List.of(payslip));
+        when(payslipRepository.totalsForPeriod(1L)).thenReturn(noTotals());
+        when(currentAccountProvider.account()).thenReturn(approver);
+
+        // Paid in another month than planned: the tax must be worked out again for the real month.
+        service().reopen(1L, "  Trả lương chậm sang tháng sau  ");
+
+        assertEquals(PayrollPeriodStatus.DRAFT, period.getStatus());
+        verify(payslipRepository).delete(payslip);
+        assertNull(period.getCalculatedByAccount());
+        assertNull(period.getCalculatedAt());
+        assertNull(period.getApprovedByAccount());
+        assertNull(period.getApprovedAt());
+        assertEquals(approver, period.getReopenedByAccount());
+        assertNotNull(period.getReopenedAt());
+        assertEquals("Trả lương chậm sang tháng sau", period.getReopenReason());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = PayrollPeriodStatus.class, names = { "DRAFT", "CALCULATED", "PAID", "LOCKED", "CANCELLED" })
+    void onlyAnApprovedPeriodIsReopened(PayrollPeriodStatus status) {
+        PayrollPeriod period = PayrollPeriod.builder().id(1L).status(status).build();
+        when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
+
+        assertThrows(ConflictException.class, () -> service().reopen(1L, "Lý do"));
+        assertEquals(status, period.getStatus());
     }
 
     @Test

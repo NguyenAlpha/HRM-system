@@ -24,6 +24,10 @@ public record PayrollPeriodResponse(
     @Nullable Instant paidAt,
     @Nullable Long lockedByAccountId,
     @Nullable Instant lockedAt,
+    /** The last time an approved period was sent back to DRAFT, and why; null if never. */
+    @Nullable Long reopenedByAccountId,
+    @Nullable Instant reopenedAt,
+    @Nullable String reopenReason,
     /** Payslips currently attached to the period; 0 until it is calculated. */
     long payslipCount,
     BigDecimal totalGrossPay,

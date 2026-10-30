@@ -14,6 +14,7 @@ stateDiagram-v2
   CALCULATED --> DRAFT: dữ liệu đầu vào đổi
   CALCULATED --> APPROVED: approve
   APPROVED --> PAID: mark-paid
+  APPROVED --> DRAFT: reopen
   PAID --> LOCKED: lock
   DRAFT --> CANCELLED: cancel
   CALCULATED --> CANCELLED: cancel
@@ -21,8 +22,8 @@ stateDiagram-v2
   CANCELLED --> [*]
 ```
 
-Mỗi tháng chỉ có một kỳ chưa hủy. `CANCELLED` và `LOCKED` là trạng thái cuối. Kỳ `APPROVED` trở đi **không có luồng
-mở lại**.
+Mỗi tháng chỉ có một kỳ chưa hủy. `CANCELLED` và `LOCKED` là trạng thái cuối. Kỳ `APPROVED` chưa trả có thể **hủy
+duyệt** (`reopen`) về `DRAFT`; kỳ `PAID` trở đi không mở lại được.
 
 ## 2. Chuyển trạng thái
 
@@ -35,6 +36,7 @@ Mọi thao tác đều cần phạm vi `COMPANY` của permission tương ứng 
 | `calculate` | `payroll.calculate` | `DRAFT`, `CALCULATED` | Phải có `taxPaymentDate` (ngày trả lương dự kiến); không kỳ nào khác đã tính có cùng **tháng trả lương** |
 | `approve` | `payroll.approve` | `CALCULATED` | Người duyệt **khác** người tính; không có bản ghi chấm công trong kỳ được sửa sau lúc tính |
 | `mark-paid` | `payroll.mark_paid` | `APPROVED` | Ngày trả thực tế (mặc định hôm nay theo giờ Việt Nam) phải cùng tháng với `taxPaymentDate` |
+| `reopen` | `payroll.approve` | `APPROVED` | Bắt buộc lý do; xóa phiếu lương, xóa thông tin tính/duyệt, ghi người, thời điểm, lý do hủy duyệt |
 | `lock` | `payroll.lock` | `PAID` | — |
 | `cancel` | `payroll.calculate` | `DRAFT`, `CALCULATED` | — |
 
@@ -43,7 +45,8 @@ Lý do của các điều kiện:
 - **Một kỳ cho mỗi tháng trả lương:** thuế TNCN tính theo tháng nhận thu nhập; hai kỳ trả cùng tháng thì phải tính
   thuế gộp, hệ thống chưa hỗ trợ nên chặn luôn.
 - **Người duyệt khác người tính** (four-eyes): một người không tự tính rồi tự duyệt lương.
-- **Tháng trả thực tế phải khớp:** thuế đã tính theo `taxPaymentDate`; trả lệch tháng thì số thuế có thể sai.
+- **Tháng trả thực tế phải khớp:** thuế đã tính theo `taxPaymentDate`; trả lệch tháng thì số thuế có thể sai. Khi
+  đó hủy duyệt kỳ, đặt lại ngày trả lương, tính và duyệt lại.
 
 ## 3. Tính lương
 
@@ -91,7 +94,7 @@ chéo nhau.
 
 ## 6. Giới hạn hiện tại
 
-- Không mở lại được kỳ `APPROVED` trở đi. Muốn sửa phải xử lý ngoài hệ thống hoặc bằng khoản điều chỉnh ở kỳ sau.
+- Không mở lại được kỳ `PAID` trở đi. Muốn sửa phải xử lý ngoài hệ thống hoặc bằng khoản điều chỉnh ở kỳ sau.
 - Phân công chính lùi về quá khứ **không** chuẩn bị lại chấm công: các ngày công đã chuẩn bị vẫn giữ ca cũ.
 
 ## Code

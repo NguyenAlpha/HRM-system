@@ -82,4 +82,15 @@ public class PayrollPeriod extends AuditedEntity {
 
     @Column(name = "locked_at")
     private Instant lockedAt;
+
+    /** Lần hủy duyệt gần nhất: người, thời điểm và lý do (cùng có hoặc cùng trống). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reopened_by_account_id")
+    private Account reopenedByAccount;
+
+    @Column(name = "reopened_at")
+    private Instant reopenedAt;
+
+    @Column(name = "reopen_reason", length = 500)
+    private String reopenReason;
 }

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.htttdn.hrm.dto.request.payroll.CreatePayrollPeriodRequest;
 import com.htttdn.hrm.dto.request.payroll.MarkPayrollPaidRequest;
 import com.htttdn.hrm.dto.request.payroll.PayrollActionRequest;
+import com.htttdn.hrm.dto.request.payroll.ReopenPayrollPeriodRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.dto.response.payroll.PayrollPeriodResponse;
@@ -73,6 +74,12 @@ public class PayrollController {
     @PostMapping("/periods/{id}/approve")
     public ApiResult<PayrollPeriodResponse> approve(@PathVariable Long id) {
         return ApiResult.ok(service.approve(id));
+    }
+
+    @PostMapping("/periods/{id}/reopen")
+    public ApiResult<PayrollPeriodResponse> reopen(@PathVariable Long id,
+        @Valid @RequestBody ReopenPayrollPeriodRequest request) {
+        return ApiResult.ok(service.reopen(id, request.reason()));
     }
 
     @PostMapping("/periods/{id}/mark-paid")

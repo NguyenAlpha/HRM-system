@@ -36,7 +36,8 @@ import lombok.RequiredArgsConstructor;
  * {@link PayslipCalculator}, phần chỉ đọc nằm ở {@link PayrollQueryService}.
  *
  * <p>Trạng thái đi một chiều: {@code DRAFT} → {@code CALCULATED} → {@code APPROVED} → {@code PAID} →
- * {@code LOCKED}; chỉ {@code DRAFT}/{@code CALCULATED} được tính lại hoặc hủy ({@code CANCELLED}). Kỳ đã tính
+ * {@code LOCKED}; chỉ {@code DRAFT}/{@code CALCULATED} được tính lại hoặc hủy ({@code CANCELLED}); kỳ
+ * {@code APPROVED} chưa trả có thể hủy duyệt về {@code DRAFT} ({@link #reopen}). Kỳ đã tính
  * mà dữ liệu đầu vào đổi thì quay về {@code DRAFT} qua {@link PayrollPeriodInvalidator}.
  *
  * <p>Mọi thao tác cần quyền phạm vi toàn công ty ({@code EmployeeAccessScopeService.requireCompanyWide},
@@ -185,6 +186,32 @@ public class PayrollService {
         period.setApprovedByAccount(approver);
         period.setApprovedAt(Instant.now(clock));
 
+        return payrollMapper.toResponse(period);
+    }
+
+    /**
+     * Hủy duyệt kỳ đã duyệt nhưng chưa trả: xóa phiếu lương, đưa kỳ về {@code DRAFT} để tính và duyệt lại
+     * (VD trả lương lệch sang tháng khác nên thuế phải tính lại theo tháng đó). Nhân viên không còn thấy phiếu
+     * lương của kỳ tới khi kỳ được duyệt lại. Ghi người, thời điểm và lý do của lần hủy duyệt gần nhất.
+     *
+     * @throws ConflictException kỳ không ở {@code APPROVED} (→ 409 {@code CONFLICT})
+     */
+    @PreAuthorize("hasAuthority('payroll.approve')")
+    public PayrollPeriodResponse reopen(Long periodId, String reason) {
+        employeeAccessScopeService.requireCompanyWide("payroll.approve");
+        PayrollPeriod period = payrollPeriodRepository.getRequiredForUpdate(periodId);
+        if (period.getStatus() != PayrollPeriodStatus.APPROVED) {
+            throw new ConflictException(ErrorCode.CONFLICT, "Only an APPROVED period can be reopened");
+        }
+        payrollPeriodInvalidator.deletePayslips(periodId);
+        period.setStatus(PayrollPeriodStatus.DRAFT);
+        period.setCalculatedByAccount(null);
+        period.setCalculatedAt(null);
+        period.setApprovedByAccount(null);
+        period.setApprovedAt(null);
+        period.setReopenedByAccount(currentAccountProvider.account());
+        period.setReopenedAt(Instant.now(clock));
+        period.setReopenReason(reason.trim());
         return payrollMapper.toResponse(period);
     }
 

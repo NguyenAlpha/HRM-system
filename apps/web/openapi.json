@@ -3171,6 +3171,43 @@
         "tags" : [ "payroll-controller" ]
       }
     },
+    "/api/payroll/periods/{id}/reopen" : {
+      "post" : {
+        "operationId" : "reopen",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReopenPayrollPeriodRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultPayrollPeriodResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "payroll-controller" ]
+      }
+    },
     "/api/payroll/periods/{periodId}/adjustments" : {
       "get" : {
         "operationId" : "list_5",
@@ -9456,6 +9493,17 @@
             "type" : "string",
             "format" : "date"
           },
+          "reopenReason" : {
+            "type" : [ "string", "null" ]
+          },
+          "reopenedAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time"
+          },
+          "reopenedByAccountId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64"
+          },
           "status" : {
             "type" : "string",
             "enum" : [ "DRAFT", "CALCULATED", "APPROVED", "PAID", "LOCKED", "CANCELLED" ]
@@ -9475,7 +9523,7 @@
             "format" : "int32"
           }
         },
-        "required" : [ "approvedAt", "approvedByAccountId", "calculatedAt", "calculatedByAccountId", "id", "lockedAt", "lockedByAccountId", "month", "paidAt", "paidByAccountId", "payslipCount", "periodEnd", "periodStart", "status", "taxPaymentDate", "totalGrossPay", "totalNetPay", "year" ]
+        "required" : [ "approvedAt", "approvedByAccountId", "calculatedAt", "calculatedByAccountId", "id", "lockedAt", "lockedByAccountId", "month", "paidAt", "paidByAccountId", "payslipCount", "periodEnd", "periodStart", "reopenReason", "reopenedAt", "reopenedByAccountId", "status", "taxPaymentDate", "totalGrossPay", "totalNetPay", "year" ]
       },
       "PayrollSalaryReportResponse" : {
         "type" : "object",
@@ -10094,6 +10142,17 @@
           }
         },
         "required" : [ "note" ]
+      },
+      "ReopenPayrollPeriodRequest" : {
+        "type" : "object",
+        "properties" : {
+          "reason" : {
+            "type" : "string",
+            "maxLength" : 500,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "reason" ]
       },
       "ReplaceRolePermissionsRequest" : {
         "type" : "object",

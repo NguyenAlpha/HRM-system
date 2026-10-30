@@ -30,6 +30,7 @@ Quy trình một tháng:
 | `GET /api/payroll/periods/{id}` | `report.payroll.read`, phạm vi `COMPANY` | Chi tiết kỳ lương |
 | `POST /api/payroll/periods/{id}/calculate` | `payroll.calculate`, phạm vi `COMPANY` | Tính (lại) phiếu lương |
 | `POST /api/payroll/periods/{id}/approve` | `payroll.approve`, phạm vi `COMPANY` | Duyệt kỳ |
+| `POST /api/payroll/periods/{id}/reopen` | `payroll.approve`, phạm vi `COMPANY` | Hủy duyệt kỳ chưa trả |
 | `POST /api/payroll/periods/{id}/mark-paid` | `payroll.mark_paid`, phạm vi `COMPANY` | Ghi nhận đã trả |
 | `POST /api/payroll/periods/{id}/lock` | `payroll.lock`, phạm vi `COMPANY` | Khóa kỳ |
 | `POST /api/payroll/periods/{id}/cancel` | `payroll.calculate`, phạm vi `COMPANY` | Hủy kỳ chưa duyệt |
@@ -69,13 +70,15 @@ Role hệ thống mặc định:
 
 ```
 DRAFT ──calculate──▶ CALCULATED ──approve──▶ APPROVED ──mark-paid──▶ PAID ──lock──▶ LOCKED
-  ▲                      │
-  └──── dữ liệu đổi ─────┘        DRAFT / CALCULATED ──cancel──▶ CANCELLED
+  ▲  ▲                   │                     │
+  │  └──── dữ liệu đổi ──┘                     │
+  └──────────────── reopen ────────────────────┘
+                                  DRAFT / CALCULATED ──cancel──▶ CANCELLED
 ```
 
 - `calculate` chạy được ở `DRAFT` và `CALCULATED` (tính lại xóa phiếu cũ và tạo lại).
 - Khi kỳ đang `CALCULATED`, mọi thay đổi dữ liệu đầu vào đưa kỳ về `DRAFT` và xóa phiếu lương: mức lương, hồ sơ bảo hiểm/thuế, người phụ thuộc, khoản cộng/trừ, ngày lễ. Người dùng phải tính lại. Riêng dữ liệu công đổi sau lần tính không đưa kỳ về `DRAFT`, nhưng `approve` bị chặn cho tới khi tính lại (xem [PAYROLL_LIFECYCLE.md](../concepts/PAYROLL_LIFECYCLE.md#4-thay-đổi-dữ-liệu-hồi-tố)).
-- Từ `APPROVED` trở đi, các thay đổi ảnh hưởng kỳ đó bị chặn với `409 PAYROLL_PERIOD_LOCKED`. Kỳ `APPROVED` hiện không có luồng mở lại.
+- Từ `APPROVED` trở đi, các thay đổi ảnh hưởng kỳ đó bị chặn với `409 PAYROLL_PERIOD_LOCKED`. Kỳ `APPROVED` chưa trả có thể [hủy duyệt](#post-apipayrollperiodsidreopen) về `DRAFT` để tính lại.
 - `CANCELLED` là trạng thái cuối; tháng đó có thể tạo kỳ mới.
 
 ---
@@ -179,6 +182,9 @@ Tiền là số thập phân VND (`BigDecimal`, 2 chữ số thập phân). Ngà
   "paidAt": null,
   "lockedByAccountId": null,
   "lockedAt": null,
+  "reopenedByAccountId": null,
+  "reopenedAt": null,
+  "reopenReason": null,
   "payslipCount": 4,
   "totalGrossPay": 98348372.00,
   "totalNetPay": 87204935.00
@@ -191,6 +197,7 @@ Tiền là số thập phân VND (`BigDecimal`, 2 chữ số thập phân). Ngà
 | `taxPaymentDate` | Ngày trả lương dự kiến (sau `mark-paid` là ngày trả thực tế); quyết định quy tắc thuế và số người phụ thuộc |
 | `status` | `DRAFT`, `CALCULATED`, `APPROVED`, `PAID`, `LOCKED`, `CANCELLED` (xem [Vòng đời kỳ lương](#vòng-đời-kỳ-lương)) |
 | `*ByAccountId`, `*At` | Ai và khi nào tính, duyệt, ghi nhận trả, khóa; `null` khi chưa xảy ra. Tính lại sau khi dữ liệu đổi xóa thông tin tính trước đó |
+| `reopenedByAccountId`, `reopenedAt`, `reopenReason` | Lần [hủy duyệt](#post-apipayrollperiodsidreopen) gần nhất; `null` khi chưa từng hủy duyệt |
 | `payslipCount`, `totalGrossPay`, `totalNetPay` | Số phiếu lương hiện có của kỳ và tổng thu nhập, tổng thực nhận của các phiếu đó; `0` khi kỳ chưa tính |
 
 ### `PayslipResponse`
@@ -603,6 +610,26 @@ Duyệt kỳ đã tính. Không có body. Người duyệt phải khác người
 
 Trả [`PayrollPeriodResponse`](#payrollperiodresponse) với `status: "APPROVED"`. Từ đây nhân viên xem được phiếu lương của mình.
 
+### POST `/api/payroll/periods/{id}/reopen`
+
+Hủy duyệt kỳ đã duyệt nhưng chưa trả, ví dụ khi lương thực tế trả lệch sang tháng khác nên thuế phải tính lại theo
+tháng đó. Phiếu lương bị xóa (nhân viên không còn thấy phiếu của kỳ), thông tin tính và duyệt bị xóa, kỳ về `DRAFT`.
+Sau đó kế toán đặt lại ngày trả lương, tính và duyệt lại như bình thường.
+
+```json
+{ "reason": "Trả lương chậm sang tháng 12" }
+```
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 400 | `VALIDATION_ERROR` | Thiếu `reason` hoặc dài quá 500 ký tự |
+| 403 | `FORBIDDEN` | Không có `payroll.approve` phạm vi `COMPANY` |
+| 404 | `PAYROLL_PERIOD_NOT_FOUND` | Kỳ không tồn tại |
+| 409 | `CONFLICT` | Kỳ không ở `APPROVED` |
+
+Trả [`PayrollPeriodResponse`](#payrollperiodresponse) với `status: "DRAFT"` và `reopenedByAccountId`, `reopenedAt`,
+`reopenReason` của lần hủy duyệt này.
+
 ### POST `/api/payroll/periods/{id}/mark-paid`
 
 Ghi nhận kỳ đã trả lương.
@@ -610,10 +637,10 @@ Ghi nhận kỳ đã trả lương.
 #### Request (không bắt buộc)
 
 ```json
-{ "taxPaymentDate": "2026-11-05" }
+{ "paidOn": "2026-11-05" }
 ```
 
-`taxPaymentDate` là ngày trả **thực tế**; bỏ trống thì lấy hôm nay (giờ Việt Nam). Ngày này phải cùng tháng với ngày trả dự kiến đã duyệt, vì thuế đã tính theo tháng đó; khác tháng thì phải đối soát lại khấu trừ trước. Sau khi ghi nhận, `taxPaymentDate` của kỳ là ngày thực tế.
+`paidOn` là ngày trả **thực tế**; bỏ trống thì lấy hôm nay (giờ Việt Nam). Ngày này phải cùng tháng với ngày trả dự kiến đã duyệt, vì thuế đã tính theo tháng đó; khác tháng thì [hủy duyệt](#post-apipayrollperiodsidreopen), đặt lại ngày trả lương và tính lại. Sau khi ghi nhận, `taxPaymentDate` của kỳ là ngày thực tế.
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
@@ -775,6 +802,6 @@ Thuế TNCN chọn theo **ngày trả lương** (`taxPaymentDate`), bảo hiểm
 
 - Chưa hỗ trợ người không cư trú, hoa hồng tính tự động, khoản giảm trừ tự nguyện khác, truy thu, hoàn thuế và quyết toán năm. Không tự động gửi tờ khai thuế hay bảo hiểm.
 - Chưa tách giờ làm đêm để cộng hệ số riêng. Tăng ca Chủ nhật/ngày lễ cần chấm vào/ra và duyệt, không tự duyệt. Việc kiểm tra trần giờ làm thêm trong ngày/năm và chứng từ miễn thuế vẫn do người duyệt tăng ca thực hiện trước khi chọn `taxExempt`.
-- Tính thuế theo một lần trả lương trong một tháng. Nếu ngày trả thực tế đổi tháng hoặc có thêm đợt trả/thưởng cùng tháng, kế toán phải đối soát. Kỳ đã `APPROVED` hiện không có luồng mở lại tự động; cần xử lý điều chỉnh có kiểm soát trước khi ghi nhận `PAID`.
+- Tính thuế theo một lần trả lương trong một tháng. Nếu ngày trả thực tế đổi tháng hoặc có thêm đợt trả/thưởng cùng tháng, kế toán phải đối soát. Kỳ `APPROVED` chưa trả có thể hủy duyệt để tính lại với ngày trả mới.
 - Hồ sơ bảo hiểm được chọn theo ngày cuối nhân viên làm việc trong kỳ; trường hợp thay đổi chế độ trong cùng tháng và các ngoại lệ luật định cần đối soát bằng tay. Dữ liệu quy tắc nạp sẵn từ 01/01/2020 đến hết năm 2026.
 - Nếu một nhân viên thuộc kỳ nhưng toàn bộ khoảng làm việc rơi vào ngày lễ/Chủ nhật, hệ thống báo lỗi yêu cầu đối soát thủ công thay vì bỏ qua nhân viên hoặc tiền tăng ca của họ.
