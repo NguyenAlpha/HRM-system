@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { apiErrorMessage } from "@/lib/api-helpers"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import { changePassword, refreshSession } from "@/lib/auth/client"
 import type { SessionData } from "@/lib/auth/types"
@@ -46,7 +47,7 @@ export function PortalDashboard() {
       setSession(await refreshSession(portal))
       setMessage("Access token và refresh token đã được xoay vòng thành công.")
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Không thể refresh phiên")
+      setError(apiErrorMessage(caughtError))
     } finally {
       setWorking(false)
     }
@@ -67,7 +68,7 @@ export function PortalDashboard() {
       router.replace(config.loginPath)
       router.refresh()
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Không thể đổi mật khẩu")
+      setError(apiErrorMessage(caughtError))
     } finally {
       setWorking(false)
     }
