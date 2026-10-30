@@ -13,6 +13,9 @@ import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.service.leave.LeaveEntitlementService;
 import com.htttdn.hrm.service.leave.LeaveEntitlementService.BalanceView;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -27,7 +30,7 @@ public class LeaveEntitlementController {
     @GetMapping
     public ApiResult<BalanceView> getBalance(
         @PathVariable Long employeeId,
-        @RequestParam(required = false) Integer year
+        @RequestParam(required = false) @Min(2000) @Max(9999) Integer year
     ) {
         return ApiResult.ok(leaveEntitlementService.getBalance(employeeId, resolveYear(year)));
     }

@@ -139,6 +139,8 @@ const FIELD_LABELS: Record<string, string> = {
   directorAppointmentReason: "Lý do bổ nhiệm Director",
   maxRequests: "Số request tối đa",
   windowSeconds: "Khoảng thời gian",
+  year: "Năm",
+  month: "Tháng",
 }
 
 const VIETNAMESE = /[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]/i

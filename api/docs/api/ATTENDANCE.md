@@ -580,7 +580,7 @@ Bộ lọc của `GET /api/leave-requests` (đều tùy chọn):
 
 ## GET `/api/leave-entitlements/employees/{employeeId}`
 
-Xem số dư phép năm. Thiếu `year` thì lấy năm hiện tại theo `Asia/Ho_Chi_Minh`.
+Xem số dư phép năm. Thiếu `year` thì lấy năm hiện tại theo `Asia/Ho_Chi_Minh`; `year` ngoài 2000–9999 trả `400 VALIDATION_ERROR` với `field` là `year`.
 
 ```http
 GET /api/leave-entitlements/employees/1?year=2026

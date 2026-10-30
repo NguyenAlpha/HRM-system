@@ -2266,7 +2266,9 @@
           "required" : false,
           "schema" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int32",
+            "maximum" : 9999,
+            "minimum" : 2000
           }
         } ],
         "responses" : {

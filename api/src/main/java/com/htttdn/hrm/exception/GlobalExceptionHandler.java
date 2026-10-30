@@ -22,10 +22,14 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Path;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -61,6 +65,39 @@ public class GlobalExceptionHandler {
                 fieldError.getDefaultMessage(),
                 fieldError.getField()
             ))
+            .orElseGet(() -> ErrorDetail.of(ErrorCode.VALIDATION_ERROR, "Validation failed"));
+
+        return ResponseEntity.badRequest().body(ApiResult.fail(error));
+    }
+
+    /** {@code @Min}/{@code @Max}… on a request parameter of a controller without {@code @Validated}. */
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ApiResult<?>> handleParameterValidation(HandlerMethodValidationException exception) {
+        ErrorDetail error = exception.getParameterValidationResults().stream()
+            .filter(result -> !result.getResolvableErrors().isEmpty())
+            .findFirst()
+            .map(result -> ErrorDetail.of(
+                ErrorCode.VALIDATION_ERROR,
+                result.getResolvableErrors().getFirst().getDefaultMessage(),
+                result.getMethodParameter().getParameterName()
+            ))
+            .orElseGet(() -> ErrorDetail.of(ErrorCode.VALIDATION_ERROR, "Validation failed"));
+
+        return ResponseEntity.badRequest().body(ApiResult.fail(error));
+    }
+
+    /** The same on a {@code @Validated} controller, where method validation throws this instead. */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResult<?>> handleConstraintViolation(ConstraintViolationException exception) {
+        ErrorDetail error = exception.getConstraintViolations().stream()
+            .findFirst()
+            .map(violation -> {
+                String field = null;
+                for (Path.Node node : violation.getPropertyPath()) {
+                    field = node.getName();
+                }
+                return ErrorDetail.of(ErrorCode.VALIDATION_ERROR, violation.getMessage(), field);
+            })
             .orElseGet(() -> ErrorDetail.of(ErrorCode.VALIDATION_ERROR, "Validation failed"));
 
         return ResponseEntity.badRequest().body(ApiResult.fail(error));
