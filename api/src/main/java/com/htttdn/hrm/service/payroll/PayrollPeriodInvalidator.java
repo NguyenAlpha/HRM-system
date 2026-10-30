@@ -28,33 +28,29 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PayrollPeriodInvalidator {
 
-    private static final List<PayrollPeriodStatus> CALCULATED_OR_RELEASED = List.of(
-        PayrollPeriodStatus.CALCULATED, PayrollPeriodStatus.APPROVED,
-        PayrollPeriodStatus.PAID, PayrollPeriodStatus.LOCKED);
-
     private final PayrollPeriodRepository payrollPeriodRepository;
     private final PayslipRepository payslipRepository;
     private final PayslipItemRepository payslipItemRepository;
 
     /** Các kỳ kết thúc từ {@code effectiveFrom} trở đi (khóa ghi). */
     public void invalidateFrom(LocalDate effectiveFrom) {
-        invalidate(payrollPeriodRepository.findAffectedPeriodsForUpdate(effectiveFrom, CALCULATED_OR_RELEASED));
+        invalidate(payrollPeriodRepository.findAffectedPeriodsForUpdate(effectiveFrom, PayrollPeriodStatus.CALCULATED_OR_RELEASED));
     }
 
     /** Các kỳ kết thúc từ {@code effectiveFrom} trở đi có phiếu lương của nhân viên này (khóa ghi). */
     public void invalidateEmployeeFrom(Long employeeId, LocalDate effectiveFrom) {
         invalidate(payrollPeriodRepository.findAffectedPeriodsOfEmployeeForUpdate(
-            employeeId, effectiveFrom, CALCULATED_OR_RELEASED));
+            employeeId, effectiveFrom, PayrollPeriodStatus.CALCULATED_OR_RELEASED));
     }
 
     /** Các kỳ có ngày nộp thuế trong [{@code from}, {@code to}]; {@code to} null → không giới hạn. */
     public void invalidateTaxPaymentsBetween(LocalDate from, LocalDate to) {
-        invalidate(payrollPeriodRepository.findAffectedPaymentPeriodsForUpdate(from, to, CALCULATED_OR_RELEASED));
+        invalidate(payrollPeriodRepository.findAffectedPaymentPeriodsForUpdate(from, to, PayrollPeriodStatus.CALCULATED_OR_RELEASED));
     }
 
     /** Một kỳ cụ thể mà bên gọi đã tải (nên khóa ghi); kỳ chưa tính hoặc đã hủy → không làm gì. */
     public void invalidatePeriod(PayrollPeriod period) {
-        if (CALCULATED_OR_RELEASED.contains(period.getStatus())) {
+        if (PayrollPeriodStatus.CALCULATED_OR_RELEASED.contains(period.getStatus())) {
             invalidate(List.of(period));
         }
     }

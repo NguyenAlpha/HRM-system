@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.AttendanceRecord;
-import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
@@ -37,9 +36,7 @@ public class AttendanceEditGuard {
      */
     public void requireEditable(LocalDate workDate) {
         payrollPeriodRepository.findContainingDateForUpdate(workDate)
-            .filter(period -> period.getStatus() == PayrollPeriodStatus.APPROVED
-                || period.getStatus() == PayrollPeriodStatus.PAID
-                || period.getStatus() == PayrollPeriodStatus.LOCKED)
+            .filter(period -> period.getStatus().isReleased())
             .ifPresent(period -> {
                 throw new ConflictException(ErrorCode.PAYROLL_PERIOD_LOCKED,
                     "Attendance belongs to approved payroll period " + period.getId());

@@ -126,8 +126,7 @@ public class PayrollService {
         LocalDate paymentMonthStart = period.getTaxPaymentDate().withDayOfMonth(1);
         if (payrollPeriodRepository.existsOtherInPaymentMonth(periodId, paymentMonthStart,
             paymentMonthStart.withDayOfMonth(paymentMonthStart.lengthOfMonth()),
-            List.of(PayrollPeriodStatus.CALCULATED, PayrollPeriodStatus.APPROVED,
-                PayrollPeriodStatus.PAID, PayrollPeriodStatus.LOCKED))) {
+            PayrollPeriodStatus.CALCULATED_OR_RELEASED)) {
             throw new BusinessException(ErrorCode.PAYROLL_PAYMENT_MONTH_TAKEN,
                 "Another payroll period uses the same tax payment month; monthly tax deductions require consolidated calculation");
         }

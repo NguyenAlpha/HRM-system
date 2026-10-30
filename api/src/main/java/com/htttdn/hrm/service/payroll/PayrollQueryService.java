@@ -66,7 +66,7 @@ public class PayrollQueryService {
         Payslip payslip = payslipRepository.getRequired(payslipId);
         requirePayslipAccess(payslip.getEmployee().getId());
         if (!currentAccountProvider.hasAuthority("report.payroll.read")
-            && !isReleased(payslip.getPayrollPeriod().getStatus())) {
+            && !payslip.getPayrollPeriod().getStatus().isReleased()) {
             throw new ForbiddenException(ErrorCode.FORBIDDEN, "Payslip has not been approved");
         }
         return payrollMapper.toResponse(payslip);
@@ -79,13 +79,7 @@ public class PayrollQueryService {
             return payslipRepository.findByEmployeeId(employeeId, pageable).map(payrollMapper::toResponse);
         }
         return payslipRepository.findByEmployeeIdAndPayrollPeriodStatusIn(employeeId,
-            List.of(PayrollPeriodStatus.APPROVED, PayrollPeriodStatus.PAID, PayrollPeriodStatus.LOCKED),
-            pageable).map(payrollMapper::toResponse);
-    }
-
-    private boolean isReleased(PayrollPeriodStatus status) {
-        return status == PayrollPeriodStatus.APPROVED || status == PayrollPeriodStatus.PAID
-            || status == PayrollPeriodStatus.LOCKED;
+            PayrollPeriodStatus.RELEASED, pageable).map(payrollMapper::toResponse);
     }
 
     private void requirePayslipAccess(Long employeeId) {
