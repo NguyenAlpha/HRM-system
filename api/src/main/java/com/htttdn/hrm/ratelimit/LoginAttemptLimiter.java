@@ -1,14 +1,11 @@
 package com.htttdn.hrm.ratelimit;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
 import java.util.Locale;
 
 import org.springframework.stereotype.Component;
 
 import com.htttdn.hrm.exception.RateLimitExceededException;
+import com.htttdn.hrm.util.Tokens;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,7 +26,7 @@ public class LoginAttemptLimiter {
      * accounts that do not exist.
      */
     public static String key(Long accountId, String login) {
-        return accountId != null ? "account:" + accountId : "name:" + sha256(login.toLowerCase(Locale.ROOT));
+        return accountId != null ? "account:" + accountId : "name:" + Tokens.sha256Hex(login.toLowerCase(Locale.ROOT));
     }
 
     /** Throws {@link RateLimitExceededException} when no try is left; does not use one. */
@@ -46,15 +43,6 @@ public class LoginAttemptLimiter {
     public void recordFailure(String key) {
         if (rateLimitService.enabled()) {
             rateLimitService.penalize(RateLimitPolicy.LOGIN_FAILURE, key);
-        }
-    }
-
-    private static String sha256(String value) {
-        try {
-            byte[] digest = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(digest);
-        } catch (NoSuchAlgorithmException exception) {
-            throw new IllegalStateException("SHA-256 is required by every Java platform", exception);
         }
     }
 }

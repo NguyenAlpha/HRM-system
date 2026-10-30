@@ -1,13 +1,8 @@
 package com.htttdn.hrm.service.account;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Base64;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,6 +18,7 @@ import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.InvalidTokenException;
 import com.htttdn.hrm.repository.AccountActivationTokenRepository;
 import com.htttdn.hrm.repository.AccountRepository;
+import com.htttdn.hrm.util.Tokens;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,7 +28,6 @@ public class AccountActivationService {
 
     private static final int TOKEN_BYTES = 32;
     private static final int MAX_RAW_TOKEN_LENGTH = 200;
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final AccountRepository accountRepository;
     private final AccountActivationTokenRepository activationTokenRepository;
@@ -57,11 +52,11 @@ public class AccountActivationService {
         Instant now = Instant.now(clock);
         activationTokenRepository.revokeActiveByAccountId(accountId, now);
 
-        String rawToken = generateToken();
+        String rawToken = Tokens.random(TOKEN_BYTES);
         Instant expiresAt = now.plus(properties.activationTokenExpirationHours(), ChronoUnit.HOURS);
         activationTokenRepository.save(AccountActivationToken.builder()
             .account(account)
-            .tokenHash(hash(rawToken))
+            .tokenHash(Tokens.sha256Hex(rawToken))
             .expiresAt(expiresAt)
             .createdByAccount(createdByAccount)
             .build());
@@ -86,7 +81,7 @@ public class AccountActivationService {
         }
 
         AccountActivationToken activationToken = activationTokenRepository
-            .findByTokenHashForUpdate(hash(rawToken))
+            .findByTokenHashForUpdate(Tokens.sha256Hex(rawToken))
             .orElseThrow(this::invalidToken);
 
         Instant now = Instant.now(clock);
@@ -124,22 +119,6 @@ public class AccountActivationService {
             ErrorCode.ACTIVATION_TOKEN_INVALID,
             "Invalid account activation token"
         );
-    }
-
-    private String generateToken() {
-        byte[] bytes = new byte[TOKEN_BYTES];
-        SECURE_RANDOM.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
-
-    private String hash(String value) {
-        try {
-            byte[] digest = MessageDigest.getInstance("SHA-256")
-                .digest(value.getBytes(StandardCharsets.UTF_8));
-            return java.util.HexFormat.of().formatHex(digest);
-        } catch (NoSuchAlgorithmException exception) {
-            throw new IllegalStateException("SHA-256 is not available", exception);
-        }
     }
 
     public record IssuedActivationToken(String rawToken, Instant expiresAt) {
