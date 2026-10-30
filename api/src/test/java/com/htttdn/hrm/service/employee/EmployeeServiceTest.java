@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 import com.htttdn.hrm.service.auth.RefreshTokenService;
+import com.htttdn.hrm.service.leave.LeaveRequestService;
 import com.htttdn.hrm.service.payroll.PayrollPeriodInvalidator;
 import com.htttdn.hrm.service.rbac.AccountRoleAssignmentCommandService;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
@@ -78,6 +79,7 @@ class EmployeeServiceTest {
     @Mock private EmployeeCodeGenerator employeeCodeGenerator;
     @Mock private PayrollPeriodInvalidator payrollPeriodInvalidator;
     @Mock private ResignationRequestRepository resignationRequestRepository;
+    @Mock private LeaveRequestService leaveRequestService;
 
     @Test
     void createUsesServerGeneratedCodeFromInitialPosition() {
@@ -258,6 +260,7 @@ class EmployeeServiceTest {
         assertEquals(endDate, assignment.getEffectiveTo());
         assertEquals(AccountStatus.DISABLED, account.getStatus());
         verify(refreshTokenService).revokeAll(5L);
+        verify(leaveRequestService).cancelOpenRequestsAfter(1L, endDate);
     }
 
     @Test
@@ -317,6 +320,8 @@ class EmployeeServiceTest {
         assertNull(assignment.getEffectiveTo());
         assertEquals(AccountStatus.ACTIVE, account.getStatus());
         verify(refreshTokenService, never()).revokeAll(any());
+        // Leave past the last day can no longer be approved, so it does not wait until then to be cancelled.
+        verify(leaveRequestService).cancelOpenRequestsAfter(1L, endDate);
     }
 
     @Test
@@ -471,6 +476,7 @@ class EmployeeServiceTest {
             mapper(),
             payrollPeriodInvalidator,
             resignationRequestRepository,
+            leaveRequestService,
             TODAY
         );
     }

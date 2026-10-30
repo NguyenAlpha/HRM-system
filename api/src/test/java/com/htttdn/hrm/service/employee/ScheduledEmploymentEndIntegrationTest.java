@@ -135,6 +135,25 @@ class ScheduledEmploymentEndIntegrationTest {
     }
 
     @Test
+    void schedulingTheLastDayCancelsOpenLeaveRunningPastIt() {
+        LocalDate lastDay = today.plusDays(10);
+        Long within = leaveRequest("PENDING", lastDay);
+        Long pendingAfter = leaveRequest("PENDING", lastDay.plusDays(1));
+        Long draftAfter = leaveRequest("DRAFT", lastDay.plusDays(2));
+        Long approvedAfter = leaveRequest("APPROVED", lastDay.plusDays(3));
+
+        employmentLifecycleService.endEmployment(employeeId, EmploymentStatus.RESIGNED, lastDay, "Nghỉ việc");
+        entityManager.flush();
+
+        // Leave on the last day itself can still be approved; days after it never can.
+        assertEquals("PENDING", leaveStatus(within));
+        assertEquals("CANCELLED", leaveStatus(pendingAfter));
+        assertEquals("CANCELLED", leaveStatus(draftAfter));
+        // Decided requests are history and stay as they are.
+        assertEquals("APPROVED", leaveStatus(approvedAfter));
+    }
+
+    @Test
     void aCancelledScheduleLeavesNoEndBehind() {
         employmentLifecycleService.endEmployment(employeeId, EmploymentStatus.RESIGNED, today.plusDays(3), "Nghỉ việc");
 
@@ -288,6 +307,22 @@ class ScheduledEmploymentEndIntegrationTest {
             VALUES (?, ?, 'SE', 'Scheduled end', 'End', 'End unit', 'End role', 0, 1, 0, 0, 0, 0)
             """, periodId, employeeId);
         return periodId;
+    }
+
+    /** A one-day leave request on {@code day}, 08:00–17:00 Vietnam time. */
+    private Long leaveRequest(String status, LocalDate day) {
+        return id("""
+            INSERT INTO leave_requests(employee_id, leave_type, salary_treatment, start_at, end_at, requested_minutes,
+                reason, status)
+            VALUES (?, 'UNPAID', 'UNPAID', ?, ?, 480, 'Việc riêng', ?) RETURNING id
+            """, employeeId,
+            java.sql.Timestamp.from(day.atTime(8, 0).atZone(ClockConfig.BUSINESS_ZONE).toInstant()),
+            java.sql.Timestamp.from(day.atTime(17, 0).atZone(ClockConfig.BUSINESS_ZONE).toInstant()),
+            status);
+    }
+
+    private String leaveStatus(Long requestId) {
+        return jdbc.queryForObject("SELECT status FROM leave_requests WHERE id = ?", String.class, requestId);
     }
 
     private static void assertAfterEnd(org.junit.jupiter.api.function.Executable call) {

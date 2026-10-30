@@ -509,7 +509,7 @@ Cách trả lương của đơn **do server suy ra từ loại nghỉ**, không 
 ## POST `/api/leave-requests/{id}/submit` và `/cancel`
 
 - `submit` ghi `submittedAt`, chốt [người duyệt](#người-duyệt) vào `approverEmployeeId` và chuyển đơn `DRAFT` sang `PENDING`. Đơn của Giám đốc hoặc Chủ sở hữu chuyển thẳng sang `APPROVED` (tự ghi nhận, kiểm tra như khi duyệt). Không tìm được người duyệt trả `409 APPROVER_NOT_FOUND`. Đơn `ANNUAL` được kiểm tra lại số dư phép năm, vì các đơn khác có thể đã gửi hoặc được duyệt sau khi lưu nháp; vượt số dư trả `409 INSUFFICIENT_LEAVE_BALANCE`.
-- `cancel` chuyển đơn `DRAFT` hoặc `PENDING` sang `CANCELLED`.
+- `cancel` chuyển đơn `DRAFT` hoặc `PENDING` sang `CANCELLED`. Hệ thống cũng tự hủy đơn `DRAFT`/`PENDING` có ngày nghỉ sau ngày làm việc cuối, ngay khi HR hẹn hoặc chốt ngày đó (xem [EMPLOYEE.md](./EMPLOYEE.md)).
 
 Cả hai không có body và trả `LeaveRequestView`. Chỉ chủ đơn được gửi hoặc hủy; quyền `request.manage`
 không cho phép làm thay. Đơn ở trạng thái khác trả `409 REQUEST_ALREADY_PROCESSED`; đơn không tồn tại trả `404 REQUEST_NOT_FOUND`.

@@ -2,6 +2,7 @@ package com.htttdn.hrm.repository;
 
 import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -64,6 +65,21 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
     );
 
     boolean existsByEmployeeId(Long employeeId);
+
+    /** Requests of the employee in {@code statuses} still running after {@code after}, locked as deciding one locks it. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT request
+        FROM LeaveRequest request
+        WHERE request.employee.id = :employeeId
+          AND request.status IN :statuses
+          AND request.endAt > :after
+        """)
+    List<LeaveRequest> findEndingAfterForUpdate(
+        @Param("employeeId") Long employeeId,
+        @Param("statuses") Collection<LeaveRequestStatus> statuses,
+        @Param("after") Instant after
+    );
 
     /**
      * Minutes already committed against a leave year. The caller passes the year bounds because

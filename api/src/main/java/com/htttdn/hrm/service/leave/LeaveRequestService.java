@@ -3,6 +3,7 @@ package com.htttdn.hrm.service.leave;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.service.attendance.LeaveAttendanceService;
@@ -49,6 +50,8 @@ public class LeaveRequestService {
     private static final String REQUEST_MANAGE = "request.manage";
     private static final String SELF_RECORDED_COMMENT =
         "Tự ghi nhận: đơn nghỉ của Giám đốc hoặc Chủ sở hữu không cần duyệt";
+    private static final String PAST_LAST_DAY_COMMENT =
+        "Tự hủy: đơn có ngày nghỉ sau ngày làm việc cuối";
 
     private final LeaveRequestRepository leaveRequestRepository;
     private final EmployeeRepository employeeRepository;
@@ -218,6 +221,24 @@ public class LeaveRequestService {
         review(request, LeaveRequestStatus.REJECTED, reviewComment);
         notificationService.notifyLeaveDecision(request);
         return leaveRequestMapper.toView(leaveRequestRepository.saveAndFlush(request));
+    }
+
+    /**
+     * Hủy đơn nháp và đơn chờ duyệt còn ngày nghỉ sau {@code lastWorkingDay}, khi HR hẹn hoặc chốt ngày làm
+     * việc cuối: chúng không còn duyệt được ({@link #requireWithinEmployment}) mà vẫn nằm trong hàng chờ.
+     * Đơn nằm trọn trong thời gian làm việc giữ nguyên, người duyệt vẫn duyệt được.
+     *
+     * <p>Không có {@code @PreAuthorize}: chỉ {@code EmploymentLifecycleService} gọi, sau khi đã kiểm tra quyền.
+     */
+    public void cancelOpenRequestsAfter(Long employeeId, LocalDate lastWorkingDay) {
+        Instant after = lastWorkingDay.plusDays(1).atStartOfDay(ClockConfig.BUSINESS_ZONE).toInstant();
+        Instant now = Instant.now(clock);
+        for (LeaveRequest request : leaveRequestRepository.findEndingAfterForUpdate(
+            employeeId, List.of(LeaveRequestStatus.DRAFT, LeaveRequestStatus.PENDING), after)) {
+            request.setStatus(LeaveRequestStatus.CANCELLED);
+            request.setReviewComment(PAST_LAST_DAY_COMMENT);
+            request.setReviewedAt(now);
+        }
     }
 
     private void validateCommand(CreateLeaveCommand command) {

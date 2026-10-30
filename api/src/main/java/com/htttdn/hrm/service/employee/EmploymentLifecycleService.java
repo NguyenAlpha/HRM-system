@@ -27,6 +27,7 @@ import com.htttdn.hrm.repository.EmployeeTaxDependentRepository;
 import com.htttdn.hrm.repository.ResignationRequestRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 import com.htttdn.hrm.service.auth.RefreshTokenService;
+import com.htttdn.hrm.service.leave.LeaveRequestService;
 import com.htttdn.hrm.service.payroll.PayrollPeriodInvalidator;
 import com.htttdn.hrm.service.rbac.AccountRoleAssignmentCommandService;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
@@ -71,6 +72,7 @@ public class EmploymentLifecycleService {
     private final EmployeeMapper employeeMapper;
     private final PayrollPeriodInvalidator payrollPeriodInvalidator;
     private final ResignationRequestRepository resignationRequestRepository;
+    private final LeaveRequestService leaveRequestService;
     private final Clock clock;
 
     /**
@@ -166,7 +168,8 @@ public class EmploymentLifecycleService {
 
     /**
      * Records the last working day and the status to take after it, leaving the employee working until
-     * then. Payroll, attendance and leave already stop at that day. Used by {@link #endEmployment} and,
+     * then. Payroll, attendance and leave already stop at that day; leave requests still open past it are
+     * cancelled. Used by {@link #endEmployment} and,
      * without the caller's permission checks, by an approved resignation, where {@code actor} is the approver.
      */
     public void scheduleEnd(
@@ -179,6 +182,7 @@ public class EmploymentLifecycleService {
         employee.setTerminationReason(terminationReason);
         employee.setScheduledEndStatus(endStatus);
         employee.setScheduledEndByAccount(actor);
+        leaveRequestService.cancelOpenRequestsAfter(employee.getId(), terminationDate);
     }
 
     /**
@@ -187,7 +191,7 @@ public class EmploymentLifecycleService {
      * approved resignation once its last working day has passed, where {@code actor} is the approver.
      *
      * <p>Các bước: đổi trạng thái + xóa lịch hẹn → đóng phân công chính ở ngày cuối → đóng lương, hồ sơ
-     * thuế, người phụ thuộc → khóa tài khoản ({@code DISABLED}), thu hồi mọi refresh token và thu hồi role
+     * thuế, người phụ thuộc → hủy đơn nghỉ nháp/chờ duyệt có ngày sau ngày cuối → khóa tài khoản ({@code DISABLED}), thu hồi mọi refresh token và thu hồi role
      * nghiệp vụ. Access token đang dùng vẫn chạy tới khi hết hạn (request không kiểm tra lại trạng thái
      * tài khoản), sau đó không làm mới được nữa.
      *
@@ -209,6 +213,7 @@ public class EmploymentLifecycleService {
         employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employeeId)
             .ifPresent(assignment -> closeAssignmentAtTermination(assignment, terminationDate));
         closePayrollInputsAtTermination(employeeId, terminationDate);
+        leaveRequestService.cancelOpenRequestsAfter(employeeId, terminationDate);
         accountRepository.findByEmployeeId(employeeId).ifPresent(account -> {
             account.setStatus(AccountStatus.DISABLED);
             refreshTokenService.revokeAll(account.getId());
