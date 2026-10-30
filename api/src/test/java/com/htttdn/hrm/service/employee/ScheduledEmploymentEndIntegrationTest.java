@@ -236,6 +236,37 @@ class ScheduledEmploymentEndIntegrationTest {
         assertEquals(ErrorCode.PAYROLL_PERIOD_LOCKED, error.getErrorCode());
     }
 
+    @Test
+    void changingALeaversDependentsSendsTheirLastCalculatedPeriodBackToDraft() {
+        LocalDate lastDay = lastMonth().atDay(10);
+        // Seeded periods paid since last month would refuse a dependent dated back there.
+        jdbc.update("UPDATE payroll_periods SET status = 'CANCELLED' WHERE tax_payment_date >= ?", lastMonth().atDay(1));
+        employmentLifecycleService.endEmployment(employeeId, EmploymentStatus.RESIGNED, lastDay, "Nghỉ");
+        var dependent = deductionsService.addDependent(employeeId,
+            new PayrollDeductionsService.DependentCommand("Con", null, lastMonth().atDay(1), null));
+        Long periodId = periodWithPayslip("CALCULATED");
+
+        // The last payslip counts dependents on the last working day, before the period's payment date.
+        deductionsService.endDependent(employeeId, dependent.id(), lastDay.minusDays(5));
+        entityManager.flush();
+
+        assertEquals("DRAFT", jdbc.queryForObject("SELECT status FROM payroll_periods WHERE id = ?", String.class, periodId));
+    }
+
+    @Test
+    void aLeaversDependentsAreFrozenOnceTheirLastPeriodIsApproved() {
+        LocalDate lastDay = lastMonth().atDay(10);
+        // Seeded periods paid since last month would refuse a dependent dated back there.
+        jdbc.update("UPDATE payroll_periods SET status = 'CANCELLED' WHERE tax_payment_date >= ?", lastMonth().atDay(1));
+        employmentLifecycleService.endEmployment(employeeId, EmploymentStatus.RESIGNED, lastDay, "Nghỉ");
+        periodWithPayslip("APPROVED");
+
+        ConflictException error = assertThrows(ConflictException.class, () -> deductionsService.addDependent(employeeId,
+            new PayrollDeductionsService.DependentCommand("Con", null, lastMonth().atDay(1), null)));
+
+        assertEquals(ErrorCode.PAYROLL_PERIOD_LOCKED, error.getErrorCode());
+    }
+
     private YearMonth lastMonth() {
         return YearMonth.from(today).minusMonths(1);
     }

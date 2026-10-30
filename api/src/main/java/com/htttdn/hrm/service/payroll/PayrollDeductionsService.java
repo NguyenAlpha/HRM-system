@@ -152,6 +152,7 @@ public class PayrollDeductionsService {
             throw new ConflictException(ErrorCode.CONFLICT, "Dependent already overlaps this effective period");
         }
         invalidator.invalidateTaxPaymentsBetween(command.effectiveFrom(), effectiveTo);
+        invalidateLastPayslip(employee, command.effectiveFrom(), effectiveTo);
         EmployeeTaxDependent created = dependentRepository.save(EmployeeTaxDependent.builder()
             .employee(employee)
             .fullName(command.fullName().trim())
@@ -175,7 +176,7 @@ public class PayrollDeductionsService {
      */
     @PreAuthorize("hasAuthority('compensation.manage')")
     public Dependent endDependent(Long employeeId, Long dependentId, LocalDate effectiveTo) {
-        requireEmployee(employeeId, "compensation.manage");
+        Employee employee = requireEmployee(employeeId, "compensation.manage");
         EmployeeTaxDependent current = dependentRepository.findById(dependentId)
             .filter(dependent -> dependent.getEmployee().getId().equals(employeeId))
             .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND,
@@ -186,8 +187,21 @@ public class PayrollDeductionsService {
         }
         // Chỉ phần bị cắt bớt (sau ngày kết thúc mới) thay đổi; getEffectiveTo() null → tới vô hạn.
         invalidator.invalidateTaxPaymentsBetween(effectiveTo.plusDays(1), current.getEffectiveTo());
+        invalidateLastPayslip(employee, effectiveTo.plusDays(1), current.getEffectiveTo());
         current.setEffectiveTo(effectiveTo);
         return toDependent(current);
+    }
+
+    /**
+     * Phiếu lương cuối của người nghỉ việc đếm người phụ thuộc tại ngày làm cuối, không tại ngày trả lương
+     * ({@code PayslipCalculator}): đổi người phụ thuộc quanh ngày đó cũng làm các kỳ có phiếu của họ từ ngày đó
+     * về {@code DRAFT}, hoặc bị từ chối khi kỳ đã duyệt.
+     */
+    private void invalidateLastPayslip(Employee employee, LocalDate from, @Nullable LocalDate to) {
+        LocalDate lastDay = employee.getTerminationDate();
+        if (lastDay != null && !lastDay.isBefore(from) && (to == null || !lastDay.isAfter(to))) {
+            invalidator.invalidateEmployeeFrom(employee.getId(), lastDay);
+        }
     }
 
     private static Profile toProfile(EmployeePayrollProfile profile) {

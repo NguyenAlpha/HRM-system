@@ -427,7 +427,7 @@ Trả [`Profile`](#profile--hồ-sơ-bảo-hiểmthuế) vừa tạo. Kỳ `CALC
 
 ## Người phụ thuộc
 
-Mỗi người phụ thuộc còn hiệu lực vào **ngày trả lương** của kỳ được giảm trừ một suất (người nghỉ việc trước ngày trả lương: tại ngày làm cuối). Vì vậy thay đổi người phụ thuộc ảnh hưởng các kỳ có `taxPaymentDate` nằm trong khoảng thay đổi, không theo tháng làm việc.
+Mỗi người phụ thuộc còn hiệu lực vào **ngày trả lương** của kỳ được giảm trừ một suất (người nghỉ việc trước ngày trả lương: tại ngày làm cuối). Vì vậy thay đổi người phụ thuộc ảnh hưởng các kỳ có `taxPaymentDate` nằm trong khoảng thay đổi, không theo tháng làm việc; với người đã có ngày làm cuối nằm trong khoảng thay đổi, thêm các kỳ có phiếu lương của họ từ ngày đó (đã tính → về `DRAFT`, đã duyệt → `409 PAYROLL_PERIOD_LOCKED`).
 
 ### GET `/api/compensation/employees/{employeeId}/tax-dependents`
 
