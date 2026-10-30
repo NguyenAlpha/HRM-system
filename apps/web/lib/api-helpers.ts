@@ -62,6 +62,8 @@ const ERROR_MESSAGES: Record<string, string> = {
     "Trong khoảng nghỉ có ngày đã chấm giờ vào nhưng chưa có giờ ra. Cần bổ sung giờ ra trước khi duyệt đơn nghỉ.",
   LEAVE_OVERLAPS_WORKED_TIME:
     "Khoảng nghỉ trùng với giờ nhân viên đã chấm công đi làm. Hãy từ chối đơn để nhân viên tạo lại đúng giờ nghỉ.",
+  ANNUAL_LEAVE_CROSSES_YEAR:
+    "Đơn phép năm phải nằm trong một năm, vì mỗi năm có hạn mức riêng. Hãy tách thành hai đơn: phần cuối năm và phần đầu năm sau.",
   LEAVE_SCHEDULE_CHANGED:
     "Lịch ca của nhân viên đã đổi sau khi tạo đơn nên số giờ nghỉ không còn khớp. Hãy từ chối đơn để nhân viên tạo lại.",
   LEAVE_DAY_TAKEN:

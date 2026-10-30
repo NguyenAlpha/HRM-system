@@ -72,7 +72,8 @@ public class LeaveRequestService {
      * @throws BusinessException kết thúc không sau bắt đầu, chọn cách trả lương khác mặc định mà thiếu
      *         {@code request.manage} (→ 400 {@code VALIDATION_ERROR}), hoặc khoảng nghỉ không có giờ làm
      *         theo lịch (→ 400 {@code LEAVE_OUTSIDE_WORK_SCHEDULE}), hoặc có ngày trước ngày vào làm hay sau ngày
-     *         làm việc cuối (→ 400 {@code LEAVE_OUTSIDE_EMPLOYMENT})
+     *         làm việc cuối (→ 400 {@code LEAVE_OUTSIDE_EMPLOYMENT}), hoặc phép năm vắt qua hai năm (→ 400
+     *         {@code ANNUAL_LEAVE_CROSSES_YEAR})
      * @throws com.htttdn.hrm.exception.ForbiddenException tạo đơn cho người khác (→ 403)
      * @throws ConflictException nghỉ phép năm vượt quỹ còn lại (→ 409 {@code INSUFFICIENT_LEAVE_BALANCE}), hoặc
      *         một ngày trong khoảng nghỉ đã có đơn chờ duyệt/đã duyệt khác (→ 409 {@code LEAVE_DAY_TAKEN})
@@ -243,6 +244,14 @@ public class LeaveRequestService {
     private void validateCommand(CreateLeaveCommand command) {
         if (!command.endAt().isAfter(command.startAt())) {
             throw validation("endAt must be after startAt", "endAt");
+        }
+        // The quota is per year and the whole request is charged to the year it starts in
+        // (LeaveEntitlementService), so leave over New Year is filed as one request per year.
+        if (command.leaveType() == LeaveType.ANNUAL
+            && LocalDate.ofInstant(command.startAt(), ClockConfig.BUSINESS_ZONE).getYear()
+                != LocalDate.ofInstant(command.endAt().minusNanos(1), ClockConfig.BUSINESS_ZONE).getYear()) {
+            throw new BusinessException(ErrorCode.ANNUAL_LEAVE_CROSSES_YEAR,
+                "Annual leave must start and end in the same year; file one request per year", "endAt");
         }
     }
 

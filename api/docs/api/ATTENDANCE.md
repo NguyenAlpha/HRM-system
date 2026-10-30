@@ -500,6 +500,7 @@ Cách trả lương của đơn **do server suy ra từ loại nghỉ**, không 
 | 400 | `VALIDATION_ERROR` | Request sai, `endAt` không sau `startAt`, hoặc `salaryTreatment` khác giá trị suy ra mà không có `request.manage` |
 | 400 | `LEAVE_OUTSIDE_WORK_SCHEDULE` | Khoảng thời gian không có phút công nào theo ca (ví dụ chỉ gồm Chủ nhật, ngày lễ hoặc giờ ngoài ca) |
 | 400 | `LEAVE_OUTSIDE_EMPLOYMENT` | Khoảng nghỉ có ngày trước ngày vào làm hoặc sau ngày làm việc cuối (kể cả ngày cuối đã hẹn nhưng chưa tới) |
+| 400 | `ANNUAL_LEAVE_CROSSES_YEAR` | Đơn `ANNUAL` có ngày ở hai năm khác nhau; tách thành một đơn cho mỗi năm |
 | 403 | `FORBIDDEN` | `employeeId` không thuộc account đang đăng nhập |
 | 404 | `EMPLOYEE_NOT_FOUND` | Nhân viên không tồn tại hoặc đã bị xóa mềm |
 | 409 | `INSUFFICIENT_LEAVE_BALANCE` | Đơn `ANNUAL` vượt số dư phép năm còn lại |
@@ -644,7 +645,7 @@ Mỗi nhân viên được **12 ngày phép năm** (Bộ luật Lao động 2019
 
 Không cộng phép theo thâm niên, không chuyển phép dư sang năm sau và HR không điều chỉnh tay. Hạn mức **không lưu trong database** mà được tính mỗi lần từ `employees.hire_date` và `employees.termination_date` (kể cả ngày cuối đã hẹn); số ngày quy ra phút theo `standard_work_minutes` của ca trong phân công chính đang mở, không có ca thì dùng 480 phút.
 
-Chỉ `ANNUAL` trừ vào số dư. `SICK`, `MATERNITY`, `UNPAID` và `OTHER` đi theo quy trình riêng và không ảnh hưởng hạn mức.
+Một đơn `ANNUAL` trừ vào hạn mức của năm chứa nó, nên đơn phải nằm trọn trong một năm; nghỉ qua Tết Dương lịch thì tạo hai đơn, ví dụ 31/12 và 02/01–04/01 (`400 ANNUAL_LEAVE_CROSSES_YEAR`). Chỉ `ANNUAL` trừ vào số dư. `SICK`, `MATERNITY`, `UNPAID` và `OTHER` đi theo quy trình riêng và không ảnh hưởng hạn mức.
 
 Khi kiểm tra, các đơn `PENDING` khác được tính như đã tiêu. Nếu không làm vậy thì ba đơn cùng chờ duyệt sẽ cùng qua được kiểm tra rồi mới vượt hạn mức sau khi duyệt hết.
 

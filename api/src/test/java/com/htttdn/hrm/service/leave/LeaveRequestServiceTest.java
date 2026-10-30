@@ -311,6 +311,38 @@ class LeaveRequestServiceTest {
     }
 
     @Test
+    void annualLeaveOverNewYearIsFiledAsOneRequestPerYear() {
+        // 31/12/2026 to 04/01/2027, Vietnam time: two quota years in one request.
+        BusinessException thrown = assertThrows(BusinessException.class,
+            () -> service().createDraft(annualLeave("2026-12-31T01:00:00Z", "2027-01-04T10:00:00Z")));
+
+        assertEquals(ErrorCode.ANNUAL_LEAVE_CROSSES_YEAR, thrown.getErrorCode());
+        verify(leaveRequestRepository, never()).save(any());
+    }
+
+    @Test
+    void annualLeaveEndingAtMidnightOnNewYearStaysInTheOldYear() {
+        stubSelfServiceDraft();
+
+        // Ends at 00:00 on 01/01/2027 Vietnam time, an open bound: nothing is taken in 2027.
+        var result = service().createDraft(annualLeave("2026-12-31T01:00:00Z", "2026-12-31T17:00:00Z"));
+
+        assertEquals(LeaveRequestStatus.DRAFT, result.status());
+    }
+
+    @Test
+    void sickLeaveOverNewYearIsOneRequest() {
+        stubSelfServiceDraft();
+
+        // Sick leave never draws on the annual quota, so the year it falls in does not matter.
+        var result = service().createDraft(new LeaveRequestService.CreateLeaveCommand(
+            1L, LeaveType.SICK, null,
+            Instant.parse("2026-12-31T01:00:00Z"), Instant.parse("2027-01-04T10:00:00Z"), "Flu", null));
+
+        assertEquals(LeaveRequestStatus.DRAFT, result.status());
+    }
+
+    @Test
     void draftBeyondTheAnnualBalanceIsRejectedBeforeItIsSaved() {
         stubOwnEmployee(12 * 480);
         doThrow(new ConflictException(ErrorCode.INSUFFICIENT_LEAVE_BALANCE, "not enough"))
