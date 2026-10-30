@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.htttdn.hrm.service.attendance.AttendanceService;
 import com.htttdn.hrm.service.payroll.PayrollPeriodInvalidator;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -51,6 +52,7 @@ public class EmployeeAssignmentService {
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final PayrollPeriodInvalidator payrollPeriodInvalidator;
+    private final AttendanceService attendanceService;
     private final EmployeeMapper employeeMapper;
     private final Clock clock;
 
@@ -96,7 +98,10 @@ public class EmployeeAssignmentService {
             .ifPresent(current -> closeCurrentAssignment(current, request.effectiveFrom()));
         employeeAssignmentRepository.flush();
 
-        return employeeMapper.toAssignmentResponse(savePrimaryAssignment(employee, request, resources, currentAccountProvider.account()));
+        EmployeeAssignment assignment = savePrimaryAssignment(employee, request, resources, currentAccountProvider.account());
+        // Days prepared under the old assignment and not yet recorded take the new shift.
+        attendanceService.rescheduleUntouchedDays(employeeId, request.effectiveFrom());
+        return employeeMapper.toAssignmentResponse(assignment);
     }
 
     @PreAuthorize("hasAuthority('employee.assignment.read')")

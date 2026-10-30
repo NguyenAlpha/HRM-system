@@ -30,7 +30,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
         """)
     List<Employee> findEmployedDuring(@Param("from") LocalDate from, @Param("to") LocalDate to);
 
-    List<Employee> findByEmploymentStatusInAndDeletedAtIsNull(List<EmploymentStatus> employmentStatuses);
 
     Optional<Employee> findByEmployeeCode(String employeeCode);
 

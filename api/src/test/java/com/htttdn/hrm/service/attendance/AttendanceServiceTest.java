@@ -107,8 +107,23 @@ class AttendanceServiceTest {
                 record.getScheduledStartAt(), record.getScheduledEndAt(), 480)));
         stubApproverOf(record);
 
-        assertThrows(BusinessException.class, () -> overtimeService().approveOvertime(1L,
+        BusinessException thrown = assertThrows(BusinessException.class, () -> overtimeService().approveOvertime(1L,
             new ApproveOvertimeRequest(60, new java.math.BigDecimal("1.5"))));
+        assertEquals(ErrorCode.OVERTIME_EXCEEDS_EXTRA_TIME, thrown.getErrorCode());
+    }
+
+    @Test
+    void overtimeOfSomeoneWhoHasLeftStillWaitsForTheirApprover() {
+        Employee manager = Employee.builder().id(5L).build();
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).employee(manager).build());
+        AttendanceRecord leaversDay = record(LocalDate.of(2026, 1, 10));
+        leaversDay.setCheckOutAt(Instant.now());
+        when(attendanceRecordRepository.findOvertimeAwaitingDecision()).thenReturn(List.of(leaversDay));
+        when(approverResolver.decidedBy(manager, List.of(leaversDay.getEmployee()))).thenReturn(List.of(2L));
+
+        var pending = overtimeService().listOvertimeAwaitingDecision();
+
+        assertEquals(1, pending.size());
     }
 
     @Test
@@ -163,8 +178,92 @@ class AttendanceServiceTest {
 
         BusinessException error = assertThrows(BusinessException.class,
             () -> service().prepareMonth(2026, 1));
+        // A Vietnamese sentence the web shows as is, naming who and which day lacks a schedule.
+        assertEquals(ErrorCode.ATTENDANCE_SCHEDULE_MISSING, error.getErrorCode());
         org.junit.jupiter.api.Assertions.assertTrue(error.getMessage().contains("EMP002"));
-        org.junit.jupiter.api.Assertions.assertTrue(error.getMessage().contains(date.toString()));
+        org.junit.jupiter.api.Assertions.assertTrue(error.getMessage().contains("15/01/2026"));
+    }
+
+    @Test
+    void adjustingADayClearsItsOvertimeDecision() {
+        LocalDate date = LocalDate.of(2026, 1, 15);
+        AttendanceRecord record = record(date);
+        record.setOvertimeMinutes(120);
+        record.setOvertimeMultiplier(new java.math.BigDecimal("1.5"));
+        record.setOvertimeApprovedAt(Instant.now());
+        when(attendanceRecordRepository.getRequired(1L)).thenReturn(record);
+        when(attendanceRecordRepository.getRequiredForUpdate(1L)).thenReturn(record);
+
+        // Marked absent after the overtime was approved: no overtime may be paid for that day any more.
+        service().adjust(1L, new AdjustAttendanceRequest(0, 0, 0, 0, AttendanceStatus.UNAUTHORIZED_ABSENCE, "Vắng"));
+
+        assertEquals(0, record.getOvertimeMinutes());
+        assertEquals(null, record.getOvertimeApprovedAt());
+    }
+
+    @Test
+    void markingTheRestOfAHalfDayLeaveAbsentKeepsThePaidLeave() {
+        LocalDate date = LocalDate.of(2026, 1, 15);
+        AttendanceRecord record = record(date);
+        record.setStatus(AttendanceStatus.MISSING_PUNCH);
+        record.setCheckInAt(null);
+        record.setLeaveRequest(LeaveRequest.builder().id(5L).salaryTreatment(LeaveSalaryTreatment.EMPLOYER_PAID).build());
+        record.setLeaveMinutes(240);
+        when(attendanceRecordRepository.getRequired(1L)).thenReturn(record);
+        when(attendanceRecordRepository.getRequiredForUpdate(1L)).thenReturn(record);
+
+        service().adjust(1L, new AdjustAttendanceRequest(0, 0, 0, 0, AttendanceStatus.UNAUTHORIZED_ABSENCE, "Chiều vắng"));
+
+        assertEquals(AttendanceStatus.UNAUTHORIZED_ABSENCE, record.getStatus());
+        assertEquals(240, record.getPayableMinutes());
+    }
+
+    @Test
+    void leaveStatusesAreNotSetByHand() {
+        LocalDate date = LocalDate.of(2026, 1, 15);
+        AttendanceRecord record = record(date);
+        record.setStatus(AttendanceStatus.MISSING_PUNCH);
+        when(attendanceRecordRepository.getRequired(1L)).thenReturn(record);
+        when(attendanceRecordRepository.getRequiredForUpdate(1L)).thenReturn(record);
+
+        BusinessException thrown = assertThrows(BusinessException.class, () -> service().adjust(1L,
+            new AdjustAttendanceRequest(0, 480, 0, 0, AttendanceStatus.PAID_LEAVE, "Nghỉ phép")));
+
+        assertEquals("status", thrown.getField());
+    }
+
+    @Test
+    void aFullDayOfApprovedLeaveIsNotAdjusted() {
+        LocalDate date = LocalDate.of(2026, 1, 15);
+        AttendanceRecord record = record(date);
+        record.setStatus(AttendanceStatus.PAID_LEAVE);
+        when(attendanceRecordRepository.getRequired(1L)).thenReturn(record);
+        when(attendanceRecordRepository.getRequiredForUpdate(1L)).thenReturn(record);
+
+        ConflictException thrown = assertThrows(ConflictException.class, () -> service().adjust(1L,
+            new AdjustAttendanceRequest(0, 0, 0, 0, AttendanceStatus.UNAUTHORIZED_ABSENCE, "Vắng")));
+
+        assertEquals(ErrorCode.ATTENDANCE_FULL_DAY_LEAVE, thrown.getErrorCode());
+    }
+
+    @Test
+    void aNewAssignmentGivesUntouchedPreparedDaysItsShiftAndDropsDaysWithoutOne() {
+        LocalDate kept = LocalDate.of(2026, 1, 20);
+        LocalDate dropped = LocalDate.of(2026, 1, 21);
+        AttendanceRecord first = record(kept);
+        AttendanceRecord second = record(dropped);
+        WorkShift afternoon = WorkShift.builder().id(4L).build();
+        when(attendanceRecordRepository.findUntouchedFromForUpdate(2L, kept)).thenReturn(List.of(first, second));
+        when(attendanceCalendarService.scheduleFor(2L, kept, dropped)).thenReturn(List.of(
+            new AttendanceCalendarService.ScheduledDay(kept, afternoon,
+                Instant.parse("2026-01-20T06:00:00Z"), Instant.parse("2026-01-20T14:00:00Z"), 420)));
+
+        service().rescheduleUntouchedDays(2L, kept);
+
+        assertEquals(afternoon, first.getShift());
+        assertEquals(Instant.parse("2026-01-20T06:00:00Z"), first.getScheduledStartAt());
+        assertEquals(420, first.getScheduledMinutes());
+        verify(attendanceRecordRepository).delete(second);
     }
 
     @Test
@@ -404,7 +503,7 @@ class AttendanceServiceTest {
     }
 
     private OvertimeService overtimeService() {
-        return new OvertimeService(attendanceRecordRepository, employeeRepository, currentAccountProvider,
+        return new OvertimeService(attendanceRecordRepository, currentAccountProvider,
             attendanceCalendarService, approverResolver, editGuard(), new AttendanceMapper(), Clock.system(ClockConfig.BUSINESS_ZONE));
     }
 

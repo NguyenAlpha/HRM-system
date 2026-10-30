@@ -33,15 +33,9 @@ public class AttendanceCalendarService {
     private final CompanyHolidayRepository holidayRepository;
 
     public List<ScheduledDay> scheduleFor(Long employeeId, LocalDate from, LocalDate to) {
-        Set<LocalDate> holidays = holidayRepository.findByHolidayDateBetweenOrderByHolidayDate(from, to)
-            .stream().map(CompanyHoliday::getHolidayDate).collect(Collectors.toSet());
         List<EmployeeAssignment> assignments = assignmentRepository.findByEmployeeIdOrderByEffectiveFromDesc(employeeId);
         List<ScheduledDay> days = new ArrayList<>();
-        for (LocalDate date = from; !date.isAfter(to); date = date.plusDays(1)) {
-            if (date.getDayOfWeek() == DayOfWeek.SUNDAY || holidays.contains(date)) {
-                continue;
-            }
-            LocalDate workDate = date;
+        for (LocalDate workDate : companyWorkDates(from, to)) {
             EmployeeAssignment assignment = assignments.stream()
                 .filter(item -> Boolean.TRUE.equals(item.getIsPrimary())
                     && !item.getEffectiveFrom().isAfter(workDate)

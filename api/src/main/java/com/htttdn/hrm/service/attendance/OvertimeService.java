@@ -4,9 +4,10 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -18,12 +19,10 @@ import com.htttdn.hrm.dto.response.attendance.OvertimeApprovalItemResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.AttendanceRecord;
 import com.htttdn.hrm.entity.Employee;
-import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.entity.enums.LeaveSalaryTreatment;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
-import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 import com.htttdn.hrm.service.employee.ApproverResolver;
 
@@ -43,7 +42,6 @@ import lombok.RequiredArgsConstructor;
 public class OvertimeService {
 
     private final AttendanceRecordRepository attendanceRecordRepository;
-    private final EmployeeRepository employeeRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final AttendanceCalendarService attendanceCalendarService;
     private final ApproverResolver approverResolver;
@@ -65,8 +63,9 @@ public class OvertimeService {
      * @throws com.htttdn.hrm.exception.ResourceNotFoundException không có ngày công (→ 404)
      * @throws com.htttdn.hrm.exception.ConflictException ngày thuộc kỳ lương đã chốt (→ 409)
      * @throws ForbiddenException người đăng nhập không phải người duyệt của nhân viên (→ 403)
-     * @throws BusinessException chưa có giờ ra, số phút vượt phần làm dư, hoặc hệ số thấp hơn mức tối
-     *         thiểu của ngày (→ 400)
+     * @throws BusinessException chưa có giờ ra (→ 400 {@code OVERTIME_ATTENDANCE_INCOMPLETE}), số phút vượt phần
+     *         làm dư (→ 400 {@code OVERTIME_EXCEEDS_EXTRA_TIME}), hoặc hệ số thấp hơn mức tối thiểu của ngày
+     *         (→ 400 {@code VALIDATION_ERROR})
      */
     @PreAuthorize("isAuthenticated()")
     public AttendanceRecordResponse approveOvertime(Long attendanceId, ApproveOvertimeRequest request) {
@@ -83,9 +82,13 @@ public class OvertimeService {
         int regularWorkedMinutes = scheduledDay
             ? Math.min(record.getWorkedMinutes(), Math.max(0, record.getPayableMinutes() - paidLeaveMinutes)) : 0;
         int availableMinutes = Math.max(0, record.getWorkedMinutes() - regularWorkedMinutes);
-        if (record.getCheckOutAt() == null || request.overtimeMinutes() > availableMinutes) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
-                "Overtime requires completed attendance and cannot include regular payable time");
+        if (record.getCheckOutAt() == null) {
+            throw new BusinessException(ErrorCode.OVERTIME_ATTENDANCE_INCOMPLETE, "Overtime requires completed attendance");
+        }
+        if (request.overtimeMinutes() > availableMinutes) {
+            throw new BusinessException(ErrorCode.OVERTIME_EXCEEDS_EXTRA_TIME,
+                "Overtime cannot include regular payable time: at most " + availableMinutes + " minutes",
+                "overtimeMinutes");
         }
         // Hệ số tối thiểu theo loại ngày: lễ 300%, Chủ nhật 200%, ngày thường 150%.
         BigDecimal minimumMultiplier = attendanceCalendarService.isCompanyHoliday(record.getWorkDate())
@@ -122,20 +125,18 @@ public class OvertimeService {
         if (self == null) {
             return List.of();
         }
-        // Xét mọi nhân viên đang làm, giữ người mà self là người duyệt. Mỗi người tốn vài query
-        // (ApproverResolver.approverFor) — chấp nhận được với số nhân viên của một công ty.
-        List<Employee> employed = employeeRepository.findByEmploymentStatusInAndDeletedAtIsNull(
-            List.of(EmploymentStatus.PROBATION, EmploymentStatus.ACTIVE));
-        List<Long> employeeIds = new ArrayList<>(approverResolver.decidedBy(self, employed));
+        // findOvertimeAwaitingDecision: có giờ ra, chưa có overtimeApprovedAt, workedMinutes > payableMinutes,
+        // kể cả của người đã nghỉ việc (ngày cuối vẫn chờ quyết định). Giữ người mà self là người duyệt; mỗi
+        // người tốn vài query (ApproverResolver.approverFor), chỉ xét người đang có ngày chờ.
+        List<AttendanceRecord> awaiting = attendanceRecordRepository.findOvertimeAwaitingDecision();
+        List<Employee> employees = awaiting.stream().map(AttendanceRecord::getEmployee).distinct().toList();
+        Set<Long> employeeIds = new HashSet<>(approverResolver.decidedBy(self, employees));
         // Company Owner không có ai ở trên → tự quyết định tăng ca của chính mình.
         if (approverResolver.approverFor(self).isEmpty() && approverResolver.isTopManagement(self)) {
             employeeIds.add(self.getId());
         }
-        if (employeeIds.isEmpty()) {
-            return List.of();
-        }
-        // findOvertimeAwaitingDecision: có giờ ra, chưa có overtimeApprovedAt, workedMinutes > payableMinutes.
-        return attendanceRecordRepository.findOvertimeAwaitingDecision(employeeIds).stream()
+        return awaiting.stream()
+            .filter(record -> employeeIds.contains(record.getEmployee().getId()))
             .map(record -> new OvertimeApprovalItemResponse(
                 attendanceMapper.toResponse(record),
                 record.getEmployee().getEmployeeCode(),

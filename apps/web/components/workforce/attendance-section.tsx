@@ -625,7 +625,8 @@ function AbsenceDialog({ record, busy, onClose, onSubmit }: {
             <DialogTitle>Ghi vắng không phép ngày {formatDate(record.workDate)}</DialogTitle>
             <DialogDescription>
               Hiện tại: {ATTENDANCE_STATUS_LABELS[record.status]}, {record.payableMinutes}/{record.scheduledMinutes} phút.
-              Ngày này sẽ không được trả lương. Nghỉ có lương phải đi qua quy trình duyệt đơn.
+              Phần chưa làm của ngày này sẽ không được trả lương; phần nghỉ có lương đã duyệt vẫn được giữ.
+              Nghỉ có lương phải đi qua quy trình duyệt đơn.
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4 grid gap-1.5">

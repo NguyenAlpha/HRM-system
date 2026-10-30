@@ -35,6 +35,7 @@ import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.repository.WorkLocationRepository;
 import com.htttdn.hrm.repository.WorkShiftRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
+import com.htttdn.hrm.service.attendance.AttendanceService;
 import com.htttdn.hrm.service.payroll.PayrollPeriodInvalidator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -62,6 +63,7 @@ class EmployeeAssignmentServiceTest {
     @Mock private AccountRepository accountRepository;
     @Mock private CurrentAccountProvider currentAccountProvider;
     @Mock private EmployeeAccessScopeService employeeAccessScopeService;
+    @Mock private AttendanceService attendanceService;
 
     @BeforeEach
     void setUp() {
@@ -125,6 +127,7 @@ class EmployeeAssignmentServiceTest {
             currentAccountProvider,
             employeeAccessScopeService,
             new PayrollPeriodInvalidator(payrollPeriodRepository, payslipRepository, payslipItemRepository),
+            attendanceService,
             new EmployeeMapper(employeeAssignmentRepository, accountRepository, Clock.systemDefaultZone()),
             Clock.systemDefaultZone()
         );

@@ -21,20 +21,35 @@ import com.htttdn.hrm.exception.ResourceNotFoundException;
 
 public interface AttendanceRecordRepository extends JpaRepository<AttendanceRecord, Long> {
 
-    /** Completed days with time beyond the payable minutes that nobody has decided on yet. */
+    /**
+     * Completed days with time beyond the payable minutes that nobody has decided on yet, of every employee
+     * not deleted, including those who have left since: their last days still wait for a decision.
+     */
     @Query("""
         SELECT record
         FROM AttendanceRecord record
-        JOIN FETCH record.employee
-        WHERE record.employee.id IN :employeeIds
+        JOIN FETCH record.employee employee
+        WHERE employee.deletedAt IS NULL
           AND record.checkOutAt IS NOT NULL
           AND record.overtimeApprovedAt IS NULL
           AND record.workedMinutes > record.payableMinutes
         ORDER BY record.workDate DESC
         """)
-    List<AttendanceRecord> findOvertimeAwaitingDecision(@Param("employeeIds") List<Long> employeeIds);
+    List<AttendanceRecord> findOvertimeAwaitingDecision();
 
-    Optional<AttendanceRecord> findByEmployeeIdAndWorkDate(Long employeeId, LocalDate workDate);
+    /** Prepared days from {@code from} on with nothing recorded yet: no punches, no leave, still MISSING_PUNCH. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT record
+        FROM AttendanceRecord record
+        WHERE record.employee.id = :employeeId
+          AND record.workDate >= :from
+          AND record.status = com.htttdn.hrm.entity.enums.AttendanceStatus.MISSING_PUNCH
+          AND record.checkInAt IS NULL
+          AND record.leaveRequest IS NULL
+        ORDER BY record.workDate
+        """)
+    List<AttendanceRecord> findUntouchedFromForUpdate(@Param("employeeId") Long employeeId, @Param("from") LocalDate from);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT record FROM AttendanceRecord record WHERE record.employee.id = :employeeId AND record.workDate = :workDate")

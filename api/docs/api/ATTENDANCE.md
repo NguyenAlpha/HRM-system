@@ -167,7 +167,9 @@ POST /api/attendance/prepare?year=2026&month=1
 }
 ```
 
-API kiểm tra mọi nhân viên có thời gian làm việc trong tháng. Nếu thiếu phân công chính hoặc ca ở ngày làm việc nào, API trả `400 VALIDATION_ERROR` kèm mã nhân viên và ngày đó; sửa phân công rồi gọi lại.
+API kiểm tra mọi nhân viên có thời gian làm việc trong tháng. Nếu thiếu phân công chính hoặc ca ở ngày làm việc nào, API trả `400 ATTENDANCE_SCHEDULE_MISSING` với câu tiếng Việt nêu mã, tên nhân viên và ngày đó; sửa phân công rồi gọi lại.
+
+Khi một phân công chính mới có hiệu lực (`POST /api/employees/{employeeId}/assignments`), các ngày công đã tạo sẵn từ ngày hiệu lực trở đi mà chưa có gì (chưa chấm giờ, chưa gắn đơn nghỉ) lấy lại ca, giờ và số phút theo phân công mới; phân công mới không có ca thì các ngày đó bị xóa. Ngày đã có dữ liệu giữ nguyên.
 
 ### Tự động chuẩn bị
 
@@ -181,7 +183,8 @@ Backend tự làm việc tương tự cho **tháng hiện tại** (giờ `Asia/H
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
-| 400 | `VALIDATION_ERROR` | Tham số sai hoặc nhân viên thiếu phân công/ca |
+| 400 | `VALIDATION_ERROR` | Tham số sai |
+| 400 | `ATTENDANCE_SCHEDULE_MISSING` | Nhân viên thiếu phân công chính hoặc ca ở một ngày làm việc |
 | 403 | `FORBIDDEN` | Không có `attendance.manage` phạm vi `COMPANY` |
 | 409 | `PAYROLL_PERIOD_LOCKED` | Tháng thuộc kỳ lương đã duyệt, đã trả hoặc đã khóa |
 
@@ -231,14 +234,15 @@ Trả `AttendanceRecordResponse` (xem [GET `/api/attendance/{id}`](#get-apiatten
 | 400 | `VALIDATION_ERROR` | Vi phạm ràng buộc ở bảng trên, nhân viên chưa vào làm/đã nghỉ việc, hoặc không có phân công chính ngày đó |
 | 403 | `FORBIDDEN` | Không có `attendance.manage` hoặc nhân viên ngoài scope |
 | 404 | `EMPLOYEE_NOT_FOUND` | Nhân viên không tồn tại |
-| 409 | `CONFLICT` | Ngày nghỉ cả ngày theo đơn đã duyệt, hoặc giờ làm trùng đơn nghỉ nửa ngày đã duyệt |
+| 409 | `ATTENDANCE_FULL_DAY_LEAVE` | Ngày nghỉ cả ngày theo đơn đã duyệt |
+| 409 | `ATTENDANCE_OVERLAPS_LEAVE` | Giờ làm trùng đơn nghỉ nửa ngày đã duyệt |
 | 409 | `PAYROLL_PERIOD_LOCKED` | Ngày thuộc kỳ lương đã duyệt, đã trả hoặc đã khóa |
 
 ---
 
 ## PUT `/api/attendance/{id}`
 
-HR ghi đè trực tiếp số phút và trạng thái của một bản ghi công. Web chỉ dùng API này để ghi **vắng không phép**; ngày nhân viên có đi làm thì nên nhập giờ vào/ra qua [`POST /api/attendance/punches`](#post-apiattendancepunches) để hệ thống tự tính phút và duyệt được tăng ca. Nghỉ có lương phải đi qua quy trình duyệt đơn nghỉ, không nhập tay ở đây.
+HR ghi đè trực tiếp số phút và trạng thái của một bản ghi công. Web chỉ dùng API này để ghi **vắng không phép**; ngày nhân viên có đi làm thì nên nhập giờ vào/ra qua [`POST /api/attendance/punches`](#post-apiattendancepunches) để hệ thống tự tính phút và duyệt được tăng ca. Nghỉ có lương phải đi qua quy trình duyệt đơn nghỉ, không nhập tay ở đây: `status` không nhận các trạng thái nghỉ (`PAID_LEAVE`, `UNPAID_LEAVE`, `SICK_LEAVE`, `MATERNITY_LEAVE`) và ngày nghỉ trọn ca đã duyệt không sửa được. Ngày có đơn nghỉ một phần giữ phần nghỉ có lương đã duyệt: `payableMinutes` được nâng lên bằng phần đó nếu gửi thấp hơn, kể cả khi ghi vắng không phép cho phần còn lại. Quyết định tăng ca cũ của ngày bị xóa, vì các con số đã đổi.
 
 ### Request
 
@@ -261,7 +265,7 @@ Ví dụ ngày vắng không phép:
 | `payableMinutes` | int | ✅ | ≥ 0, không vượt `scheduledMinutes`; bằng 0 khi `UNAUTHORIZED_ABSENCE` |
 | `lateMinutes` | int | ✅ | ≥ 0 |
 | `earlyLeaveMinutes` | int | ✅ | ≥ 0 |
-| `status` | enum | ✅ | Khác `MISSING_PUNCH` |
+| `status` | enum | ✅ | Khác `MISSING_PUNCH` và các trạng thái nghỉ |
 | `note` | string | ✅ | Lý do điều chỉnh, không rỗng |
 
 ### Response `200 OK`
@@ -273,6 +277,7 @@ Trả `AttendanceRecordResponse` sau điều chỉnh.
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Vi phạm ràng buộc ở bảng trên |
+| 409 | `ATTENDANCE_FULL_DAY_LEAVE` | Ngày nghỉ trọn ca theo đơn đã duyệt |
 | 403 | `FORBIDDEN` | Không có `attendance.manage` hoặc nhân viên ngoài scope |
 | 404 | `ATTENDANCE_NOT_FOUND` | Bản ghi công không tồn tại |
 | 409 | `PAYROLL_PERIOD_LOCKED` | Ngày thuộc kỳ lương đã duyệt, đã trả hoặc đã khóa |
@@ -307,7 +312,9 @@ Trả `AttendanceRecordResponse` với `overtimeMinutes`, `overtimeMultiplier` v
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
-| 400 | `VALIDATION_ERROR` | Ngày chưa chấm ra, số phút vượt phần làm ngoài công thường, hoặc hệ số dưới mức tối thiểu |
+| 400 | `OVERTIME_ATTENDANCE_INCOMPLETE` | Ngày chưa chấm ra |
+| 400 | `OVERTIME_EXCEEDS_EXTRA_TIME` | Số phút vượt phần làm ngoài công thường (`field` là `overtimeMinutes`) |
+| 400 | `VALIDATION_ERROR` | Hệ số dưới mức tối thiểu |
 | 403 | `FORBIDDEN` | Người gọi không phải người duyệt của nhân viên |
 | 404 | `ATTENDANCE_NOT_FOUND` | Bản ghi công không tồn tại |
 
@@ -315,7 +322,7 @@ Trả `AttendanceRecordResponse` với `overtimeMinutes`, `overtimeMultiplier` v
 
 ## GET `/api/attendance/overtime/pending`
 
-Các ngày đã chấm ra, có giờ làm vượt phần công được trả (`workedMinutes > payableMinutes`) và chưa có quyết định tăng ca, của những nhân viên mà người gọi là [người duyệt](#người-duyệt). Chủ sở hữu thấy cả ngày của chính mình. Ngày mới nhất trước.
+Các ngày đã chấm ra, có giờ làm vượt phần công được trả (`workedMinutes > payableMinutes`) và chưa có quyết định tăng ca, của những nhân viên mà người gọi là [người duyệt](#người-duyệt), kể cả người đã nghỉ việc (khi đó người duyệt là Giám đốc, vì phân công đã đóng). Chủ sở hữu thấy cả ngày của chính mình. Ngày mới nhất trước.
 
 ```json
 {

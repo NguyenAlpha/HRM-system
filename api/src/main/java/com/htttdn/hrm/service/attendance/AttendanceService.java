@@ -4,8 +4,11 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.htttdn.hrm.config.ClockConfig;
@@ -23,6 +26,7 @@ import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AttendanceRecord;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.enums.AttendanceStatus;
+import com.htttdn.hrm.entity.enums.LeaveSalaryTreatment;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
@@ -61,6 +65,7 @@ public class AttendanceService {
     /** Set by an approved leave covering the whole day; changed only through the leave workflow. */
     private static final Set<AttendanceStatus> FULL_DAY_LEAVE = Set.of(AttendanceStatus.PAID_LEAVE,
         AttendanceStatus.UNPAID_LEAVE, AttendanceStatus.MATERNITY_LEAVE, AttendanceStatus.SICK_LEAVE);
+    private static final DateTimeFormatter DISPLAY_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final EmployeeRepository employeeRepository;
@@ -87,7 +92,8 @@ public class AttendanceService {
      *         {@code attendance.manage} (→ 403)
      * @throws com.htttdn.hrm.exception.ConflictException tháng thuộc kỳ lương đã duyệt/trả/khóa
      *         (→ 409 {@code PAYROLL_PERIOD_LOCKED})
-     * @throws BusinessException một nhân viên thiếu phân công chính hoặc ca vào ngày làm việc (→ 400)
+     * @throws BusinessException một nhân viên thiếu phân công chính hoặc ca vào ngày làm việc (→ 400
+     *         {@code ATTENDANCE_SCHEDULE_MISSING}, câu tiếng Việt nêu nhân viên và ngày)
      */
     @PreAuthorize("hasAuthority('attendance.manage')")
     public int prepareMonth(int year, int month) {
@@ -147,10 +153,8 @@ public class AttendanceService {
         try {
             scheduledDays = attendanceCalendarService.scheduleFor(employee.getId(), employedFrom, employedTo);
         } catch (BusinessException error) {
-            // scheduleFor ném lỗi khi phân công chính không có ca; ném lại kèm mã nhân viên.
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
-                "Cannot prepare attendance for employee " + employee.getEmployeeCode()
-                    + " (ID " + employee.getId() + "): " + error.getMessage());
+            // scheduleFor ném lỗi khi phân công chính không có ca; ném lại kèm tên nhân viên.
+            throw scheduleMissing(employee, "phân công chính chưa có ca làm việc");
         }
         // scheduleFor bỏ qua ngày không có phân công chính → so với ngày làm việc của công ty để
         // phát hiện khoảng trống phân công.
@@ -158,9 +162,7 @@ public class AttendanceService {
             .map(AttendanceCalendarService.ScheduledDay::workDate).collect(Collectors.toSet());
         for (LocalDate date : attendanceCalendarService.companyWorkDates(employedFrom, employedTo)) {
             if (!scheduledDates.contains(date)) {
-                throw new BusinessException(ErrorCode.VALIDATION_ERROR,
-                    "Cannot prepare attendance for employee " + employee.getEmployeeCode()
-                        + " (ID " + employee.getId() + "): missing primary assignment and work shift on " + date);
+                throw scheduleMissing(employee, "thiếu phân công chính và ca làm việc ngày " + date.format(DISPLAY_DATE));
             }
         }
         // Ngày đã có bản ghi (đã chấm giờ, đã áp đơn nghỉ, hay tạo ở lần chạy trước) giữ nguyên.
@@ -175,6 +177,47 @@ public class AttendanceService {
             created++;
         }
         return created;
+    }
+
+    /** Lỗi tạo công nêu rõ nhân viên, để HR biết cần bổ sung phân công/ca cho ai (web hiện nguyên câu này). */
+    private static BusinessException scheduleMissing(Employee employee, String problem) {
+        String who = employee.getFullName() == null ? employee.getEmployeeCode()
+            : employee.getEmployeeCode() + " - " + employee.getFullName();
+        return new BusinessException(ErrorCode.ATTENDANCE_SCHEDULE_MISSING,
+            "Chưa tạo được công cho nhân viên " + who + ": " + problem + ".");
+    }
+
+    /**
+     * Một phân công chính mới có hiệu lực từ {@code from}: các ngày công đã tạo sẵn mà chưa có gì (chưa chấm
+     * giờ, chưa gắn đơn nghỉ) lấy lại lịch theo phân công mới, vì {@link #prepareMonth} bỏ qua ngày đã có bản
+     * ghi. Ngày không còn lịch (phân công mới không có ca) thì xóa, lần tạo công sau sẽ báo thiếu ca. Ngày đã
+     * có dữ liệu giữ nguyên lịch cũ.
+     *
+     * <p>Không có {@code @PreAuthorize}: chỉ {@code EmployeeAssignmentService} gọi, sau khi đã kiểm tra quyền.
+     */
+    public void rescheduleUntouchedDays(Long employeeId, LocalDate from) {
+        List<AttendanceRecord> untouched = attendanceRecordRepository.findUntouchedFromForUpdate(employeeId, from);
+        if (untouched.isEmpty()) {
+            return;
+        }
+        Map<LocalDate, AttendanceCalendarService.ScheduledDay> schedule;
+        try {
+            schedule = attendanceCalendarService.scheduleFor(employeeId, from, untouched.getLast().getWorkDate())
+                .stream().collect(Collectors.toMap(AttendanceCalendarService.ScheduledDay::workDate, Function.identity()));
+        } catch (BusinessException noShift) {
+            schedule = Map.of();
+        }
+        for (AttendanceRecord record : untouched) {
+            AttendanceCalendarService.ScheduledDay day = schedule.get(record.getWorkDate());
+            if (day == null) {
+                attendanceRecordRepository.delete(record);
+                continue;
+            }
+            record.setShift(day.shift());
+            record.setScheduledStartAt(day.startAt());
+            record.setScheduledEndAt(day.endAt());
+            record.setScheduledMinutes(day.minutes());
+        }
     }
 
     /**
@@ -194,8 +237,9 @@ public class AttendanceService {
      * @throws BusinessException giờ vào không thuộc ngày công, giờ ra không sau giờ vào hoặc quá 24 giờ,
      *         nhân viên chưa vào làm/đã nghỉ, hoặc không có phân công chính ngày đó (→ 400)
      * @throws ResourceNotFoundException nhân viên không tồn tại hoặc đã xóa mềm (→ 404)
-     * @throws com.htttdn.hrm.exception.ConflictException kỳ lương đã chốt, ngày nghỉ trọn ngày đã duyệt,
-     *         hoặc giờ làm chồng lên khoảng nghỉ đã duyệt (→ 409)
+     * @throws com.htttdn.hrm.exception.ConflictException kỳ lương đã chốt, ngày nghỉ trọn ngày đã duyệt
+     *         (→ 409 {@code ATTENDANCE_FULL_DAY_LEAVE}), hoặc giờ làm chồng lên khoảng nghỉ đã duyệt (→ 409
+     *         {@code ATTENDANCE_OVERLAPS_LEAVE})
      */
     @PreAuthorize("hasAuthority('attendance.manage')")
     public AttendanceRecordResponse recordPunches(RecordPunchesRequest request) {
@@ -222,12 +266,12 @@ public class AttendanceService {
         // Khóa ghi (PESSIMISTIC_WRITE) bản ghi của ngày → hai lần ghi cùng lúc không đè nhau.
         AttendanceRecord record = attendanceRecordRepository
             .findByEmployeeIdAndWorkDateForUpdate(employee.getId(), workDate).orElse(null);
-        if (record != null && FULL_DAY_LEAVE.contains(record.getStatus())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Attendance on " + workDate + " is a full day of approved leave");
+        if (record != null) {
+            requireNotFullDayLeave(record);
         }
         if (record != null && record.getLeaveRequest() != null
             && in.isBefore(record.getLeaveRequest().getEndAt()) && out.isAfter(record.getLeaveRequest().getStartAt())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Worked time overlaps approved leave");
+            throw new ConflictException(ErrorCode.ATTENDANCE_OVERLAPS_LEAVE, "Worked time overlaps approved leave");
         }
         if (record == null) {
             // assignedDay lấy cả Chủ nhật, ngày lễ (khác scheduleFor) → ghi được giờ làm ngày nghỉ; khi đó
@@ -242,12 +286,7 @@ public class AttendanceService {
         record.setCheckOutAt(out);
         attendanceDayCalculator.applyPunches(record);
         record.setStatus(AttendanceStatus.PRESENT);
-        // Xóa quyết định tăng ca cũ → ngày quay lại hàng chờ của người duyệt nếu vẫn làm dư giờ.
-        record.setOvertimeMinutes(0);
-        record.setOvertimeMultiplier(BigDecimal.ONE);
-        record.setOvertimeTaxExempt(false);
-        record.setOvertimeApprovedByAccount(null);
-        record.setOvertimeApprovedAt(null);
+        clearOvertimeDecision(record);
         record.setNote(Strings.trimToNull(request.note()));
         record.setUpdatedByAccount(currentAccountProvider.account());
         return attendanceMapper.toResponse(attendanceRecordRepository.save(record));
@@ -257,20 +296,30 @@ public class AttendanceService {
      * HR sửa tay các con số của một ngày công (máy chấm công sai, quên chấm…) thay cho việc tính từ giờ
      * vào/ra. Ngày phải được chốt khỏi {@code MISSING_PUNCH} thì mới tính lương được.
      *
+     * <p>Trạng thái nghỉ chỉ đến từ đơn nghỉ đã duyệt, nên không chọn tay được, và ngày nghỉ trọn ca không
+     * sửa được. Ngày có đơn nghỉ một phần giữ phần nghỉ có lương đã duyệt: phút được trả không thấp hơn phần
+     * đó, kể cả khi ghi vắng không phép cho phần còn lại. Quyết định tăng ca cũ bị xóa vì các con số đã đổi.
+     *
      * @param attendanceId ngày công cần sửa
      * @param request các con số mới, trạng thái và ghi chú
      * @return ngày công sau khi sửa
      * @throws ResourceNotFoundException không có ngày công này (→ 404 {@code ATTENDANCE_NOT_FOUND})
-     * @throws com.htttdn.hrm.exception.ConflictException ngày thuộc kỳ lương đã chốt (→ 409)
+     * @throws com.htttdn.hrm.exception.ConflictException ngày thuộc kỳ lương đã chốt (→ 409), hoặc là ngày nghỉ
+     *         trọn ca đã duyệt (→ 409 {@code ATTENDANCE_FULL_DAY_LEAVE})
      * @throws com.htttdn.hrm.exception.ForbiddenException nhân viên ngoài phạm vi (→ 403)
-     * @throws BusinessException phút được trả vượt ca, vẫn để {@code MISSING_PUNCH}, {@code PRESENT}
-     *         mà 0 phút làm, hoặc {@code UNAUTHORIZED_ABSENCE} mà có phút (→ 400)
+     * @throws BusinessException phút được trả vượt ca, vẫn để {@code MISSING_PUNCH}, chọn trạng thái nghỉ,
+     *         {@code PRESENT} mà 0 phút làm, hoặc {@code UNAUTHORIZED_ABSENCE} mà có phút (→ 400)
      */
     @PreAuthorize("hasAuthority('attendance.manage')")
     public AttendanceRecordResponse adjust(Long attendanceId, AdjustAttendanceRequest request) {
         // Kiểm tra kỳ lương + khóa ghi trước, rồi mới kiểm tra phạm vi (cần biết ngày công của ai).
         AttendanceRecord record = attendanceEditGuard.getEditableForUpdate(attendanceId);
         employeeAccessScopeService.requireEmployeeAccess(record.getEmployee().getId(), "attendance.manage");
+        requireNotFullDayLeave(record);
+        if (FULL_DAY_LEAVE.contains(request.status())) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+                "Leave statuses come only from an approved leave request", "status");
+        }
         if (request.payableMinutes() > record.getScheduledMinutes()) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Payable time exceeds scheduled time", "payableMinutes");
         }
@@ -288,15 +337,36 @@ public class AttendanceService {
                 "UNAUTHORIZED_ABSENCE requires zero worked and payable minutes", "status");
         }
         Account updatedBy = currentAccountProvider.account();
+        // The approved paid part of a partial leave stays paid whatever happened to the rest of the day.
+        int paidLeaveMinutes = record.getLeaveRequest() != null
+            && record.getLeaveRequest().getSalaryTreatment() == LeaveSalaryTreatment.EMPLOYER_PAID
+                ? record.getLeaveMinutes() : 0;
 
         record.setWorkedMinutes(request.workedMinutes());
-        record.setPayableMinutes(request.payableMinutes());
+        record.setPayableMinutes(Math.max(request.payableMinutes(), paidLeaveMinutes));
         record.setLateMinutes(request.lateMinutes());
         record.setEarlyLeaveMinutes(request.earlyLeaveMinutes());
         record.setStatus(request.status());
         record.setNote(request.note());
         record.setUpdatedByAccount(updatedBy);
+        clearOvertimeDecision(record);
 
         return attendanceMapper.toResponse(record);
+    }
+
+    private static void requireNotFullDayLeave(AttendanceRecord record) {
+        if (FULL_DAY_LEAVE.contains(record.getStatus())) {
+            throw new ConflictException(ErrorCode.ATTENDANCE_FULL_DAY_LEAVE,
+                "Attendance on " + record.getWorkDate() + " is a full day of approved leave");
+        }
+    }
+
+    /** Xóa quyết định tăng ca cũ → ngày quay lại hàng chờ của người duyệt nếu vẫn làm dư giờ. */
+    private static void clearOvertimeDecision(AttendanceRecord record) {
+        record.setOvertimeMinutes(0);
+        record.setOvertimeMultiplier(BigDecimal.ONE);
+        record.setOvertimeTaxExempt(false);
+        record.setOvertimeApprovedByAccount(null);
+        record.setOvertimeApprovedAt(null);
     }
 }

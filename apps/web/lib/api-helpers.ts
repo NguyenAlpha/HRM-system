@@ -70,6 +70,12 @@ const ERROR_MESSAGES: Record<string, string> = {
     "Ngày này đã có đơn nghỉ khác đang chờ duyệt hoặc đã duyệt. Mỗi ngày chỉ có một đơn nghỉ, kể cả nghỉ nửa ngày: hãy chọn ngày khác, hoặc hủy đơn đang chờ rồi tạo một đơn cho cả ngày.",
   AFTER_EMPLOYMENT_END: "Ngày hiệu lực không được sau ngày làm việc cuối của nhân sự.",
   ATTENDANCE_NOT_FOUND: "Không tìm thấy dữ liệu chấm công.",
+  // The API's own message names the employee and the day; this is only the fallback.
+  ATTENDANCE_SCHEDULE_MISSING: "Một nhân viên còn thiếu phân công chính hoặc ca làm việc nên chưa tạo được công.",
+  ATTENDANCE_FULL_DAY_LEAVE: "Ngày này là ngày nghỉ trọn ca đã duyệt nên không nhập giờ hay sửa công được.",
+  ATTENDANCE_OVERLAPS_LEAVE: "Giờ làm trùng với khoảng nghỉ đã duyệt của ngày này.",
+  OVERTIME_ATTENDANCE_INCOMPLETE: "Ngày này chưa có giờ ra nên chưa duyệt tăng ca được.",
+  OVERTIME_EXCEEDS_EXTRA_TIME: "Số phút tăng ca vượt quá phần giờ làm dư của ngày.",
   PAYROLL_PERIOD_NOT_FOUND: "Không tìm thấy kỳ lương.",
   PAYROLL_PERIOD_LOCKED: "Kỳ lương đã duyệt hoặc khóa nên không thể thay đổi.",
   // The API's own message names the employee and the missing data; this is only the fallback.
