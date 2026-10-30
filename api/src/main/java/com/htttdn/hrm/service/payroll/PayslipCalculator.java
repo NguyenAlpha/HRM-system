@@ -321,9 +321,14 @@ public class PayslipCalculator {
             return record.getPayableMinutes() == 0 && (record.getStatus() == AttendanceStatus.UNPAID_LEAVE
                 || record.getStatus() == AttendanceStatus.UNAUTHORIZED_ABSENCE);
         }).count();
+        // Nghỉ việc đóng người phụ thuộc ở ngày làm cuối; lương tháng cuối thường trả sau ngày đó, nên đếm
+        // người phụ thuộc tại ngày làm cuối để phiếu lương cuối vẫn được giảm trừ gia cảnh.
+        LocalDate paymentDate = period.getTaxPaymentDate();
+        LocalDate lastWorkingDay = employee.getTerminationDate();
+        LocalDate dependentsOn = lastWorkingDay != null && lastWorkingDay.isBefore(paymentDate) ? lastWorkingDay : paymentDate;
         try {
             return insuranceTaxCalculator.calculate(employee.getId(), inputs.employedTo(),
-                period.getTaxPaymentDate(), taxableGrossPay, unpaidDays + inputs.daysNotEmployed());
+                paymentDate, dependentsOn, taxableGrossPay, unpaidDays + inputs.daysNotEmployed());
         } catch (BusinessException error) {
             // Bọc lại để thông báo có mã nhân viên; vẫn là BusinessException → 400 VALIDATION_ERROR.
             throw missingPayrollInput(employee, error.getMessage());

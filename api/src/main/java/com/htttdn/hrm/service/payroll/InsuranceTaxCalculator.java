@@ -50,7 +50,8 @@ public class InsuranceTaxCalculator {
      * thuế lũy tiến ({@link #progressiveTax}).
      *
      * @param workMonthEnd ngày cuối nhân viên còn làm trong tháng: chọn hồ sơ bảo hiểm và luật bảo hiểm
-     * @param paymentDate ngày trả lương: chọn luật thuế và số người phụ thuộc
+     * @param paymentDate ngày trả lương: chọn luật thuế
+     * @param dependentsOn ngày đếm người phụ thuộc: ngày trả lương, hoặc ngày làm cuối nếu nhân viên nghỉ trước đó
      * @param taxableGrossPay tổng thu nhập chịu thuế (đã trừ phần miễn thuế)
      * @param daysNotWorked số ngày làm việc của tháng mà người lao động không làm việc; từ 14 ngày thì
      *        tháng đó không trừ bảo hiểm
@@ -59,7 +60,7 @@ public class InsuranceTaxCalculator {
      * @throws BusinessException thiếu hồ sơ, luật hoặc dữ liệu không hợp lệ (→ 400)
      */
     public Deduction calculate(Long employeeId, LocalDate workMonthEnd, LocalDate paymentDate,
-        BigDecimal taxableGrossPay, long daysNotWorked) {
+        LocalDate dependentsOn, BigDecimal taxableGrossPay, long daysNotWorked) {
         EmployeePayrollProfile profile = profileRepository.findEffective(employeeId, workMonthEnd)
             .orElseThrow(() -> new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Employee " + employeeId + ": missing payroll profile on " + workMonthEnd));
@@ -94,8 +95,8 @@ public class InsuranceTaxCalculator {
         PayrollTaxRule tax = taxRules.findEffective(paymentDate)
             .orElseThrow(() -> new BusinessException(ErrorCode.VALIDATION_ERROR,
                 "Missing resident income tax rules for payment date " + paymentDate));
-        // Người phụ thuộc đếm theo ngày trả lương, cùng mốc với luật thuế.
-        long dependentCount = dependentRepository.countEffective(employeeId, paymentDate);
+        // Người phụ thuộc đếm theo ngày trả lương, cùng mốc với luật thuế (xem dependentsOn).
+        long dependentCount = dependentRepository.countEffective(employeeId, dependentsOn);
         if (taxableGrossPay.signum() < 0) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Taxable pay cannot be negative");
         }

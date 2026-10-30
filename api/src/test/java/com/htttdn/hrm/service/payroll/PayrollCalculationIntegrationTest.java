@@ -172,6 +172,30 @@ class PayrollCalculationIntegrationTest {
         assertMoney("1000000.00", items.get(1).get("amount"));
     }
 
+    @Test
+    void aLeaversLastPayslipKeepsTheDependentsHeldOnTheLastWorkingDay() {
+        // Ending employment closes dependents on the last working day, before the February payment date.
+        jdbc.update("""
+            UPDATE employees SET employment_status = 'RESIGNED', termination_date = ?, termination_reason = 'Nghỉ'
+            WHERE id = ?
+            """, PERIOD_END, employeeId);
+        jdbc.update("""
+            INSERT INTO employee_tax_dependents(employee_id, full_name, effective_from, effective_to, created_by_account_id)
+            VALUES (?, 'Con', '2026-01-01', ?, ?)
+            """, employeeId, PERIOD_END, accountantId);
+
+        PayrollPeriodResponse period = payrollService.createPeriod(
+            new CreatePayrollPeriodRequest((short) 2026, (short) 1, TAX_PAYMENT_DATE));
+        payrollService.calculate(period.id(), new PayrollActionRequest());
+        entityManager.flush();
+
+        Map<String, Object> payslip = jdbc.queryForMap(
+            "SELECT * FROM payslips WHERE payroll_period_id = ?", period.id());
+        // 10,450,000 as above, less one 6,200,000 dependent deduction; 5% of the rest.
+        assertMoney("4250000.00", payslip.get("taxable_income"));
+        assertMoney("212500.00", payslip.get("personal_income_tax"));
+    }
+
     private Long insertId(String sql, Object... args) {
         return jdbc.queryForObject(sql, Long.class, args);
     }

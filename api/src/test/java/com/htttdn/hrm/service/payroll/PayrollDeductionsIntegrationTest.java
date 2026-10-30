@@ -51,7 +51,7 @@ class PayrollDeductionsIntegrationTest {
         LocalDate payDate = LocalDate.of(2026, 11, 5);
 
         InsuranceTaxCalculator.Deduction result = calculator.calculate(employeeId, workEnd,
-            payDate, new BigDecimal("40000000"), 0);
+            payDate, payDate, new BigDecimal("40000000"), 0);
 
         assertEquals(new BigDecimal("50600000.00"), result.insuranceSalaryBase());
         assertEquals(new BigDecimal("60000000.00"), result.unemploymentInsuranceBase());
@@ -66,7 +66,7 @@ class PayrollDeductionsIntegrationTest {
     void missingFutureTaxRuleStopsCalculation() {
         Long employeeId = seedEmployee();
         assertThrows(BusinessException.class, () -> calculator.calculate(employeeId,
-            LocalDate.of(2026, 10, 31), LocalDate.of(2027, 1, 5),
+            LocalDate.of(2026, 10, 31), LocalDate.of(2027, 1, 5), LocalDate.of(2027, 1, 5),
             new BigDecimal("40000000"), 0));
     }
 
@@ -76,9 +76,9 @@ class PayrollDeductionsIntegrationTest {
         LocalDate workEnd = LocalDate.of(2026, 10, 31);
         LocalDate payDate = LocalDate.of(2026, 11, 5);
 
-        InsuranceTaxCalculator.Deduction contributing = calculator.calculate(employeeId, workEnd, payDate,
+        InsuranceTaxCalculator.Deduction contributing = calculator.calculate(employeeId, workEnd, payDate, payDate,
             new BigDecimal("40000000"), InsuranceTaxCalculator.MIN_DAYS_NOT_WORKED_WITHOUT_INSURANCE - 1);
-        InsuranceTaxCalculator.Deduction exempt = calculator.calculate(employeeId, workEnd, payDate,
+        InsuranceTaxCalculator.Deduction exempt = calculator.calculate(employeeId, workEnd, payDate, payDate,
             new BigDecimal("40000000"), InsuranceTaxCalculator.MIN_DAYS_NOT_WORKED_WITHOUT_INSURANCE);
 
         assertTrue(contributing.social().signum() > 0);
