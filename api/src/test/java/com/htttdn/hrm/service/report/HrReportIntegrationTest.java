@@ -107,7 +107,8 @@ class HrReportIntegrationTest {
 
         // The 2024 hire who left in February still worked in 2025; the other unit's employee is outside the scope.
         assertEquals(3, balances.size());
-        assertEquals(List.of(12 * 480, 12 * 480, 10 * 480), balances.stream()
+        // Prorated by months worked in 2025: January–February, the whole year, March–June.
+        assertEquals(List.of(2 * 480, 12 * 480, 4 * 480), balances.stream()
             .sorted(java.util.Comparator.comparing(row -> row.balance().employeeId()))
             .map(row -> row.balance().grantedMinutes()).toList());
         assertEquals(0, leaveEntitlementService.balancesForReport(2023, null, null).size());
