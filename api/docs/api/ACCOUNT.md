@@ -92,7 +92,7 @@ Employee phải nằm trong scope `account.provision` của account đang đăng
 Toàn bộ thao tác nằm trong một transaction:
 
 1. Tạo account `PENDING` chưa có mật khẩu.
-2. Gán role `EMPLOYEE` với scope `SELF`.
+2. Gán role `EMPLOYEE` với scope `SELF`, có hiệu lực từ hôm nay hoặc từ ngày vào làm nếu ngày đó muộn hơn. Trước ngày vào làm, người nhận đăng nhập được nhưng chưa có quyền nhân viên.
 3. Tạo token kích hoạt dùng một lần.
 
 Phần tạo account ở trên được triển khai bởi component provisioning nội bộ dùng chung. Endpoint này kiểm tra `account.provision` cùng scope của employee rồi chuyển `employeeId`, `username` và actor lấy từ Security Context vào component đó. Các workflow tổng hợp tái sử dụng cùng component, không gọi vòng qua `AccountAdminController` và không phải có thêm `account.provision` nếu permission chuyên biệt của workflow đã cho phép toàn bộ thao tác.

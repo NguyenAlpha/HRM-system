@@ -131,10 +131,15 @@ public class AccountProvisioningService {
             .account(account)
             .role(role)
             .scopeType(RoleScopeType.SELF)
-            .effectiveFrom(LocalDate.now(clock))
+            // Không trước ngày vào làm, như mọi lần gán role khác.
+            .effectiveFrom(laterOf(LocalDate.now(clock), account.getEmployee().getHireDate()))
             .grantedByAccount(actor)
             .reason("Default employee access assigned during account provisioning")
             .build());
+    }
+
+    private static LocalDate laterOf(LocalDate a, LocalDate b) {
+        return a.isAfter(b) ? a : b;
     }
 
     private AccountResponse toResponse(Account account, List<String> roleCodes) {
