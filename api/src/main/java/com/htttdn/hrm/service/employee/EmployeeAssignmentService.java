@@ -20,7 +20,6 @@ import com.htttdn.hrm.entity.JobPosition;
 import com.htttdn.hrm.entity.OrganizationUnit;
 import com.htttdn.hrm.entity.WorkLocation;
 import com.htttdn.hrm.entity.WorkShift;
-import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
@@ -72,7 +71,7 @@ public class EmployeeAssignmentService {
         employeeAccessScopeService.requireEmployeeAccess(employeeId, EMPLOYEE_ASSIGNMENT_MANAGE);
         Employee employee = employeeRepository.getRequiredForUpdate(employeeId);
 
-        if (isEmploymentEnded(employee.getEmploymentStatus())) {
+        if (employee.getEmploymentStatus().isEnded()) {
             throw new ConflictException(
                 ErrorCode.EMPLOYMENT_ALREADY_ENDED,
                 "Cannot assign an employee whose employment has ended"
@@ -175,7 +174,7 @@ public class EmployeeAssignmentService {
         }
         Employee manager = findEmployee(managerEmployeeId);
         employeeAccessScopeService.requireEmployeeAccess(managerEmployeeId, permissionCode);
-        if (isEmploymentEnded(manager.getEmploymentStatus())) {
+        if (manager.getEmploymentStatus().isEnded()) {
             throw new ConflictException(ErrorCode.MANAGER_NOT_EMPLOYED, "Manager is no longer employed", "managerEmployeeId");
         }
         return manager;
@@ -214,12 +213,6 @@ public class EmployeeAssignmentService {
 
     private Employee findEmployee(Long employeeId) {
         return employeeRepository.getRequired(employeeId);
-    }
-
-    private boolean isEmploymentEnded(EmploymentStatus status) {
-        return status == EmploymentStatus.RESIGNED
-            || status == EmploymentStatus.TERMINATED
-            || status == EmploymentStatus.RETIRED;
     }
 
     private record AssignmentResources(

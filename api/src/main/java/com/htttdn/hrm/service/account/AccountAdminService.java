@@ -31,7 +31,6 @@ import com.htttdn.hrm.dto.response.account.AccountResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.enums.AccountStatus;
-import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
@@ -47,12 +46,6 @@ import lombok.RequiredArgsConstructor;
 public class AccountAdminService {
 
     private static final String ACCOUNT_PROVISION = "account.provision";
-
-    private static final Set<EmploymentStatus> ENDED_EMPLOYMENT = Set.of(
-        EmploymentStatus.RESIGNED,
-        EmploymentStatus.TERMINATED,
-        EmploymentStatus.RETIRED
-    );
 
     private static final Set<String> SORTABLE_PROPERTIES = Set.of(
         "id", "username", "email", "status", "lastLoginAt", "createdAt"
@@ -162,7 +155,7 @@ public class AccountAdminService {
             throw invalidTransition(account, "A deleted account cannot be reactivated");
         }
         // Ending employment disables the account; reactivating it would let the person who left sign in again.
-        if (account.getEmployee() != null && ENDED_EMPLOYMENT.contains(account.getEmployee().getEmploymentStatus())) {
+        if (account.getEmployee() != null && account.getEmployee().getEmploymentStatus().isEnded()) {
             throw invalidTransition(account, "The account of an employee who has left cannot be reactivated");
         }
         if (account.getStatus() == AccountStatus.ACTIVE) {

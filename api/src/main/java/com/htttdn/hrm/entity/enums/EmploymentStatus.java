@@ -5,5 +5,10 @@ public enum EmploymentStatus {
     ACTIVE,
     RESIGNED,
     TERMINATED,
-    RETIRED
+    RETIRED;
+
+    /** Employment has ended: resigned, terminated or retired. */
+    public boolean isEnded() {
+        return this == RESIGNED || this == TERMINATED || this == RETIRED;
+    }
 }

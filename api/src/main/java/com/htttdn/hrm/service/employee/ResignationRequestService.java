@@ -48,8 +48,6 @@ public class ResignationRequestService {
     private static final String REQUEST_READ = "request.read";
     private static final String REQUEST_MANAGE = "request.manage";
     private static final Set<String> SORTABLE_PROPERTIES = Set.of("createdAt", "lastWorkingDate", "status");
-    private static final Set<EmploymentStatus> ENDED = Set.of(
-        EmploymentStatus.RESIGNED, EmploymentStatus.TERMINATED, EmploymentStatus.RETIRED);
 
     private final ResignationRequestRepository resignationRequestRepository;
     private final EmployeeRepository employeeRepository;
@@ -64,7 +62,7 @@ public class ResignationRequestService {
     public ResignationRequestView create(CreateResignationRequestRequest command) {
         Employee employee = employeeRepository.getRequired(command.employeeId());
         requireSelfOrScopedAccess(employee.getId(), REQUEST_MANAGE);
-        if (ENDED.contains(employee.getEmploymentStatus())) {
+        if (employee.getEmploymentStatus().isEnded()) {
             throw new ConflictException(ErrorCode.EMPLOYMENT_ALREADY_ENDED, "Employee employment has already ended");
         }
         requireLastWorkingDate(command.requestedLastWorkingDate(), employee);
@@ -103,7 +101,7 @@ public class ResignationRequestService {
         ResignationRequest request = resignationRequestRepository.getRequiredForUpdate(requestId);
         requireApprover(request);
         requirePending(request);
-        if (ENDED.contains(request.getEmployee().getEmploymentStatus())) {
+        if (request.getEmployee().getEmploymentStatus().isEnded()) {
             throw new ConflictException(ErrorCode.EMPLOYMENT_ALREADY_ENDED, "Employee employment has already ended");
         }
         LocalDate effective = lastWorkingDate != null ? lastWorkingDate : request.getLastWorkingDate();
@@ -204,7 +202,7 @@ public class ResignationRequestService {
             return;
         }
         Employee employee = request.getEmployee();
-        if (!ENDED.contains(employee.getEmploymentStatus())) {
+        if (!employee.getEmploymentStatus().isEnded()) {
             // HR moved the last working day: the employee's own schedule ends it, and this request completes after.
             // A request approved before approvals scheduled the end has no day on the employee, and ends here.
             LocalDate scheduled = employee.getTerminationDate();

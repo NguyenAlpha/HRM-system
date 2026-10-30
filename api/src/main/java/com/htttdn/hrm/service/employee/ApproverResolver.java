@@ -14,7 +14,6 @@ import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeAssignment;
 import com.htttdn.hrm.entity.enums.AccountStatus;
-import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
@@ -91,10 +90,7 @@ public class ApproverResolver {
 
     /** Still employed and able to sign in to act on the request. */
     private boolean canApprove(Employee candidate) {
-        if (candidate.getDeletedAt() != null
-            || candidate.getEmploymentStatus() == EmploymentStatus.RESIGNED
-            || candidate.getEmploymentStatus() == EmploymentStatus.TERMINATED
-            || candidate.getEmploymentStatus() == EmploymentStatus.RETIRED) {
+        if (candidate.getDeletedAt() != null || candidate.getEmploymentStatus().isEnded()) {
             return false;
         }
         return accountRepository.findByEmployeeId(candidate.getId())

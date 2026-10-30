@@ -93,7 +93,7 @@ public class EmploymentLifecycleService {
     public EmployeeDetailResponse endEmployment(
         Long employeeId, EmploymentStatus endStatus, LocalDate terminationDate, String terminationReason
     ) {
-        if (!isEmploymentEnded(endStatus)) {
+        if (!endStatus.isEnded()) {
             throw new BusinessException(
                 ErrorCode.VALIDATION_ERROR, "endStatus must be RESIGNED, TERMINATED or RETIRED", "endStatus"
             );
@@ -105,7 +105,7 @@ public class EmploymentLifecycleService {
                 ErrorCode.VALIDATION_ERROR, "terminationDate must not be before hireDate", "terminationDate"
             );
         }
-        if (isEmploymentEnded(employee.getEmploymentStatus())) {
+        if (employee.getEmploymentStatus().isEnded()) {
             throw new ConflictException(ErrorCode.EMPLOYMENT_ALREADY_ENDED, "Employee employment has already ended");
         }
 
@@ -269,11 +269,5 @@ public class EmploymentLifecycleService {
                 "terminationDate"
             );
         }
-    }
-
-    private boolean isEmploymentEnded(EmploymentStatus status) {
-        return status == EmploymentStatus.RESIGNED
-            || status == EmploymentStatus.TERMINATED
-            || status == EmploymentStatus.RETIRED;
     }
 }
