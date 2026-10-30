@@ -40,7 +40,8 @@ public class PayrollReportService {
     @PreAuthorize("hasAuthority('report.payroll.read')")
     public PayrollSummaryReportResponse getYearSummary(int year) {
         employeeAccessScopeService.requireCompanyWide(PAYROLL_REPORT_READ);
-        List<Payslip> payslips = payslipRepository.findForReportYear((short) year);
+        // Báo cáo là số chính thức: chỉ kỳ đã duyệt trở đi; kỳ mới tính có thể còn đổi.
+        List<Payslip> payslips = payslipRepository.findForReportYear((short) year, PayrollPeriodStatus.RELEASED);
         Map<Integer, PayrollPeriod> periods = payrollPeriodRepository
             .findByYearAndStatusNot((short) year, PayrollPeriodStatus.CANCELLED).stream()
             .collect(Collectors.toMap(period -> period.getMonth().intValue(), Function.identity()));

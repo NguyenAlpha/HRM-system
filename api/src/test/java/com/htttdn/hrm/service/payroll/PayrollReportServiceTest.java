@@ -34,7 +34,8 @@ class PayrollReportServiceTest {
         PayrollPeriod february = period(12L, 2, PayrollPeriodStatus.DRAFT);
         when(payrollPeriodRepository.findByYearAndStatusNot((short) 2026, PayrollPeriodStatus.CANCELLED))
             .thenReturn(List.of(january, february));
-        when(payslipRepository.findForReportYear((short) 2026)).thenReturn(List.of(
+        // Only payslips of approved periods onwards count: a calculated sheet may still change.
+        when(payslipRepository.findForReportYear((short) 2026, PayrollPeriodStatus.RELEASED)).thenReturn(List.of(
             payslip(january, "Kế toán", "10000000", "1050000", "500000", "8450000"),
             payslip(january, "Nhân sự", "20000000", "2100000", "1500000", "16400000"),
             payslip(january, "Nhân sự", "15000000", "1575000", "800000", "12625000")

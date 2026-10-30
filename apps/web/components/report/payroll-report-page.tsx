@@ -70,7 +70,7 @@ export function PayrollReportPage() {
   return (
     <>
       <PageHeader title="Quỹ lương, bảo hiểm & thuế" alignActions="end"
-        description="Cộng từ phiếu lương của các kỳ chưa hủy. Bảo hiểm là phần người lao động đóng, khấu trừ vào lương."
+        description="Cộng từ phiếu lương của các kỳ đã duyệt. Bảo hiểm là phần người lao động đóng, khấu trừ vào lương."
         actions={canRead && <YearPicker year={year} maxYear={currentYear} onChange={setYear} />} />
 
       <div className="mt-6 grid gap-4">
@@ -91,7 +91,7 @@ export function PayrollReportPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Quỹ lương theo tháng</CardTitle>
-                <CardDescription>Tổng thu nhập trên phiếu lương của từng tháng; tháng chưa tính lương để trống.</CardDescription>
+                <CardDescription>Tổng thu nhập trên phiếu lương của từng tháng; tháng chưa duyệt lương để trống.</CardDescription>
               </CardHeader>
               <CardContent>
                 <MonthlyColumnChart label={`Tổng thu nhập theo tháng năm ${year}`} format={shortMoney}
@@ -143,7 +143,7 @@ export function PayrollReportPage() {
                     amounts: unit.amounts,
                   }))}
                   total={data.units.length > 0 ? data.total : null}
-                  emptyText={`Chưa có phiếu lương nào trong năm ${year}.`}
+                  emptyText={`Chưa có phiếu lương đã duyệt nào trong năm ${year}.`}
                 />
               </CardContent>
             </Card>

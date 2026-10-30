@@ -109,12 +109,12 @@ GET /api/reports/payroll/summary?year=2026
 Authorization: Bearer <access-token>
 ```
 
-Yêu cầu `report.payroll.read` với scope `COMPANY`, giống bảng lương. Cộng từ phiếu lương của mọi kỳ chưa
-hủy trong năm:
+Yêu cầu `report.payroll.read` với scope `COMPANY`, giống bảng lương. Cộng từ phiếu lương của các kỳ đã duyệt
+(`APPROVED`, `PAID`, `LOCKED`) trong năm; kỳ mới tính có thể còn đổi nên chưa được cộng:
 
 - `total`: cả năm.
-- `months`: 12 tháng; `periodId` và `status` là `null` khi tháng chưa có kỳ lương, kỳ chưa tính thì
-  `payslipCount = 0`.
+- `months`: 12 tháng; `periodId` và `status` là `null` khi tháng chưa có kỳ lương, kỳ chưa duyệt
+  (`DRAFT`, `CALCULATED`) thì `payslipCount = 0`.
 - `units`: theo đơn vị ghi trên phiếu lương lúc tính, đơn vị có tổng thu nhập lớn nhất trước.
 
 Mỗi nhóm có số phiếu lương, tổng thu nhập, phụ cấp, tăng ca, BHXH/BHYT/BHTN, thuế TNCN, khấu trừ khác và

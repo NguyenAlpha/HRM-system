@@ -49,15 +49,15 @@ public interface PayslipRepository extends JpaRepository<Payslip, Long> {
 
     boolean existsByEmployeeId(Long employeeId);
 
-    /** Phiếu lương của các kỳ chưa hủy trong năm, kèm kỳ lương. */
+    /** Phiếu lương của các kỳ trong năm có trạng thái thuộc {@code statuses}, kèm kỳ lương. */
     @Query("""
         SELECT payslip
         FROM Payslip payslip
         JOIN FETCH payslip.payrollPeriod period
         WHERE period.year = :year
-          AND period.status <> com.htttdn.hrm.entity.enums.PayrollPeriodStatus.CANCELLED
+          AND period.status IN :statuses
         """)
-    List<Payslip> findForReportYear(@Param("year") short year);
+    List<Payslip> findForReportYear(@Param("year") short year, @Param("statuses") List<PayrollPeriodStatus> statuses);
 
     /** Phiếu lương theo id, không có thì 404 {@code PAYSLIP_NOT_FOUND}. Xem {@link AccountRepository#getRequired}. */
     default Payslip getRequired(Long id) {
