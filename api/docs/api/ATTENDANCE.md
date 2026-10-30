@@ -563,7 +563,7 @@ Nghỉ một phần ngày rồi chấm công phần còn lại không cần đ�
 |:---------|:--------|
 | `GET /api/leave-requests` | Đơn của mọi nhân viên trong scope `request.read`, mặc định xếp `startAt` giảm dần |
 | `GET /api/leave-requests/{id}` | Chi tiết đơn; `404 REQUEST_NOT_FOUND` nếu không tồn tại |
-| `GET /api/leave-requests/employees/{employeeId}` | Đơn của một nhân viên, mới nhất trước; `404 EMPLOYEE_NOT_FOUND` nếu nhân viên không tồn tại |
+| `GET /api/leave-requests/employees/{employeeId}` | Đơn của một nhân viên, mới nhất trước; đơn `DRAFT` chỉ chính nhân viên đó thấy; `404 EMPLOYEE_NOT_FOUND` nếu nhân viên không tồn tại |
 | `GET /api/leave-requests/pending` | Đơn `PENDING` có `approverEmployeeId` là nhân viên của người gọi |
 
 Các endpoint danh sách hỗ trợ `page`, `size` (mặc định 20) và trả `PagedResult<LeaveRequestView>`.

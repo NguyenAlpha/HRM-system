@@ -71,7 +71,7 @@ public class LeaveRequestQueryService {
     }
 
     /**
-     * Mọi đơn của một nhân viên (cả nháp), mới tạo trước.
+     * Mọi đơn của một nhân viên, mới tạo trước. Đơn nháp chỉ chính nhân viên đó thấy, như ở {@link #search}.
      *
      * @throws com.htttdn.hrm.exception.ResourceNotFoundException nhân viên không có hoặc đã xóa (→ 404)
      * @throws com.htttdn.hrm.exception.ForbiddenException không phải của mình và ngoài phạm vi (→ 403)
@@ -79,9 +79,13 @@ public class LeaveRequestQueryService {
     @PreAuthorize("hasAnyAuthority('request.self.read', 'request.read')")
     public Page<LeaveRequestView> listByEmployee(Long employeeId, Pageable pageable) {
         employeeRepository.getRequired(employeeId);
-        requireSelfOrScopedAccess(employeeId);
-        return leaveRequestRepository.findByEmployeeIdOrderByCreatedAtDesc(employeeId, pageable)
-            .map(leaveRequestMapper::toView);
+        if (currentAccountProvider.account().belongsTo(employeeId)) {
+            return leaveRequestRepository.findByEmployeeIdOrderByCreatedAtDesc(employeeId, pageable)
+                .map(leaveRequestMapper::toView);
+        }
+        employeeAccessScopeService.requireEmployeeAccess(employeeId, REQUEST_READ);
+        return leaveRequestRepository.findByEmployeeIdAndStatusNotOrderByCreatedAtDesc(
+            employeeId, LeaveRequestStatus.DRAFT, pageable).map(leaveRequestMapper::toView);
     }
 
     /**

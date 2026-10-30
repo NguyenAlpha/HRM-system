@@ -25,6 +25,12 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
 
     Page<LeaveRequest> findByEmployeeIdOrderByCreatedAtDesc(Long employeeId, Pageable pageable);
 
+    Page<LeaveRequest> findByEmployeeIdAndStatusNotOrderByCreatedAtDesc(
+        Long employeeId,
+        LeaveRequestStatus status,
+        Pageable pageable
+    );
+
     Page<LeaveRequest> findByApproverEmployeeIdAndStatusOrderByCreatedAtDesc(
         Long approverEmployeeId,
         LeaveRequestStatus status,

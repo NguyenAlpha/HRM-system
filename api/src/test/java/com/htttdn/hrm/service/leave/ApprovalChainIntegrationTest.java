@@ -214,7 +214,7 @@ class ApprovalChainIntegrationTest {
         authenticateAs(staff, EMPLOYEE);
         Instant start = calendarService.scheduleFor(staff.employeeId(), LEAVE_DAY.plusDays(1), LEAVE_DAY.plusDays(1))
             .getFirst().startAt();
-        leaveRequestService.createDraft(new LeaveRequestService.CreateLeaveCommand(
+        LeaveRequestView draft = leaveRequestService.createDraft(new LeaveRequestService.CreateLeaveCommand(
             staff.employeeId(), LeaveType.UNPAID, null, start, start.plusSeconds(4 * 3600), "Nháp", null));
 
         Long otherUnitId = id("INSERT INTO organization_units(code, name, unit_type) VALUES (?, 'Other unit', 'DEPARTMENT') RETURNING id",
@@ -229,11 +229,15 @@ class ApprovalChainIntegrationTest {
             """, manager.accountId(), otherUnitId, creatorAccountId);
 
         authenticateAs(hr, "request.read");
-        // The draft is the employee's own and stays hidden.
+        // The draft is the employee's own and stays hidden, in the search and in the employee's list.
         assertEquals(List.of(pending.id()), searchIds(null, null, null));
         assertEquals(List.of(pending.id()), searchIds("approval staff", LeaveRequestStatus.PENDING, LEAVE_DAY));
         assertEquals(List.of(), searchIds(null, LeaveRequestStatus.APPROVED, null));
         assertEquals(List.of(), searchIds(null, null, LEAVE_DAY.plusDays(1)));
+        assertEquals(List.of(pending.id()), employeeLeaveIds(staff));
+
+        authenticateAs(staff, EMPLOYEE);
+        assertEquals(java.util.Set.of(pending.id(), draft.id()), java.util.Set.copyOf(employeeLeaveIds(staff)));
 
         authenticateAs(manager, "request.read");
         assertEquals(List.of(), searchIds(null, null, null));
@@ -319,6 +323,11 @@ class ApprovalChainIntegrationTest {
         assertTrue(attendanceQueryService.timesheet(2026, 4, "approval staff", null).getFirst().records().isEmpty());
         // Hired in 2025-01: not on the timesheet of an earlier month.
         assertTrue(attendanceQueryService.timesheet(2024, 12, null, null).isEmpty());
+    }
+
+    private List<Long> employeeLeaveIds(Person person) {
+        return leaveRequestQueryService.listByEmployee(person.employeeId(), org.springframework.data.domain.Pageable.unpaged())
+            .map(LeaveRequestView::id).getContent();
     }
 
     private List<Long> searchIds(String keyword, LeaveRequestStatus status, LocalDate day) {
