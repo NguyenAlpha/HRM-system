@@ -272,8 +272,7 @@ public class EmployeeService {
 
         EmployeeBirthDateValidator.validate(request.dateOfBirth(), false, LocalDate.now(clock));
 
-        Instant now = Instant.now(clock);
-        updateWorkEmail(employee, request.workEmail(), now);
+        updateWorkEmail(employee, request.workEmail());
 
         employee.setFullName(request.fullName());
         employee.setDateOfBirth(request.dateOfBirth());
@@ -312,7 +311,7 @@ public class EmployeeService {
      * trùng ở cả bảng nhân viên lẫn bảng tài khoản. Kiểm tra trước để trả lỗi có {@code field} cho form;
      * unique index vẫn là chốt chặn cuối khi hai request đến cùng lúc.
      */
-    private void updateWorkEmail(Employee employee, String requestedWorkEmail, Instant now) {
+    private void updateWorkEmail(Employee employee, String requestedWorkEmail) {
         String workEmail = normalizeEmail(requestedWorkEmail);
         if (workEmail != null
             && employeeRepository.existsByWorkEmailIgnoreCaseAndIdNot(workEmail, employee.getId())) {
