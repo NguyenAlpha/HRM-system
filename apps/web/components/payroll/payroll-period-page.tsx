@@ -13,6 +13,7 @@ import {
   Lock,
   RefreshCw,
   Search,
+  Undo2,
   Wallet,
 } from "lucide-react"
 
@@ -50,6 +51,7 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
 import { PayrollAdjustmentsPanel } from "@/components/workforce/payroll-adjustments-panel"
 import {
   EmptyRow,
@@ -62,7 +64,7 @@ import {
 import { apiErrorMessage } from "@/lib/api-helpers"
 import { authorizedDownload } from "@/lib/auth/client"
 import type { PayrollPeriod, Payslip, WorkforceBody } from "@/lib/workforce"
-import { formatDate, formatDateRange } from "@/lib/format-date"
+import { formatDate, formatDateRange, formatDateTime } from "@/lib/format-date"
 
 type Confirm = "approve" | "lock" | "cancel"
 
@@ -90,6 +92,8 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
   const [selected, setSelected] = useState<Payslip | null>(null)
   const [confirm, setConfirm] = useState<Confirm | null>(null)
   const [markingPaid, setMarkingPaid] = useState(false)
+  const [calculating, setCalculating] = useState(false)
+  const [reopening, setReopening] = useState(false)
   const reload = () => setRevision((value) => value + 1)
   const { busy, run } = useWorkforceAction(reload)
   const loading = loadedRevision !== revision
@@ -129,6 +133,7 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
   const canCalculate = permissions.has("payroll.calculate") && editable
   const canApprove = permissions.has("payroll.approve") && status === "CALCULATED"
   const canMarkPaid = permissions.has("payroll.mark_paid") && status === "APPROVED"
+  const canReopen = permissions.has("payroll.approve") && status === "APPROVED"
   const canLock = permissions.has("payroll.lock") && status === "PAID"
   const canCancel = permissions.has("payroll.calculate") && editable
   const canExport = status !== undefined && status !== "DRAFT" && status !== "CANCELLED"
@@ -149,12 +154,15 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
               {formatDateRange(period.periodStart, period.periodEnd)} · Ngày trả lương {period.taxPaymentDate ? formatDate(period.taxPaymentDate) : "chưa đặt"}
             </p>
           )}
+          {period?.reopenedAt && editable && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Đã hủy duyệt lúc {formatDateTime(period.reopenedAt)}: {period.reopenReason}
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {canCalculate && (
-            <Button type="button" disabled={busy}
-              onClick={() => void action("calculate", "Đã tính lương",
-                { taxPaymentDate: period?.taxPaymentDate ?? null } satisfies WorkforceBody["PayrollActionRequest"])}>
+            <Button type="button" disabled={busy} onClick={() => setCalculating(true)}>
               <Calculator /> {status === "DRAFT" ? "Tính lương" : "Tính lại"}
             </Button>
           )}
@@ -169,6 +177,7 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
           )}
           <ActionsMenu label={title} outline>
             <RowActionItem icon={RefreshCw} onClick={reload} disabled={loading}>Tải lại</RowActionItem>
+            {canReopen && <RowActionItem icon={Undo2} disabled={busy} onClick={() => setReopening(true)}>Hủy duyệt</RowActionItem>}
             {canCancel && <RowActionItem icon={Ban} destructive disabled={busy} onClick={() => setConfirm("cancel")}>Hủy kỳ</RowActionItem>}
           </ActionsMenu>
         </div>
@@ -320,6 +329,18 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
 
       {selected && <PayslipDialog payslip={selected} onClose={() => setSelected(null)} />}
 
+      {calculating && period && (
+        <CalculateDialog period={period} busy={busy} onClose={() => setCalculating(false)}
+          onSubmit={(taxPaymentDate) => action("calculate", "Đã tính lương",
+            { taxPaymentDate } satisfies WorkforceBody["PayrollActionRequest"])} />
+      )}
+
+      {reopening && (
+        <ReopenDialog title={title} busy={busy} onClose={() => setReopening(false)}
+          onSubmit={(reason) => action("reopen", "Đã hủy duyệt bảng lương",
+            { reason } satisfies WorkforceBody["ReopenPayrollPeriodRequest"])} />
+      )}
+
       {markingPaid && period && (
         <MarkPaidDialog period={period} busy={busy} onClose={() => setMarkingPaid(false)}
           onSubmit={(paidOn) => action("mark-paid", "Đã ghi nhận trả lương",
@@ -361,6 +382,81 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
         </AlertDialogContent>
       </AlertDialog>
     </>
+  )
+}
+
+/** The payment date decides the tax rules and month, so it is confirmed, or changed, before each calculation. */
+function CalculateDialog({ period, busy, onClose, onSubmit }: {
+  period: PayrollPeriod
+  busy: boolean
+  onClose: () => void
+  onSubmit: (taxPaymentDate: string) => Promise<boolean>
+}) {
+  const [taxPaymentDate, setTaxPaymentDate] = useState(period.taxPaymentDate ?? today())
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open && !busy) onClose() }}>
+      <DialogContent className="sm:max-w-sm">
+        <form onSubmit={(event) => {
+          event.preventDefault()
+          void onSubmit(taxPaymentDate).then((ok) => { if (ok) onClose() })
+        }}>
+          <DialogHeader>
+            <DialogTitle>{period.status === "DRAFT" ? "Tính lương" : "Tính lại lương"}</DialogTitle>
+            <DialogDescription>
+              Thuế TNCN tính theo tháng của ngày trả lương; khi trả thực tế, ngày trả phải nằm trong cùng tháng này.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 grid gap-1.5">
+            <Label htmlFor="tax-payment-date">Ngày trả lương dự kiến</Label>
+            <Input id="tax-payment-date" type="date" required value={taxPaymentDate}
+              onChange={(event) => setTaxPaymentDate(event.target.value)} />
+          </div>
+          <DialogFooter className="mt-4">
+            <Button type="button" variant="outline" onClick={onClose} disabled={busy}>Hủy</Button>
+            <Button type="submit" disabled={busy}>{busy && <Loader2 className="animate-spin" />} Tính lương</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+/** Sends an approved, unpaid period back to draft, e.g. when salaries are paid in another month than planned. */
+function ReopenDialog({ title, busy, onClose, onSubmit }: {
+  title: string
+  busy: boolean
+  onClose: () => void
+  onSubmit: (reason: string) => Promise<boolean>
+}) {
+  const [reason, setReason] = useState("")
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open && !busy) onClose() }}>
+      <DialogContent className="sm:max-w-md">
+        <form onSubmit={(event) => {
+          event.preventDefault()
+          void onSubmit(reason.trim()).then((ok) => { if (ok) onClose() })
+        }}>
+          <DialogHeader>
+            <DialogTitle>Hủy duyệt {title.toLowerCase()}?</DialogTitle>
+            <DialogDescription>
+              Phiếu lương của kỳ bị xóa và nhân viên không còn thấy phiếu cho tới khi kỳ được tính và duyệt lại.
+              Dùng khi chưa trả lương, ví dụ trả lương lệch sang tháng khác nên phải tính lại thuế.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 grid gap-1.5">
+            <Label htmlFor="reopen-reason">Lý do</Label>
+            <Textarea id="reopen-reason" rows={2} required maxLength={500} value={reason}
+              onChange={(event) => setReason(event.target.value)} />
+          </div>
+          <DialogFooter className="mt-4">
+            <Button type="button" variant="outline" onClick={onClose} disabled={busy}>Không</Button>
+            <Button type="submit" variant="destructive" disabled={busy || !reason.trim()}>
+              {busy && <Loader2 className="animate-spin" />} Hủy duyệt
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
 

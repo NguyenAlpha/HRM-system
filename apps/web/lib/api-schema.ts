@@ -1220,6 +1220,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payroll/periods/{id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reopen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/payroll/periods/{periodId}/adjustments": {
         parameters: {
             query?: never;
@@ -3329,6 +3345,11 @@ export interface components {
             periodEnd: string;
             /** Format: date */
             periodStart: string;
+            reopenReason: string | null;
+            /** Format: date-time */
+            reopenedAt: string | null;
+            /** Format: int64 */
+            reopenedByAccountId: number | null;
             /** @enum {string} */
             status: "DRAFT" | "CALCULATED" | "APPROVED" | "PAID" | "LOCKED" | "CANCELLED";
             /** Format: date */
@@ -3569,6 +3590,9 @@ export interface components {
         };
         RejectRoleAssignmentRequest: {
             note: string;
+        };
+        ReopenPayrollPeriodRequest: {
+            reason: string;
         };
         ReplaceRolePermissionsRequest: {
             permissionIds: number[];
@@ -6385,6 +6409,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultListPayslipResponse"];
+                };
+            };
+        };
+    };
+    reopen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReopenPayrollPeriodRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultPayrollPeriodResponse"];
                 };
             };
         };
