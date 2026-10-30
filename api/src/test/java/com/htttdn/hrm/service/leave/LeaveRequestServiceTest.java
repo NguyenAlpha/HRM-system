@@ -3,6 +3,7 @@ package com.htttdn.hrm.service.leave;
 import com.htttdn.hrm.config.ClockConfig;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Optional;
 
 import com.htttdn.hrm.service.attendance.LeaveAttendanceService;
@@ -42,6 +43,8 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class LeaveRequestServiceTest {
 
+    private static final LocalDate HIRED = LocalDate.of(2025, 1, 1);
+
     @Mock private LeaveRequestRepository leaveRequestRepository;
     @Mock private EmployeeRepository employeeRepository;
     @Mock private AccountRepository accountRepository;
@@ -54,7 +57,7 @@ class LeaveRequestServiceTest {
 
     @Test
     void employeeCreatesOwnDraftUsingMinuteBasedPeriod() {
-        Employee employee = Employee.builder().id(1L).build();
+        Employee employee = Employee.builder().id(1L).hireDate(HIRED).build();
         Account actor = Account.builder().id(9L).employee(employee).build();
         when(employeeRepository.getRequired(1L)).thenReturn(employee);
         when(currentAccountProvider.account()).thenReturn(actor);
@@ -84,7 +87,7 @@ class LeaveRequestServiceTest {
 
     @Test
     void hrCannotCreateLeaveForAnotherEmployeeEvenWithManagePermission() {
-        Employee applicant = Employee.builder().id(1L).build();
+        Employee applicant = Employee.builder().id(1L).hireDate(HIRED).build();
         Employee hr = Employee.builder().id(2L).build();
         when(currentAccountProvider.account()).thenReturn(
             Account.builder().id(9L).employee(hr).build());
@@ -98,7 +101,7 @@ class LeaveRequestServiceTest {
 
     @Test
     void hrCannotSubmitOrCancelAnotherEmployeesDraft() {
-        Employee applicant = Employee.builder().id(1L).build();
+        Employee applicant = Employee.builder().id(1L).hireDate(HIRED).build();
         Employee hr = Employee.builder().id(2L).build();
         LeaveRequest request = LeaveRequest.builder().id(3L).employee(applicant)
             .status(LeaveRequestStatus.DRAFT).build();
@@ -113,7 +116,7 @@ class LeaveRequestServiceTest {
 
     @Test
     void submittingLeaveNotifiesHrAndApprover() {
-        Employee employee = Employee.builder().id(1L).fullName("Employee").build();
+        Employee employee = Employee.builder().id(1L).hireDate(HIRED).fullName("Employee").build();
         Employee manager = Employee.builder().id(5L).fullName("Manager").build();
         LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee)
             .status(LeaveRequestStatus.DRAFT).build();
@@ -132,7 +135,7 @@ class LeaveRequestServiceTest {
 
     @Test
     void approvingLeaveUpdatesAttendance() {
-        Employee employee = Employee.builder().id(1L).build();
+        Employee employee = Employee.builder().id(1L).hireDate(HIRED).build();
         Employee manager = Employee.builder().id(5L).build();
         LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee).approverEmployee(manager)
             .status(LeaveRequestStatus.PENDING)
@@ -152,7 +155,7 @@ class LeaveRequestServiceTest {
 
     @Test
     void rejectingLeaveNotifiesApplicant() {
-        Employee employee = Employee.builder().id(1L).build();
+        Employee employee = Employee.builder().id(1L).hireDate(HIRED).build();
         Employee manager = Employee.builder().id(5L).build();
         LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee).approverEmployee(manager)
             .status(LeaveRequestStatus.PENDING).build();
@@ -169,7 +172,7 @@ class LeaveRequestServiceTest {
 
     @Test
     void approveRejectsOverlappingApprovedLeave() {
-        Employee employee = Employee.builder().id(1L).build();
+        Employee employee = Employee.builder().id(1L).hireDate(HIRED).build();
         Employee manager = Employee.builder().id(5L).build();
         LeaveRequest request = LeaveRequest.builder()
             .id(3L)
@@ -216,6 +219,56 @@ class LeaveRequestServiceTest {
     }
 
     @Test
+    void draftPastTheLastWorkingDayIsRejected() {
+        Employee employee = Employee.builder().id(1L).hireDate(HIRED)
+            .terminationDate(LocalDate.of(2026, 11, 15)).build();
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).employee(employee).build());
+
+        // The last working day is the 15th; the leave runs into the 16th (Vietnam time).
+        BusinessException thrown = assertThrows(BusinessException.class,
+            () -> service().createDraft(annualLeave("2026-11-15T01:00:00Z", "2026-11-16T10:00:00Z")));
+
+        assertEquals(ErrorCode.LEAVE_OUTSIDE_EMPLOYMENT, thrown.getErrorCode());
+        verify(leaveRequestRepository, never()).save(any());
+    }
+
+    @Test
+    void draftEndingOnTheLastWorkingDayIsAccepted() {
+        Employee employee = Employee.builder().id(1L).hireDate(HIRED)
+            .terminationDate(LocalDate.of(2026, 11, 15)).build();
+        when(employeeRepository.getRequired(1L)).thenReturn(employee);
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).employee(employee).build());
+        when(leaveAttendanceService.leaveMinutesFor(eq(1L), any(), any())).thenReturn(480);
+        when(leaveRequestRepository.save(any(LeaveRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Ends at midnight starting the 16th, an open bound: the 16th itself is not taken.
+        var result = service().createDraft(annualLeave("2026-11-15T01:00:00Z", "2026-11-15T17:00:00Z"));
+
+        assertEquals(LeaveRequestStatus.DRAFT, result.status());
+    }
+
+    @Test
+    void approvingLeavePastALastWorkingDaySetAfterItWasFiledIsRejected() {
+        Employee employee = Employee.builder().id(1L).hireDate(HIRED)
+            .terminationDate(LocalDate.of(2026, 11, 15)).build();
+        Employee manager = Employee.builder().id(5L).build();
+        LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee).approverEmployee(manager)
+            .status(LeaveRequestStatus.PENDING)
+            .startAt(Instant.parse("2026-11-20T01:00:00Z"))
+            .endAt(Instant.parse("2026-11-20T10:00:00Z"))
+            .requestedMinutes(480).build();
+        when(leaveRequestRepository.getRequiredForUpdate(3L)).thenReturn(request);
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).employee(manager).build());
+
+        BusinessException thrown = assertThrows(BusinessException.class, () -> service().approve(3L, null));
+
+        assertEquals(ErrorCode.LEAVE_OUTSIDE_EMPLOYMENT, thrown.getErrorCode());
+        assertEquals(LeaveRequestStatus.PENDING, request.getStatus());
+        verify(leaveAttendanceService, never()).applyApprovedLeave(any());
+    }
+
+    @Test
     void draftBeyondTheAnnualBalanceIsRejectedBeforeItIsSaved() {
         stubOwnEmployee(12 * 480);
         doThrow(new ConflictException(ErrorCode.INSUFFICIENT_LEAVE_BALANCE, "not enough"))
@@ -230,7 +283,7 @@ class LeaveRequestServiceTest {
 
     @Test
     void submitRechecksTheAnnualBalance() {
-        Employee employee = Employee.builder().id(1L).build();
+        Employee employee = Employee.builder().id(1L).hireDate(HIRED).build();
         LeaveRequest request = LeaveRequest.builder().id(3L).employee(employee)
             .leaveType(LeaveType.ANNUAL).status(LeaveRequestStatus.DRAFT).build();
         when(leaveRequestRepository.getRequiredForUpdate(3L)).thenReturn(request);
@@ -273,7 +326,7 @@ class LeaveRequestServiceTest {
 
     @Test
     void requesterCannotMarkUnpaidLeaveAsEmployerPaid() {
-        Employee employee = Employee.builder().id(1L).build();
+        Employee employee = Employee.builder().id(1L).hireDate(HIRED).build();
         Account actor = Account.builder().id(9L).employee(employee).build();
         when(employeeRepository.getRequired(1L)).thenReturn(employee);
         when(currentAccountProvider.account()).thenReturn(actor);
@@ -290,7 +343,7 @@ class LeaveRequestServiceTest {
 
     @Test
     void hrMayOverrideTheTreatmentForCompanyPaidSickLeave() {
-        Employee employee = Employee.builder().id(1L).build();
+        Employee employee = Employee.builder().id(1L).hireDate(HIRED).build();
         Account actor = Account.builder().id(9L).employee(employee).build();
         when(employeeRepository.getRequired(1L)).thenReturn(employee);
         when(currentAccountProvider.account()).thenReturn(actor);
@@ -321,7 +374,7 @@ class LeaveRequestServiceTest {
     }
 
     private void stubOwnEmployee(int scheduledMinutes) {
-        Employee employee = Employee.builder().id(1L).build();
+        Employee employee = Employee.builder().id(1L).hireDate(HIRED).build();
         Account actor = Account.builder().id(9L).employee(employee).build();
         when(employeeRepository.getRequired(1L)).thenReturn(employee);
         when(currentAccountProvider.account()).thenReturn(actor);

@@ -56,6 +56,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   APPROVER_NOT_FOUND: "Chưa xác định được người duyệt cho đơn này.",
   INSUFFICIENT_LEAVE_BALANCE: "Số ngày phép còn lại không đủ.",
   LEAVE_OUTSIDE_WORK_SCHEDULE: "Khoảng thời gian này không có giờ làm theo ca, không cần tạo đơn nghỉ.",
+  LEAVE_OUTSIDE_EMPLOYMENT: "Thời gian nghỉ phải nằm trong thời gian làm việc, từ ngày vào làm đến ngày làm việc cuối.",
   AFTER_EMPLOYMENT_END: "Ngày hiệu lực không được sau ngày làm việc cuối của nhân sự.",
   ATTENDANCE_NOT_FOUND: "Không tìm thấy dữ liệu chấm công.",
   PAYROLL_PERIOD_NOT_FOUND: "Không tìm thấy kỳ lương.",

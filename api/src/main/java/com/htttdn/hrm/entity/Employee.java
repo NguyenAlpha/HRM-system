@@ -143,4 +143,9 @@ public class Employee extends AuditedEntity {
     public boolean isEmployedDuring(LocalDate from, LocalDate to) {
         return !hireDate.isAfter(to) && (terminationDate == null || !terminationDate.isBefore(from));
     }
+
+    /** Whether the employee works every day of [{@code from}, {@code to}]: hired by then, not gone before the end. */
+    public boolean isEmployedThroughout(LocalDate from, LocalDate to) {
+        return !hireDate.isAfter(from) && (terminationDate == null || !terminationDate.isBefore(to));
+    }
 }

@@ -499,6 +499,7 @@ Cách trả lương của đơn **do server suy ra từ loại nghỉ**, không 
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Request sai, `endAt` không sau `startAt`, hoặc `salaryTreatment` khác giá trị suy ra mà không có `request.manage` |
 | 400 | `LEAVE_OUTSIDE_WORK_SCHEDULE` | Khoảng thời gian không có phút công nào theo ca (ví dụ chỉ gồm Chủ nhật, ngày lễ hoặc giờ ngoài ca) |
+| 400 | `LEAVE_OUTSIDE_EMPLOYMENT` | Khoảng nghỉ có ngày trước ngày vào làm hoặc sau ngày làm việc cuối (kể cả ngày cuối đã hẹn nhưng chưa tới) |
 | 403 | `FORBIDDEN` | `employeeId` không thuộc account đang đăng nhập |
 | 404 | `EMPLOYEE_NOT_FOUND` | Nhân viên không tồn tại hoặc đã bị xóa mềm |
 | 409 | `INSUFFICIENT_LEAVE_BALANCE` | Đơn `ANNUAL` vượt số dư phép năm còn lại |
@@ -528,8 +529,9 @@ Chỉ người duyệt đã chốt của đơn (`approverEmployeeId`) duyệt ho
 Khi duyệt, hệ thống:
 
 1. Kiểm tra nhân viên chưa có đơn đã duyệt trùng thời gian.
-2. Với `ANNUAL`, kiểm tra số dư phép năm (xem [Hạn mức phép năm](#hạn-mức-phép-năm)).
-3. Gắn đơn và số phút nghỉ vào bảng công từng ngày. Đơn nghỉ có lương cộng vào phút được trả lương; đơn nghỉ không lương hoặc do bảo hiểm chi trả không cộng.
+2. Kiểm tra khoảng nghỉ vẫn nằm trong thời gian làm việc: ngày làm việc cuối có thể được hẹn sau khi tạo đơn.
+3. Với `ANNUAL`, kiểm tra số dư phép năm (xem [Hạn mức phép năm](#hạn-mức-phép-năm)).
+4. Gắn đơn và số phút nghỉ vào bảng công từng ngày. Đơn nghỉ có lương cộng vào phút được trả lương; đơn nghỉ không lương hoặc do bảo hiểm chi trả không cộng.
 
 Nghỉ một phần ngày rồi chấm công phần còn lại không cần đối soát: đơn được duyệt trước hay sau khi chấm đều cho ra đủ công. Chỉ khi nhân viên không chấm công cho phần còn lại thì ngày đó mới ở `MISSING_PUNCH` chờ HR.
 
@@ -538,6 +540,7 @@ Nghỉ một phần ngày rồi chấm công phần còn lại không cần đ�
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
 | 403 | `FORBIDDEN` | Người gọi không phải người duyệt của đơn |
+| 400 | `LEAVE_OUTSIDE_EMPLOYMENT` | Khoảng nghỉ có ngày sau ngày làm việc cuối |
 | 404 | `REQUEST_NOT_FOUND` | Đơn không tồn tại |
 | 409 | `REQUEST_ALREADY_PROCESSED` | Đơn không ở `PENDING` |
 | 409 | `CONFLICT` | Trùng đơn đã duyệt, ngày đã gắn đơn khác, ngày đang chấm dở, hoặc đơn trùng giờ đã làm |

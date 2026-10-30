@@ -2,7 +2,9 @@ package com.htttdn.hrm.service.leave;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 
+import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.service.attendance.LeaveAttendanceService;
 import com.htttdn.hrm.service.NotificationService;
 import com.htttdn.hrm.service.employee.ApproverResolver;
@@ -66,7 +68,8 @@ public class LeaveRequestService {
      *
      * @throws BusinessException kết thúc không sau bắt đầu, chọn cách trả lương khác mặc định mà thiếu
      *         {@code request.manage} (→ 400 {@code VALIDATION_ERROR}), hoặc khoảng nghỉ không có giờ làm
-     *         theo lịch (→ 400 {@code LEAVE_OUTSIDE_WORK_SCHEDULE})
+     *         theo lịch (→ 400 {@code LEAVE_OUTSIDE_WORK_SCHEDULE}), hoặc có ngày trước ngày vào làm hay sau ngày
+     *         làm việc cuối (→ 400 {@code LEAVE_OUTSIDE_EMPLOYMENT})
      * @throws com.htttdn.hrm.exception.ForbiddenException tạo đơn cho người khác (→ 403)
      * @throws ConflictException nghỉ phép năm vượt quỹ còn lại (→ 409 {@code INSUFFICIENT_LEAVE_BALANCE})
      */
@@ -75,6 +78,7 @@ public class LeaveRequestService {
         validateCommand(command);
         requireOwnEmployee(command.employeeId());
         Employee employee = employeeRepository.getRequired(command.employeeId());
+        requireWithinEmployment(employee, command.startAt(), command.endAt());
         LeaveSalaryTreatment salaryTreatment = resolveSalaryTreatment(command);
         int requestedMinutes = leaveAttendanceService.leaveMinutesFor(employee.getId(), command.startAt(), command.endAt());
         if (requestedMinutes == 0) {
@@ -170,13 +174,15 @@ public class LeaveRequestService {
     /**
      * Chốt đơn là đã duyệt: dùng cho cả người duyệt bấm duyệt lẫn đơn tự ghi nhận của lãnh đạo.
      *
-     * <p>Thứ tự: không trùng đơn đã duyệt khác → còn đủ quỹ phép → ghi vào chấm công
-     * ({@code LeaveAttendanceService.applyApprovedLeave}) → ghi người duyệt, thời điểm. Lỗi ở bước nào thì cả
-     * transaction rollback, đơn giữ trạng thái cũ.
+     * <p>Thứ tự: không trùng đơn đã duyệt khác → vẫn nằm trong thời gian làm việc → còn đủ quỹ phép → ghi vào
+     * chấm công ({@code LeaveAttendanceService.applyApprovedLeave}) → ghi người duyệt, thời điểm. Lỗi ở bước nào
+     * thì cả transaction rollback, đơn giữ trạng thái cũ.
      *
      * @throws ConflictException trùng đơn đã duyệt (→ 409 {@code CONFLICT}), quỹ phép không đủ (→ 409
      *         {@code INSUFFICIENT_LEAVE_BALANCE}), hoặc chấm công không nhận được ngày nghỉ, VD kỳ lương đã
      *         chốt (→ 409)
+     * @throws BusinessException có ngày sau ngày làm việc cuối, VD HR hẹn nghỉ việc sau khi tạo đơn (→ 400
+     *         {@code LEAVE_OUTSIDE_EMPLOYMENT})
      */
     private void applyApproval(LeaveRequest request, String reviewComment) {
         if (leaveRequestRepository.existsApprovedOverlap(
@@ -190,6 +196,8 @@ public class LeaveRequestService {
                 "Employee already has an approved leave request in this period"
             );
         }
+        // The last working day may have been set after the request was created.
+        requireWithinEmployment(request.getEmployee(), request.getStartAt(), request.getEndAt());
 
         leaveEntitlementService.requireSufficientBalance(request);
         leaveAttendanceService.applyApprovedLeave(request);
@@ -215,6 +223,20 @@ public class LeaveRequestService {
     private void validateCommand(CreateLeaveCommand command) {
         if (!command.endAt().isAfter(command.startAt())) {
             throw validation("endAt must be after startAt", "endAt");
+        }
+    }
+
+    /**
+     * Mọi ngày của khoảng nghỉ phải nằm từ ngày vào làm tới ngày làm việc cuối (kể cả ngày cuối HR mới hẹn):
+     * sau ngày cuối phân công chính vẫn còn mở tới khi job chốt, nên lịch ca không tự chặn được.
+     */
+    private void requireWithinEmployment(Employee employee, Instant startAt, Instant endAt) {
+        LocalDate firstDay = LocalDate.ofInstant(startAt, ClockConfig.BUSINESS_ZONE);
+        // endAt là mốc mở, như LeaveAttendanceService.leaveMinutesFor.
+        LocalDate lastDay = LocalDate.ofInstant(endAt.minusNanos(1), ClockConfig.BUSINESS_ZONE);
+        if (!employee.isEmployedThroughout(firstDay, lastDay)) {
+            throw new BusinessException(ErrorCode.LEAVE_OUTSIDE_EMPLOYMENT,
+                "Leave must fall between the hire date and the last working day", "endAt");
         }
     }
 
