@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Briefcase, Eye, Loader2, Pencil, Plus, RefreshCw, TrendingUp } from "lucide-react"
+import { Briefcase, Eye, Loader2, Pencil, Plus, RefreshCw, Trash2, TrendingUp } from "lucide-react"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { PageHeader } from "@/components/portal/page-header"
@@ -331,14 +331,14 @@ function SeniorityAllowances({ canManage }: { canManage: boolean }) {
     <>
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
-          % lương cơ bản theo số năm thâm niên tròn tính từ ngày bắt đầu thâm niên; dưới bậc thấp nhất thì không có.
+          % lương cơ bản theo số năm thâm niên tròn tính từ ngày bắt đầu thâm niên; mỗi năm thâm niên thuộc đúng một bậc.
         </p>
         <div className="flex gap-2">
           <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
             <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
           </Button>
           {canManage && (
-            <Button type="button" size="sm" onClick={() => setAdding(true)}><Plus /> Thêm bậc</Button>
+            <Button type="button" size="sm" onClick={() => setAdding(true)} disabled={loading}><Pencil /> Sửa bảng</Button>
           )}
         </div>
       </div>
@@ -380,76 +380,143 @@ function SeniorityAllowances({ canManage }: { canManage: boolean }) {
         </Table>
       </div>
 
-      {adding && <SeniorityAllowanceDialog busy={busy} run={run} onClose={() => setAdding(false)} />}
+      {adding && (
+        <SeniorityTableDialog busy={busy} run={run} onClose={() => setAdding(false)}
+          current={rules.filter((rule) => rule.effectiveTo === null).toSorted((a, b) => a.minYears - b.minYears)} />
+      )}
     </>
   )
 }
 
-function SeniorityAllowanceDialog({ busy, run, onClose }: { busy: boolean; run: Run; onClose: () => void }) {
-  const [minYears, setMinYears] = useState("")
-  const [maxYears, setMaxYears] = useState("")
-  const [percentage, setPercentage] = useState("")
+/** One row of the table being edited; its lower bound is the previous row's upper bound, the last row is open. */
+type TierRow = { key: number; maxYears: string; percentage: string }
+
+/**
+ * Declares the whole seniority table from one date: the rows always join from 0 years to an open last row, so
+ * no year is left without a rate. Starts from the table in force today.
+ */
+function SeniorityTableDialog({ current, busy, run, onClose }: {
+  current: SeniorityAllowance[]
+  busy: boolean
+  run: Run
+  onClose: () => void
+}) {
+  const [rows, setRows] = useState<TierRow[]>(() => current.length > 0
+    ? current.map((rule, index) => ({
+      key: index,
+      maxYears: rule.maxYears == null ? "" : String(rule.maxYears),
+      percentage: String(Number(rule.percentage)),
+    }))
+    : [{ key: 0, maxYears: "", percentage: "0" }])
+  const [nextKey, setNextKey] = useState(rows.length)
   const [effectiveFrom, setEffectiveFrom] = useState(today())
   const [note, setNote] = useState("")
+  const minYears = (index: number) => (index === 0 ? 0 : Number(rows[index - 1].maxYears))
+
+  function update(index: number, change: Partial<TierRow>) {
+    setRows((previous) => previous.map((row, at) => (at === index ? { ...row, ...change } : row)))
+  }
+
+  function addRow() {
+    // The open last row gets an upper bound to fill in; the new row becomes the open one.
+    setRows((previous) => [...previous, { key: nextKey, maxYears: "", percentage: previous.at(-1)?.percentage ?? "0" }])
+    setNextKey((value) => value + 1)
+  }
+
+  function removeRow(index: number) {
+    setRows((previous) => {
+      const next = previous.filter((_, at) => at !== index)
+      return next.map((row, at) => (at === next.length - 1 ? { ...row, maxYears: "" } : row))
+    })
+  }
 
   async function submit() {
-    const ok = await run("Đã thêm bậc phụ cấp thâm niên", () =>
+    const ok = await run("Đã cập nhật bảng phụ cấp thâm niên", () =>
       workforceApi("compensation/seniority-allowances", "POST", {
-        minYears: Number(minYears),
-        maxYears: maxYears === "" ? null : Number(maxYears),
-        percentage: Number(percentage),
         effectiveFrom,
         note: note.trim() || null,
-      } satisfies WorkforceBody["SetSeniorityAllowanceCommand"]))
+        tiers: rows.map((row, index) => ({
+          minYears: minYears(index),
+          maxYears: index === rows.length - 1 ? null : Number(row.maxYears),
+          percentage: Number(row.percentage),
+        })),
+      } satisfies WorkforceBody["SetSeniorityAllowancesCommand"]))
     if (ok) onClose()
   }
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open && !busy) onClose() }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <form onSubmit={(event) => { event.preventDefault(); void submit() }}>
           <DialogHeader>
-            <DialogTitle>Thêm bậc phụ cấp thâm niên</DialogTitle>
+            <DialogTitle>Bảng phụ cấp thâm niên</DialogTitle>
             <DialogDescription>
-              Các bậc đang áp dụng có khoảng năm chồng với bậc mới sẽ tự kết thúc vào ngày trước ngày hiệu lực.
+              Khai báo cả bảng: mỗi năm thâm niên thuộc đúng một bậc, bậc cuối không giới hạn. Bảng đang áp dụng kết
+              thúc vào ngày trước ngày hiệu lực.
             </DialogDescription>
           </DialogHeader>
 
           <div className="mt-4 grid gap-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5">
-                <Label htmlFor="seniority-min">Từ (năm)</Label>
-                <Input id="seniority-min" required type="number" min="0" step="1" value={minYears}
-                  onChange={(event) => setMinYears(event.target.value)} />
-              </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="seniority-max">Đến dưới (năm)</Label>
-                <Input id="seniority-max" type="number" min="1" step="1" placeholder="Không giới hạn" value={maxYears}
-                  onChange={(event) => setMaxYears(event.target.value)} />
-              </div>
+            <div className="rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Từ (năm)</TableHead>
+                    <TableHead>Đến dưới (năm)</TableHead>
+                    <TableHead>Tỷ lệ (%)</TableHead>
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((row, index) => {
+                    const last = index === rows.length - 1
+                    const from = minYears(index)
+                    return (
+                      <TableRow key={row.key}>
+                        <TableCell className="tabular-nums">{Number.isFinite(from) ? from : "—"}</TableCell>
+                        <TableCell>
+                          {last ? <span className="text-sm text-muted-foreground">Không giới hạn</span> : (
+                            <Input aria-label={`Bậc ${index + 1}: đến dưới (năm)`} required type="number" step="1"
+                              min={Number.isFinite(from) ? from + 1 : 1} value={row.maxYears}
+                              onChange={(event) => update(index, { maxYears: event.target.value })} />
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Input aria-label={`Bậc ${index + 1}: tỷ lệ (%)`} required type="number" min="0" step="0.01"
+                            value={row.percentage} onChange={(event) => update(index, { percentage: event.target.value })} />
+                        </TableCell>
+                        <TableCell>
+                          {rows.length > 1 && (
+                            <Button type="button" variant="ghost" size="icon" aria-label={`Xóa bậc ${index + 1}`}
+                              onClick={() => removeRow(index)}><Trash2 /></Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
             </div>
+            <Button type="button" variant="outline" size="sm" className="justify-self-start" onClick={addRow}>
+              <Plus /> Thêm bậc
+            </Button>
             <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5">
-                <Label htmlFor="seniority-percentage">Tỷ lệ (% lương cơ bản)</Label>
-                <Input id="seniority-percentage" required type="number" min="0" step="0.01" value={percentage}
-                  onChange={(event) => setPercentage(event.target.value)} />
-              </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="seniority-from">Hiệu lực từ</Label>
                 <Input id="seniority-from" required type="date" value={effectiveFrom}
                   onChange={(event) => setEffectiveFrom(event.target.value)} />
               </div>
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="seniority-note">Ghi chú</Label>
-              <Input id="seniority-note" value={note} onChange={(event) => setNote(event.target.value)} />
+              <div className="grid gap-1.5">
+                <Label htmlFor="seniority-note">Ghi chú</Label>
+                <Input id="seniority-note" value={note} onChange={(event) => setNote(event.target.value)} />
+              </div>
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="mt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={busy}>Hủy</Button>
             <Button type="submit" disabled={busy}>
-              {busy && <Loader2 className="animate-spin" />} Thêm bậc
+              {busy && <Loader2 className="animate-spin" />} Lưu bảng
             </Button>
           </DialogFooter>
         </form>

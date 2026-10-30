@@ -36,7 +36,7 @@ export type WorkforceBody = Pick<Schemas,
   | "CreateResignationRequestRequest" | "ApproveResignationBody" | "RejectResignationBody"
   | "SetSalaryCommand" | "ProfileCommand" | "DependentCommand" | "EndDependentCommand"
   | "CreatePayrollPeriodRequest" | "PayrollActionRequest" | "MarkPayrollPaidRequest" | "ReopenPayrollPeriodRequest" | "CreatePayrollAdjustmentRequest"
-  | "SetPositionAllowanceCommand" | "SetSeniorityAllowanceCommand" | "CompanyProfileRequest"
+  | "SetPositionAllowanceCommand" | "SetSeniorityAllowancesCommand" | "CompanyProfileRequest"
 >
 
 // The label records below must list every enum value, so a value added in the API fails typecheck.

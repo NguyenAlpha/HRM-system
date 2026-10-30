@@ -119,6 +119,7 @@ const FIELD_LABELS: Record<string, string> = {
   effectiveTo: "Ngày kết thúc",
   taxPaymentDate: "Ngày trả lương",
   paidOn: "Ngày trả thực tế",
+  tiers: "Các bậc thâm niên",
   startDate: "Ngày bắt đầu",
   endDate: "Ngày kết thúc",
   reason: "Lý do",

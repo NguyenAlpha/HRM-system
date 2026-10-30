@@ -621,7 +621,7 @@ export interface paths {
         };
         get: operations["seniorityAllowances"];
         put?: never;
-        post: operations["setSeniorityAllowance"];
+        post: operations["setSeniorityAllowances"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2443,11 +2443,6 @@ export interface components {
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
-        ApiResultSeniorityAllowanceView: {
-            data: components["schemas"]["SeniorityAllowanceView"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-            success: boolean;
-        };
         ApiResultTurnoverReportResponse: {
             data: components["schemas"]["TurnoverReportResponse"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
@@ -3784,6 +3779,13 @@ export interface components {
             note: string | null;
             percentage: number;
         };
+        SeniorityTier: {
+            /** Format: int32 */
+            maxYears?: number | null;
+            /** Format: int32 */
+            minYears: number;
+            percentage: number;
+        };
         SetPositionAllowanceCommand: {
             /** Format: date */
             effectiveFrom: string;
@@ -3797,15 +3799,11 @@ export interface components {
             note?: string | null;
             reason?: string | null;
         };
-        SetSeniorityAllowanceCommand: {
+        SetSeniorityAllowancesCommand: {
             /** Format: date */
             effectiveFrom: string;
-            /** Format: int32 */
-            maxYears?: number | null;
-            /** Format: int32 */
-            minYears: number;
             note?: string | null;
-            percentage: number;
+            tiers: components["schemas"]["SeniorityTier"][];
         };
         SoftDeleteEmployeeRequest: {
             deletionReason: string;
@@ -5198,7 +5196,7 @@ export interface operations {
             };
         };
     };
-    setSeniorityAllowance: {
+    setSeniorityAllowances: {
         parameters: {
             query?: never;
             header?: never;
@@ -5207,7 +5205,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SetSeniorityAllowanceCommand"];
+                "application/json": components["schemas"]["SetSeniorityAllowancesCommand"];
             };
         };
         responses: {
@@ -5217,7 +5215,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiResultSeniorityAllowanceView"];
+                    "application/json": components["schemas"]["ApiResultListSeniorityAllowanceView"];
                 };
             };
         };
