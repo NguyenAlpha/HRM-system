@@ -87,7 +87,9 @@ public class PayrollAdjustmentService {
     }
 
     private PayrollPeriod findEditablePeriod(Long periodId) {
-        PayrollPeriod period = payrollPeriodRepository.getRequired(periodId);
+        // Khóa ghi như các thao tác khác trên kỳ: không thì kỳ vừa được duyệt song song vẫn đọc là CALCULATED, và
+        // invalidatePeriod sẽ xóa phiếu lương rồi ghi đè kỳ đã duyệt về DRAFT.
+        PayrollPeriod period = payrollPeriodRepository.getRequiredForUpdate(periodId);
         if (period.getStatus() != PayrollPeriodStatus.DRAFT && period.getStatus() != PayrollPeriodStatus.CALCULATED) {
             throw new ConflictException(ErrorCode.PAYROLL_PERIOD_LOCKED,
                 "Adjustments can only change while period " + periodId + " is DRAFT or CALCULATED");
