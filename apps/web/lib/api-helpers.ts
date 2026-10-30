@@ -57,6 +57,13 @@ const ERROR_MESSAGES: Record<string, string> = {
   INSUFFICIENT_LEAVE_BALANCE: "Số ngày phép còn lại không đủ.",
   LEAVE_OUTSIDE_WORK_SCHEDULE: "Khoảng thời gian này không có giờ làm theo ca, không cần tạo đơn nghỉ.",
   LEAVE_OUTSIDE_EMPLOYMENT: "Thời gian nghỉ phải nằm trong thời gian làm việc, từ ngày vào làm đến ngày làm việc cuối.",
+  LEAVE_DAY_APPROVED: "Ngày này đã có đơn nghỉ khác được duyệt, mà mỗi ngày chỉ có một đơn nghỉ. Hãy từ chối đơn này.",
+  LEAVE_DAY_PUNCH_INCOMPLETE:
+    "Trong khoảng nghỉ có ngày đã chấm giờ vào nhưng chưa có giờ ra. Cần bổ sung giờ ra trước khi duyệt đơn nghỉ.",
+  LEAVE_OVERLAPS_WORKED_TIME:
+    "Khoảng nghỉ trùng với giờ nhân viên đã chấm công đi làm. Hãy từ chối đơn để nhân viên tạo lại đúng giờ nghỉ.",
+  LEAVE_SCHEDULE_CHANGED:
+    "Lịch ca của nhân viên đã đổi sau khi tạo đơn nên số giờ nghỉ không còn khớp. Hãy từ chối đơn để nhân viên tạo lại.",
   LEAVE_DAY_TAKEN:
     "Ngày này đã có đơn nghỉ khác đang chờ duyệt hoặc đã duyệt. Mỗi ngày chỉ có một đơn nghỉ, kể cả nghỉ nửa ngày: hãy chọn ngày khác, hoặc hủy đơn đang chờ rồi tạo một đơn cho cả ngày.",
   AFTER_EMPLOYMENT_END: "Ngày hiệu lực không được sau ngày làm việc cuối của nhân sự.",

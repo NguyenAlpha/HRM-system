@@ -32,6 +32,7 @@ import com.htttdn.hrm.entity.WorkShift;
 import com.htttdn.hrm.entity.enums.AttendanceStatus;
 import com.htttdn.hrm.entity.enums.LeaveSalaryTreatment;
 import com.htttdn.hrm.entity.enums.LeaveType;
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AccountRepository;
@@ -197,6 +198,46 @@ class AttendanceServiceTest {
     }
 
     @Test
+    void leaveOverlappingWorkedTimeIsRefusedWithItsOwnCode() {
+        LocalDate date = LocalDate.of(2026, 1, 15);
+        // Worked 08:00-12:00, yet the leave claims the same morning.
+        AttendanceRecord record = officeDay(date, "2026-01-15T01:00:00Z", "2026-01-15T05:00:00Z");
+        LeaveRequest leave = leave(record, "2026-01-15T01:00:00Z", "2026-01-15T05:00:00Z");
+        stubLeaveDay(record, date);
+
+        ConflictException thrown = assertThrows(ConflictException.class, () -> leaveService().applyApprovedLeave(leave));
+
+        assertEquals(ErrorCode.LEAVE_OVERLAPS_WORKED_TIME, thrown.getErrorCode());
+    }
+
+    @Test
+    void leaveOnADayStillMissingItsCheckOutIsRefusedWithItsOwnCode() {
+        LocalDate date = LocalDate.of(2026, 1, 15);
+        AttendanceRecord record = officeDay(date, "2026-01-15T06:00:00Z", "2026-01-15T10:00:00Z");
+        record.setCheckOutAt(null);
+        LeaveRequest leave = leave(record, "2026-01-15T01:00:00Z", "2026-01-15T05:00:00Z");
+        stubLeaveDay(record, date);
+
+        ConflictException thrown = assertThrows(ConflictException.class, () -> leaveService().applyApprovedLeave(leave));
+
+        assertEquals(ErrorCode.LEAVE_DAY_PUNCH_INCOMPLETE, thrown.getErrorCode());
+    }
+
+    @Test
+    void leaveLongerThanTheCurrentScheduleIsRefusedWithItsOwnCode() {
+        LocalDate date = LocalDate.of(2026, 1, 15);
+        AttendanceRecord record = officeDay(date, "2026-01-15T06:00:00Z", "2026-01-15T10:00:00Z");
+        LeaveRequest leave = leave(record, "2026-01-15T01:00:00Z", "2026-01-15T05:00:00Z");
+        // Filed when the morning was longer; the shift has changed since.
+        leave.setRequestedMinutes(300);
+        stubOfficeDay(record, date);
+
+        BusinessException thrown = assertThrows(BusinessException.class, () -> leaveService().applyApprovedLeave(leave));
+
+        assertEquals(ErrorCode.LEAVE_SCHEDULE_CHANGED, thrown.getErrorCode());
+    }
+
+    @Test
     void afternoonLeaveSpanningTheBreakCountsOnlyWorkMinutes() {
         LocalDate date = LocalDate.of(2026, 1, 15);
         // Worked 08:00-12:00; leave filed 12:00-17:00 covers the break, which is not leave time.
@@ -315,12 +356,17 @@ class AttendanceServiceTest {
     }
 
     private void stubOfficeDay(AttendanceRecord record, LocalDate date) {
+        stubLeaveDay(record, date);
+        when(attendanceCalendarService.companyWorkDates(date, date)).thenReturn(List.of(date));
+    }
+
+    /** Just what applying a leave reads before it refuses the day. */
+    private void stubLeaveDay(AttendanceRecord record, LocalDate date) {
         when(attendanceCalendarService.scheduleFor(2L, date.minusDays(1), date))
             .thenReturn(List.of(new AttendanceCalendarService.ScheduledDay(date, record.getShift(),
                 record.getScheduledStartAt(), record.getScheduledEndAt(), 480)));
         when(attendanceRecordRepository.findByEmployeeIdAndWorkDateForUpdate(2L, date))
             .thenReturn(Optional.of(record));
-        when(attendanceCalendarService.companyWorkDates(date, date)).thenReturn(List.of(date));
     }
 
     /** The signed-in account is the approver of the record's employee. */

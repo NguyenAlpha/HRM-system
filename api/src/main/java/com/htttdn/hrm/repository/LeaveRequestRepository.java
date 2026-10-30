@@ -48,22 +48,6 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
         """)
     Optional<LeaveRequest> findByIdForUpdate(@Param("id") Long id);
 
-    @Query("""
-        SELECT CASE WHEN COUNT(request) > 0 THEN true ELSE false END
-        FROM LeaveRequest request
-        WHERE request.employee.id = :employeeId
-          AND request.status = com.htttdn.hrm.entity.enums.LeaveRequestStatus.APPROVED
-          AND request.startAt < :endAt
-          AND request.endAt > :startAt
-          AND (:excludedRequestId IS NULL OR request.id <> :excludedRequestId)
-        """)
-    boolean existsApprovedOverlap(
-        @Param("employeeId") Long employeeId,
-        @Param("startAt") Instant startAt,
-        @Param("endAt") Instant endAt,
-        @Param("excludedRequestId") Long excludedRequestId
-    );
-
     boolean existsByEmployeeId(Long employeeId);
 
     /** Whether another request of the employee in {@code statuses} touches [{@code from}, {@code to}). */

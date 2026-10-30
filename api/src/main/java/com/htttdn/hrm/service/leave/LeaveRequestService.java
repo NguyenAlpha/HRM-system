@@ -181,27 +181,22 @@ public class LeaveRequestService {
     /**
      * Chốt đơn là đã duyệt: dùng cho cả người duyệt bấm duyệt lẫn đơn tự ghi nhận của lãnh đạo.
      *
-     * <p>Thứ tự: không trùng đơn đã duyệt khác → vẫn nằm trong thời gian làm việc → còn đủ quỹ phép → ghi vào
+     * <p>Thứ tự: không có đơn đã duyệt khác cùng ngày → vẫn nằm trong thời gian làm việc → còn đủ quỹ phép → ghi vào
      * chấm công ({@code LeaveAttendanceService.applyApprovedLeave}) → ghi người duyệt, thời điểm. Lỗi ở bước nào
      * thì cả transaction rollback, đơn giữ trạng thái cũ.
      *
-     * @throws ConflictException trùng đơn đã duyệt (→ 409 {@code CONFLICT}), quỹ phép không đủ (→ 409
-     *         {@code INSUFFICIENT_LEAVE_BALANCE}), hoặc chấm công không nhận được ngày nghỉ, VD kỳ lương đã
-     *         chốt (→ 409)
+     * @throws ConflictException ngày nghỉ đã có đơn được duyệt khác (→ 409 {@code LEAVE_DAY_APPROVED}), quỹ
+     *         phép không đủ (→ 409 {@code INSUFFICIENT_LEAVE_BALANCE}), hoặc chấm công không nhận được ngày nghỉ
+     *         (xem {@code LeaveAttendanceService.applyApprovedLeave})
      * @throws BusinessException có ngày sau ngày làm việc cuối, VD HR hẹn nghỉ việc sau khi tạo đơn (→ 400
      *         {@code LEAVE_OUTSIDE_EMPLOYMENT})
      */
     private void applyApproval(LeaveRequest request, String reviewComment) {
-        if (leaveRequestRepository.existsApprovedOverlap(
-            request.getEmployee().getId(),
-            request.getStartAt(),
-            request.getEndAt(),
-            request.getId()
-        )) {
-            throw new ConflictException(
-                ErrorCode.CONFLICT,
-                "Employee already has an approved leave request in this period"
-            );
+        // Requests filed before one request per day was enforced may still share a day with an approved one.
+        if (existsOnTheSameDays(request.getEmployee().getId(), request.getStartAt(), request.getEndAt(),
+            List.of(LeaveRequestStatus.APPROVED), request.getId())) {
+            throw new ConflictException(ErrorCode.LEAVE_DAY_APPROVED,
+                "Another approved leave request already covers one of these days");
         }
         // The last working day may have been set after the request was created.
         requireWithinEmployment(request.getEmployee(), request.getStartAt(), request.getEndAt());
@@ -272,15 +267,22 @@ public class LeaveRequestService {
      * nhân viên, khi gửi sẽ được kiểm tra lại.
      */
     private void requireNoOtherLeaveOnTheSameDays(Long employeeId, Instant startAt, Instant endAt, Long excludedId) {
+        if (existsOnTheSameDays(employeeId, startAt, endAt,
+            List.of(LeaveRequestStatus.PENDING, LeaveRequestStatus.APPROVED), excludedId)) {
+            throw new ConflictException(ErrorCode.LEAVE_DAY_TAKEN,
+                "Another pending or approved leave request already covers one of these days");
+        }
+    }
+
+    /** Whether another request in {@code statuses} touches one of the days (Vietnam time) from startAt to endAt. */
+    private boolean existsOnTheSameDays(
+        Long employeeId, Instant startAt, Instant endAt, List<LeaveRequestStatus> statuses, Long excludedId
+    ) {
         Instant firstDayStart = LocalDate.ofInstant(startAt, ClockConfig.BUSINESS_ZONE)
             .atStartOfDay(ClockConfig.BUSINESS_ZONE).toInstant();
         Instant lastDayEnd = LocalDate.ofInstant(endAt.minusNanos(1), ClockConfig.BUSINESS_ZONE).plusDays(1)
             .atStartOfDay(ClockConfig.BUSINESS_ZONE).toInstant();
-        if (leaveRequestRepository.existsInStatusesBetween(employeeId,
-            List.of(LeaveRequestStatus.PENDING, LeaveRequestStatus.APPROVED), firstDayStart, lastDayEnd, excludedId)) {
-            throw new ConflictException(ErrorCode.LEAVE_DAY_TAKEN,
-                "Another pending or approved leave request already covers one of these days");
-        }
+        return leaveRequestRepository.existsInStatusesBetween(employeeId, statuses, firstDayStart, lastDayEnd, excludedId);
     }
 
     /**

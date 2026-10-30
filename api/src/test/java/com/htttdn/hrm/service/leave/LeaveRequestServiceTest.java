@@ -33,7 +33,6 @@ import com.htttdn.hrm.service.NotificationService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -173,7 +172,7 @@ class LeaveRequestServiceTest {
     }
 
     @Test
-    void approveRejectsOverlappingApprovedLeave() {
+    void approveRejectsLeaveOnADayWithAnotherApprovedLeave() {
         Employee employee = Employee.builder().id(1L).hireDate(HIRED).build();
         Employee manager = Employee.builder().id(5L).build();
         LeaveRequest request = LeaveRequest.builder()
@@ -186,16 +185,16 @@ class LeaveRequestServiceTest {
             .build();
         when(leaveRequestRepository.getRequiredForUpdate(3L)).thenReturn(request);
         when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).employee(manager).build());
-        when(leaveRequestRepository.existsApprovedOverlap(
-            1L, request.getStartAt(), request.getEndAt(), 3L
-        )).thenReturn(true);
+        when(leaveRequestRepository.existsInStatusesBetween(1L, List.of(LeaveRequestStatus.APPROVED),
+            Instant.parse("2026-01-04T17:00:00Z"), Instant.parse("2026-01-05T17:00:00Z"), 3L)).thenReturn(true);
 
         ConflictException exception = assertThrows(
             ConflictException.class,
             () -> service().approve(3L, "Approved")
         );
 
-        assertTrue(exception.getMessage().contains("approved leave request"));
+        assertEquals(ErrorCode.LEAVE_DAY_APPROVED, exception.getErrorCode());
+        verify(leaveAttendanceService, never()).applyApprovedLeave(any());
     }
 
     @Test

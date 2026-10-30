@@ -78,10 +78,12 @@ public class LeaveAttendanceService {
      * </ul>
      *
      * @param request đơn nghỉ đã duyệt, có {@code requestedMinutes} tính từ {@link #leaveMinutesFor}
-     * @throws com.htttdn.hrm.exception.ConflictException kỳ lương đã chốt, ngày đã gắn đơn nghỉ khác,
-     *         ngày đang chấm dở (có giờ vào chưa có giờ ra) hoặc giờ đã làm chồng lên giờ nghỉ (→ 409)
-     * @throws BusinessException đơn dài hơn tổng giờ làm theo lịch hiện tại (→ 400), VD lịch đã đổi
-     *         sau khi nộp đơn
+     * @throws com.htttdn.hrm.exception.ConflictException kỳ lương đã chốt (→ 409 {@code PAYROLL_PERIOD_LOCKED}),
+     *         ngày đã gắn đơn nghỉ khác (→ 409 {@code LEAVE_DAY_APPROVED}), ngày đang chấm dở, có giờ vào chưa
+     *         có giờ ra (→ 409 {@code LEAVE_DAY_PUNCH_INCOMPLETE}), hoặc giờ đã làm chồng lên giờ nghỉ (→ 409
+     *         {@code LEAVE_OVERLAPS_WORKED_TIME})
+     * @throws BusinessException đơn dài hơn tổng giờ làm theo lịch hiện tại, VD lịch đã đổi sau khi nộp đơn
+     *         (→ 400 {@code LEAVE_SCHEDULE_CHANGED})
      */
     public void applyApprovedLeave(LeaveRequest request) {
         Long employeeId = request.getEmployee().getId();
@@ -107,15 +109,16 @@ public class LeaveAttendanceService {
                     remainingMinutes -= leaveMinutes;
                     continue;
                 }
-                throw new ConflictException(ErrorCode.CONFLICT,
+                throw new ConflictException(ErrorCode.LEAVE_DAY_APPROVED,
                     "Attendance already references another leave request on " + day.workDate());
             }
             if (record != null && record.getCheckInAt() != null && record.getCheckOutAt() == null) {
-                throw new ConflictException(ErrorCode.CONFLICT, "Complete attendance before approving leave on " + day.workDate());
+                throw new ConflictException(ErrorCode.LEAVE_DAY_PUNCH_INCOMPLETE,
+                    "Complete attendance before approving leave on " + day.workDate());
             }
             if (record != null && record.getCheckInAt() != null && record.getCheckOutAt() != null
                 && record.getCheckInAt().isBefore(overlapEnd) && record.getCheckOutAt().isAfter(overlapStart)) {
-                throw new ConflictException(ErrorCode.CONFLICT,
+                throw new ConflictException(ErrorCode.LEAVE_OVERLAPS_WORKED_TIME,
                     "Leave overlaps worked time on " + day.workDate());
             }
             if (record == null) {
@@ -137,7 +140,7 @@ public class LeaveAttendanceService {
             remainingMinutes -= leaveMinutes;
         }
         if (remainingMinutes > 0) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+            throw new BusinessException(ErrorCode.LEAVE_SCHEDULE_CHANGED,
                 "Requested leave exceeds scheduled work time by " + remainingMinutes + " minutes");
         }
     }

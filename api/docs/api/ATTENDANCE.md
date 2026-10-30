@@ -532,7 +532,7 @@ Chỉ người duyệt đã chốt của đơn (`approverEmployeeId`) duyệt ho
 
 Khi duyệt, hệ thống:
 
-1. Kiểm tra nhân viên chưa có đơn đã duyệt trùng thời gian.
+1. Kiểm tra các ngày nghỉ chưa có đơn đã duyệt nào khác (mỗi ngày một đơn).
 2. Kiểm tra khoảng nghỉ vẫn nằm trong thời gian làm việc: ngày làm việc cuối có thể được hẹn sau khi tạo đơn.
 3. Với `ANNUAL`, kiểm tra số dư phép năm (xem [Hạn mức phép năm](#hạn-mức-phép-năm)).
 4. Gắn đơn và số phút nghỉ vào bảng công từng ngày. Đơn nghỉ có lương cộng vào phút được trả lương; đơn nghỉ không lương hoặc do bảo hiểm chi trả không cộng.
@@ -547,7 +547,10 @@ Nghỉ một phần ngày rồi chấm công phần còn lại không cần đ�
 | 400 | `LEAVE_OUTSIDE_EMPLOYMENT` | Khoảng nghỉ có ngày sau ngày làm việc cuối |
 | 404 | `REQUEST_NOT_FOUND` | Đơn không tồn tại |
 | 409 | `REQUEST_ALREADY_PROCESSED` | Đơn không ở `PENDING` |
-| 409 | `CONFLICT` | Trùng đơn đã duyệt, ngày đã gắn đơn khác, ngày đang chấm dở, hoặc đơn trùng giờ đã làm |
+| 400 | `LEAVE_SCHEDULE_CHANGED` | Lịch ca đã đổi sau khi tạo đơn, số phút của đơn vượt giờ làm theo lịch hiện tại |
+| 409 | `LEAVE_DAY_APPROVED` | Một ngày trong khoảng nghỉ đã có đơn khác được duyệt |
+| 409 | `LEAVE_DAY_PUNCH_INCOMPLETE` | Một ngày trong khoảng nghỉ có giờ vào mà chưa có giờ ra |
+| 409 | `LEAVE_OVERLAPS_WORKED_TIME` | Khoảng nghỉ trùng giờ đã chấm công đi làm |
 | 409 | `INSUFFICIENT_LEAVE_BALANCE` | Đơn `ANNUAL` vượt số dư phép năm còn lại |
 | 409 | `PAYROLL_PERIOD_LOCKED` | Ngày nghỉ thuộc kỳ lương đã duyệt, đã trả hoặc đã khóa |
 
