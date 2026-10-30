@@ -531,7 +531,7 @@ Trả [`PayrollPeriodResponse`](#payrollperiodresponse) với `status: "DRAFT"`.
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
-| 400 | `VALIDATION_ERROR` | Thiếu `year`/`month` hoặc `month` ngoài 1–12 |
+| 400 | `VALIDATION_ERROR` | Thiếu `year`/`month`, `month` ngoài 1–12, hoặc `taxPaymentDate` trước ngày đầu kỳ (`field: taxPaymentDate`) |
 | 403 | `FORBIDDEN` | Không có `payroll.calculate` phạm vi `COMPANY` |
 | 409 | `CONFLICT` | Tháng đã có kỳ chưa hủy |
 
@@ -590,6 +590,7 @@ Trả [`PayrollPeriodResponse`](#payrollperiodresponse) với `status: "CALCULAT
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
 | 400 | `PAYROLL_PAYMENT_DATE_REQUIRED` | Kỳ chưa có `taxPaymentDate` và request không gửi |
+| 400 | `VALIDATION_ERROR` | `taxPaymentDate` trước ngày đầu kỳ (`field: taxPaymentDate`) |
 | 400 | `PAYROLL_PAYMENT_MONTH_TAKEN` | Một kỳ khác đã tính trở đi có ngày trả lương cùng tháng |
 | 400 | `PAYROLL_INPUT_MISSING` | Một nhân viên thiếu dữ liệu đầu vào (xem trên) |
 | 403 | `FORBIDDEN` | Không có `payroll.calculate` phạm vi `COMPANY` |
@@ -640,10 +641,11 @@ Ghi nhận kỳ đã trả lương.
 { "paidOn": "2026-11-05" }
 ```
 
-`paidOn` là ngày trả **thực tế**; bỏ trống thì lấy hôm nay (giờ Việt Nam). Ngày này phải cùng tháng với ngày trả dự kiến đã duyệt, vì thuế đã tính theo tháng đó; khác tháng thì [hủy duyệt](#post-apipayrollperiodsidreopen), đặt lại ngày trả lương và tính lại. Sau khi ghi nhận, `taxPaymentDate` của kỳ là ngày thực tế.
+`paidOn` là ngày trả **thực tế**, không được sau hôm nay; bỏ trống thì lấy hôm nay (giờ Việt Nam). Ngày này phải cùng tháng với ngày trả dự kiến đã duyệt, vì thuế đã tính theo tháng đó; khác tháng thì [hủy duyệt](#post-apipayrollperiodsidreopen), đặt lại ngày trả lương và tính lại. Sau khi ghi nhận, `taxPaymentDate` của kỳ là ngày thực tế.
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
+| 400 | `VALIDATION_ERROR` | `paidOn` sau hôm nay (`field: paidOn`) |
 | 403 | `FORBIDDEN` | Không có `payroll.mark_paid` phạm vi `COMPANY` |
 | 404 | `PAYROLL_PERIOD_NOT_FOUND` | Kỳ không tồn tại |
 | 409 | `CONFLICT` | Kỳ không ở `APPROVED` |

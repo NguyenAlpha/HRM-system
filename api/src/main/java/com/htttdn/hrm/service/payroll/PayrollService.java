@@ -78,6 +78,9 @@ public class PayrollService {
 
         LocalDate periodStart = LocalDate.of(request.year(), request.month(), 1);
         LocalDate periodEnd = periodStart.withDayOfMonth(periodStart.lengthOfMonth());
+        if (request.taxPaymentDate() != null) {
+            requirePaymentNotBeforeStart(request.taxPaymentDate(), periodStart);
+        }
         PayrollPeriod period = PayrollPeriod.builder()
             .year(request.year())
             .month(request.month())
@@ -122,6 +125,7 @@ public class PayrollService {
             throw new BusinessException(ErrorCode.PAYROLL_PAYMENT_DATE_REQUIRED,
                 "taxPaymentDate is required to calculate payroll withholding");
         }
+        requirePaymentNotBeforeStart(period.getTaxPaymentDate(), period.getPeriodStart());
         // Thuế TNCN tính theo từng tháng trả lương: hai kỳ đã tính trả cùng một tháng thì mỗi kỳ được giảm
         // trừ gia cảnh một lần, thuế bị tính thiếu → chặn, vì hệ thống chưa gộp thu nhập nhiều kỳ.
         LocalDate paymentMonthStart = period.getTaxPaymentDate().withDayOfMonth(1);
@@ -233,6 +237,10 @@ public class PayrollService {
         // Thuế đã tính theo ngày trả dự kiến (luật thuế, số người phụ thuộc, tháng nộp thuế): trả lệch sang
         // tháng khác thì số thuế có thể sai, phải tính lại trước. Cùng tháng thì chỉ cập nhật ngày.
         LocalDate actualPaymentDate = paidOn == null ? LocalDate.now(clock) : paidOn;
+        // Ghi nhận việc đã xảy ra: chưa tới ngày trả thì chưa phải "đã trả".
+        if (actualPaymentDate.isAfter(LocalDate.now(clock))) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "không được sau hôm nay", "paidOn");
+        }
         if (period.getTaxPaymentDate() == null || !YearMonth.from(actualPaymentDate)
             .equals(YearMonth.from(period.getTaxPaymentDate()))) {
             throw new ConflictException(ErrorCode.PAYROLL_PAYMENT_MONTH_MISMATCH,
@@ -287,5 +295,15 @@ public class PayrollService {
         payrollPeriodInvalidator.deletePayslips(periodId);
         period.setStatus(PayrollPeriodStatus.CANCELLED);
         return payrollMapper.toResponse(period);
+    }
+
+    /**
+     * Ngày trả lương chọn biểu thuế và tháng tính thuế, nên không được trước ngày đầu kỳ (nhập nhầm năm hay
+     * tháng thì báo ngay, không đợi tới lúc tính thiếu biểu thuế). Message chỉ là quy tắc; web ghép tên trường.
+     */
+    private static void requirePaymentNotBeforeStart(LocalDate taxPaymentDate, LocalDate periodStart) {
+        if (taxPaymentDate.isBefore(periodStart)) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "không được trước ngày đầu kỳ lương", "taxPaymentDate");
+        }
     }
 }

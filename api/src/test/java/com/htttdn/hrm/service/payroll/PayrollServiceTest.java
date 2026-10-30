@@ -18,6 +18,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.htttdn.hrm.dto.request.payroll.CreatePayrollPeriodRequest;
 import com.htttdn.hrm.dto.request.payroll.PayrollActionRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
@@ -528,6 +529,35 @@ class PayrollServiceTest {
     }
 
     @Test
+    void salariesCannotBeMarkedPaidOnADayStillToCome() {
+        LocalDate later = LocalDate.now(ClockConfig.BUSINESS_ZONE).plusYears(1);
+        PayrollPeriod period = PayrollPeriod.builder().id(1L).taxPaymentDate(later)
+            .status(PayrollPeriodStatus.APPROVED).build();
+        when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
+
+        BusinessException error = assertThrows(BusinessException.class, () -> service().markPaid(1L, later));
+        assertEquals(ErrorCode.VALIDATION_ERROR, error.getErrorCode());
+        assertEquals("paidOn", error.getField());
+        assertEquals(PayrollPeriodStatus.APPROVED, period.getStatus());
+    }
+
+    @Test
+    void thePaymentDateIsNotBeforeThePeriodStarts() {
+        LocalDate start = LocalDate.of(2026, 1, 1);
+        PayrollPeriod period = PayrollPeriod.builder().id(1L).periodStart(start)
+            .periodEnd(LocalDate.of(2026, 1, 31)).status(PayrollPeriodStatus.DRAFT).build();
+        when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
+
+        BusinessException calculating = assertThrows(BusinessException.class,
+            () -> service().calculate(1L, new PayrollActionRequest(start.minusDays(1))));
+        assertEquals("taxPaymentDate", calculating.getField());
+
+        BusinessException creating = assertThrows(BusinessException.class, () -> service().createPeriod(
+            new CreatePayrollPeriodRequest((short) 2026, (short) 1, start.minusDays(1))));
+        assertEquals("taxPaymentDate", creating.getField());
+    }
+
+    @Test
     void paymentMonthChangeCannotSilentlyReuseApprovedTax() {
         PayrollPeriod period = PayrollPeriod.builder().id(1L)
             .taxPaymentDate(LocalDate.of(2026, 11, 5))
@@ -535,7 +565,7 @@ class PayrollServiceTest {
         when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
 
         ConflictException error = assertThrows(ConflictException.class, () -> service().markPaid(1L,
-            LocalDate.of(2026, 12, 1)));
+            LocalDate.of(2026, 10, 1)));
         assertEquals(ErrorCode.PAYROLL_PAYMENT_MONTH_MISMATCH, error.getErrorCode());
         assertEquals(PayrollPeriodStatus.APPROVED, period.getStatus());
     }
