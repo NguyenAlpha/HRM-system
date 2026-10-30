@@ -671,4 +671,6 @@ Endpoint kỳ lương: `POST /api/payroll/periods`, `GET /api/payroll/periods`, 
 - Giờ vào/ra sẽ đến từ máy chấm công qua `POST /api/attendance/punches`; web không có thao tác tự chấm công, chỉ HR nhập hoặc sửa giờ khi đối soát.
 - Actor duyệt đơn, điều chỉnh công và duyệt tăng ca luôn lấy từ JWT/Security Context.
 - Cổng HRM có `/attendance`, `/leave-requests`, `/payslips`; tất cả yêu cầu đi qua BFF allowlist và API kiểm tra quyền cùng phạm vi truy cập.
-- Giới hạn hiện tại: mỗi ca có một khoảng nghỉ. Mô hình chỉ lưu một cặp chấm vào/ra và một đơn nghỉ cho mỗi nhân viên mỗi ngày, nên không có hai đơn khác loại trong cùng một ngày (ví dụ sáng nghỉ phép năm, chiều nghỉ ốm). Lịch lễ chỉ nạp sẵn cho 2025 và 2026; từ 2027 HR tự khai báo.
+- Giới hạn hiện tại: mỗi ca có một khoảng nghỉ. Mô hình chỉ lưu một cặp chấm vào/ra và một đơn nghỉ cho mỗi nhân viên mỗi ngày, nên mỗi ngày chỉ có một đơn nghỉ, dù cùng loại hay khác loại (ví dụ sáng nghỉ phép năm, chiều nghỉ ốm). Lịch lễ chỉ nạp sẵn cho 2025 và 2026; từ 2027 HR tự khai báo.
+- Giới hạn đã chọn: đơn nghỉ đã duyệt không hủy được, kể cả khi chưa tới ngày nghỉ, vì trường hợp này hiếm gặp. Nhân viên chỉ gửi đơn khi đã chắc chắn; ngày nghỉ trọn ca đã duyệt không nhận giờ chấm công.
+- Giới hạn đã chọn: người duyệt được chốt lúc gửi đơn và không tự đổi. Nếu người đó nghỉ việc hoặc mất quyền khi đơn còn `PENDING`, nhân viên hủy đơn rồi tạo đơn mới để hệ thống chọn lại người duyệt.
