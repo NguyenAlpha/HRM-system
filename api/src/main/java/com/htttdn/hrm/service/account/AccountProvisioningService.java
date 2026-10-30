@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.response.account.AccountInvitationResponse;
 import com.htttdn.hrm.dto.response.account.AccountProvisioningResponse;
-import com.htttdn.hrm.dto.response.account.AccountResponse;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AccountRoleAssignment;
@@ -95,7 +94,7 @@ public class AccountProvisioningService {
         );
 
         return new AccountProvisioningResponse(
-            toResponse(account, List.of(SystemRoles.EMPLOYEE)),
+            AccountAdminService.toResponse(account, List.of(SystemRoles.EMPLOYEE)),
             new AccountInvitationResponse(account.getId(), issued.rawToken(), issued.expiresAt())
         );
     }
@@ -140,25 +139,5 @@ public class AccountProvisioningService {
 
     private static LocalDate laterOf(LocalDate a, LocalDate b) {
         return a.isAfter(b) ? a : b;
-    }
-
-    private AccountResponse toResponse(Account account, List<String> roleCodes) {
-        return new AccountResponse(
-            account.getId(),
-            account.getEmployee() == null ? null : account.getEmployee().getId(),
-            account.getEmployee() == null ? null : account.getEmployee().getEmployeeCode(),
-            account.getEmployee() == null ? null : account.getEmployee().getFullName(),
-            account.getUsername(),
-            account.getEmail(),
-            account.getStatus(),
-            roleCodes,
-            account.getFailedLoginCount(),
-            account.getLockedUntil(),
-            account.getLastLoginAt(),
-            account.getCreatedAt(),
-            account.getUpdatedAt(),
-            account.getDeletedAt(),
-            account.getDeletionReason()
-        );
     }
 }

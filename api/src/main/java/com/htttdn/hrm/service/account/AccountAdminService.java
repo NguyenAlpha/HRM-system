@@ -253,7 +253,7 @@ public class AccountAdminService {
         return toResponse(account, heldRoleCodes(List.of(account.getId())).getOrDefault(account.getId(), List.of()));
     }
 
-    private AccountResponse toResponse(Account account, List<String> roleCodes) {
+    static AccountResponse toResponse(Account account, List<String> roleCodes) {
         return new AccountResponse(
             account.getId(),
             account.getEmployee() == null ? null : account.getEmployee().getId(),
