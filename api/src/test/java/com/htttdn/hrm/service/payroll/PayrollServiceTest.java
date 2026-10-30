@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.htttdn.hrm.dto.request.payroll.PayrollActionRequest;
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.AttendanceRecord;
 import com.htttdn.hrm.entity.Employee;
@@ -90,8 +91,9 @@ class PayrollServiceTest {
 
         BusinessException error = assertThrows(BusinessException.class,
             () -> service().calculate(1L, new PayrollActionRequest(holiday)));
+        assertEquals(ErrorCode.PAYROLL_INPUT_MISSING, error.getErrorCode());
         assertTrue(error.getMessage().contains("EMP002"));
-        assertTrue(error.getMessage().contains("company workdays"));
+        assertTrue(error.getMessage().contains("ngày công"));
     }
 
     @Test
@@ -113,8 +115,11 @@ class PayrollServiceTest {
 
         BusinessException error = assertThrows(BusinessException.class,
             () -> service().calculate(1L, new PayrollActionRequest(end)));
+        // Read by HR as it is: names the employee and the missing data, with the date as the app shows dates.
+        assertEquals(ErrorCode.PAYROLL_INPUT_MISSING, error.getErrorCode());
         assertTrue(error.getMessage().contains("EMP002"));
-        assertTrue(error.getMessage().contains(end.toString()));
+        assertTrue(error.getMessage().contains("lương cơ bản"));
+        assertTrue(error.getMessage().contains("31/01/2026"));
         assertEquals(PayrollPeriodStatus.DRAFT, period.getStatus());
     }
 
@@ -138,8 +143,9 @@ class PayrollServiceTest {
 
         BusinessException error = assertThrows(BusinessException.class,
             () -> service().calculate(1L, new PayrollActionRequest(end)));
+        assertEquals(ErrorCode.PAYROLL_INPUT_MISSING, error.getErrorCode());
         assertTrue(error.getMessage().contains("EMP001"));
-        assertTrue(error.getMessage().contains("2026-10-05"));
+        assertTrue(error.getMessage().contains("05/10/2026"));
         assertEquals(PayrollPeriodStatus.DRAFT, period.getStatus());
         verify(payslipRepository, org.mockito.Mockito.never()).save(any(Payslip.class));
     }
@@ -169,7 +175,9 @@ class PayrollServiceTest {
             new AttendanceCalendarService.ScheduledDay(first, shift, Instant.now(), Instant.now(), 480),
             new AttendanceCalendarService.ScheduledDay(second, shift, Instant.now(), Instant.now(), 480)));
 
-        assertThrows(BusinessException.class, () -> service().calculate(1L, new PayrollActionRequest(second)));
+        BusinessException error = assertThrows(BusinessException.class,
+            () -> service().calculate(1L, new PayrollActionRequest(second)));
+        assertEquals(ErrorCode.PAYROLL_INPUT_MISSING, error.getErrorCode());
         assertEquals(PayrollPeriodStatus.DRAFT, period.getStatus());
     }
 
@@ -184,8 +192,38 @@ class PayrollServiceTest {
         when(attendanceRecordRepository.existsByWorkDateBetweenAndUpdatedAtAfter(start, end, calculatedAt))
             .thenReturn(true);
 
-        assertThrows(ConflictException.class, () -> service().approve(1L));
+        ConflictException error = assertThrows(ConflictException.class, () -> service().approve(1L));
+        assertEquals(ErrorCode.PAYROLL_RECALCULATION_REQUIRED, error.getErrorCode());
         assertEquals(PayrollPeriodStatus.CALCULATED, period.getStatus());
+    }
+
+    @Test
+    void whoeverCalculatedThePayrollDoesNotApproveIt() {
+        Account accountant = Account.builder().id(9L).build();
+        PayrollPeriod period = PayrollPeriod.builder().id(1L).periodStart(LocalDate.of(2026, 1, 1))
+            .periodEnd(LocalDate.of(2026, 1, 31)).calculatedAt(Instant.now()).calculatedByAccount(accountant)
+            .status(PayrollPeriodStatus.CALCULATED).build();
+        when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
+        when(currentAccountProvider.account()).thenReturn(accountant);
+
+        BusinessException error = assertThrows(BusinessException.class, () -> service().approve(1L));
+        assertEquals(ErrorCode.PAYROLL_APPROVER_IS_CALCULATOR, error.getErrorCode());
+    }
+
+    @Test
+    void calculatingNeedsAPaymentDateInAMonthNoOtherPeriodPaysIn() {
+        PayrollPeriod period = PayrollPeriod.builder().id(1L).periodStart(LocalDate.of(2026, 1, 1))
+            .periodEnd(LocalDate.of(2026, 1, 31)).status(PayrollPeriodStatus.DRAFT).build();
+        when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
+
+        BusinessException noDate = assertThrows(BusinessException.class,
+            () -> service().calculate(1L, new PayrollActionRequest()));
+        assertEquals(ErrorCode.PAYROLL_PAYMENT_DATE_REQUIRED, noDate.getErrorCode());
+
+        when(payrollPeriodRepository.existsOtherInPaymentMonth(any(), any(), any(), any())).thenReturn(true);
+        BusinessException taken = assertThrows(BusinessException.class,
+            () -> service().calculate(1L, new PayrollActionRequest(LocalDate.of(2026, 2, 5))));
+        assertEquals(ErrorCode.PAYROLL_PAYMENT_MONTH_TAKEN, taken.getErrorCode());
     }
 
     @Test
@@ -455,8 +493,9 @@ class PayrollServiceTest {
             .status(PayrollPeriodStatus.APPROVED).build();
         when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
 
-        assertThrows(ConflictException.class, () -> service().markPaid(1L,
+        ConflictException error = assertThrows(ConflictException.class, () -> service().markPaid(1L,
             LocalDate.of(2026, 12, 1)));
+        assertEquals(ErrorCode.PAYROLL_PAYMENT_MONTH_MISMATCH, error.getErrorCode());
         assertEquals(PayrollPeriodStatus.APPROVED, period.getStatus());
     }
 

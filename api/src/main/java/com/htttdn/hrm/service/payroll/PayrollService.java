@@ -100,8 +100,9 @@ public class PayrollService {
      * @param request {@code taxPaymentDate} ghi đè ngày trả lương của kỳ (null → giữ ngày đã có)
      * @return kỳ đã tính, kèm tổng số phiếu, tổng thu nhập và thực nhận
      * @throws ConflictException kỳ đã duyệt/trả/khóa/hủy (→ 409 {@code PAYROLL_PERIOD_LOCKED})
-     * @throws BusinessException thiếu ngày trả lương, trùng tháng nộp thuế với kỳ khác, hoặc một nhân viên
-     *         thiếu dữ liệu tính lương (→ 400 {@code VALIDATION_ERROR}, thông báo kèm mã nhân viên)
+     * @throws BusinessException thiếu ngày trả lương (→ 400 {@code PAYROLL_PAYMENT_DATE_REQUIRED}), trùng tháng
+     *         nộp thuế với kỳ khác (→ 400 {@code PAYROLL_PAYMENT_MONTH_TAKEN}), hoặc một nhân viên thiếu dữ liệu
+     *         tính lương (→ 400 {@code PAYROLL_INPUT_MISSING}, thông báo tiếng Việt kèm mã nhân viên)
      */
     @PreAuthorize("hasAuthority('payroll.calculate')")
     public PayrollPeriodResponse calculate(Long periodId, PayrollActionRequest request) {
@@ -117,7 +118,7 @@ public class PayrollService {
             period.setTaxPaymentDate(request.taxPaymentDate());
         }
         if (period.getTaxPaymentDate() == null) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+            throw new BusinessException(ErrorCode.PAYROLL_PAYMENT_DATE_REQUIRED,
                 "taxPaymentDate is required to calculate payroll withholding");
         }
         // Thuế TNCN tính theo từng tháng trả lương: hai kỳ đã tính trả cùng một tháng thì mỗi kỳ được giảm
@@ -127,7 +128,7 @@ public class PayrollService {
             paymentMonthStart.withDayOfMonth(paymentMonthStart.lengthOfMonth()),
             List.of(PayrollPeriodStatus.CALCULATED, PayrollPeriodStatus.APPROVED,
                 PayrollPeriodStatus.PAID, PayrollPeriodStatus.LOCKED))) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+            throw new BusinessException(ErrorCode.PAYROLL_PAYMENT_MONTH_TAKEN,
                 "Another payroll period uses the same tax payment month; monthly tax deductions require consolidated calculation");
         }
 
@@ -157,9 +158,9 @@ public class PayrollService {
      * Duyệt bảng lương đã tính. Từ đây phiếu lương hiện cho nhân viên và dữ liệu ảnh hưởng tới kỳ bị khóa
      * (đổi lương, phụ cấp, chấm công… của kỳ sẽ bị từ chối 409 {@code PAYROLL_PERIOD_LOCKED}).
      *
-     * @throws ConflictException kỳ chưa ở {@code CALCULATED}, hoặc chấm công trong kỳ đã sửa sau lúc tính
-     *         (→ 409 {@code CONFLICT})
-     * @throws BusinessException người duyệt cũng là người tính (→ 400 {@code VALIDATION_ERROR})
+     * @throws ConflictException kỳ chưa ở {@code CALCULATED} (→ 409 {@code CONFLICT}), hoặc chấm công trong kỳ
+     *         đã sửa sau lúc tính (→ 409 {@code PAYROLL_RECALCULATION_REQUIRED})
+     * @throws BusinessException người duyệt cũng là người tính (→ 400 {@code PAYROLL_APPROVER_IS_CALCULATOR})
      */
     @PreAuthorize("hasAuthority('payroll.approve')")
     public PayrollPeriodResponse approve(Long periodId) {
@@ -171,12 +172,14 @@ public class PayrollService {
         // Chấm công sửa sau lúc tính (updated_at mới hơn calculatedAt) → bảng lương có thể đã lỗi thời.
         if (attendanceRecordRepository.existsByWorkDateBetweenAndUpdatedAtAfter(
             period.getPeriodStart(), period.getPeriodEnd(), period.getCalculatedAt())) {
-            throw new ConflictException(ErrorCode.CONFLICT, "Attendance changed after payroll calculation; recalculate first");
+            throw new ConflictException(ErrorCode.PAYROLL_RECALCULATION_REQUIRED,
+                "Attendance changed after payroll calculation; recalculate first");
         }
         Account approver = currentAccountProvider.account();
         // Tách người tính và người duyệt (four-eyes): một người không tự duyệt bảng lương mình tính.
         if (period.getCalculatedByAccount() != null && period.getCalculatedByAccount().getId().equals(approver.getId())) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "The approver must be different from the calculator");
+            throw new BusinessException(ErrorCode.PAYROLL_APPROVER_IS_CALCULATOR,
+                "The approver must be different from the calculator");
         }
 
         period.setStatus(PayrollPeriodStatus.APPROVED);
@@ -190,8 +193,8 @@ public class PayrollService {
      * Ghi nhận đã trả lương và chốt ngày trả thực tế.
      *
      * @param paidOn ngày trả thực tế (null → hôm nay); thành ngày trả lương của kỳ
-     * @throws ConflictException kỳ chưa duyệt, hoặc ngày trả thực tế khác tháng với ngày trả đã dùng để
-     *         tính thuế (→ 409 {@code CONFLICT})
+     * @throws ConflictException kỳ chưa duyệt (→ 409 {@code CONFLICT}), hoặc ngày trả thực tế khác tháng với
+     *         ngày trả đã dùng để tính thuế (→ 409 {@code PAYROLL_PAYMENT_MONTH_MISMATCH})
      */
     @PreAuthorize("hasAuthority('payroll.mark_paid')")
     public PayrollPeriodResponse markPaid(Long periodId, @Nullable LocalDate paidOn) {
@@ -206,7 +209,7 @@ public class PayrollService {
         LocalDate actualPaymentDate = paidOn == null ? LocalDate.now(clock) : paidOn;
         if (period.getTaxPaymentDate() == null || !YearMonth.from(actualPaymentDate)
             .equals(YearMonth.from(period.getTaxPaymentDate()))) {
-            throw new ConflictException(ErrorCode.CONFLICT,
+            throw new ConflictException(ErrorCode.PAYROLL_PAYMENT_MONTH_MISMATCH,
                 "Actual payment month differs from the approved tax payment month; review withholding before marking paid");
         }
 

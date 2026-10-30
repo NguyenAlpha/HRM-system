@@ -563,7 +563,7 @@ Thuế tính theo một lần trả trong một tháng thuế: không thể có 
 
 #### Điều kiện dữ liệu
 
-Với từng nhân viên, tính lương dừng và trả `400 VALIDATION_ERROR` kèm mã nhân viên và dữ liệu thiếu (ví dụ `Cannot calculate payroll for employee NV0002 (ID 2): missing salary history on 2026-10-31`) khi:
+Với từng nhân viên, tính lương dừng và trả `400 PAYROLL_INPUT_MISSING`, `message` là câu tiếng Việt nêu mã, tên nhân viên và dữ liệu thiếu để web hiện nguyên văn (ví dụ `Chưa tính được lương cho nhân viên NV0002 - Trần Bình: thiếu lương cơ bản hiệu lực ngày 31/10/2026.`) khi:
 
 - Không có ngày làm việc nào của công ty trong khoảng làm việc của nhân viên (toàn bộ rơi vào Chủ nhật/ngày lễ).
 - Thiếu phân công chính hoặc ca vào một ngày làm việc.
@@ -583,7 +583,9 @@ Trả [`PayrollPeriodResponse`](#payrollperiodresponse) với `status: "CALCULAT
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
-| 400 | `VALIDATION_ERROR` | Thiếu `taxPaymentDate`, trùng tháng thuế với kỳ khác, hoặc thiếu dữ liệu đầu vào (xem trên) |
+| 400 | `PAYROLL_PAYMENT_DATE_REQUIRED` | Kỳ chưa có `taxPaymentDate` và request không gửi |
+| 400 | `PAYROLL_PAYMENT_MONTH_TAKEN` | Một kỳ khác đã tính trở đi có ngày trả lương cùng tháng |
+| 400 | `PAYROLL_INPUT_MISSING` | Một nhân viên thiếu dữ liệu đầu vào (xem trên) |
 | 403 | `FORBIDDEN` | Không có `payroll.calculate` phạm vi `COMPANY` |
 | 404 | `PAYROLL_PERIOD_NOT_FOUND` | Kỳ không tồn tại |
 | 409 | `PAYROLL_PERIOD_LOCKED` | Kỳ không ở `DRAFT` hoặc `CALCULATED` |
@@ -594,10 +596,11 @@ Duyệt kỳ đã tính. Không có body. Người duyệt phải khác người
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
-| 400 | `VALIDATION_ERROR` | Người duyệt chính là người tính |
+| 400 | `PAYROLL_APPROVER_IS_CALCULATOR` | Người duyệt chính là người tính |
 | 403 | `FORBIDDEN` | Không có `payroll.approve` phạm vi `COMPANY` |
 | 404 | `PAYROLL_PERIOD_NOT_FOUND` | Kỳ không tồn tại |
-| 409 | `CONFLICT` | Kỳ không ở `CALCULATED`, hoặc dữ liệu công trong tháng đổi sau lần tính (phải tính lại) |
+| 409 | `CONFLICT` | Kỳ không ở `CALCULATED` |
+| 409 | `PAYROLL_RECALCULATION_REQUIRED` | Dữ liệu công trong tháng đổi sau lần tính (phải tính lại) |
 
 Trả [`PayrollPeriodResponse`](#payrollperiodresponse) với `status: "APPROVED"`. Từ đây nhân viên xem được phiếu lương của mình.
 
@@ -617,7 +620,8 @@ Ghi nhận kỳ đã trả lương.
 |:----:|:-------------|:-----------|
 | 403 | `FORBIDDEN` | Không có `payroll.mark_paid` phạm vi `COMPANY` |
 | 404 | `PAYROLL_PERIOD_NOT_FOUND` | Kỳ không tồn tại |
-| 409 | `CONFLICT` | Kỳ không ở `APPROVED`, hoặc ngày trả thực tế khác tháng với ngày trả đã duyệt |
+| 409 | `CONFLICT` | Kỳ không ở `APPROVED` |
+| 409 | `PAYROLL_PAYMENT_MONTH_MISMATCH` | Ngày trả thực tế khác tháng với ngày trả đã dùng để tính thuế |
 
 Trả [`PayrollPeriodResponse`](#payrollperiodresponse) với `status: "PAID"`.
 
