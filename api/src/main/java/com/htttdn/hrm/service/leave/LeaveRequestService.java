@@ -25,6 +25,7 @@ import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
+import com.htttdn.hrm.util.DayRange;
 import com.htttdn.hrm.util.Strings;
 
 import jakarta.annotation.Nullable;
@@ -247,9 +248,8 @@ public class LeaveRequestService {
         }
         // The quota is per year and the whole request is charged to the year it starts in
         // (LeaveEntitlementService), so leave over New Year is filed as one request per year.
-        if (command.leaveType() == LeaveType.ANNUAL
-            && LocalDate.ofInstant(command.startAt(), ClockConfig.BUSINESS_ZONE).getYear()
-                != LocalDate.ofInstant(command.endAt().minusNanos(1), ClockConfig.BUSINESS_ZONE).getYear()) {
+        DayRange days = DayRange.covering(command.startAt(), command.endAt());
+        if (command.leaveType() == LeaveType.ANNUAL && days.first().getYear() != days.last().getYear()) {
             throw new BusinessException(ErrorCode.ANNUAL_LEAVE_CROSSES_YEAR,
                 "Annual leave must start and end in the same year; file one request per year", "endAt");
         }
@@ -260,10 +260,8 @@ public class LeaveRequestService {
      * sau ngày cuối phân công chính vẫn còn mở tới khi job chốt, nên lịch ca không tự chặn được.
      */
     private void requireWithinEmployment(Employee employee, Instant startAt, Instant endAt) {
-        LocalDate firstDay = LocalDate.ofInstant(startAt, ClockConfig.BUSINESS_ZONE);
-        // endAt là mốc mở, như LeaveAttendanceService.leaveMinutesFor.
-        LocalDate lastDay = LocalDate.ofInstant(endAt.minusNanos(1), ClockConfig.BUSINESS_ZONE);
-        if (!employee.isEmployedThroughout(firstDay, lastDay)) {
+        DayRange days = DayRange.covering(startAt, endAt);
+        if (!employee.isEmployedThroughout(days.first(), days.last())) {
             throw new BusinessException(ErrorCode.LEAVE_OUTSIDE_EMPLOYMENT,
                 "Leave must fall between the hire date and the last working day", "endAt");
         }
@@ -287,11 +285,9 @@ public class LeaveRequestService {
     private boolean existsOnTheSameDays(
         Long employeeId, Instant startAt, Instant endAt, List<LeaveRequestStatus> statuses, Long excludedId
     ) {
-        Instant firstDayStart = LocalDate.ofInstant(startAt, ClockConfig.BUSINESS_ZONE)
-            .atStartOfDay(ClockConfig.BUSINESS_ZONE).toInstant();
-        Instant lastDayEnd = LocalDate.ofInstant(endAt.minusNanos(1), ClockConfig.BUSINESS_ZONE).plusDays(1)
-            .atStartOfDay(ClockConfig.BUSINESS_ZONE).toInstant();
-        return leaveRequestRepository.existsInStatusesBetween(employeeId, statuses, firstDayStart, lastDayEnd, excludedId);
+        DayRange days = DayRange.covering(startAt, endAt);
+        return leaveRequestRepository.existsInStatusesBetween(
+            employeeId, statuses, days.startInstant(), days.endInstant(), excludedId);
     }
 
     /**

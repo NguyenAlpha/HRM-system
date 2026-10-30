@@ -1,12 +1,10 @@
 package com.htttdn.hrm.service.attendance;
 
 import java.time.Instant;
-import java.time.LocalDate;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.AttendanceRecord;
 import com.htttdn.hrm.entity.LeaveRequest;
@@ -16,6 +14,7 @@ import com.htttdn.hrm.entity.enums.LeaveType;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
+import com.htttdn.hrm.util.DayRange;
 
 import lombok.RequiredArgsConstructor;
 
@@ -53,11 +52,11 @@ public class LeaveAttendanceService {
      */
     @Transactional(readOnly = true)
     public int leaveMinutesFor(Long employeeId, Instant startAt, Instant endAt) {
-        LocalDate from = LocalDate.ofInstant(startAt, ClockConfig.BUSINESS_ZONE).minusDays(1);
-        // endAt là mốc mở: nghỉ tới đúng 00:00 thì ngày hôm đó không tính → lùi 1 nano trước khi lấy ngày.
-        LocalDate to = LocalDate.ofInstant(endAt.minusNanos(1), ClockConfig.BUSINESS_ZONE);
+        // endAt là mốc mở: nghỉ tới đúng 00:00 thì ngày hôm đó không tính (DayRange lùi 1 nano trước khi lấy ngày).
+        DayRange days = DayRange.covering(startAt, endAt);
         int minutes = 0;
-        for (AttendanceCalendarService.ScheduledDay day : attendanceCalendarService.scheduleFor(employeeId, from, to)) {
+        for (AttendanceCalendarService.ScheduledDay day
+            : attendanceCalendarService.scheduleFor(employeeId, days.first().minusDays(1), days.last())) {
             minutes += Math.min(day.minutes(), workMinutes(day.startAt(), day.endAt(), day.shift(), startAt, endAt));
         }
         return minutes;
@@ -87,11 +86,11 @@ public class LeaveAttendanceService {
      */
     public void applyApprovedLeave(LeaveRequest request) {
         Long employeeId = request.getEmployee().getId();
-        LocalDate from = LocalDate.ofInstant(request.getStartAt(), ClockConfig.BUSINESS_ZONE).minusDays(1);
-        LocalDate to = LocalDate.ofInstant(request.getEndAt().minusNanos(1), ClockConfig.BUSINESS_ZONE);
+        DayRange days = DayRange.covering(request.getStartAt(), request.getEndAt());
         // Đếm ngược số phút của đơn: chia lần lượt cho từng ngày, hết thì các ngày sau không bị trừ.
         int remainingMinutes = request.getRequestedMinutes();
-        for (AttendanceCalendarService.ScheduledDay day : attendanceCalendarService.scheduleFor(employeeId, from, to)) {
+        for (AttendanceCalendarService.ScheduledDay day
+            : attendanceCalendarService.scheduleFor(employeeId, days.first().minusDays(1), days.last())) {
             Instant overlapStart = request.getStartAt().isAfter(day.startAt()) ? request.getStartAt() : day.startAt();
             Instant overlapEnd = request.getEndAt().isBefore(day.endAt()) ? request.getEndAt() : day.endAt();
             int overlapMinutes = workMinutes(day.startAt(), day.endAt(), day.shift(),
