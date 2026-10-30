@@ -20,7 +20,7 @@ Phụ cấp chức vụ đặt theo chức danh, phụ cấp thâm niên đặt 
 | `GET /api/compensation/job-positions/{jobPositionId}/allowances` | `compensation.read` | Lịch sử phụ cấp chức vụ của một chức danh |
 | `POST /api/compensation/job-positions/{jobPositionId}/allowances` | `compensation.manage` | Đặt mức phụ cấp chức vụ mới |
 | `GET /api/compensation/seniority-allowances` | `compensation.read` | Các bậc phụ cấp thâm niên |
-| `POST /api/compensation/seniority-allowances` | `compensation.manage` | Đặt bậc phụ cấp thâm niên mới |
+| `POST /api/compensation/seniority-allowances` | `compensation.manage` | Khai báo cả bảng phụ cấp thâm niên mới |
 
 Chính sách áp dụng chung cho cả công ty nên chỉ xét permission, không xét scope. Role mặc định có cả `compensation.read` và `compensation.manage`: `HR_MANAGER`, `PAYROLL_ACCOUNTANT`; `DIRECTOR` và `COMPANY_OWNER` chỉ có `compensation.read` (xem). Thiếu token trả `401 UNAUTHORIZED`, thiếu permission trả `403 FORBIDDEN`.
 
@@ -160,37 +160,41 @@ Mọi bậc thâm niên, mới nhất trước rồi theo `minYears` tăng dần
 
 ### POST `/api/compensation/seniority-allowances`
 
-Đặt bậc thâm niên mới. Mọi bậc đang áp dụng có khoảng năm chồng với bậc mới tự kết thúc vào ngày trước `effectiveFrom`.
+Khai báo **cả bảng** phụ cấp thâm niên áp dụng từ `effectiveFrom`. Mọi bậc đang áp dụng kết thúc vào ngày trước
+`effectiveFrom` và các bậc trong request được tạo. Vì phải gửi đủ cả bảng, không năm thâm niên nào bị bỏ trống: muốn
+tách, gộp hay đổi tỷ lệ một bậc thì gửi lại cả bảng với thay đổi đó.
 
 #### Request
 
 ```json
 {
-  "minYears": 5,
-  "maxYears": null,
-  "percentage": 8,
   "effectiveFrom": "2027-01-01",
-  "note": null
+  "note": "Tăng phụ cấp từ 5 năm",
+  "tiers": [
+    { "minYears": 0, "maxYears": 5, "percentage": 0 },
+    { "minYears": 5, "maxYears": 10, "percentage": 5 },
+    { "minYears": 10, "maxYears": null, "percentage": 8 }
+  ]
 }
 ```
 
 | Field | Type | Bắt buộc | Ràng buộc |
 |:------|:-----|:--------:|:----------|
-| `minYears` | integer | ✅ | `≥ 0` |
-| `maxYears` | integer | | `> minYears`; bỏ trống nếu không giới hạn trên |
-| `percentage` | number | ✅ | `≥ 0` |
-| `effectiveFrom` | date | ✅ | Sau ngày bắt đầu của mọi bậc đang áp dụng bị chồng |
-| `note` | string | | Chuỗi trắng lưu `null` |
-
-Bậc mới chỉ đóng các bậc chồng khoảng năm; muốn đổi cách chia bậc (ví dụ gộp `1–3` và `3–5`) thì gửi một bậc phủ cả hai khoảng.
+| `effectiveFrom` | date | ✅ | Sau ngày bắt đầu của bảng đang áp dụng |
+| `note` | string | | Ghi lên mọi bậc; chuỗi trắng lưu `null` |
+| `tiers` | array | ✅ | Ít nhất một bậc; theo `minYears` tăng dần phải nối liền từ `0` tới bậc cuối có `maxYears: null`, không hở, không chồng (thứ tự gửi không quan trọng) |
+| `tiers[].minYears` | integer | ✅ | `≥ 0` |
+| `tiers[].maxYears` | integer | | `> minYears`; chỉ bậc cuối bỏ trống (không giới hạn trên) |
+| `tiers[].percentage` | number | ✅ | `≥ 0`, theo % lương cơ bản; `0` nghĩa là bậc đó không có phụ cấp |
 
 #### Response `201 Created`
 
-Trả [`SeniorityAllowanceView`](#seniorityallowanceview--bậc-phụ-cấp-thâm-niên) vừa tạo.
+Trả danh sách [`SeniorityAllowanceView`](#seniorityallowanceview--bậc-phụ-cấp-thâm-niên) vừa tạo, theo `minYears` tăng dần.
 
 #### Lỗi
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
-| 400 | `VALIDATION_ERROR` | Thiếu/âm `minYears` hoặc `percentage`, `maxYears ≤ minYears`, thiếu `effectiveFrom`, hoặc `effectiveFrom` không sau ngày bắt đầu của bậc bị chồng |
+| 400 | `VALIDATION_ERROR` | Thiếu `effectiveFrom` hoặc `tiers`, bậc thiếu/âm `minYears` hoặc `percentage`, các bậc không nối liền từ 0 tới không giới hạn (`field: tiers`), hoặc `effectiveFrom` không sau ngày bắt đầu của bảng đang áp dụng |
 | 403 | `FORBIDDEN` | Không có `compensation.manage` |
+| 409 | `PAYROLL_PERIOD_LOCKED` | Có kỳ lương đã duyệt, đã trả hoặc đã khóa kết thúc từ `effectiveFrom` |

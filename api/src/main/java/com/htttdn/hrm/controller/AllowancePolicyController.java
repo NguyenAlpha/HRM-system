@@ -17,7 +17,7 @@ import com.htttdn.hrm.service.payroll.AllowancePolicyService.PositionAllowanceSu
 import com.htttdn.hrm.service.payroll.AllowancePolicyService.PositionAllowanceView;
 import com.htttdn.hrm.service.payroll.AllowancePolicyService.SeniorityAllowanceView;
 import com.htttdn.hrm.service.payroll.AllowancePolicyService.SetPositionAllowanceCommand;
-import com.htttdn.hrm.service.payroll.AllowancePolicyService.SetSeniorityAllowanceCommand;
+import com.htttdn.hrm.service.payroll.AllowancePolicyService.SetSeniorityAllowancesCommand;
 
 import jakarta.validation.Valid;
 
@@ -53,7 +53,8 @@ public class AllowancePolicyController {
 
     @PostMapping("/seniority-allowances")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResult<SeniorityAllowanceView> setSeniorityAllowance(@Valid @RequestBody SetSeniorityAllowanceCommand command) {
-        return ApiResult.ok(service.setSeniorityAllowance(command));
+    public ApiResult<List<SeniorityAllowanceView>> setSeniorityAllowances(
+        @Valid @RequestBody SetSeniorityAllowancesCommand command) {
+        return ApiResult.ok(service.setSeniorityAllowances(command));
     }
 }

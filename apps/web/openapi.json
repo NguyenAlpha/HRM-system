@@ -1593,12 +1593,12 @@
         "tags" : [ "allowance-policy-controller" ]
       },
       "post" : {
-        "operationId" : "setSeniorityAllowance",
+        "operationId" : "setSeniorityAllowances",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/SetSeniorityAllowanceCommand"
+                "$ref" : "#/components/schemas/SetSeniorityAllowancesCommand"
               }
             }
           },
@@ -1609,7 +1609,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ApiResultSeniorityAllowanceView"
+                  "$ref" : "#/components/schemas/ApiResultListSeniorityAllowanceView"
                 }
               }
             },
@@ -7056,29 +7056,6 @@
         },
         "required" : [ "data", "error", "success" ]
       },
-      "ApiResultSeniorityAllowanceView" : {
-        "type" : "object",
-        "properties" : {
-          "data" : {
-            "anyOf" : [ {
-              "$ref" : "#/components/schemas/SeniorityAllowanceView"
-            }, {
-              "type" : "null"
-            } ]
-          },
-          "error" : {
-            "anyOf" : [ {
-              "$ref" : "#/components/schemas/ErrorDetail"
-            }, {
-              "type" : "null"
-            } ]
-          },
-          "success" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "data", "error", "success" ]
-      },
       "ApiResultTurnoverReportResponse" : {
         "type" : "object",
         "properties" : {
@@ -10642,6 +10619,23 @@
         },
         "required" : [ "approvedByAccountId", "createdAt", "effectiveFrom", "effectiveTo", "id", "maxYears", "minYears", "note", "percentage" ]
       },
+      "SeniorityTier" : {
+        "type" : "object",
+        "properties" : {
+          "maxYears" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "minYears" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "percentage" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "minYears", "percentage" ]
+      },
       "SetPositionAllowanceCommand" : {
         "type" : "object",
         "properties" : {
@@ -10677,29 +10671,25 @@
         },
         "required" : [ "baseSalary", "effectiveFrom" ]
       },
-      "SetSeniorityAllowanceCommand" : {
+      "SetSeniorityAllowancesCommand" : {
         "type" : "object",
         "properties" : {
           "effectiveFrom" : {
             "type" : "string",
             "format" : "date"
           },
-          "maxYears" : {
-            "type" : [ "integer", "null" ],
-            "format" : "int32"
-          },
-          "minYears" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
           "note" : {
             "type" : [ "string", "null" ]
           },
-          "percentage" : {
-            "type" : "number"
+          "tiers" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SeniorityTier"
+            },
+            "minItems" : 1
           }
         },
-        "required" : [ "effectiveFrom", "minYears", "percentage" ]
+        "required" : [ "effectiveFrom", "tiers" ]
       },
       "SoftDeleteEmployeeRequest" : {
         "type" : "object",

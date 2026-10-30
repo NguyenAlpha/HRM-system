@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.response.common.ErrorCode;
+import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.JobPosition;
 import com.htttdn.hrm.entity.PositionAllowanceRule;
 import com.htttdn.hrm.entity.SeniorityAllowanceRule;
@@ -24,6 +26,8 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 import com.htttdn.hrm.util.Strings;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 
@@ -110,33 +114,38 @@ public class AllowancePolicyService {
             .toList();
     }
 
+    /**
+     * Thay cả bảng phụ cấp thâm niên từ {@code effectiveFrom}: mọi quy tắc đang mở đóng vào ngày hôm trước,
+     * các khoảng mới được tạo. Khai báo cả bảng một lần, nên không năm thâm niên nào bị bỏ trống giữa chừng.
+     *
+     * @throws BusinessException các khoảng không liền nhau từ 0 năm đến không giới hạn (→ 400
+     *         {@code VALIDATION_ERROR}, {@code field: tiers}), hoặc {@code effectiveFrom} không sau ngày bắt
+     *         đầu của bảng đang áp dụng (→ 400, {@code field: effectiveFrom})
+     * @throws ConflictException có kỳ lương đã duyệt từ {@code effectiveFrom} (→ 409 {@code PAYROLL_PERIOD_LOCKED})
+     */
     @PreAuthorize("hasAuthority('compensation.manage')")
-    public SeniorityAllowanceView setSeniorityAllowance(SetSeniorityAllowanceCommand command) {
-        validateSeniorityCommand(command);
+    public List<SeniorityAllowanceView> setSeniorityAllowances(SetSeniorityAllowancesCommand command) {
+        requireDate(command.effectiveFrom());
+        List<SeniorityTier> tiers = requireContiguousTiers(command.tiers());
         payrollPeriodInvalidator.invalidateFrom(command.effectiveFrom());
-        List<SeniorityAllowanceRule> overlappingOpenRules = seniorityRuleRepository
-            .findOpenForUpdate()
-            .stream()
-            .filter(rule -> rangesOverlap(
-                rule.getMinYears(), rule.getMaxYears(), command.minYears(), command.maxYears()
-            ))
-            .toList();
-        for (SeniorityAllowanceRule current : overlappingOpenRules) {
-            closeCurrentRule(
-                current.getEffectiveFrom(), command.effectiveFrom(), current::setEffectiveTo
-            );
+        for (SeniorityAllowanceRule current : seniorityRuleRepository.findOpenForUpdate()) {
+            closeCurrentRule(current.getEffectiveFrom(), command.effectiveFrom(), current::setEffectiveTo);
         }
         seniorityRuleRepository.flush();
 
-        SeniorityAllowanceRule rule = SeniorityAllowanceRule.builder()
-            .minYears(command.minYears())
-            .maxYears(command.maxYears())
-            .percentage(command.percentage())
-            .effectiveFrom(command.effectiveFrom())
-            .approvedByAccount(currentAccountProvider.account())
-            .note(Strings.trimToNull(command.note()))
-            .build();
-        return toView(seniorityRuleRepository.save(rule));
+        Account approver = currentAccountProvider.account();
+        String note = Strings.trimToNull(command.note());
+        return tiers.stream()
+            .map(tier -> seniorityRuleRepository.save(SeniorityAllowanceRule.builder()
+                .minYears(tier.minYears())
+                .maxYears(tier.maxYears())
+                .percentage(tier.percentage())
+                .effectiveFrom(command.effectiveFrom())
+                .approvedByAccount(approver)
+                .note(note)
+                .build()))
+            .map(this::toView)
+            .toList();
     }
 
     @PreAuthorize("hasAuthority('compensation.read')")
@@ -147,15 +156,24 @@ public class AllowancePolicyService {
             .toList();
     }
 
-    private void validateSeniorityCommand(SetSeniorityAllowanceCommand command) {
-        if (command.minYears() == null || command.minYears() < 0) {
-            throw validation("minYears must be zero or greater", "minYears");
+    /**
+     * Các khoảng theo số năm tăng dần phải nối liền từ 0 tới khoảng cuối không giới hạn: không hở, không chồng,
+     * nên mọi năm thâm niên có đúng một tỷ lệ (có thể là 0%).
+     */
+    private List<SeniorityTier> requireContiguousTiers(List<SeniorityTier> tiers) {
+        List<SeniorityTier> sorted = tiers.stream().sorted(Comparator.comparing(SeniorityTier::minYears)).toList();
+        int expectedMin = 0;
+        for (int i = 0; i < sorted.size(); i++) {
+            SeniorityTier tier = sorted.get(i);
+            validateAmount(tier.percentage(), "tiers");
+            boolean last = i == sorted.size() - 1;
+            if (tier.minYears() != expectedMin || (tier.maxYears() == null) != last
+                || tier.maxYears() != null && tier.maxYears() <= tier.minYears()) {
+                throw validation("phải liền nhau từ 0 năm đến không giới hạn, không hở hay chồng nhau", "tiers");
+            }
+            expectedMin = last ? expectedMin : tier.maxYears();
         }
-        if (command.maxYears() != null && command.maxYears() <= command.minYears()) {
-            throw validation("maxYears must be greater than minYears", "maxYears");
-        }
-        validateAmount(command.percentage(), "percentage");
-        requireDate(command.effectiveFrom());
+        return sorted;
     }
 
     private void validateAmount(BigDecimal value, String field) {
@@ -182,17 +200,6 @@ public class AllowancePolicyService {
             );
         }
         closeAction.accept(nextEffectiveFrom.minusDays(1));
-    }
-
-    private boolean rangesOverlap(
-        int leftMin,
-        Integer leftMax,
-        int rightMin,
-        Integer rightMax
-    ) {
-        int normalizedLeftMax = leftMax == null ? Integer.MAX_VALUE : leftMax;
-        int normalizedRightMax = rightMax == null ? Integer.MAX_VALUE : rightMax;
-        return leftMin < normalizedRightMax && rightMin < normalizedLeftMax;
     }
 
     private BusinessException validation(String message, String field) {
@@ -233,12 +240,18 @@ public class AllowancePolicyService {
     ) {
     }
 
-    public record SetSeniorityAllowanceCommand(
+    public record SetSeniorityAllowancesCommand(
+        @NotNull LocalDate effectiveFrom,
+        @Nullable String note,
+        @NotEmpty List<@Valid @NotNull SeniorityTier> tiers
+    ) {
+    }
+
+    /** Một khoảng thâm niên [{@code minYears}, {@code maxYears}) năm; {@code maxYears} null → không giới hạn. */
+    public record SeniorityTier(
         @NotNull @PositiveOrZero Integer minYears,
         @Nullable Integer maxYears,
-        @NotNull @PositiveOrZero BigDecimal percentage,
-        @NotNull LocalDate effectiveFrom,
-        @Nullable String note
+        @NotNull @PositiveOrZero BigDecimal percentage
     ) {
     }
 
