@@ -1,6 +1,5 @@
 "use client"
 
-import { apiErrorMessage } from "@/lib/api-helpers"
 import type { components } from "@/lib/api-schema"
 import { authorizedRequest } from "@/lib/auth/client"
 import { AuthApiError, type Portal } from "@/lib/auth/types"
@@ -160,10 +159,6 @@ export function cancelScheduledEmploymentEnd(employeeId: number): Promise<Employ
 
 export function softDeleteEmployee(employeeId: number, deletionReason: string): Promise<null> {
   return employeeMutation<null>("hrm", `/${employeeId}/soft-delete`, "POST", { deletionReason })
-}
-
-export function employeeErrorMessage(error: unknown): string {
-  return apiErrorMessage(error)
 }
 
 export function isSessionExpired(error: unknown): boolean {

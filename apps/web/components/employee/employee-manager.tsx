@@ -33,8 +33,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { apiErrorMessage } from "@/lib/api-helpers"
 import {
-  employeeErrorMessage,
   employeeListQuery,
   employeeRequest,
   EMPLOYMENT_STATUS_LABELS,
@@ -142,7 +142,7 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
       .catch((caught: unknown) => {
         if (!active) return
         if (isSessionExpired(caught)) onSessionExpired()
-        setError(employeeErrorMessage(caught))
+        setError(apiErrorMessage(caught))
         setLoadedQuery(requestKey)
       })
     return () => { active = false }
@@ -173,7 +173,7 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
       openEdit(detail)
     } catch (caught) {
       if (isSessionExpired(caught)) onSessionExpired()
-      toast.error("Không thể tải hồ sơ nhân sự", { description: employeeErrorMessage(caught) })
+      toast.error("Không thể tải hồ sơ nhân sự", { description: apiErrorMessage(caught) })
     }
   }
 

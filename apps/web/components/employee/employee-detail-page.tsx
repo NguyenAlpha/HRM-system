@@ -44,11 +44,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { apiErrorMessage } from "@/lib/api-helpers"
 import {
   cancelScheduledEmploymentEnd,
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_END_LABELS,
-  employeeErrorMessage,
   employeeRequest,
   EMPLOYMENT_STATUS_LABELS,
   EMPLOYMENT_TYPE_LABELS,
@@ -154,7 +154,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
       .catch((caught: unknown) => {
         if (!active) return
         if (isSessionExpired(caught)) onSessionExpired()
-        setError(employeeErrorMessage(caught))
+        setError(apiErrorMessage(caught))
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -179,7 +179,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
       reload()
     } catch (caught) {
       if (isSessionExpired(caught)) onSessionExpired()
-      toast.error("Không thể hủy lịch kết thúc", { description: employeeErrorMessage(caught) })
+      toast.error("Không thể hủy lịch kết thúc", { description: apiErrorMessage(caught) })
     } finally {
       setCancelBusy(false)
     }

@@ -20,8 +20,8 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { apiErrorMessage } from "@/lib/api-helpers"
 import {
-  employeeErrorMessage,
   isSessionExpired,
   softDeleteEmployee,
   type EmployeeDetail,
@@ -59,7 +59,7 @@ export function EmployeeDeleteDialog({ employee, onClose, onDeleted, onSessionEx
       onDeleted()
     } catch (caught) {
       if (isSessionExpired(caught)) onSessionExpired()
-      setDialogError(employeeErrorMessage(caught))
+      setDialogError(apiErrorMessage(caught))
     }
   }
 

@@ -28,10 +28,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { apiErrorMessage } from "@/lib/api-helpers"
 import {
   EDUCATION_LEVEL_LABELS,
   EDUCATION_LEVELS,
-  employeeErrorMessage,
   employeeMutation,
   GENDER_LABELS,
   GENDERS,
@@ -125,7 +125,7 @@ export function EmployeeEditDialog({ portal, detail, onClose, onSaved, onSession
       onClose()
     } catch (caught) {
       if (isSessionExpired(caught)) onSessionExpired()
-      setError(employeeErrorMessage(caught))
+      setError(apiErrorMessage(caught))
     }
   }
 

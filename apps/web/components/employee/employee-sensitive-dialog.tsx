@@ -21,8 +21,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { apiErrorMessage } from "@/lib/api-helpers"
 import {
-  employeeErrorMessage,
   getEmployeeSensitiveData,
   isSessionExpired,
   updateEmployeeSensitiveData,
@@ -97,7 +97,7 @@ export function EmployeeSensitiveDialog({ employee, onClose, onSaved, onSessionE
       .catch((caught: unknown) => {
         if (!active) return
         if (isSessionExpired(caught)) onSessionExpired()
-        setDialogError(employeeErrorMessage(caught))
+        setDialogError(apiErrorMessage(caught))
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -121,7 +121,7 @@ export function EmployeeSensitiveDialog({ employee, onClose, onSaved, onSessionE
       onSaved(saved)
     } catch (caught) {
       if (isSessionExpired(caught)) onSessionExpired()
-      setDialogError(employeeErrorMessage(caught))
+      setDialogError(apiErrorMessage(caught))
     }
   }
 

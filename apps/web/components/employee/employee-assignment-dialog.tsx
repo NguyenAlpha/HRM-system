@@ -29,7 +29,6 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  employeeErrorMessage,
   employeeMutation,
   employeeRequest,
   EMPLOYMENT_TYPE_LABELS,
@@ -41,6 +40,7 @@ import {
   type EmployeeSummary,
   type EmploymentType,
 } from "@/lib/employee"
+import { apiErrorMessage } from "@/lib/api-helpers"
 import { positionsForOrganizationUnit } from "@/lib/organization-position-filter"
 import type { Page } from "@/lib/pagination"
 import {
@@ -198,7 +198,7 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
       .catch((caught: unknown) => {
         if (!active) return
         if (isSessionExpired(caught)) onSessionExpired()
-        setDialogError(employeeErrorMessage(caught))
+        setDialogError(apiErrorMessage(caught))
       })
       .finally(() => {
         if (active) setLoadingOptions(false)
@@ -232,7 +232,7 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
       onAssigned()
     } catch (caught) {
       if (isSessionExpired(caught)) onSessionExpired()
-      setDialogError(employeeErrorMessage(caught))
+      setDialogError(apiErrorMessage(caught))
     }
   }
 
