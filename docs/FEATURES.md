@@ -227,8 +227,8 @@ Khi đơn được duyệt hoặc từ chối, nhân viên nộp đơn nhận th
 Nút thông báo đang ẩn trên giao diện; API vẫn lưu và trả thông báo cho đúng account.
 Chi tiết API: [NOTIFICATIONS.md](../api/docs/api/NOTIFICATIONS.md).
 
-Nghỉ `ANNUAL` có hạn mức năm: 12 ngày, chia tỷ lệ theo số tháng làm việc nếu vào làm giữa năm (tháng
-vào làm tính trọn tháng). Không cộng theo thâm niên, không chuyển phép dư sang năm sau, HR không điều
+Nghỉ `ANNUAL` có hạn mức năm: 12 ngày, chia tỷ lệ theo số tháng làm việc nếu vào làm hoặc nghỉ việc giữa năm (tháng
+vào làm và tháng nghỉ việc tính trọn tháng). Không cộng theo thâm niên, không chuyển phép dư sang năm sau, HR không điều
 chỉnh tay; hạn mức được tính mỗi lần, không lưu database. Duyệt đơn vượt số dư bị chặn bằng `409`. Khi kiểm tra, các
 đơn `PENDING` khác được tính như đã tiêu nên nhiều đơn cùng chờ không thể cùng lọt qua. Số dư lưu
 bằng phút để khớp với chấm công và payroll; các loại nghỉ còn lại không trừ hạn mức.

@@ -633,9 +633,9 @@ GET /api/leave-entitlements/employees/1?year=2026
 Mỗi nhân viên được **12 ngày phép năm** (Bộ luật Lao động 2019, Điều 113). Đơn vượt số dư còn lại bị từ chối với `409 INSUFFICIENT_LEAVE_BALANCE` khi tạo, khi gửi và khi duyệt. Chỉ có hai quy tắc:
 
 - Làm cả năm: 12 ngày.
-- Vào làm giữa năm: 12 × số tháng làm việc / 12, tháng vào làm tính trọn tháng. Vào làm tháng 9 được 4 ngày, tháng 10 được 3 ngày.
+- Vào làm hoặc nghỉ việc giữa năm: 12 × số tháng làm việc / 12; tháng vào làm và tháng có ngày làm việc cuối đều tính trọn tháng. Vào làm tháng 9 được 4 ngày, tháng 10 được 3 ngày; nghỉ việc tháng 3 được 3 ngày.
 
-Không cộng phép theo thâm niên, không chuyển phép dư sang năm sau và HR không điều chỉnh tay. Hạn mức **không lưu trong database** mà được tính mỗi lần từ `employees.hire_date`; số ngày quy ra phút theo `standard_work_minutes` của ca trong phân công chính đang mở, không có ca thì dùng 480 phút.
+Không cộng phép theo thâm niên, không chuyển phép dư sang năm sau và HR không điều chỉnh tay. Hạn mức **không lưu trong database** mà được tính mỗi lần từ `employees.hire_date` và `employees.termination_date` (kể cả ngày cuối đã hẹn); số ngày quy ra phút theo `standard_work_minutes` của ca trong phân công chính đang mở, không có ca thì dùng 480 phút.
 
 Chỉ `ANNUAL` trừ vào số dư. `SICK`, `MATERNITY`, `UNPAID` và `OTHER` đi theo quy trình riêng và không ảnh hưởng hạn mức.
 

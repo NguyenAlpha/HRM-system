@@ -130,14 +130,14 @@ Hệ thống hỗ trợ quản lý tập trung hồ sơ nhân viên, cơ cấu t
 - **Người sử dụng:** Nhân viên lập đơn, người có thẩm quyền duyệt và HR theo dõi số dư phép.
 - **Luồng chính:** Nhân viên tạo đơn nháp, gửi duyệt hoặc hủy. Người duyệt xem đơn chờ, chấp thuận hoặc từ chối. Nhân viên và người có quyền xem lịch sử đơn và số dư phép năm.
 - **Vòng đời:** `DRAFT` → `PENDING` → `APPROVED` hoặc `REJECTED`; đơn cũng có thể chuyển sang `CANCELLED` theo quy tắc nghiệp vụ.
-- **Quy tắc:** Phép năm có hạn mức 12 ngày, tính tỷ lệ theo số tháng làm việc nếu vào làm giữa năm. Khi xét số dư, các đơn đang chờ cũng được tính để tránh duyệt vượt hạn mức. Đơn được duyệt cập nhật số phút nghỉ vào bảng công; cách trả lương phụ thuộc loại nghỉ.
+- **Quy tắc:** Phép năm có hạn mức 12 ngày, tính tỷ lệ theo số tháng làm việc nếu vào làm hoặc nghỉ việc giữa năm. Khi xét số dư, các đơn đang chờ cũng được tính để tránh duyệt vượt hạn mức. Đơn được duyệt cập nhật số phút nghỉ vào bảng công; cách trả lương phụ thuộc loại nghỉ.
 - **Kết quả:** Đơn nghỉ và số dư phép được theo dõi thống nhất với chấm công, tính lương.
 
 **Thông tin của đơn nghỉ:** Nhân viên, loại nghỉ, khoảng thời gian, lý do, trạng thái và cách xử lý lương. Các loại hiện có là `ANNUAL` (phép năm), `SICK` (ốm), `MATERNITY` (thai sản), `UNPAID` (không lương) và `OTHER` (khác).
 
 **Các bước xử lý:** Nhân viên tạo đơn `DRAFT`, kiểm tra nội dung rồi gửi thành `PENDING`. Người duyệt xem các đơn đang chờ trong phạm vi được giao và chọn duyệt hoặc từ chối. Khi duyệt, hệ thống kiểm tra số dư nếu là phép năm, sau đó ghi số phút nghỉ lên bản ghi công tương ứng. Đơn hủy hoặc từ chối không tiếp tục được tính như ngày nghỉ đã duyệt.
 
-**Cách tính số dư:** Mỗi năm có 12 ngày phép; người vào làm giữa năm được chia tỷ lệ theo số tháng làm việc, tháng vào làm tính trọn tháng (Bộ luật Lao động 2019, Điều 113). Hạn mức không lưu trong database mà được tính lại mỗi lần từ ngày vào làm và các đơn nghỉ, đối chiếu theo phút công. Chỉ đơn `ANNUAL` trừ hạn mức; đơn `PENDING` cũng được tạm tính khi kiểm tra khả năng duyệt các đơn khác, và duyệt đơn vượt số dư bị chặn. Phép không cộng theo thâm niên, không chuyển phần còn dư sang năm sau và HR không điều chỉnh tay hạn mức.
+**Cách tính số dư:** Mỗi năm có 12 ngày phép; người vào làm hoặc nghỉ việc giữa năm được chia tỷ lệ theo số tháng làm việc, tháng vào làm và tháng nghỉ việc tính trọn tháng (Bộ luật Lao động 2019, Điều 113). Hạn mức không lưu trong database mà được tính lại mỗi lần từ ngày vào làm, ngày làm việc cuối và các đơn nghỉ, đối chiếu theo phút công. Chỉ đơn `ANNUAL` trừ hạn mức; đơn `PENDING` cũng được tạm tính khi kiểm tra khả năng duyệt các đơn khác, và duyệt đơn vượt số dư bị chặn. Phép không cộng theo thâm niên, không chuyển phần còn dư sang năm sau và HR không điều chỉnh tay hạn mức.
 
 **Liên hệ tính lương:** Hệ thống tự suy ra cách trả lương từ loại nghỉ: phép năm do doanh nghiệp trả, nghỉ ốm hoặc thai sản theo bảo hiểm xã hội, nghỉ không lương hoặc loại khác mặc định không trả. Người có `request.manage` mới được ghi đè khi có trường hợp nghiệp vụ phù hợp. Nghỉ có lương tăng số phút được trả lương trong bảng công; nghỉ không lương hoặc do bảo hiểm chi trả không tăng số phút này.
 

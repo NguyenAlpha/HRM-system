@@ -94,7 +94,7 @@ export function LeaveReportPage() {
               <CardHeader>
                 <CardTitle>Phép năm {year} theo nhân viên</CardTitle>
                 <CardDescription>
-                  12 ngày mỗi năm, vào làm giữa năm thì tính theo số tháng. Nhân viên có làm việc trong năm, kể cả người đã nghỉ.
+                  12 ngày mỗi năm, vào làm hoặc nghỉ việc giữa năm thì tính theo số tháng. Nhân viên có làm việc trong năm, kể cả người đã nghỉ.
                 </CardDescription>
                 <CardAction><ExportButton onClick={exportRows} disabled={!rows || rows.length === 0} /></CardAction>
               </CardHeader>

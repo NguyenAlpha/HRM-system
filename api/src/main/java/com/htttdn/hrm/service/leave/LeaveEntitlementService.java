@@ -30,8 +30,8 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Annual leave quota: 12 days a year, prorated by the months worked when the employee joined
- * part-way through the year (Bộ luật Lao động 2019, Điều 113). Nothing is stored; the balance is
+ * Annual leave quota: 12 days a year, prorated by the months worked when the employee joined or
+ * leaves part-way through the year (Bộ luật Lao động 2019, Điều 113). Nothing is stored; the balance is
  * computed from the hire date and the leave requests every time. Only {@link LeaveType#ANNUAL}
  * draws on it; sick, maternity, unpaid and other leave never reduce the balance. Unused days do
  * not carry over to the next year.
@@ -120,18 +120,18 @@ public class LeaveEntitlementService {
     }
 
     /**
-     * 12 days, times the months worked out of 12 when the employee joined during the year; the
-     * month of joining counts as a whole month.
+     * 12 days, times the months worked out of 12 when the employee joined or leaves during the year;
+     * the months of joining and of the last working day count as whole months.
      */
     static int grantedMinutes(Employee employee, int year, int standardDayMinutes) {
-        LocalDate yearStart = LocalDate.of(year, 1, 1);
         LocalDate hireDate = employee.getHireDate();
-        if (hireDate != null && hireDate.getYear() > year) {
+        LocalDate lastDay = employee.getTerminationDate();
+        if (hireDate != null && hireDate.getYear() > year || lastDay != null && lastDay.getYear() < year) {
             return 0;
         }
-        int monthsWorked = hireDate != null && !hireDate.isBefore(yearStart)
-            ? 12 - hireDate.getMonthValue() + 1
-            : 12;
+        int firstMonth = hireDate != null && hireDate.getYear() == year ? hireDate.getMonthValue() : 1;
+        int lastMonth = lastDay != null && lastDay.getYear() == year ? lastDay.getMonthValue() : 12;
+        int monthsWorked = lastMonth - firstMonth + 1;
         return (int) Math.round(ANNUAL_LEAVE_DAYS * standardDayMinutes * monthsWorked / 12.0);
     }
 

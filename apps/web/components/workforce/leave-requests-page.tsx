@@ -448,7 +448,7 @@ function BalanceCard({ balance }: { balance: LeaveBalance }) {
       <CardHeader>
         <CardTitle>Phép năm {balance.year}</CardTitle>
         <CardDescription>
-          12 ngày mỗi năm, vào làm giữa năm thì tính theo số tháng làm việc. Phép không dùng hết không chuyển sang năm sau.
+          12 ngày mỗi năm, vào làm hoặc nghỉ việc giữa năm thì tính theo số tháng làm việc. Phép không dùng hết không chuyển sang năm sau.
           Một ngày = {day} phút theo ca làm việc.
         </CardDescription>
       </CardHeader>

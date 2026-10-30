@@ -74,6 +74,31 @@ class LeaveEntitlementServiceTest {
     }
 
     @Test
+    void leavingPartWayThroughTheYearProratesByMonthsWorked() {
+        Employee leavesInMarch = employee(LocalDate.of(2020, 1, 1));
+        leavesInMarch.setTerminationDate(LocalDate.of(2026, 3, 2));
+
+        // January to March: the month of the last working day counts as a whole month.
+        assertEquals(3 * DAY, LeaveEntitlementService.grantedMinutes(leavesInMarch, 2026, DAY));
+    }
+
+    @Test
+    void joiningAndLeavingInTheSameYearCountsOnlyTheMonthsBetween() {
+        Employee shortStay = employee(LocalDate.of(2026, 4, 20));
+        shortStay.setTerminationDate(LocalDate.of(2026, 6, 5));
+
+        assertEquals(3 * DAY, LeaveEntitlementService.grantedMinutes(shortStay, 2026, DAY));
+    }
+
+    @Test
+    void employeeGoneBeforeTheYearGetsNothing() {
+        Employee gone = employee(LocalDate.of(2020, 1, 1));
+        gone.setTerminationDate(LocalDate.of(2025, 12, 31));
+
+        assertEquals(0, LeaveEntitlementService.grantedMinutes(gone, 2026, DAY));
+    }
+
+    @Test
     void employeeHiredAfterTheYearGetsNothing() {
         Employee hiredNextYear = employee(LocalDate.of(2027, 2, 1));
 
