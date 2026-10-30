@@ -408,7 +408,7 @@ function CalculateDialog({ period, busy, onClose, onSubmit }: {
           </DialogHeader>
           <div className="mt-4 grid gap-1.5">
             <Label htmlFor="tax-payment-date">Ngày trả lương dự kiến</Label>
-            <Input id="tax-payment-date" type="date" required value={taxPaymentDate}
+            <Input id="tax-payment-date" type="date" required min={period.periodStart} value={taxPaymentDate}
               onChange={(event) => setTaxPaymentDate(event.target.value)} />
           </div>
           <DialogFooter className="mt-4">
@@ -485,7 +485,7 @@ function MarkPaidDialog({ period, busy, onClose, onSubmit }: {
           </DialogHeader>
           <div className="mt-4 grid gap-1.5">
             <Label htmlFor="paid-on">Ngày trả thực tế</Label>
-            <Input id="paid-on" type="date" required value={paidOn} onChange={(event) => setPaidOn(event.target.value)} />
+            <Input id="paid-on" type="date" required max={today()} value={paidOn} onChange={(event) => setPaidOn(event.target.value)} />
           </div>
           <DialogFooter className="mt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={busy}>Hủy</Button>

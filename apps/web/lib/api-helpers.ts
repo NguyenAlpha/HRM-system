@@ -117,6 +117,8 @@ const FIELD_LABELS: Record<string, string> = {
   hireDate: "Ngày vào làm",
   effectiveFrom: "Ngày hiệu lực",
   effectiveTo: "Ngày kết thúc",
+  taxPaymentDate: "Ngày trả lương",
+  paidOn: "Ngày trả thực tế",
   startDate: "Ngày bắt đầu",
   endDate: "Ngày kết thúc",
   reason: "Lý do",

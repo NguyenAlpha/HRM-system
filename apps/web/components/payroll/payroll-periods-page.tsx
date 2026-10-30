@@ -183,7 +183,7 @@ function CreatePeriodDialog({ onClose, onCreated }: { onClose: () => void; onCre
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="new-period-payment">Ngày dự kiến trả lương</Label>
-              <Input id="new-period-payment" type="date" required value={taxPaymentDate}
+              <Input id="new-period-payment" type="date" required min={month ? `${month}-01` : undefined} value={taxPaymentDate}
                 onChange={(event) => setTaxPaymentDate(event.target.value)} />
             </div>
           </div>
