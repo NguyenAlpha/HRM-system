@@ -1,6 +1,7 @@
 package com.htttdn.hrm.service.payroll;
 
 import java.util.List;
+import java.util.Set;
 
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.springframework.data.domain.Page;
@@ -17,6 +18,7 @@ import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
+import com.htttdn.hrm.repository.specification.SearchPatterns;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PayrollQueryService {
 
+    private static final Set<String> PERIOD_SORTABLE = Set.of("periodStart", "year", "month", "status");
+    private static final Set<String> PAYSLIP_SORTABLE = Set.of("payrollPeriod.periodStart");
+
     private final PayrollPeriodRepository payrollPeriodRepository;
     private final PayslipRepository payslipRepository;
     private final CurrentAccountProvider currentAccountProvider;
@@ -48,7 +53,8 @@ public class PayrollQueryService {
     @PreAuthorize("hasAuthority('report.payroll.read')")
     public Page<PayrollPeriodResponse> listPeriods(Pageable pageable) {
         employeeAccessScopeService.requireCompanyWide("report.payroll.read");
-        return payrollPeriodRepository.findAll(pageable).map(payrollMapper::toResponse);
+        return payrollPeriodRepository.findAll(SearchPatterns.requireSortable(pageable, PERIOD_SORTABLE))
+            .map(payrollMapper::toResponse);
     }
 
     /** Every payslip of one period, by employee code: the payroll sheet reviewed before approval. */
@@ -74,6 +80,7 @@ public class PayrollQueryService {
 
     @PreAuthorize("hasAnyAuthority('payroll.self.read', 'report.payroll.read')")
     public Page<PayslipResponse> listPayslipsForEmployee(Long employeeId, Pageable pageable) {
+        SearchPatterns.requireSortable(pageable, PAYSLIP_SORTABLE);
         requirePayslipAccess(employeeId);
         if (currentAccountProvider.hasAuthority("report.payroll.read")) {
             return payslipRepository.findByEmployeeId(employeeId, pageable).map(payrollMapper::toResponse);

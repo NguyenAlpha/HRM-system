@@ -7,12 +7,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.PayrollPeriod;
 import com.htttdn.hrm.entity.Payslip;
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
+import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.repository.PayslipItemRepository;
@@ -81,6 +84,18 @@ class PayrollQueryServiceTest {
             .payrollPeriod(PayrollPeriod.builder().id(1L).status(status).build())
             .build();
         when(payslipRepository.getRequired(5L)).thenReturn(payslip);
+    }
+
+    @Test
+    void listsSortOnlyByKnownProperties() {
+        PageRequest byHash = PageRequest.of(0, 20, Sort.by("passwordHash"));
+
+        // An unknown property would otherwise fail inside the query and answer 500.
+        BusinessException periods = assertThrows(BusinessException.class, () -> service().listPeriods(byHash));
+        assertEquals("sort", periods.getField());
+        BusinessException payslips = assertThrows(BusinessException.class,
+            () -> service().listPayslipsForEmployee(2L, byHash));
+        assertEquals("sort", payslips.getField());
     }
 
     private PayrollQueryService service() {

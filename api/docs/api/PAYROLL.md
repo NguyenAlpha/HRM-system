@@ -537,7 +537,7 @@ Trả [`PayrollPeriodResponse`](#payrollperiodresponse) với `status: "DRAFT"`.
 
 ### GET `/api/payroll/periods`
 
-Danh sách kỳ lương, có phân trang. Query `page` (từ 0), `size` (mặc định 20) và `sort` (ví dụ `sort=periodStart,desc`; không truyền thì không có thứ tự cố định). Trả `PagedResult<PayrollPeriodResponse>`.
+Danh sách kỳ lương, có phân trang. Query `page` (từ 0), `size` (mặc định 20) và `sort` theo `periodStart`, `year`, `month` hoặc `status` (mặc định `periodStart,desc`; trường khác → `400 VALIDATION_ERROR`, `field: sort`). Trả `PagedResult<PayrollPeriodResponse>`.
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
@@ -714,7 +714,7 @@ Trả [`PayslipResponse`](#payslipresponse).
 
 ### GET `/api/payroll/employees/{employeeId}/payslips`
 
-Phiếu lương của một nhân viên, có phân trang (`page`, `size` mặc định 20, `sort`). Trả `PagedResult<PayslipResponse>`. Người không có `report.payroll.read` chỉ thấy phiếu của kỳ `APPROVED`, `PAID`, `LOCKED`.
+Phiếu lương của một nhân viên, có phân trang (`page`, `size` mặc định 20, `sort` chỉ theo `payrollPeriod.periodStart`, mặc định giảm dần; trường khác → `400 VALIDATION_ERROR`). Trả `PagedResult<PayslipResponse>`. Người không có `report.payroll.read` chỉ thấy phiếu của kỳ `APPROVED`, `PAID`, `LOCKED`.
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|

@@ -3,6 +3,7 @@ package com.htttdn.hrm.controller;
 import java.util.List;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -47,7 +48,8 @@ public class PayrollController {
     }
 
     @GetMapping("/periods")
-    public ApiResult<PagedResult<PayrollPeriodResponse>> list(@PageableDefault(size = 20) Pageable pageable) {
+    public ApiResult<PagedResult<PayrollPeriodResponse>> list(
+        @PageableDefault(size = 20, sort = "periodStart", direction = Sort.Direction.DESC) Pageable pageable) {
         return ApiResult.ok(PagedResult.of(queryService.listPeriods(pageable)));
     }
 
@@ -110,7 +112,7 @@ public class PayrollController {
 
     @GetMapping("/employees/{employeeId}/payslips")
     public ApiResult<PagedResult<PayslipResponse>> employeePayslips(@PathVariable Long employeeId,
-        @PageableDefault(size = 20) Pageable pageable) {
+        @PageableDefault(size = 20, sort = "payrollPeriod.periodStart", direction = Sort.Direction.DESC) Pageable pageable) {
         return ApiResult.ok(PagedResult.of(queryService.listPayslipsForEmployee(employeeId, pageable)));
     }
 }
