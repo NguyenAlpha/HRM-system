@@ -99,7 +99,6 @@ Hai role được lưu thành hai assignment riêng. Sau này doanh nghiệp có
         "email": "owner@company.com",
         "status": "PENDING",
         "failedLoginCount": 0,
-        "lockedUntil": null,
         "lastLoginAt": null,
         "createdAt": "2026-09-26T09:00:00Z",
         "updatedAt": "2026-09-26T09:00:00Z"

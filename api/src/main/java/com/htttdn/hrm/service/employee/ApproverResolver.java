@@ -98,7 +98,7 @@ public class ApproverResolver {
             return false;
         }
         return accountRepository.findByEmployeeId(candidate.getId())
-            .map(account -> account.getStatus() == AccountStatus.ACTIVE || account.getStatus() == AccountStatus.LOCKED)
+            .map(account -> account.getStatus() == AccountStatus.ACTIVE)
             .orElse(false);
     }
 }

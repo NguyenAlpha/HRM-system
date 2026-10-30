@@ -125,13 +125,12 @@ public class AccountAdminService {
         companyOwnerAccountGuard.requireCanManage(accountId);
 
         Account account = accountRepository.getRequiredForUpdate(accountId);
-        if (account.getStatus() != AccountStatus.ACTIVE && account.getStatus() != AccountStatus.LOCKED) {
-            throw invalidTransition(account, "Password reset requires an active or locked account");
+        if (account.getStatus() != AccountStatus.ACTIVE) {
+            throw invalidTransition(account, "Password reset requires an active account");
         }
         account.setPasswordHash(null);
         account.setStatus(AccountStatus.PENDING);
         account.setFailedLoginCount(0);
-        account.setLockedUntil(null);
         refreshTokenService.revokeAll(accountId);
         return issueInvitation(accountId);
     }
@@ -151,7 +150,6 @@ public class AccountAdminService {
         }
 
         account.setStatus(AccountStatus.DISABLED);
-        account.setLockedUntil(null);
         refreshTokenService.revokeAll(accountId);
         accountActivationService.revokeAll(accountId);
         return toResponse(accountRepository.saveAndFlush(account));
@@ -173,13 +171,9 @@ public class AccountAdminService {
         if (account.getStatus() == AccountStatus.PENDING || account.getPasswordHash() == null) {
             throw invalidTransition(account, "A pending account must be activated by its invitation token");
         }
-        if (account.getStatus() != AccountStatus.DISABLED && account.getStatus() != AccountStatus.LOCKED) {
-            throw invalidTransition(account, "Account cannot be activated from its current status");
-        }
 
         account.setStatus(AccountStatus.ACTIVE);
         account.setFailedLoginCount(0);
-        account.setLockedUntil(null);
         return toResponse(accountRepository.saveAndFlush(account));
     }
 
@@ -202,7 +196,6 @@ public class AccountAdminService {
         Account actor = accountRepository.getReferenceById(actorAccountId);
         String trimmed = reason.trim();
         account.setStatus(AccountStatus.DISABLED);
-        account.setLockedUntil(null);
         account.setDeletedAt(now);
         account.setDeletedByAccount(actor);
         account.setDeletionReason(trimmed);
@@ -264,7 +257,6 @@ public class AccountAdminService {
             account.getStatus(),
             roleCodes,
             account.getFailedLoginCount(),
-            account.getLockedUntil(),
             account.getLastLoginAt(),
             account.getCreatedAt(),
             account.getUpdatedAt(),

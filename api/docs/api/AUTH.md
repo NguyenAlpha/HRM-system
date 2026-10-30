@@ -230,7 +230,6 @@ Spring Security chuyển role code thành authority có prefix `ROLE_`; ví dụ
   (mặc định) thì đăng nhập vào tài khoản đó bị trả `429 RATE_LIMIT_EXCEEDED` tới khi hết thời gian chờ, kể cả với mật
   khẩu đúng. Xem [RATE_LIMIT.md](../concepts/RATE_LIMIT.md#5-chống-dò-mật-khẩu).
 - Đăng nhập thành công đặt bộ đếm về 0 và cập nhật `lastLoginAt`.
-- Account ở trạng thái `LOCKED` do quản trị viên thiết lập vẫn không thể đăng nhập.
 
 ### Lỗi
 
@@ -238,7 +237,6 @@ Spring Security chuyển role code thành authority có prefix `ROLE_`; ví dụ
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Request body hoặc field không hợp lệ |
 | 401 | `INVALID_CREDENTIALS` | Không tìm thấy account hoặc sai mật khẩu, với mọi trạng thái account. Account `PENDING` chưa có mật khẩu nên luôn nhận lỗi này |
-| 401 | `ACCOUNT_LOCKED` | Đúng mật khẩu nhưng account đang bị quản trị viên khóa |
 | 401 | `ACCOUNT_DISABLED` | Đúng mật khẩu nhưng account đã bị vô hiệu hóa |
 
 Trạng thái account chỉ được báo cho người nhập đúng mật khẩu, nên đoán tên đăng nhập không cho biết account có tồn tại hay đang ở trạng thái nào. Sai mật khẩu ở account không `ACTIVE` cũng tính một lượt sai.

@@ -46,7 +46,7 @@ Console cho `SYSTEM_ADMIN`. Trình duyệt không bao giờ giữ JWT; Next.js g
 | Đổi mật khẩu | `POST /api/auth/change-password` |
 | Kích hoạt account bằng token mời | `POST /api/account-activations/{token}/complete` |
 
-Trạng thái account: `PENDING` → `ACTIVE`, và `LOCKED` / `DISABLED`.
+Trạng thái account: `PENDING` → `ACTIVE`, và `DISABLED`.
 
 Mọi API đều có giới hạn số request theo IP và theo người dùng; sai mật khẩu quá 5 lần trong 15 phút thì phải chờ
 mới đăng nhập lại được (không khoá tài khoản). Admin Console có trang thống kê **Giới hạn truy cập**

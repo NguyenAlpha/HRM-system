@@ -18,7 +18,7 @@ Một ứng viên bị **bỏ qua** khi:
 
 - là chính nhân viên đó (không ai tự duyệt đơn của mình);
 - hồ sơ đã xóa mềm, hoặc đã `RESIGNED` / `TERMINATED` / `RETIRED`;
-- không có account, hoặc account không ở trạng thái `ACTIVE` hay `LOCKED`.
+- không có account, hoặc account không ở trạng thái `ACTIVE`.
 
 Company Owner là đỉnh của sơ đồ nên **không có ai duyệt cho Company Owner** (kết quả rỗng).
 

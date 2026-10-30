@@ -53,7 +53,7 @@ Từ khi kỳ lương chứa ngày đó ở `APPROVED`, `PAID` hoặc `LOCKED`, 
 2. **Giám đốc**: người đang giữ role `DIRECTOR`.
 3. **Chủ sở hữu**: người đang giữ role `COMPANY_OWNER`.
 
-Một người bị bỏ qua khi đó là chính nhân viên, đã nghỉ việc/bị xóa, hoặc không có tài khoản `ACTIVE`/`LOCKED`. Vì vậy không ai duyệt được đơn hoặc tăng ca của chính mình. Chủ sở hữu ở đỉnh sơ đồ nên không có người duyệt.
+Một người bị bỏ qua khi đó là chính nhân viên, đã nghỉ việc/bị xóa, hoặc không có tài khoản `ACTIVE`. Vì vậy không ai duyệt được đơn hoặc tăng ca của chính mình. Chủ sở hữu ở đỉnh sơ đồ nên không có người duyệt.
 
 - **Đơn nghỉ**: người duyệt được chốt khi gửi đơn (`approverEmployeeId`). Đơn của người giữ `DIRECTOR` hoặc `COMPANY_OWNER` không cần duyệt: khi gửi, đơn chuyển thẳng sang `APPROVED` với ghi chú `Tự ghi nhận…` và được gắn vào bảng công như đơn đã duyệt.
 - **Tăng ca**: người duyệt được xác định lúc quyết định. Tăng ca của Giám đốc do Chủ sở hữu quyết định; Chủ sở hữu tự xác nhận tăng ca của mình.

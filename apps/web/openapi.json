@@ -63,7 +63,7 @@
           "required" : false,
           "schema" : {
             "type" : "string",
-            "enum" : [ "PENDING", "ACTIVE", "LOCKED", "DISABLED" ]
+            "enum" : [ "PENDING", "ACTIVE", "DISABLED" ]
           }
         }, {
           "in" : "query",
@@ -5115,10 +5115,6 @@
             "type" : [ "string", "null" ],
             "format" : "date-time"
           },
-          "lockedUntil" : {
-            "type" : [ "string", "null" ],
-            "format" : "date-time"
-          },
           "roleCodes" : {
             "type" : "array",
             "items" : {
@@ -5127,7 +5123,7 @@
           },
           "status" : {
             "type" : "string",
-            "enum" : [ "PENDING", "ACTIVE", "LOCKED", "DISABLED" ]
+            "enum" : [ "PENDING", "ACTIVE", "DISABLED" ]
           },
           "updatedAt" : {
             "type" : "string",
@@ -5137,7 +5133,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "createdAt", "deletedAt", "deletionReason", "email", "employeeCode", "employeeFullName", "employeeId", "failedLoginCount", "id", "lastLoginAt", "lockedUntil", "roleCodes", "status", "updatedAt", "username" ]
+        "required" : [ "createdAt", "deletedAt", "deletionReason", "email", "employeeCode", "employeeFullName", "employeeId", "failedLoginCount", "id", "lastLoginAt", "roleCodes", "status", "updatedAt", "username" ]
       },
       "AccountRoleAssignmentResponse" : {
         "type" : "object",
@@ -7400,7 +7396,7 @@
           },
           "status" : {
             "type" : "string",
-            "enum" : [ "PENDING", "ACTIVE", "LOCKED", "DISABLED" ]
+            "enum" : [ "PENDING", "ACTIVE", "DISABLED" ]
           },
           "username" : {
             "type" : "string"
@@ -8275,7 +8271,7 @@
           },
           "status" : {
             "type" : "string",
-            "enum" : [ "PENDING", "ACTIVE", "LOCKED", "DISABLED" ]
+            "enum" : [ "PENDING", "ACTIVE", "DISABLED" ]
           },
           "username" : {
             "type" : "string"

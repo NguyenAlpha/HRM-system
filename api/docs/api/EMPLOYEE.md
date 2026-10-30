@@ -269,12 +269,12 @@ Các bộ lọc kết hợp theo AND và luôn nằm trong phạm vi dữ liệu
 }
 ```
 
-`currentAssignment` là phân công chính đang hiệu lực tại ngày gọi API và có thể là `null` nếu nhân sự chưa có phân công hiện tại. `account=null` nghĩa là employee đã có hồ sơ nhân sự nhưng chưa được cấp tài khoản đăng nhập. Object account chỉ chứa thông tin nhận diện và trạng thái cần cho nghiệp vụ nhân sự; các dữ liệu quản trị bảo mật như `failedLoginCount`, `lockedUntil` và lịch sử kích hoạt không được trả về từ endpoint này.
+`currentAssignment` là phân công chính đang hiệu lực tại ngày gọi API và có thể là `null` nếu nhân sự chưa có phân công hiện tại. `account=null` nghĩa là employee đã có hồ sơ nhân sự nhưng chưa được cấp tài khoản đăng nhập. Object account chỉ chứa thông tin nhận diện và trạng thái cần cho nghiệp vụ nhân sự; các dữ liệu quản trị bảo mật như `failedLoginCount` và lịch sử kích hoạt không được trả về từ endpoint này.
 
 ### Giá trị trạng thái
 
 - `employmentStatus`: `PROBATION`, `ACTIVE`, `RESIGNED`, `TERMINATED`, `RETIRED`.
-- `account.status`: `PENDING`, `ACTIVE`, `LOCKED`, `DISABLED`.
+- `account.status`: `PENDING`, `ACTIVE`, `DISABLED`.
 
 ### Lỗi
 

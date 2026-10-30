@@ -28,7 +28,6 @@ public class AccountUserDetailsService implements UserDetailsService {
             .password(account.getPasswordHash() == null ? "" : account.getPasswordHash())
             .authorities("ACCOUNT")
             .disabled(!active)
-            .accountLocked(account.getStatus() == AccountStatus.LOCKED)
             .build();
     }
 }

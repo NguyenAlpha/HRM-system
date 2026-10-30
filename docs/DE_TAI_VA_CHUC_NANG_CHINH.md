@@ -35,13 +35,13 @@ Hệ thống hỗ trợ quản lý tập trung hồ sơ nhân viên, cơ cấu t
 3. Khi access token hết hạn, ứng dụng dùng refresh token để lấy phiên mới theo cơ chế xoay vòng. Người dùng có thể chủ động đăng xuất hoặc đổi mật khẩu từ phiên hợp lệ.
 4. Với tài khoản mới hoặc cần đặt lại mật khẩu, người dùng mở liên kết chứa token kích hoạt còn hiệu lực, tự tạo mật khẩu và chuyển tài khoản từ `PENDING` sang `ACTIVE`.
 
-**Trường hợp cần xử lý:** Đăng nhập sai bị từ chối và số lần sai được ghi nhận; tài khoản `PENDING`, `LOCKED` hoặc `DISABLED` không đăng nhập được. Hệ thống hiện chưa tự khóa sau một số lần nhập sai, vì vậy trạng thái `LOCKED` do thao tác quản trị thiết lập. Token kích hoạt chỉ dùng một lần và phải còn hạn. Quyền vừa thay đổi được phản ánh trong token mới, không tự sửa token đã phát.
+**Trường hợp cần xử lý:** Đăng nhập sai bị từ chối và số lần sai được ghi nhận; tài khoản `PENDING` hoặc `DISABLED` không đăng nhập được. Hệ thống không tự khóa tài khoản sau nhiều lần nhập sai mà chỉ tạm chặn đăng nhập một thời gian; thao tác khóa của quản trị viên đưa tài khoản về `DISABLED`. Token kích hoạt chỉ dùng một lần và phải còn hạn. Quyền vừa thay đổi được phản ánh trong token mới, không tự sửa token đã phát.
 
 ### 2. Quản lý tài khoản
 
 - **Người sử dụng:** Người có quyền cấp hoặc quản lý tài khoản; nhân viên là người nhận tài khoản.
 - **Luồng chính:** Sau khi có hồ sơ nhân viên hợp lệ, người quản lý cấp tài khoản gắn với hồ sơ đó. Hệ thống tạo trạng thái chờ kích hoạt và token mời. Người dùng kích hoạt rồi tự đặt mật khẩu. Người quản lý có thể xem danh sách, xem chi tiết, gửi lại lời mời, khởi tạo quy trình đặt lại mật khẩu, khóa hoặc mở khóa tài khoản.
-- **Trạng thái:** `PENDING` khi chờ kích hoạt, `ACTIVE` khi sử dụng được, `LOCKED` khi bị khóa và `DISABLED` khi ngừng sử dụng.
+- **Trạng thái:** `PENDING` khi chờ kích hoạt, `ACTIVE` khi sử dụng được và `DISABLED` khi bị khóa hoặc ngừng sử dụng.
 - **Quy tắc:** Không đặt mật khẩu hộ người dùng. Khi nhân viên kết thúc làm việc, tài khoản liên quan chuyển sang `DISABLED` và các refresh token bị thu hồi.
 - **Kết quả:** Mỗi nhân viên được cấp quyền có tài khoản để truy cập đúng phần việc của mình.
 
@@ -53,7 +53,7 @@ Hệ thống hỗ trợ quản lý tập trung hồ sơ nhân viên, cơ cấu t
 | --- | --- |
 | Cấp tài khoản | Tạo account `PENDING`, gán vai trò nền `EMPLOYEE` với phạm vi `SELF` và phát token kích hoạt. |
 | Gửi lại lời mời | Chỉ dành cho account `PENDING`; token cũ bị thu hồi và token mới được phát. |
-| Đặt lại mật khẩu | Đưa account `ACTIVE` hoặc `LOCKED` về `PENDING` để chủ tài khoản tự đặt mật khẩu bằng token mới. |
+| Đặt lại mật khẩu | Đưa account `ACTIVE` về `PENDING` để chủ tài khoản tự đặt mật khẩu bằng token mới. |
 | Khóa hoặc vô hiệu hóa | Chặn đăng nhập và thu hồi các refresh token còn hiệu lực. |
 | Mở lại tài khoản | Áp dụng theo trạng thái hiện tại và điều kiện account đã có mật khẩu. |
 

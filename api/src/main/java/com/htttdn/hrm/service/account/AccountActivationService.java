@@ -103,7 +103,6 @@ public class AccountActivationService {
         account.setPasswordHash(passwordEncoder.encode(request.password()));
         account.setStatus(AccountStatus.ACTIVE);
         account.setFailedLoginCount(0);
-        account.setLockedUntil(null);
         activationToken.setUsedAt(now);
         activationTokenRepository.revokeOtherActiveByAccountId(account.getId(), activationToken.getId(), now);
     }

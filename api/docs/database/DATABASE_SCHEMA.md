@@ -655,9 +655,8 @@ Ví dụ dữ liệu:
 | `username` | VARCHAR(50) | NOT NULL, UNIQUE | Tên đăng nhập |
 | `email` | VARCHAR(100) | NOT NULL, UNIQUE theo `LOWER` | Email đăng nhập |
 | `password_hash` | VARCHAR(255) | nullable khi `PENDING` hoặc đã xóa | Mật khẩu đã hash |
-| `status` | VARCHAR(20) | NOT NULL | `PENDING` / `ACTIVE` / `LOCKED` / `DISABLED` |
+| `status` | VARCHAR(20) | NOT NULL | `PENDING` / `ACTIVE` / `DISABLED` |
 | `failed_login_count` | INTEGER | NOT NULL, DEFAULT 0 | Số lần đăng nhập sai liên tiếp |
-| `locked_until` | TIMESTAMPTZ | | Khóa tạm đến thời điểm |
 | `last_login_at` | TIMESTAMPTZ | | Lần đăng nhập gần nhất |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
@@ -1469,7 +1468,7 @@ ALTER TABLE leave_requests ADD CONSTRAINT chk_leave_period
   CHECK (end_at > start_at AND requested_minutes > 0);
 
 ALTER TABLE accounts ADD CONSTRAINT chk_account_status
-  CHECK (status IN ('PENDING', 'ACTIVE', 'LOCKED', 'DISABLED'));
+  CHECK (status IN ('PENDING', 'ACTIVE', 'DISABLED'));
 
 ALTER TABLE account_role_assignments ADD CONSTRAINT chk_role_scope
   CHECK (

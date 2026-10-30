@@ -111,16 +111,15 @@ hạn mức). IPv4 và IPv4-mapped IPv6 giữ nguyên. Vì vậy khi chạy trê
 
 - Trước khi kiểm tra mật khẩu chỉ **xem** bucket còn lượt hay không, chưa trừ. Hết lượt thì trả `429` ngay, kể cả khi
   lần này nhập đúng mật khẩu.
-- Chỉ **sai mật khẩu** mới trừ một lượt. Đăng nhập đúng không trừ. Tài khoản `PENDING`, `LOCKED`, `DISABLED` bị từ
-  chối trước bước kiểm tra mật khẩu nên cũng không trừ.
+- Chỉ **sai mật khẩu** mới trừ một lượt. Đăng nhập đúng không trừ. Tài khoản `DISABLED` nhập đúng mật khẩu bị từ chối
+  với mã lỗi riêng và không trừ; nhập sai thì trừ như mọi tài khoản.
 - Khoá đếm là `account:<id>` khi tài khoản tồn tại, nên username và email của cùng tài khoản dùng chung bucket. Tài
   khoản không tồn tại thì dùng `name:<sha256(chuỗi đã nhập, chữ thường)>`: vẫn chặn được việc dò tên không có thật, và
   chuỗi dài bao nhiêu cũng không làm phình bộ nhớ.
 - **Không khoá hẳn tài khoản.** Hết thời gian chờ là đăng nhập lại được. Đánh đổi: người khác cố tình nhập sai có thể
   bắt chủ tài khoản chờ tối đa một cửa sổ (mặc định 15 phút), nhưng không khoá vĩnh viễn được ai.
 
-`failedLoginCount` của tài khoản vẫn tăng mỗi lần sai mật khẩu như trước, chỉ để audit, không dùng để chặn. Trạng thái
-`LOCKED` (mã lỗi `ACCOUNT_LOCKED`) chỉ do quản trị viên đặt.
+`failedLoginCount` của tài khoản vẫn tăng mỗi lần sai mật khẩu như trước, chỉ để audit, không dùng để chặn.
 
 ## 6. Response khi bị chặn
 

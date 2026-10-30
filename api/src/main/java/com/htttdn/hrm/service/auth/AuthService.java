@@ -77,7 +77,6 @@ public class AuthService {
         }
 
         account.setFailedLoginCount(0);
-        account.setLockedUntil(null);
         account.setLastLoginAt(Instant.now(clock));
         return issueTokenBundle(account);
     }
@@ -195,10 +194,6 @@ public class AuthService {
             case PENDING -> throw new UnauthorizedException(
                 ErrorCode.ACCOUNT_PENDING,
                 "Account is pending activation"
-            );
-            case LOCKED -> throw new UnauthorizedException(
-                ErrorCode.ACCOUNT_LOCKED,
-                "Account is locked"
             );
             case DISABLED -> throw new UnauthorizedException(
                 ErrorCode.ACCOUNT_DISABLED,

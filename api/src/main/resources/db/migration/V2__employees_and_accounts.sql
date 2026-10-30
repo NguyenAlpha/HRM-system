@@ -81,14 +81,13 @@ CREATE TABLE accounts (
     password_hash VARCHAR(255),
     status VARCHAR(20) NOT NULL,
     failed_login_count INTEGER NOT NULL DEFAULT 0,
-    locked_until TIMESTAMPTZ,
     last_login_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     deleted_at TIMESTAMPTZ,
     deleted_by_account_id BIGINT REFERENCES accounts (id),
     deletion_reason TEXT,
-    CONSTRAINT chk_accounts_status CHECK (status IN ('PENDING', 'ACTIVE', 'LOCKED', 'DISABLED')),
+    CONSTRAINT chk_accounts_status CHECK (status IN ('PENDING', 'ACTIVE', 'DISABLED')),
     CONSTRAINT chk_accounts_password_after_activation
         CHECK (status = 'PENDING' OR password_hash IS NOT NULL OR deleted_at IS NOT NULL),
     CONSTRAINT chk_accounts_deleted

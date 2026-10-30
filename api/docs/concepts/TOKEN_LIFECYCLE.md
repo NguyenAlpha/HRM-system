@@ -40,7 +40,8 @@ sequenceDiagram
 `AuthService.login`:
 
 - Chấp nhận username, email (đưa về chữ thường) hoặc mã nhân viên (không phân biệt hoa/thường), tìm theo đúng thứ tự đó.
-- Account phải ở trạng thái `ACTIVE`. `PENDING`, `LOCKED`, `DISABLED` trả mã lỗi riêng.
+- Account phải ở trạng thái `ACTIVE`. Account `DISABLED` nhập đúng mật khẩu thì nhận mã lỗi riêng; sai mật khẩu, hoặc
+  account `PENDING` chưa có mật khẩu, đều nhận `INVALID_CREDENTIALS`.
 - Sai mật khẩu thì tăng `failedLoginCount`, nhưng **hiện không tự khóa account** theo số lần sai. Đăng nhập đúng
   đặt bộ đếm về 0 và ghi `lastLoginAt`.
 - Thành công thì tạo refresh token mới và ký access token từ snapshot role/permission tại thời điểm đó.

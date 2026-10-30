@@ -56,9 +56,6 @@ public class Account extends AuditedEntity {
     @Column(name = "failed_login_count", nullable = false)
     private Integer failedLoginCount;
 
-    @Column(name = "locked_until")
-    private Instant lockedUntil;
-
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
 

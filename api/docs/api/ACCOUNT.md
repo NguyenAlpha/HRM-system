@@ -25,9 +25,9 @@ Company Owner tạo HR Manager đầu tiên và các HR Manager tiếp theo bằ
 | `GET /api/accounts/{accountId}` | `account.read` | Lấy thông tin chi tiết của một account |
 | `GET /api/accounts/{accountId}/permissions` | `account.read` | Permission account đang có hôm nay và role assignment nào cấp |
 | `POST /api/accounts/{accountId}/invitations/resend` | `account.activation.manage` | Thu hồi lời mời cũ và phát lại token kích hoạt cho account `PENDING` |
-| `POST /api/accounts/{accountId}/password-reset` | `account.activation.manage` | Đưa account `ACTIVE` hoặc `LOCKED` về `PENDING` và phát token để người dùng tự đặt lại mật khẩu |
+| `POST /api/accounts/{accountId}/password-reset` | `account.activation.manage` | Đưa account `ACTIVE` về `PENDING` và phát token để người dùng tự đặt lại mật khẩu |
 | `POST /api/accounts/{accountId}/suspend` | `account.manage` | Vô hiệu hóa account và thu hồi toàn bộ refresh token |
-| `POST /api/accounts/{accountId}/activate` | `account.manage` | Kích hoạt lại account `DISABLED` hoặc mở khóa account `LOCKED` đã có mật khẩu |
+| `POST /api/accounts/{accountId}/activate` | `account.manage` | Kích hoạt lại account `DISABLED` đã có mật khẩu |
 | `POST /api/accounts/{accountId}/delete` | `account.manage` | Xóa mềm account (kể cả `PENDING`) kèm lý do |
 
 Tất cả endpoint yêu cầu Bearer token. `COMPANY_OWNER` và `SYSTEM_ADMIN` được seed sẵn toàn bộ permission trên. `HR_MANAGER` chỉ được seed `account.provision` trong nhóm API này. `SYSTEM_ADMIN` quản trị *truy cập* (tài khoản, định nghĩa role, danh mục tổ chức) và chỉ *xem* hồ sơ nhân sự; việc cấp role và permission override cho người dùng thuộc Company Owner; nghiệp vụ nhân sự, chấm công, lương, báo cáo và dữ liệu nhạy cảm thuộc các role nghiệp vụ. Tài khoản đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được khóa, phát mã kích hoạt, đổi role hoặc permission override, và tài khoản đang giữ `SYSTEM_ADMIN` cũng chỉ một System Admin khác được làm các việc đó (mở khóa vẫn được phép), nên người quản trị truy cập không chiếm được quyền chủ doanh nghiệp và ngược lại.
@@ -74,7 +74,6 @@ Employee phải nằm trong scope `account.provision` của account đang đăng
       "status": "PENDING",
       "roleCodes": ["EMPLOYEE"],
       "failedLoginCount": 0,
-      "lockedUntil": null,
       "lastLoginAt": null,
       "createdAt": "2026-09-26T09:00:00Z",
       "updatedAt": "2026-09-26T09:00:00Z"
@@ -124,7 +123,7 @@ GET /api/accounts?page=0&size=20&sort=username,asc&keyword=an&status=ACTIVE&role
 |:----------|:-----|:--------|
 | `sort` | string | `id`, `username`, `email`, `status`, `lastLoginAt` hoặc `createdAt`, kèm `asc`/`desc`; mặc định `id,asc`; thuộc tính khác trả `400 VALIDATION_ERROR` |
 | `keyword` | string | Tìm không phân biệt hoa thường trong username, email, họ tên và mã của employee liên kết |
-| `status` | enum | `PENDING`, `ACTIVE`, `LOCKED` hoặc `DISABLED` |
+| `status` | enum | `PENDING`, `ACTIVE` hoặc `DISABLED` |
 | `roleCode` | string | Chỉ account đang giữ assignment chưa thu hồi của role này |
 | `deleted` | boolean | `true`: chỉ account đã xóa mềm; mặc định `false`: chỉ account chưa xóa |
 
@@ -205,7 +204,7 @@ Trả `409 ACCOUNT_ACTIVATION_NOT_ALLOWED` nếu account không còn ở trạng
 
 ## POST `/api/accounts/{accountId}/password-reset`
 
-Khởi tạo reset mật khẩu cho account `ACTIVE` hoặc `LOCKED`:
+Khởi tạo reset mật khẩu cho account `ACTIVE`:
 
 - Đặt account về `PENDING` và xóa password hash cũ.
 - Thu hồi toàn bộ refresh token.
@@ -219,7 +218,7 @@ Response giống endpoint gửi lại lời mời. Account `PENDING` phải dùn
 
 ## POST `/api/accounts/{accountId}/suspend`
 
-Chuyển account `ACTIVE` hoặc `LOCKED` sang `DISABLED` và thu hồi toàn bộ refresh token. Thao tác có tính idempotent nếu account đã `DISABLED`.
+Chuyển account `ACTIVE` sang `DISABLED` và thu hồi toàn bộ refresh token. Thao tác có tính idempotent nếu account đã `DISABLED`.
 
 Không được tự suspend account đang đăng nhập và không dùng endpoint này để hủy account `PENDING`.
 
@@ -231,7 +230,7 @@ Trả `AccountResponse` với `status = DISABLED`.
 
 ## POST `/api/accounts/{accountId}/activate`
 
-Kích hoạt lại account `DISABLED` hoặc `LOCKED` đã có mật khẩu, đồng thời xóa trạng thái khóa và bộ đếm đăng nhập sai. Account đã xóa mềm, hoặc account của nhân viên đã kết thúc làm việc (`RESIGNED`, `TERMINATED`, `RETIRED`), không kích hoạt lại được (`409 ACCOUNT_STATUS_TRANSITION_NOT_ALLOWED`). Nếu account đã `ACTIVE`, endpoint trả thành công mà không thay đổi dữ liệu.
+Kích hoạt lại account `DISABLED` đã có mật khẩu, đồng thời đặt bộ đếm đăng nhập sai về 0. Account đã xóa mềm, hoặc account của nhân viên đã kết thúc làm việc (`RESIGNED`, `TERMINATED`, `RETIRED`), không kích hoạt lại được (`409 ACCOUNT_STATUS_TRANSITION_NOT_ALLOWED`). Nếu account đã `ACTIVE`, endpoint trả thành công mà không thay đổi dữ liệu.
 
 Endpoint không được bỏ qua bước đặt mật khẩu của account `PENDING`. Account `PENDING` chỉ có thể chuyển sang `ACTIVE` qua:
 

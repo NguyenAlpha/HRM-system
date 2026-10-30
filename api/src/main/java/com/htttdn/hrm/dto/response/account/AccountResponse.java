@@ -18,7 +18,6 @@ public record AccountResponse(
     /** Codes of the roles the account holds and that are not revoked, sorted. */
     List<String> roleCodes,
     Integer failedLoginCount,
-    @Nullable Instant lockedUntil,
     @Nullable Instant lastLoginAt,
     Instant createdAt,
     Instant updatedAt,
