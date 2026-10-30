@@ -532,7 +532,8 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
             <AlertDialogTitle>Hủy lịch kết thúc làm việc?</AlertDialogTitle>
             <AlertDialogDescription>
               {detail?.fullName} ({detail?.employeeCode}) sẽ tiếp tục làm việc, không còn ngày nghỉ việc
-              {detail?.terminationDate ? ` ${formatDate(detail.terminationDate)}` : ""}.
+              {detail?.terminationDate ? ` ${formatDate(detail.terminationDate)}` : ""}. Đơn xin nghỉ việc đã duyệt
+              (nếu có) cũng bị hủy.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

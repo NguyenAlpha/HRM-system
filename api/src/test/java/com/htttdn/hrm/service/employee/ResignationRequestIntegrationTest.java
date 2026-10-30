@@ -19,6 +19,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.request.employeerequest.CreateResignationRequestRequest;
+import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.entity.enums.ResignationRequestStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
@@ -29,6 +30,7 @@ import jakarta.persistence.EntityManager;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -45,6 +47,7 @@ class ResignationRequestIntegrationTest {
     @Autowired private JdbcTemplate jdbc;
     @Autowired private EntityManager entityManager;
     @Autowired private ResignationRequestService service;
+    @Autowired private EmploymentLifecycleService lifecycleService;
 
     private final LocalDate today = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
     private Long unitId;
@@ -106,6 +109,44 @@ class ResignationRequestIntegrationTest {
         // Nothing ends before the last working day.
         assertEquals("ACTIVE", employeeStatus(staff));
         assertTrue(service.dueIds(today).stream().noneMatch(pending.id()::equals));
+        // The employee record shows the end like one HR schedules, so nothing is dated after it meanwhile.
+        entityManager.flush();
+        var employee = jdbc.queryForMap("SELECT * FROM employees WHERE id = ?", staff.employeeId());
+        assertEquals(today.plusDays(30), ((java.sql.Date) employee.get("termination_date")).toLocalDate());
+        assertEquals("RESIGNED", employee.get("scheduled_end_status"));
+        assertEquals(manager.accountId(), ((Number) employee.get("scheduled_end_by_account_id")).longValue());
+    }
+
+    @Test
+    void cancellingTheScheduledEndWithdrawsTheApprovedResignation() {
+        ResignationRequestView approved = approvedResignation(today.plusDays(10));
+        authenticateAs(staff, "employee.lifecycle.manage");
+
+        lifecycleService.cancelScheduledEnd(staff.employeeId());
+        entityManager.flush();
+
+        // Otherwise the request would still end the employment HR has just kept going.
+        assertEquals("CANCELLED", jdbc.queryForObject(
+            "SELECT status FROM resignation_requests WHERE id = ?", String.class, approved.id()));
+    }
+
+    @Test
+    void aLastWorkingDayMovedByHrIsTheOneThatEndsTheEmployment() {
+        ResignationRequestView approved = approvedResignation(today.plusDays(10));
+        authenticateAs(staff, "employee.lifecycle.manage");
+        lifecycleService.endEmployment(staff.employeeId(), EmploymentStatus.RESIGNED, today.plusDays(40), "Bàn giao chậm");
+        SecurityContextHolder.clearContext();
+        entityManager.flush();
+
+        // The request's own day comes: HR's later day still stands.
+        jdbc.update("UPDATE resignation_requests SET last_working_date = ? WHERE id = ?", today.minusDays(1), approved.id());
+        entityManager.clear();
+        service.complete(approved.id());
+        entityManager.flush();
+
+        assertEquals("ACTIVE", employeeStatus(staff));
+        assertNull(jdbc.queryForObject(
+            "SELECT completed_at FROM resignation_requests WHERE id = ?", java.sql.Timestamp.class, approved.id()));
     }
 
     @Test
@@ -117,7 +158,9 @@ class ResignationRequestIntegrationTest {
 
         assertTrue(service.dueIds(today.plusDays(1)).contains(pending.id()));
         // The job runs on the next day; pretend that day has come by moving the request back one day.
+        entityManager.flush();
         jdbc.update("UPDATE resignation_requests SET last_working_date = ? WHERE id = ?", today.minusDays(1), pending.id());
+        jdbc.update("UPDATE employees SET termination_date = ? WHERE id = ?", today.minusDays(1), staff.employeeId());
         entityManager.clear();
         service.complete(pending.id());
         entityManager.flush();
@@ -153,6 +196,12 @@ class ResignationRequestIntegrationTest {
     @Test
     void theLastWorkingDayCannotBeInThePast() {
         assertThrows(BusinessException.class, () -> resign(staff, today.minusDays(1)));
+    }
+
+    private ResignationRequestView approvedResignation(LocalDate lastWorkingDate) {
+        ResignationRequestView pending = resign(staff, lastWorkingDate);
+        authenticateAs(manager, EMPLOYEE);
+        return service.approve(pending.id(), null, null);
     }
 
     private ResignationRequestView resign(Person person, LocalDate lastWorkingDate) {

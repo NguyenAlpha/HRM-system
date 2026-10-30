@@ -110,6 +110,9 @@ public class ResignationRequestService {
         requireLastWorkingDate(effective, request.getEmployee());
         request.setLastWorkingDate(effective);
         review(request, ResignationRequestStatus.APPROVED, comment);
+        // Shown on the employee like an end HR schedules: nothing can then be dated after the last working day.
+        employmentLifecycleService.scheduleEnd(request.getEmployee(), EmploymentStatus.RESIGNED, effective,
+            request.getReason(), request.getReviewedByAccount());
         return toView(request);
     }
 
@@ -192,7 +195,8 @@ public class ResignationRequestService {
 
     /**
      * Ends the employment of an approved request once its last working day has passed, acting as the
-     * approver who decided it. Employment already ended by HR in the meantime is left as it is.
+     * approver who decided it. Employment already ended by HR in the meantime is left as it is, and a last
+     * working day HR has since moved waits for that day.
      */
     public void complete(Long requestId) {
         ResignationRequest request = resignationRequestRepository.getRequiredForUpdate(requestId);
@@ -201,6 +205,12 @@ public class ResignationRequestService {
         }
         Employee employee = request.getEmployee();
         if (!ENDED.contains(employee.getEmploymentStatus())) {
+            // HR moved the last working day: the employee's own schedule ends it, and this request completes after.
+            // A request approved before approvals scheduled the end has no day on the employee, and ends here.
+            LocalDate scheduled = employee.getTerminationDate();
+            if (scheduled != null && !scheduled.equals(request.getLastWorkingDate())) {
+                return;
+            }
             employmentLifecycleService.endEmploymentAs(employee, EmploymentStatus.RESIGNED, request.getLastWorkingDate(),
                 request.getReason(), request.getReviewedByAccount());
         }

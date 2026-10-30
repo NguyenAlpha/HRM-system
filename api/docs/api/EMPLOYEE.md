@@ -540,7 +540,8 @@ chỉ lên lịch, `employmentStatus` giữ nguyên và `scheduledEndStatus` là
 ## DELETE `/api/employees/{employeeId}/employment-end`
 
 Hủy lịch kết thúc làm việc chưa đến hạn: xóa `terminationDate`, `terminationReason` và
-`scheduledEndStatus`, nhân sự tiếp tục làm việc như chưa từng có lịch. Không có body. Trả
+`scheduledEndStatus`, nhân sự tiếp tục làm việc như chưa từng có lịch. Đơn nghỉ việc đã duyệt mà chưa
+hoàn tất của nhân viên chuyển `CANCELLED`, vì nếu không nó vẫn kết thúc hợp đồng. Không có body. Trả
 `EmployeeDetailResponse`.
 
 | HTTP | `error.code` | Nguyên nhân |
@@ -556,11 +557,15 @@ Hủy lịch kết thúc làm việc chưa đến hạn: xóa `terminationDate`,
 
 Nhân viên tự nộp đơn nghỉ việc; [người duyệt](ATTENDANCE.md#người-duyệt) như đơn nghỉ phép (quản lý
 trực tiếp → Giám đốc → Chủ sở hữu, chốt lúc nộp) duyệt hoặc từ chối. Đơn đã duyệt **chưa kết thúc
-hợp đồng ngay**: nhân viên vẫn đăng nhập, chấm công đến hết ngày làm việc cuối. Từ ngày hôm sau,
+hợp đồng ngay**: nhân viên vẫn đăng nhập, chấm công đến hết ngày làm việc cuối. Duyệt đơn ghi lịch kết
+thúc lên hồ sơ như khi HR [lên lịch](#post-apiemployeesemployeeidemployment-end) (`terminationDate`,
+`scheduledEndStatus: RESIGNED`, người hẹn là người duyệt), nên từ lúc đó không lương, hồ sơ bảo hiểm,
+người phụ thuộc hay phân công nào được có hiệu lực sau ngày cuối. Từ ngày hôm sau,
 job chạy lúc khởi động và 00:10 mỗi đêm kết thúc hợp đồng với `RESIGNED`, đúng các bước của
 [`employment-end`](#post-apiemployeesemployeeidemployment-end) (người thu hồi role là người đã duyệt
 đơn), và ghi `completedAt` vào đơn. HR vẫn có thể kết thúc hợp đồng trực tiếp; đơn đến hạn của người
-đã nghỉ chỉ được đánh dấu hoàn tất.
+đã nghỉ chỉ được đánh dấu hoàn tất. HR đổi ngày cuối thì ngày mới quyết định: đơn chờ tới khi hợp đồng kết
+thúc theo lịch đó rồi mới hoàn tất. HR hủy lịch thì đơn bị hủy theo.
 
 | Endpoint | Permission | Mô tả |
 |:---------|:-----------|:------|

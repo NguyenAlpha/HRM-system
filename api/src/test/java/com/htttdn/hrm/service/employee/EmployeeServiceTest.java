@@ -38,6 +38,7 @@ import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeePayrollProfileRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
+import com.htttdn.hrm.repository.ResignationRequestRepository;
 import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
 import com.htttdn.hrm.repository.EmployeeTaxDependentRepository;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
@@ -76,6 +77,7 @@ class EmployeeServiceTest {
     @Mock private EmployeeAssignmentService employeeAssignmentService;
     @Mock private EmployeeCodeGenerator employeeCodeGenerator;
     @Mock private PayrollPeriodInvalidator payrollPeriodInvalidator;
+    @Mock private ResignationRequestRepository resignationRequestRepository;
 
     @Test
     void createUsesServerGeneratedCodeFromInitialPosition() {
@@ -441,6 +443,7 @@ class EmployeeServiceTest {
             employeeAccessScopeService,
             mapper(),
             payrollPeriodInvalidator,
+            resignationRequestRepository,
             TODAY
         );
     }

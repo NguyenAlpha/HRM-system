@@ -14,6 +14,7 @@ import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeAssignment;
 import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
+import com.htttdn.hrm.entity.enums.ResignationRequestStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AccountRepository;
@@ -23,6 +24,7 @@ import com.htttdn.hrm.repository.EmployeePayrollProfileRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
 import com.htttdn.hrm.repository.EmployeeTaxDependentRepository;
+import com.htttdn.hrm.repository.ResignationRequestRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 import com.htttdn.hrm.service.auth.RefreshTokenService;
 import com.htttdn.hrm.service.payroll.PayrollPeriodInvalidator;
@@ -68,6 +70,7 @@ public class EmploymentLifecycleService {
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final EmployeeMapper employeeMapper;
     private final PayrollPeriodInvalidator payrollPeriodInvalidator;
+    private final ResignationRequestRepository resignationRequestRepository;
     private final Clock clock;
 
     /**
@@ -124,7 +127,7 @@ public class EmploymentLifecycleService {
 
     /**
      * Hủy lịch hẹn kết thúc làm việc: xóa ngày cuối, lý do và trạng thái hẹn; nhân viên tiếp tục làm như
-     * chưa từng hẹn.
+     * chưa từng hẹn. Đơn nghỉ việc đã duyệt đặt lịch này cũng bị hủy, nếu không nó vẫn kết thúc hợp đồng.
      *
      * @throws ConflictException không có lịch hẹn nào (→ 409)
      */
@@ -139,6 +142,8 @@ public class EmploymentLifecycleService {
         employee.setTerminationReason(null);
         employee.setScheduledEndStatus(null);
         employee.setScheduledEndByAccount(null);
+        resignationRequestRepository.findApprovedNotCompletedForUpdate(employeeId)
+            .ifPresent(request -> request.setStatus(ResignationRequestStatus.CANCELLED));
         return employeeMapper.toDetailResponse(employee);
     }
 
@@ -161,9 +166,10 @@ public class EmploymentLifecycleService {
 
     /**
      * Records the last working day and the status to take after it, leaving the employee working until
-     * then. Payroll, attendance and leave already stop at that day.
+     * then. Payroll, attendance and leave already stop at that day. Used by {@link #endEmployment} and,
+     * without the caller's permission checks, by an approved resignation, where {@code actor} is the approver.
      */
-    private void scheduleEnd(
+    public void scheduleEnd(
         Employee employee, EmploymentStatus endStatus, LocalDate terminationDate, String terminationReason, Account actor
     ) {
         requireNotCompanyOwner(employee);

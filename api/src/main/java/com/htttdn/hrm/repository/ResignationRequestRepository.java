@@ -53,6 +53,17 @@ public interface ResignationRequestRepository
         """)
     List<ResignationRequest> findDue(@Param("today") LocalDate today);
 
+    /** The approved request whose employment has not ended yet, if any (at most one, uq_resignation_requests_open). */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT request
+        FROM ResignationRequest request
+        WHERE request.employee.id = :employeeId
+          AND request.status = com.htttdn.hrm.entity.enums.ResignationRequestStatus.APPROVED
+          AND request.completedAt IS NULL
+        """)
+    Optional<ResignationRequest> findApprovedNotCompletedForUpdate(@Param("employeeId") Long employeeId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         SELECT request
