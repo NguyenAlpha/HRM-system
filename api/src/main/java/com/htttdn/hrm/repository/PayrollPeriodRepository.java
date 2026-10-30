@@ -57,6 +57,19 @@ public interface PayrollPeriodRepository extends JpaRepository<PayrollPeriod, Lo
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         SELECT period FROM PayrollPeriod period
+        WHERE period.periodEnd >= :date AND period.status IN :statuses
+          AND EXISTS (SELECT payslip.id FROM Payslip payslip
+                      WHERE payslip.payrollPeriod = period AND payslip.employee.id = :employeeId)
+        ORDER BY period.periodStart, period.id
+        """)
+    List<PayrollPeriod> findAffectedPeriodsOfEmployeeForUpdate(
+        @Param("employeeId") Long employeeId,
+        @Param("date") LocalDate date,
+        @Param("statuses") List<PayrollPeriodStatus> statuses);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT period FROM PayrollPeriod period
         WHERE period.taxPaymentDate >= :from
           AND period.taxPaymentDate <= COALESCE(:to, period.taxPaymentDate)
           AND period.status IN :statuses

@@ -2,6 +2,7 @@ package com.htttdn.hrm.service.employee;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.Map;
 import java.util.UUID;
 
@@ -24,6 +25,7 @@ import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
 import com.htttdn.hrm.entity.enums.EmploymentType;
 import com.htttdn.hrm.exception.BusinessException;
+import com.htttdn.hrm.exception.ConflictException;
 
 import jakarta.persistence.EntityManager;
 
@@ -208,6 +210,53 @@ class ScheduledEmploymentEndIntegrationTest {
             new EmployeeSalaryHistoryService.SetSalaryCommand(new BigDecimal("21000000"), lastDay, null, null)).effectiveFrom());
         assertEquals(lastDay, deductionsService.addDependent(employeeId,
             new PayrollDeductionsService.DependentCommand("Con", null, today.plusDays(1), null)).effectiveTo());
+    }
+
+    @Test
+    void aPastLastDaySendsACalculatedPeriodWithTheirPayslipBackToDraft() {
+        LocalDate lastDay = lastMonth().atDay(10);
+        Long periodId = periodWithPayslip("CALCULATED");
+
+        employmentLifecycleService.endEmployment(employeeId, EmploymentStatus.RESIGNED, lastDay, "Nghỉ");
+        entityManager.flush();
+
+        // The payslip paid the whole month; it is recalculated up to the last working day.
+        assertEquals("DRAFT", jdbc.queryForObject("SELECT status FROM payroll_periods WHERE id = ?", String.class, periodId));
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM payslips WHERE payroll_period_id = ?", Integer.class, periodId));
+        assertEquals("RESIGNED", employee().get("employment_status"));
+    }
+
+    @Test
+    void aPastLastDayInsideAnApprovedPeriodIsRefused() {
+        periodWithPayslip("APPROVED");
+
+        ConflictException error = assertThrows(ConflictException.class, () -> employmentLifecycleService
+            .endEmployment(employeeId, EmploymentStatus.RESIGNED, lastMonth().atDay(10), "Nghỉ"));
+
+        assertEquals(ErrorCode.PAYROLL_PERIOD_LOCKED, error.getErrorCode());
+    }
+
+    private YearMonth lastMonth() {
+        return YearMonth.from(today).minusMonths(1);
+    }
+
+    /** Last month's period, in this status, holding a payslip of the employee (any seeded period there is cancelled). */
+    private Long periodWithPayslip(String status) {
+        YearMonth month = lastMonth();
+        jdbc.update("UPDATE payroll_periods SET status = 'CANCELLED' WHERE year = ? AND month = ?",
+            month.getYear(), month.getMonthValue());
+        Long periodId = id("""
+            INSERT INTO payroll_periods(year, month, period_start, period_end, tax_payment_date, status)
+            VALUES (?, ?, ?, ?, ?, ?) RETURNING id
+            """, month.getYear(), month.getMonthValue(), month.atDay(1), month.atEndOfMonth(),
+            month.plusMonths(1).atDay(5), status);
+        jdbc.update("""
+            INSERT INTO payslips(payroll_period_id, employee_id, employee_code_snapshot, employee_name_snapshot,
+                work_location_snapshot, organization_unit_snapshot, position_snapshot, contractual_base_salary,
+                scheduled_work_minutes, payable_work_minutes, base_salary_pay, gross_pay, net_pay)
+            VALUES (?, ?, 'SE', 'Scheduled end', 'End', 'End unit', 'End role', 0, 1, 0, 0, 0, 0)
+            """, periodId, employeeId);
+        return periodId;
     }
 
     private static void assertAfterEnd(org.junit.jupiter.api.function.Executable call) {

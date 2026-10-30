@@ -41,6 +41,12 @@ public class PayrollPeriodInvalidator {
         invalidate(payrollPeriodRepository.findAffectedPeriodsForUpdate(effectiveFrom, CALCULATED_OR_RELEASED));
     }
 
+    /** Các kỳ kết thúc từ {@code effectiveFrom} trở đi có phiếu lương của nhân viên này (khóa ghi). */
+    public void invalidateEmployeeFrom(Long employeeId, LocalDate effectiveFrom) {
+        invalidate(payrollPeriodRepository.findAffectedPeriodsOfEmployeeForUpdate(
+            employeeId, effectiveFrom, CALCULATED_OR_RELEASED));
+    }
+
     /** Các kỳ có ngày nộp thuế trong [{@code from}, {@code to}]; {@code to} null → không giới hạn. */
     public void invalidateTaxPaymentsBetween(LocalDate from, LocalDate to) {
         invalidate(payrollPeriodRepository.findAffectedPaymentPeriodsForUpdate(from, to, CALCULATED_OR_RELEASED));

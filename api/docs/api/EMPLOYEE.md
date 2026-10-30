@@ -499,7 +499,7 @@ Khi kết thúc, một lần chạy thay đổi năm thứ trong cùng transacti
 2. Phân công chính đang mở được đóng lại tại `terminationDate`.
 3. Account liên kết chuyển sang `DISABLED` và toàn bộ refresh token của account bị thu hồi, nên các phiên đang đăng nhập không refresh được nữa.
 4. Các role nghiệp vụ account còn giữ bị thu hồi như khi gọi [API thu hồi role](./ACCOUNT_ROLE_ASSIGNMENTS.md#post-apiaccountsaccountidrole-assignmentsassignmentidrevoke): ghi `revokedAt`, người thu hồi là người gọi, `revocationReason` là `Kết thúc làm việc: <terminationReason>`. Assignment đã bắt đầu được đóng `effectiveTo` tại `terminationDate`; assignment chưa bắt đầu giữ nguyên ngày. Assignment đã kết thúc trước `terminationDate` giữ nguyên làm lịch sử. Role `AUTO` (`EMPLOYEE`) và `SYSTEM_ONLY` (`COMPANY_OWNER`, `SYSTEM_ADMIN`) không bị đụng tới. Nhờ vậy assignment `DIRECTOR` của người nghỉ không còn chặn việc bổ nhiệm Giám đốc mới. [Đề xuất role](./ROLE_ASSIGNMENT_REQUESTS.md) đang `PENDING` của account chuyển `CANCELLED` với cùng lý do, vì không còn duyệt được.
-5. Lương cơ bản, hồ sơ bảo hiểm/thuế và người phụ thuộc còn chạy quá `terminationDate` được đóng tại ngày đó, nên không mục nào còn hiện là "hiện tại". Lương đã dừng ở ngày đó nên không phiếu lương nào đổi. Từ lúc lên lịch hoặc kết thúc, các mục này và phân công mới không được có hiệu lực sau `terminationDate` (xem [PAYROLL.md](./PAYROLL.md#sau-ngày-làm-việc-cuối)); hồ sơ và dữ liệu nhạy cảm vẫn sửa được.
+5. Lương cơ bản, hồ sơ bảo hiểm/thuế và người phụ thuộc còn chạy quá `terminationDate` được đóng tại ngày đó, nên không mục nào còn hiện là "hiện tại". Lương đã dừng ở ngày đó nên không phiếu lương nào đổi. Riêng khi kết thúc ngay với `terminationDate` đã qua (khác ngày đã hẹn), kỳ lương có phiếu của nhân viên kết thúc sau ngày đó mà đã tính thì quay về `DRAFT` để tính lại; đã duyệt, đã trả hoặc đã khóa thì bị từ chối. Từ lúc lên lịch hoặc kết thúc, các mục này và phân công mới không được có hiệu lực sau `terminationDate` (xem [PAYROLL.md](./PAYROLL.md#sau-ngày-làm-việc-cuối)); hồ sơ và dữ liệu nhạy cảm vẫn sửa được.
 
 ### Request
 
@@ -532,6 +532,7 @@ chỉ lên lịch, `employmentStatus` giữ nguyên và `scheduledEndStatus` là
 | 403 | `FORBIDDEN` | Thiếu `employee.lifecycle.manage` hoặc employee nằm ngoài scope được giao |
 | 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |
 | 409 | `CONFLICT` | Employee đã kết thúc làm việc trước đó |
+| 409 | `PAYROLL_PERIOD_LOCKED` | `terminationDate` đã qua nằm trong (hoặc trước) một kỳ lương đã duyệt, đã trả hoặc đã khóa có phiếu lương của employee |
 | 409 | `COMPANY_OWNER_TRANSFER_REQUIRED` | Account của employee đang giữ `COMPANY_OWNER`: phải [chuyển giao Company Owner](./COMPANY_OWNER_TRANSFER.md) trước, cả khi lên lịch lẫn khi kết thúc ngay. Lịch đã đến hạn hoặc đơn nghỉ việc đã duyệt của người vẫn là Owner cũng không được thực hiện |
 
 ---

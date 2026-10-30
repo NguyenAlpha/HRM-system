@@ -25,6 +25,7 @@ import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
 import com.htttdn.hrm.repository.EmployeeTaxDependentRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 import com.htttdn.hrm.service.auth.RefreshTokenService;
+import com.htttdn.hrm.service.payroll.PayrollPeriodInvalidator;
 import com.htttdn.hrm.service.rbac.AccountRoleAssignmentCommandService;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import com.htttdn.hrm.service.rbac.SystemRoles;
@@ -66,6 +67,7 @@ public class EmploymentLifecycleService {
     private final CurrentAccountProvider currentAccountProvider;
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final EmployeeMapper employeeMapper;
+    private final PayrollPeriodInvalidator payrollPeriodInvalidator;
     private final Clock clock;
 
     /**
@@ -109,6 +111,12 @@ public class EmploymentLifecycleService {
         if (terminationDate.isAfter(LocalDate.now(clock))) {
             scheduleEnd(employee, endStatus, terminationDate, terminationReason, currentAccountProvider.account());
         } else {
+            // A last day already past may cut short a month payroll has paid in full: periods holding their
+            // payslip after that day go back to DRAFT, or refuse the end once approved (409 PAYROLL_PERIOD_LOCKED).
+            // A day scheduled earlier was already used by payroll, so it changes nothing.
+            if (!terminationDate.equals(employee.getTerminationDate())) {
+                payrollPeriodInvalidator.invalidateEmployeeFrom(employeeId, terminationDate.plusDays(1));
+            }
             endEmploymentAs(employee, endStatus, terminationDate, terminationReason, currentAccountProvider.account());
         }
         return employeeMapper.toDetailResponse(employee);

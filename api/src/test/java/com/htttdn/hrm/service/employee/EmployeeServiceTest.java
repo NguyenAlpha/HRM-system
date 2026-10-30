@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 import com.htttdn.hrm.service.auth.RefreshTokenService;
+import com.htttdn.hrm.service.payroll.PayrollPeriodInvalidator;
 import com.htttdn.hrm.service.rbac.AccountRoleAssignmentCommandService;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.junit.jupiter.api.Test;
@@ -74,6 +75,7 @@ class EmployeeServiceTest {
     @Mock private EmployeeAccessScopeService employeeAccessScopeService;
     @Mock private EmployeeAssignmentService employeeAssignmentService;
     @Mock private EmployeeCodeGenerator employeeCodeGenerator;
+    @Mock private PayrollPeriodInvalidator payrollPeriodInvalidator;
 
     @Test
     void createUsesServerGeneratedCodeFromInitialPosition() {
@@ -438,6 +440,7 @@ class EmployeeServiceTest {
             currentAccountProvider,
             employeeAccessScopeService,
             mapper(),
+            payrollPeriodInvalidator,
             TODAY
         );
     }
