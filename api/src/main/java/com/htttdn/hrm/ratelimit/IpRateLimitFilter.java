@@ -27,20 +27,24 @@ public class IpRateLimitFilter extends OncePerRequestFilter {
      * The rate-limit statistics and settings are never limited, so an administrator who set a quota
      * too tight can always loosen it again. They need a signed-in SYSTEM_ONLY permission anyway.
      */
-    static final String SETTINGS_PATH = "/api/system/rate-limit/";
+    static final PathPattern SETTINGS = pattern("/api/system/rate-limit/**");
 
-    private static final PathPattern ACTIVATION_COMPLETE =
-        PathPatternParser.defaultInstance.parse("/api/account-activations/{token}/complete");
+    static final PathPattern API = pattern("/api/**");
+
+    private static final PathPattern LOGIN = pattern("/api/auth/login");
+    private static final PathPattern REFRESH = pattern("/api/auth/refresh");
+    private static final PathPattern ACTIVATION_COMPLETE = pattern("/api/account-activations/{token}/complete");
 
     private final RateLimitService rateLimitService;
     private final ClientIpResolver clientIpResolver;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
+        PathContainer path = path(request);
         return !rateLimitService.enabled()
             || HttpMethod.OPTIONS.matches(request.getMethod())
-            || !path(request).startsWith("/api/")
-            || path(request).startsWith(SETTINGS_PATH);
+            || !API.matches(path)
+            || SETTINGS.matches(path);
     }
 
     @Override
@@ -68,20 +72,29 @@ public class IpRateLimitFilter extends OncePerRequestFilter {
         if (!HttpMethod.POST.matches(request.getMethod())) {
             return RateLimitPolicy.IP_CEILING;
         }
-        String path = path(request);
-        if (path.equals("/api/auth/login")) {
+        PathContainer path = path(request);
+        if (LOGIN.matches(path)) {
             return RateLimitPolicy.LOGIN;
         }
-        if (path.equals("/api/auth/refresh")) {
+        if (REFRESH.matches(path)) {
             return RateLimitPolicy.REFRESH;
         }
-        if (ACTIVATION_COMPLETE.matches(PathContainer.parsePath(path))) {
+        if (ACTIVATION_COMPLETE.matches(path)) {
             return RateLimitPolicy.ACTIVATION;
         }
         return RateLimitPolicy.IP_CEILING;
     }
 
-    private static String path(HttpServletRequest request) {
-        return request.getRequestURI().substring(request.getContextPath().length());
+    /**
+     * The request path as Spring MVC matches it: patterns compare decoded segments, so
+     * {@code /%61pi/auth/%6Cogin} counts as {@code /api/auth/login}, the handler it reaches. Comparing
+     * the raw URI as text would let an encoded path pick a wider quota or skip the limits.
+     */
+    static PathContainer path(HttpServletRequest request) {
+        return PathContainer.parsePath(request.getRequestURI().substring(request.getContextPath().length()));
+    }
+
+    static PathPattern pattern(String pattern) {
+        return PathPatternParser.defaultInstance.parse(pattern);
     }
 }

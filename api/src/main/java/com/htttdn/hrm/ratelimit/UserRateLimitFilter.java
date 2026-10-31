@@ -10,7 +10,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.pattern.PathPattern;
-import org.springframework.web.util.pattern.PathPatternParser;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -43,9 +42,10 @@ public class UserRateLimitFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
+        PathContainer path = IpRateLimitFilter.path(request);
         return !rateLimitService.enabled()
-            || !path(request).startsWith("/api/")
-            || path(request).startsWith(IpRateLimitFilter.SETTINGS_PATH);
+            || !IpRateLimitFilter.API.matches(path)
+            || IpRateLimitFilter.SETTINGS.matches(path);
     }
 
     @Override
@@ -74,7 +74,7 @@ public class UserRateLimitFilter extends OncePerRequestFilter {
     }
 
     static RateLimitPolicy policy(HttpServletRequest request) {
-        PathContainer path = PathContainer.parsePath(path(request));
+        PathContainer path = IpRateLimitFilter.path(request);
         return RULES.stream()
             .filter(rule -> rule.method().equals(request.getMethod()) && rule.pattern().matches(path))
             .map(Rule::policy)
@@ -82,14 +82,10 @@ public class UserRateLimitFilter extends OncePerRequestFilter {
             .orElse(RateLimitPolicy.API);
     }
 
-    private static String path(HttpServletRequest request) {
-        return request.getRequestURI().substring(request.getContextPath().length());
-    }
-
     private record Rule(RateLimitPolicy policy, String method, PathPattern pattern) {
 
         Rule(RateLimitPolicy policy, String method, String pattern) {
-            this(policy, method, PathPatternParser.defaultInstance.parse(pattern));
+            this(policy, method, IpRateLimitFilter.pattern(pattern));
         }
     }
 }
