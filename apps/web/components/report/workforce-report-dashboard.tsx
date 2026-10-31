@@ -1,15 +1,16 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { AlertTriangle, Banknote, CalendarDays, RefreshCw, UsersRound } from "lucide-react"
 
+import { ALL_OPTION, FilterSelect } from "@/components/common/list-filters"
 import { DistributionChart } from "@/components/report/distribution-chart"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { money, today } from "@/components/workforce/workforce-shared"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import { EMPLOYMENT_STATUSES, EMPLOYMENT_STATUS_LABELS, type EmploymentStatus } from "@/lib/employee"
 import {
@@ -26,26 +27,12 @@ import {
   type ReportFilters,
 } from "@/lib/report"
 
-function localToday(): string {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, "0")
-  const day = String(now.getDate()).padStart(2, "0")
-  return `${year}-${month}-${day}`
-}
-
 const INITIAL_FILTERS: ReportFilters = {
-  asOfDate: localToday(),
+  asOfDate: today(),
   organizationUnitId: "",
   workLocationId: "",
   employmentStatus: "",
 }
-
-const money = new Intl.NumberFormat("vi-VN", {
-  style: "currency",
-  currency: "VND",
-  maximumFractionDigits: 0,
-})
 
 export function WorkforceReportDashboard({
   canReadHr,
@@ -59,6 +46,8 @@ export function WorkforceReportDashboard({
   onSessionExpired: () => void
 }) {
   const [filters, setFilters] = useState<ReportFilters>(INITIAL_FILTERS)
+  // The filters the shown reports were asked with; "Áp dụng" copies the form into it, which reloads.
+  const [applied, setApplied] = useState({ filters: INITIAL_FILTERS, revision: 0 })
   const [hrReport, setHrReport] = useState<HrWorkforceReport | null>(null)
   const [salaryReport, setSalaryReport] = useState<PayrollSalaryReport | null>(null)
   const [units, setUnits] = useState<OrganizationUnitOption[]>([])
@@ -66,43 +55,16 @@ export function WorkforceReportDashboard({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const loadReports = useCallback(async (nextFilters: ReportFilters) => {
-    setLoading(true)
-    setError(null)
-    if (canReadHr) setHrReport(null)
-    if (canReadPayroll) setSalaryReport(null)
-    const requests: Promise<void>[] = []
-    if (canReadHr) {
-      requests.push(getHrWorkforceReport(nextFilters).then(setHrReport))
-    }
-    if (canReadPayroll) {
-      requests.push(getPayrollSalaryReport(nextFilters).then(setSalaryReport))
-    }
-    const results = await Promise.allSettled(requests)
-    const failedRequest = results.find(
-      (result): result is PromiseRejectedResult => result.status === "rejected",
-    )
-    if (failedRequest) {
-      const message = apiErrorMessage(failedRequest.reason)
-      setError(message)
-      if (isPortalSessionExpired(failedRequest.reason)) onSessionExpired()
-    }
-    setLoading(false)
-  }, [canReadHr, canReadPayroll, onSessionExpired])
-
   useEffect(() => {
     let active = true
     const requests: Promise<void>[] = []
     if (canReadHr) {
-      requests.push(getHrWorkforceReport(INITIAL_FILTERS).then((report) => {
-        if (active) setHrReport(report)
-      }))
+      requests.push(getHrWorkforceReport(applied.filters).then((report) => { if (active) setHrReport(report) }))
     }
     if (canReadPayroll) {
-      requests.push(getPayrollSalaryReport(INITIAL_FILTERS).then((report) => {
-        if (active) setSalaryReport(report)
-      }))
+      requests.push(getPayrollSalaryReport(applied.filters).then((report) => { if (active) setSalaryReport(report) }))
     }
+    // A failing report never hides the other one.
     Promise.allSettled(requests)
       .then((results) => {
         if (!active) return
@@ -110,15 +72,20 @@ export function WorkforceReportDashboard({
           (result): result is PromiseRejectedResult => result.status === "rejected",
         )
         if (!failedRequest) return
-        const message = apiErrorMessage(failedRequest.reason)
-        setError(message)
+        setError(apiErrorMessage(failedRequest.reason))
         if (isPortalSessionExpired(failedRequest.reason)) onSessionExpired()
       })
-      .finally(() => {
-        if (active) setLoading(false)
-      })
+      .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [canReadHr, canReadPayroll, onSessionExpired])
+  }, [applied, canReadHr, canReadPayroll, onSessionExpired])
+
+  function apply() {
+    setLoading(true)
+    setError(null)
+    setHrReport(null)
+    setSalaryReport(null)
+    setApplied((current) => ({ filters, revision: current.revision + 1 }))
+  }
 
   useEffect(() => {
     if (!canReadOrganization) return
@@ -143,7 +110,7 @@ export function WorkforceReportDashboard({
             className="grid gap-3 md:grid-cols-2 xl:grid-cols-5"
             onSubmit={(event) => {
               event.preventDefault()
-              void loadReports(filters)
+              apply()
             }}
           >
             <div className="grid gap-2">
@@ -151,7 +118,7 @@ export function WorkforceReportDashboard({
               <Input
                 id="report-date"
                 type="date"
-                max={localToday()}
+                max={today()}
                 value={filters.asOfDate}
                 onChange={(event) => setFilters((current) => ({ ...current, asOfDate: event.target.value }))}
                 required
@@ -160,61 +127,23 @@ export function WorkforceReportDashboard({
 
             {canReadOrganization && (
               <>
-                <div className="grid gap-2">
-                  <Label>Đơn vị tổ chức</Label>
-                  <Select
-                    value={filters.organizationUnitId || "all"}
-                    onValueChange={(value) => setFilters((current) => ({
-                      ...current,
-                      organizationUnitId: value === "all" ? "" : String(value),
-                    }))}
-                  >
-                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tất cả đơn vị</SelectItem>
-                      {units.map((unit) => <SelectItem key={unit.id} value={String(unit.id)}>{unit.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label>Địa điểm làm việc</Label>
-                  <Select
-                    value={filters.workLocationId || "all"}
-                    onValueChange={(value) => setFilters((current) => ({
-                      ...current,
-                      workLocationId: value === "all" ? "" : String(value),
-                    }))}
-                  >
-                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tất cả địa điểm</SelectItem>
-                      {locations.map((location) => (
-                        <SelectItem key={location.id} value={String(location.id)}>{location.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <FilterSelect id="report-unit" label="Đơn vị tổ chức" allLabel="Tất cả đơn vị"
+                  value={filters.organizationUnitId || ALL_OPTION}
+                  onChange={(value) => setFilters((current) => ({ ...current, organizationUnitId: value === ALL_OPTION ? "" : value }))}
+                  options={units.map((unit) => ({ value: String(unit.id), label: unit.name }))} />
+                <FilterSelect id="report-location" label="Địa điểm làm việc" allLabel="Tất cả địa điểm"
+                  value={filters.workLocationId || ALL_OPTION}
+                  onChange={(value) => setFilters((current) => ({ ...current, workLocationId: value === ALL_OPTION ? "" : value }))}
+                  options={locations.map((location) => ({ value: String(location.id), label: location.name }))} />
               </>
             )}
 
-            <div className="grid gap-2">
-              <Label>Trạng thái hiện tại</Label>
-              <Select
-                value={filters.employmentStatus || "all"}
-                onValueChange={(value) => setFilters((current) => ({
-                  ...current,
-                  employmentStatus: value === "all" ? "" : value as EmploymentStatus,
-                }))}
-              >
-                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                  {EMPLOYMENT_STATUSES.map((status) => (
-                    <SelectItem key={status} value={status}>{EMPLOYMENT_STATUS_LABELS[status]}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <FilterSelect id="report-status" label="Trạng thái hiện tại" allLabel="Tất cả trạng thái"
+              value={filters.employmentStatus || ALL_OPTION}
+              onChange={(value) => setFilters((current) => ({
+                ...current, employmentStatus: value === ALL_OPTION ? "" : value as EmploymentStatus,
+              }))}
+              options={EMPLOYMENT_STATUSES.map((status) => ({ value: status, label: EMPLOYMENT_STATUS_LABELS[status] }))} />
 
             <div className="flex items-end">
               <Button className="w-full" type="submit" disabled={loading}>
@@ -248,7 +177,7 @@ export function WorkforceReportDashboard({
             <SummaryCard
               icon={<Banknote />}
               label="Lương cơ bản trung bình"
-              value={salaryReport?.averageBasicSalary == null ? "—" : money.format(salaryReport.averageBasicSalary)}
+              value={salaryReport?.averageBasicSalary == null ? "—" : money(salaryReport.averageBasicSalary)}
             />
             <SummaryCard
               icon={<AlertTriangle />}
