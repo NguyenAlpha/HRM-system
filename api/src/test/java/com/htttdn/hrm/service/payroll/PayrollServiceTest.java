@@ -419,7 +419,8 @@ class PayrollServiceTest {
         // … but a day's pay is still a share of the whole month's workdays.
         when(attendanceCalendarService.companyWorkdayCount(start, end)).thenReturn(27L);
         when(attendanceCalendarService.companyWorkdayCount(lastWorkingDay.plusDays(1), end)).thenReturn(25L);
-        when(attendanceRecordRepository.findByEmployeeIdAndWorkDateBetween(2L, start, end)).thenReturn(List.of(
+        // Only days up to the last working day are read, so a day recorded after it is never paid.
+        when(attendanceRecordRepository.findByEmployeeIdAndWorkDateBetween(2L, start, lastWorkingDay)).thenReturn(List.of(
             AttendanceRecord.builder().workDate(dayBefore).scheduledMinutes(480).payableMinutes(480).build(),
             AttendanceRecord.builder().workDate(lastWorkingDay).scheduledMinutes(480).payableMinutes(480).build()));
         when(employeeSalaryHistoryRepository.findEffective(eq(2L), any(LocalDate.class))).thenReturn(Optional.of(salary));

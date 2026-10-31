@@ -477,6 +477,7 @@ class EmployeeServiceTest {
             payrollPeriodInvalidator,
             resignationRequestRepository,
             leaveRequestService,
+            attendanceRecordRepository,
             TODAY
         );
     }

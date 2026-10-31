@@ -19,6 +19,7 @@ import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
+import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeePayrollProfileRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
@@ -73,6 +74,7 @@ public class EmploymentLifecycleService {
     private final PayrollPeriodInvalidator payrollPeriodInvalidator;
     private final ResignationRequestRepository resignationRequestRepository;
     private final LeaveRequestService leaveRequestService;
+    private final AttendanceRecordRepository attendanceRecordRepository;
     private final Clock clock;
 
     /**
@@ -169,7 +171,7 @@ public class EmploymentLifecycleService {
     /**
      * Records the last working day and the status to take after it, leaving the employee working until
      * then. Payroll, attendance and leave already stop at that day; leave requests still open past it are
-     * cancelled. Used by {@link #endEmployment} and,
+     * cancelled and prepared attendance days past it with nothing recorded are deleted. Used by {@link #endEmployment} and,
      * without the caller's permission checks, by an approved resignation, where {@code actor} is the approver.
      */
     public void scheduleEnd(
@@ -183,6 +185,7 @@ public class EmploymentLifecycleService {
         employee.setScheduledEndStatus(endStatus);
         employee.setScheduledEndByAccount(actor);
         leaveRequestService.cancelOpenRequestsAfter(employee.getId(), terminationDate);
+        deleteUntouchedDaysAfter(employee.getId(), terminationDate);
     }
 
     /**
@@ -191,7 +194,8 @@ public class EmploymentLifecycleService {
      * approved resignation once its last working day has passed, where {@code actor} is the approver.
      *
      * <p>Các bước: đổi trạng thái + xóa lịch hẹn → đóng phân công chính ở ngày cuối → đóng lương, hồ sơ
-     * thuế, người phụ thuộc → hủy đơn nghỉ nháp/chờ duyệt có ngày sau ngày cuối → khóa tài khoản ({@code DISABLED}), thu hồi mọi refresh token và thu hồi role
+     * thuế, người phụ thuộc → hủy đơn nghỉ nháp/chờ duyệt có ngày sau ngày cuối → xóa ngày công tạo sẵn còn
+     * trống sau ngày cuối → khóa tài khoản ({@code DISABLED}), thu hồi mọi refresh token và thu hồi role
      * nghiệp vụ. Access token đang dùng vẫn chạy tới khi hết hạn (request không kiểm tra lại trạng thái
      * tài khoản), sau đó không làm mới được nữa.
      *
@@ -214,6 +218,7 @@ public class EmploymentLifecycleService {
             .ifPresent(assignment -> closeAssignmentAtTermination(assignment, terminationDate));
         closePayrollInputsAtTermination(employeeId, terminationDate);
         leaveRequestService.cancelOpenRequestsAfter(employeeId, terminationDate);
+        deleteUntouchedDaysAfter(employeeId, terminationDate);
         accountRepository.findByEmployeeId(employeeId).ifPresent(account -> {
             account.setStatus(AccountStatus.DISABLED);
             refreshTokenService.revokeAll(account.getId());
@@ -238,6 +243,17 @@ public class EmploymentLifecycleService {
                 "Transfer company ownership before ending the Company Owner's employment"
             );
         }
+    }
+
+    /**
+     * The month is prepared on its first day, so days after a last working day set later already exist; those
+     * with nothing recorded (no punches, no leave) are deleted, or the timesheet shows the leaver missing
+     * punches there. Days with something recorded stay as history; payroll reads only days up to the last one.
+     * A schedule cancelled later gets its days back from the nightly preparation.
+     */
+    private void deleteUntouchedDaysAfter(Long employeeId, LocalDate terminationDate) {
+        attendanceRecordRepository.deleteAll(
+            attendanceRecordRepository.findUntouchedFromForUpdate(employeeId, terminationDate.plusDays(1)));
     }
 
     /**

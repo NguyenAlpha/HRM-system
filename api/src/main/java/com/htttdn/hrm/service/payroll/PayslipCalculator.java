@@ -380,8 +380,9 @@ public class PayslipCalculator {
             .findCurrentPrimary(employee.getId(), lastWorkDate)
             .orElseThrow(() -> missingPayrollInput(employee, "thiếu phân công chính ngày " + display(lastWorkDate)));
 
+        // Chỉ ngày còn làm việc: ngày công sau ngày nghỉ (VD kết thúc lùi ngày) không được trả, kể cả tăng ca.
         List<AttendanceRecord> attendanceRecords = attendanceRecordRepository.findByEmployeeIdAndWorkDateBetween(
-            employee.getId(), period.getPeriodStart(), period.getPeriodEnd());
+            employee.getId(), employedFrom, employedTo);
         if (attendanceRecords.isEmpty()) {
             throw missingPayrollInput(employee, "chưa có dữ liệu chấm công trong kỳ");
         }

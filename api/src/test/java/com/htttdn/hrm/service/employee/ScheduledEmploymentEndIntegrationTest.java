@@ -154,6 +154,26 @@ class ScheduledEmploymentEndIntegrationTest {
     }
 
     @Test
+    void schedulingTheLastDayDropsPreparedDaysAfterItThatHaveNothingRecorded() {
+        LocalDate lastDay = today.plusDays(5);
+        Long shiftId = id("""
+            INSERT INTO work_shifts(code, name, start_time, end_time, break_minutes, break_start_time, standard_work_minutes)
+            VALUES (?, 'Ca hành chính', '08:00', '17:00', 60, '12:00', 480) RETURNING id
+            """, "SES_" + UUID.randomUUID().toString().substring(0, 8));
+        attendanceDay(shiftId, lastDay, false);
+        attendanceDay(shiftId, lastDay.plusDays(1), false);
+        attendanceDay(shiftId, lastDay.plusDays(2), true);
+
+        employmentLifecycleService.endEmployment(employeeId, EmploymentStatus.RESIGNED, lastDay, "Nghỉ việc");
+        entityManager.flush();
+
+        // The last day itself is still worked; an empty day after it goes, a punched one stays as history.
+        assertEquals(java.util.List.of(java.sql.Date.valueOf(lastDay), java.sql.Date.valueOf(lastDay.plusDays(2))),
+            jdbc.queryForList("SELECT work_date FROM attendance_records WHERE employee_id = ? ORDER BY work_date",
+                java.sql.Date.class, employeeId));
+    }
+
+    @Test
     void aCancelledScheduleLeavesNoEndBehind() {
         employmentLifecycleService.endEmployment(employeeId, EmploymentStatus.RESIGNED, today.plusDays(3), "Nghỉ việc");
 
@@ -341,7 +361,17 @@ class ScheduledEmploymentEndIntegrationTest {
         return jdbc.queryForObject("SELECT status FROM accounts WHERE id = ?", String.class, accountId);
     }
 
-    private Long id(String sql, Object... args) {
+    private void attendanceDay(Long shiftId, LocalDate date, boolean punched) {
+        jdbc.update("""
+            INSERT INTO attendance_records(employee_id, work_date, shift_id, scheduled_start_at, scheduled_end_at,
+                scheduled_minutes, check_in_at, status)
+            VALUES (?, ?, ?, (?::date + time '08:00') AT TIME ZONE 'Asia/Ho_Chi_Minh',
+                (?::date + time '17:00') AT TIME ZONE 'Asia/Ho_Chi_Minh', 480,
+                CASE WHEN ? THEN (?::date + time '08:00') AT TIME ZONE 'Asia/Ho_Chi_Minh' END, 'MISSING_PUNCH')
+            """, employeeId, date, shiftId, date, date, punched, date);
+    }
+
+        private Long id(String sql, Object... args) {
         return jdbc.queryForObject(sql, Long.class, args);
     }
 }

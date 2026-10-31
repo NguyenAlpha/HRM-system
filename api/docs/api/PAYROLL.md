@@ -53,6 +53,9 @@ lương chỉ tính đến ngày đó. Vì vậy:
   lưu với `effectiveTo` là ngày làm việc cuối.
 - Lúc kết thúc, lương cơ bản, hồ sơ và người phụ thuộc còn chạy quá ngày làm việc cuối được đóng tại
   ngày đó. Mục bắt đầu sau ngày đó (nhập trước khi có quy tắc này) giữ nguyên và không bao giờ áp dụng.
+- Phiếu lương chỉ đọc chấm công từ ngày vào làm đến ngày làm việc cuối trong kỳ: ngày công sau ngày cuối
+  (VD khi kết thúc lùi ngày) không được trả, kể cả tăng ca đã duyệt. Ngày công tạo sẵn còn trống sau ngày cuối
+  bị xóa khi lên lịch hoặc kết thúc làm việc.
 
 Tất cả endpoint yêu cầu Bearer token; thiếu hoặc hết hạn trả `401 UNAUTHORIZED`. Không có permission trả `403 FORBIDDEN`. "Trong scope" nghĩa là nhân viên nằm trong phạm vi của role cấp permission đó (theo phân công hiện hành); "phạm vi `COMPANY`" nghĩa là role phải có scope toàn công ty, scope hẹp hơn trả `403 FORBIDDEN`.
 
