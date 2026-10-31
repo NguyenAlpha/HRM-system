@@ -1,12 +1,14 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Check, Copy, KeyRound, Link2, Loader2, ShieldCheck, UserPlus } from "lucide-react"
+import { Loader2, ShieldCheck, UserPlus } from "lucide-react"
 import { toast } from "sonner"
 
+import { ACCOUNT_STATUS_LABELS } from "@/components/account/account-actions"
+import { ActivationInvitation } from "@/components/account/activation-invitation"
 import { ErrorAlert } from "@/components/common/list-controls"
 import { Button } from "@/components/ui/button"
 import {
@@ -27,7 +29,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
-import { provisionAccount, type AccountProvisioningResponse } from "@/lib/account"
+import { provisionAccount, usernameSchema, type AccountProvisioningResponse } from "@/lib/account"
 import type { Portal } from "@/lib/auth/types"
 import { employeeRequest, type EmployeeSummary } from "@/lib/employee"
 import type { Page } from "@/lib/pagination"
@@ -45,12 +47,13 @@ import {
   type AccountRoleAssignment,
   type RoleScopeType,
 } from "@/lib/role-assignment"
-import { formatDate, formatDateTime } from "@/lib/format-date"
+import { formatDate } from "@/lib/format-date"
 
 const grantSchema = z
   .object({
     employeeId: z.string().min(1, "Bắt buộc"),
-    username: z.string().trim().max(50, "Tối đa 50 ký tự").optional(),
+    // Only needed, and then checked in onSubmit, when the employee has no account yet.
+    username: z.union([z.literal(""), usernameSchema]).optional(),
     roleCode: z.string().min(1, "Bắt buộc"),
     scopeType: z.string().min(1, "Bắt buộc"),
     organizationUnitId: z.string().optional(),
@@ -103,21 +106,18 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
 
   const [formError, setFormError] = useState<string | null>(null)
   const [result, setResult] = useState<GrantResult | null>(null)
-  const [copiedToken, setCopiedToken] = useState(false)
-  const [copiedLink, setCopiedLink] = useState(false)
 
   const {
     register,
     handleSubmit,
     reset,
-    watch,
     control,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<GrantValues>({ resolver: zodResolver(grantSchema), defaultValues: EMPTY_VALUES })
 
-  const selectedEmployeeId = watch("employeeId")
-  const selectedScopeType = watch("scopeType")
+  const selectedEmployeeId = useWatch({ control, name: "employeeId" })
+  const selectedScopeType = useWatch({ control, name: "scopeType" })
   const selectedEmployee = useMemo(
     () => employees.find((employee) => String(employee.id) === selectedEmployeeId) ?? null,
     [employees, selectedEmployeeId],
@@ -149,8 +149,6 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
 
   useEffect(() => {
     let active = true
-    setLoadingOptions(true)
-    setOptionsError(null)
     Promise.all([
       employeeRequest<Page<EmployeeSummary>>(portal, "?page=0&size=100"),
       rbacRequest<Page<Role>>(portal, "/roles?page=0&size=100&sort=name,asc"),
@@ -178,6 +176,8 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
     setResult(null)
     setFormError(null)
     reset(EMPTY_VALUES)
+    setLoadingOptions(true)
+    setOptionsError(null)
     setRevision((value) => value + 1)
   }
 
@@ -223,8 +223,8 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
       if (provisioning) {
         setResult({ employee, provisioning, assignment: null })
         setFormError(
-          `Đã tạo tài khoản ${provisioning.account.username} nhưng gán role thất bại: ${apiErrorMessage(caught)}. `
-          + "Bạn có thể gán role sau trong trang Vai trò & quyền.",
+          `Đã tạo tài khoản ${provisioning.account.username} nhưng gán role thất bại: ${apiErrorMessage(caught)} `
+          + "Nhân sự giờ đã có tài khoản; hãy cấp role lại ngay trên trang này.",
         )
       } else {
         setFormError(apiErrorMessage(caught))
@@ -232,35 +232,13 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
     }
   }
 
-  async function copyToken() {
-    if (!result?.provisioning) return
-    try {
-      await navigator.clipboard.writeText(result.provisioning.invitation.activationToken)
-      setCopiedToken(true)
-      toast.success("Đã sao chép mã kích hoạt")
-      setTimeout(() => setCopiedToken(false), 1500)
-    } catch {
-      toast.error("Không thể sao chép, hãy tự copy thủ công")
-    }
-  }
-
-  async function copyLink() {
-    if (!result?.provisioning) return
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}/activate/${result.provisioning.invitation.activationToken}`)
-      setCopiedLink(true)
-      toast.success("Đã sao chép link kích hoạt")
-      setTimeout(() => setCopiedLink(false), 1500)
-    } catch {
-      toast.error("Không thể sao chép, hãy tự copy thủ công")
-    }
-  }
-
   if (result) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Đã cấp quyền cho {result.employee.fullName}</CardTitle>
+          <CardTitle>
+            {result.assignment ? `Đã cấp quyền cho ${result.employee.fullName}` : `Đã tạo tài khoản cho ${result.employee.fullName}`}
+          </CardTitle>
           <CardDescription>
             {result.assignment
               ? `Role ${result.assignment.roleName} có hiệu lực từ ${formatDate(result.assignment.effectiveFrom)}.`
@@ -284,31 +262,7 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
           )}
 
           {result.provisioning && (
-            <>
-              <div className="flex min-w-0 items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm">
-                <Link2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-muted-foreground">Link kích hoạt — gửi trực tiếp cho nhân sự</p>
-                  <code className="mt-0.5 block truncate font-semibold">/activate/{result.provisioning.invitation.activationToken}</code>
-                </div>
-                <Button type="button" variant="ghost" size="icon-sm" onClick={copyLink} aria-label="Sao chép link kích hoạt">
-                  {copiedLink ? <Check /> : <Copy />}
-                </Button>
-              </div>
-              <div className="flex min-w-0 items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm">
-                <KeyRound className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-muted-foreground">Mã kích hoạt (dùng một lần)</p>
-                  <code className="mt-0.5 block truncate font-semibold">{result.provisioning.invitation.activationToken}</code>
-                </div>
-                <Button type="button" variant="ghost" size="icon-sm" onClick={copyToken} aria-label="Sao chép mã kích hoạt">
-                  {copiedToken ? <Check /> : <Copy />}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Hết hạn lúc {formatDateTime(result.provisioning.invitation.expiresAt)}.
-              </p>
-            </>
+            <ActivationInvitation invitation={result.provisioning.invitation} recipient="nhân sự" />
           )}
 
           <Button type="button" onClick={startOver}>
@@ -366,7 +320,7 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
 
           {selectedEmployee?.account && (
             <p className="rounded-lg bg-muted px-3 py-2.5 text-xs text-muted-foreground">
-              Nhân sự đã có tài khoản <strong>{selectedEmployee.account.username}</strong> ({selectedEmployee.account.status}); role mới sẽ được gán thêm vào tài khoản này.
+              Nhân sự đã có tài khoản <strong>{selectedEmployee.account.username}</strong> ({ACCOUNT_STATUS_LABELS[selectedEmployee.account.status]}); role mới sẽ được gán thêm vào tài khoản này.
             </p>
           )}
 

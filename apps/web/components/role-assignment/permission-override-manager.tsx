@@ -1,12 +1,13 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Loader2, Plus, RefreshCw, ShieldMinus } from "lucide-react"
 import { toast } from "sonner"
 
+import { todayIso } from "@/components/account/account-access"
 import { ErrorAlert } from "@/components/common/list-controls"
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
@@ -58,14 +59,6 @@ const overrideSchema = z.object({
 
 type OverrideValues = z.infer<typeof overrideSchema>
 
-function todayIso() {
-  const date = new Date()
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, "0")
-  const day = String(date.getDate()).padStart(2, "0")
-  return `${year}-${month}-${day}`
-}
-
 function statusVariant(status: AccountPermissionOverride["status"]) {
   if (status === "ACTIVE") return "secondary" as const
   if (status === "REVOKED") return "destructive" as const
@@ -95,15 +88,14 @@ export function PermissionOverrideManager({ portal, onSessionExpired }: {
     handleSubmit,
     control,
     reset,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<OverrideValues>({
     resolver: zodResolver(overrideSchema),
     defaultValues: { permissionId: "", effectiveFrom: todayIso(), effectiveTo: "", reason: "" },
   })
 
-  const selectedPermissionId = watch("permissionId")
-  const selectedEffectiveFrom = watch("effectiveFrom")
+  const selectedPermissionId = useWatch({ control, name: "permissionId" })
+  const selectedEffectiveFrom = useWatch({ control, name: "effectiveFrom" })
   const selectedPermission = permissionOptions.find((option) => String(option.permissionId) === selectedPermissionId) ?? null
   const selectedAssignment = assignments.find((assignment) => String(assignment.id) === assignmentId) ?? null
   const canCreateOverride = selectedAssignment !== null

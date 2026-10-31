@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Check, Loader2, Plus, RefreshCw, ShieldMinus, Undo2, X } from "lucide-react"
@@ -155,14 +155,13 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
     register,
     handleSubmit,
     reset,
-    watch,
     control,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateRequestValues>({ resolver: zodResolver(createRequestSchema), defaultValues: EMPTY_CREATE_VALUES })
 
-  const selectedRoleCode = watch("roleCode")
-  const selectedScopeType = watch("scopeType")
+  const selectedRoleCode = useWatch({ control, name: "roleCode" })
+  const selectedScopeType = useWatch({ control, name: "scopeType" })
   const selectedRole = useMemo(
     () => roleOptions.find((role) => role.roleCode === selectedRoleCode) ?? null,
     [roleOptions, selectedRoleCode],

@@ -4,9 +4,9 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Check, Copy, KeyRound, Link2, Loader2 } from "lucide-react"
-import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
 
+import { ActivationInvitation } from "@/components/account/activation-invitation"
 import { ErrorAlert } from "@/components/common/list-controls"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,17 +21,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import type { Portal } from "@/lib/auth/types"
-import { provisionAccount, type AccountProvisioningResponse } from "@/lib/account"
-import { formatDateTime } from "@/lib/format-date"
+import { provisionAccount, usernameSchema, type AccountProvisioningResponse } from "@/lib/account"
 
-const provisionSchema = z.object({
-  username: z
-    .string()
-    .trim()
-    .min(3, "Tối thiểu 3 ký tự")
-    .max(30, "Tối đa 30 ký tự")
-    .regex(/^[A-Za-z0-9._-]+$/, "Chỉ gồm chữ, số, dấu chấm, gạch dưới, gạch ngang"),
-})
+const provisionSchema = z.object({ username: usernameSchema })
 
 type ProvisionValues = z.infer<typeof provisionSchema>
 
@@ -45,8 +37,6 @@ export function EmployeeProvisionDialog({ portal, employeeId, employeeName, onCl
 }) {
   const [dialogError, setDialogError] = useState<string | null>(null)
   const [result, setResult] = useState<AccountProvisioningResponse | null>(null)
-  const [copied, setCopied] = useState(false)
-  const [copiedLink, setCopiedLink] = useState(false)
 
   const {
     register,
@@ -63,30 +53,6 @@ export function EmployeeProvisionDialog({ portal, employeeId, employeeName, onCl
     } catch (caught) {
       if (isPortalSessionExpired(caught)) onSessionExpired()
       setDialogError(apiErrorMessage(caught))
-    }
-  }
-
-  async function copyToken() {
-    if (!result) return
-    try {
-      await navigator.clipboard.writeText(result.invitation.activationToken)
-      setCopied(true)
-      toast.success("Đã sao chép mã kích hoạt")
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      toast.error("Không thể sao chép, hãy tự copy thủ công")
-    }
-  }
-
-  async function copyLink() {
-    if (!result) return
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}/activate/${result.invitation.activationToken}`)
-      setCopiedLink(true)
-      toast.success("Đã sao chép link kích hoạt")
-      setTimeout(() => setCopiedLink(false), 1500)
-    } catch {
-      toast.error("Không thể sao chép, hãy tự copy thủ công")
     }
   }
 
@@ -128,31 +94,8 @@ export function EmployeeProvisionDialog({ portal, employeeId, employeeName, onCl
               </DialogDescription>
             </DialogHeader>
 
-            <div className="mt-4 grid min-w-0 gap-3">
-              <div className="flex min-w-0 items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm">
-                <Link2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-muted-foreground">Link kích hoạt — gửi trực tiếp cho nhân sự</p>
-                  <code className="mt-0.5 block truncate font-semibold">/activate/{result.invitation.activationToken}</code>
-                </div>
-                <Button type="button" variant="ghost" size="icon-sm" onClick={copyLink} aria-label="Sao chép link kích hoạt">
-                  {copiedLink ? <Check /> : <Copy />}
-                </Button>
-              </div>
-              <div className="flex min-w-0 items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm">
-                <KeyRound className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-muted-foreground">Mã kích hoạt (dùng một lần)</p>
-                  <code className="mt-0.5 block truncate font-semibold">{result.invitation.activationToken}</code>
-                </div>
-                <Button type="button" variant="ghost" size="icon-sm" onClick={copyToken} aria-label="Sao chép mã kích hoạt">
-                  {copied ? <Check /> : <Copy />}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Hết hạn lúc {formatDateTime(result.invitation.expiresAt)}. Nếu hết hạn, hãy gửi lại lời mời từ trang quản trị tài khoản.
-              </p>
-            </div>
+            <ActivationInvitation className="mt-4" invitation={result.invitation} recipient="nhân sự"
+              note="Nếu hết hạn, hãy gửi lại lời mời từ trang quản trị tài khoản." />
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>Đóng</Button>

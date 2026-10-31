@@ -4,9 +4,10 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Check, Copy, KeyRound, Link2, Loader2, ShieldCheck } from "lucide-react"
+import { Loader2, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
 
+import { ActivationInvitation } from "@/components/account/activation-invitation"
 import { PhoneInput } from "@/components/common/phone-input"
 import { ErrorAlert } from "@/components/common/list-controls"
 import { Badge } from "@/components/ui/badge"
@@ -24,8 +25,8 @@ import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { phoneSchema } from "@/lib/phone"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
+import { usernameSchema } from "@/lib/account"
 import { bootstrapCompanyOwner, type CompanyOwnerProvisioningResult } from "@/lib/company-owner"
-import { formatDateTime } from "@/lib/format-date"
 
 const bootstrapSchema = z
   .object({
@@ -49,12 +50,7 @@ const bootstrapSchema = z
       .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Email không hợp lệ"),
     phone: phoneSchema,
     hireDate: z.string().min(1, "Bắt buộc"),
-    username: z
-      .string()
-      .trim()
-      .min(3, "Tối thiểu 3 ký tự")
-      .max(30, "Tối đa 30 ký tự")
-      .regex(/^[A-Za-z0-9._-]+$/, "Chỉ gồm chữ, số, dấu chấm, gạch dưới, gạch ngang"),
+    username: usernameSchema,
     effectiveFrom: z.string().min(1, "Bắt buộc"),
     ownershipReason: z.string().trim().min(1, "Bắt buộc").max(100, "Tối đa 100 ký tự"),
     directorAppointmentReason: z.string().trim().min(1, "Bắt buộc").max(100, "Tối đa 100 ký tự"),
@@ -69,8 +65,6 @@ type BootstrapValues = z.infer<typeof bootstrapSchema>
 export function CompanyOwnerProvision({ onSessionExpired }: { onSessionExpired: () => void }) {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<CompanyOwnerProvisioningResult | null>(null)
-  const [copied, setCopied] = useState(false)
-  const [copiedLink, setCopiedLink] = useState(false)
 
   const {
     register,
@@ -109,30 +103,6 @@ export function CompanyOwnerProvision({ onSessionExpired }: { onSessionExpired: 
     }
   }
 
-  async function copyToken() {
-    if (!result) return
-    try {
-      await navigator.clipboard.writeText(result.accountProvisioning.invitation.activationToken)
-      setCopied(true)
-      toast.success("Đã sao chép mã kích hoạt")
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      toast.error("Không thể sao chép, hãy tự copy thủ công")
-    }
-  }
-
-  async function copyLink() {
-    if (!result) return
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}/activate/${result.accountProvisioning.invitation.activationToken}`)
-      setCopiedLink(true)
-      toast.success("Đã sao chép link kích hoạt")
-      setTimeout(() => setCopiedLink(false), 1500)
-    } catch {
-      toast.error("Không thể sao chép, hãy tự copy thủ công")
-    }
-  }
-
   if (result) {
     return (
       <Card>
@@ -143,29 +113,8 @@ export function CompanyOwnerProvision({ onSessionExpired }: { onSessionExpired: 
           </CardDescription>
         </CardHeader>
         <CardContent className="grid min-w-0 gap-4">
-          <div className="flex min-w-0 items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm">
-            <Link2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground">Link kích hoạt — gửi trực tiếp cho Company Owner</p>
-              <code className="mt-0.5 block truncate font-semibold">/activate/{result.accountProvisioning.invitation.activationToken}</code>
-            </div>
-            <Button type="button" variant="ghost" size="icon-sm" onClick={copyLink} aria-label="Sao chép link kích hoạt">
-              {copiedLink ? <Check /> : <Copy />}
-            </Button>
-          </div>
-          <div className="flex min-w-0 items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm">
-            <KeyRound className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground">Mã kích hoạt (dùng một lần)</p>
-              <code className="mt-0.5 block truncate font-semibold">{result.accountProvisioning.invitation.activationToken}</code>
-            </div>
-            <Button type="button" variant="ghost" size="icon-sm" onClick={copyToken} aria-label="Sao chép mã kích hoạt">
-              {copied ? <Check /> : <Copy />}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Hết hạn lúc {formatDateTime(result.accountProvisioning.invitation.expiresAt)}. Hãy chuyển mã này cho Company Owner qua kênh an toàn để họ tự đặt mật khẩu.
-          </p>
+          <ActivationInvitation invitation={result.accountProvisioning.invitation} recipient="Company Owner"
+            note="Hãy chuyển mã này cho Company Owner qua kênh an toàn để họ tự đặt mật khẩu." />
 
           <Separator />
 

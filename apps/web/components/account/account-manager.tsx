@@ -90,6 +90,7 @@ export function AccountManager({ portal, viewer, onSessionExpired }: {
           return
         }
         setData(result)
+        setError(null)
         setLoadedQuery(requestKey)
       })
       .catch((caught: unknown) => {

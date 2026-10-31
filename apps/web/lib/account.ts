@@ -1,5 +1,7 @@
 "use client"
 
+import { z } from "zod"
+
 import type { components } from "@/lib/api-schema"
 import { authorizedRequest } from "@/lib/auth/client"
 import type { Portal } from "@/lib/auth/types"
@@ -11,6 +13,14 @@ export type ProvisionedAccount = Schemas["AccountResponse"]
 export type AccountInvitation = Schemas["AccountInvitationResponse"]
 export type AccountProvisioningResponse = Schemas["AccountProvisioningResponse"]
 type CreateAccountInput = Schemas["CreateAccountRequest"]
+
+/** The API's username rule (CreateAccountRequest): 3 to 30 letters, digits, dots, underscores or hyphens. */
+export const usernameSchema = z
+  .string()
+  .trim()
+  .min(3, "Tối thiểu 3 ký tự")
+  .max(30, "Tối đa 30 ký tự")
+  .regex(/^[A-Za-z0-9._-]+$/, "Chỉ gồm chữ, số, dấu chấm, gạch dưới, gạch ngang")
 
 export function provisionAccount(portal: Portal, employeeId: number, username: string): Promise<AccountProvisioningResponse> {
   return authorizedRequest<AccountProvisioningResponse>(portal, "/accounts", {
