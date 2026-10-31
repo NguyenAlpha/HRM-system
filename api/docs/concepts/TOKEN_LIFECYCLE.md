@@ -130,7 +130,7 @@ thất bại và người dùng phải đăng nhập lại.
 
 | Biến môi trường | Mặc định | Ghi chú |
 |:----------------|:---------|:--------|
-| `JWT_SECRET` | Không có | Base64, tối thiểu 32 byte sau khi decode. Bắt buộc ở mọi môi trường, thiếu thì ứng dụng không khởi động; test dùng khóa riêng trong `src/test/resources/config/application.properties` |
+| `JWT_SECRET` | có giá trị dev trong `application.properties` | Base64, tối thiểu 32 byte sau khi decode. **Bắt buộc đặt riêng ở production** |
 | `JWT_ISSUER` | `https://hrm.local` | Decoder từ chối token có `iss` khác |
 | `JWT_ACCESS_TOKEN_EXPIRATION_SECONDS` | `900` | |
 | `JWT_REFRESH_TOKEN_EXPIRATION_DAYS` | `30` | |
