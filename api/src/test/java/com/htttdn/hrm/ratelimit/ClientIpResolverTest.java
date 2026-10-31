@@ -38,6 +38,14 @@ class ClientIpResolverTest {
     }
 
     @Test
+    void dropsThePortAzureAddsToTheClientAddress() {
+        assertEquals("116.100.131.193", resolver.resolve(request("116.100.131.193:58809", null)));
+        assertEquals("2001:db8::1", resolver.resolve(request("[2001:db8::1]:58809", null)));
+        assertEquals("198.51.100.1", resolver.resolve(request("127.0.0.1", "198.51.100.1:4321")));
+        assertEquals("2001:db8::1", ClientIpResolver.withoutPort("2001:db8::1"));
+    }
+
+    @Test
     void groupsIpv6ByNetworkAndKeepsIpv4() {
         assertEquals("2001:db8:1:2::/64", ClientIpResolver.bucketKey("2001:db8:1:2:aaaa:bbbb:cccc:dddd"));
         assertEquals("2001:db8:1:2::/64", ClientIpResolver.bucketKey("2001:db8:1:2::1"));

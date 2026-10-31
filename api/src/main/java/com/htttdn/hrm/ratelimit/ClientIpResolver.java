@@ -36,7 +36,7 @@ public class ClientIpResolver {
      * entry is the client. Without a usable header the connecting address is the client.
      */
     public String resolve(HttpServletRequest request) {
-        String remoteAddress = request.getRemoteAddr();
+        String remoteAddress = withoutPort(request.getRemoteAddr());
         if (!isTrusted(remoteAddress)) {
             return remoteAddress;
         }
@@ -44,7 +44,7 @@ public class ClientIpResolver {
         for (String header : Collections.list(request.getHeaders(FORWARDED_FOR))) {
             for (String entry : header.split(",")) {
                 if (!entry.isBlank()) {
-                    forwarded.add(entry.trim());
+                    forwarded.add(withoutPort(entry.trim()));
                 }
             }
         }
@@ -79,6 +79,21 @@ public class ClientIpResolver {
             key.append(Integer.toHexString(value)).append(':');
         }
         return key.append(":/64").toString();
+    }
+
+    /**
+     * The address without a port. Azure App Service writes the client into {@code X-Forwarded-For} as
+     * {@code ip:port}, and Spring Boot makes that the remote address there; with the port the key
+     * changed with every connection, so each new connection got a fresh quota.
+     */
+    static String withoutPort(String address) {
+        if (address.startsWith("[")) {
+            int end = address.indexOf(']');
+            return end > 0 ? address.substring(1, end) : address;
+        }
+        int colon = address.indexOf(':');
+        // One colon: IPv4 with a port. More: a bare IPv6 address, kept as it is.
+        return colon > 0 && colon == address.lastIndexOf(':') ? address.substring(0, colon) : address;
     }
 
     private boolean isTrusted(String address) {
