@@ -37,7 +37,7 @@ import type {
   SeniorityAllowance,
   WorkforceBody,
 } from "@/lib/workforce"
-import { formatDateRange } from "@/lib/format-date"
+import { formatDate, formatDateRange } from "@/lib/format-date"
 
 type Run = (success: string, action: () => Promise<unknown>) => Promise<boolean>
 type Period = { effectiveFrom: string; effectiveTo: string | null }
@@ -169,7 +169,7 @@ function PositionAllowances({ canManage }: { canManage: boolean }) {
                     ? <span className="font-normal text-muted-foreground">Không có</span>
                     : money(position.currentMonthlyAmount)}
                 </TableCell>
-                <TableCell className="text-muted-foreground">{position.currentEffectiveFrom ?? "—"}</TableCell>
+                <TableCell className="text-muted-foreground">{formatDate(position.currentEffectiveFrom)}</TableCell>
                 <RowActionsCell label={position.code}>
                   {canManage && position.active
                     ? <RowActionItem icon={Pencil} onClick={() => setSelected(position)}>Đổi phụ cấp</RowActionItem>

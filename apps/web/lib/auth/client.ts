@@ -1,5 +1,6 @@
 "use client"
 
+import { isPortalSessionExpired } from "@/lib/api-helpers"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import {
   AuthApiError,
@@ -9,6 +10,26 @@ import {
 } from "@/lib/auth/types"
 
 const refreshRequests = new Map<Portal, Promise<SessionData>>()
+const sessionGoneHandlers = new Map<Portal, () => void>()
+
+/**
+ * What to do when a request finds the portal's session gone for good (the refresh is refused); PortalShell
+ * sends the user back to sign in. Pass null to remove it.
+ */
+export function setSessionGoneHandler(portal: Portal, handler: (() => void) | null): void {
+  if (handler) sessionGoneHandlers.set(portal, handler)
+  else sessionGoneHandlers.delete(portal)
+}
+
+/** Refreshes once for a request that hit an expired access token; a refused refresh ends the session. */
+async function refreshForRetry(portal: Portal): Promise<void> {
+  try {
+    await refreshSession(portal)
+  } catch (error) {
+    if (isPortalSessionExpired(error)) sessionGoneHandlers.get(portal)?.()
+    throw error
+  }
+}
 
 async function request<T>(portal: Portal, path: string, init?: RequestInit): Promise<T> {
   let response: Response
@@ -73,7 +94,7 @@ export async function authorizedRequest<T>(
       throw error
     }
 
-    await refreshSession(portal)
+    await refreshForRetry(portal)
     return request<T>(portal, path, init)
   }
 }
@@ -85,7 +106,7 @@ export async function authorizedDownload(portal: Portal, path: string): Promise<
   })
   let response = await fetchFile()
   if (response.status === 401) {
-    await refreshSession(portal)
+    await refreshForRetry(portal)
     response = await fetchFile()
   }
   if (!response.ok) {

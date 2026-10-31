@@ -89,9 +89,7 @@ type Tab = "mine" | "approvals" | "all"
 type Review = { leave: LeaveRequest; approve: boolean }
 type Run = (success: string, action: () => Promise<unknown>) => Promise<boolean>
 
-export function LeaveRequestsPage({ openCreate = false, initialTab, initialRequestId }: {
-  openCreate?: boolean; initialTab?: Tab; initialRequestId?: number
-}) {
+export function LeaveRequestsPage({ openCreate = false, initialTab }: { openCreate?: boolean; initialTab?: Tab }) {
   const { session } = usePortalSession()
   const self = session.account.employee
   const permissions = new Set(session.account.permissions.map((permission) => permission.code))
@@ -106,20 +104,6 @@ export function LeaveRequestsPage({ openCreate = false, initialTab, initialReque
   const [selectedTab, setTab] = useState<Tab>(initialTab ?? (canReadOwn ? "mine" : "all"))
   const [creating, setCreating] = useState(canCreate && openCreate)
   const [review, setReview] = useState<Review | null>(null)
-  const [highlight, setHighlight] = useState<{ id: number; leave: LeaveRequest | null; error: string | null } | null>(null)
-  const highlighted = highlight && highlight.id === initialRequestId ? highlight.leave : null
-  const highlightError = highlight && highlight.id === initialRequestId ? highlight.error : null
-
-  useEffect(() => {
-    if (!initialRequestId) return
-    let active = true
-    workforceApi<LeaveRequest>(`leave-requests/${initialRequestId}`)
-      .then((leave) => { if (active) setHighlight({ id: initialRequestId, leave, error: null }) })
-      .catch((caught: unknown) => {
-        if (active) setHighlight({ id: initialRequestId, leave: null, error: apiErrorMessage(caught) })
-      })
-    return () => { active = false }
-  }, [initialRequestId, revision])
 
   // Approval follows the reporting line, not a permission: only the approver fixed on submit reviews.
   useEffect(() => {
@@ -151,13 +135,6 @@ export function LeaveRequestsPage({ openCreate = false, initialTab, initialReque
       />
 
       <div className="mt-6 grid gap-4">
-        {highlightError && <ErrorAlert error={highlightError} />}
-        {highlighted && (
-          <Card>
-            <CardHeader><CardTitle>Đơn #{highlighted.id} từ thông báo</CardTitle></CardHeader>
-            <CardContent><LeaveTable leaves={[highlighted]} showEmployee emptyText="Không tìm thấy đơn." actions={actions} /></CardContent>
-          </Card>
-        )}
         {!canReadOwn && !canReadAll && !showApprovals && <p role="alert">Tài khoản chưa có quyền xem đơn nghỉ.</p>}
 
         {(canReadOwn || canReadAll || showApprovals) && (
@@ -508,7 +485,11 @@ function CreateLeaveDialog({ canManage, self, busy, run, onClose }: {
   function save(submit: boolean) {
     if (!applicant) return
     const span = part === "CUSTOM"
-      ? { startAt: new Date(customStart).toISOString(), endAt: new Date(customEnd).toISOString() }
+      // datetime-local gives "YYYY-MM-DDTHH:mm", read in Vietnam time like the presets.
+      ? {
+        startAt: vietnamInstant(customStart.slice(0, 10), customStart.slice(11, 16)),
+        endAt: vietnamInstant(customEnd.slice(0, 10), customEnd.slice(11, 16)),
+      }
       : { startAt: vietnamInstant(date, PART_HOURS[part][0]), endAt: vietnamInstant(date, PART_HOURS[part][1]) }
     const body = {
       employeeId: applicant.id, leaveType, ...(canManage ? { salaryTreatment: treatment } : {}), ...span, reason: reason.trim(),
@@ -629,7 +610,7 @@ function ReviewDialog({ review, busy, onClose, onSubmit }: {
             <DialogTitle>{approve ? "Duyệt" : "Từ chối"} đơn #{leave.id}</DialogTitle>
             <DialogDescription>
               {leave.employeeCode} · {leave.employeeName} · {LEAVE_TYPE_LABELS[leave.leaveType]} · {formatDateTime(leave.startAt)} → {formatDateTime(leave.endAt)}
-              {" "}· {leave.requestedMinutes} phút. {leave.reason}
+              {" "}· {hours(leave.requestedMinutes)}. {leave.reason}
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4 grid gap-1.5">

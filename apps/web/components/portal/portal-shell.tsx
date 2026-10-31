@@ -6,7 +6,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 
 import { PortalSidebar } from "@/components/portal/portal-sidebar"
 import { apiErrorMessage } from "@/lib/api-helpers"
-import { getCurrentSession } from "@/lib/auth/client"
+import { getCurrentSession, setSessionGoneHandler } from "@/lib/auth/client"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import { AuthApiError, type Portal, type SessionData } from "@/lib/auth/types"
 import type { Branding } from "@/lib/branding"
@@ -52,6 +52,12 @@ export function PortalShell({ portal, branding, children }: { portal: Portal; br
     setSidebarCollapsed(next)
     localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(next))
   }
+
+  // Any request that finds the session gone sends the user back to sign in, whatever page made it.
+  useEffect(() => {
+    setSessionGoneHandler(portal, onSessionExpired)
+    return () => setSessionGoneHandler(portal, null)
+  }, [portal, onSessionExpired])
 
   useEffect(() => {
     let active = true
