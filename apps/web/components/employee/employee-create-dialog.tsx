@@ -56,14 +56,17 @@ import {
   getJobPositionOptions,
   getOrganizationUnitOptions,
   getWorkLocationOptions,
+  getWorkShiftOptions,
   type JobPositionOption,
   type OrganizationUnitOption,
   type WorkLocationOption,
+  type WorkShiftOption,
 } from "@/lib/reference"
 
 const GENDER_NONE = "NONE"
 const EDU_NONE = "NONE"
 const MANAGER_NONE = "NONE"
+const SHIFT_NONE = "NONE"
 
 const GENDER_ITEMS: Record<string, string> = { [GENDER_NONE]: "Không chọn", ...GENDER_LABELS }
 const EDUCATION_ITEMS: Record<string, string> = { [EDU_NONE]: "Không chọn", ...EDUCATION_LEVEL_LABELS }
@@ -85,6 +88,7 @@ const createEmployeeSchema = z
     organizationUnitId: z.string().min(1, "Bắt buộc"),
     workLocationId: z.string().min(1, "Bắt buộc"),
     positionId: z.string().min(1, "Bắt buộc"),
+    shiftId: z.string(),
     managerEmployeeId: z.string(),
     employmentType: z.string().min(1, "Bắt buộc"),
     effectiveFrom: z.string().min(1, "Bắt buộc"),
@@ -119,6 +123,7 @@ const EMPTY_VALUES: CreateEmployeeValues = {
   organizationUnitId: "",
   workLocationId: "",
   positionId: "",
+  shiftId: SHIFT_NONE,
   managerEmployeeId: MANAGER_NONE,
   employmentType: "",
   effectiveFrom: "",
@@ -134,6 +139,7 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
   const [orgUnits, setOrgUnits] = useState<OrganizationUnitOption[]>([])
   const [workLocations, setWorkLocations] = useState<WorkLocationOption[]>([])
   const [positions, setPositions] = useState<JobPositionOption[]>([])
+  const [shifts, setShifts] = useState<WorkShiftOption[]>([])
   const [managers, setManagers] = useState<EmployeeSummary[]>([])
   const [loadingOptions, setLoadingOptions] = useState(true)
 
@@ -144,6 +150,10 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
   const workLocationItems = useMemo(
     () => Object.fromEntries(workLocations.map((location) => [String(location.id), location.name])),
     [workLocations],
+  )
+  const shiftItems = useMemo(
+    () => ({ [SHIFT_NONE]: "Không xếp ca", ...Object.fromEntries(shifts.map((shift) => [String(shift.id), shift.name])) }),
+    [shifts],
   )
   const managerItems = useMemo(
     () => ({
@@ -181,13 +191,17 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
       getOrganizationUnitOptions("hrm"),
       getWorkLocationOptions("hrm"),
       getJobPositionOptions("hrm"),
+      getWorkShiftOptions("hrm"),
       employeeRequest<Page<EmployeeSummary>>("hrm", "?page=0&size=100"),
     ])
-      .then(([units, locations, jobPositions, employeePage]) => {
+      .then(([units, locations, jobPositions, workShifts, employeePage]) => {
         if (!active) return
         setOrgUnits(units)
         setWorkLocations(locations)
         setPositions(jobPositions)
+        setShifts(workShifts)
+        // Attendance, leave and payroll need a shift; with only one there is nothing to choose.
+        if (workShifts.length === 1) setValue("shiftId", String(workShifts[0].id))
         // Same rule as the assignment dialog: the API refuses a manager who no longer works here.
         setManagers(employeePage.content.filter((candidate) =>
           candidate.employmentStatus === "ACTIVE" || candidate.employmentStatus === "PROBATION"))
@@ -202,7 +216,7 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
       })
 
     return () => { active = false }
-  }, [onSessionExpired])
+  }, [onSessionExpired, setValue])
 
   async function onSubmit(values: CreateEmployeeValues) {
     setDialogError(null)
@@ -224,7 +238,7 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
           organizationUnitId: Number(values.organizationUnitId),
           workLocationId: Number(values.workLocationId),
           positionId: Number(values.positionId),
-          shiftId: null,
+          shiftId: values.shiftId === SHIFT_NONE ? null : Number(values.shiftId),
           managerEmployeeId: values.managerEmployeeId === MANAGER_NONE ? null : Number(values.managerEmployeeId),
           employmentType: values.employmentType as EmploymentType,
           effectiveFrom: values.effectiveFrom,
@@ -446,6 +460,24 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-1.5">
+                  <Label htmlFor="new-emp-shift">Ca làm việc</Label>
+                  <Controller
+                    control={control}
+                    name="shiftId"
+                    render={({ field }) => (
+                      <Select value={field.value} items={shiftItems} onValueChange={field.onChange} disabled={loadingOptions}>
+                        <SelectTrigger id="new-emp-shift" className="w-full">
+                          <SelectValue placeholder={loadingOptions ? "Đang tải..." : "Không xếp ca"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={SHIFT_NONE}>Không xếp ca</SelectItem>
+                          {shifts.map((shift) => <SelectItem key={shift.id} value={String(shift.id)}>{shift.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+                <div className="grid gap-1.5">
                   <Label htmlFor="new-emp-manager">Quản lý trực tiếp</Label>
                   <Controller
                     control={control}
@@ -465,11 +497,12 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
                     )}
                   />
                 </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="new-emp-effective-from">Hiệu lực phân công từ</Label>
-                  <Input id="new-emp-effective-from" type="date" aria-invalid={!!errors.effectiveFrom} {...register("effectiveFrom")} />
-                  {errors.effectiveFrom && <p className="text-xs font-medium text-destructive">{errors.effectiveFrom.message}</p>}
-                </div>
+              </div>
+
+              <div className="grid gap-1.5">
+                <Label htmlFor="new-emp-effective-from">Hiệu lực phân công từ</Label>
+                <Input id="new-emp-effective-from" type="date" className="max-w-[calc(50%-0.5rem)]" aria-invalid={!!errors.effectiveFrom} {...register("effectiveFrom")} />
+                {errors.effectiveFrom && <p className="text-xs font-medium text-destructive">{errors.effectiveFrom.message}</p>}
               </div>
 
               <div className="grid gap-1.5">
