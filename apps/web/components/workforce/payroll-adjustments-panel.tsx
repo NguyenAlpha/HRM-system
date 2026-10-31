@@ -10,8 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { money, workforceApi } from "@/components/workforce/workforce-shared"
 import { apiErrorMessage } from "@/lib/api-helpers"
-import { authorizedRequest } from "@/lib/auth/client"
 import { findEmployeeByCode } from "@/lib/employee"
 import type { PayrollAdjustment, PayrollAdjustmentType, WorkforceBody } from "@/lib/workforce"
 
@@ -27,13 +27,6 @@ export const PAYROLL_ADJUSTMENT_LABELS: Record<PayrollAdjustmentType, string> = 
 }
 
 const TYPE_ITEMS = { ...PAYROLL_ADJUSTMENT_LABELS }
-
-const money = (amount: number) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount)
-
-const request = <T,>(path: string, method = "GET", body?: unknown) => authorizedRequest<T>("hrm", `/workforce/${path}`, {
-  method,
-  ...(body === undefined ? {} : { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
-})
 
 /**
  * Bonuses, other allowances and deductions for one payroll period. They reach payslips on the
@@ -55,7 +48,7 @@ export function PayrollAdjustmentsPanel({ periodId, editable, onChanged }: {
 
   useEffect(() => {
     let active = true
-    request<PayrollAdjustment[]>(`payroll/periods/${periodId}/adjustments`)
+    workforceApi<PayrollAdjustment[]>(`payroll/periods/${periodId}/adjustments`)
       .then((result) => { if (active) setRows(result) })
       .catch((caught: unknown) => { if (active) setError(apiErrorMessage(caught)) })
     return () => { active = false }
@@ -81,7 +74,7 @@ export function PayrollAdjustmentsPanel({ periodId, editable, onChanged }: {
     void act(async () => {
       const employee = await findEmployeeByCode("hrm", employeeCode)
       if (!employee) throw new Error(`Không tìm thấy nhân viên có mã ${employeeCode.trim()}.`)
-      await request(`payroll/periods/${periodId}/adjustments`, "POST", {
+      await workforceApi(`payroll/periods/${periodId}/adjustments`, "POST", {
         employeeId: employee.id, type, description: description.trim(), amount: Number(amount),
       } satisfies WorkforceBody["CreatePayrollAdjustmentRequest"])
       setDescription("")
@@ -111,7 +104,7 @@ export function PayrollAdjustmentsPanel({ periodId, editable, onChanged }: {
                 <TableCell className="text-right">{row.type === "DEDUCTION" ? "−" : ""}{money(row.amount)}</TableCell>
                 {editable && <RowActionsCell label={row.description}>
                   <RowActionItem icon={Trash2} destructive disabled={busy}
-                    onClick={() => void act(() => request(`payroll/periods/${periodId}/adjustments/${row.id}`, "DELETE"), "Đã xóa khoản điều chỉnh")}>
+                    onClick={() => void act(() => workforceApi(`payroll/periods/${periodId}/adjustments/${row.id}`, "DELETE"), "Đã xóa khoản điều chỉnh")}>
                     Xóa
                   </RowActionItem>
                 </RowActionsCell>}

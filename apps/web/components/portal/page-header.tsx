@@ -2,14 +2,10 @@
 
 import type { ReactNode } from "react"
 
-/**
- * Title block of a portal page. `backToOverview` is still accepted from the pages but no longer
- * rendered: the sidebar's "Tổng quan" entry already leads back.
- */
+/** Title block of a portal page; the sidebar's "Tổng quan" entry leads back, so there is no back link. */
 export function PageHeader({ title, description, actions, alignActions = "start" }: {
   title: ReactNode
   description: ReactNode
-  backToOverview?: boolean
   /** Extra controls on the right, e.g. the employee/month filters of the workforce pages. */
   actions?: ReactNode
   alignActions?: "start" | "end"

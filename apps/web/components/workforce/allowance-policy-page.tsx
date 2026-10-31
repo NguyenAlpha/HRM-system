@@ -71,7 +71,6 @@ export function AllowancePolicyPage() {
       <PageHeader
         title="Chính sách phụ cấp"
         description="Phụ cấp chức vụ theo tháng và phụ cấp thâm niên theo % lương cơ bản, áp dụng chung khi tính lương."
-        backToOverview
       />
 
       <div className="mt-6">

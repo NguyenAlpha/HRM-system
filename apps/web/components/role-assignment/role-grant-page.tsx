@@ -17,7 +17,6 @@ export function RoleGrantPage() {
       <PageHeader
         title="Cấp quyền trực tiếp"
         description="Gán role trực tiếp cho nhân sự và cấp mã kích hoạt tài khoản mà không cần chờ duyệt."
-        backToOverview
       />
 
       <div className="mt-6 grid gap-6">

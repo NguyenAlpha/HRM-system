@@ -21,7 +21,6 @@ export function WorkforceReportPage() {
       <PageHeader
         title="Cơ cấu nhân sự"
         description="Thống kê trình độ học vấn, mức lương cơ bản và thâm niên theo phạm vi được phân quyền."
-        backToOverview
       />
 
       <div className="mt-6">

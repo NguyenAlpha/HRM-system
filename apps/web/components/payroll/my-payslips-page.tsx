@@ -49,7 +49,6 @@ export function MyPayslipsPage() {
       <PageHeader
         title="Phiếu lương của tôi"
         description="Phiếu lương hiện ra khi kỳ lương của tháng đã được duyệt."
-        backToOverview
       />
 
       <div className="mt-6 grid gap-6">

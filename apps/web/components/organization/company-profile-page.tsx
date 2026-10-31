@@ -72,7 +72,6 @@ export function CompanyProfilePage() {
       <PageHeader
         title="Thông tin doanh nghiệp"
         description="Tên, mã số thuế và địa chỉ in trên phiếu lương và bảng lương năm."
-        backToOverview
       />
 
       <div className="mt-6 grid max-w-3xl gap-4">

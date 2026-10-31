@@ -93,8 +93,9 @@ export function HrmDashboard() {
     employeeListQuery(0, 1, { ...ALL, employmentStatus: "ACTIVE" }, "id,asc")), "active")
   const probation = useWidget(canReadEmployees, () => employeeRequest<Page<EmployeeSummary>>("hrm",
     employeeListQuery(0, 50, { ...ALL, employmentStatus: "PROBATION" }, "hireDate,asc")), "probation")
+  // 50 rather than the 5 listed, so the month's hires are all counted.
   const newest = useWidget(canReadEmployees, () => employeeRequest<Page<EmployeeSummary>>("hrm",
-    employeeListQuery(0, 5, { ...ALL, employmentStatus: "" }, "hireDate,desc")), "newest")
+    employeeListQuery(0, 50, { ...ALL, employmentStatus: "" }, "hireDate,desc")), "newest")
 
   const tasks = buildTasks({ pendingLeaves, pendingResignations, pendingOvertime, pendingRoles, periods, has })
   const latestPeriod = periods?.content.find((period) => period.status !== "CANCELLED")

@@ -14,7 +14,6 @@ export function RoleAssignmentPage() {
       <PageHeader
         title="Đề xuất role"
         description="Đề xuất, theo dõi và phê duyệt việc cấp hoặc thu hồi role nghiệp vụ cho tài khoản nhân sự."
-        backToOverview
       />
 
       <div className="mt-6">

@@ -21,7 +21,6 @@ export function EmployeePage() {
       <PageHeader
         title="Nhân sự"
         description="Xem và cập nhật hồ sơ nhân sự trong phạm vi quản lý được phân công."
-        backToOverview
       />
 
       <div className="mt-6">

@@ -37,6 +37,7 @@ import {
   EMPLOYMENT_STATUS_LABELS,
   EMPLOYMENT_TYPE_LABELS,
   GENDER_LABELS,
+  employeeMutation,
   employeeRequest,
   type EducationLevel,
   type EmployeeDetail,
@@ -283,7 +284,7 @@ function EditProfileDialog({ profile, onClose, onSaved }: {
       institution: institution.trim() || null,
     } satisfies SelfProfileInput
     try {
-      await employeeRequest("hrm", "/me/profile", { method: "PUT", body: JSON.stringify(body) })
+      await employeeMutation("hrm", "/me/profile", "PUT", body)
       toast.success("Đã cập nhật hồ sơ")
       onSaved()
     } catch (caught) {

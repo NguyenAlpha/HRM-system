@@ -20,7 +20,6 @@ export function RbacPage() {
       <PageHeader
         title="Vai trò & quyền"
         description="Quản lý vai trò tùy chỉnh và xem danh mục quyền do hệ thống định nghĩa."
-        backToOverview
       />
 
       <Tabs

@@ -69,7 +69,6 @@ export function PayrollPeriodsPage() {
       <PageHeader
         title="Kỳ lương"
         description="Mỗi tháng một kỳ: kế toán tính lương, người duyệt kiểm tra bảng lương rồi duyệt, xác nhận đã trả và khóa kỳ."
-        backToOverview
       />
 
       <div className="mt-6">

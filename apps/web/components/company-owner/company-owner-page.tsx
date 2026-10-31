@@ -12,7 +12,6 @@ export function CompanyOwnerPage() {
       <PageHeader
         title="Khởi tạo Company Owner"
         description="Cầu nối từ vận hành nền tảng sang quản trị nội bộ doanh nghiệp — chỉ dùng một lần cho Company Owner đầu tiên."
-        backToOverview
       />
 
       <div className="mt-6 max-w-2xl">
