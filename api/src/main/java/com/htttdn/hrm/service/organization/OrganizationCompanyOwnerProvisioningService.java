@@ -12,11 +12,9 @@ import com.htttdn.hrm.dto.request.organization.CreateCompanyOwnerEmployeeRequest
 import com.htttdn.hrm.dto.request.organization.CreateOrganizationCompanyOwnerRequest;
 import com.htttdn.hrm.dto.response.account.AccountProvisioningResponse;
 import com.htttdn.hrm.dto.response.account.AccountRoleAssignmentResponse;
-import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.organization.OrganizationCompanyOwnerProvisioningResponse;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.Employee;
-import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.security.CurrentAccountProvider;
 import com.htttdn.hrm.service.rbac.SystemRoles;
 
@@ -38,14 +36,6 @@ public class OrganizationCompanyOwnerProvisioningService {
     public OrganizationCompanyOwnerProvisioningResponse provision(
         CreateOrganizationCompanyOwnerRequest request
     ) {
-        if (request.effectiveFrom().isBefore(request.employee().hireDate())) {
-            throw new BusinessException(
-                ErrorCode.VALIDATION_ERROR,
-                "effectiveFrom must be on or after employee.hireDate",
-                "effectiveFrom"
-            );
-        }
-
         Account actor = currentAccountProvider.account();
         companyProfileService.save(request.company());
         Employee employee = createCompanyOwnerEmployee(request.employee());

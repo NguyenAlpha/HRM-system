@@ -127,7 +127,7 @@ Request là trạng thái đầy đủ của các field được phép cập nh�
 }
 ```
 
-Không nhận `code`. Nếu ca đã có chấm công, chỉ có thể đổi `name` hoặc `isActive`; thay đổi lịch làm việc trả `409 ORGANIZATION_RESOURCE_IN_USE`.
+Không nhận `code`. Nếu ca đã có chấm công, chỉ có thể đổi `name` hoặc `isActive`; thay đổi lịch làm việc trả `409 WORK_SHIFT_HAS_ATTENDANCE` (tạo ca mới với giờ mới rồi phân công nhân sự sang ca đó).
 
 ---
 
@@ -147,4 +147,5 @@ Thực hiện soft delete bằng cách đặt `isActive=false` và ghi `deletedA
 | 403 | `FORBIDDEN` | Không có permission tương ứng |
 | 404 | `WORK_SHIFT_NOT_FOUND` | Ca không tồn tại hoặc đã bị xóa mềm |
 | 409 | `WORK_SHIFT_CODE_TAKEN` | Code đang được ca chưa bị xóa mềm sử dụng |
-| 409 | `ORGANIZATION_RESOURCE_IN_USE` | Ca có lịch sử chấm công cần bảo toàn hoặc còn trong phân công hiện tại/tương lai |
+| 409 | `WORK_SHIFT_HAS_ATTENDANCE` | Đổi giờ của ca đã có chấm công |
+| 409 | `ORGANIZATION_RESOURCE_IN_USE` | Xóa ca còn trong phân công hiện tại/tương lai |

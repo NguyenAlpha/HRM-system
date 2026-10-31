@@ -5,11 +5,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -80,7 +78,7 @@ public class WorkLocationService {
             }
         }
         return roots.stream()
-            .map(root -> toTreeResponse(root, childrenByParentId, new HashSet<>()))
+            .map(root -> toTreeResponse(root, childrenByParentId))
             .toList();
     }
 
@@ -97,7 +95,7 @@ public class WorkLocationService {
             throw codeTaken();
         }
 
-        WorkLocation parent = resolveActiveParent(request.parentLocationId());
+        WorkLocation parent = resolveParent(request.parentLocationId(), true);
         validateHierarchy(request.locationType(), parent);
         WorkLocation location = WorkLocation.builder()
             .parentLocation(parent)
@@ -118,8 +116,7 @@ public class WorkLocationService {
     @PreAuthorize("hasAuthority('organization.manage')")
     public WorkLocationResponse update(Long locationId, UpdateWorkLocationRequest request) {
         WorkLocation location = workLocationRepository.getRequiredForUpdate(locationId);
-        WorkLocation parent = resolveActiveParent(request.parentLocationId());
-        validateNoCycle(location, parent);
+        WorkLocation parent = resolveParent(request.parentLocationId(), request.isActive());
         validateHierarchy(location.getLocationType(), parent);
         if (Boolean.FALSE.equals(request.isActive())) {
             requireNoActiveChildren(locationId);
@@ -170,17 +167,19 @@ public class WorkLocationService {
         }
     }
 
-    private WorkLocation resolveActiveParent(Long parentLocationId) {
+    /** An active location needs an active parent; an inactive one may sit under an inactive parent. */
+    private WorkLocation resolveParent(Long parentLocationId, boolean active) {
         if (parentLocationId == null) {
             return null;
         }
         WorkLocation parent = workLocationRepository.getRequired(parentLocationId);
-        if (!Boolean.TRUE.equals(parent.getIsActive())) {
+        if (active && !Boolean.TRUE.equals(parent.getIsActive())) {
             throw hierarchyInvalid("Parent work location must be active", "parentLocationId");
         }
         return parent;
     }
 
+    /** The fixed levels (and a locationType that never changes) also rule out a cycle. */
     private void validateHierarchy(LocationType locationType, WorkLocation parent) {
         boolean valid = switch (locationType) {
             case HEAD_OFFICE -> parent == null;
@@ -198,27 +197,13 @@ public class WorkLocationService {
         }
     }
 
-    private void validateNoCycle(WorkLocation location, WorkLocation parent) {
-        WorkLocation current = parent;
-        while (current != null) {
-            if (current.getId().equals(location.getId())) {
-                throw hierarchyInvalid("Work location hierarchy cannot contain a cycle", "parentLocationId");
-            }
-            current = current.getParentLocation();
-        }
-    }
-
     private WorkLocationTreeResponse toTreeResponse(
         WorkLocation location,
-        Map<Long, List<WorkLocation>> childrenByParentId,
-        Set<Long> path
+        Map<Long, List<WorkLocation>> childrenByParentId
     ) {
-        if (!path.add(location.getId())) {
-            throw new IllegalStateException("Cycle detected in work location hierarchy");
-        }
         List<WorkLocationTreeResponse> children = childrenByParentId
             .getOrDefault(location.getId(), List.of()).stream()
-            .map(child -> toTreeResponse(child, childrenByParentId, new HashSet<>(path)))
+            .map(child -> toTreeResponse(child, childrenByParentId))
             .toList();
         return new WorkLocationTreeResponse(
             location.getId(),

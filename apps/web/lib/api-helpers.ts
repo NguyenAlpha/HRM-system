@@ -45,12 +45,17 @@ const ERROR_MESSAGES: Record<string, string> = {
   WORK_SHIFT_NOT_FOUND: "Không tìm thấy ca làm việc.",
   WORK_SHIFT_CODE_TAKEN: "Mã ca làm việc đã tồn tại.",
   WORK_SHIFT_SCHEDULE_INVALID: "Giờ của ca làm việc không hợp lệ.",
+  WORK_SHIFT_HAS_ATTENDANCE:
+    "Ca này đã có dữ liệu chấm công nên không thể đổi giờ. Hãy tạo ca mới với giờ mới rồi phân công nhân sự sang ca đó.",
   ORGANIZATION_HIERARCHY_INVALID: "Cấp cha không hợp lệ cho mục này.",
   ORGANIZATION_RESOURCE_IN_USE: "Mục này đang được sử dụng nên không thể thay đổi.",
   COMPANY_OWNER_ALREADY_EXISTS: "Doanh nghiệp đã có Company Owner.",
   COMPANY_OWNER_TRANSFER_REQUIRED:
     "Nhân sự này đang là Company Owner. Hãy chuyển giao Company Owner trước khi kết thúc làm việc.",
   COMPANY_LOGO_INVALID: "Logo phải là ảnh PNG, JPG hoặc WebP, tối đa 512 KB.",
+  HOLIDAY_DATE_TAKEN: "Ngày này đã là ngày lễ.",
+  HOLIDAY_DAY_RECORDED:
+    "Ngày này đã có nhân sự chấm công, được điều chỉnh công hoặc gắn đơn nghỉ nên không thể đổi thành ngày lễ hay ngày làm việc.",
   REQUEST_NOT_FOUND: "Không tìm thấy đơn.",
   REQUEST_ALREADY_PROCESSED: "Đơn này đã được xử lý.",
   APPROVER_NOT_FOUND: "Chưa xác định được người duyệt cho đơn này.",

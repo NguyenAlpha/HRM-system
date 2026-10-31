@@ -5,11 +5,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -78,7 +76,7 @@ public class OrganizationUnitService {
             }
         }
         return roots.stream()
-            .map(root -> toTreeResponse(root, childrenByParentId, new HashSet<>()))
+            .map(root -> toTreeResponse(root, childrenByParentId))
             .toList();
     }
 
@@ -95,7 +93,7 @@ public class OrganizationUnitService {
             throw codeTaken();
         }
 
-        OrganizationUnit parent = resolveActiveParent(request.parentUnitId());
+        OrganizationUnit parent = resolveParent(request.parentUnitId(), true);
         validateHierarchy(request.unitType(), parent);
         OrganizationUnit unit = OrganizationUnit.builder()
             .parentUnit(parent)
@@ -114,8 +112,7 @@ public class OrganizationUnitService {
     @PreAuthorize("hasAuthority('organization.manage')")
     public OrganizationUnitResponse update(Long unitId, UpdateOrganizationUnitRequest request) {
         OrganizationUnit unit = organizationUnitRepository.getRequiredForUpdate(unitId);
-        OrganizationUnit parent = resolveActiveParent(request.parentUnitId());
-        validateNoCycle(unit, parent);
+        OrganizationUnit parent = resolveParent(request.parentUnitId(), request.isActive());
         validateHierarchy(unit.getUnitType(), parent);
         if (Boolean.FALSE.equals(request.isActive())) {
             requireNoActiveChildren(unitId);
@@ -164,17 +161,19 @@ public class OrganizationUnitService {
         }
     }
 
-    private OrganizationUnit resolveActiveParent(Long parentUnitId) {
+    /** An active unit needs an active parent; an inactive one may sit under an inactive parent. */
+    private OrganizationUnit resolveParent(Long parentUnitId, boolean active) {
         if (parentUnitId == null) {
             return null;
         }
         OrganizationUnit parent = organizationUnitRepository.getRequired(parentUnitId);
-        if (!Boolean.TRUE.equals(parent.getIsActive())) {
+        if (active && !Boolean.TRUE.equals(parent.getIsActive())) {
             throw hierarchyInvalid("Parent organization unit must be active", "parentUnitId");
         }
         return parent;
     }
 
+    /** The fixed levels (and a unitType that never changes) also rule out a cycle. */
     private void validateHierarchy(OrganizationUnitType unitType, OrganizationUnit parent) {
         boolean valid = switch (unitType) {
             case BOARD -> parent == null;
@@ -189,27 +188,13 @@ public class OrganizationUnitService {
         }
     }
 
-    private void validateNoCycle(OrganizationUnit unit, OrganizationUnit parent) {
-        OrganizationUnit current = parent;
-        while (current != null) {
-            if (current.getId().equals(unit.getId())) {
-                throw hierarchyInvalid("Organization hierarchy cannot contain a cycle", "parentUnitId");
-            }
-            current = current.getParentUnit();
-        }
-    }
-
     private OrganizationUnitTreeResponse toTreeResponse(
         OrganizationUnit unit,
-        Map<Long, List<OrganizationUnit>> childrenByParentId,
-        Set<Long> path
+        Map<Long, List<OrganizationUnit>> childrenByParentId
     ) {
-        if (!path.add(unit.getId())) {
-            throw new IllegalStateException("Cycle detected in organization unit hierarchy");
-        }
         List<OrganizationUnitTreeResponse> children = childrenByParentId
             .getOrDefault(unit.getId(), List.of()).stream()
-            .map(child -> toTreeResponse(child, childrenByParentId, new HashSet<>(path)))
+            .map(child -> toTreeResponse(child, childrenByParentId))
             .toList();
         return new OrganizationUnitTreeResponse(
             unit.getId(),

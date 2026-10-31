@@ -151,7 +151,7 @@ Request là trạng thái đầy đủ của các field được phép cập nh�
 }
 ```
 
-Không nhận `code` hoặc `unitType`. Khi đổi parent, parent mới phải active, đúng loại và không được tạo chu trình.
+Không nhận `code` hoặc `unitType`. Parent phải đúng loại; đơn vị để `isActive=true` thì parent phải active, đơn vị ngưng hoạt động thì được nằm dưới parent cũng đã ngưng (để vẫn sửa được tên). Cấp bậc cố định BOARD → DEPARTMENT → TEAM nên không thể tạo chu trình.
 
 ---
 
@@ -285,7 +285,7 @@ Request là trạng thái đầy đủ của các field được phép cập nh�
 }
 ```
 
-Không nhận `code` hoặc `locationType`. Khi đổi parent, parent mới phải active, đúng loại và không được tạo chu trình.
+Không nhận `code` hoặc `locationType`. Parent phải đúng loại; địa điểm để `isActive=true` thì parent phải active, địa điểm ngưng hoạt động thì được nằm dưới parent cũng đã ngưng. Cấp bậc cố định HEAD_OFFICE → BRANCH → WAREHOUSE nên không thể tạo chu trình.
 
 ---
 
@@ -402,7 +402,7 @@ Thực hiện soft delete: đặt `isActive=false` và ghi `deletedAt`. Endpoint
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Body, query param hoặc kiểu enum không hợp lệ |
-| 400 | `ORGANIZATION_HIERARCHY_INVALID` | Parent inactive, sai loại hoặc tạo chu trình |
+| 400 | `ORGANIZATION_HIERARCHY_INVALID` | Parent sai loại, hoặc parent inactive mà mục này active |
 | 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
 | 403 | `FORBIDDEN` | Không có permission tương ứng |
 | 404 | `ORGANIZATION_UNIT_NOT_FOUND` | Đơn vị không tồn tại hoặc đã bị xóa mềm |

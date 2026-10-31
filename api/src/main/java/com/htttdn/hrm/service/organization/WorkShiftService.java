@@ -102,7 +102,8 @@ public class WorkShiftService {
             request.crossesMidnight()
         );
         if (scheduleChanged(shift, request) && attendanceRecordRepository.existsByShiftId(shiftId)) {
-            throw resourceInUse(
+            throw new ConflictException(
+                ErrorCode.WORK_SHIFT_HAS_ATTENDANCE,
                 "Work shift schedule has attendance history; create a new shift instead"
             );
         }

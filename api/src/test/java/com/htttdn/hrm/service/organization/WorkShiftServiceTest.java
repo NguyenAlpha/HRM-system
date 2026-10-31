@@ -12,8 +12,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.dto.request.workshift.CreateWorkShiftRequest;
+import com.htttdn.hrm.dto.request.workshift.UpdateWorkShiftRequest;
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.WorkShift;
 import com.htttdn.hrm.exception.BusinessException;
+import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.WorkShiftRepository;
@@ -56,6 +59,20 @@ class WorkShiftServiceTest {
         var result = service().create(request("22:00", "06:00", true, 30, "02:00"));
 
         assertEquals(LocalTime.of(2, 0), result.breakStartTime());
+    }
+
+    @Test
+    void updateRejectsNewHoursOnceTheShiftHasAttendance() {
+        when(workShiftRepository.getRequiredForUpdate(1L)).thenReturn(WorkShift.builder().id(1L)
+            .startTime(LocalTime.of(8, 0)).endTime(LocalTime.of(17, 0)).breakMinutes(60)
+            .breakStartTime(LocalTime.of(12, 0)).standardWorkMinutes(480).graceLateMinutes(0)
+            .crossesMidnight(false).isActive(true).build());
+        when(attendanceRecordRepository.existsByShiftId(1L)).thenReturn(true);
+        var request = new UpdateWorkShiftRequest("Day", LocalTime.of(9, 0), LocalTime.of(18, 0), 60,
+            LocalTime.of(12, 0), 480, 0, false, true);
+
+        ConflictException exception = assertThrows(ConflictException.class, () -> service().update(1L, request));
+        assertEquals(ErrorCode.WORK_SHIFT_HAS_ATTENDANCE, exception.getErrorCode());
     }
 
     private static CreateWorkShiftRequest request(String start, String end, boolean overnight, int breakMinutes,

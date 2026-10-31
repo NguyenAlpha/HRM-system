@@ -109,13 +109,13 @@ Khai báo một ngày lễ. Lịch nghỉ lễ, Tết hưởng nguyên lương n
 | Field | Type | Bắt buộc | Ràng buộc |
 |:------|:-----|:--------:|:----------|
 | `date` | date | ✅ | Chưa có ngày lễ khác cùng ngày |
-| `name` | string | ✅ | Không rỗng, tối đa 150 ký tự |
+| `name` | string | ✅ | Không rỗng, tối đa 30 ký tự |
 
 ### Response `201 Created`
 
 Trả `CompanyHolidayResponse` như phần tử của `GET /api/company-holidays`.
 
-Ngày lễ thay đổi lịch làm việc, nên nếu ngày đó thuộc kỳ lương `CALCULATED` thì kỳ được đưa về `DRAFT` để tính lại.
+Ngày lễ thay đổi lịch làm việc, nên nếu ngày đó thuộc kỳ lương `CALCULATED` thì kỳ được đưa về `DRAFT` để tính lại. Các ngày công đã tạo sẵn của ngày đó mà chưa có gì (còn `MISSING_PUNCH`, chưa chấm giờ, chưa gắn đơn nghỉ) bị xóa. Nếu đã có ngày công của ai đó được ghi nhận (chấm giờ, điều chỉnh hoặc gắn đơn nghỉ) thì bị từ chối, vì `payableMinutes` đã tính theo ngày làm việc thường và sẽ không còn đúng.
 
 ### Lỗi
 
@@ -123,14 +123,15 @@ Ngày lễ thay đổi lịch làm việc, nên nếu ngày đó thuộc kỳ l�
 |:----:|:-------------|:-----------|
 | 400 | `VALIDATION_ERROR` | Thiếu `date` hoặc `name` sai |
 | 403 | `FORBIDDEN` | Không có `organization.manage` phạm vi `COMPANY` |
-| 409 | `CONFLICT` | Đã có ngày lễ vào ngày này |
+| 409 | `HOLIDAY_DATE_TAKEN` | Đã có ngày lễ vào ngày này |
+| 409 | `HOLIDAY_DAY_RECORDED` | Ngày này đã có ngày công được ghi nhận |
 | 409 | `PAYROLL_PERIOD_LOCKED` | Ngày thuộc kỳ lương đã duyệt, đã trả hoặc đã khóa |
 
 ---
 
 ## DELETE `/api/company-holidays/{id}`
 
-Xóa ngày lễ. Giống khi tạo, kỳ lương `CALCULATED` chứa ngày đó được đưa về `DRAFT`.
+Xóa ngày lễ. Giống khi tạo, kỳ lương `CALCULATED` chứa ngày đó được đưa về `DRAFT`. Ngày công của ngày đó được tạo ở lần `POST /api/attendance/prepare` kế tiếp (tháng hiện tại thì job chạy đêm tự tạo). Nếu đã có người chấm giờ hoặc được điều chỉnh công vào ngày lễ này thì bị từ chối (`HOLIDAY_DAY_RECORDED`), vì giờ làm ngày lễ chỉ được trả qua tăng ca.
 
 ### Lỗi
 
@@ -138,6 +139,7 @@ Xóa ngày lễ. Giống khi tạo, kỳ lương `CALCULATED` chứa ngày đó 
 |:----:|:-------------|:-----------|
 | 403 | `FORBIDDEN` | Không có `organization.manage` phạm vi `COMPANY` |
 | 404 | `RESOURCE_NOT_FOUND` | Ngày lễ không tồn tại |
+| 409 | `HOLIDAY_DAY_RECORDED` | Ngày này đã có ngày công được ghi nhận |
 | 409 | `PAYROLL_PERIOD_LOCKED` | Ngày thuộc kỳ lương đã duyệt, đã trả hoặc đã khóa |
 
 ---

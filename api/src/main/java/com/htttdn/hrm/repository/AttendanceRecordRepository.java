@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -50,6 +51,28 @@ public interface AttendanceRecordRepository extends JpaRepository<AttendanceReco
         ORDER BY record.workDate
         """)
     List<AttendanceRecord> findUntouchedFromForUpdate(@Param("employeeId") Long employeeId, @Param("from") LocalDate from);
+
+    /** Whether anyone's day on {@code workDate} has something recorded: punches, leave, or an HR adjustment. */
+    @Query("""
+        SELECT COUNT(record) > 0
+        FROM AttendanceRecord record
+        WHERE record.workDate = :workDate
+          AND (record.status <> com.htttdn.hrm.entity.enums.AttendanceStatus.MISSING_PUNCH
+            OR record.checkInAt IS NOT NULL
+            OR record.leaveRequest IS NOT NULL)
+        """)
+    boolean existsRecordedOn(@Param("workDate") LocalDate workDate);
+
+    /** Deletes everyone's prepared day on {@code workDate} that has nothing recorded yet. */
+    @Modifying
+    @Query("""
+        DELETE FROM AttendanceRecord record
+        WHERE record.workDate = :workDate
+          AND record.status = com.htttdn.hrm.entity.enums.AttendanceStatus.MISSING_PUNCH
+          AND record.checkInAt IS NULL
+          AND record.leaveRequest IS NULL
+        """)
+    void deleteUntouchedOn(@Param("workDate") LocalDate workDate);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT record FROM AttendanceRecord record WHERE record.employee.id = :employeeId AND record.workDate = :workDate")
