@@ -3,9 +3,11 @@ package com.htttdn.hrm.service.leave;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
@@ -65,7 +67,8 @@ public class LeaveEntitlementService {
 
     /**
      * Phép năm của mọi nhân viên trong scope {@code report.hr.read} có làm việc trong năm, xếp theo mã.
-     * Lọc thêm theo từ khóa (mã, tên, email) và đơn vị của phân công hiện tại.
+     * Lọc thêm theo từ khóa (mã, tên, email) và đơn vị của phân công chính vào ngày làm việc cuối của từng
+     * người trong năm (tính đến hôm nay).
      */
     @PreAuthorize("hasAuthority('report.hr.read')")
     @Transactional(readOnly = true)
@@ -79,23 +82,36 @@ public class LeaveEntitlementService {
                 builder.lessThanOrEqualTo(root.get("hireDate"), last),
                 builder.or(builder.isNull(root.get("terminationDate")),
                     builder.greaterThanOrEqualTo(root.get("terminationDate"), first))));
-        for (Specification<Employee> filter : Arrays.asList(
-            EmployeeSpecifications.matchesKeyword(keyword),
-            EmployeeSpecifications.currentlyAssignedTo(organizationUnitId, null, LocalDate.now(clock))
-        )) {
-            if (filter != null) {
-                specification = specification.and(filter);
-            }
+        Specification<Employee> matchesKeyword = EmployeeSpecifications.matchesKeyword(keyword);
+        if (matchesKeyword != null) {
+            specification = specification.and(matchesKeyword);
         }
         List<Employee> employees = employeeRepository.findAll(specification, Sort.by("employeeCode"));
         LocalDate today = LocalDate.now(clock);
-        Set<Long> visible = employeeAccessScopeService.visibleOnLastDay("report.hr.read", employees,
-            last.isBefore(today) ? last : today);
+        LocalDate lastSeen = last.isBefore(today) ? last : today;
+        Set<Long> visible = employeeAccessScopeService.visibleOnLastDay("report.hr.read", employees, lastSeen);
+        Set<Long> inUnit = organizationUnitId == null ? null : inUnitOnLastDay(employees, organizationUnitId, lastSeen);
         return employees.stream()
             .filter(employee -> visible.contains(employee.getId()))
+            .filter(employee -> inUnit == null || inUnit.contains(employee.getId()))
             .map(employee -> new EmployeeBalanceView(employee.getEmployeeCode(), employee.getFullName(),
                 buildBalance(employee, year, null)))
             .toList();
+    }
+
+    /**
+     * Ids whose primary assignment on their last working day up to {@code date} is in the unit, like the
+     * scope check, so someone who left or moved away later in the year stays under the unit they were in.
+     */
+    private Set<Long> inUnitOnLastDay(List<Employee> employees, Long organizationUnitId, LocalDate date) {
+        Map<LocalDate, List<Long>> idsByDay = employees.stream().collect(Collectors.groupingBy(
+            employee -> employee.employedFrom(employee.employedTo(date)),
+            Collectors.mapping(Employee::getId, Collectors.toList())));
+        Set<Long> inUnit = new HashSet<>();
+        idsByDay.forEach((day, ids) -> employeeAssignmentRepository.findCurrentPrimaryByEmployeeIds(ids, day).stream()
+            .filter(assignment -> assignment.getOrganizationUnit().getId().equals(organizationUnitId))
+            .forEach(assignment -> inUnit.add(assignment.getEmployee().getId())));
+        return inUnit;
     }
 
     /**

@@ -139,6 +139,14 @@ public class Employee extends AuditedEntity {
         return terminationDate != null && terminationDate.isBefore(periodEnd) ? terminationDate : periodEnd;
     }
 
+    /**
+     * The status the employment ends with: the scheduled one while the last working day is still ahead,
+     * otherwise the current status.
+     */
+    public EmploymentStatus endStatus() {
+        return scheduledEndStatus != null ? scheduledEndStatus : employmentStatus;
+    }
+
     /** Whether the employee works at least one day in [{@code from}, {@code to}]. */
     public boolean isEmployedDuring(LocalDate from, LocalDate to) {
         return !hireDate.isAfter(to) && (terminationDate == null || !terminationDate.isBefore(from));

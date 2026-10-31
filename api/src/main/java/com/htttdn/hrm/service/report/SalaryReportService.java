@@ -11,13 +11,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.dto.response.report.DistributionItemResponse;
 import com.htttdn.hrm.dto.response.report.PayrollSalaryReportResponse;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeeSalaryHistory;
 import com.htttdn.hrm.entity.enums.EmploymentStatus;
-import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.EmployeeSalaryHistoryRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -52,7 +50,6 @@ public class SalaryReportService {
      * @param employmentStatus lọc theo trạng thái làm việc (null → không lọc)
      * @return thống kê lương; trung bình/thấp nhất/cao nhất là null khi không ai có lương
      * @throws com.htttdn.hrm.exception.BusinessException ngày ở tương lai (→ 400 {@code VALIDATION_ERROR})
-     * @throws ConflictException một nhân viên có hai mức lương cùng hiệu lực (→ 409 {@code CONFLICT})
      */
     @PreAuthorize("hasAuthority('report.payroll.read')")
     public PayrollSalaryReportResponse getSalaryReport(
@@ -73,14 +70,9 @@ public class SalaryReportService {
             : employeeSalaryHistoryRepository.findEffectiveForEmployees(employeeIds, asOfDate);
 
         Map<Long, BigDecimal> salaries = new HashMap<>();
+        // excl_employee_salary_history_overlap: một người có nhiều nhất một mức lương hiệu lực mỗi ngày.
         for (EmployeeSalaryHistory salaryHistory : salaryHistories) {
-            Long employeeId = salaryHistory.getEmployee().getId();
-            if (salaries.put(employeeId, salaryHistory.getBaseSalary()) != null) {
-                throw new ConflictException(
-                    ErrorCode.CONFLICT,
-                    "Employee has overlapping basic salaries at " + asOfDate
-                );
-            }
+            salaries.put(salaryHistory.getEmployee().getId(), salaryHistory.getBaseSalary());
         }
 
         Map<String, Long> salaryCounts = initializedSalaryCounts();

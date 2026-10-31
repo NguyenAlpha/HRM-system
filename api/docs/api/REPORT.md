@@ -61,11 +61,14 @@ Yêu cầu `report.hr.read`. `year` bắt buộc (2000–9999) và không đư�
   nghỉ việc chia quân số bình quân `(đầu kỳ + cuối kỳ) / 2`.
 - `months`: các chỉ số trên theo từng tháng.
 - `events`: danh sách từng lần vào làm (`HIRE`) và nghỉ việc (`TERMINATION`, kèm trạng thái kết thúc và lý do).
+  Người đã được duyệt nghỉ mà chưa tới ngày làm việc cuối (trong tháng hiện tại) mang trạng thái kết thúc đã lên lịch.
 
 Người nghỉ việc ngày *d* không còn tính vào quân số cuối ngày *d*, nên luôn có
 `đầu kỳ + vào − nghỉ = cuối kỳ`. Với role theo đơn vị hoặc địa điểm, phạm vi được xét vào ngày làm việc
 cuối cùng của từng người trong kỳ, vì phân công của người đã nghỉ đã đóng; nhờ vậy người rời đơn vị vẫn
-được đếm. Hồ sơ xóa mềm (tạo nhầm) không được tính.
+được đếm. Riêng với các role này, điều chuyển giữa các đơn vị/địa điểm không được tính là vào hay nghỉ:
+người chuyển đến hoặc chuyển đi chỉ làm quân số đầu/cuối kỳ thay đổi, nên đẳng thức trên có thể lệch đúng
+bằng số người điều chuyển. Với phạm vi toàn công ty đẳng thức luôn đúng. Hồ sơ xóa mềm (tạo nhầm) không được tính.
 
 ## Tình hình nhân sự theo tháng
 
@@ -82,7 +85,8 @@ Response gồm:
 - `absentDays`: tổng ngày vắng không phép.
 - `rows`: từng người làm ít nhất một ngày trong tháng (sắp theo mã nhân viên), gồm đơn vị và chức danh
   tại ngày cuối cùng họ làm trong tháng, `status` là `NEW_HIRE` (vào làm trong tháng), `TERMINATED`
-  (nghỉ việc trong tháng, kèm `terminationDate` và `endStatus`) hoặc `ACTIVE`; số ngày nghỉ theo loại
+  (nghỉ việc trong tháng, kèm `terminationDate` và `endStatus`; người chưa tới ngày làm việc cuối mang
+  trạng thái kết thúc đã lên lịch) hoặc `ACTIVE`; số ngày nghỉ theo loại
   (`annualLeaveDays`, `sickLeaveDays`, `maternityLeaveDays`, `unpaidLeaveDays`, `otherLeaveDays`), tổng
   `leaveDays` và `absentDays`.
 
@@ -100,7 +104,8 @@ Yêu cầu `report.hr.read`. Trả mỗi nhân viên trong phạm vi có làm vi
 (`employeeCode`, `employeeName`, `balance`), xếp theo mã. `balance` cùng dạng với
 `GET /api/leave-entitlements/employees/{employeeId}`: phút được cấp, đã dùng, đang chờ duyệt, còn lại và
 số phút một ngày công. `keyword` lọc theo mã, họ tên hoặc email công việc; `organizationUnitId` theo đơn
-vị của phân công hiện tại. Phạm vi được xét như báo cáo biến động nhân sự.
+vị của phân công chính vào ngày làm việc cuối của từng người trong năm (tính đến hôm nay), nên người đã nghỉ
+hoặc đã chuyển đi trong năm vẫn nằm ở đơn vị cũ. Phạm vi được xét như báo cáo biến động nhân sự.
 
 ## Quỹ lương, bảo hiểm và thuế
 

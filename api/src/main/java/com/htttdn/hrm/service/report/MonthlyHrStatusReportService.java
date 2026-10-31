@@ -127,7 +127,7 @@ public class MonthlyHrStatusReportService {
                 assignment == null ? null : assignment.getPosition().getTitle(),
                 employee.getHireDate(), terminated ? ended : null,
                 terminated ? "TERMINATED" : hired ? "NEW_HIRE" : "ACTIVE",
-                terminated ? employee.getEmploymentStatus() : null,
+                terminated ? employee.endStatus() : null,
                 days(byType.get(LeaveType.ANNUAL)), days(byType.get(LeaveType.SICK)), days(byType.get(LeaveType.MATERNITY)),
                 days(byType.get(LeaveType.UNPAID)), days(byType.get(LeaveType.OTHER)), total, absent));
         }

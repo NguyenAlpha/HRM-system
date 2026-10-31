@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.htttdn.hrm.dto.response.report.MonthlyHrStatusReportResponse;
 import com.htttdn.hrm.dto.response.report.TurnoverReportResponse;
+import com.htttdn.hrm.entity.enums.EmploymentStatus;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -112,6 +113,21 @@ class HrReportIntegrationTest {
             .sorted(java.util.Comparator.comparing(row -> row.balance().employeeId()))
             .map(row -> row.balance().grantedMinutes()).toList());
         assertEquals(0, leaveEntitlementService.balancesForReport(2023, null, null).size());
+        // Filtering by the unit keeps the leavers: their unit is the one of their last working day.
+        assertEquals(3, leaveEntitlementService.balancesForReport(2025, null, unitId).size());
+    }
+
+    @Test
+    void aScheduledEndShowsTheStatusTheEmploymentWillEndWith() {
+        Long scheduledId = employee(unitId, "2025-01-01", "2025-06-20", "ACTIVE");
+        jdbc.update("UPDATE employees SET scheduled_end_status = 'RESIGNED', scheduled_end_by_account_id = ?, termination_reason = 'Nghỉ' WHERE id = ?",
+            creatorAccountId, scheduledId);
+
+        assertEquals(EmploymentStatus.RESIGNED,
+            row(monthlyHrStatusReportService.getMonthlyStatusReport(2025, 6), scheduledId).endStatus());
+        assertEquals(EmploymentStatus.RESIGNED, turnoverReportService.getTurnoverReport(2025).events().stream()
+            .filter(event -> event.employeeId().equals(scheduledId) && "TERMINATION".equals(event.type()))
+            .findFirst().orElseThrow().endStatus());
     }
 
     @Test

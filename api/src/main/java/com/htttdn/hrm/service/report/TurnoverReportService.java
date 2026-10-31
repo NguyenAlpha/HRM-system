@@ -103,6 +103,6 @@ public class TurnoverReportService {
     private TurnoverReportResponse.TurnoverEvent event(Employee employee, String type, LocalDate date) {
         boolean termination = "TERMINATION".equals(type);
         return new TurnoverReportResponse.TurnoverEvent(employee.getId(), employee.getEmployeeCode(), employee.getFullName(), type, date,
-            termination ? employee.getEmploymentStatus() : null, termination ? employee.getTerminationReason() : null);
+            termination ? employee.endStatus() : null, termination ? employee.getTerminationReason() : null);
     }
 }

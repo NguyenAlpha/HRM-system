@@ -99,12 +99,17 @@ public class ReportSupport {
         List<Employee> candidates = employeeRepository.findAll(notDeleted()
             .and(hiredBy(hiredBy))
             .and(notEndedBefore(notEndedBefore)));
-        // Phạm vi toàn công ty: ai cũng thấy. Phạm vi hẹp: mỗi ngày một query, nhớ lại để không query lặp.
-        Map<LocalDate, Set<Long>> visibleCache = new HashMap<>();
-        Function<LocalDate, Set<Long>> visibleAt = date -> scope.companyWide()
-            ? candidates.stream().map(Employee::getId).collect(Collectors.toSet())
-            : visibleCache.computeIfAbsent(date, at -> employeeRepository.findAll(notDeleted().and(scope.toSpecification(at)))
+        // Phạm vi toàn công ty: ai cũng thấy, dựng một lần. Phạm vi hẹp: mỗi ngày một query, nhớ lại để không query lặp.
+        Function<LocalDate, Set<Long>> visibleAt;
+        if (scope.companyWide()) {
+            Set<Long> everyone = candidates.stream().map(Employee::getId).collect(Collectors.toSet());
+            visibleAt = date -> everyone;
+        } else {
+            Map<LocalDate, Set<Long>> visibleCache = new HashMap<>();
+            visibleAt = date -> visibleCache.computeIfAbsent(date, at -> employeeRepository
+                .findAll(notDeleted().and(scope.toSpecification(at)))
                 .stream().map(Employee::getId).collect(Collectors.toSet()));
+        }
         return new Population(candidates, visibleAt);
     }
 
