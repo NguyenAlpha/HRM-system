@@ -74,10 +74,16 @@ hoặc khởi động lại.
 
 Mở terminal thứ nhất.
 
+API cần `JWT_SECRET` (khóa ký JWT, Base64, tối thiểu 32 bytes); không có thì không khởi động. Mỗi máy tự tạo
+một khóa và không commit nó.
+
 PowerShell trên Windows:
 
 ```powershell
 Set-Location api
+$bytes = New-Object byte[] 32
+[System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+$env:JWT_SECRET = [Convert]::ToBase64String($bytes)
 ./mvnw.cmd spring-boot:run
 ```
 
@@ -85,8 +91,13 @@ macOS/Linux:
 
 ```bash
 cd api
+export JWT_SECRET=$(openssl rand -base64 32)
 ./mvnw spring-boot:run
 ```
+
+Biến chỉ sống trong terminal đó. Muốn khỏi đặt lại mỗi lần, lưu một khóa cố định vào biến môi trường của tài
+khoản (Windows: `[Environment]::SetEnvironmentVariable("JWT_SECRET", "<khóa>", "User")`) hoặc vào run
+configuration của IDE. Đổi khóa thì các phiên đăng nhập cũ hết hiệu lực.
 
 API khởi động thành công khi log hiển thị ứng dụng đã start trên port `8080`. Trong lần chạy
 đầu tiên, Flyway tự động tạo schema và các seeder khởi tạo dữ liệu phát triển.
@@ -96,15 +107,15 @@ Swagger UI có tại `http://localhost:8080/swagger-ui.html`; xem
 
 ### Biến môi trường của API
 
-Các giá trị mặc định đã khớp với `docker-compose.yaml`; local development không bắt buộc
-phải khai báo thêm biến môi trường.
+Các giá trị mặc định đã khớp với `docker-compose.yaml`; local development chỉ bắt buộc
+khai báo `JWT_SECRET`.
 
 | Biến | Mặc định | Ý nghĩa |
 |:-----|:---------|:--------|
 | `DB_URL` | `jdbc:postgresql://localhost:5432/hrm` | JDBC URL của PostgreSQL |
 | `DB_USERNAME` | `hrm-user` | Database username |
 | `DB_PASSWORD` | `hrm-password` | Database password |
-| `JWT_SECRET` | Secret phát triển trong properties | Secret Base64, tối thiểu 32 bytes sau decode |
+| `JWT_SECRET` | Không có, bắt buộc | Secret Base64, tối thiểu 32 bytes sau decode |
 | `JWT_ISSUER` | `https://hrm.local` | JWT issuer |
 | `JWT_ACCESS_TOKEN_EXPIRATION_SECONDS` | `900` | Thời gian sống access token |
 | `JWT_REFRESH_TOKEN_EXPIRATION_DAYS` | `30` | Thời gian sống refresh token |

@@ -151,6 +151,7 @@ docker compose up -d database
 
 # 2. API (http://localhost:8080)
 cd api
+export JWT_SECRET=$(openssl rand -base64 32)   # required signing key, see docs/SETUP.md for Windows
 sh ./mvnw spring-boot:run          # Windows: ./mvnw.cmd spring-boot:run
 
 # 3. Web (http://localhost:3000), in another terminal

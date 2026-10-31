@@ -8,7 +8,7 @@
 
 ## Chạy local
 
-Khởi động API từ thư mục `api`:
+Khởi động API từ thư mục `api`, với `JWT_SECRET` đã đặt (xem [SETUP.md](../../../docs/SETUP.md)):
 
 ```powershell
 ./mvnw.cmd spring-boot:run
