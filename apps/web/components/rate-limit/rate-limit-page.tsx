@@ -103,7 +103,7 @@ export function RateLimitPage() {
           <div className="flex flex-wrap items-center justify-end gap-2">
             {updatedAt && (
               <span className="text-xs text-muted-foreground tabular-nums">
-                Cập nhật lúc {updatedAt.toLocaleTimeString("vi-VN")}
+                Cập nhật lúc {updatedAt.toLocaleTimeString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
               </span>
             )}
             <Button type="button" variant="outline" size="sm" aria-pressed={autoRefresh}

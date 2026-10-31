@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -63,6 +64,7 @@ const bootstrapSchema = z
 type BootstrapValues = z.infer<typeof bootstrapSchema>
 
 export function CompanyOwnerProvision({ onSessionExpired }: { onSessionExpired: () => void }) {
+  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<CompanyOwnerProvisioningResult | null>(null)
 
@@ -96,6 +98,8 @@ export function CompanyOwnerProvision({ onSessionExpired }: { onSessionExpired: 
         directorAppointmentReason: values.directorAppointmentReason.trim(),
       })
       setResult(response)
+      // The company details were replaced; the server layout reloads the name and logo in the sidebar.
+      router.refresh()
       toast.success(`Đã khởi tạo Company Owner ${response.fullName}`)
     } catch (caught) {
       if (isPortalSessionExpired(caught)) onSessionExpired()
