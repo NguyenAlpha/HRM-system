@@ -18,6 +18,7 @@ export function OrganizationReferenceManager({ portal, onSessionExpired }: { por
   const has = (code: string) => session.account.permissions.some((permission) => permission.code === code)
   // Holidays go through the HRM workforce proxy, so the Admin Console does not list them.
   const canReadHolidays = portal === "hrm" && has("holiday.read")
+  const canManage = has("organization.manage")
 
   return (
     // No card around the tabs: the page header already names the catalogue.
@@ -32,24 +33,24 @@ export function OrganizationReferenceManager({ portal, onSessionExpired }: { por
       </TabsList>
 
       <TabsContent value="units" className="mt-4 grid gap-4">
-        <OrganizationUnitManager portal={portal} onSessionExpired={onSessionExpired} />
+        <OrganizationUnitManager portal={portal} canManage={canManage} onSessionExpired={onSessionExpired} />
       </TabsContent>
 
       <TabsContent value="locations" className="mt-4 grid gap-4">
-        <WorkLocationManager portal={portal} onSessionExpired={onSessionExpired} />
+        <WorkLocationManager portal={portal} canManage={canManage} onSessionExpired={onSessionExpired} />
       </TabsContent>
 
       <TabsContent value="positions" className="mt-4 grid gap-4">
-        <JobPositionManager portal={portal} onSessionExpired={onSessionExpired} />
+        <JobPositionManager portal={portal} canManage={canManage} onSessionExpired={onSessionExpired} />
       </TabsContent>
 
       <TabsContent value="shifts" className="mt-4 grid gap-4">
-        <WorkShiftManager portal={portal} onSessionExpired={onSessionExpired} />
+        <WorkShiftManager portal={portal} canManage={canManage} onSessionExpired={onSessionExpired} />
       </TabsContent>
 
       {canReadHolidays && (
         <TabsContent value="holidays" className="mt-4 grid gap-4">
-          <CompanyHolidayManager canManage={has("organization.manage")} />
+          <CompanyHolidayManager canManage={canManage} />
         </TabsContent>
       )}
 

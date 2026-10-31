@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react"
@@ -73,7 +73,12 @@ type UnitValues = z.infer<typeof unitSchema>
 
 const EMPTY_FORM: UnitValues = { code: "", name: "", unitType: "", parentUnitId: "", isActive: "true" }
 
-export function OrganizationUnitManager({ portal, onSessionExpired }: { portal: Portal; onSessionExpired: () => void }) {
+/** `canManage` (organization.manage) shows the create, edit and delete actions; without it the list is read-only. */
+export function OrganizationUnitManager({ portal, canManage, onSessionExpired }: {
+  portal: Portal
+  canManage: boolean
+  onSessionExpired: () => void
+}) {
   const [units, setUnits] = useState<OrganizationUnit[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -85,17 +90,17 @@ export function OrganizationUnitManager({ portal, onSessionExpired }: { portal: 
   const [deleting, setDeleting] = useState(false)
 
   const {
+    control,
     register,
     handleSubmit,
     reset,
-    watch,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<UnitValues>({ resolver: zodResolver(unitSchema), defaultValues: EMPTY_FORM })
 
-  const unitTypeValue = watch("unitType")
-  const parentUnitIdValue = watch("parentUnitId")
-  const isActiveValue = watch("isActive")
+  const unitTypeValue = useWatch({ control, name: "unitType" })
+  const parentUnitIdValue = useWatch({ control, name: "parentUnitId" })
+  const isActiveValue = useWatch({ control, name: "isActive" })
 
   const unitTypeItems = useMemo(
     () => Object.fromEntries(ORGANIZATION_UNIT_TYPES.map((type) => [type, ORGANIZATION_UNIT_TYPE_LABELS[type]])),
@@ -201,9 +206,11 @@ export function OrganizationUnitManager({ portal, onSessionExpired }: { portal: 
         <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
           <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
         </Button>
-        <Button type="button" size="sm" onClick={openCreate}>
-          <Plus /> Thêm đơn vị
-        </Button>
+        {canManage && (
+          <Button type="button" size="sm" onClick={openCreate}>
+            <Plus /> Thêm đơn vị
+          </Button>
+        )}
       </div>
 
       <ErrorAlert error={error} />
@@ -241,8 +248,12 @@ export function OrganizationUnitManager({ portal, onSessionExpired }: { portal: 
                   <Badge variant={unit.isActive ? "secondary" : "outline"}>{unit.isActive ? "Hoạt động" : "Tạm tắt"}</Badge>
                 </TableCell>
                 <RowActionsCell label={unit.code}>
-                  <RowActionItem icon={Pencil} onClick={() => openEdit(unit)}>Sửa</RowActionItem>
-                  <RowActionItem icon={Trash2} destructive onClick={() => setUnitToDelete(unit)}>Xóa</RowActionItem>
+                  {canManage && (
+                    <>
+                      <RowActionItem icon={Pencil} onClick={() => openEdit(unit)}>Sửa</RowActionItem>
+                      <RowActionItem icon={Trash2} destructive onClick={() => setUnitToDelete(unit)}>Xóa</RowActionItem>
+                    </>
+                  )}
                 </RowActionsCell>
               </TableRow>
             ))}

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react"
@@ -72,7 +72,12 @@ type PositionValues = z.infer<typeof positionSchema>
 
 const EMPTY_FORM: PositionValues = { code: "", title: "", description: "", isManagerial: "false", isActive: "true" }
 
-export function JobPositionManager({ portal, onSessionExpired }: { portal: Portal; onSessionExpired: () => void }) {
+/** `canManage` (organization.manage) shows the create, edit and delete actions; without it the list is read-only. */
+export function JobPositionManager({ portal, canManage, onSessionExpired }: {
+  portal: Portal
+  canManage: boolean
+  onSessionExpired: () => void
+}) {
   const [positions, setPositions] = useState<JobPosition[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -84,16 +89,16 @@ export function JobPositionManager({ portal, onSessionExpired }: { portal: Porta
   const [deleting, setDeleting] = useState(false)
 
   const {
+    control,
     register,
     handleSubmit,
     reset,
-    watch,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<PositionValues>({ resolver: zodResolver(positionSchema), defaultValues: EMPTY_FORM })
 
-  const isManagerialValue = watch("isManagerial")
-  const isActiveValue = watch("isActive")
+  const isManagerialValue = useWatch({ control, name: "isManagerial" })
+  const isActiveValue = useWatch({ control, name: "isActive" })
   const booleanItems = { true: "Có", false: "Không" }
   const statusItems = { true: "Hoạt động", false: "Tạm tắt" }
 
@@ -190,9 +195,11 @@ export function JobPositionManager({ portal, onSessionExpired }: { portal: Porta
         <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
           <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
         </Button>
-        <Button type="button" size="sm" onClick={openCreate}>
-          <Plus /> Thêm vị trí
-        </Button>
+        {canManage && (
+          <Button type="button" size="sm" onClick={openCreate}>
+            <Plus /> Thêm vị trí
+          </Button>
+        )}
       </div>
 
       <ErrorAlert error={error} />
@@ -230,8 +237,12 @@ export function JobPositionManager({ portal, onSessionExpired }: { portal: Porta
                   <Badge variant={position.isActive ? "secondary" : "outline"}>{position.isActive ? "Hoạt động" : "Tạm tắt"}</Badge>
                 </TableCell>
                 <RowActionsCell label={position.code}>
-                  <RowActionItem icon={Pencil} onClick={() => openEdit(position)}>Sửa</RowActionItem>
-                  <RowActionItem icon={Trash2} destructive onClick={() => setPositionToDelete(position)}>Xóa</RowActionItem>
+                  {canManage && (
+                    <>
+                      <RowActionItem icon={Pencil} onClick={() => openEdit(position)}>Sửa</RowActionItem>
+                      <RowActionItem icon={Trash2} destructive onClick={() => setPositionToDelete(position)}>Xóa</RowActionItem>
+                    </>
+                  )}
                 </RowActionsCell>
               </TableRow>
             ))}

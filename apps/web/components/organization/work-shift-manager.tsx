@@ -89,7 +89,12 @@ const hhmm = (time: string | null) => time ? time.slice(0, 5) : ""
 
 const fieldError = (message?: string) => message && <p className="text-xs font-medium text-destructive">{message}</p>
 
-export function WorkShiftManager({ portal, onSessionExpired }: { portal: Portal; onSessionExpired: () => void }) {
+/** `canManage` (organization.manage) shows the create, edit and delete actions; without it the list is read-only. */
+export function WorkShiftManager({ portal, canManage, onSessionExpired }: {
+  portal: Portal
+  canManage: boolean
+  onSessionExpired: () => void
+}) {
   const [shifts, setShifts] = useState<WorkShift[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -214,9 +219,11 @@ export function WorkShiftManager({ portal, onSessionExpired }: { portal: Portal;
         <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
           <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
         </Button>
-        <Button type="button" size="sm" onClick={openCreate}>
-          <Plus /> Thêm ca
-        </Button>
+        {canManage && (
+          <Button type="button" size="sm" onClick={openCreate}>
+            <Plus /> Thêm ca
+          </Button>
+        )}
       </div>
 
       <ErrorAlert error={error} />
@@ -261,8 +268,12 @@ export function WorkShiftManager({ portal, onSessionExpired }: { portal: Portal;
                   <Badge variant={shift.isActive ? "secondary" : "outline"}>{shift.isActive ? "Hoạt động" : "Tạm tắt"}</Badge>
                 </TableCell>
                 <RowActionsCell label={shift.code}>
-                  <RowActionItem icon={Pencil} onClick={() => openEdit(shift)}>Sửa</RowActionItem>
-                  <RowActionItem icon={Trash2} destructive onClick={() => setShiftToDelete(shift)}>Xóa</RowActionItem>
+                  {canManage && (
+                    <>
+                      <RowActionItem icon={Pencil} onClick={() => openEdit(shift)}>Sửa</RowActionItem>
+                      <RowActionItem icon={Trash2} destructive onClick={() => setShiftToDelete(shift)}>Xóa</RowActionItem>
+                    </>
+                  )}
                 </RowActionsCell>
               </TableRow>
             ))}

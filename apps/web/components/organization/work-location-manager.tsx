@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react"
@@ -64,7 +64,7 @@ import {
 const CODE_PATTERN = /^[A-Z][A-Z0-9_-]*$/
 
 const locationSchema = z.object({
-  code: z.string().trim().min(1, "Bắt buộc").max(12, "Tối đa 12 ký tự").regex(CODE_PATTERN, "Chữ hoa, số, gạch dưới/ngang; bắt đầu bằng chữ cái"),
+  code: z.string().trim().min(1, "Bắt buộc").max(20, "Tối đa 20 ký tự").regex(CODE_PATTERN, "Chữ hoa, số, gạch dưới/ngang; bắt đầu bằng chữ cái"),
   name: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự"),
   locationType: z.string().min(1, "Bắt buộc"),
   address: z.string().trim().min(1, "Bắt buộc"),
@@ -77,7 +77,12 @@ type LocationValues = z.infer<typeof locationSchema>
 
 const EMPTY_FORM: LocationValues = { code: "", name: "", locationType: "", address: "", phone: "", parentLocationId: "", isActive: "true" }
 
-export function WorkLocationManager({ portal, onSessionExpired }: { portal: Portal; onSessionExpired: () => void }) {
+/** `canManage` (organization.manage) shows the create, edit and delete actions; without it the list is read-only. */
+export function WorkLocationManager({ portal, canManage, onSessionExpired }: {
+  portal: Portal
+  canManage: boolean
+  onSessionExpired: () => void
+}) {
   const [locations, setLocations] = useState<WorkLocation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -89,17 +94,17 @@ export function WorkLocationManager({ portal, onSessionExpired }: { portal: Port
   const [deleting, setDeleting] = useState(false)
 
   const {
+    control,
     register,
     handleSubmit,
     reset,
-    watch,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<LocationValues>({ resolver: zodResolver(locationSchema), defaultValues: EMPTY_FORM })
 
-  const locationTypeValue = watch("locationType")
-  const parentLocationIdValue = watch("parentLocationId")
-  const isActiveValue = watch("isActive")
+  const locationTypeValue = useWatch({ control, name: "locationType" })
+  const parentLocationIdValue = useWatch({ control, name: "parentLocationId" })
+  const isActiveValue = useWatch({ control, name: "isActive" })
 
   const locationTypeItems = useMemo(
     () => Object.fromEntries(LOCATION_TYPES.map((type) => [type, LOCATION_TYPE_LABELS[type]])),
@@ -211,9 +216,11 @@ export function WorkLocationManager({ portal, onSessionExpired }: { portal: Port
         <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
           <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
         </Button>
-        <Button type="button" size="sm" onClick={openCreate}>
-          <Plus /> Thêm địa điểm
-        </Button>
+        {canManage && (
+          <Button type="button" size="sm" onClick={openCreate}>
+            <Plus /> Thêm địa điểm
+          </Button>
+        )}
       </div>
 
       <ErrorAlert error={error} />
@@ -256,8 +263,12 @@ export function WorkLocationManager({ portal, onSessionExpired }: { portal: Port
                   <Badge variant={location.isActive ? "secondary" : "outline"}>{location.isActive ? "Hoạt động" : "Tạm tắt"}</Badge>
                 </TableCell>
                 <RowActionsCell label={location.code}>
-                  <RowActionItem icon={Pencil} onClick={() => openEdit(location)}>Sửa</RowActionItem>
-                  <RowActionItem icon={Trash2} destructive onClick={() => setLocationToDelete(location)}>Xóa</RowActionItem>
+                  {canManage && (
+                    <>
+                      <RowActionItem icon={Pencil} onClick={() => openEdit(location)}>Sửa</RowActionItem>
+                      <RowActionItem icon={Trash2} destructive onClick={() => setLocationToDelete(location)}>Xóa</RowActionItem>
+                    </>
+                  )}
                 </RowActionsCell>
               </TableRow>
             ))}

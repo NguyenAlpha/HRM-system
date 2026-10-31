@@ -603,6 +603,12 @@ export async function handleCompanyOwnerBootstrapRequest(request: Request): Prom
   return forwardWithSession(request, "admin", "/api/system/organization/company-owner")
 }
 
+// The Company Owner hands ownership to another employee; the API checks the role and the password.
+export async function handleCompanyOwnerTransferRequest(request: Request): Promise<NextResponse> {
+  if (request.method !== "POST") return methodNotAllowed()
+  return forwardWithSession(request, "hrm", "/api/company-owner/transfer")
+}
+
 const ROLE_ASSIGNMENT_REQUEST_ROUTES: Route[] = [
   { pattern: /^$/, methods: ["GET", "POST"] },
   { pattern: /^available-roles$/, methods: ["GET"] },

@@ -188,7 +188,9 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
         setOrgUnits(units)
         setWorkLocations(locations)
         setPositions(jobPositions)
-        setManagers(employeePage.content)
+        // Same rule as the assignment dialog: the API refuses a manager who no longer works here.
+        setManagers(employeePage.content.filter((candidate) =>
+          candidate.employmentStatus === "ACTIVE" || candidate.employmentStatus === "PROBATION"))
       })
       .catch((caught: unknown) => {
         if (!active) return

@@ -6,6 +6,8 @@ import { useEffect, useState } from "react"
 import { ArrowLeft, BadgeCheck, BriefcaseBusiness, CalendarCheck, CalendarX, KeyRound, Loader2, LogOut, Pencil, RefreshCw, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
+import { todayIso } from "@/components/account/account-access"
+import { ACCOUNT_STATUS_LABELS } from "@/components/account/account-actions"
 import { ErrorAlert } from "@/components/common/list-controls"
 import { ActionsMenu, RowActionItem, RowActionLink } from "@/components/common/row-actions"
 import { usePortalSession } from "@/components/portal/portal-shell"
@@ -61,20 +63,6 @@ import {
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import { formatDate } from "@/lib/format-date"
 
-const ACCOUNT_STATUS_LABELS: Record<string, string> = {
-  PENDING: "Chờ kích hoạt",
-  ACTIVE: "Đang hoạt động",
-  DISABLED: "Đã vô hiệu hóa",
-}
-
-function todayIsoDate() {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, "0")
-  const day = String(today.getDate()).padStart(2, "0")
-  return `${year}-${month}-${day}`
-}
-
 export function InfoField({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div className="min-w-0">
@@ -91,7 +79,7 @@ function AssignmentBadge({ assignment, currentAssignmentId }: {
   if (assignment.id === currentAssignmentId) {
     return <Badge variant="secondary">Hiện tại</Badge>
   }
-  const today = todayIsoDate()
+  const today = todayIso()
   if (assignment.effectiveFrom > today) {
     return <Badge variant="secondary">Sắp hiệu lực</Badge>
   }
@@ -363,7 +351,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
                         <dt className="text-xs text-muted-foreground">Trạng thái</dt>
                         <dd className="mt-1">
                           <Badge variant={detail.account.status === "ACTIVE" ? "secondary" : "outline"}>
-                            {ACCOUNT_STATUS_LABELS[detail.account.status] ?? detail.account.status}
+                            {ACCOUNT_STATUS_LABELS[detail.account.status]}
                           </Badge>
                         </dd>
                       </div>

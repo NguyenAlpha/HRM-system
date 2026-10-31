@@ -58,6 +58,8 @@ test.describe("Đăng nhập HRM (/login)", () => {
   })
 
   test("đăng nhập bằng mã nhân viên, viết hoa hay thường đều được", async ({ browser }) => {
+    // Two full sign-ins, each compiling pages on first visit under `next dev`.
+    test.slow()
     for (const code of [EMPLOYEE.employeeCode, EMPLOYEE.employeeCode.toLowerCase()]) {
       const context = await browser.newContext()
       const page = await context.newPage()

@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { ExternalLink, KeyRound, Pencil } from "lucide-react"
 
+import { ACCOUNT_STATUS_LABELS } from "@/components/account/account-actions"
 import { ErrorAlert } from "@/components/common/list-controls"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -150,12 +151,12 @@ export function EmployeeDetailDialog({ portal, employeeId, canUpdate, canProvisi
                 <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Tài khoản đăng nhập</p>
                 {detail.account ? (
                   <dl className="mt-2 grid grid-cols-2 gap-3">
-                    <Field label="Username" value={detail.account.username} />
+                    <Field label="Tên đăng nhập" value={detail.account.username} />
                     <div className="min-w-0">
                       <dt className="text-xs text-muted-foreground">Trạng thái</dt>
                       <dd className="mt-1">
                         <Badge variant={detail.account.status === "ACTIVE" ? "secondary" : "outline"}>
-                          {detail.account.status}
+                          {ACCOUNT_STATUS_LABELS[detail.account.status]}
                         </Badge>
                       </dd>
                     </div>

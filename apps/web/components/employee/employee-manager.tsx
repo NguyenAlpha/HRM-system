@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { BadgeCheck, BriefcaseBusiness, Eye, KeyRound, Pencil, Plus, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 
+import { ACCOUNT_STATUS_LABELS } from "@/components/account/account-actions"
 import { EmployeeAssignmentDialog } from "@/components/employee/employee-assignment-dialog"
 import { EmployeeConfirmDialog } from "@/components/employee/employee-confirm-dialog"
 import { EmployeeCreateDialog } from "@/components/employee/employee-create-dialog"
@@ -136,6 +137,7 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
           return
         }
         setData(result)
+        setError(null)
         setLoadedQuery(requestKey)
       })
       .catch((caught: unknown) => {
@@ -175,8 +177,6 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
       toast.error("Không thể tải hồ sơ nhân sự", { description: apiErrorMessage(caught) })
     }
   }
-
-
 
   return (
     <>
@@ -296,7 +296,7 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
                       {employee.account ? (
                         <div>
                           <span className="text-sm font-medium">{employee.account.username}</span>
-                          <span className="block text-xs text-muted-foreground">{employee.account.status}</span>
+                          <span className="block text-xs text-muted-foreground">{ACCOUNT_STATUS_LABELS[employee.account.status]}</span>
                         </div>
                       ) : canProvisionAccount ? (
                         <Tooltip>
