@@ -481,14 +481,14 @@ Sau khi đổi mật khẩu:
 
 | Biến môi trường | Mặc định | Ý nghĩa |
 |:----------------|:---------|:--------|
-| `JWT_SECRET` | Không có | Secret Base64, tối thiểu 32 bytes sau decode; bắt buộc để ứng dụng khởi động |
+| `JWT_SECRET` | Giá trị dev trong `application.properties` | Secret Base64, tối thiểu 32 bytes sau decode; môi trường deploy đặt giá trị riêng |
 | `JWT_ISSUER` | `https://hrm.local` | Giá trị claim `iss` và issuer được decoder chấp nhận |
 | `JWT_ACCESS_TOKEN_EXPIRATION_SECONDS` | `900` | Thời hạn access token theo giây |
 | `JWT_REFRESH_TOKEN_EXPIRATION_DAYS` | `30` | Thời hạn refresh token theo ngày |
 | `ACCOUNT_ACTIVATION_TOKEN_EXPIRATION_HOURS` | `24` | Thời hạn token kích hoạt tài khoản theo giờ |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3000` | Danh sách origin frontend, phân tách bằng dấu phẩy |
 
-Tạo secret phát triển bằng OpenSSL:
+Tạo secret riêng cho môi trường deploy bằng OpenSSL:
 
 ```bash
 openssl rand -base64 32
@@ -502,7 +502,7 @@ $bytes = New-Object byte[] 32
 $env:JWT_SECRET = [Convert]::ToBase64String($bytes)
 ```
 
-Không commit giá trị `JWT_SECRET` vào repository.
+Không commit secret của môi trường deploy vào repository; giá trị trong `application.properties` chỉ dùng cho máy dev.
 
 Biến `RATE_LIMIT_*` (giới hạn đăng nhập, refresh, kích hoạt và mọi API) được mô tả ở
 [RATE_LIMIT.md](../concepts/RATE_LIMIT.md#3-cấu-hình).

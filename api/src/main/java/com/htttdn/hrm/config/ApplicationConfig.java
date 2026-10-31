@@ -81,8 +81,7 @@ public class ApplicationConfig {
      */
     @Bean
     public JwtEncoder jwtEncoder(JwtProperties jwt) {
-        byte[] keyBytes = decodeAndValidateJwtSecret(jwt.secret());
-        SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
+        SecretKeySpec secretKey = jwtSecretKey(jwt.secret());
         return NimbusJwtEncoder.withSecretKey(secretKey)
             .algorithm(MacAlgorithm.HS256)
             .build();
@@ -101,8 +100,7 @@ public class ApplicationConfig {
      */
     @Bean
     public JwtDecoder jwtDecoder(JwtProperties jwt) {
-        byte[] keyBytes = decodeAndValidateJwtSecret(jwt.secret());
-        SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
+        SecretKeySpec secretKey = jwtSecretKey(jwt.secret());
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(secretKey)
             .macAlgorithm(MacAlgorithm.HS256)
             .build();
@@ -173,10 +171,10 @@ public class ApplicationConfig {
      * đặc quyền.
      *
      * @param encodedSecret secret lấy từ biến môi trường {@code JWT_SECRET}
-     * @return key bytes đã decode và kiểm tra
+     * @return khóa HMAC-SHA256 dựng từ key bytes đã decode và kiểm tra, dùng chung cho encoder và decoder
      * @throws IllegalStateException nếu secret thiếu, sai Base64 hoặc ngắn hơn 32 bytes
      */
-    private byte[] decodeAndValidateJwtSecret(String encodedSecret) {
+    private SecretKeySpec jwtSecretKey(String encodedSecret) {
         if (encodedSecret == null || encodedSecret.isBlank()) {
             throw new IllegalStateException(
                 "jwt.secret is required; set JWT_SECRET to a Base64-encoded value of at least 32 bytes"
@@ -192,6 +190,6 @@ public class ApplicationConfig {
         if (keyBytes.length < 32) {
             throw new IllegalStateException("jwt.secret must contain at least 32 bytes after Base64 decoding");
         }
-        return keyBytes;
+        return new SecretKeySpec(keyBytes, "HmacSHA256");
     }
 }
