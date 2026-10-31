@@ -964,38 +964,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/notifications": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["inbox"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/notifications/{id}/read": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["markRead"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/organization-units": {
         parameters: {
             query?: never;
@@ -2147,11 +2115,6 @@ export interface components {
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
-        ApiResultInboxView: {
-            data: components["schemas"]["InboxView"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-            success: boolean;
-        };
         ApiResultInteger: {
             /** Format: int32 */
             data: number | null;
@@ -2300,11 +2263,6 @@ export interface components {
         };
         ApiResultMonthlyHrStatusReportResponse: {
             data: components["schemas"]["MonthlyHrStatusReportResponse"] | null;
-            error: components["schemas"]["ErrorDetail"] | null;
-            success: boolean;
-        };
-        ApiResultNotificationView: {
-            data: components["schemas"]["NotificationView"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
@@ -3012,11 +2970,6 @@ export interface components {
             /** Format: int64 */
             totalEmployees: number;
         };
-        InboxView: {
-            items: components["schemas"]["NotificationView"][];
-            /** Format: int64 */
-            unreadCount: number;
-        };
         JobPositionResponse: {
             code: string;
             /** Format: date-time */
@@ -3096,23 +3049,6 @@ export interface components {
             terminations: number;
             /** Format: int32 */
             year: number;
-        };
-        NotificationView: {
-            /** Format: date-time */
-            createdAt: string;
-            employeeName: string;
-            /** Format: int64 */
-            id: number;
-            /** Format: int64 */
-            leaveRequestId: number;
-            /** @enum {string} */
-            leaveType: "ANNUAL" | "SICK" | "MATERNITY" | "UNPAID" | "OTHER";
-            /** Format: date-time */
-            readAt: string | null;
-            requiresApproval: boolean;
-            /** Format: date-time */
-            startAt: string;
-            type: string;
         };
         OrganizationCompanyOwnerProvisioningResponse: {
             accountProvisioning: components["schemas"]["AccountProvisioningResponse"];
@@ -5949,48 +5885,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultLeaveRequestView"];
-                };
-            };
-        };
-    };
-    inbox: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultInboxView"];
-                };
-            };
-        };
-    };
-    markRead: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiResultNotificationView"];
                 };
             };
         };

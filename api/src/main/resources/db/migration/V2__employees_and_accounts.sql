@@ -1,5 +1,6 @@
 -- Hồ sơ nhân sự, tài khoản đăng nhập và các token xác thực.
--- employees.deleted_by_account_id tham chiếu accounts nên FK được thêm sau khi accounts tồn tại.
+-- employees.deleted_by_account_id và scheduled_end_by_account_id tham chiếu accounts nên FK được thêm
+-- sau khi accounts tồn tại.
 
 CREATE TABLE employees (
     id BIGSERIAL PRIMARY KEY,
@@ -30,6 +31,12 @@ CREATE TABLE employees (
     deleted_at TIMESTAMPTZ,
     deleted_by_account_id BIGINT,
     deletion_reason TEXT,
+    -- HR kết thúc làm việc với ngày làm việc cuối trong tương lai: termination_date và termination_reason
+    -- được ghi ngay, còn trạng thái, phân công, tài khoản và role chỉ đóng sau ngày đó (job 00:10 mỗi đêm).
+    -- scheduled_end_status là trạng thái sẽ đặt; scheduled_end_by_account_id là người lên lịch, dùng làm
+    -- người thu hồi role khi job chạy.
+    scheduled_end_status VARCHAR(20),
+    scheduled_end_by_account_id BIGINT,
     CONSTRAINT chk_employees_gender CHECK (gender IN ('MALE', 'FEMALE', 'OTHER', 'UNDISCLOSED')),
     CONSTRAINT chk_employees_education_level
         CHECK (highest_education_level IN ('HIGH_SCHOOL', 'COLLEGE', 'BACHELOR', 'MASTER', 'DOCTORATE')),
@@ -38,10 +45,19 @@ CREATE TABLE employees (
     CONSTRAINT chk_employees_dates CHECK (
         seniority_start_date >= hire_date
         AND (termination_date IS NULL OR termination_date >= hire_date)
+    ),
+    CONSTRAINT chk_employees_scheduled_end CHECK (
+        (scheduled_end_status IS NULL AND scheduled_end_by_account_id IS NULL)
+        OR (scheduled_end_status IN ('RESIGNED', 'TERMINATED', 'RETIRED')
+            AND scheduled_end_by_account_id IS NOT NULL
+            AND employment_status IN ('PROBATION', 'ACTIVE')
+            AND termination_date IS NOT NULL
+            AND termination_reason IS NOT NULL)
     )
 );
 
 CREATE INDEX idx_employees_status ON employees (employment_status) WHERE deleted_at IS NULL;
+CREATE INDEX idx_employees_scheduled_end ON employees (termination_date) WHERE scheduled_end_status IS NOT NULL;
 
 -- Employee identity values used for account provisioning must be unique regardless of letter case.
 -- Unique theo LOWER(...) đã bao hàm unique phân biệt hoa thường nên không khai báo UNIQUE trên cột.
@@ -104,6 +120,9 @@ CREATE UNIQUE INDEX uq_accounts_email_lower
 ALTER TABLE employees
     ADD CONSTRAINT fk_employees_deleted_by_account FOREIGN KEY (deleted_by_account_id) REFERENCES accounts (id);
 
+ALTER TABLE employees
+    ADD CONSTRAINT fk_employees_scheduled_end_by_account FOREIGN KEY (scheduled_end_by_account_id) REFERENCES accounts (id);
+
 -- Refresh tokens are opaque credentials. Only their SHA-256 hashes are stored.
 CREATE TABLE refresh_tokens (
     id BIGSERIAL PRIMARY KEY,
@@ -140,3 +159,22 @@ CREATE INDEX idx_account_activation_tokens_expires_at
 CREATE UNIQUE INDEX uq_account_activation_tokens_active_account
     ON account_activation_tokens (account_id)
     WHERE used_at IS NULL AND revoked_at IS NULL;
+
+-- Hạn mức rate-limit do quản trị viên chỉnh trên giao diện, ghi đè giá trị trong application.properties.
+-- Mức không có dòng nào dùng giá trị trong application.properties và luôn bật.
+CREATE TABLE rate_limit_policy_settings (
+    policy VARCHAR(30) PRIMARY KEY,
+    enabled BOOLEAN NOT NULL,
+    max_requests INTEGER NOT NULL,
+    window_seconds INTEGER NOT NULL,
+    updated_by_account_id BIGINT NOT NULL REFERENCES accounts (id),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT chk_rate_limit_policy CHECK (policy IN (
+        'login', 'refresh', 'activation', 'ip-ceiling', 'login-failure',
+        'api', 'password', 'export', 'report', 'heavy-write'
+    )),
+    CONSTRAINT chk_rate_limit_max_requests CHECK (max_requests BETWEEN 1 AND 100000),
+    CONSTRAINT chk_rate_limit_window_seconds CHECK (window_seconds BETWEEN 1 AND 86400),
+    -- Chống dò mật khẩu không được tắt.
+    CONSTRAINT chk_rate_limit_login_failure_enabled CHECK (policy <> 'login-failure' OR enabled)
+);

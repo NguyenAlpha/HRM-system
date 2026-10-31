@@ -102,8 +102,8 @@ flowchart TB
   yêu cầu và duyệt cấp quyền; chỉ Company Owner mới đổi được quyền truy cập của Company Owner khác.
 - **Tổ chức và nhân viên:** cây phòng ban và địa điểm làm việc, chức vụ, hồ sơ nhân viên, lịch sử phân công và
   lịch sử lương, dữ liệu nhạy cảm cần permission riêng.
-- **Nghỉ phép:** phép năm 12 ngày tính theo số tháng làm việc, duyệt đơn, chặn trùng, thông báo đơn nghỉ; đơn
-  nghỉ việc.
+- **Nghỉ phép:** phép năm 12 ngày tính theo số tháng làm việc, duyệt đơn, chặn trùng; đơn nghỉ
+  việc.
 - **Chấm công:** bảng công theo tháng, ca làm việc, ngày lễ công ty, HR đối soát dữ liệu chấm công.
 - **Tính lương:** phụ cấp theo chức vụ và thâm niên, BHXH / BHYT / BHTN, thuế TNCN lũy tiến có giảm trừ người phụ
   thuộc, khoản điều chỉnh, phiếu lương, xuất XLSX.

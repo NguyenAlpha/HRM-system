@@ -29,7 +29,6 @@ import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.EmployeeRepository;
 import com.htttdn.hrm.repository.LeaveRequestRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
-import com.htttdn.hrm.service.NotificationService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -53,7 +52,6 @@ class LeaveRequestServiceTest {
     @Mock private LeaveAttendanceService leaveAttendanceService;
     @Mock private LeaveEntitlementService leaveEntitlementService;
     @Mock private ApproverResolver approverResolver;
-    @Mock private NotificationService notificationService;
 
     @Test
     void employeeCreatesOwnDraftUsingMinuteBasedPeriod() {
@@ -131,7 +129,6 @@ class LeaveRequestServiceTest {
 
         assertEquals(LeaveRequestStatus.PENDING, result.status());
         assertEquals(5L, result.approverEmployeeId());
-        verify(notificationService).notifyLeaveSubmitted(request);
     }
 
     @Test
@@ -150,7 +147,6 @@ class LeaveRequestServiceTest {
         service().approve(3L, "Approved");
 
         verify(leaveAttendanceService).applyApprovedLeave(request);
-        verify(notificationService).notifyLeaveDecision(request);
         assertEquals(LeaveRequestStatus.APPROVED, request.getStatus());
     }
 
@@ -168,7 +164,6 @@ class LeaveRequestServiceTest {
         service().reject(3L, "Not approved");
 
         assertEquals(LeaveRequestStatus.REJECTED, request.getStatus());
-        verify(notificationService).notifyLeaveDecision(request);
     }
 
     @Test
@@ -370,7 +365,6 @@ class LeaveRequestServiceTest {
         assertThrows(ConflictException.class, () -> service().submit(3L));
 
         assertEquals(LeaveRequestStatus.DRAFT, request.getStatus());
-        verify(notificationService, never()).notifyLeaveSubmitted(any());
     }
 
     @Test
@@ -469,7 +463,6 @@ class LeaveRequestServiceTest {
             leaveAttendanceService,
             leaveEntitlementService,
             approverResolver,
-            notificationService,
             new LeaveRequestMapper(),
             Clock.system(ClockConfig.BUSINESS_ZONE)
         );

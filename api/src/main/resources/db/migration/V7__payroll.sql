@@ -104,6 +104,11 @@ CREATE TABLE payroll_periods (
     paid_at TIMESTAMPTZ,
     locked_by_account_id BIGINT REFERENCES accounts (id),
     locked_at TIMESTAMPTZ,
+    -- Kỳ đã duyệt nhưng chưa trả có thể được hủy duyệt (VD trả lương lệch sang tháng khác nên phải tính lại
+    -- thuế): kỳ về DRAFT, phiếu lương bị xóa. Ba cột ghi lần hủy duyệt gần nhất; cả ba cùng có hoặc cùng trống.
+    reopened_by_account_id BIGINT REFERENCES accounts (id),
+    reopened_at TIMESTAMPTZ,
+    reopen_reason VARCHAR(500),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT chk_payroll_periods_status
@@ -113,6 +118,10 @@ CREATE TABLE payroll_periods (
         calculated_by_account_id IS NULL
         OR approved_by_account_id IS NULL
         OR calculated_by_account_id <> approved_by_account_id
+    ),
+    CONSTRAINT chk_payroll_periods_reopen CHECK (
+        (reopened_by_account_id IS NULL AND reopened_at IS NULL AND reopen_reason IS NULL)
+        OR (reopened_by_account_id IS NOT NULL AND reopened_at IS NOT NULL AND reopen_reason IS NOT NULL)
     )
 );
 

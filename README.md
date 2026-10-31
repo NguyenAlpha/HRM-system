@@ -102,8 +102,8 @@ flowchart TB
   Owner's access.
 - **Organization and employees:** org unit and work location trees, job positions, employee profiles, assignment
   and salary history, sensitive data behind a separate permission.
-- **Leave:** annual leave of 12 days a year prorated by months worked, approvals, overlap checks, leave
-  notifications; resignation requests.
+- **Leave:** annual leave of 12 days a year prorated by months worked, approvals, overlap checks; resignation
+  requests.
 - **Attendance:** monthly timesheets, work shifts, company holidays, punch reconciliation by HR.
 - **Payroll:** position and seniority allowances, social / health / unemployment insurance, progressive personal
   income tax with dependents, adjustments, payslips, XLSX export.

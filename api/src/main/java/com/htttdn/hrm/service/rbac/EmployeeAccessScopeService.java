@@ -80,25 +80,6 @@ public class EmployeeAccessScopeService {
     }
 
     /**
-     * Tài khoản bất kỳ (không nhất thiết là người đang đăng nhập) có thấy nhân viên này với permission
-     * này không, xét theo phân công hôm nay.
-     *
-     * <p>Dùng khi hệ thống tự chọn người nhận, VD {@code NotificationService} chỉ gửi thông báo cho người
-     * quản lý có phạm vi chứa nhân viên, và seeder chọn HR duyệt đơn.
-     *
-     * @param accountId      tài khoản cần xét
-     * @param employeeId     nhân viên cần xem
-     * @param permissionCode mã permission
-     * @return {@code true} nếu nhân viên chưa xóa mềm và nằm trong phạm vi
-     */
-    public boolean canAccountAccessEmployee(Long accountId, Long employeeId, String permissionCode) {
-        EmployeeAccessScope scope = resolve(accountId, permissionCode);
-        return employeeRepository.exists(notDeleted()
-            .and(scope.toSpecification(LocalDate.now(clock)))
-            .and(hasId(employeeId)));
-    }
-
-    /**
      * Hợp mọi phạm vi của các lần gán có permission thành một {@link EmployeeAccessScope}.
      *
      * <p>Các bước: lấy phạm vi từng lần gán ({@link AccountAuthorizationService#getScopes}, đọc database)

@@ -54,10 +54,7 @@ DRAFT ──submit──▶ PENDING ──approve──▶ APPROVED
 - Khi duyệt (`applyApproval`), hệ thống:
   1. chặn nếu đã có đơn được duyệt trùng thời gian (database cũng chặn bằng `EXCLUDE USING GIST` trên `tstzrange`);
   2. kiểm tra còn đủ phép năm;
-  3. ghi ngày nghỉ vào chấm công (`AttendanceService.applyApprovedLeave`). Ngày thuộc kỳ lương đã duyệt thì bị chặn;
-  4. tạo thông báo cho nhân viên.
-- Thông báo: khi nộp, gửi tới người duyệt và mọi người đang giữ `HR_MANAGER`; khi duyệt hoặc từ chối, gửi tới
-  nhân viên (account phải `ACTIVE`). Không ai nhận thông báo về thao tác của chính mình.
+  3. ghi ngày nghỉ vào chấm công (`AttendanceService.applyApprovedLeave`). Ngày thuộc kỳ lương đã duyệt thì bị chặn.
 
 ## 4. Đơn nghỉ việc
 
@@ -83,5 +80,4 @@ DRAFT ──submit──▶ PENDING ──approve──▶ APPROVED
 - [`LeaveRequestService`](../../src/main/java/com/htttdn/hrm/service/LeaveRequestService.java): `submit`, `approve`, `applyApproval`
 - [`ResignationRequestService`](../../src/main/java/com/htttdn/hrm/service/ResignationRequestService.java): `create`, `approve`, `complete`
 - [`AttendanceService`](../../src/main/java/com/htttdn/hrm/service/AttendanceService.java): `approveOvertime`, `listOvertimeAwaitingDecision`
-- [`NotificationService`](../../src/main/java/com/htttdn/hrm/service/NotificationService.java)
-- Endpoint: [ATTENDANCE.md](../api/ATTENDANCE.md), [EMPLOYEE.md](../api/EMPLOYEE.md) (đơn nghỉ việc), [NOTIFICATIONS.md](../api/NOTIFICATIONS.md)
+- Endpoint: [ATTENDANCE.md](../api/ATTENDANCE.md), [EMPLOYEE.md](../api/EMPLOYEE.md) (đơn nghỉ việc)

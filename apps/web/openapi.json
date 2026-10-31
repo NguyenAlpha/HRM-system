@@ -2598,51 +2598,6 @@
         "tags" : [ "leave-request-controller" ]
       }
     },
-    "/api/notifications" : {
-      "get" : {
-        "operationId" : "inbox",
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ApiResultInboxView"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "tags" : [ "notification-controller" ]
-      }
-    },
-    "/api/notifications/{id}/read" : {
-      "post" : {
-        "operationId" : "markRead",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "id",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ApiResultNotificationView"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "tags" : [ "notification-controller" ]
-      }
-    },
     "/api/organization-units" : {
       "get" : {
         "operationId" : "list_6",
@@ -5730,29 +5685,6 @@
         },
         "required" : [ "data", "error", "success" ]
       },
-      "ApiResultInboxView" : {
-        "type" : "object",
-        "properties" : {
-          "data" : {
-            "anyOf" : [ {
-              "$ref" : "#/components/schemas/InboxView"
-            }, {
-              "type" : "null"
-            } ]
-          },
-          "error" : {
-            "anyOf" : [ {
-              "$ref" : "#/components/schemas/ErrorDetail"
-            }, {
-              "type" : "null"
-            } ]
-          },
-          "success" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "data", "error", "success" ]
-      },
       "ApiResultInteger" : {
         "type" : "object",
         "properties" : {
@@ -6397,29 +6329,6 @@
           "data" : {
             "anyOf" : [ {
               "$ref" : "#/components/schemas/MonthlyHrStatusReportResponse"
-            }, {
-              "type" : "null"
-            } ]
-          },
-          "error" : {
-            "anyOf" : [ {
-              "$ref" : "#/components/schemas/ErrorDetail"
-            }, {
-              "type" : "null"
-            } ]
-          },
-          "success" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "data", "error", "success" ]
-      },
-      "ApiResultNotificationView" : {
-        "type" : "object",
-        "properties" : {
-          "data" : {
-            "anyOf" : [ {
-              "$ref" : "#/components/schemas/NotificationView"
             }, {
               "type" : "null"
             } ]
@@ -8653,22 +8562,6 @@
         },
         "required" : [ "asOfDate", "averageSeniorityYears", "educationDistribution", "missingEducation", "seniorityDistribution", "totalEmployees" ]
       },
-      "InboxView" : {
-        "type" : "object",
-        "properties" : {
-          "items" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/NotificationView"
-            }
-          },
-          "unreadCount" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        },
-        "required" : [ "items", "unreadCount" ]
-      },
       "JobPositionResponse" : {
         "type" : "object",
         "properties" : {
@@ -8864,45 +8757,6 @@
           }
         },
         "required" : [ "absentDays", "employeesOnLeave", "headcountEnd", "headcountStart", "hires", "leaveDays", "month", "rows", "terminations", "year" ]
-      },
-      "NotificationView" : {
-        "type" : "object",
-        "properties" : {
-          "createdAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "employeeName" : {
-            "type" : "string"
-          },
-          "id" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "leaveRequestId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "leaveType" : {
-            "type" : "string",
-            "enum" : [ "ANNUAL", "SICK", "MATERNITY", "UNPAID", "OTHER" ]
-          },
-          "readAt" : {
-            "type" : [ "string", "null" ],
-            "format" : "date-time"
-          },
-          "requiresApproval" : {
-            "type" : "boolean"
-          },
-          "startAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "type" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "createdAt", "employeeName", "id", "leaveRequestId", "leaveType", "readAt", "requiresApproval", "startAt", "type" ]
       },
       "OrganizationCompanyOwnerProvisioningResponse" : {
         "type" : "object",

@@ -57,7 +57,7 @@
   <p class="eyebrow">Hệ thống quản lý nhân sự · PostgreSQL</p>
   <h1>Sơ đồ ERD kiểu Chen</h1>
   <p class="lede">Sơ đồ đầy đủ từ migration Flyway: thực thể là hình chữ nhật, thuộc tính là hình oval, quan hệ khóa ngoại là hình thoi. Mô hình được chia thành các phần để đọc được từng tên bảng, cột và lực lượng quan hệ.</p>
-  <div class="stats"><div class="stat"><strong>33</strong>bảng</div><div class="stat"><strong>397</strong>cột</div><div class="stat"><strong>73</strong>khóa ngoại</div><div class="stat"><strong>43</strong>quan hệ nghiệp vụ</div></div>
+  <div class="stats"><div class="stat"><strong>33</strong>bảng</div><div class="stat"><strong>404</strong>cột</div><div class="stat"><strong>74</strong>khóa ngoại</div><div class="stat"><strong>41</strong>quan hệ nghiệp vụ</div></div>
   <div class="legend-bar"><span><span class="sample-entity">THỰC THỂ</span> bảng</span><span><span class="sample-attr">thuộc tính</span> cột</span><span><span class="sample-relation"></span> quan hệ</span><span><u>Gạch dưới</u> khóa chính</span><span><span class="sample-audit"></span> FK kiểm toán / quy trình</span></div>
   <h2>Ví dụ kết nối</h2>
   <p class="section-note">Ba thực thể cốt lõi được trình bày cùng thuộc tính và quan hệ như mẫu. Phần tiếp theo mở rộng ra toàn bộ bảng, cột và khóa ngoại.</p>
@@ -93,7 +93,7 @@
     </section>
   <h2 id="relationships">Quan hệ giữa các thực thể</h2>
   <p class="section-note">Mỗi dòng đọc từ bảng được tham chiếu → cột khóa ngoại → bảng chứa khóa ngoại. Số ở hai đầu là lực lượng quan hệ. Nét đứt chỉ quan hệ kiểm toán hoặc quy trình chưa có trong ERD nghiệp vụ của tài liệu schema.</p>
-  <nav aria-label="Các phần quan hệ"><a href="#rel-1">01 Cơ cấu tổ chức</a><a href="#rel-2">02 Nhân viên và tài khoản · 1/2</a><a href="#rel-3">03 Nhân viên và tài khoản · 2/2</a><a href="#rel-4">04 Phân quyền · 1/6</a><a href="#rel-5">05 Phân quyền · 2/6</a><a href="#rel-6">06 Phân quyền · 3/6</a><a href="#rel-7">07 Phân quyền · 4/6</a><a href="#rel-8">08 Phân quyền · 5/6</a><a href="#rel-9">09 Phân quyền · 6/6</a><a href="#rel-10">10 Phân công và lương cơ bản · 1/3</a><a href="#rel-11">11 Phân công và lương cơ bản · 2/3</a><a href="#rel-12">12 Phân công và lương cơ bản · 3/3</a><a href="#rel-13">13 Nghỉ phép · 1/2</a><a href="#rel-14">14 Nghỉ phép · 2/2</a><a href="#rel-15">15 Chấm công · 1/2</a><a href="#rel-16">16 Chấm công · 2/2</a><a href="#rel-17">17 Tính lương · 1/5</a><a href="#rel-18">18 Tính lương · 2/5</a><a href="#rel-19">19 Tính lương · 3/5</a><a href="#rel-20">20 Tính lương · 4/5</a><a href="#rel-21">21 Tính lương · 5/5</a><a href="#rel-22">22 Thông báo</a></nav>
+  <nav aria-label="Các phần quan hệ"><a href="#rel-1">01 Cơ cấu tổ chức</a><a href="#rel-2">02 Nhân viên và tài khoản · 1/2</a><a href="#rel-3">03 Nhân viên và tài khoản · 2/2</a><a href="#rel-4">04 Phân quyền · 1/6</a><a href="#rel-5">05 Phân quyền · 2/6</a><a href="#rel-6">06 Phân quyền · 3/6</a><a href="#rel-7">07 Phân quyền · 4/6</a><a href="#rel-8">08 Phân quyền · 5/6</a><a href="#rel-9">09 Phân quyền · 6/6</a><a href="#rel-10">10 Phân công và lương cơ bản · 1/3</a><a href="#rel-11">11 Phân công và lương cơ bản · 2/3</a><a href="#rel-12">12 Phân công và lương cơ bản · 3/3</a><a href="#rel-13">13 Nghỉ phép · 1/2</a><a href="#rel-14">14 Nghỉ phép · 2/2</a><a href="#rel-15">15 Chấm công · 1/2</a><a href="#rel-16">16 Chấm công · 2/2</a><a href="#rel-17">17 Tính lương · 1/5</a><a href="#rel-18">18 Tính lương · 2/5</a><a href="#rel-19">19 Tính lương · 3/5</a><a href="#rel-20">20 Tính lương · 4/5</a><a href="#rel-21">21 Tính lương · 5/5</a></nav>
   <section class="panel" id="rel-1">
       <div class="panel-head"><span class="section-no">01</span><h3>Cơ cấu tổ chức</h3><span class="panel-count">2 quan hệ</span></div>
       <div class="diagram-container"><svg viewBox="0 0 960 292" role="img" aria-labelledby="hrm-rel-01-title hrm-rel-01-desc" xmlns="http://www.w3.org/2000/svg">
@@ -169,14 +169,16 @@
         <text x="690" y="478" class="legend">PHẢI: BẢNG CHỨA FK</text>
       </svg></div>
     </section><section class="panel" id="rel-3">
-      <div class="panel-head"><span class="section-no">03</span><h3>Nhân viên và tài khoản · 2/2</h3><span class="panel-count">2 quan hệ</span></div>
-      <div class="diagram-container"><svg viewBox="0 0 960 292" role="img" aria-labelledby="hrm-rel-03-title hrm-rel-03-desc" xmlns="http://www.w3.org/2000/svg">
+      <div class="panel-head"><span class="section-no">03</span><h3>Nhân viên và tài khoản · 2/2</h3><span class="panel-count">4 quan hệ</span></div>
+      <div class="diagram-container"><svg viewBox="0 0 960 492" role="img" aria-labelledby="hrm-rel-03-title hrm-rel-03-desc" xmlns="http://www.w3.org/2000/svg">
         <title id="hrm-rel-03-title">Nhân viên và tài khoản · 2/2</title>
-        <desc id="hrm-rel-03-desc">Sơ đồ Chen gồm 2 quan hệ khóa ngoại; thực thể là hình chữ nhật và quan hệ là hình thoi.</desc>
-        <rect width="960" height="292" fill="#f5f5f5"/>
+        <desc id="hrm-rel-03-desc">Sơ đồ Chen gồm 4 quan hệ khóa ngoại; thực thể là hình chữ nhật và quan hệ là hình thoi.</desc>
+        <rect width="960" height="492" fill="#f5f5f5"/>
         <line x1="300" y1="54" x2="348" y2="54" class="edge" stroke-dasharray="5 4"/>
           <line x1="612" y1="54" x2="660" y2="54" class="edge" stroke-dasharray="5 4"/><line x1="300" y1="154" x2="348" y2="154" class="edge" stroke-dasharray="5 4"/>
-          <line x1="612" y1="154" x2="660" y2="154" class="edge" stroke-dasharray="5 4"/>
+          <line x1="612" y1="154" x2="660" y2="154" class="edge" stroke-dasharray="5 4"/><line x1="300" y1="254" x2="348" y2="254" class="edge" stroke-dasharray="5 4"/>
+          <line x1="612" y1="254" x2="660" y2="254" class="edge" stroke-dasharray="5 4"/><line x1="300" y1="354" x2="348" y2="354" class="edge" stroke-dasharray="5 4"/>
+          <line x1="612" y1="354" x2="660" y2="354" class="edge" stroke-dasharray="5 4"/>
         <rect x="40" y="28" width="260" height="52" class="entity"/>
           <text x="170" y="58" class="entity-text" text-anchor="middle">accounts</text>
           <polygon points="480,22 612,54 480,86 348,54" class="diamond"/>
@@ -191,11 +193,25 @@
           <rect x="660" y="128" width="260" height="52" class="entity"/>
           <text x="790" y="158" class="entity-text" text-anchor="middle">employees</text>
           <text x="323" y="144" class="cardinality" text-anchor="middle">0..1</text>
-          <text x="637" y="144" class="cardinality" text-anchor="middle">0..N</text>
-        <line x1="40" y1="258" x2="920" y2="258" class="rule"/>
-        <text x="40" y="278" class="legend">TRÁI: BẢNG ĐƯỢC THAM CHIẾU</text>
-        <text x="390" y="278" class="legend">HÌNH THOI: CỘT FK</text>
-        <text x="690" y="278" class="legend">PHẢI: BẢNG CHỨA FK</text>
+          <text x="637" y="144" class="cardinality" text-anchor="middle">0..N</text><rect x="40" y="228" width="260" height="52" class="entity"/>
+          <text x="170" y="258" class="entity-text" text-anchor="middle">accounts</text>
+          <polygon points="480,222 612,254 480,286 348,254" class="diamond"/>
+          <text x="480" y="258" class="diamond-text" text-anchor="middle">scheduled_end_by_account_id</text>
+          <rect x="660" y="228" width="260" height="52" class="entity"/>
+          <text x="790" y="258" class="entity-text" text-anchor="middle">employees</text>
+          <text x="323" y="244" class="cardinality" text-anchor="middle">0..1</text>
+          <text x="637" y="244" class="cardinality" text-anchor="middle">0..N</text><rect x="40" y="328" width="260" height="52" class="entity"/>
+          <text x="170" y="358" class="entity-text" text-anchor="middle">accounts</text>
+          <polygon points="480,322 612,354 480,386 348,354" class="diamond"/>
+          <text x="480" y="358" class="diamond-text" text-anchor="middle">updated_by_account_id</text>
+          <rect x="660" y="328" width="260" height="52" class="entity"/>
+          <text x="790" y="358" class="entity-text" text-anchor="middle">rate_limit_policy_settings</text>
+          <text x="323" y="344" class="cardinality" text-anchor="middle">1</text>
+          <text x="637" y="344" class="cardinality" text-anchor="middle">0..N</text>
+        <line x1="40" y1="458" x2="920" y2="458" class="rule"/>
+        <text x="40" y="478" class="legend">TRÁI: BẢNG ĐƯỢC THAM CHIẾU</text>
+        <text x="390" y="478" class="legend">HÌNH THOI: CỘT FK</text>
+        <text x="690" y="478" class="legend">PHẢI: BẢNG CHỨA FK</text>
       </svg></div>
     </section><section class="panel" id="rel-4">
       <div class="panel-head"><span class="section-no">04</span><h3>Phân quyền · 1/6</h3><span class="panel-count">4 quan hệ</span></div>
@@ -907,14 +923,15 @@
         <text x="690" y="478" class="legend">PHẢI: BẢNG CHỨA FK</text>
       </svg></div>
     </section><section class="panel" id="rel-21">
-      <div class="panel-head"><span class="section-no">21</span><h3>Tính lương · 5/5</h3><span class="panel-count">2 quan hệ</span></div>
-      <div class="diagram-container"><svg viewBox="0 0 960 292" role="img" aria-labelledby="hrm-rel-21-title hrm-rel-21-desc" xmlns="http://www.w3.org/2000/svg">
+      <div class="panel-head"><span class="section-no">21</span><h3>Tính lương · 5/5</h3><span class="panel-count">3 quan hệ</span></div>
+      <div class="diagram-container"><svg viewBox="0 0 960 392" role="img" aria-labelledby="hrm-rel-21-title hrm-rel-21-desc" xmlns="http://www.w3.org/2000/svg">
         <title id="hrm-rel-21-title">Tính lương · 5/5</title>
-        <desc id="hrm-rel-21-desc">Sơ đồ Chen gồm 2 quan hệ khóa ngoại; thực thể là hình chữ nhật và quan hệ là hình thoi.</desc>
-        <rect width="960" height="292" fill="#f5f5f5"/>
+        <desc id="hrm-rel-21-desc">Sơ đồ Chen gồm 3 quan hệ khóa ngoại; thực thể là hình chữ nhật và quan hệ là hình thoi.</desc>
+        <rect width="960" height="392" fill="#f5f5f5"/>
         <line x1="300" y1="54" x2="348" y2="54" class="edge" stroke-dasharray="5 4"/>
           <line x1="612" y1="54" x2="660" y2="54" class="edge" stroke-dasharray="5 4"/><line x1="300" y1="154" x2="348" y2="154" class="edge" stroke-dasharray="5 4"/>
-          <line x1="612" y1="154" x2="660" y2="154" class="edge" stroke-dasharray="5 4"/>
+          <line x1="612" y1="154" x2="660" y2="154" class="edge" stroke-dasharray="5 4"/><line x1="300" y1="254" x2="348" y2="254" class="edge" stroke-dasharray="5 4"/>
+          <line x1="612" y1="254" x2="660" y2="254" class="edge" stroke-dasharray="5 4"/>
         <rect x="40" y="28" width="260" height="52" class="entity"/>
           <text x="170" y="58" class="entity-text" text-anchor="middle">accounts</text>
           <polygon points="480,22 612,54 480,86 348,54" class="diamond"/>
@@ -929,45 +946,23 @@
           <rect x="660" y="128" width="260" height="52" class="entity"/>
           <text x="790" y="158" class="entity-text" text-anchor="middle">payroll_periods</text>
           <text x="323" y="144" class="cardinality" text-anchor="middle">0..1</text>
-          <text x="637" y="144" class="cardinality" text-anchor="middle">0..N</text>
-        <line x1="40" y1="258" x2="920" y2="258" class="rule"/>
-        <text x="40" y="278" class="legend">TRÁI: BẢNG ĐƯỢC THAM CHIẾU</text>
-        <text x="390" y="278" class="legend">HÌNH THOI: CỘT FK</text>
-        <text x="690" y="278" class="legend">PHẢI: BẢNG CHỨA FK</text>
-      </svg></div>
-    </section><section class="panel" id="rel-22">
-      <div class="panel-head"><span class="section-no">22</span><h3>Thông báo</h3><span class="panel-count">2 quan hệ</span></div>
-      <div class="diagram-container"><svg viewBox="0 0 960 292" role="img" aria-labelledby="hrm-rel-22-title hrm-rel-22-desc" xmlns="http://www.w3.org/2000/svg">
-        <title id="hrm-rel-22-title">Thông báo</title>
-        <desc id="hrm-rel-22-desc">Sơ đồ Chen gồm 2 quan hệ khóa ngoại; thực thể là hình chữ nhật và quan hệ là hình thoi.</desc>
-        <rect width="960" height="292" fill="#f5f5f5"/>
-        <line x1="300" y1="54" x2="348" y2="54" class="edge"/>
-          <line x1="612" y1="54" x2="660" y2="54" class="edge"/><line x1="300" y1="154" x2="348" y2="154" class="edge"/>
-          <line x1="612" y1="154" x2="660" y2="154" class="edge"/>
-        <rect x="40" y="28" width="260" height="52" class="entity"/>
-          <text x="170" y="58" class="entity-text" text-anchor="middle">leave_requests</text>
-          <polygon points="480,22 612,54 480,86 348,54" class="diamond"/>
-          <text x="480" y="58" class="diamond-text" text-anchor="middle">leave_request_id</text>
-          <rect x="660" y="28" width="260" height="52" class="entity"/>
-          <text x="790" y="58" class="entity-text" text-anchor="middle">notifications</text>
-          <text x="323" y="44" class="cardinality" text-anchor="middle">1</text>
-          <text x="637" y="44" class="cardinality" text-anchor="middle">0..N</text><rect x="40" y="128" width="260" height="52" class="entity"/>
-          <text x="170" y="158" class="entity-text" text-anchor="middle">accounts</text>
-          <polygon points="480,122 612,154 480,186 348,154" class="diamond"/>
-          <text x="480" y="158" class="diamond-text" text-anchor="middle">recipient_account_id</text>
-          <rect x="660" y="128" width="260" height="52" class="entity"/>
-          <text x="790" y="158" class="entity-text" text-anchor="middle">notifications</text>
-          <text x="323" y="144" class="cardinality" text-anchor="middle">1</text>
-          <text x="637" y="144" class="cardinality" text-anchor="middle">0..N</text>
-        <line x1="40" y1="258" x2="920" y2="258" class="rule"/>
-        <text x="40" y="278" class="legend">TRÁI: BẢNG ĐƯỢC THAM CHIẾU</text>
-        <text x="390" y="278" class="legend">HÌNH THOI: CỘT FK</text>
-        <text x="690" y="278" class="legend">PHẢI: BẢNG CHỨA FK</text>
+          <text x="637" y="144" class="cardinality" text-anchor="middle">0..N</text><rect x="40" y="228" width="260" height="52" class="entity"/>
+          <text x="170" y="258" class="entity-text" text-anchor="middle">accounts</text>
+          <polygon points="480,222 612,254 480,286 348,254" class="diamond"/>
+          <text x="480" y="258" class="diamond-text" text-anchor="middle">reopened_by_account_id</text>
+          <rect x="660" y="228" width="260" height="52" class="entity"/>
+          <text x="790" y="258" class="entity-text" text-anchor="middle">payroll_periods</text>
+          <text x="323" y="244" class="cardinality" text-anchor="middle">0..1</text>
+          <text x="637" y="244" class="cardinality" text-anchor="middle">0..N</text>
+        <line x1="40" y1="358" x2="920" y2="358" class="rule"/>
+        <text x="40" y="378" class="legend">TRÁI: BẢNG ĐƯỢC THAM CHIẾU</text>
+        <text x="390" y="378" class="legend">HÌNH THOI: CỘT FK</text>
+        <text x="690" y="378" class="legend">PHẢI: BẢNG CHỨA FK</text>
       </svg></div>
     </section>
   <h2 id="attributes">Đầy đủ thuộc tính của 33 thực thể</h2>
   <p class="section-note">Mở từng bảng để xem tất cả cột. Oval có nét đứt là khóa ngoại; tên gạch dưới là khóa chính. Kiểu dữ liệu và dấu PK/FK/UQ/NN nằm trong oval. Quan hệ và thuộc tính đều lấy trực tiếp từ V1–V10.</p>
-  <nav aria-label="Các bảng"><a href="#table-account_activation_tokens">account_activation_tokens</a><a href="#table-account_permission_overrides">account_permission_overrides</a><a href="#table-account_role_assignments">account_role_assignments</a><a href="#table-accounts">accounts</a><a href="#table-attendance_records">attendance_records</a><a href="#table-company_holidays">company_holidays</a><a href="#table-company_profile">company_profile</a><a href="#table-employee_assignments">employee_assignments</a><a href="#table-employee_payroll_profiles">employee_payroll_profiles</a><a href="#table-employee_salary_history">employee_salary_history</a><a href="#table-employee_tax_dependents">employee_tax_dependents</a><a href="#table-employees">employees</a><a href="#table-job_positions">job_positions</a><a href="#table-leave_requests">leave_requests</a><a href="#table-notifications">notifications</a><a href="#table-organization_units">organization_units</a><a href="#table-payroll_adjustments">payroll_adjustments</a><a href="#table-payroll_insurance_rules">payroll_insurance_rules</a><a href="#table-payroll_periods">payroll_periods</a><a href="#table-payroll_tax_brackets">payroll_tax_brackets</a><a href="#table-payroll_tax_rules">payroll_tax_rules</a><a href="#table-payslip_items">payslip_items</a><a href="#table-payslips">payslips</a><a href="#table-permissions">permissions</a><a href="#table-position_allowance_rules">position_allowance_rules</a><a href="#table-refresh_tokens">refresh_tokens</a><a href="#table-resignation_requests">resignation_requests</a><a href="#table-role_assignment_requests">role_assignment_requests</a><a href="#table-role_permissions">role_permissions</a><a href="#table-roles">roles</a><a href="#table-seniority_allowance_rules">seniority_allowance_rules</a><a href="#table-work_locations">work_locations</a><a href="#table-work_shifts">work_shifts</a></nav>
+  <nav aria-label="Các bảng"><a href="#table-account_activation_tokens">account_activation_tokens</a><a href="#table-account_permission_overrides">account_permission_overrides</a><a href="#table-account_role_assignments">account_role_assignments</a><a href="#table-accounts">accounts</a><a href="#table-attendance_records">attendance_records</a><a href="#table-company_holidays">company_holidays</a><a href="#table-company_profile">company_profile</a><a href="#table-employee_assignments">employee_assignments</a><a href="#table-employee_payroll_profiles">employee_payroll_profiles</a><a href="#table-employee_salary_history">employee_salary_history</a><a href="#table-employee_tax_dependents">employee_tax_dependents</a><a href="#table-employees">employees</a><a href="#table-job_positions">job_positions</a><a href="#table-leave_requests">leave_requests</a><a href="#table-organization_units">organization_units</a><a href="#table-payroll_adjustments">payroll_adjustments</a><a href="#table-payroll_insurance_rules">payroll_insurance_rules</a><a href="#table-payroll_periods">payroll_periods</a><a href="#table-payroll_tax_brackets">payroll_tax_brackets</a><a href="#table-payroll_tax_rules">payroll_tax_rules</a><a href="#table-payslip_items">payslip_items</a><a href="#table-payslips">payslips</a><a href="#table-permissions">permissions</a><a href="#table-position_allowance_rules">position_allowance_rules</a><a href="#table-rate_limit_policy_settings">rate_limit_policy_settings</a><a href="#table-refresh_tokens">refresh_tokens</a><a href="#table-resignation_requests">resignation_requests</a><a href="#table-role_assignment_requests">role_assignment_requests</a><a href="#table-role_permissions">role_permissions</a><a href="#table-roles">roles</a><a href="#table-seniority_allowance_rules">seniority_allowance_rules</a><a href="#table-work_locations">work_locations</a><a href="#table-work_shifts">work_shifts</a></nav>
   <details class="table-panel" id="table-account_activation_tokens">
       <summary><span>account_activation_tokens</span><small>8 cột · V2__employees_and_accounts.sql</small></summary>
       <div class="diagram-container"><svg viewBox="0 0 960 312" role="img" aria-labelledby="hrm-attr-account-activation-tokens-title hrm-attr-account-activation-tokens-desc" xmlns="http://www.w3.org/2000/svg">
@@ -1070,12 +1065,12 @@
           <text x="806" y="415" class="attribute-type" text-anchor="middle">TEXT</text>
     </svg></div>
     </details><details class="table-panel" id="table-accounts">
-      <summary><span>accounts</span><small>14 cột · V2__employees_and_accounts.sql</small></summary>
+      <summary><span>accounts</span><small>13 cột · V2__employees_and_accounts.sql</small></summary>
       <div class="diagram-container"><svg viewBox="0 0 960 480" role="img" aria-labelledby="hrm-attr-accounts-title hrm-attr-accounts-desc" xmlns="http://www.w3.org/2000/svg">
       <title id="hrm-attr-accounts-title">Thuộc tính bảng accounts</title>
-      <desc id="hrm-attr-accounts-desc">Thực thể accounts với đầy đủ 14 cột từ Flyway; khóa chính gạch dưới và khóa ngoại có oval nét đứt.</desc>
+      <desc id="hrm-attr-accounts-desc">Thực thể accounts với đầy đủ 13 cột từ Flyway; khóa chính gạch dưới và khóa ngoại có oval nét đứt.</desc>
       <rect width="960" height="480" fill="#f5f5f5"/>
-      <line x1="370" y1="240" x2="284" y2="68" class="edge"/><line x1="590" y1="240" x2="676" y2="68" class="edge"/><line x1="370" y1="240" x2="284" y2="124" class="edge"/><line x1="590" y1="240" x2="676" y2="124" class="edge"/><line x1="370" y1="240" x2="284" y2="180" class="edge"/><line x1="590" y1="240" x2="676" y2="180" class="edge"/><line x1="370" y1="240" x2="284" y2="236" class="edge"/><line x1="590" y1="240" x2="676" y2="236" class="edge"/><line x1="370" y1="240" x2="284" y2="292" class="edge"/><line x1="590" y1="240" x2="676" y2="292" class="edge"/><line x1="370" y1="240" x2="284" y2="348" class="edge"/><line x1="590" y1="240" x2="676" y2="348" class="edge"/><line x1="370" y1="240" x2="284" y2="404" class="edge"/><line x1="590" y1="240" x2="676" y2="404" class="edge"/>
+      <line x1="370" y1="240" x2="284" y2="68" class="edge"/><line x1="590" y1="240" x2="676" y2="68" class="edge"/><line x1="370" y1="240" x2="284" y2="124" class="edge"/><line x1="590" y1="240" x2="676" y2="124" class="edge"/><line x1="370" y1="240" x2="284" y2="180" class="edge"/><line x1="590" y1="240" x2="676" y2="180" class="edge"/><line x1="370" y1="240" x2="284" y2="236" class="edge"/><line x1="590" y1="240" x2="676" y2="236" class="edge"/><line x1="370" y1="240" x2="284" y2="292" class="edge"/><line x1="590" y1="240" x2="676" y2="292" class="edge"/><line x1="370" y1="240" x2="284" y2="348" class="edge"/><line x1="590" y1="240" x2="676" y2="348" class="edge"/><line x1="370" y1="240" x2="284" y2="404" class="edge"/>
       <rect x="370" y="207" width="220" height="66" class="entity"/>
       <text x="480" y="244" class="entity-text" text-anchor="middle">accounts</text>
       <ellipse cx="154" cy="68" rx="130" ry="20" fill="#ffffff" stroke="#bf4520" stroke-width="1.1"/>
@@ -1093,20 +1088,18 @@
           <text x="806" y="191" class="attribute-type" text-anchor="middle">VARCHAR(20) · NN</text><ellipse cx="154" cy="236" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
           <text x="154" y="234" class="attribute-name" text-anchor="middle">failed_login_count</text>
           <text x="154" y="247" class="attribute-type" text-anchor="middle">INTEGER · NN</text><ellipse cx="806" cy="236" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
-          <text x="806" y="234" class="attribute-name" text-anchor="middle">locked_until</text>
+          <text x="806" y="234" class="attribute-name" text-anchor="middle">last_login_at</text>
           <text x="806" y="247" class="attribute-type" text-anchor="middle">TIMESTAMPTZ</text><ellipse cx="154" cy="292" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
-          <text x="154" y="290" class="attribute-name" text-anchor="middle">last_login_at</text>
-          <text x="154" y="303" class="attribute-type" text-anchor="middle">TIMESTAMPTZ</text><ellipse cx="806" cy="292" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
-          <text x="806" y="290" class="attribute-name" text-anchor="middle">created_at</text>
+          <text x="154" y="290" class="attribute-name" text-anchor="middle">created_at</text>
+          <text x="154" y="303" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text><ellipse cx="806" cy="292" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
+          <text x="806" y="290" class="attribute-name" text-anchor="middle">updated_at</text>
           <text x="806" y="303" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text><ellipse cx="154" cy="348" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
-          <text x="154" y="346" class="attribute-name" text-anchor="middle">updated_at</text>
-          <text x="154" y="359" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text><ellipse cx="806" cy="348" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
-          <text x="806" y="346" class="attribute-name" text-anchor="middle">deleted_at</text>
-          <text x="806" y="359" class="attribute-type" text-anchor="middle">TIMESTAMPTZ</text><ellipse cx="154" cy="404" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1" stroke-dasharray="4 3"/>
-          <text x="154" y="402" class="attribute-name" text-anchor="middle">deleted_by_account_id</text>
-          <text x="154" y="415" class="attribute-type" text-anchor="middle">BIGINT · FK</text><ellipse cx="806" cy="404" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
-          <text x="806" y="402" class="attribute-name" text-anchor="middle">deletion_reason</text>
-          <text x="806" y="415" class="attribute-type" text-anchor="middle">TEXT</text>
+          <text x="154" y="346" class="attribute-name" text-anchor="middle">deleted_at</text>
+          <text x="154" y="359" class="attribute-type" text-anchor="middle">TIMESTAMPTZ</text><ellipse cx="806" cy="348" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1" stroke-dasharray="4 3"/>
+          <text x="806" y="346" class="attribute-name" text-anchor="middle">deleted_by_account_id</text>
+          <text x="806" y="359" class="attribute-type" text-anchor="middle">BIGINT · FK</text><ellipse cx="154" cy="404" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
+          <text x="154" y="402" class="attribute-name" text-anchor="middle">deletion_reason</text>
+          <text x="154" y="415" class="attribute-type" text-anchor="middle">TEXT</text>
     </svg></div>
     </details><details class="table-panel" id="table-attendance_records">
       <summary><span>attendance_records</span><small>25 cột · V6__attendance.sql</small></summary>
@@ -1189,14 +1182,14 @@
           <text x="806" y="135" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text>
     </svg></div>
     </details><details class="table-panel" id="table-company_profile">
-      <summary><span>company_profile</span><small>10 cột · V1__organization.sql</small></summary>
-      <div class="diagram-container"><svg viewBox="0 0 960 368" role="img" aria-labelledby="hrm-attr-company-profile-title hrm-attr-company-profile-desc" xmlns="http://www.w3.org/2000/svg">
+      <summary><span>company_profile</span><small>13 cột · V1__organization.sql</small></summary>
+      <div class="diagram-container"><svg viewBox="0 0 960 480" role="img" aria-labelledby="hrm-attr-company-profile-title hrm-attr-company-profile-desc" xmlns="http://www.w3.org/2000/svg">
       <title id="hrm-attr-company-profile-title">Thuộc tính bảng company_profile</title>
-      <desc id="hrm-attr-company-profile-desc">Thực thể company_profile với đầy đủ 10 cột từ Flyway; khóa chính gạch dưới và khóa ngoại có oval nét đứt.</desc>
-      <rect width="960" height="368" fill="#f5f5f5"/>
-      <line x1="370" y1="184" x2="284" y2="68" class="edge"/><line x1="590" y1="184" x2="676" y2="68" class="edge"/><line x1="370" y1="184" x2="284" y2="124" class="edge"/><line x1="590" y1="184" x2="676" y2="124" class="edge"/><line x1="370" y1="184" x2="284" y2="180" class="edge"/><line x1="590" y1="184" x2="676" y2="180" class="edge"/><line x1="370" y1="184" x2="284" y2="236" class="edge"/><line x1="590" y1="184" x2="676" y2="236" class="edge"/><line x1="370" y1="184" x2="284" y2="292" class="edge"/><line x1="590" y1="184" x2="676" y2="292" class="edge"/>
-      <rect x="370" y="151" width="220" height="66" class="entity"/>
-      <text x="480" y="188" class="entity-text" text-anchor="middle">company_profile</text>
+      <desc id="hrm-attr-company-profile-desc">Thực thể company_profile với đầy đủ 13 cột từ Flyway; khóa chính gạch dưới và khóa ngoại có oval nét đứt.</desc>
+      <rect width="960" height="480" fill="#f5f5f5"/>
+      <line x1="370" y1="240" x2="284" y2="68" class="edge"/><line x1="590" y1="240" x2="676" y2="68" class="edge"/><line x1="370" y1="240" x2="284" y2="124" class="edge"/><line x1="590" y1="240" x2="676" y2="124" class="edge"/><line x1="370" y1="240" x2="284" y2="180" class="edge"/><line x1="590" y1="240" x2="676" y2="180" class="edge"/><line x1="370" y1="240" x2="284" y2="236" class="edge"/><line x1="590" y1="240" x2="676" y2="236" class="edge"/><line x1="370" y1="240" x2="284" y2="292" class="edge"/><line x1="590" y1="240" x2="676" y2="292" class="edge"/><line x1="370" y1="240" x2="284" y2="348" class="edge"/><line x1="590" y1="240" x2="676" y2="348" class="edge"/><line x1="370" y1="240" x2="284" y2="404" class="edge"/>
+      <rect x="370" y="207" width="220" height="66" class="entity"/>
+      <text x="480" y="244" class="entity-text" text-anchor="middle">company_profile</text>
       <ellipse cx="154" cy="68" rx="130" ry="20" fill="#ffffff" stroke="#bf4520" stroke-width="1.1"/>
           <text x="154" y="66" class="attribute-name" text-anchor="middle" text-decoration="underline">id</text>
           <text x="154" y="79" class="attribute-type" text-anchor="middle">SMALLINT · PK</text><ellipse cx="806" cy="68" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
@@ -1214,10 +1207,16 @@
           <text x="154" y="247" class="attribute-type" text-anchor="middle">TEXT</text><ellipse cx="806" cy="236" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
           <text x="806" y="234" class="attribute-name" text-anchor="middle">timezone</text>
           <text x="806" y="247" class="attribute-type" text-anchor="middle">VARCHAR(50) · NN</text><ellipse cx="154" cy="292" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
-          <text x="154" y="290" class="attribute-name" text-anchor="middle">created_at</text>
-          <text x="154" y="303" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text><ellipse cx="806" cy="292" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
-          <text x="806" y="290" class="attribute-name" text-anchor="middle">updated_at</text>
-          <text x="806" y="303" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text>
+          <text x="154" y="290" class="attribute-name" text-anchor="middle">logo</text>
+          <text x="154" y="303" class="attribute-type" text-anchor="middle">BYTEA</text><ellipse cx="806" cy="292" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
+          <text x="806" y="290" class="attribute-name" text-anchor="middle">logo_content_type</text>
+          <text x="806" y="303" class="attribute-type" text-anchor="middle">VARCHAR(20)</text><ellipse cx="154" cy="348" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
+          <text x="154" y="346" class="attribute-name" text-anchor="middle">logo_updated_at</text>
+          <text x="154" y="359" class="attribute-type" text-anchor="middle">TIMESTAMPTZ</text><ellipse cx="806" cy="348" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
+          <text x="806" y="346" class="attribute-name" text-anchor="middle">created_at</text>
+          <text x="806" y="359" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text><ellipse cx="154" cy="404" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
+          <text x="154" y="402" class="attribute-name" text-anchor="middle">updated_at</text>
+          <text x="154" y="415" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text>
     </svg></div>
     </details><details class="table-panel" id="table-employee_assignments">
       <summary><span>employee_assignments</span><small>14 cột · V4__employment_and_salary.sql</small></summary>
@@ -1350,14 +1349,14 @@
           <text x="806" y="247" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text>
     </svg></div>
     </details><details class="table-panel" id="table-employees" open>
-      <summary><span>employees</span><small>28 cột · V2__employees_and_accounts.sql</small></summary>
-      <div class="diagram-container"><svg viewBox="0 0 960 872" role="img" aria-labelledby="hrm-attr-employees-title hrm-attr-employees-desc" xmlns="http://www.w3.org/2000/svg">
+      <summary><span>employees</span><small>30 cột · V2__employees_and_accounts.sql</small></summary>
+      <div class="diagram-container"><svg viewBox="0 0 960 928" role="img" aria-labelledby="hrm-attr-employees-title hrm-attr-employees-desc" xmlns="http://www.w3.org/2000/svg">
       <title id="hrm-attr-employees-title">Thuộc tính bảng employees</title>
-      <desc id="hrm-attr-employees-desc">Thực thể employees với đầy đủ 28 cột từ Flyway; khóa chính gạch dưới và khóa ngoại có oval nét đứt.</desc>
-      <rect width="960" height="872" fill="#f5f5f5"/>
-      <line x1="370" y1="436" x2="284" y2="68" class="edge"/><line x1="590" y1="436" x2="676" y2="68" class="edge"/><line x1="370" y1="436" x2="284" y2="124" class="edge"/><line x1="590" y1="436" x2="676" y2="124" class="edge"/><line x1="370" y1="436" x2="284" y2="180" class="edge"/><line x1="590" y1="436" x2="676" y2="180" class="edge"/><line x1="370" y1="436" x2="284" y2="236" class="edge"/><line x1="590" y1="436" x2="676" y2="236" class="edge"/><line x1="370" y1="436" x2="284" y2="292" class="edge"/><line x1="590" y1="436" x2="676" y2="292" class="edge"/><line x1="370" y1="436" x2="284" y2="348" class="edge"/><line x1="590" y1="436" x2="676" y2="348" class="edge"/><line x1="370" y1="436" x2="284" y2="404" class="edge"/><line x1="590" y1="436" x2="676" y2="404" class="edge"/><line x1="370" y1="436" x2="284" y2="460" class="edge"/><line x1="590" y1="436" x2="676" y2="460" class="edge"/><line x1="370" y1="436" x2="284" y2="516" class="edge"/><line x1="590" y1="436" x2="676" y2="516" class="edge"/><line x1="370" y1="436" x2="284" y2="572" class="edge"/><line x1="590" y1="436" x2="676" y2="572" class="edge"/><line x1="370" y1="436" x2="284" y2="628" class="edge"/><line x1="590" y1="436" x2="676" y2="628" class="edge"/><line x1="370" y1="436" x2="284" y2="684" class="edge"/><line x1="590" y1="436" x2="676" y2="684" class="edge"/><line x1="370" y1="436" x2="284" y2="740" class="edge"/><line x1="590" y1="436" x2="676" y2="740" class="edge"/><line x1="370" y1="436" x2="284" y2="796" class="edge"/><line x1="590" y1="436" x2="676" y2="796" class="edge"/>
-      <rect x="370" y="403" width="220" height="66" class="entity"/>
-      <text x="480" y="440" class="entity-text" text-anchor="middle">employees</text>
+      <desc id="hrm-attr-employees-desc">Thực thể employees với đầy đủ 30 cột từ Flyway; khóa chính gạch dưới và khóa ngoại có oval nét đứt.</desc>
+      <rect width="960" height="928" fill="#f5f5f5"/>
+      <line x1="370" y1="464" x2="284" y2="68" class="edge"/><line x1="590" y1="464" x2="676" y2="68" class="edge"/><line x1="370" y1="464" x2="284" y2="124" class="edge"/><line x1="590" y1="464" x2="676" y2="124" class="edge"/><line x1="370" y1="464" x2="284" y2="180" class="edge"/><line x1="590" y1="464" x2="676" y2="180" class="edge"/><line x1="370" y1="464" x2="284" y2="236" class="edge"/><line x1="590" y1="464" x2="676" y2="236" class="edge"/><line x1="370" y1="464" x2="284" y2="292" class="edge"/><line x1="590" y1="464" x2="676" y2="292" class="edge"/><line x1="370" y1="464" x2="284" y2="348" class="edge"/><line x1="590" y1="464" x2="676" y2="348" class="edge"/><line x1="370" y1="464" x2="284" y2="404" class="edge"/><line x1="590" y1="464" x2="676" y2="404" class="edge"/><line x1="370" y1="464" x2="284" y2="460" class="edge"/><line x1="590" y1="464" x2="676" y2="460" class="edge"/><line x1="370" y1="464" x2="284" y2="516" class="edge"/><line x1="590" y1="464" x2="676" y2="516" class="edge"/><line x1="370" y1="464" x2="284" y2="572" class="edge"/><line x1="590" y1="464" x2="676" y2="572" class="edge"/><line x1="370" y1="464" x2="284" y2="628" class="edge"/><line x1="590" y1="464" x2="676" y2="628" class="edge"/><line x1="370" y1="464" x2="284" y2="684" class="edge"/><line x1="590" y1="464" x2="676" y2="684" class="edge"/><line x1="370" y1="464" x2="284" y2="740" class="edge"/><line x1="590" y1="464" x2="676" y2="740" class="edge"/><line x1="370" y1="464" x2="284" y2="796" class="edge"/><line x1="590" y1="464" x2="676" y2="796" class="edge"/><line x1="370" y1="464" x2="284" y2="852" class="edge"/><line x1="590" y1="464" x2="676" y2="852" class="edge"/>
+      <rect x="370" y="431" width="220" height="66" class="entity"/>
+      <text x="480" y="468" class="entity-text" text-anchor="middle">employees</text>
       <ellipse cx="154" cy="68" rx="130" ry="20" fill="#ffffff" stroke="#bf4520" stroke-width="1.1"/>
           <text x="154" y="66" class="attribute-name" text-anchor="middle" text-decoration="underline">id</text>
           <text x="154" y="79" class="attribute-type" text-anchor="middle">BIGSERIAL · PK</text><ellipse cx="806" cy="68" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
@@ -1414,7 +1413,11 @@
           <text x="154" y="794" class="attribute-name" text-anchor="middle">deleted_by_account_id</text>
           <text x="154" y="807" class="attribute-type" text-anchor="middle">BIGINT · FK</text><ellipse cx="806" cy="796" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
           <text x="806" y="794" class="attribute-name" text-anchor="middle">deletion_reason</text>
-          <text x="806" y="807" class="attribute-type" text-anchor="middle">TEXT</text>
+          <text x="806" y="807" class="attribute-type" text-anchor="middle">TEXT</text><ellipse cx="154" cy="852" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
+          <text x="154" y="850" class="attribute-name" text-anchor="middle">scheduled_end_status</text>
+          <text x="154" y="863" class="attribute-type" text-anchor="middle">VARCHAR(20)</text><ellipse cx="806" cy="852" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1" stroke-dasharray="4 3"/>
+          <text x="806" y="850" class="attribute-name" text-anchor="middle">scheduled_end_by_account_id</text>
+          <text x="806" y="863" class="attribute-type" text-anchor="middle">BIGINT · FK</text>
     </svg></div>
     </details><details class="table-panel" id="table-job_positions">
       <summary><span>job_positions</span><small>9 cột · V1__organization.sql</small></summary>
@@ -1489,29 +1492,6 @@
           <text x="806" y="471" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text><ellipse cx="154" cy="516" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
           <text x="154" y="514" class="attribute-name" text-anchor="middle">updated_at</text>
           <text x="154" y="527" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text>
-    </svg></div>
-    </details><details class="table-panel" id="table-notifications">
-      <summary><span>notifications</span><small>6 cột · V9__notifications.sql</small></summary>
-      <div class="diagram-container"><svg viewBox="0 0 960 256" role="img" aria-labelledby="hrm-attr-notifications-title hrm-attr-notifications-desc" xmlns="http://www.w3.org/2000/svg">
-      <title id="hrm-attr-notifications-title">Thuộc tính bảng notifications</title>
-      <desc id="hrm-attr-notifications-desc">Thực thể notifications với đầy đủ 6 cột từ Flyway; khóa chính gạch dưới và khóa ngoại có oval nét đứt.</desc>
-      <rect width="960" height="256" fill="#f5f5f5"/>
-      <line x1="370" y1="128" x2="284" y2="68" class="edge"/><line x1="590" y1="128" x2="676" y2="68" class="edge"/><line x1="370" y1="128" x2="284" y2="124" class="edge"/><line x1="590" y1="128" x2="676" y2="124" class="edge"/><line x1="370" y1="128" x2="284" y2="180" class="edge"/><line x1="590" y1="128" x2="676" y2="180" class="edge"/>
-      <rect x="370" y="95" width="220" height="66" class="entity"/>
-      <text x="480" y="132" class="entity-text" text-anchor="middle">notifications</text>
-      <ellipse cx="154" cy="68" rx="130" ry="20" fill="#ffffff" stroke="#bf4520" stroke-width="1.1"/>
-          <text x="154" y="66" class="attribute-name" text-anchor="middle" text-decoration="underline">id</text>
-          <text x="154" y="79" class="attribute-type" text-anchor="middle">BIGSERIAL · PK</text><ellipse cx="806" cy="68" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1" stroke-dasharray="4 3"/>
-          <text x="806" y="66" class="attribute-name" text-anchor="middle">recipient_account_id</text>
-          <text x="806" y="79" class="attribute-type" text-anchor="middle">BIGINT · FK · NN</text><ellipse cx="154" cy="124" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1" stroke-dasharray="4 3"/>
-          <text x="154" y="122" class="attribute-name" text-anchor="middle">leave_request_id</text>
-          <text x="154" y="135" class="attribute-type" text-anchor="middle">BIGINT · FK · NN</text><ellipse cx="806" cy="124" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
-          <text x="806" y="122" class="attribute-name" text-anchor="middle">type</text>
-          <text x="806" y="135" class="attribute-type" text-anchor="middle">VARCHAR(40) · NN</text><ellipse cx="154" cy="180" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
-          <text x="154" y="178" class="attribute-name" text-anchor="middle">created_at</text>
-          <text x="154" y="191" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text><ellipse cx="806" cy="180" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
-          <text x="806" y="178" class="attribute-name" text-anchor="middle">read_at</text>
-          <text x="806" y="191" class="attribute-type" text-anchor="middle">TIMESTAMPTZ</text>
     </svg></div>
     </details><details class="table-panel" id="table-organization_units">
       <summary><span>organization_units</span><small>9 cột · V1__organization.sql</small></summary>
@@ -1607,14 +1587,14 @@
           <text x="154" y="415" class="attribute-type" text-anchor="middle">TEXT · NN</text>
     </svg></div>
     </details><details class="table-panel" id="table-payroll_periods">
-      <summary><span>payroll_periods</span><small>17 cột · V7__payroll.sql</small></summary>
-      <div class="diagram-container"><svg viewBox="0 0 960 592" role="img" aria-labelledby="hrm-attr-payroll-periods-title hrm-attr-payroll-periods-desc" xmlns="http://www.w3.org/2000/svg">
+      <summary><span>payroll_periods</span><small>20 cột · V7__payroll.sql</small></summary>
+      <div class="diagram-container"><svg viewBox="0 0 960 648" role="img" aria-labelledby="hrm-attr-payroll-periods-title hrm-attr-payroll-periods-desc" xmlns="http://www.w3.org/2000/svg">
       <title id="hrm-attr-payroll-periods-title">Thuộc tính bảng payroll_periods</title>
-      <desc id="hrm-attr-payroll-periods-desc">Thực thể payroll_periods với đầy đủ 17 cột từ Flyway; khóa chính gạch dưới và khóa ngoại có oval nét đứt.</desc>
-      <rect width="960" height="592" fill="#f5f5f5"/>
-      <line x1="370" y1="296" x2="284" y2="68" class="edge"/><line x1="590" y1="296" x2="676" y2="68" class="edge"/><line x1="370" y1="296" x2="284" y2="124" class="edge"/><line x1="590" y1="296" x2="676" y2="124" class="edge"/><line x1="370" y1="296" x2="284" y2="180" class="edge"/><line x1="590" y1="296" x2="676" y2="180" class="edge"/><line x1="370" y1="296" x2="284" y2="236" class="edge"/><line x1="590" y1="296" x2="676" y2="236" class="edge"/><line x1="370" y1="296" x2="284" y2="292" class="edge"/><line x1="590" y1="296" x2="676" y2="292" class="edge"/><line x1="370" y1="296" x2="284" y2="348" class="edge"/><line x1="590" y1="296" x2="676" y2="348" class="edge"/><line x1="370" y1="296" x2="284" y2="404" class="edge"/><line x1="590" y1="296" x2="676" y2="404" class="edge"/><line x1="370" y1="296" x2="284" y2="460" class="edge"/><line x1="590" y1="296" x2="676" y2="460" class="edge"/><line x1="370" y1="296" x2="284" y2="516" class="edge"/>
-      <rect x="370" y="263" width="220" height="66" class="entity"/>
-      <text x="480" y="300" class="entity-text" text-anchor="middle">payroll_periods</text>
+      <desc id="hrm-attr-payroll-periods-desc">Thực thể payroll_periods với đầy đủ 20 cột từ Flyway; khóa chính gạch dưới và khóa ngoại có oval nét đứt.</desc>
+      <rect width="960" height="648" fill="#f5f5f5"/>
+      <line x1="370" y1="324" x2="284" y2="68" class="edge"/><line x1="590" y1="324" x2="676" y2="68" class="edge"/><line x1="370" y1="324" x2="284" y2="124" class="edge"/><line x1="590" y1="324" x2="676" y2="124" class="edge"/><line x1="370" y1="324" x2="284" y2="180" class="edge"/><line x1="590" y1="324" x2="676" y2="180" class="edge"/><line x1="370" y1="324" x2="284" y2="236" class="edge"/><line x1="590" y1="324" x2="676" y2="236" class="edge"/><line x1="370" y1="324" x2="284" y2="292" class="edge"/><line x1="590" y1="324" x2="676" y2="292" class="edge"/><line x1="370" y1="324" x2="284" y2="348" class="edge"/><line x1="590" y1="324" x2="676" y2="348" class="edge"/><line x1="370" y1="324" x2="284" y2="404" class="edge"/><line x1="590" y1="324" x2="676" y2="404" class="edge"/><line x1="370" y1="324" x2="284" y2="460" class="edge"/><line x1="590" y1="324" x2="676" y2="460" class="edge"/><line x1="370" y1="324" x2="284" y2="516" class="edge"/><line x1="590" y1="324" x2="676" y2="516" class="edge"/><line x1="370" y1="324" x2="284" y2="572" class="edge"/><line x1="590" y1="324" x2="676" y2="572" class="edge"/>
+      <rect x="370" y="291" width="220" height="66" class="entity"/>
+      <text x="480" y="328" class="entity-text" text-anchor="middle">payroll_periods</text>
       <ellipse cx="154" cy="68" rx="130" ry="20" fill="#ffffff" stroke="#bf4520" stroke-width="1.1"/>
           <text x="154" y="66" class="attribute-name" text-anchor="middle" text-decoration="underline">id</text>
           <text x="154" y="79" class="attribute-type" text-anchor="middle">BIGSERIAL · PK</text><ellipse cx="806" cy="68" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
@@ -1645,11 +1625,17 @@
           <text x="806" y="402" class="attribute-name" text-anchor="middle">locked_by_account_id</text>
           <text x="806" y="415" class="attribute-type" text-anchor="middle">BIGINT · FK</text><ellipse cx="154" cy="460" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
           <text x="154" y="458" class="attribute-name" text-anchor="middle">locked_at</text>
-          <text x="154" y="471" class="attribute-type" text-anchor="middle">TIMESTAMPTZ</text><ellipse cx="806" cy="460" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
-          <text x="806" y="458" class="attribute-name" text-anchor="middle">created_at</text>
-          <text x="806" y="471" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text><ellipse cx="154" cy="516" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
-          <text x="154" y="514" class="attribute-name" text-anchor="middle">updated_at</text>
-          <text x="154" y="527" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text>
+          <text x="154" y="471" class="attribute-type" text-anchor="middle">TIMESTAMPTZ</text><ellipse cx="806" cy="460" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1" stroke-dasharray="4 3"/>
+          <text x="806" y="458" class="attribute-name" text-anchor="middle">reopened_by_account_id</text>
+          <text x="806" y="471" class="attribute-type" text-anchor="middle">BIGINT · FK</text><ellipse cx="154" cy="516" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
+          <text x="154" y="514" class="attribute-name" text-anchor="middle">reopened_at</text>
+          <text x="154" y="527" class="attribute-type" text-anchor="middle">TIMESTAMPTZ</text><ellipse cx="806" cy="516" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
+          <text x="806" y="514" class="attribute-name" text-anchor="middle">reopen_reason</text>
+          <text x="806" y="527" class="attribute-type" text-anchor="middle">VARCHAR(500)</text><ellipse cx="154" cy="572" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
+          <text x="154" y="570" class="attribute-name" text-anchor="middle">created_at</text>
+          <text x="154" y="583" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text><ellipse cx="806" cy="572" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
+          <text x="806" y="570" class="attribute-name" text-anchor="middle">updated_at</text>
+          <text x="806" y="583" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text>
     </svg></div>
     </details><details class="table-panel" id="table-payroll_tax_brackets">
       <summary><span>payroll_tax_brackets</span><small>4 cột · V7__payroll.sql</small></summary>
@@ -1860,6 +1846,29 @@
           <text x="154" y="247" class="attribute-type" text-anchor="middle">TEXT</text><ellipse cx="806" cy="236" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
           <text x="806" y="234" class="attribute-name" text-anchor="middle">created_at</text>
           <text x="806" y="247" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text>
+    </svg></div>
+    </details><details class="table-panel" id="table-rate_limit_policy_settings">
+      <summary><span>rate_limit_policy_settings</span><small>6 cột · V2__employees_and_accounts.sql</small></summary>
+      <div class="diagram-container"><svg viewBox="0 0 960 256" role="img" aria-labelledby="hrm-attr-rate-limit-policy-settings-title hrm-attr-rate-limit-policy-settings-desc" xmlns="http://www.w3.org/2000/svg">
+      <title id="hrm-attr-rate-limit-policy-settings-title">Thuộc tính bảng rate_limit_policy_settings</title>
+      <desc id="hrm-attr-rate-limit-policy-settings-desc">Thực thể rate_limit_policy_settings với đầy đủ 6 cột từ Flyway; khóa chính gạch dưới và khóa ngoại có oval nét đứt.</desc>
+      <rect width="960" height="256" fill="#f5f5f5"/>
+      <line x1="370" y1="128" x2="284" y2="68" class="edge"/><line x1="590" y1="128" x2="676" y2="68" class="edge"/><line x1="370" y1="128" x2="284" y2="124" class="edge"/><line x1="590" y1="128" x2="676" y2="124" class="edge"/><line x1="370" y1="128" x2="284" y2="180" class="edge"/><line x1="590" y1="128" x2="676" y2="180" class="edge"/>
+      <rect x="370" y="95" width="220" height="66" class="entity"/>
+      <text x="480" y="132" class="entity-text" text-anchor="middle">rate_limit_policy_settings</text>
+      <ellipse cx="154" cy="68" rx="130" ry="20" fill="#ffffff" stroke="#bf4520" stroke-width="1.1"/>
+          <text x="154" y="66" class="attribute-name" text-anchor="middle" text-decoration="underline">policy</text>
+          <text x="154" y="79" class="attribute-type" text-anchor="middle">VARCHAR(30) · PK</text><ellipse cx="806" cy="68" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
+          <text x="806" y="66" class="attribute-name" text-anchor="middle">enabled</text>
+          <text x="806" y="79" class="attribute-type" text-anchor="middle">BOOLEAN · NN</text><ellipse cx="154" cy="124" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
+          <text x="154" y="122" class="attribute-name" text-anchor="middle">max_requests</text>
+          <text x="154" y="135" class="attribute-type" text-anchor="middle">INTEGER · NN</text><ellipse cx="806" cy="124" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
+          <text x="806" y="122" class="attribute-name" text-anchor="middle">window_seconds</text>
+          <text x="806" y="135" class="attribute-type" text-anchor="middle">INTEGER · NN</text><ellipse cx="154" cy="180" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1" stroke-dasharray="4 3"/>
+          <text x="154" y="178" class="attribute-name" text-anchor="middle">updated_by_account_id</text>
+          <text x="154" y="191" class="attribute-type" text-anchor="middle">BIGINT · FK · NN</text><ellipse cx="806" cy="180" rx="130" ry="20" fill="#ffffff" stroke="#4f5d75" stroke-width="1.1"/>
+          <text x="806" y="178" class="attribute-name" text-anchor="middle">updated_at</text>
+          <text x="806" y="191" class="attribute-type" text-anchor="middle">TIMESTAMPTZ · NN</text>
     </svg></div>
     </details><details class="table-panel" id="table-refresh_tokens">
       <summary><span>refresh_tokens</span><small>6 cột · V2__employees_and_accounts.sql</small></summary>
@@ -2126,11 +2135,7 @@
           <text x="806" y="415" class="attribute-type" text-anchor="middle">TIMESTAMPTZ</text>
     </svg></div>
     </details>
-  <section class="appendix" id="migrations"><h2>SQL gốc</h2><p class="section-note">Toàn bộ migration đi kèm để đối chiếu CHECK, INDEX, ALTER TABLE và các ràng buộc khác.</p><details><summary><span>V10__notification_decisions.sql</span></summary><pre>ALTER TABLE notifications DROP CONSTRAINT chk_notification_type;
-
-ALTER TABLE notifications ADD CONSTRAINT chk_notification_type
-    CHECK (type IN (&#x27;LEAVE_SUBMITTED&#x27;, &#x27;LEAVE_APPROVED&#x27;, &#x27;LEAVE_REJECTED&#x27;));
-</pre></details><details><summary><span>V1__organization.sql</span></summary><pre>-- Doanh nghiệp, cơ cấu tổ chức, vị trí công việc và danh mục ca làm việc.
+  <section class="appendix" id="migrations"><h2>SQL gốc</h2><p class="section-note">Toàn bộ migration đi kèm để đối chiếu CHECK, INDEX, ALTER TABLE và các ràng buộc khác.</p><details><summary><span>V1__organization.sql</span></summary><pre>-- Doanh nghiệp, cơ cấu tổ chức, vị trí công việc và danh mục ca làm việc.
 
 -- Dùng cho các EXCLUDE constraint chống chồng lấn khoảng thời gian trong toàn bộ schema.
 CREATE EXTENSION IF NOT EXISTS btree_gist;
@@ -2144,9 +2149,17 @@ CREATE TABLE company_profile (
     email VARCHAR(100),
     address TEXT,
     timezone VARCHAR(50) NOT NULL DEFAULT &#x27;Asia/Ho_Chi_Minh&#x27;,
+    -- Logo hiển thị trên giao diện (PNG/JPEG/WebP, tối đa 512 KB); ba cột cùng có hoặc cùng trống.
+    logo BYTEA,
+    logo_content_type VARCHAR(20),
+    logo_updated_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT chk_company_profile_single CHECK (id = 1)
+    CONSTRAINT chk_company_profile_single CHECK (id = 1),
+    CONSTRAINT chk_company_profile_logo CHECK (
+        (logo IS NULL AND logo_content_type IS NULL AND logo_updated_at IS NULL)
+        OR (logo IS NOT NULL AND logo_content_type IS NOT NULL AND logo_updated_at IS NOT NULL)
+    )
 );
 
 CREATE TABLE work_locations (
@@ -2219,7 +2232,8 @@ CREATE TABLE work_shifts (
 
 CREATE UNIQUE INDEX uq_work_shifts_code ON work_shifts (code) WHERE deleted_at IS NULL;
 </pre></details><details><summary><span>V2__employees_and_accounts.sql</span></summary><pre>-- Hồ sơ nhân sự, tài khoản đăng nhập và các token xác thực.
--- employees.deleted_by_account_id tham chiếu accounts nên FK được thêm sau khi accounts tồn tại.
+-- employees.deleted_by_account_id và scheduled_end_by_account_id tham chiếu accounts nên FK được thêm
+-- sau khi accounts tồn tại.
 
 CREATE TABLE employees (
     id BIGSERIAL PRIMARY KEY,
@@ -2250,6 +2264,12 @@ CREATE TABLE employees (
     deleted_at TIMESTAMPTZ,
     deleted_by_account_id BIGINT,
     deletion_reason TEXT,
+    -- HR kết thúc làm việc với ngày làm việc cuối trong tương lai: termination_date và termination_reason
+    -- được ghi ngay, còn trạng thái, phân công, tài khoản và role chỉ đóng sau ngày đó (job 00:10 mỗi đêm).
+    -- scheduled_end_status là trạng thái sẽ đặt; scheduled_end_by_account_id là người lên lịch, dùng làm
+    -- người thu hồi role khi job chạy.
+    scheduled_end_status VARCHAR(20),
+    scheduled_end_by_account_id BIGINT,
     CONSTRAINT chk_employees_gender CHECK (gender IN (&#x27;MALE&#x27;, &#x27;FEMALE&#x27;, &#x27;OTHER&#x27;, &#x27;UNDISCLOSED&#x27;)),
     CONSTRAINT chk_employees_education_level
         CHECK (highest_education_level IN (&#x27;HIGH_SCHOOL&#x27;, &#x27;COLLEGE&#x27;, &#x27;BACHELOR&#x27;, &#x27;MASTER&#x27;, &#x27;DOCTORATE&#x27;)),
@@ -2258,10 +2278,19 @@ CREATE TABLE employees (
     CONSTRAINT chk_employees_dates CHECK (
         seniority_start_date &gt;= hire_date
         AND (termination_date IS NULL OR termination_date &gt;= hire_date)
+    ),
+    CONSTRAINT chk_employees_scheduled_end CHECK (
+        (scheduled_end_status IS NULL AND scheduled_end_by_account_id IS NULL)
+        OR (scheduled_end_status IN (&#x27;RESIGNED&#x27;, &#x27;TERMINATED&#x27;, &#x27;RETIRED&#x27;)
+            AND scheduled_end_by_account_id IS NOT NULL
+            AND employment_status IN (&#x27;PROBATION&#x27;, &#x27;ACTIVE&#x27;)
+            AND termination_date IS NOT NULL
+            AND termination_reason IS NOT NULL)
     )
 );
 
 CREATE INDEX idx_employees_status ON employees (employment_status) WHERE deleted_at IS NULL;
+CREATE INDEX idx_employees_scheduled_end ON employees (termination_date) WHERE scheduled_end_status IS NOT NULL;
 
 -- Employee identity values used for account provisioning must be unique regardless of letter case.
 -- Unique theo LOWER(...) đã bao hàm unique phân biệt hoa thường nên không khai báo UNIQUE trên cột.
@@ -2301,14 +2330,13 @@ CREATE TABLE accounts (
     password_hash VARCHAR(255),
     status VARCHAR(20) NOT NULL,
     failed_login_count INTEGER NOT NULL DEFAULT 0,
-    locked_until TIMESTAMPTZ,
     last_login_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     deleted_at TIMESTAMPTZ,
     deleted_by_account_id BIGINT REFERENCES accounts (id),
     deletion_reason TEXT,
-    CONSTRAINT chk_accounts_status CHECK (status IN (&#x27;PENDING&#x27;, &#x27;ACTIVE&#x27;, &#x27;LOCKED&#x27;, &#x27;DISABLED&#x27;)),
+    CONSTRAINT chk_accounts_status CHECK (status IN (&#x27;PENDING&#x27;, &#x27;ACTIVE&#x27;, &#x27;DISABLED&#x27;)),
     CONSTRAINT chk_accounts_password_after_activation
         CHECK (status = &#x27;PENDING&#x27; OR password_hash IS NOT NULL OR deleted_at IS NOT NULL),
     CONSTRAINT chk_accounts_deleted
@@ -2324,6 +2352,9 @@ CREATE UNIQUE INDEX uq_accounts_email_lower
 
 ALTER TABLE employees
     ADD CONSTRAINT fk_employees_deleted_by_account FOREIGN KEY (deleted_by_account_id) REFERENCES accounts (id);
+
+ALTER TABLE employees
+    ADD CONSTRAINT fk_employees_scheduled_end_by_account FOREIGN KEY (scheduled_end_by_account_id) REFERENCES accounts (id);
 
 -- Refresh tokens are opaque credentials. Only their SHA-256 hashes are stored.
 CREATE TABLE refresh_tokens (
@@ -2361,6 +2392,25 @@ CREATE INDEX idx_account_activation_tokens_expires_at
 CREATE UNIQUE INDEX uq_account_activation_tokens_active_account
     ON account_activation_tokens (account_id)
     WHERE used_at IS NULL AND revoked_at IS NULL;
+
+-- Hạn mức rate-limit do quản trị viên chỉnh trên giao diện, ghi đè giá trị trong application.properties.
+-- Mức không có dòng nào dùng giá trị trong application.properties và luôn bật.
+CREATE TABLE rate_limit_policy_settings (
+    policy VARCHAR(30) PRIMARY KEY,
+    enabled BOOLEAN NOT NULL,
+    max_requests INTEGER NOT NULL,
+    window_seconds INTEGER NOT NULL,
+    updated_by_account_id BIGINT NOT NULL REFERENCES accounts (id),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT chk_rate_limit_policy CHECK (policy IN (
+        &#x27;login&#x27;, &#x27;refresh&#x27;, &#x27;activation&#x27;, &#x27;ip-ceiling&#x27;, &#x27;login-failure&#x27;,
+        &#x27;api&#x27;, &#x27;password&#x27;, &#x27;export&#x27;, &#x27;report&#x27;, &#x27;heavy-write&#x27;
+    )),
+    CONSTRAINT chk_rate_limit_max_requests CHECK (max_requests BETWEEN 1 AND 100000),
+    CONSTRAINT chk_rate_limit_window_seconds CHECK (window_seconds BETWEEN 1 AND 86400),
+    -- Chống dò mật khẩu không được tắt.
+    CONSTRAINT chk_rate_limit_login_failure_enabled CHECK (policy &lt;&gt; &#x27;login-failure&#x27; OR enabled)
+);
 </pre></details><details><summary><span>V3__rbac.sql</span></summary><pre>-- Quyền, vai trò, phân quyền theo phạm vi (RBAC) và đề xuất cấp vai trò.
 -- Danh mục permission, role và mapping mặc định do PermissionSeeder, RoleSeeder và
 -- RolePermissionSeeder tạo khi ứng dụng khởi động, không seed trong migration.
@@ -2960,6 +3010,11 @@ CREATE TABLE payroll_periods (
     paid_at TIMESTAMPTZ,
     locked_by_account_id BIGINT REFERENCES accounts (id),
     locked_at TIMESTAMPTZ,
+    -- Kỳ đã duyệt nhưng chưa trả có thể được hủy duyệt (VD trả lương lệch sang tháng khác nên phải tính lại
+    -- thuế): kỳ về DRAFT, phiếu lương bị xóa. Ba cột ghi lần hủy duyệt gần nhất; cả ba cùng có hoặc cùng trống.
+    reopened_by_account_id BIGINT REFERENCES accounts (id),
+    reopened_at TIMESTAMPTZ,
+    reopen_reason VARCHAR(500),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT chk_payroll_periods_status
@@ -2969,6 +3024,10 @@ CREATE TABLE payroll_periods (
         calculated_by_account_id IS NULL
         OR approved_by_account_id IS NULL
         OR calculated_by_account_id &lt;&gt; approved_by_account_id
+    ),
+    CONSTRAINT chk_payroll_periods_reopen CHECK (
+        (reopened_by_account_id IS NULL AND reopened_at IS NULL AND reopen_reason IS NULL)
+        OR (reopened_by_account_id IS NOT NULL AND reopened_at IS NOT NULL AND reopen_reason IS NOT NULL)
     )
 );
 
@@ -3141,21 +3200,5 @@ VALUES
     (&#x27;2026-07-01&#x27;, &#x27;2026-12-31&#x27;, 0.08, 0.015, 0.01, 50600000, 20,
      5310000, 4730000, 4140000, 3700000,
      &#x27;Decree 161/2026/ND-CP; Decree 293/2025/ND-CP; Employment Law 2025&#x27;);
-</pre></details><details><summary><span>V9__notifications.sql</span></summary><pre>CREATE TABLE notifications (
-    id BIGSERIAL PRIMARY KEY,
-    recipient_account_id BIGINT NOT NULL REFERENCES accounts (id),
-    leave_request_id BIGINT NOT NULL REFERENCES leave_requests (id),
-    type VARCHAR(40) NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    read_at TIMESTAMPTZ,
-    CONSTRAINT chk_notification_type CHECK (type IN (&#x27;LEAVE_SUBMITTED&#x27;)),
-    CONSTRAINT uq_notification_recipient_leave_type UNIQUE (recipient_account_id, leave_request_id, type)
-);
-
-CREATE INDEX idx_notifications_recipient_created
-    ON notifications (recipient_account_id, created_at DESC);
-
-CREATE INDEX idx_notifications_recipient_unread
-    ON notifications (recipient_account_id, created_at DESC) WHERE read_at IS NULL;
 </pre></details></section>
 </main></body></html>

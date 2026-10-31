@@ -80,7 +80,7 @@ for migration in migrations:
             fks.append({"child": child, "column": column, "parent": parent, "parent_column": parent_column})
 
 assert len(tables) == 33, f"Expected 33 Flyway tables, found {len(tables)}"
-assert len(fks) == 73, f"Expected 73 physical foreign keys, found {len(fks)}"
+assert len(fks) == 74, f"Expected 74 physical foreign keys, found {len(fks)}"
 for fk in fks:
     assert fk["child"] in tables and fk["parent"] in tables, fk
     assert fk["column"] in {column["name"] for column in tables[fk["child"]]["columns"]}, fk
@@ -98,7 +98,7 @@ for parent, left, right, child, column in re.findall(
     r"^\s*([A-Z_]+)\s+(\|\||\|o)--(o\{|o\|)\s+([A-Z_]+)\s*:\s*(\w+)\s*$", mermaid, re.M
 ):
     documented[(child.lower(), column.lower(), parent.lower())] = (left, right)
-assert len(documented) == 43
+assert len(documented) == 41
 physical = {(fk["child"], fk["column"], fk["parent"]) for fk in fks}
 assert set(documented).issubset(physical), sorted(set(documented) - physical)
 for fk in fks:
@@ -118,7 +118,6 @@ domain_names = {
     "V6": "Chấm công",
     "V7": "Tính lương",
     "V8": "Dữ liệu tham chiếu",
-    "V9": "Thông báo",
 }
 
 

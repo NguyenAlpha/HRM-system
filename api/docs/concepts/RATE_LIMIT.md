@@ -280,7 +280,7 @@ thay đổi đã có hiệu lực, nên trang cập nhật bảng mà không c�
 
 Cách hoạt động (`RateLimitSettingsService`):
 
-- Mỗi mức đã chỉnh là một dòng trong bảng `rate_limit_policy_settings` (migration `V11`), kèm người chỉnh và thời
+- Mỗi mức đã chỉnh là một dòng trong bảng `rate_limit_policy_settings` (migration `V2`), kèm người chỉnh và thời
   điểm. Mức không có dòng nào dùng giá trị trong `application.properties` và luôn bật. Database cũng có CHECK chặn
   giá trị ngoài khoảng và chặn tắt `login-failure`.
 - Lưu xong, `RateLimitService` thay hạn mức của mức đó **ngay**. Mọi bucket của mức đó được tạo lại đầy, tức là mọi
@@ -339,7 +339,7 @@ tra mức đó đếm riêng và trả `429` khi hết lượt.
   [`RateLimitStatsController`](../../src/main/java/com/htttdn/hrm/controller/RateLimitStatsController.java),
   [`RateLimitSettingsService`](../../src/main/java/com/htttdn/hrm/service/RateLimitSettingsService.java),
   [`RateLimitPolicySetting`](../../src/main/java/com/htttdn/hrm/entity/RateLimitPolicySetting.java),
-  [`V11__rate_limit_settings.sql`](../../src/main/resources/db/migration/V11__rate_limit_settings.sql)
+  [`V2__employees_and_accounts.sql`](../../src/main/resources/db/migration/V2__employees_and_accounts.sql)
 - Web: [`client-ip.ts`](../../../apps/web/lib/client-ip.ts), [`rate-limit.ts`](../../../apps/web/lib/rate-limit.ts),
   [`rate-limit-page.tsx`](../../../apps/web/components/rate-limit/rate-limit-page.tsx),
   [`rate-limit-policy-dialogs.tsx`](../../../apps/web/components/rate-limit/rate-limit-policy-dialogs.tsx),

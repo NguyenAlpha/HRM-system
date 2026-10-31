@@ -7,7 +7,6 @@ import java.util.List;
 
 import com.htttdn.hrm.config.ClockConfig;
 import com.htttdn.hrm.service.attendance.LeaveAttendanceService;
-import com.htttdn.hrm.service.NotificationService;
 import com.htttdn.hrm.service.employee.ApproverResolver;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -40,8 +39,7 @@ import lombok.RequiredArgsConstructor;
  * ({@code CANCELLED}). Phần chỉ đọc nằm ở {@link LeaveRequestQueryService}.
  *
  * <p>Duyệt đơn ghi ngày nghỉ vào chấm công ({@code LeaveAttendanceService.applyApprovedLeave}) và trừ vào quỹ phép
- * năm ({@link LeaveEntitlementService}); người duyệt được chọn lúc gửi ({@code ApproverResolver}) và nhận
- * thông báo ({@code NotificationService}).
+ * năm ({@link LeaveEntitlementService}); người duyệt được chọn lúc gửi ({@code ApproverResolver}).
  */
 @Service
 @Transactional
@@ -60,7 +58,6 @@ public class LeaveRequestService {
     private final LeaveAttendanceService leaveAttendanceService;
     private final LeaveEntitlementService leaveEntitlementService;
     private final ApproverResolver approverResolver;
-    private final NotificationService notificationService;
     private final LeaveRequestMapper leaveRequestMapper;
     private final Clock clock;
 
@@ -139,7 +136,6 @@ public class LeaveRequestService {
             ));
         request.setApproverEmployee(approver);
         request.setStatus(LeaveRequestStatus.PENDING);
-        notificationService.notifyLeaveSubmitted(request);
         return leaveRequestMapper.toView(leaveRequestRepository.saveAndFlush(request));
     }
 
@@ -176,7 +172,6 @@ public class LeaveRequestService {
         requireApprover(request);
         requireStatus(request, LeaveRequestStatus.PENDING);
         applyApproval(request, reviewComment);
-        notificationService.notifyLeaveDecision(request);
         return leaveRequestMapper.toView(leaveRequestRepository.saveAndFlush(request));
     }
 
@@ -220,7 +215,6 @@ public class LeaveRequestService {
         requireApprover(request);
         requireStatus(request, LeaveRequestStatus.PENDING);
         review(request, LeaveRequestStatus.REJECTED, reviewComment);
-        notificationService.notifyLeaveDecision(request);
         return leaveRequestMapper.toView(leaveRequestRepository.saveAndFlush(request));
     }
 

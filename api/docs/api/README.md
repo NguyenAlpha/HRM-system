@@ -24,7 +24,6 @@ năng theo module thay vì theo endpoint, đọc [docs/FEATURES.md](../../../doc
 | [API_TRAFFIC.md](../concepts/API_TRAFFIC.md#2-api) | `/api/system/traffic/stats`, `/api/system/traffic/timeline` |
 | [WORK_SHIFT.md](WORK_SHIFT.md) | `/api/work-shifts/*` |
 | [ATTENDANCE.md](ATTENDANCE.md) | `/api/attendance/*`, `/api/leave-requests/*`, `/api/company-holidays/*`, `/api/leave-entitlements/*` |
-| [NOTIFICATIONS.md](NOTIFICATIONS.md) | `/api/notifications/*` |
 | [PAYROLL.md](PAYROLL.md) | `/api/payroll/*`, `/api/compensation/employees/{employeeId}/*` |
 | [ALLOWANCE.md](ALLOWANCE.md) | `/api/compensation/position-allowances`, `/api/compensation/job-positions/{jobPositionId}/allowances`, `/api/compensation/seniority-allowances` |
 | [REPORT.md](REPORT.md) | `/api/reports/hr/*`, `/api/reports/payroll/*` |
