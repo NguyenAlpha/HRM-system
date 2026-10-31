@@ -276,231 +276,199 @@ export async function handleChangePassword(request: Request, portal: Portal): Pr
     return gatewayFailure()
   }
 
-  const response = NextResponse.json(result.payload, { status: result.response.status })
+  // Here the only credential checked is the current password, not the username the generic message names.
+  const payload = result.payload.error?.code === "INVALID_CREDENTIALS"
+    ? { ...result.payload, error: { ...result.payload.error, message: "Mật khẩu hiện tại không đúng." } }
+    : result.payload
+  const response = NextResponse.json(payload, { status: result.response.status })
   if (result.response.ok && result.payload.success) {
     clearSessionCookies(response, portal)
   }
   return response
 }
 
-// Only expose the role/permission endpoints, never an arbitrary upstream URL.
-export async function handleRbacRequest(request: Request, segments: string[], portal: Portal): Promise<NextResponse> {
-  const path = segments.join("/")
-  const routes = [
-    { pattern: /^roles$/, methods: ["GET", "POST"] },
-    { pattern: /^roles\/with-permissions$/, methods: ["GET"] },
-    { pattern: /^roles\/[1-9]\d*$/, methods: ["GET", "PUT", "DELETE"] },
-    { pattern: /^permissions$/, methods: ["GET"] },
-    { pattern: /^permissions\/[1-9]\d*$/, methods: ["GET"] },
-    { pattern: /^roles\/[1-9]\d*\/permissions$/, methods: ["GET", "POST", "PUT"] },
-    { pattern: /^roles\/[1-9]\d*\/permissions\/[1-9]\d*$/, methods: ["DELETE"] },
-  ]
-  const route = routes.find((candidate) => candidate.pattern.test(path))
-  if (!route) {
-    return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
-  }
-  if (!route.methods.includes(request.method)) {
-    return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
-  }
+type Route = { pattern: RegExp; methods: string[] }
 
+const ID = "[1-9]\\d*"
+
+function notFound(): NextResponse {
+  return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
+}
+
+function methodNotAllowed(): NextResponse {
+  return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
+}
+
+/** The 404/405 answer when the path or method is not on the allow-list, otherwise null. */
+function rejectUnlisted(routes: Route[], path: string, method: string): NextResponse | null {
+  const route = routes.find((candidate) => candidate.pattern.test(path))
+  if (!route) return notFound()
+  return route.methods.includes(method) ? null : methodNotAllowed()
+}
+
+/** Writes must come from this site; the access token comes from the portal's cookie. */
+async function sessionAccessToken(request: Request, portal: Portal): Promise<string | NextResponse> {
   const origin = request.headers.get("origin")
   if (request.method !== "GET" && origin && origin !== new URL(request.url).origin) {
     return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
   }
-
-  const cookieStore = await cookies()
-  const accessToken = cookieStore.get(PORTAL_CONFIG[portal].accessCookie)?.value
+  const accessToken = (await cookies()).get(PORTAL_CONFIG[portal].accessCookie)?.value
   if (!accessToken) {
-    return NextResponse.json(failure("UNAUTHORIZED", "Phiên đăng nhập đã hết hạn"), { status: 401 })
+    const message = portal === "admin" ? "Phiên quản trị đã hết hạn" : "Phiên đăng nhập đã hết hạn"
+    return NextResponse.json(failure("UNAUTHORIZED", message), { status: 401 })
   }
+  return accessToken
+}
 
-  let body: string | undefined
-  if (request.method === "POST" || request.method === "PUT") {
-    try {
-      body = JSON.stringify(await request.json())
-    } catch {
-      return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
-    }
-  }
-
-  const query = new URLSearchParams()
-  new URL(request.url).searchParams.forEach((value, key) => {
-    if (["page", "size", "sort", "module"].includes(key)) query.append(key, value)
-  })
-  const result = await callApi<unknown>(`/api/${path}?${query}`, {
-    method: request.method,
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body,
-  })
+/** The API's envelope and status, unchanged and never cached. */
+function apiResult(result: Awaited<ReturnType<typeof callApi<unknown>>>): NextResponse {
   if (!result) return gatewayFailure()
-
   return NextResponse.json(result.payload, {
     status: result.response.status,
     headers: { "Cache-Control": "no-store" },
   })
 }
+
+/**
+ * Forwards the request to `upstreamPath` with the session's access token. A JSON body is passed on
+ * as it is (the API validates it), and of the query only the `queryKeys` parameters.
+ */
+async function forwardWithSession(
+  request: Request,
+  portal: Portal,
+  upstreamPath: string,
+  queryKeys: string[] = [],
+): Promise<NextResponse> {
+  const accessToken = await sessionAccessToken(request, portal)
+  if (accessToken instanceof NextResponse) return accessToken
+
+  const body = request.method === "GET" ? "" : await request.text()
+  const query = new URLSearchParams()
+  new URL(request.url).searchParams.forEach((value, key) => {
+    if (queryKeys.includes(key)) query.append(key, value)
+  })
+  return apiResult(await callApi<unknown>(`${upstreamPath}${query.size ? `?${query}` : ""}`, {
+    method: request.method,
+    headers: body
+      ? { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }
+      : { Authorization: `Bearer ${accessToken}` },
+    body: body || undefined,
+  }))
+}
+
+const RBAC_ROUTES: Route[] = [
+  { pattern: /^roles$/, methods: ["GET", "POST"] },
+  { pattern: /^roles\/with-permissions$/, methods: ["GET"] },
+  { pattern: new RegExp(`^roles/${ID}$`), methods: ["GET", "PUT", "DELETE"] },
+  { pattern: /^permissions$/, methods: ["GET"] },
+  { pattern: new RegExp(`^permissions/${ID}$`), methods: ["GET"] },
+  { pattern: new RegExp(`^roles/${ID}/permissions$`), methods: ["GET", "POST", "PUT"] },
+  { pattern: new RegExp(`^roles/${ID}/permissions/${ID}$`), methods: ["DELETE"] },
+]
+
+// Only expose the role/permission endpoints, never an arbitrary upstream URL.
+export async function handleRbacRequest(request: Request, segments: string[], portal: Portal): Promise<NextResponse> {
+  const path = segments.join("/")
+  return rejectUnlisted(RBAC_ROUTES, path, request.method)
+    ?? forwardWithSession(request, portal, `/api/${path}`, ["page", "size", "sort", "module"])
+}
+
+const EMPLOYEE_ROUTES: Route[] = [
+  { pattern: /^$/, methods: ["GET", "POST"] },
+  { pattern: /^me$/, methods: ["GET"] },
+  { pattern: /^me\/profile$/, methods: ["GET", "PUT"] },
+  { pattern: new RegExp(`^${ID}$`), methods: ["GET", "PUT"] },
+  { pattern: new RegExp(`^${ID}/assignments$`), methods: ["GET", "POST"] },
+  { pattern: new RegExp(`^${ID}/confirm$`), methods: ["POST"] },
+  { pattern: new RegExp(`^${ID}/sensitive$`), methods: ["GET", "PUT"] },
+  { pattern: new RegExp(`^${ID}/employment-end$`), methods: ["POST", "DELETE"] },
+  { pattern: new RegExp(`^${ID}/soft-delete$`), methods: ["POST"] },
+]
 
 // Only expose the employee profile endpoints, never an arbitrary upstream URL.
 export async function handleEmployeeRequest(request: Request, segments: string[], portal: Portal): Promise<NextResponse> {
   const path = segments.join("/")
-  const routes = [
-    { pattern: /^$/, methods: ["GET", "POST"] },
-    { pattern: /^me$/, methods: ["GET"] },
-    { pattern: /^me\/profile$/, methods: ["GET", "PUT"] },
-    { pattern: /^[1-9]\d*$/, methods: ["GET", "PUT"] },
-    { pattern: /^[1-9]\d*\/assignments$/, methods: ["GET", "POST"] },
-    { pattern: /^[1-9]\d*\/confirm$/, methods: ["POST"] },
-    { pattern: /^[1-9]\d*\/sensitive$/, methods: ["GET", "PUT"] },
-    { pattern: /^[1-9]\d*\/employment-end$/, methods: ["POST", "DELETE"] },
-    { pattern: /^[1-9]\d*\/soft-delete$/, methods: ["POST"] },
-  ]
-  const route = routes.find((candidate) => candidate.pattern.test(path))
-  if (!route) {
-    return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
-  }
-  if (!route.methods.includes(request.method)) {
-    return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
-  }
-
-  const origin = request.headers.get("origin")
-  if (request.method !== "GET" && origin && origin !== new URL(request.url).origin) {
-    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
-  }
-
-  const cookieStore = await cookies()
-  const accessToken = cookieStore.get(PORTAL_CONFIG[portal].accessCookie)?.value
-  if (!accessToken) {
-    return NextResponse.json(failure("UNAUTHORIZED", "Phiên đăng nhập đã hết hạn"), { status: 401 })
-  }
-
-  let body: string | undefined
-  const requiresBody = request.method === "PUT"
-    || (request.method === "POST" && !/^[1-9]\d*\/confirm$/.test(path))
-  if (requiresBody) {
-    try {
-      body = JSON.stringify(await request.json())
-    } catch {
-      return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
-    }
-  }
-
-  const query = new URLSearchParams()
-  new URL(request.url).searchParams.forEach((value, key) => {
-    if (["page", "size", "sort", "keyword", "employmentStatus", "organizationUnitId", "positionId"].includes(key)) query.append(key, value)
-  })
-  const result = await callApi<unknown>(`/api/employees${path ? `/${path}` : ""}?${query}`, {
-    method: request.method,
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body,
-  })
-  if (!result) return gatewayFailure()
-
-  return NextResponse.json(result.payload, {
-    status: result.response.status,
-    headers: { "Cache-Control": "no-store" },
-  })
+  return rejectUnlisted(EMPLOYEE_ROUTES, path, request.method)
+    ?? forwardWithSession(request, portal, `/api/employees${path ? `/${path}` : ""}`,
+      ["page", "size", "sort", "keyword", "employmentStatus", "organizationUnitId", "positionId"])
 }
+
+const PAYROLL_EXPORT = new RegExp(`^payroll/periods/${ID}/export$`)
+
+const WORKFORCE_ROUTES: Route[] = [
+  { pattern: /^attendance\/prepare$/, methods: ["POST"] },
+  { pattern: /^attendance\/punches$/, methods: ["POST"] },
+  { pattern: new RegExp(`^attendance/employees/${ID}$`), methods: ["GET"] },
+  { pattern: new RegExp(`^attendance/${ID}$`), methods: ["GET", "PUT"] },
+  { pattern: new RegExp(`^attendance/${ID}/overtime-approval$`), methods: ["POST"] },
+  { pattern: /^attendance\/overtime\/pending$/, methods: ["GET"] },
+  { pattern: /^attendance\/timesheet$/, methods: ["GET"] },
+  { pattern: /^company-holidays$/, methods: ["GET", "POST"] },
+  { pattern: new RegExp(`^company-holidays/${ID}$`), methods: ["DELETE"] },
+  { pattern: /^company$/, methods: ["GET", "PUT"] },
+  { pattern: /^company\/logo$/, methods: ["PUT", "DELETE"] },
+  { pattern: /^leave-requests$/, methods: ["GET", "POST"] },
+  { pattern: /^leave-requests\/pending$/, methods: ["GET"] },
+  { pattern: new RegExp(`^leave-requests/employees/${ID}$`), methods: ["GET"] },
+  { pattern: new RegExp(`^leave-requests/${ID}$`), methods: ["GET"] },
+  { pattern: new RegExp(`^leave-requests/${ID}/(?:submit|cancel|approve|reject)$`), methods: ["POST"] },
+  { pattern: new RegExp(`^leave-entitlements/employees/${ID}$`), methods: ["GET"] },
+  { pattern: /^resignation-requests$/, methods: ["GET", "POST"] },
+  { pattern: /^resignation-requests\/pending$/, methods: ["GET"] },
+  { pattern: new RegExp(`^resignation-requests/employees/${ID}$`), methods: ["GET"] },
+  { pattern: new RegExp(`^resignation-requests/${ID}/(?:cancel|approve|reject)$`), methods: ["POST"] },
+  { pattern: /^payroll\/periods$/, methods: ["GET", "POST"] },
+  { pattern: new RegExp(`^payroll/periods/${ID}$`), methods: ["GET"] },
+  { pattern: PAYROLL_EXPORT, methods: ["GET"] },
+  { pattern: new RegExp(`^payroll/periods/${ID}/payslips$`), methods: ["GET"] },
+  { pattern: new RegExp(`^payroll/periods/${ID}/adjustments$`), methods: ["GET", "POST"] },
+  { pattern: new RegExp(`^payroll/periods/${ID}/adjustments/${ID}$`), methods: ["DELETE"] },
+  { pattern: new RegExp(`^payroll/periods/${ID}/(?:calculate|approve|mark-paid|lock|cancel)$`), methods: ["POST"] },
+  { pattern: new RegExp(`^payroll/payslips/${ID}$`), methods: ["GET"] },
+  { pattern: new RegExp(`^payroll/employees/${ID}/payslips$`), methods: ["GET"] },
+  { pattern: new RegExp(`^compensation/employees/${ID}/salary-history$`), methods: ["GET", "POST"] },
+  { pattern: new RegExp(`^compensation/employees/${ID}/salary-history/effective$`), methods: ["GET"] },
+  { pattern: new RegExp(`^compensation/employees/${ID}/payroll-profiles$`), methods: ["GET", "POST"] },
+  { pattern: new RegExp(`^compensation/employees/${ID}/tax-dependents$`), methods: ["GET", "POST"] },
+  { pattern: new RegExp(`^compensation/employees/${ID}/tax-dependents/${ID}/end$`), methods: ["PUT"] },
+  { pattern: /^compensation\/position-allowances$/, methods: ["GET"] },
+  { pattern: new RegExp(`^compensation/job-positions/${ID}/allowances$`), methods: ["GET", "POST"] },
+  { pattern: /^compensation\/seniority-allowances$/, methods: ["GET", "POST"] },
+  { pattern: /^reports\/hr\/(?:turnover|monthly-status|leave-balances)$/, methods: ["GET"] },
+  { pattern: /^reports\/payroll\/summary$/, methods: ["GET"] },
+]
 
 // Explicit workforce routes keep the session cookie on the Next.js server.
 export async function handleWorkforceRequest(request: Request, segments: string[]): Promise<NextResponse> {
   const path = segments.join("/")
-  const routes = [
-    { pattern: /^attendance\/prepare$/, methods: ["POST"] },
-    { pattern: /^attendance\/punches$/, methods: ["POST"] },
-    { pattern: /^attendance\/employees\/[1-9]\d*$/, methods: ["GET"] },
-    { pattern: /^attendance\/[1-9]\d*$/, methods: ["GET", "PUT"] },
-    { pattern: /^attendance\/[1-9]\d*\/overtime-approval$/, methods: ["POST"] },
-    { pattern: /^attendance\/overtime\/pending$/, methods: ["GET"] },
-    { pattern: /^attendance\/timesheet$/, methods: ["GET"] },
-    { pattern: /^company-holidays$/, methods: ["GET", "POST"] },
-    { pattern: /^company-holidays\/[1-9]\d*$/, methods: ["DELETE"] },
-    { pattern: /^company$/, methods: ["GET", "PUT"] },
-    { pattern: /^company\/logo$/, methods: ["PUT", "DELETE"] },
-    { pattern: /^leave-requests$/, methods: ["GET", "POST"] },
-    { pattern: /^leave-requests\/pending$/, methods: ["GET"] },
-    { pattern: /^leave-requests\/employees\/[1-9]\d*$/, methods: ["GET"] },
-    { pattern: /^leave-requests\/[1-9]\d*$/, methods: ["GET"] },
-    { pattern: /^leave-requests\/[1-9]\d*\/(?:submit|cancel|approve|reject)$/, methods: ["POST"] },
-    { pattern: /^leave-entitlements\/employees\/[1-9]\d*$/, methods: ["GET"] },
-    { pattern: /^resignation-requests$/, methods: ["GET", "POST"] },
-    { pattern: /^resignation-requests\/pending$/, methods: ["GET"] },
-    { pattern: /^resignation-requests\/employees\/[1-9]\d*$/, methods: ["GET"] },
-    { pattern: /^resignation-requests\/[1-9]\d*\/(?:cancel|approve|reject)$/, methods: ["POST"] },
-    { pattern: /^payroll\/periods$/, methods: ["GET", "POST"] },
-    { pattern: /^payroll\/periods\/[1-9]\d*$/, methods: ["GET"] },
-    { pattern: /^payroll\/periods\/[1-9]\d*\/export$/, methods: ["GET"] },
-    { pattern: /^payroll\/periods\/[1-9]\d*\/payslips$/, methods: ["GET"] },
-    { pattern: /^payroll\/periods\/[1-9]\d*\/adjustments$/, methods: ["GET", "POST"] },
-    { pattern: /^payroll\/periods\/[1-9]\d*\/adjustments\/[1-9]\d*$/, methods: ["DELETE"] },
-    { pattern: /^payroll\/periods\/[1-9]\d*\/(?:calculate|approve|mark-paid|lock|cancel)$/, methods: ["POST"] },
-    { pattern: /^payroll\/payslips\/[1-9]\d*$/, methods: ["GET"] },
-    { pattern: /^payroll\/employees\/[1-9]\d*\/payslips$/, methods: ["GET"] },
-    { pattern: /^compensation\/employees\/[1-9]\d*\/salary-history$/, methods: ["GET", "POST"] },
-    { pattern: /^compensation\/employees\/[1-9]\d*\/salary-history\/effective$/, methods: ["GET"] },
-    { pattern: /^compensation\/employees\/[1-9]\d*\/payroll-profiles$/, methods: ["GET", "POST"] },
-    { pattern: /^compensation\/employees\/[1-9]\d*\/tax-dependents$/, methods: ["GET", "POST"] },
-    { pattern: /^compensation\/employees\/[1-9]\d*\/tax-dependents\/[1-9]\d*\/end$/, methods: ["PUT"] },
-    { pattern: /^compensation\/position-allowances$/, methods: ["GET"] },
-    { pattern: /^compensation\/job-positions\/[1-9]\d*\/allowances$/, methods: ["GET", "POST"] },
-    { pattern: /^compensation\/seniority-allowances$/, methods: ["GET", "POST"] },
-    { pattern: /^reports\/hr\/(?:turnover|monthly-status|leave-balances)$/, methods: ["GET"] },
-    { pattern: /^reports\/payroll\/summary$/, methods: ["GET"] },
-  ]
-  const route = routes.find((candidate) => candidate.pattern.test(path))
-  if (!route) return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
-  if (!route.methods.includes(request.method)) {
-    return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
-  }
-  const origin = request.headers.get("origin")
-  if (request.method !== "GET" && origin && origin !== new URL(request.url).origin) {
-    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
-  }
-  const accessToken = (await cookies()).get(PORTAL_CONFIG.hrm.accessCookie)?.value
-  if (!accessToken) return NextResponse.json(failure("UNAUTHORIZED", "Phiên đăng nhập đã hết hạn"), { status: 401 })
-  if (/^payroll\/periods\/[1-9]\d*\/export$/.test(path)) return proxyDownload(`/api/${path}`, accessToken)
+  const rejected = rejectUnlisted(WORKFORCE_ROUTES, path, request.method)
+  if (rejected) return rejected
 
+  const exportFile = PAYROLL_EXPORT.test(path)
+  const logoUpload = path === "company/logo" && request.method === "PUT"
+  if (!exportFile && !logoUpload) {
+    return forwardWithSession(request, "hrm", `/api/${path}`, ["from", "to", "year", "fromYear", "month", "page",
+      "size", "sort", "date", "keyword", "organizationUnitId", "status", "leaveType"])
+  }
+
+  const accessToken = await sessionAccessToken(request, "hrm")
+  if (accessToken instanceof NextResponse) return accessToken
+  if (exportFile) return proxyDownload(`/api/${path}`, accessToken)
   // The logo goes up as multipart form data; pass it through untouched.
-  if (path === "company/logo" && request.method === "PUT") {
-    const result = await callApi<unknown>("/api/company/logo", {
-      method: "PUT",
-      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": request.headers.get("content-type") ?? "" },
-      body: await request.arrayBuffer(),
-    })
-    if (!result) return gatewayFailure()
-    return NextResponse.json(result.payload, { status: result.response.status, headers: { "Cache-Control": "no-store" } })
-  }
+  return apiResult(await callApi<unknown>("/api/company/logo", {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": request.headers.get("content-type") ?? "" },
+    body: await request.arrayBuffer(),
+  }))
+}
 
-  let body: string | undefined
-  if (request.method === "PUT" || (request.method === "POST" &&
-      (/^(?:leave-requests|resignation-requests|payroll\/periods|company-holidays)$/.test(path)
-        || /^compensation\/employees\/[1-9]\d*\/(?:salary-history|payroll-profiles|tax-dependents)$/.test(path)
-        || /^compensation\/(?:job-positions\/[1-9]\d*\/allowances|seniority-allowances)$/.test(path)
-        || /^attendance\/(?:punches|[1-9]\d*\/overtime-approval)$/.test(path)
-        || /^payroll\/periods\/[1-9]\d*\/calculate$/.test(path)
-        || /^payroll\/periods\/[1-9]\d*\/mark-paid$/.test(path)
-        || /^payroll\/periods\/[1-9]\d*\/adjustments$/.test(path)
-        || /^(?:leave|resignation)-requests\/[1-9]\d*\/(?:approve|reject)$/.test(path)))) {
-    try {
-      body = JSON.stringify(await request.json())
-    } catch {
-      return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
-    }
-  }
-  const query = new URLSearchParams()
-  new URL(request.url).searchParams.forEach((value, key) => {
-    if (["from", "to", "year", "fromYear", "month", "page", "size", "sort", "date",
-      "keyword", "organizationUnitId", "status", "leaveType"].includes(key)) query.append(key, value)
-  })
-  const result = await callApi<unknown>(`/api/${path}${query.size ? `?${query}` : ""}`, {
-    method: request.method,
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body,
-  })
-  if (!result) return gatewayFailure()
-  return NextResponse.json(result.payload, {
-    status: result.response.status,
-    headers: { "Cache-Control": "no-store" },
-  })
+// Workforce and salary distribution charts of the report pages.
+export async function handleReportRequest(request: Request, report: "hr" | "payroll"): Promise<NextResponse> {
+  const endpoint = report === "hr"
+    ? "/api/reports/hr/workforce-distribution"
+    : "/api/reports/payroll/salary-distribution"
+  return forwardWithSession(request, "hrm", endpoint,
+    ["asOfDate", "organizationUnitId", "workLocationId", "employmentStatus"])
 }
 
 /** Company name and logo for the sidebar, sign-in page and tab title; fetched once per request. */
@@ -572,98 +540,29 @@ const REFERENCE_RESOURCES = ["organization-units", "work-locations", "job-positi
 export async function handleReferenceRequest(request: Request, segments: string[], portal: Portal): Promise<NextResponse> {
   const [resource, id, ...rest] = segments
   if (!REFERENCE_RESOURCES.includes(resource as typeof REFERENCE_RESOURCES[number]) || rest.length > 0) {
-    return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
+    return notFound()
   }
-  if (id !== undefined && !/^[1-9]\d*$/.test(id)) {
-    return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
-  }
+  if (id !== undefined && !new RegExp(`^${ID}$`).test(id)) return notFound()
 
   const methods = id === undefined ? ["GET", "POST"] : ["PUT", "DELETE"]
-  if (!methods.includes(request.method)) {
-    return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
-  }
+  if (!methods.includes(request.method)) return methodNotAllowed()
 
-  const origin = request.headers.get("origin")
-  if (request.method !== "GET" && origin && origin !== new URL(request.url).origin) {
-    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
-  }
-
-  const cookieStore = await cookies()
-  const accessToken = cookieStore.get(PORTAL_CONFIG[portal].accessCookie)?.value
-  if (!accessToken) {
-    return NextResponse.json(failure("UNAUTHORIZED", "Phiên đăng nhập đã hết hạn"), { status: 401 })
-  }
-
-  let body: string | undefined
-  if (request.method === "POST" || request.method === "PUT") {
-    try {
-      body = JSON.stringify(await request.json())
-    } catch {
-      return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
-    }
-  }
-
-  let path = `/api/${resource}`
-  if (id !== undefined) path += `/${id}`
-  if (request.method === "GET") {
-    const query = new URLSearchParams()
-    new URL(request.url).searchParams.forEach((value, key) => {
-      if (["active", "unitType", "locationType", "managerial", "parentUnitId", "parentLocationId", "crossesMidnight"].includes(key)) {
-        query.append(key, value)
-      }
-    })
-    path += `?${query}`
-  }
-
-  const result = await callApi<unknown>(path, {
-    method: request.method,
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body,
-  })
-  if (!result) return gatewayFailure()
-
-  return NextResponse.json(result.payload, {
-    status: result.response.status,
-    headers: { "Cache-Control": "no-store" },
-  })
+  return forwardWithSession(request, portal, `/api/${resource}${id === undefined ? "" : `/${id}`}`,
+    ["active", "unitType", "locationType", "managerial", "parentUnitId", "parentLocationId", "crossesMidnight"])
 }
 
 // Only expose account provisioning; listing and lifecycle actions go through handleAccountLifecycleRequest.
 export async function handleAccountProvisionRequest(request: Request, portal: Portal): Promise<NextResponse> {
-  if (request.method !== "POST") {
-    return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
-  }
-
-  const origin = request.headers.get("origin")
-  if (origin && origin !== new URL(request.url).origin) {
-    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
-  }
-
-  const cookieStore = await cookies()
-  const accessToken = cookieStore.get(PORTAL_CONFIG[portal].accessCookie)?.value
-  if (!accessToken) {
-    return NextResponse.json(failure("UNAUTHORIZED", "Phiên đăng nhập đã hết hạn"), { status: 401 })
-  }
-
-  let body: string
-  try {
-    body = JSON.stringify(await request.json())
-  } catch {
-    return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
-  }
-
-  const result = await callApi<unknown>("/api/accounts", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body,
-  })
-  if (!result) return gatewayFailure()
-
-  return NextResponse.json(result.payload, {
-    status: result.response.status,
-    headers: { "Cache-Control": "no-store" },
-  })
+  if (request.method !== "POST") return methodNotAllowed()
+  return forwardWithSession(request, portal, "/api/accounts")
 }
+
+const ACCOUNT_LIFECYCLE_ROUTES: Route[] = [
+  { pattern: /^$/, methods: ["GET"] },
+  { pattern: new RegExp(`^${ID}$`), methods: ["GET"] },
+  { pattern: new RegExp(`^${ID}/permissions$`), methods: ["GET"] },
+  { pattern: new RegExp(`^${ID}/(?:invitations/resend|password-reset|suspend|activate|delete)$`), methods: ["POST"] },
+]
 
 // Account list and lifecycle actions for both portals; the API checks the permissions.
 export async function handleAccountLifecycleRequest(
@@ -672,52 +571,18 @@ export async function handleAccountLifecycleRequest(
   portal: Portal,
 ): Promise<NextResponse> {
   const path = segments.join("/")
-  const routes = [
-    { pattern: /^$/, methods: ["GET"] },
-    { pattern: /^[1-9]\d*$/, methods: ["GET"] },
-    { pattern: /^[1-9]\d*\/permissions$/, methods: ["GET"] },
-    { pattern: /^[1-9]\d*\/(?:invitations\/resend|password-reset|suspend|activate)$/, methods: ["POST"] },
-    { pattern: /^[1-9]\d*\/delete$/, methods: ["POST"] },
-  ]
-  const route = routes.find((candidate) => candidate.pattern.test(path))
-  if (!route) return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
-  if (!route.methods.includes(request.method)) {
-    return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
-  }
-  const origin = request.headers.get("origin")
-  if (request.method !== "GET" && origin && origin !== new URL(request.url).origin) {
-    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
-  }
-  const accessToken = (await cookies()).get(PORTAL_CONFIG[portal].accessCookie)?.value
-  if (!accessToken) return NextResponse.json(failure("UNAUTHORIZED", "Phiên đăng nhập đã hết hạn"), { status: 401 })
-
-  const query = new URLSearchParams()
-  new URL(request.url).searchParams.forEach((value, key) => {
-    if (["page", "size", "sort", "keyword", "status", "roleCode", "deleted"].includes(key)) query.append(key, value)
-  })
-  // Only deleting carries a body: the reason.
-  let body: string | undefined
-  if (path.endsWith("/delete")) {
-    try {
-      body = JSON.stringify(await request.json())
-    } catch {
-      return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
-    }
-  }
-  const result = await callApi<unknown>(`/api/accounts${path ? `/${path}` : ""}${query.size ? `?${query}` : ""}`, {
-    method: request.method,
-    headers: body
-      ? { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }
-      : { Authorization: `Bearer ${accessToken}` },
-    body,
-  })
-  if (!result) return gatewayFailure()
-
-  return NextResponse.json(result.payload, {
-    status: result.response.status,
-    headers: { "Cache-Control": "no-store" },
-  })
+  return rejectUnlisted(ACCOUNT_LIFECYCLE_ROUTES, path, request.method)
+    ?? forwardWithSession(request, portal, `/api/accounts${path ? `/${path}` : ""}`,
+      ["page", "size", "sort", "keyword", "status", "roleCode", "deleted"])
 }
+
+const ACCOUNT_ROLE_ASSIGNMENT_ROUTES: Route[] = [
+  { pattern: /^$/, methods: ["GET", "POST"] },
+  { pattern: new RegExp(`^${ID}/revoke$`), methods: ["POST"] },
+  { pattern: new RegExp(`^${ID}/permission-overrides$`), methods: ["GET", "POST"] },
+  { pattern: new RegExp(`^${ID}/permission-overrides/available-permissions$`), methods: ["GET"] },
+  { pattern: new RegExp(`^${ID}/permission-overrides/${ID}/revoke$`), methods: ["POST"] },
+]
 
 // Only expose role assignment, its revocation and its permission-override workflow for one account.
 export async function handleAccountRoleAssignmentRequest(
@@ -726,160 +591,39 @@ export async function handleAccountRoleAssignmentRequest(
   portal: Portal,
   segments: string[] = [],
 ): Promise<NextResponse> {
-  if (!/^[1-9]\d*$/.test(accountId)) {
-    return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
-  }
+  if (!new RegExp(`^${ID}$`).test(accountId)) return notFound()
   const path = segments.join("/")
-  const routes = [
-    { pattern: /^$/, methods: ["GET", "POST"] },
-    { pattern: /^[1-9]\d*\/revoke$/, methods: ["POST"] },
-    { pattern: /^[1-9]\d*\/permission-overrides$/, methods: ["GET", "POST"] },
-    { pattern: /^[1-9]\d*\/permission-overrides\/available-permissions$/, methods: ["GET"] },
-    { pattern: /^[1-9]\d*\/permission-overrides\/[1-9]\d*\/revoke$/, methods: ["POST"] },
-  ]
-  const route = routes.find((candidate) => candidate.pattern.test(path))
-  if (!route) {
-    return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
-  }
-  if (!route.methods.includes(request.method)) {
-    return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
-  }
-
-  const origin = request.headers.get("origin")
-  if (request.method !== "GET" && origin && origin !== new URL(request.url).origin) {
-    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
-  }
-
-  const cookieStore = await cookies()
-  const accessToken = cookieStore.get(PORTAL_CONFIG[portal].accessCookie)?.value
-  if (!accessToken) {
-    return NextResponse.json(failure("UNAUTHORIZED", "Phiên đăng nhập đã hết hạn"), { status: 401 })
-  }
-
-  let body: string | undefined
-  if (request.method === "POST") {
-    try {
-      body = JSON.stringify(await request.json())
-    } catch {
-      return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
-    }
-  }
-
-  const upstreamPath = `/api/accounts/${accountId}/role-assignments${path ? `/${path}` : ""}`
-  const result = await callApi<unknown>(upstreamPath, {
-    method: request.method,
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body,
-  })
-  if (!result) return gatewayFailure()
-
-  return NextResponse.json(result.payload, {
-    status: result.response.status,
-    headers: { "Cache-Control": "no-store" },
-  })
+  return rejectUnlisted(ACCOUNT_ROLE_ASSIGNMENT_ROUTES, path, request.method)
+    ?? forwardWithSession(request, portal, `/api/accounts/${accountId}/role-assignments${path ? `/${path}` : ""}`)
 }
 
 // Only expose the one-time first Company Owner bootstrap endpoint, restricted to the admin portal.
 export async function handleCompanyOwnerBootstrapRequest(request: Request): Promise<NextResponse> {
-  if (request.method !== "POST") {
-    return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
-  }
-
-  const origin = request.headers.get("origin")
-  if (origin && origin !== new URL(request.url).origin) {
-    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
-  }
-
-  const cookieStore = await cookies()
-  const accessToken = cookieStore.get(PORTAL_CONFIG.admin.accessCookie)?.value
-  if (!accessToken) {
-    return NextResponse.json(failure("UNAUTHORIZED", "Phiên quản trị đã hết hạn"), { status: 401 })
-  }
-
-  let body: string
-  try {
-    body = JSON.stringify(await request.json())
-  } catch {
-    return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
-  }
-
-  const result = await callApi<unknown>("/api/system/organization/company-owner", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body,
-  })
-  if (!result) return gatewayFailure()
-
-  return NextResponse.json(result.payload, {
-    status: result.response.status,
-    headers: { "Cache-Control": "no-store" },
-  })
+  if (request.method !== "POST") return methodNotAllowed()
+  return forwardWithSession(request, "admin", "/api/system/organization/company-owner")
 }
+
+const ROLE_ASSIGNMENT_REQUEST_ROUTES: Route[] = [
+  { pattern: /^$/, methods: ["GET", "POST"] },
+  { pattern: /^available-roles$/, methods: ["GET"] },
+  { pattern: /^revocable-assignments$/, methods: ["GET"] },
+  { pattern: /^revocations$/, methods: ["POST"] },
+  { pattern: new RegExp(`^${ID}$`), methods: ["GET"] },
+  { pattern: new RegExp(`^${ID}/(?:approve|reject|cancel)$`), methods: ["POST"] },
+]
 
 // Only expose the role assignment request/approval workflow endpoints.
 export async function handleRoleAssignmentRequest(request: Request, segments: string[], portal: Portal): Promise<NextResponse> {
   const path = segments.join("/")
-  const routes = [
-    { pattern: /^$/, methods: ["GET", "POST"] },
-    { pattern: /^available-roles$/, methods: ["GET"] },
-    { pattern: /^revocable-assignments$/, methods: ["GET"] },
-    { pattern: /^revocations$/, methods: ["POST"] },
-    { pattern: /^[1-9]\d*$/, methods: ["GET"] },
-    { pattern: /^[1-9]\d*\/approve$/, methods: ["POST"] },
-    { pattern: /^[1-9]\d*\/reject$/, methods: ["POST"] },
-    { pattern: /^[1-9]\d*\/cancel$/, methods: ["POST"] },
-  ]
-  const route = routes.find((candidate) => candidate.pattern.test(path))
-  if (!route) {
-    return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
-  }
-  if (!route.methods.includes(request.method)) {
-    return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
-  }
-
-  const origin = request.headers.get("origin")
-  if (request.method !== "GET" && origin && origin !== new URL(request.url).origin) {
-    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
-  }
-
-  const cookieStore = await cookies()
-  const accessToken = cookieStore.get(PORTAL_CONFIG[portal].accessCookie)?.value
-  if (!accessToken) {
-    return NextResponse.json(failure("UNAUTHORIZED", "Phiên đăng nhập đã hết hạn"), { status: 401 })
-  }
-
-  let body: string | undefined
-  if (request.method === "POST") {
-    try {
-      body = JSON.stringify(await request.json())
-    } catch {
-      return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
-    }
-  }
-
-  const query = new URLSearchParams()
-  new URL(request.url).searchParams.forEach((value, key) => {
-    if (["page", "size", "sort", "status", "accountId"].includes(key)) query.append(key, value)
-  })
-  const result = await callApi<unknown>(`/api/role-assignment-requests${path ? `/${path}` : ""}?${query}`, {
-    method: request.method,
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body,
-  })
-  if (!result) return gatewayFailure()
-
-  return NextResponse.json(result.payload, {
-    status: result.response.status,
-    headers: { "Cache-Control": "no-store" },
-  })
+  return rejectUnlisted(ROLE_ASSIGNMENT_REQUEST_ROUTES, path, request.method)
+    ?? forwardWithSession(request, portal, `/api/role-assignment-requests${path ? `/${path}` : ""}`,
+      ["page", "size", "sort", "status", "accountId"])
 }
 
 // Public, unauthenticated: a brand-new account has no password yet, so it cannot carry a
 // session cookie. Only forwards to the single activation-completion endpoint.
 export async function handleAccountActivationRequest(request: Request, token: string): Promise<NextResponse> {
-  if (request.method !== "POST") {
-    return NextResponse.json(failure("METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ"), { status: 405 })
-  }
+  if (request.method !== "POST") return methodNotAllowed()
   if (!token) {
     return NextResponse.json(failure("VALIDATION_ERROR", "Thiếu mã kích hoạt"), { status: 400 })
   }
@@ -889,24 +633,11 @@ export async function handleAccountActivationRequest(request: Request, token: st
     return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
   }
 
-  let body: string
-  try {
-    body = JSON.stringify(await request.json())
-  } catch {
-    return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
-  }
-
-  const result = await callApi<unknown>(`/api/account-activations/${encodeURIComponent(token)}/complete`, {
+  return apiResult(await callApi<unknown>(`/api/account-activations/${encodeURIComponent(token)}/complete`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body,
-  })
-  if (!result) return gatewayFailure()
-
-  return NextResponse.json(result.payload, {
-    status: result.response.status,
-    headers: { "Cache-Control": "no-store" },
-  })
+    body: await request.text(),
+  }))
 }
 
 // Read-only system statistics (rate limits, API traffic) for the admin portal.
@@ -923,50 +654,13 @@ export async function handleSystemStatsRequest(
     return NextResponse.json(failure("UNAUTHORIZED", "Phiên quản trị đã hết hạn"), { status: 401 })
   }
 
-  const result = await callApi<unknown>(query?.size ? `${apiPath}?${query}` : apiPath, {
+  return apiResult(await callApi<unknown>(query?.size ? `${apiPath}?${query}` : apiPath, {
     headers: { Authorization: `Bearer ${accessToken}` },
-  })
-  if (!result) return gatewayFailure()
-
-  return NextResponse.json(result.payload, {
-    status: result.response.status,
-    headers: { "Cache-Control": "no-store" },
-  })
+  }))
 }
 
 // Edits (PUT) or resets (DELETE) one rate-limit policy for the admin portal; the API checks the permission.
 export async function handleRateLimitPolicyRequest(request: Request, policy: string): Promise<NextResponse> {
-  if (!/^[a-z-]{1,30}$/.test(policy)) {
-    return NextResponse.json(failure("RESOURCE_NOT_FOUND", "API không tồn tại"), { status: 404 })
-  }
-  const origin = request.headers.get("origin")
-  if (origin && origin !== new URL(request.url).origin) {
-    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
-  }
-  const accessToken = (await cookies()).get(PORTAL_CONFIG.admin.accessCookie)?.value
-  if (!accessToken) {
-    return NextResponse.json(failure("UNAUTHORIZED", "Phiên quản trị đã hết hạn"), { status: 401 })
-  }
-
-  let body: string | undefined
-  if (request.method === "PUT") {
-    try {
-      body = JSON.stringify(await request.json())
-    } catch {
-      return NextResponse.json(failure("VALIDATION_ERROR", "Dữ liệu JSON không hợp lệ"), { status: 400 })
-    }
-  }
-  const result = await callApi<unknown>(`/api/system/rate-limit/policies/${policy}`, {
-    method: request.method,
-    headers: body
-      ? { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }
-      : { Authorization: `Bearer ${accessToken}` },
-    body,
-  })
-  if (!result) return gatewayFailure()
-
-  return NextResponse.json(result.payload, {
-    status: result.response.status,
-    headers: { "Cache-Control": "no-store" },
-  })
+  if (!/^[a-z-]{1,30}$/.test(policy)) return notFound()
+  return forwardWithSession(request, "admin", `/api/system/rate-limit/policies/${policy}`)
 }

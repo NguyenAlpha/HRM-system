@@ -107,7 +107,6 @@ export function LoginForm({ portal, branding }: LoginFormProps) {
         description: `Chào mừng trở lại, ${session.account.username}`,
       })
       router.replace(PORTAL_CONFIG[portal].homePath)
-      router.refresh()
     } catch (caughtError) {
       setError(
         caughtError instanceof AuthApiError

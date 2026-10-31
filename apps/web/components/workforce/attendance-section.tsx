@@ -125,7 +125,8 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
   const canManage = permissions.has("attendance.manage")
   const canReadHolidays = permissions.has("holiday.read")
 
-  const [rows, setRows] = useState<AttendanceRecord[]>([])
+  // Null until the month has loaded, so the summary never shows the calendar's workdays against zero payable days.
+  const [rows, setRows] = useState<AttendanceRecord[] | null>(null)
   const [holidays, setHolidays] = useState<CompanyHoliday[]>([])
   const [error, setError] = useState<string | null>(null)
   const [revision, setRevision] = useState(0)
@@ -161,7 +162,7 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
     const date = `${month}-${String(index + 1).padStart(2, "0")}`
     return {
       date,
-      record: rows.find((row) => row.workDate === date),
+      record: rows?.find((row) => row.workDate === date),
       holiday: holidays.find((holiday) => holiday.holidayDate === date),
     }
   })
@@ -203,7 +204,7 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
         </CardHeader>
         <CardContent className="grid gap-4">
           <SectionError error={error} />
-          {employeeId > 0 && <MonthSummary days={days} />}
+          {employeeId > 0 && rows && <MonthSummary days={days} />}
           {view === "calendar"
             ? <CalendarView days={days} onSelect={setSelected} />
             : <ListView days={days} actions={actions}

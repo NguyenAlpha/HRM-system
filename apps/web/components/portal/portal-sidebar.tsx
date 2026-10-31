@@ -135,7 +135,6 @@ export function PortalSidebar({ portal, account, branding, collapsed, onToggle }
       await logout(portal)
     } finally {
       router.replace(PORTAL_CONFIG[portal].loginPath)
-      router.refresh()
     }
   }
 

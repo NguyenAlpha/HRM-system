@@ -30,7 +30,7 @@ async function annualLeave(page: Page) {
 /** "Công tính lương" of the month, and the list view of the timesheet opened for the rows. */
 async function payableDays(page: Page) {
   await page.goto("/attendance")
-  // Until the records arrive the tile reads "0 / 0 ngày".
+  // The summary tiles appear once the month's records have arrived.
   const days = await statValue(page, "Công tính lương", /\/ [1-9]\d* ngày/)
   await page.getByRole("tab", { name: "Danh sách" }).click()
   return days

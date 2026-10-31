@@ -66,7 +66,6 @@ export function PortalDashboard() {
     try {
       await changePassword(portal, currentPassword, newPassword)
       router.replace(config.loginPath)
-      router.refresh()
     } catch (caughtError) {
       setError(apiErrorMessage(caughtError))
     } finally {

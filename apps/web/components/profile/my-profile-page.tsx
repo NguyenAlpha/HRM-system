@@ -208,7 +208,6 @@ function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
     try {
       await changePassword(portal, currentPassword, newPassword)
       router.replace(PORTAL_CONFIG[portal].loginPath)
-      router.refresh()
     } catch (caught) {
       setError(apiErrorMessage(caught))
       setBusy(false)

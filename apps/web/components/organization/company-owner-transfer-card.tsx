@@ -83,7 +83,6 @@ export function CompanyOwnerTransferCard({ ownAccountId }: { ownAccountId: numbe
       await logout("hrm")
     } finally {
       router.replace(PORTAL_CONFIG.hrm.loginPath)
-      router.refresh()
     }
   }
 

@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { CheckCircle2, Eye, EyeOff, Loader2, TriangleAlert } from "lucide-react"
 
+import { BrandMark } from "@/components/portal/brand-mark"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,6 +22,7 @@ import { Label } from "@/components/ui/label"
 import { completeAccountActivation } from "@/lib/activation"
 import { friendlyErrorMessage } from "@/lib/api-helpers"
 import { AuthApiError } from "@/lib/auth/types"
+import type { Branding } from "@/lib/branding"
 
 const activateSchema = z
   .object({
@@ -35,7 +37,7 @@ const activateSchema = z
 
 type ActivateValues = z.infer<typeof activateSchema>
 
-export function ActivateAccountPage({ initialToken }: { initialToken: string }) {
+export function ActivateAccountPage({ initialToken, branding }: { initialToken: string; branding: Branding }) {
   const [error, setError] = useState<AuthApiError | null>(null)
   const [success, setSuccess] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -67,9 +69,9 @@ export function ActivateAccountPage({ initialToken }: { initialToken: string }) 
     <main className="flex min-h-svh items-center justify-center bg-[var(--canvas)] px-6 py-12">
       <div className="w-full max-w-sm">
         <Link className="brand mb-8 justify-center" href="/login">
-          <span className="brand-mark">H</span>
+          <BrandMark branding={branding} />
           <span>
-            <strong>HRM</strong>
+            <strong>{branding.name}</strong>
             <small>People Workspace</small>
           </span>
         </Link>

@@ -152,7 +152,6 @@ apps/web/
 │   ├── rbac.ts                       # Client role, permission và module quyền
 │   ├── reference.ts                  # Client danh mục tổ chức dùng chung
 │   ├── report.ts                     # Client và kiểu dữ liệu báo cáo
-│   ├── report-server.ts              # BFF gọi Report API
 │   ├── role-assignment.ts            # Client role assignment và yêu cầu cấp role
 │   ├── utils.ts                      # Tiện ích dùng chung
 │   ├── workforce.ts                  # Kiểu dữ liệu và nhãn trạng thái chấm công, nghỉ phép, lương

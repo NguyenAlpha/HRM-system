@@ -45,7 +45,6 @@ export function PortalShell({ portal, branding, children }: { portal: Portal; br
   )
   const onSessionExpired = useCallback(() => {
     router.replace(loginPath)
-    router.refresh()
   }, [router, loginPath])
 
   function toggleSidebar() {
