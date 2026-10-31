@@ -33,12 +33,11 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { apiErrorMessage } from "@/lib/api-helpers"
+import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import {
   employeeListQuery,
   employeeRequest,
   EMPLOYMENT_STATUS_LABELS,
-  isSessionExpired,
   type EmployeeDetail,
   type EmployeeFilters,
   type EmployeeSummary,
@@ -141,7 +140,7 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
       })
       .catch((caught: unknown) => {
         if (!active) return
-        if (isSessionExpired(caught)) onSessionExpired()
+        if (isPortalSessionExpired(caught)) onSessionExpired()
         setError(apiErrorMessage(caught))
         setLoadedQuery(requestKey)
       })
@@ -172,7 +171,7 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
       const detail = await employeeRequest<EmployeeDetail>(portal, `/${employeeId}`)
       openEdit(detail)
     } catch (caught) {
-      if (isSessionExpired(caught)) onSessionExpired()
+      if (isPortalSessionExpired(caught)) onSessionExpired()
       toast.error("Không thể tải hồ sơ nhân sự", { description: apiErrorMessage(caught) })
     }
   }

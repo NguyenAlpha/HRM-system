@@ -2,7 +2,7 @@
 
 import type { components } from "@/lib/api-schema"
 import { authorizedRequest } from "@/lib/auth/client"
-import { AuthApiError, type Portal } from "@/lib/auth/types"
+import type { Portal } from "@/lib/auth/types"
 import type { Page } from "@/lib/pagination"
 
 // DTO types come from the API's OpenAPI spec; run `npm run gen:api` after changing them.
@@ -54,16 +54,4 @@ export async function getPermissionOptions(portal: Portal): Promise<Permission[]
     page++
   }
   return permissions
-}
-
-export function rbacErrorMessage(error: unknown): string {
-  if (error instanceof AuthApiError) {
-    return `${error.code}: ${error.message}${error.field ? ` (${error.field})` : ""}`
-  }
-  return error instanceof Error ? error.message : "Không thể hoàn tất thao tác. Vui lòng thử lại."
-}
-
-export function isSessionExpired(error: unknown): boolean {
-  return error instanceof AuthApiError
-    && (error.status === 401 || error.code === "ADMIN_ACCESS_REQUIRED" || error.code === "ADMIN_PORTAL_REQUIRED")
 }

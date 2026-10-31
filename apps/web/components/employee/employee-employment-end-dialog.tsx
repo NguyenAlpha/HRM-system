@@ -28,13 +28,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { apiErrorMessage } from "@/lib/api-helpers"
+import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import {
   EMPLOYMENT_END_LABELS,
   EMPLOYMENT_END_STATUSES,
   endEmployeeEmployment,
   isEmploymentEnded,
-  isSessionExpired,
   type EmployeeDetail,
 } from "@/lib/employee"
 import { formatDate } from "@/lib/format-date"
@@ -91,7 +90,7 @@ export function EmployeeEmploymentEndDialog({ employee, onClose, onCompleted, on
       onClose()
       onCompleted()
     } catch (caught) {
-      if (isSessionExpired(caught)) onSessionExpired()
+      if (isPortalSessionExpired(caught)) onSessionExpired()
       setDialogError(apiErrorMessage(caught))
     }
   }

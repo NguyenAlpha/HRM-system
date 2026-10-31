@@ -2,7 +2,7 @@
 
 import type { components } from "@/lib/api-schema"
 import { authorizedRequest } from "@/lib/auth/client"
-import { AuthApiError, type Portal } from "@/lib/auth/types"
+import type { Portal } from "@/lib/auth/types"
 
 // DTO types come from the API's OpenAPI spec; run `npm run gen:api` after changing them.
 type Schemas = components["schemas"]
@@ -159,8 +159,4 @@ export function cancelScheduledEmploymentEnd(employeeId: number): Promise<Employ
 
 export function softDeleteEmployee(employeeId: number, deletionReason: string): Promise<null> {
   return employeeMutation<null>("hrm", `/${employeeId}/soft-delete`, "POST", { deletionReason })
-}
-
-export function isSessionExpired(error: unknown): boolean {
-  return error instanceof AuthApiError && (error.status === 401 || error.code === "ADMIN_PORTAL_REQUIRED")
 }

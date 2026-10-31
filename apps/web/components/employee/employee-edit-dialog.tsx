@@ -28,14 +28,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { apiErrorMessage } from "@/lib/api-helpers"
+import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import {
   EDUCATION_LEVEL_LABELS,
   EDUCATION_LEVELS,
   employeeMutation,
   GENDER_LABELS,
   GENDERS,
-  isSessionExpired,
   type EducationLevel,
   type EmployeeDetail,
   type Gender,
@@ -124,7 +123,7 @@ export function EmployeeEditDialog({ portal, detail, onClose, onSaved, onSession
       onSaved(saved)
       onClose()
     } catch (caught) {
-      if (isSessionExpired(caught)) onSessionExpired()
+      if (isPortalSessionExpired(caught)) onSessionExpired()
       setError(apiErrorMessage(caught))
     }
   }

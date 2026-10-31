@@ -14,12 +14,11 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import type { Portal } from "@/lib/auth/types"
 import {
   getPermissionOptions,
-  isSessionExpired,
   PERMISSION_MODULES,
-  rbacErrorMessage,
   rbacRequest,
   type Permission,
   type PermissionModule,
@@ -49,8 +48,8 @@ export function RolePermissionMatrix({ portal, onSessionExpired }: { portal: Por
       })
       .catch((caught: unknown) => {
         if (!active) return
-        if (isSessionExpired(caught)) onSessionExpired()
-        setError(rbacErrorMessage(caught))
+        if (isPortalSessionExpired(caught)) onSessionExpired()
+        setError(apiErrorMessage(caught))
         setLoading(false)
       })
     return () => { active = false }

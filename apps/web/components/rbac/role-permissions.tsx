@@ -18,12 +18,11 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
+import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import type { Portal } from "@/lib/auth/types"
 import {
   getPermissionOptions,
-  isSessionExpired,
   PERMISSION_MODULES,
-  rbacErrorMessage,
   rbacMutation,
   rbacRequest,
   type Permission,
@@ -97,8 +96,8 @@ export function RolePermissions({ portal, role, onClose, onSessionExpired }: {
       })
       .catch((caught: unknown) => {
         if (!active) return
-        if (isSessionExpired(caught)) onSessionExpired()
-        setError(rbacErrorMessage(caught))
+        if (isPortalSessionExpired(caught)) onSessionExpired()
+        setError(apiErrorMessage(caught))
         setLoading(false)
       })
     return () => { active = false }
@@ -155,8 +154,8 @@ export function RolePermissions({ portal, role, onClose, onSessionExpired }: {
       setSavedIds(new Set(updatedIds))
       toast.success(`Đã cập nhật ${updated.length} quyền cho ${role.code}`)
     } catch (caught) {
-      if (isSessionExpired(caught)) onSessionExpired()
-      setError(rbacErrorMessage(caught))
+      if (isPortalSessionExpired(caught)) onSessionExpired()
+      setError(apiErrorMessage(caught))
     } finally {
       setBusy(false)
     }

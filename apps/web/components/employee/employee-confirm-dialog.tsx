@@ -16,11 +16,10 @@ import {
 } from "@/components/ui/alert-dialog"
 import {
   employeeMutation,
-  isSessionExpired,
   type EmployeeDetail,
   type EmployeeSummary,
 } from "@/lib/employee"
-import { apiErrorMessage } from "@/lib/api-helpers"
+import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import type { Portal } from "@/lib/auth/types"
 
 /** Confirms a probation employee as permanent. Opened from the employee list and from the employee detail page. */
@@ -41,7 +40,7 @@ export function EmployeeConfirmDialog({ portal, employee, onClose, onConfirmed, 
       onClose()
       onConfirmed()
     } catch (caught) {
-      if (isSessionExpired(caught)) onSessionExpired()
+      if (isPortalSessionExpired(caught)) onSessionExpired()
       toast.error("Không thể xác nhận nhân sự", { description: apiErrorMessage(caught) })
     } finally {
       setConfirming(false)

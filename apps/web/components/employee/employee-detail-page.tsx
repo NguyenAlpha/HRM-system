@@ -44,7 +44,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { apiErrorMessage } from "@/lib/api-helpers"
+import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import {
   cancelScheduledEmploymentEnd,
   EDUCATION_LEVEL_LABELS,
@@ -54,7 +54,6 @@ import {
   EMPLOYMENT_TYPE_LABELS,
   GENDER_LABELS,
   isEmploymentEnded,
-  isSessionExpired,
   type EmployeeAssignment,
   type EmployeeDetail,
   type EmploymentEndStatus,
@@ -153,7 +152,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
       })
       .catch((caught: unknown) => {
         if (!active) return
-        if (isSessionExpired(caught)) onSessionExpired()
+        if (isPortalSessionExpired(caught)) onSessionExpired()
         setError(apiErrorMessage(caught))
       })
       .finally(() => {
@@ -178,7 +177,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
       setCancellingEnd(false)
       reload()
     } catch (caught) {
-      if (isSessionExpired(caught)) onSessionExpired()
+      if (isPortalSessionExpired(caught)) onSessionExpired()
       toast.error("Không thể hủy lịch kết thúc", { description: apiErrorMessage(caught) })
     } finally {
       setCancelBusy(false)

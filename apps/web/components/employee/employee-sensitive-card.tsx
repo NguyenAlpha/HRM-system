@@ -13,10 +13,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { apiErrorMessage } from "@/lib/api-helpers"
+import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import {
   getEmployeeSensitiveData,
-  isSessionExpired,
   type EmployeeDetail,
   type EmployeeSensitiveData,
 } from "@/lib/employee"
@@ -46,7 +45,7 @@ export function EmployeeSensitiveCard({ employee, canManage, onSessionExpired }:
     try {
       setData(await getEmployeeSensitiveData(employee.id))
     } catch (caught) {
-      if (isSessionExpired(caught)) onSessionExpired()
+      if (isPortalSessionExpired(caught)) onSessionExpired()
       setError(apiErrorMessage(caught))
     } finally {
       setLoading(false)

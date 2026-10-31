@@ -18,13 +18,12 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
-import { apiErrorMessage } from "@/lib/api-helpers"
+import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import {
   EDUCATION_LEVEL_LABELS,
   employeeRequest,
   EMPLOYMENT_STATUS_LABELS,
   GENDER_LABELS,
-  isSessionExpired,
   type EmployeeDetail,
 } from "@/lib/employee"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
@@ -62,7 +61,7 @@ export function EmployeeDetailDialog({ portal, employeeId, canUpdate, canProvisi
       })
       .catch((caught: unknown) => {
         if (!active) return
-        if (isSessionExpired(caught)) onSessionExpired()
+        if (isPortalSessionExpired(caught)) onSessionExpired()
         setError(apiErrorMessage(caught))
       })
       .finally(() => {

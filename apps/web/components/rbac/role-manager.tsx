@@ -56,11 +56,10 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
+import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import type { Portal } from "@/lib/auth/types"
 import type { Page } from "@/lib/pagination"
 import {
-  isSessionExpired,
-  rbacErrorMessage,
   rbacMutation,
   rbacRequest,
   type CreateRoleInput,
@@ -137,8 +136,8 @@ export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSe
       })
       .catch((caught: unknown) => {
         if (!active) return
-        if (isSessionExpired(caught)) onSessionExpired()
-        setError(rbacErrorMessage(caught))
+        if (isPortalSessionExpired(caught)) onSessionExpired()
+        setError(apiErrorMessage(caught))
         setLoading(false)
       })
     return () => { active = false }
@@ -190,8 +189,8 @@ export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSe
       setDialogOpen(false)
       reload()
     } catch (caught) {
-      if (isSessionExpired(caught)) onSessionExpired()
-      setDialogError(rbacErrorMessage(caught))
+      if (isPortalSessionExpired(caught)) onSessionExpired()
+      setDialogError(apiErrorMessage(caught))
     }
   }
 
@@ -205,8 +204,8 @@ export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSe
       setRoleToDelete(null)
       reload()
     } catch (caught) {
-      if (isSessionExpired(caught)) onSessionExpired()
-      toast.error(rbacErrorMessage(caught))
+      if (isPortalSessionExpired(caught)) onSessionExpired()
+      toast.error(apiErrorMessage(caught))
     } finally {
       setDeleting(false)
     }

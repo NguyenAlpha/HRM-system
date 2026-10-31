@@ -20,9 +20,8 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { apiErrorMessage } from "@/lib/api-helpers"
+import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import {
-  isSessionExpired,
   softDeleteEmployee,
   type EmployeeDetail,
 } from "@/lib/employee"
@@ -58,7 +57,7 @@ export function EmployeeDeleteDialog({ employee, onClose, onDeleted, onSessionEx
       onClose()
       onDeleted()
     } catch (caught) {
-      if (isSessionExpired(caught)) onSessionExpired()
+      if (isPortalSessionExpired(caught)) onSessionExpired()
       setDialogError(apiErrorMessage(caught))
     }
   }

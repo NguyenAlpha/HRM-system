@@ -29,12 +29,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import type { Portal } from "@/lib/auth/types"
 import type { Page } from "@/lib/pagination"
 import {
-  isSessionExpired,
   PERMISSION_MODULES,
-  rbacErrorMessage,
   rbacRequest,
   type Permission,
 } from "@/lib/rbac"
@@ -63,8 +62,8 @@ export function PermissionManager({ portal, onSessionExpired }: { portal: Portal
       })
       .catch((caught: unknown) => {
         if (!active) return
-        if (isSessionExpired(caught)) onSessionExpired()
-        setError(rbacErrorMessage(caught))
+        if (isPortalSessionExpired(caught)) onSessionExpired()
+        setError(apiErrorMessage(caught))
         setLoading(false)
       })
     return () => { active = false }

@@ -33,14 +33,13 @@ import {
   employeeRequest,
   EMPLOYMENT_TYPE_LABELS,
   EMPLOYMENT_TYPES,
-  isSessionExpired,
   type AssignEmployeeInput,
   type EmployeeAssignment,
   type EmployeeDetail,
   type EmployeeSummary,
   type EmploymentType,
 } from "@/lib/employee"
-import { apiErrorMessage } from "@/lib/api-helpers"
+import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import { positionsForOrganizationUnit } from "@/lib/organization-position-filter"
 import type { Page } from "@/lib/pagination"
 import {
@@ -197,7 +196,7 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
       })
       .catch((caught: unknown) => {
         if (!active) return
-        if (isSessionExpired(caught)) onSessionExpired()
+        if (isPortalSessionExpired(caught)) onSessionExpired()
         setDialogError(apiErrorMessage(caught))
       })
       .finally(() => {
@@ -231,7 +230,7 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
       onClose()
       onAssigned()
     } catch (caught) {
-      if (isSessionExpired(caught)) onSessionExpired()
+      if (isPortalSessionExpired(caught)) onSessionExpired()
       setDialogError(apiErrorMessage(caught))
     }
   }

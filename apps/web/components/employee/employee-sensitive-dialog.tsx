@@ -21,10 +21,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { apiErrorMessage } from "@/lib/api-helpers"
+import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import {
   getEmployeeSensitiveData,
-  isSessionExpired,
   updateEmployeeSensitiveData,
   type EmployeeDetail,
   type EmployeeSensitiveData,
@@ -96,7 +95,7 @@ export function EmployeeSensitiveDialog({ employee, onClose, onSaved, onSessionE
       })
       .catch((caught: unknown) => {
         if (!active) return
-        if (isSessionExpired(caught)) onSessionExpired()
+        if (isPortalSessionExpired(caught)) onSessionExpired()
         setDialogError(apiErrorMessage(caught))
       })
       .finally(() => {
@@ -120,7 +119,7 @@ export function EmployeeSensitiveDialog({ employee, onClose, onSaved, onSessionE
       toast.success(`Đã cập nhật dữ liệu nhạy cảm của ${employee.fullName}`)
       onSaved(saved)
     } catch (caught) {
-      if (isSessionExpired(caught)) onSessionExpired()
+      if (isPortalSessionExpired(caught)) onSessionExpired()
       setDialogError(apiErrorMessage(caught))
     }
   }
