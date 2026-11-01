@@ -12,6 +12,7 @@ Hiện áp dụng cho:
 | Thông tin doanh nghiệp (`GET /workforce/company`) | `["company-profile"]` | 30 phút | [§4](#4-thông-tin-doanh-nghiệp) |
 | Phụ cấp chức vụ và phụ cấp thâm niên (`/allowances`) | `["position-allowances"]`, `["seniority-allowances"]` | 10 phút | [§5](#5-chính-sách-phụ-cấp) |
 | Danh bạ nhân sự cho ô chọn nhân sự (`EmployeePicker`) | `["employee-directory", portal]` | 0, làm mới ở nền | [§6](#6-ô-chọn-nhân-sự-employeepicker) |
+| Phiếu lương của tôi (`/payslips`), phiếu mới nhất và từng năm | `["my-payslips", employeeId, "latest" \| năm]` | 5 phút | [§7](#7-phiếu-lương-của-tôi) |
 
 Các trang khác vẫn tự gọi API bằng `useEffect` như cũ.
 
@@ -152,7 +153,23 @@ lớn hơn thì đổi bên trong `EmployeePicker` sang tìm ở server (gửi `
 
 Cấp role trực tiếp có thể tạo tài khoản mới, nên "Cấp tiếp" gọi `invalidateQueries` cho danh bạ.
 
-## 7. Cách trình bày khi demo
+## 7. Phiếu lương của tôi
+
+Trước đây trang `/payslips` tải **mọi** phiếu lương của nhân viên trong một request. Giờ API
+`GET /payroll/employees/{id}/payslips` nhận thêm `year`, và
+[`components/payroll/my-payslips-page.tsx`](../components/payroll/my-payslips-page.tsx) dùng hai loại khóa:
+
+- `["my-payslips", employeeId, "latest"]`: phiếu mới nhất (`size=1`), hiện ở thẻ "Lương tháng …" và quyết định
+  năm hiện ra đầu tiên.
+- `["my-payslips", employeeId, năm]`: phiếu của một năm, dùng chung cho bảng lương năm và bảng "Lịch sử phiếu
+  lương năm X".
+
+**Invalidation:** duyệt, mở lại hoặc khóa kỳ ở trang bảng lương làm phiếu hiện ra hoặc ẩn đi, nên `reload()` trong
+`payroll-period-page.tsx` xóa cả `MY_PAYSLIPS_KEY`.
+
+**Đã đo:** mở trang rồi chuyển 2026 → 2025 → 2026 → 2025 chỉ có 3 request (phiếu mới nhất, năm 2026, năm 2025).
+
+## 8. Cách trình bày khi demo
 
 Chạy `npm run dev` (Devtools chỉ có trong chế độ dev, bản build production không có).
 
@@ -173,7 +190,7 @@ Chạy `npm run dev` (Devtools chỉ có trong chế độ dev, bản build prod
    Next.js). Bảng hiện các khóa `["payroll-periods",2025]`, `["payroll-periods",2026]` cùng trạng thái
    `fresh` / `stale` / `inactive`, và thời điểm lấy dữ liệu.
 
-## 8. Áp dụng cho trang khác
+## 9. Áp dụng cho trang khác
 
 1. Đặt hằng khóa cache cạnh code của domain, ví dụ `export const EMPLOYEES_KEY = ["employees"] as const`.
 2. Trong component, thay cặp `useState` + `useEffect` gọi API bằng `useQuery({ queryKey: [...KEY, ...tham số],

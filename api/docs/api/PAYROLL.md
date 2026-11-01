@@ -717,7 +717,7 @@ Trả [`PayslipResponse`](#payslipresponse).
 
 ### GET `/api/payroll/employees/{employeeId}/payslips`
 
-Phiếu lương của một nhân viên, có phân trang (`page`, `size` mặc định 20, `sort` chỉ theo `payrollPeriod.periodStart`, mặc định giảm dần; trường khác → `400 VALIDATION_ERROR`). Trả `PagedResult<PayslipResponse>`. Người không có `report.payroll.read` chỉ thấy phiếu của kỳ `APPROVED`, `PAID`, `LOCKED`.
+Phiếu lương của một nhân viên, có phân trang (`page`, `size` mặc định 20, `sort` chỉ theo `payrollPeriod.periodStart`, mặc định giảm dần; trường khác → `400 VALIDATION_ERROR`). Query `year` (không bắt buộc) chỉ lấy phiếu của các kỳ trong năm đó. Trả `PagedResult<PayslipResponse>`. Người không có `report.payroll.read` chỉ thấy phiếu của kỳ `APPROVED`, `PAID`, `LOCKED`.
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|

@@ -73,6 +73,16 @@ class PayrollQueryServiceTest {
         verify(employeeAccessScopeService).requireEmployeeAccess(3L, "report.payroll.read");
     }
 
+    @Test
+    void employeeListsOnlyTheReleasedPayslipsOfTheRequestedYear() {
+        signInAsEmployee(2L);
+        PageRequest page = PageRequest.of(0, 20);
+        when(payslipRepository.findByEmployeeIdAndPayrollPeriodYearAndPayrollPeriodStatusIn(
+            2L, (short) 2026, PayrollPeriodStatus.RELEASED, page)).thenReturn(new PageImpl<>(List.of()));
+
+        assertEquals(0, service().listPayslipsForEmployee(2L, (short) 2026, page).getTotalElements());
+    }
+
     private void signInAsEmployee(Long employeeId) {
         when(currentAccountProvider.hasAuthority("payroll.self.read")).thenReturn(true);
         when(currentAccountProvider.account())
@@ -95,7 +105,7 @@ class PayrollQueryServiceTest {
         BusinessException periods = assertThrows(BusinessException.class, () -> service().listPeriods(null, byHash));
         assertEquals("sort", periods.getField());
         BusinessException payslips = assertThrows(BusinessException.class,
-            () -> service().listPayslipsForEmployee(2L, byHash));
+            () -> service().listPayslipsForEmployee(2L, null, byHash));
         assertEquals("sort", payslips.getField());
     }
 

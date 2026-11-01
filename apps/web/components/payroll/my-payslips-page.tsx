@@ -1,11 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { Eye, Printer } from "lucide-react"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
   CompanyPrintHeader,
+  MY_PAYSLIPS_KEY,
   PayslipDialog,
   hours,
   payslipDeductions,
@@ -29,20 +31,33 @@ export function MyPayslipsPage() {
   const { session } = usePortalSession()
   const self = session.account.employee
   const canRead = !!self && session.account.permissions.some((permission) => permission.code === "payroll.self.read")
-  const [payslips, setPayslips] = useState<Payslip[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const employeeId = self?.id
+  const [pickedYear, setPickedYear] = useState<number | null>(null)
   const [selected, setSelected] = useState<Payslip | null>(null)
+  const path = `payroll/employees/${employeeId}/payslips`
 
-  useEffect(() => {
-    if (!canRead || !self) return
-    let active = true
-    workforceApi<Page<Payslip>>(`payroll/employees/${self.id}/payslips?size=100&sort=payrollPeriod.periodStart,desc`)
-      .then((page) => { if (active) setPayslips(page.content) })
-      .catch((caught: unknown) => { if (active) { setError(apiErrorMessage(caught)); setPayslips([]) } })
-    return () => { active = false }
-  }, [canRead, self])
-
-  const latest = payslips?.[0]
+  // The newest payslip heads the page and picks the year shown first (null: none released yet).
+  const latestQuery = useQuery({
+    queryKey: [...MY_PAYSLIPS_KEY, employeeId, "latest"],
+    queryFn: () => workforceApi<Page<Payslip>>(`${path}?size=1&sort=payrollPeriod.periodStart,desc`)
+      .then((page) => page.content[0] ?? null),
+    enabled: canRead,
+    staleTime: 5 * 60_000,
+  })
+  const latest = latestQuery.data
+  const year = pickedYear ?? latest?.periodYear
+  // One year at a time, each cached under its own key: stepping back to a year already seen
+  // shows it from memory without calling the API.
+  const yearQuery = useQuery({
+    queryKey: [...MY_PAYSLIPS_KEY, employeeId, year],
+    queryFn: () => workforceApi<Page<Payslip>>(`${path}?year=${year}&size=100&sort=payrollPeriod.periodStart,desc`)
+      .then((page) => page.content),
+    enabled: canRead && year !== undefined,
+    staleTime: 5 * 60_000,
+  })
+  const payslips = latest === null ? [] : yearQuery.data
+  const failure = latestQuery.error ?? yearQuery.error
+  const error = failure ? apiErrorMessage(failure) : null
 
   return (
     <>
@@ -55,7 +70,7 @@ export function MyPayslipsPage() {
         {!canRead && <p role="alert">Tài khoản chưa gắn với hồ sơ nhân viên hoặc chưa có quyền xem phiếu lương.</p>}
         <SectionError error={error} />
 
-        {canRead && payslips === null && <Skeleton className="h-40 w-full rounded-xl" />}
+        {canRead && latestQuery.isPending && <Skeleton className="h-40 w-full rounded-xl" />}
 
         {latest && (
           <Card className="border-primary/40">
@@ -85,12 +100,15 @@ export function MyPayslipsPage() {
           </Card>
         )}
 
-        {latest && <YearlyPayrollCard payslips={payslips} printable={!selected} />}
+        {latest && year !== undefined && (
+          <YearlyPayrollCard year={year} maxYear={latest.periodYear} payslips={payslips}
+            onYearChange={setPickedYear} printable={!selected} />
+        )}
 
-        {canRead && payslips !== null && (
+        {canRead && latest !== undefined && (
           <Card>
             <CardHeader>
-              <CardTitle>Lịch sử phiếu lương</CardTitle>
+              <CardTitle>Lịch sử phiếu lương{latest ? ` năm ${year}` : ""}</CardTitle>
               <CardDescription>Chọn một tháng để xem chi tiết thu nhập và khấu trừ.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -107,7 +125,7 @@ export function MyPayslipsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {payslips.map((slip) => (
+                    {payslips?.map((slip) => (
                       <TableRow key={slip.id} className="cursor-pointer" onClick={() => setSelected(slip)}>
                         <TableCell className="font-medium">{periodLabel(slip.periodYear, slip.periodMonth)}</TableCell>
                         <TableCell className="text-right">{hours(slip.payableWorkMinutes)}</TableCell>
@@ -119,7 +137,11 @@ export function MyPayslipsPage() {
                         </RowActionsCell>
                       </TableRow>
                     ))}
-                    {payslips.length === 0 && <EmptyRow colSpan={6}>Chưa có phiếu lương nào được phát hành.</EmptyRow>}
+                    {payslips?.length === 0 && (
+                      <EmptyRow colSpan={6}>
+                        {latest ? `Không có phiếu lương năm ${year}.` : "Chưa có phiếu lương nào được phát hành."}
+                      </EmptyRow>
+                    )}
                   </TableBody>
                 </Table>
               </div>
@@ -147,12 +169,17 @@ const YEAR_COLUMNS: [string, (slip: Payslip) => number][] = [
 
 /**
  * A year of released payslips as one sheet: a line per month, the year's total under it, printable.
+ * `payslips` are that year's, undefined while they load.
  * `printable` is off while a payslip is open so printing then gives just that slip.
  */
-function YearlyPayrollCard({ payslips, printable }: { payslips: Payslip[]; printable: boolean }) {
-  const lastYear = Math.max(...payslips.map((slip) => slip.periodYear))
-  const [year, setYear] = useState(lastYear)
-  const slips = payslips.filter((slip) => slip.periodYear === year)
+function YearlyPayrollCard({ year, maxYear, payslips, onYearChange, printable }: {
+  year: number
+  maxYear: number
+  payslips: Payslip[] | undefined
+  onYearChange: (year: number) => void
+  printable: boolean
+}) {
+  const slips = payslips ?? []
   const months = Array.from({ length: 12 }, (_, index) => ({
     month: index + 1,
     slip: slips.find((slip) => slip.periodMonth === index + 1),
@@ -169,7 +196,7 @@ function YearlyPayrollCard({ payslips, printable }: { payslips: Payslip[]; print
           Tổng hợp các phiếu lương đã phát hành trong năm.
         </CardDescription>
         <CardAction className="flex items-center gap-2 print:hidden">
-          <YearPicker year={year} maxYear={lastYear} onChange={setYear} />
+          <YearPicker year={year} maxYear={maxYear} onChange={onYearChange} />
           <Button type="button" variant="outline" size="sm" onClick={() => window.print()} disabled={slips.length === 0}>
             <Printer /> In bảng lương năm
           </Button>

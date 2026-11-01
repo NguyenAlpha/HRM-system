@@ -80,14 +80,20 @@ public class PayrollQueryService {
     }
 
     @PreAuthorize("hasAnyAuthority('payroll.self.read', 'report.payroll.read')")
-    public Page<PayslipResponse> listPayslipsForEmployee(Long employeeId, Pageable pageable) {
+    public Page<PayslipResponse> listPayslipsForEmployee(Long employeeId, Short year, Pageable pageable) {
         SearchPatterns.requireSortable(pageable, PAYSLIP_SORTABLE);
         requirePayslipAccess(employeeId);
         if (currentAccountProvider.hasAuthority("report.payroll.read")) {
-            return payslipRepository.findByEmployeeId(employeeId, pageable).map(payrollMapper::toResponse);
+            return (year == null
+                ? payslipRepository.findByEmployeeId(employeeId, pageable)
+                : payslipRepository.findByEmployeeIdAndPayrollPeriodYear(employeeId, year, pageable))
+                .map(payrollMapper::toResponse);
         }
-        return payslipRepository.findByEmployeeIdAndPayrollPeriodStatusIn(employeeId,
-            PayrollPeriodStatus.RELEASED, pageable).map(payrollMapper::toResponse);
+        return (year == null
+            ? payslipRepository.findByEmployeeIdAndPayrollPeriodStatusIn(employeeId, PayrollPeriodStatus.RELEASED, pageable)
+            : payslipRepository.findByEmployeeIdAndPayrollPeriodYearAndPayrollPeriodStatusIn(employeeId, year,
+                PayrollPeriodStatus.RELEASED, pageable))
+            .map(payrollMapper::toResponse);
     }
 
     private void requirePayslipAccess(Long employeeId) {

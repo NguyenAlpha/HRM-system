@@ -47,6 +47,11 @@ public interface PayslipRepository extends JpaRepository<Payslip, Long> {
     Page<Payslip> findByEmployeeIdAndPayrollPeriodStatusIn(Long employeeId,
         Collection<PayrollPeriodStatus> statuses, Pageable pageable);
 
+    Page<Payslip> findByEmployeeIdAndPayrollPeriodYear(Long employeeId, Short year, Pageable pageable);
+
+    Page<Payslip> findByEmployeeIdAndPayrollPeriodYearAndPayrollPeriodStatusIn(Long employeeId, Short year,
+        Collection<PayrollPeriodStatus> statuses, Pageable pageable);
+
     boolean existsByEmployeeId(Long employeeId);
 
     /** Phiếu lương của các kỳ trong năm có trạng thái thuộc {@code statuses}, kèm kỳ lương. */

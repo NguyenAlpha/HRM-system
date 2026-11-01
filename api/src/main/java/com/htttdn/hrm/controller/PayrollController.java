@@ -114,7 +114,8 @@ public class PayrollController {
 
     @GetMapping("/employees/{employeeId}/payslips")
     public ApiResult<PagedResult<PayslipResponse>> employeePayslips(@PathVariable Long employeeId,
+        @RequestParam(required = false) Short year,
         @PageableDefault(size = 20, sort = "payrollPeriod.periodStart", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ApiResult.ok(PagedResult.of(queryService.listPayslipsForEmployee(employeeId, pageable)));
+        return ApiResult.ok(PagedResult.of(queryService.listPayslipsForEmployee(employeeId, year, pageable)));
     }
 }

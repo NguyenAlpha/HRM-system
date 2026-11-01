@@ -20,6 +20,7 @@ import {
 
 import { ActionsMenu, RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
+  MY_PAYSLIPS_KEY,
   PAYROLL_PERIODS_KEY,
   PayslipDialog,
   PeriodSteps,
@@ -97,11 +98,13 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
   const [calculating, setCalculating] = useState(false)
   const [reopening, setReopening] = useState(false)
   const queryClient = useQueryClient()
-  // Every change made here can move the period's status or totals, so the cached periods list is marked
-  // stale and fetched again when the user goes back to it.
+  // Every change made here can move the period's status or totals, so the cached periods list (and the
+  // user's own payslips, released or withdrawn with the period) is marked stale and fetched again when
+  // the user goes back to it.
   const reload = () => {
     setRevision((value) => value + 1)
     void queryClient.invalidateQueries({ queryKey: PAYROLL_PERIODS_KEY })
+    void queryClient.invalidateQueries({ queryKey: MY_PAYSLIPS_KEY })
   }
   const { busy, run } = useWorkforceAction(reload)
   const loading = loadedRevision !== revision

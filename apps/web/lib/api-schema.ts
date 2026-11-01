@@ -6032,6 +6032,7 @@ export interface operations {
     employeePayslips: {
         parameters: {
             query: {
+                year?: number;
                 pageable: components["schemas"]["Pageable"];
             };
             header?: never;
