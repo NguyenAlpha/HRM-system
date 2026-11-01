@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useQueryClient } from "@tanstack/react-query"
 import { z } from "zod"
 import { Loader2, ShieldCheck, UserPlus } from "lucide-react"
 import { toast } from "sonner"
@@ -10,6 +11,7 @@ import { toast } from "sonner"
 import { ACCOUNT_STATUS_LABELS } from "@/components/account/account-actions"
 import { ActivationInvitation } from "@/components/account/activation-invitation"
 import { ErrorAlert } from "@/components/common/list-controls"
+import { EMPLOYEE_DIRECTORY_KEY, EmployeePicker, useEmployeeDirectory } from "@/components/employee/employee-picker"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -31,7 +33,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import { provisionAccount, usernameSchema, type AccountProvisioningResponse } from "@/lib/account"
 import type { Portal } from "@/lib/auth/types"
-import { employeeRequest, type EmployeeSummary } from "@/lib/employee"
+import type { EmployeeSummary } from "@/lib/employee"
 import type { Page } from "@/lib/pagination"
 import {
   getOrganizationUnitOptions,
@@ -98,7 +100,9 @@ interface GrantResult {
 export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: Portal; onSessionExpired: () => void }) {
   const [loadingOptions, setLoadingOptions] = useState(true)
   const [optionsError, setOptionsError] = useState<string | null>(null)
-  const [employees, setEmployees] = useState<EmployeeSummary[]>([])
+  // A grant can create the employee's account, so starting over refreshes the directory too.
+  const queryClient = useQueryClient()
+  const { data: employees = [] } = useEmployeeDirectory(portal)
   const [roles, setRoles] = useState<Role[]>([])
   const [orgUnits, setOrgUnits] = useState<OrganizationUnitOption[]>([])
   const [workLocations, setWorkLocations] = useState<WorkLocationOption[]>([])
@@ -123,13 +127,6 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
     [employees, selectedEmployeeId],
   )
 
-  const employeeItems = useMemo(
-    () => Object.fromEntries(employees.map((employee) => [
-      String(employee.id),
-      `${employee.fullName}${employee.account ? ` (${employee.account.username})` : " · chưa có tài khoản"}`,
-    ])),
-    [employees],
-  )
   const roleItems = useMemo(
     () => Object.fromEntries(roles.map((role) => [role.code, role.name])),
     [roles],
@@ -150,14 +147,12 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
   useEffect(() => {
     let active = true
     Promise.all([
-      employeeRequest<Page<EmployeeSummary>>(portal, "?page=0&size=100"),
       rbacRequest<Page<Role>>(portal, "/roles?page=0&size=100&sort=name,asc"),
       getOrganizationUnitOptions(portal),
       getWorkLocationOptions(portal),
     ])
-      .then(([employeePage, rolePage, units, locations]) => {
+      .then(([rolePage, units, locations]) => {
         if (!active) return
-        setEmployees(employeePage.content)
         setRoles(rolePage.content.filter((role) => role.grantPolicy === "HR_ASSIGNABLE" || role.grantPolicy === "OWNER_APPROVAL"))
         setOrgUnits(units)
         setWorkLocations(locations)
@@ -179,6 +174,7 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
     setLoadingOptions(true)
     setOptionsError(null)
     setRevision((value) => value + 1)
+    void queryClient.invalidateQueries({ queryKey: EMPLOYEE_DIRECTORY_KEY })
   }
 
   async function onSubmit(values: GrantValues) {
@@ -292,18 +288,11 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
               control={control}
               name="employeeId"
               render={({ field }) => (
-                <Select value={field.value} items={employeeItems} onValueChange={field.onChange} disabled={loadingOptions}>
-                  <SelectTrigger id="grant-employee" className="w-full" aria-invalid={!!errors.employeeId}>
-                    <SelectValue placeholder={loadingOptions ? "Đang tải..." : "Chọn nhân sự..."} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {employees.map((employee) => (
-                      <SelectItem key={employee.id} value={String(employee.id)}>
-                        {employee.fullName}{employee.account ? ` (${employee.account.username})` : " · chưa có tài khoản"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <EmployeePicker id="grant-employee" portal={portal} value={field.value ? Number(field.value) : null}
+                  onChange={(employee) => field.onChange(employee ? String(employee.id) : "")}
+                  invalid={!!errors.employeeId}
+                  label={(employee) => `${employee.employeeCode} · ${employee.fullName}${employee.account
+                    ? ` (${employee.account.username})` : " · chưa có tài khoản"}`} />
               )}
             />
             {errors.employeeId && <p className="text-xs font-medium text-destructive">{errors.employeeId.message}</p>}

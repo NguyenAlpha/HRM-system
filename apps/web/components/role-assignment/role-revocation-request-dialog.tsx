@@ -1,11 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Loader2, ShieldMinus } from "lucide-react"
 import { toast } from "sonner"
 
 import { scopeLabel, validityLabel } from "@/components/account/account-access"
 import { ErrorAlert } from "@/components/common/list-controls"
+import { EmployeePicker, useEmployeeDirectory } from "@/components/employee/employee-picker"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -19,8 +20,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
-import { employeeRequest, type EmployeeSummary } from "@/lib/employee"
-import type { Page } from "@/lib/pagination"
+import type { EmployeeSummary } from "@/lib/employee"
 import {
   createRoleRevocationRequest,
   listRevocableAssignments,
@@ -35,32 +35,22 @@ export function RoleRevocationRequestDialog({ onClose, onCreated, onSessionExpir
   onCreated: () => void
   onSessionExpired: () => void
 }) {
-  const [employees, setEmployees] = useState<EmployeeSummary[] | null>(null)
-  const [accountId, setAccountId] = useState("")
+  const { error: directoryError } = useEmployeeDirectory("hrm")
+  const [employee, setEmployee] = useState<EmployeeSummary | null>(null)
   const [assignments, setAssignments] = useState<AccountRoleAssignment[] | null>(null)
   const [assignmentId, setAssignmentId] = useState("")
   const [reason, setReason] = useState("")
-  const [error, setError] = useState<string | null>(null)
+  const [actionError, setError] = useState<string | null>(null)
+  const error = actionError ?? (directoryError ? apiErrorMessage(directoryError) : null)
   const [running, setRunning] = useState(false)
 
-  useEffect(() => {
-    let active = true
-    employeeRequest<Page<EmployeeSummary>>("hrm", "?page=0&size=100")
-      .then((page) => { if (active) setEmployees(page.content.filter((employee) => employee.account !== null)) })
-      .catch((caught: unknown) => {
-        if (!active) return
-        if (isPortalSessionExpired(caught)) onSessionExpired()
-        setError(apiErrorMessage(caught))
-      })
-    return () => { active = false }
-  }, [onSessionExpired])
-
-  function chooseAccount(next: string) {
-    setAccountId(next)
+  function chooseEmployee(next: EmployeeSummary | null) {
+    setEmployee(next)
     setAssignmentId("")
     setAssignments(null)
     setError(null)
-    listRevocableAssignments(Number(next))
+    if (!next?.account) return
+    listRevocableAssignments(next.account.id)
       .then((loaded) => {
         setAssignments(loaded)
         if (loaded.length === 1) setAssignmentId(String(loaded[0].id))
@@ -71,8 +61,6 @@ export function RoleRevocationRequestDialog({ onClose, onCreated, onSessionExpir
       })
   }
 
-  const employeeItems = Object.fromEntries((employees ?? []).map((employee) =>
-    [String(employee.account!.id), `${employee.fullName} (${employee.account!.username})`]))
   const assignmentItems = Object.fromEntries((assignments ?? []).map((assignment) =>
     [String(assignment.id), `${assignment.roleName} · ${scopeLabel(assignment)}`]))
   const selected = assignments?.find((assignment) => String(assignment.id) === assignmentId) ?? null
@@ -114,22 +102,12 @@ export function RoleRevocationRequestDialog({ onClose, onCreated, onSessionExpir
 
             <div className="grid gap-1.5">
               <Label htmlFor="revoke-req-account">Nhân sự (đã có tài khoản)</Label>
-              <Select value={accountId} items={employeeItems} onValueChange={(value) => chooseAccount(String(value ?? ""))}
-                disabled={employees === null}>
-                <SelectTrigger id="revoke-req-account" className="w-full">
-                  <SelectValue placeholder={employees === null ? "Đang tải..." : "Chọn nhân sự..."} />
-                </SelectTrigger>
-                <SelectContent>
-                  {(employees ?? []).map((employee) => (
-                    <SelectItem key={employee.account!.id} value={String(employee.account!.id)}>
-                      {employeeItems[String(employee.account!.id)]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <EmployeePicker id="revoke-req-account" portal="hrm" value={employee?.id ?? null} onChange={chooseEmployee}
+                filter={(candidate) => candidate.account !== null}
+                label={(candidate) => `${candidate.employeeCode} · ${candidate.fullName} (${candidate.account?.username})`} />
             </div>
 
-            {accountId && (
+            {employee && (
               <div className="grid gap-1.5">
                 <Label htmlFor="revoke-req-assignment">Role cần thu hồi</Label>
                 {assignments?.length === 0 ? (

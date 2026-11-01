@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -9,6 +9,7 @@ import { toast } from "sonner"
 
 import { todayIso } from "@/components/account/account-access"
 import { ErrorAlert } from "@/components/common/list-controls"
+import { EmployeePicker, useEmployeeDirectory } from "@/components/employee/employee-picker"
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
   AlertDialog,
@@ -30,8 +31,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import type { Portal } from "@/lib/auth/types"
-import { employeeRequest, type EmployeeSummary } from "@/lib/employee"
-import type { Page } from "@/lib/pagination"
 import {
   createPermissionOverride,
   listAccountRoleAssignments,
@@ -69,13 +68,12 @@ export function PermissionOverrideManager({ portal, onSessionExpired }: {
   portal: Portal
   onSessionExpired: () => void
 }) {
-  const [employees, setEmployees] = useState<EmployeeSummary[]>([])
   const [assignments, setAssignments] = useState<AccountRoleAssignment[]>([])
   const [overrides, setOverrides] = useState<AccountPermissionOverride[]>([])
   const [permissionOptions, setPermissionOptions] = useState<PermissionOverrideOption[]>([])
   const [accountId, setAccountId] = useState("")
+  const [employeeId, setEmployeeId] = useState<number | null>(null)
   const [assignmentId, setAssignmentId] = useState("")
-  const [loadingEmployees, setLoadingEmployees] = useState(true)
   const [loadingAssignments, setLoadingAssignments] = useState(false)
   const [loadingOverrides, setLoadingOverrides] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -105,12 +103,6 @@ export function PermissionOverrideManager({ portal, onSessionExpired }: {
     ? selectedAssignment.effectiveFrom
     : todayIso()
 
-  const employeeItems = useMemo(
-    () => Object.fromEntries(employees
-      .filter((employee) => employee.account)
-      .map((employee) => [String(employee.account!.id), `${employee.fullName} (${employee.account!.username})`])),
-    [employees],
-  )
   const assignmentItems = useMemo(
     () => Object.fromEntries(assignments.map((assignment) => [
       String(assignment.id),
@@ -126,20 +118,7 @@ export function PermissionOverrideManager({ portal, onSessionExpired }: {
     [permissionOptions],
   )
 
-  useEffect(() => {
-    let active = true
-    employeeRequest<Page<EmployeeSummary>>(portal, "?page=0&size=100")
-      .then((page) => {
-        if (active) setEmployees(page.content.filter((employee) => employee.account))
-      })
-      .catch((caught: unknown) => {
-        if (!active) return
-        if (isPortalSessionExpired(caught)) onSessionExpired()
-        setError(apiErrorMessage(caught))
-      })
-      .finally(() => { if (active) setLoadingEmployees(false) })
-    return () => { active = false }
-  }, [portal, onSessionExpired])
+  const { error: directoryError } = useEmployeeDirectory(portal)
 
   async function selectAccount(nextAccountId: string | null) {
     const value = nextAccountId ?? ""
@@ -272,23 +251,18 @@ export function PermissionOverrideManager({ portal, onSessionExpired }: {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-5">
-          <ErrorAlert error={error} />
+          <ErrorAlert error={error ?? (directoryError ? apiErrorMessage(directoryError) : null)} />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5">
               <Label htmlFor="override-account">Nhân sự / tài khoản</Label>
-              <Select value={accountId} items={employeeItems} onValueChange={selectAccount} disabled={loadingEmployees}>
-                <SelectTrigger id="override-account" className="w-full">
-                  <SelectValue placeholder={loadingEmployees ? "Đang tải..." : "Chọn tài khoản..."} />
-                </SelectTrigger>
-                <SelectContent>
-                  {employees.map((employee) => employee.account && (
-                    <SelectItem key={employee.account.id} value={String(employee.account.id)}>
-                      {employee.fullName} ({employee.account.username})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <EmployeePicker id="override-account" portal={portal} value={employeeId}
+                onChange={(employee) => {
+                  setEmployeeId(employee?.id ?? null)
+                  void selectAccount(employee?.account ? String(employee.account.id) : null)
+                }}
+                filter={(employee) => employee.account !== null}
+                label={(employee) => `${employee.employeeCode} · ${employee.fullName} (${employee.account?.username})`} />
             </div>
 
             <div className="grid gap-1.5">

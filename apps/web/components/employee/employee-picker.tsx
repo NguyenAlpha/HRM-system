@@ -38,7 +38,7 @@ export function useEmployeeDirectory(portal: Portal) {
 const defaultLabel = (employee: EmployeeSummary) => `${employee.employeeCode} · ${employee.fullName}`
 
 /** Searchable employee select: type part of a code or name to narrow the list. */
-export function EmployeePicker({ id, portal, value, onChange, filter, label = defaultLabel, disabled }: {
+export function EmployeePicker({ id, portal, value, onChange, filter, label = defaultLabel, disabled, invalid }: {
   id: string
   portal: Portal
   /** Selected employee id; null for none. */
@@ -49,6 +49,8 @@ export function EmployeePicker({ id, portal, value, onChange, filter, label = de
   /** Text shown for an employee, also what typing searches. */
   label?: (employee: EmployeeSummary) => string
   disabled?: boolean
+  /** Marks the field as failing form validation. */
+  invalid?: boolean
 }) {
   const { data: directory, isPending } = useEmployeeDirectory(portal)
   const candidates = filter ? (directory ?? []).filter(filter) : directory ?? []
@@ -64,7 +66,7 @@ export function EmployeePicker({ id, portal, value, onChange, filter, label = de
       limit={SHOWN_MATCHES}
       disabled={disabled || isPending}
     >
-      <ComboboxInput id={id} className="w-full" disabled={disabled || isPending}
+      <ComboboxInput id={id} className="w-full" disabled={disabled || isPending} aria-invalid={invalid}
         placeholder={isPending ? "Đang tải..." : "Gõ mã hoặc tên nhân sự..."} />
       <ComboboxContent>
         <ComboboxEmpty>Không tìm thấy nhân sự phù hợp.</ComboboxEmpty>

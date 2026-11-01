@@ -9,6 +9,7 @@ import { toast } from "sonner"
 
 import { Pagination, ErrorAlert } from "@/components/common/list-controls"
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
+import { EmployeePicker } from "@/components/employee/employee-picker"
 import { RoleRevocationRequestDialog } from "@/components/role-assignment/role-revocation-request-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -47,7 +48,6 @@ import {
 } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
-import { employeeRequest, type EmployeeSummary } from "@/lib/employee"
 import type { Page } from "@/lib/pagination"
 import {
   approveRoleAssignmentRequest,
@@ -142,7 +142,7 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
   const [createError, setCreateError] = useState<string | null>(null)
   const [loadingOptions, setLoadingOptions] = useState(true)
   const [roleOptions, setRoleOptions] = useState<RoleAssignmentOption[]>([])
-  const [accountOptions, setAccountOptions] = useState<EmployeeSummary[]>([])
+  const [pickedEmployeeId, setPickedEmployeeId] = useState<number | null>(null)
   const [orgUnits, setOrgUnits] = useState<OrganizationUnitOption[]>([])
   const [workLocations, setWorkLocations] = useState<WorkLocationOption[]>([])
 
@@ -167,10 +167,6 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
     [roleOptions, selectedRoleCode],
   )
 
-  const accountItems = useMemo(
-    () => Object.fromEntries(accountOptions.map((employee) => [String(employee.account!.id), `${employee.fullName} (${employee.account!.username})`])),
-    [accountOptions],
-  )
   const roleItems = useMemo(
     () => Object.fromEntries(roleOptions.map((role) => [role.roleCode, `${role.roleName} ${role.requiresApproval ? "· cần duyệt" : "· tự động"}`])),
     [roleOptions],
@@ -219,17 +215,16 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
     setCreateError(null)
     reset(EMPTY_CREATE_VALUES)
     setCreateOpen(true)
+    setPickedEmployeeId(null)
     setLoadingOptions(true)
 
     Promise.all([
       getAvailableRoles(),
-      employeeRequest<Page<EmployeeSummary>>("hrm", "?page=0&size=100"),
       getOrganizationUnitOptions("hrm"),
       getWorkLocationOptions("hrm"),
     ])
-      .then(([roles, employees, units, locations]) => {
+      .then(([roles, units, locations]) => {
         setRoleOptions(roles)
-        setAccountOptions(employees.content.filter((employee) => employee.account !== null))
         setOrgUnits(units)
         setWorkLocations(locations)
       })
@@ -454,18 +449,13 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
                   control={control}
                   name="accountId"
                   render={({ field }) => (
-                    <Select value={field.value} items={accountItems} onValueChange={field.onChange} disabled={loadingOptions}>
-                      <SelectTrigger id="req-account" className="w-full" aria-invalid={!!errors.accountId}>
-                        <SelectValue placeholder={loadingOptions ? "Đang tải..." : "Chọn nhân sự..."} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {accountOptions.map((employee) => (
-                          <SelectItem key={employee.account!.id} value={String(employee.account!.id)}>
-                            {employee.fullName} ({employee.account!.username})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <EmployeePicker id="req-account" portal="hrm" value={pickedEmployeeId} invalid={!!errors.accountId}
+                      onChange={(employee) => {
+                        setPickedEmployeeId(employee?.id ?? null)
+                        field.onChange(employee?.account ? String(employee.account.id) : "")
+                      }}
+                      filter={(employee) => employee.account !== null}
+                      label={(employee) => `${employee.employeeCode} · ${employee.fullName} (${employee.account?.username})`} />
                   )}
                 />
                 {errors.accountId && <p className="text-xs font-medium text-destructive">{errors.accountId.message}</p>}

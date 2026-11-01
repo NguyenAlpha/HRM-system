@@ -134,7 +134,16 @@ Gõ tìm thì vẫn không bao giờ gọi API.
 Giới hạn: 2000 là cỡ trang lớn nhất mặc định của Spring, đủ cho quy mô ứng dụng nội bộ một công ty. Công ty
 lớn hơn thì đổi bên trong `EmployeePicker` sang tìm ở server (gửi `keyword`), nơi dùng không phải sửa.
 
-Đang dùng ở: Chuyển giao Company Owner (`/company`).
+Đang dùng ở:
+
+| Trang | Ô chọn | Điều kiện lọc |
+|:------|:-------|:--------------|
+| `/company` | Chuyển giao Company Owner | Đang làm việc, tài khoản đang hoạt động, không phải chính mình |
+| `/role-requests` | Đề xuất cấp role, Đề xuất thu hồi role | Có tài khoản |
+| `/role-grant` | Cấp role trực tiếp | Mọi nhân sự (người chưa có tài khoản được tạo tài khoản khi cấp) |
+| `/role-grant` | Ghi đè quyền | Có tài khoản |
+
+Cấp role trực tiếp có thể tạo tài khoản mới, nên "Cấp tiếp" gọi `invalidateQueries` cho danh bạ.
 
 ## 7. Cách trình bày khi demo
 
