@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import { PhoneInput } from "@/components/common/phone-input"
 import { ErrorAlert } from "@/components/common/list-controls"
 import { EmployeeBirthDateSelect } from "@/components/employee/employee-birth-date-select"
+import { EmployeePicker } from "@/components/employee/employee-picker"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -40,18 +41,15 @@ import {
   EDUCATION_LEVELS,
   EMPLOYMENT_TYPE_LABELS,
   EMPLOYMENT_TYPES,
-  employeeRequest,
   GENDER_LABELS,
   GENDERS,
   type EducationLevel,
-  type EmployeeSummary,
   type EmploymentType,
   type Gender,
 } from "@/lib/employee"
 import { phoneSchema } from "@/lib/phone"
 import { positionsForOrganizationUnit } from "@/lib/organization-position-filter"
 import { isEligibleEmployeeBirthDate } from "@/lib/employee-birth-date"
-import type { Page } from "@/lib/pagination"
 import {
   getJobPositionOptions,
   getOrganizationUnitOptions,
@@ -140,7 +138,6 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
   const [workLocations, setWorkLocations] = useState<WorkLocationOption[]>([])
   const [positions, setPositions] = useState<JobPositionOption[]>([])
   const [shifts, setShifts] = useState<WorkShiftOption[]>([])
-  const [managers, setManagers] = useState<EmployeeSummary[]>([])
   const [loadingOptions, setLoadingOptions] = useState(true)
 
   const orgUnitItems = useMemo(
@@ -154,13 +151,6 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
   const shiftItems = useMemo(
     () => ({ [SHIFT_NONE]: "Không xếp ca", ...Object.fromEntries(shifts.map((shift) => [String(shift.id), shift.name])) }),
     [shifts],
-  )
-  const managerItems = useMemo(
-    () => ({
-      [MANAGER_NONE]: "Không có",
-      ...Object.fromEntries(managers.map((manager) => [String(manager.id), `${manager.fullName} (${manager.employeeCode})`])),
-    }),
-    [managers],
   )
 
   const {
@@ -192,9 +182,8 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
       getWorkLocationOptions("hrm"),
       getJobPositionOptions("hrm"),
       getWorkShiftOptions("hrm"),
-      employeeRequest<Page<EmployeeSummary>>("hrm", "?page=0&size=100"),
     ])
-      .then(([units, locations, jobPositions, workShifts, employeePage]) => {
+      .then(([units, locations, jobPositions, workShifts]) => {
         if (!active) return
         setOrgUnits(units)
         setWorkLocations(locations)
@@ -202,9 +191,6 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
         setShifts(workShifts)
         // Attendance, leave and payroll need a shift; with only one there is nothing to choose.
         if (workShifts.length === 1) setValue("shiftId", String(workShifts[0].id))
-        // Same rule as the assignment dialog: the API refuses a manager who no longer works here.
-        setManagers(employeePage.content.filter((candidate) =>
-          candidate.employmentStatus === "ACTIVE" || candidate.employmentStatus === "PROBATION"))
       })
       .catch((caught: unknown) => {
         if (!active) return
@@ -483,17 +469,12 @@ export function EmployeeCreateDialog({ onClose, onCreated, onSessionExpired }: {
                     control={control}
                     name="managerEmployeeId"
                     render={({ field }) => (
-                      <Select value={field.value} items={managerItems} onValueChange={field.onChange} disabled={loadingOptions}>
-                        <SelectTrigger id="new-emp-manager" className="w-full">
-                          <SelectValue placeholder={loadingOptions ? "Đang tải..." : "Không có"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={MANAGER_NONE}>Không có</SelectItem>
-                          {managers.map((manager) => (
-                            <SelectItem key={manager.id} value={String(manager.id)}>{manager.fullName} ({manager.employeeCode})</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <EmployeePicker id="new-emp-manager" portal="hrm" clearable disabled={loadingOptions}
+                        value={field.value === MANAGER_NONE ? null : Number(field.value)}
+                        onChange={(manager) => field.onChange(manager ? String(manager.id) : MANAGER_NONE)}
+                        // Same rule as the assignment dialog: the API refuses a manager who no longer works here.
+                        filter={(candidate) => candidate.employmentStatus === "ACTIVE" || candidate.employmentStatus === "PROBATION"}
+                        placeholder="Không có (gõ mã hoặc tên để chọn)" />
                     )}
                   />
                 </div>

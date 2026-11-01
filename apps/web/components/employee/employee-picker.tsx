@@ -38,7 +38,9 @@ export function useEmployeeDirectory(portal: Portal) {
 const defaultLabel = (employee: EmployeeSummary) => `${employee.employeeCode} · ${employee.fullName}`
 
 /** Searchable employee select: type part of a code or name to narrow the list. */
-export function EmployeePicker({ id, portal, value, onChange, filter, label = defaultLabel, disabled, invalid }: {
+export function EmployeePicker({
+  id, portal, value, onChange, filter, label = defaultLabel, placeholder = "Gõ mã hoặc tên nhân sự...", clearable, disabled, invalid,
+}: {
   id: string
   portal: Portal
   /** Selected employee id; null for none. */
@@ -48,6 +50,10 @@ export function EmployeePicker({ id, portal, value, onChange, filter, label = de
   filter?: (employee: EmployeeSummary) => boolean
   /** Text shown for an employee, also what typing searches. */
   label?: (employee: EmployeeSummary) => string
+  /** Shown while nothing is picked. */
+  placeholder?: string
+  /** Offers a button that clears the choice, for optional fields. */
+  clearable?: boolean
   disabled?: boolean
   /** Marks the field as failing form validation. */
   invalid?: boolean
@@ -67,7 +73,7 @@ export function EmployeePicker({ id, portal, value, onChange, filter, label = de
       disabled={disabled || isPending}
     >
       <ComboboxInput id={id} className="w-full" disabled={disabled || isPending} aria-invalid={invalid}
-        placeholder={isPending ? "Đang tải..." : "Gõ mã hoặc tên nhân sự..."} />
+        showClear={clearable && selected !== null} placeholder={isPending ? "Đang tải..." : placeholder} />
       <ComboboxContent>
         <ComboboxEmpty>Không tìm thấy nhân sự phù hợp.</ComboboxEmpty>
         <ComboboxList>

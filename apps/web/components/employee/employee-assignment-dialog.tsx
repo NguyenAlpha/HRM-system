@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { ErrorAlert } from "@/components/common/list-controls"
+import { EmployeePicker } from "@/components/employee/employee-picker"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -41,7 +42,6 @@ import {
 } from "@/lib/employee"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import { positionsForOrganizationUnit } from "@/lib/organization-position-filter"
-import type { Page } from "@/lib/pagination"
 import {
   getJobPositionOptions,
   getOrganizationUnitOptions,
@@ -101,7 +101,6 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
   const [workLocations, setWorkLocations] = useState<WorkLocationOption[]>([])
   const [positions, setPositions] = useState<JobPositionOption[]>([])
   const [shifts, setShifts] = useState<WorkShiftOption[]>([])
-  const [managers, setManagers] = useState<EmployeeSummary[]>([])
   const [loadingOptions, setLoadingOptions] = useState(true)
 
   const orgUnitItems = useMemo(
@@ -115,13 +114,6 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
   const shiftItems = useMemo(
     () => ({ [NONE]: "Không xếp ca", ...Object.fromEntries(shifts.map((shift) => [String(shift.id), shift.name])) }),
     [shifts],
-  )
-  const managerItems = useMemo(
-    () => ({
-      [NONE]: "Không có",
-      ...Object.fromEntries(managers.map((manager) => [String(manager.id), `${manager.fullName} (${manager.employeeCode})`])),
-    }),
-    [managers],
   )
   const employmentTypeItems = useMemo(() => ({ ...EMPLOYMENT_TYPE_LABELS }), [])
 
@@ -165,9 +157,8 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
       getWorkLocationOptions("hrm"),
       getJobPositionOptions("hrm"),
       getWorkShiftOptions("hrm"),
-      employeeRequest<Page<EmployeeSummary>>("hrm", "?page=0&size=100"),
     ])
-      .then(([employeeDetail, units, locations, jobPositions, workShifts, employeePage]) => {
+      .then(([employeeDetail, units, locations, jobPositions, workShifts]) => {
         if (!active) return
         const current = employeeDetail.currentAssignment
         setDetail(employeeDetail)
@@ -175,9 +166,6 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
         setWorkLocations(locations)
         setPositions(jobPositions)
         setShifts(workShifts)
-        setManagers(employeePage.content.filter((candidate) =>
-          candidate.id !== employee.id
-          && (candidate.employmentStatus === "ACTIVE" || candidate.employmentStatus === "PROBATION")))
         reset({
           organizationUnitId: current ? String(current.organizationUnitId) : "",
           workLocationId: current ? String(current.workLocationId) : "",
@@ -354,17 +342,13 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
                   control={control}
                   name="managerEmployeeId"
                   render={({ field }) => (
-                    <Select value={field.value} items={managerItems} onValueChange={field.onChange} disabled={loadingOptions}>
-                      <SelectTrigger id="assignment-manager" className="w-full">
-                        <SelectValue placeholder={loadingOptions ? "Đang tải..." : "Không có"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={NONE}>Không có</SelectItem>
-                        {managers.map((manager) => (
-                          <SelectItem key={manager.id} value={String(manager.id)}>{manager.fullName} ({manager.employeeCode})</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <EmployeePicker id="assignment-manager" portal="hrm" clearable disabled={loadingOptions}
+                      value={field.value === NONE ? null : Number(field.value)}
+                      onChange={(manager) => field.onChange(manager ? String(manager.id) : NONE)}
+                      // The API refuses a manager who no longer works here, or the employee themself.
+                      filter={(candidate) => candidate.id !== employee.id
+                        && (candidate.employmentStatus === "ACTIVE" || candidate.employmentStatus === "PROBATION")}
+                      placeholder="Không có (gõ mã hoặc tên để chọn)" />
                   )}
                 />
               </div>

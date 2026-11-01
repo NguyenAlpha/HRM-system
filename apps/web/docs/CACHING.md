@@ -142,6 +142,8 @@ lớn hơn thì đổi bên trong `EmployeePicker` sang tìm ở server (gửi `
 | `/role-requests` | Đề xuất cấp role, Đề xuất thu hồi role | Có tài khoản |
 | `/role-grant` | Cấp role trực tiếp | Mọi nhân sự (người chưa có tài khoản được tạo tài khoản khi cấp) |
 | `/role-grant` | Ghi đè quyền | Có tài khoản |
+| `/employees` | Quản lý trực tiếp khi thêm nhân sự | Đang làm việc (chính thức hoặc thử việc); có nút xóa để bỏ chọn |
+| `/employees` | Quản lý trực tiếp khi thay đổi phân công | Như trên, trừ chính nhân sự đang phân công |
 
 Cấp role trực tiếp có thể tạo tài khoản mới, nên "Cấp tiếp" gọi `invalidateQueries` cho danh bạ.
 
