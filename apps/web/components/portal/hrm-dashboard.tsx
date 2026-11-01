@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState, type ReactNode } from "react"
+import type { ReactNode } from "react"
+import { useQuery } from "@tanstack/react-query"
 import {
   ArrowUpRight,
   CalendarCheck,
@@ -23,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { money, time, today, workforceApi } from "@/components/workforce/workforce-shared"
 import { employeeListQuery, employeeRequest, type EmployeeSummary } from "@/lib/employee"
 import type { Page } from "@/lib/pagination"
+import { DASHBOARD_KEY } from "@/lib/query-client"
 import { listRoleAssignmentRequests } from "@/lib/role-assignment"
 import {
   ATTENDANCE_STATUS_LABELS,
@@ -37,22 +39,14 @@ import {
 
 /**
  * Loads one dashboard widget. `undefined` while loading, `null` when the call failed or the widget
- * is not allowed; a failing widget never blocks the others.
+ * is not allowed; a failing widget never blocks the others. Each widget is cached for a minute under
+ * `key` (see docs/CACHING.md), so coming back to the dashboard shows it at once; every write made
+ * anywhere in the app drops that cache (authorizedRequest), keeping pending counts right.
  */
 function useWidget<T>(enabled: boolean, load: () => Promise<T>, key: string): T | null | undefined {
-  const [state, setState] = useState<{ key: string; value: T | null } | null>(null)
-  useEffect(() => {
-    if (!enabled) return
-    let active = true
-    load()
-      .then((value) => { if (active) setState({ key, value }) })
-      .catch(() => { if (active) setState({ key, value: null }) })
-    return () => { active = false }
-    // `key` identifies the request; `load` is a fresh closure on every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, key])
-  if (!enabled) return null
-  return state?.key === key ? state.value : undefined
+  const { data, isError } = useQuery({ queryKey: [...DASHBOARD_KEY, key], queryFn: load, enabled, staleTime: 60_000 })
+  if (!enabled || isError) return null
+  return data
 }
 
 const ALL = { keyword: "", organizationUnitId: "", positionId: "" }

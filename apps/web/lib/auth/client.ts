@@ -8,6 +8,7 @@ import {
   type Portal,
   type SessionData,
 } from "@/lib/auth/types"
+import { DASHBOARD_KEY, getQueryClient } from "@/lib/query-client"
 
 const refreshRequests = new Map<Portal, Promise<SessionData>>()
 const sessionGoneHandlers = new Map<Portal, () => void>()
@@ -87,6 +88,14 @@ export async function authorizedRequest<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
+  const result = await requestWithRefresh<T>(portal, path, init)
+  // Any change (an approval, a new request, a punch…) may move a dashboard figure, so the cached
+  // dashboard is dropped after every successful write.
+  if (init?.method && init.method !== "GET") void getQueryClient().invalidateQueries({ queryKey: DASHBOARD_KEY })
+  return result
+}
+
+async function requestWithRefresh<T>(portal: Portal, path: string, init?: RequestInit): Promise<T> {
   try {
     return await request<T>(portal, path, init)
   } catch (error) {

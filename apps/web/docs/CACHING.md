@@ -15,6 +15,7 @@ Hiện áp dụng cho:
 | Phiếu lương của tôi (`/payslips`), phiếu mới nhất và từng năm | `["my-payslips", employeeId, "latest" \| năm]` | 5 phút | [§7](#7-phiếu-lương-của-tôi) |
 | Danh mục cho dropdown: đơn vị, địa điểm, chức danh, ca | `["reference-options", portal, đường dẫn]` | 30 phút | [§8](#8-danh-mục-cho-dropdown) |
 | Danh sách nhân sự (`/employees`) theo trang, bộ lọc, sắp xếp; chi tiết một nhân sự | `["employees", portal, "list", query]`, `["employees", portal, "detail", id]` | 1 phút; 30 giây | [§9](#9-danh-sách-và-chi-tiết-nhân-sự) |
+| Các widget của trang Tổng quan (`/dashboard`) | `["dashboard", widget]` | 1 phút | [§10](#10-trang-tổng-quan) |
 
 Các trang khác vẫn tự gọi API bằng `useEffect` như cũ.
 
@@ -210,7 +211,23 @@ Xem xong bấm Sửa thì không tải lại.
 - **Đã đo:** sang trang 2 rồi về trang 1 thì **0** request; xem một nhân sự rồi bấm "Sửa hồ sơ" thì **0** request;
   lưu xong thì danh sách và chi tiết được tải lại.
 
-## 10. Cách trình bày khi demo
+## 10. Trang Tổng quan
+
+Trang Tổng quan gọi tới **11–12 request** mỗi lần vào (chấm công hôm nay, phép còn lại, đơn của tôi, phiếu lương
+gần nhất, việc chờ duyệt, kỳ lương, số liệu nhân sự). Mọi widget đi qua hàm `useWidget` trong
+[`components/portal/hrm-dashboard.tsx`](../components/portal/hrm-dashboard.tsx). Hàm này giờ dùng `useQuery`, mỗi
+widget một khóa `["dashboard", tên widget]`, giữ 1 phút. Vì vậy cả 12 widget được cache mà không phải sửa từng cái.
+
+**Invalidation tập trung:** mọi lời gọi API của web đều đi qua `authorizedRequest` trong
+[`lib/auth/client.ts`](../lib/auth/client.ts). Sau mỗi request **ghi** (POST/PUT/DELETE) thành công, hàm này xóa
+cache `DASHBOARD_KEY`. Duyệt đơn, nộp đơn, chấm công, sửa hồ sơ… ở bất kỳ trang nào thì lần sau về Tổng quan đều
+thấy số liệu mới, không phải gắn lệnh xóa cache vào từng trang. Thay đổi do **người khác** làm hiện ra sau tối đa
+1 phút.
+
+**Đã đo (tài khoản `hr`):** vào Tổng quan 11 request; sang Danh sách nhân sự rồi quay lại: **0**; lưu một hồ sơ
+nhân sự rồi quay lại: 11 (đã tải lại vì có thao tác ghi).
+
+## 11. Cách trình bày khi demo
 
 Chạy `npm run dev` (Devtools chỉ có trong chế độ dev, bản build production không có).
 
@@ -231,11 +248,13 @@ Chạy `npm run dev` (Devtools chỉ có trong chế độ dev, bản build prod
    lần: chỉ lần đầu có request địa điểm và ca, các lần sau không có.
 7. **Danh sách nhân sự:** mở `/employees`, lọc Network bằng `employees`. Sang trang 2 rồi về trang 1: lần về
    không có request. Bấm một nhân sự để xem, rồi bấm "Sửa hồ sơ": không có request mới.
-8. **TanStack Query Devtools:** bấm biểu tượng TanStack ở **góc trên bên phải** (góc dưới phải là nút của
+8. **Tổng quan:** lọc Network bằng `session`, vào Tổng quan (khoảng 11 request), sang trang khác rồi bấm lại
+   "Tổng quan": không có request nào.
+9. **TanStack Query Devtools:** bấm biểu tượng TanStack ở **góc trên bên phải** (góc dưới phải là nút của
    Next.js). Bảng hiện các khóa `["payroll-periods",2025]`, `["payroll-periods",2026]` cùng trạng thái
    `fresh` / `stale` / `inactive`, và thời điểm lấy dữ liệu.
 
-## 11. Áp dụng cho trang khác
+## 12. Áp dụng cho trang khác
 
 1. Đặt hằng khóa cache cạnh code của domain, ví dụ `export const EMPLOYEES_KEY = ["employees"] as const`.
 2. Trong component, thay cặp `useState` + `useEffect` gọi API bằng `useQuery({ queryKey: [...KEY, ...tham số],
