@@ -51,9 +51,10 @@ public class PayrollQueryService {
     }
 
     @PreAuthorize("hasAuthority('report.payroll.read')")
-    public Page<PayrollPeriodResponse> listPeriods(Pageable pageable) {
+    public Page<PayrollPeriodResponse> listPeriods(Short year, Pageable pageable) {
         employeeAccessScopeService.requireCompanyWide("report.payroll.read");
-        return payrollPeriodRepository.findAll(SearchPatterns.requireSortable(pageable, PERIOD_SORTABLE))
+        Pageable sorted = SearchPatterns.requireSortable(pageable, PERIOD_SORTABLE);
+        return (year == null ? payrollPeriodRepository.findAll(sorted) : payrollPeriodRepository.findByYear(year, sorted))
             .map(payrollMapper::toResponse);
     }
 

@@ -7,6 +7,7 @@ import { Loader2, Plus, RefreshCw, Table2 } from "lucide-react"
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { PeriodStatusBadge, periodLabel } from "@/components/payroll/payroll-shared"
 import { PageHeader } from "@/components/portal/page-header"
+import { YearPicker } from "@/components/report/report-shared"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import { Button } from "@/components/ui/button"
 import {
@@ -34,7 +35,7 @@ import type { Page } from "@/lib/pagination"
 import type { PayrollPeriod, WorkforceBody } from "@/lib/workforce"
 import { formatDate, formatDateRange } from "@/lib/format-date"
 
-/** Payroll runs, one per month; each opens its payroll sheet. */
+/** Payroll runs, one per month and listed a year at a time; each opens its payroll sheet. */
 export function PayrollPeriodsPage() {
   const router = useRouter()
   const { session } = usePortalSession()
@@ -44,23 +45,27 @@ export function PayrollPeriodsPage() {
   )
   const canRead = permissions.has("report.payroll.read")
   const canCalculate = permissions.has("payroll.calculate")
+  const currentYear = Number(today().slice(0, 4))
+  const [year, setYear] = useState(currentYear)
   const [periods, setPeriods] = useState<PayrollPeriod[]>([])
   const [error, setError] = useState<string | null>(null)
   const [revision, setRevision] = useState(0)
-  const [loadedRevision, setLoadedRevision] = useState(-1)
+  const [loadedKey, setLoadedKey] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
-  const loading = canRead && loadedRevision !== revision
+  const requestKey = `${year}#${revision}`
+  const loading = canRead && loadedKey !== requestKey
   const reload = () => setRevision((value) => value + 1)
 
   useEffect(() => {
     if (!canRead) return
     let active = true
-    workforceApi<Page<PayrollPeriod>>("payroll/periods?size=100&sort=periodStart,desc")
+    // A year holds at most one live period per month, so one request covers it.
+    workforceApi<Page<PayrollPeriod>>(`payroll/periods?year=${year}&size=100&sort=periodStart,desc`)
       .then((page) => { if (active) { setPeriods(page.content); setError(null) } })
       .catch((caught: unknown) => { if (active) setError(apiErrorMessage(caught)) })
-      .finally(() => { if (active) setLoadedRevision(revision) })
+      .finally(() => { if (active) setLoadedKey(requestKey) })
     return () => { active = false }
-  }, [canRead, revision])
+  }, [canRead, year, requestKey])
 
   const open = (period: PayrollPeriod) => router.push(`/payroll/${period.id}`)
 
@@ -77,7 +82,10 @@ export function PayrollPeriodsPage() {
           // No card around the list: the page header already names it.
           <div className="grid gap-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-muted-foreground">Chọn một kỳ để xem bảng lương của toàn bộ nhân viên.</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <YearPicker year={year} maxYear={currentYear} onChange={setYear} />
+                <p className="text-sm text-muted-foreground">Chọn một kỳ để xem bảng lương của toàn bộ nhân viên.</p>
+              </div>
               <div className="flex gap-2">
                 <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
                   <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
@@ -127,7 +135,7 @@ export function PayrollPeriodsPage() {
                       </TableRow>
                     ))}
 
-                    {!loading && periods.length === 0 && <EmptyRow colSpan={7}>Chưa có kỳ lương.</EmptyRow>}
+                    {!loading && periods.length === 0 && <EmptyRow colSpan={7}>Chưa có kỳ lương năm {year}.</EmptyRow>}
                   </TableBody>
                 </Table>
               </div>

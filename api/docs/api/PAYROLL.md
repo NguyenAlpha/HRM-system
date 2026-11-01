@@ -36,7 +36,7 @@ Quy trình một tháng:
 | `POST /api/payroll/periods/{id}/cancel` | `payroll.calculate`, phạm vi `COMPANY` | Hủy kỳ chưa duyệt |
 | `GET /api/payroll/periods/{id}/export` | `report.payroll.read`, phạm vi `COMPANY` | Tải bảng lương Excel |
 | `GET /api/payroll/periods/{id}/payslips` | `report.payroll.read`, phạm vi `COMPANY` | Bảng lương: mọi phiếu của kỳ |
-| `GET /api/payroll/periods/{periodId}/adjustments` | `payroll.calculate`, phạm vi `COMPANY` | Khoản cộng/trừ của kỳ |
+| `GET /api/payroll/periods/{periodId}/adjustments` | `report.payroll.read`, phạm vi `COMPANY` | Khoản cộng/trừ của kỳ |
 | `POST /api/payroll/periods/{periodId}/adjustments` | `payroll.calculate`, phạm vi `COMPANY` | Thêm khoản cộng/trừ |
 | `DELETE /api/payroll/periods/{periodId}/adjustments/{adjustmentId}` | `payroll.calculate`, phạm vi `COMPANY` | Xóa khoản cộng/trừ |
 | `GET /api/payroll/payslips/{id}` | `payroll.self.read` (chính mình) hoặc `report.payroll.read` (trong scope) | Chi tiết phiếu lương |
@@ -540,7 +540,7 @@ Trả [`PayrollPeriodResponse`](#payrollperiodresponse) với `status: "DRAFT"`.
 
 ### GET `/api/payroll/periods`
 
-Danh sách kỳ lương, có phân trang. Query `page` (từ 0), `size` (mặc định 20) và `sort` theo `periodStart`, `year`, `month` hoặc `status` (mặc định `periodStart,desc`; trường khác → `400 VALIDATION_ERROR`, `field: sort`). Trả `PagedResult<PayrollPeriodResponse>`.
+Danh sách kỳ lương, có phân trang. Query `year` (không bắt buộc) chỉ lấy kỳ của năm đó; `page` (từ 0), `size` (mặc định 20) và `sort` theo `periodStart`, `year`, `month` hoặc `status` (mặc định `periodStart,desc`; trường khác → `400 VALIDATION_ERROR`, `field: sort`). Trả `PagedResult<PayrollPeriodResponse>`.
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
@@ -740,11 +740,11 @@ Khấu trừ lớn hơn số còn lại sau thuế làm việc tính lương d�
 
 ### GET `/api/payroll/periods/{periodId}/adjustments`
 
-Các khoản của kỳ theo thứ tự nhập. Mỗi phần tử là [`PayrollAdjustmentResponse`](#payrolladjustmentresponse).
+Các khoản của kỳ theo thứ tự nhập. Mỗi phần tử là [`PayrollAdjustmentResponse`](#payrolladjustmentresponse). Cùng quyền với bảng lương, để người duyệt xem được các khoản trước khi duyệt.
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
-| 403 | `FORBIDDEN` | Không có `payroll.calculate` phạm vi `COMPANY` |
+| 403 | `FORBIDDEN` | Không có `report.payroll.read` phạm vi `COMPANY` |
 | 404 | `PAYROLL_PERIOD_NOT_FOUND` | Kỳ không tồn tại |
 
 ### POST `/api/payroll/periods/{periodId}/adjustments`

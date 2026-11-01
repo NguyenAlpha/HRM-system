@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.htttdn.hrm.dto.request.payroll.CreatePayrollPeriodRequest;
@@ -49,8 +50,9 @@ public class PayrollController {
 
     @GetMapping("/periods")
     public ApiResult<PagedResult<PayrollPeriodResponse>> list(
+        @RequestParam(required = false) Short year,
         @PageableDefault(size = 20, sort = "periodStart", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ApiResult.ok(PagedResult.of(queryService.listPeriods(pageable)));
+        return ApiResult.ok(PagedResult.of(queryService.listPeriods(year, pageable)));
     }
 
     @GetMapping("/periods/{id}")

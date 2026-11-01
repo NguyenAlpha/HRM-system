@@ -6078,6 +6078,7 @@ export interface operations {
     list_4: {
         parameters: {
             query: {
+                year?: number;
                 pageable: components["schemas"]["Pageable"];
             };
             header?: never;

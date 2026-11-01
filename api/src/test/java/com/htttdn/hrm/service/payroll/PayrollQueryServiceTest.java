@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
@@ -91,11 +92,19 @@ class PayrollQueryServiceTest {
         PageRequest byHash = PageRequest.of(0, 20, Sort.by("passwordHash"));
 
         // An unknown property would otherwise fail inside the query and answer 500.
-        BusinessException periods = assertThrows(BusinessException.class, () -> service().listPeriods(byHash));
+        BusinessException periods = assertThrows(BusinessException.class, () -> service().listPeriods(null, byHash));
         assertEquals("sort", periods.getField());
         BusinessException payslips = assertThrows(BusinessException.class,
             () -> service().listPayslipsForEmployee(2L, byHash));
         assertEquals("sort", payslips.getField());
+    }
+
+    @Test
+    void listsOnlyThePeriodsOfTheRequestedYear() {
+        PageRequest page = PageRequest.of(0, 20, Sort.by("periodStart"));
+        when(payrollPeriodRepository.findByYear((short) 2026, page)).thenReturn(new PageImpl<>(List.of()));
+
+        assertEquals(0, service().listPeriods((short) 2026, page).getTotalElements());
     }
 
     private PayrollQueryService service() {
