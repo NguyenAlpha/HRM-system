@@ -3,6 +3,7 @@
 import type { components } from "@/lib/api-schema"
 import { authorizedRequest } from "@/lib/auth/client"
 import type { Portal } from "@/lib/auth/types"
+import { getQueryClient } from "@/lib/query-client"
 
 // DTO types come from the API's OpenAPI spec; run `npm run gen:api` after changing them.
 type Schemas = components["schemas"]
@@ -51,28 +52,44 @@ function referenceRequest<T>(portal: Portal, path: string, init?: RequestInit): 
   return authorizedRequest<T>(portal, `/reference/${path}`, { ...init, cache: "no-store" })
 }
 
-function referenceMutation<T>(portal: Portal, path: string, method: "POST" | "PUT" | "DELETE", body?: unknown): Promise<T> {
-  return referenceRequest<T>(portal, path, {
+// The option lists feed dropdowns all over the app (see docs/CACHING.md). They rarely change and every
+// change goes through referenceMutation, which invalidates them, so callers share one cached copy.
+const OPTIONS_KEY = ["reference-options"] as const
+const OPTIONS_CACHE_TIME = 30 * 60_000
+
+function cachedOptions<T>(portal: Portal, path: string): Promise<T> {
+  return getQueryClient().fetchQuery({
+    queryKey: [...OPTIONS_KEY, portal, path],
+    queryFn: () => referenceRequest<T>(portal, path),
+    staleTime: OPTIONS_CACHE_TIME,
+    gcTime: OPTIONS_CACHE_TIME,
+  })
+}
+
+async function referenceMutation<T>(portal: Portal, path: string, method: "POST" | "PUT" | "DELETE", body?: unknown): Promise<T> {
+  const result = await referenceRequest<T>(portal, path, {
     method,
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   })
+  void getQueryClient().invalidateQueries({ queryKey: OPTIONS_KEY })
+  return result
 }
 
 export function getOrganizationUnitOptions(portal: Portal): Promise<OrganizationUnitOption[]> {
-  return referenceRequest<OrganizationUnitOption[]>(portal, "organization-units?active=true")
+  return cachedOptions<OrganizationUnitOption[]>(portal, "organization-units?active=true")
 }
 
 export function getWorkLocationOptions(portal: Portal): Promise<WorkLocationOption[]> {
-  return referenceRequest<WorkLocationOption[]>(portal, "work-locations?active=true")
+  return cachedOptions<WorkLocationOption[]>(portal, "work-locations?active=true")
 }
 
 export function getJobPositionOptions(portal: Portal): Promise<JobPositionOption[]> {
-  return referenceRequest<JobPositionOption[]>(portal, "job-positions?active=true")
+  return cachedOptions<JobPositionOption[]>(portal, "job-positions?active=true")
 }
 
 export function getWorkShiftOptions(portal: Portal): Promise<WorkShiftOption[]> {
-  return referenceRequest<WorkShiftOption[]>(portal, "work-shifts?active=true")
+  return cachedOptions<WorkShiftOption[]>(portal, "work-shifts?active=true")
 }
 
 export function listOrganizationUnits(portal: Portal): Promise<OrganizationUnit[]> {

@@ -13,6 +13,7 @@ Hiện áp dụng cho:
 | Phụ cấp chức vụ và phụ cấp thâm niên (`/allowances`) | `["position-allowances"]`, `["seniority-allowances"]` | 10 phút | [§5](#5-chính-sách-phụ-cấp) |
 | Danh bạ nhân sự cho ô chọn nhân sự (`EmployeePicker`) | `["employee-directory", portal]` | 0, làm mới ở nền | [§6](#6-ô-chọn-nhân-sự-employeepicker) |
 | Phiếu lương của tôi (`/payslips`), phiếu mới nhất và từng năm | `["my-payslips", employeeId, "latest" \| năm]` | 5 phút | [§7](#7-phiếu-lương-của-tôi) |
+| Danh mục cho dropdown: đơn vị, địa điểm, chức danh, ca | `["reference-options", portal, đường dẫn]` | 30 phút | [§8](#8-danh-mục-cho-dropdown) |
 
 Các trang khác vẫn tự gọi API bằng `useEffect` như cũ.
 
@@ -42,7 +43,8 @@ So sánh với tầng của backend:
 
 | Ở đâu | Vai trò |
 |:------|:--------|
-| [`components/portal/portal-shell.tsx`](../components/portal/portal-shell.tsx) | Tạo **một** `QueryClient` cho mỗi phiên đăng nhập và bọc mọi trang bằng `QueryClientProvider`. Đây là chỗ quản lý cache chung |
+| [`lib/query-client.ts`](../lib/query-client.ts) | `getQueryClient()`: **một** `QueryClient` cho cả tab trình duyệt. Đây là chỗ quản lý cache chung, dùng được cả trong component lẫn trong các hàm gọi API ở `lib/` |
+| [`components/portal/portal-shell.tsx`](../components/portal/portal-shell.tsx) | Bọc mọi trang bằng `QueryClientProvider`, và xóa sạch cache khi rời layout |
 | [`components/payroll/payroll-shared.tsx`](../components/payroll/payroll-shared.tsx) | `PAYROLL_PERIODS_KEY`: tiền tố khóa cache của danh sách kỳ lương |
 | [`components/payroll/payroll-periods-page.tsx`](../components/payroll/payroll-periods-page.tsx) | Đọc danh sách bằng `useQuery`, mỗi năm một khóa |
 | [`components/payroll/payroll-period-page.tsx`](../components/payroll/payroll-period-page.tsx) | Đánh dấu danh sách hết hạn sau mỗi thay đổi trên kỳ lương |
@@ -50,8 +52,10 @@ So sánh với tầng của backend:
 
 ### Vòng đời cache
 
-- `QueryClient` sống cùng layout `PortalShell`. Đăng xuất hoặc hết phiên sẽ rời layout đó, nên cache bị bỏ.
-  Người đăng nhập sau trên cùng tab **không thấy** dữ liệu của người trước.
+- `PortalShell` gọi `queryClient.clear()` khi layout bị gỡ. Đăng xuất hoặc hết phiên sẽ rời layout đó, nên cache
+  bị xóa sạch. Người đăng nhập sau trên cùng tab **không thấy** dữ liệu của người trước.
+- Trên server (lúc Next.js render trước trang), `getQueryClient()` luôn tạo client mới, không dùng chung giữa
+  các người dùng.
 - `retry: false`: lỗi hiện ngay như các trang khác, không tự gửi lại 3 lần. Việc làm mới access token đã có
   `authorizedRequest` lo.
 
@@ -170,7 +174,23 @@ Trước đây trang `/payslips` tải **mọi** phiếu lương của nhân vi�
 
 **Đã đo:** mở trang rồi chuyển 2026 → 2025 → 2026 → 2025 chỉ có 3 request (phiếu mới nhất, năm 2026, năm 2025).
 
-## 8. Cách trình bày khi demo
+## 8. Danh mục cho dropdown
+
+Bốn danh mục đơn vị tổ chức, địa điểm, chức danh và ca làm việc (`GET /reference/…?active=true`) nằm trong
+dropdown và bộ lọc của **11 component**: danh sách nhân sự, dialog thêm nhân sự và phân công, báo cáo, chấm công,
+đơn từ, nghỉ việc, phân quyền… Trước đây mỗi lần mở trang hoặc dialog lại gọi lại.
+
+Cache nằm ngay trong các hàm `get…Options` của [`lib/reference.ts`](../lib/reference.ts): chúng gọi
+`getQueryClient().fetchQuery(...)`, trả bản trong cache nếu còn hạn, hết hạn mới gọi API. Vì vậy 11 nơi gọi
+**không phải sửa gì**.
+
+- **`staleTime` và `gcTime` 30 phút:** danh mục rất ít khi đổi.
+- **Invalidation:** mọi thao tác thêm, sửa, xóa danh mục ở trang `/organization` đều đi qua `referenceMutation`.
+  Hàm này xóa cache sau khi lưu thành công, nên chỉ cần một chỗ.
+- **Đã đo:** đăng nhập `hr`, mở `/employees`, mở "Thêm nhân sự" 3 lần, sang Đơn từ rồi quay lại: **4** request
+  danh mục (mỗi danh mục một lần), trước đây khoảng 17. Sửa một đơn vị ở `/organization` thì lần sau tải lại.
+
+## 9. Cách trình bày khi demo
 
 Chạy `npm run dev` (Devtools chỉ có trong chế độ dev, bản build production không có).
 
@@ -187,11 +207,13 @@ Chạy `npm run dev` (Devtools chỉ có trong chế độ dev, bản build prod
 5. **Ô chọn nhân sự:** đăng nhập `owner`, mở `/company`, lọc Network bằng `employees`. Mở trang **chưa có request nào**.
    Bấm vào ô "Người nhận": có đúng 1 request. Gõ tiếp (ví dụ `tran`, `nv000`) thì danh sách thu hẹp ngay mà
    **không có thêm request nào**.
-6. **TanStack Query Devtools:** bấm biểu tượng TanStack ở **góc trên bên phải** (góc dưới phải là nút của
+6. **Danh mục:** đăng nhập `hr`, mở `/employees`, lọc Network bằng `active=true`. Mở và đóng "Thêm nhân sự" vài
+   lần: chỉ lần đầu có request địa điểm và ca, các lần sau không có.
+7. **TanStack Query Devtools:** bấm biểu tượng TanStack ở **góc trên bên phải** (góc dưới phải là nút của
    Next.js). Bảng hiện các khóa `["payroll-periods",2025]`, `["payroll-periods",2026]` cùng trạng thái
    `fresh` / `stale` / `inactive`, và thời điểm lấy dữ liệu.
 
-## 9. Áp dụng cho trang khác
+## 10. Áp dụng cho trang khác
 
 1. Đặt hằng khóa cache cạnh code của domain, ví dụ `export const EMPLOYEES_KEY = ["employees"] as const`.
 2. Trong component, thay cặp `useState` + `useEffect` gọi API bằng `useQuery({ queryKey: [...KEY, ...tham số],

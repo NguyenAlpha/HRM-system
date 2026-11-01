@@ -2,13 +2,14 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react"
 
 import { PortalSidebar } from "@/components/portal/portal-sidebar"
 import { apiErrorMessage } from "@/lib/api-helpers"
 import { getCurrentSession, setSessionGoneHandler } from "@/lib/auth/client"
+import { getQueryClient } from "@/lib/query-client"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import { AuthApiError, type Portal, type SessionData } from "@/lib/auth/types"
 import type { Branding } from "@/lib/branding"
@@ -40,9 +41,10 @@ export function PortalShell({ portal, branding, children }: { portal: Portal; br
   const { loginPath } = PORTAL_CONFIG[portal]
   const [session, setSession] = useState<SessionData | null>(null)
   const [error, setError] = useState<string | null>(null)
-  // The browser-side cache of API data (see docs/CACHING.md). It lives with this layout, so signing out,
-  // which leaves it, drops whatever the previous account had loaded.
-  const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }))
+  // The browser-side cache of API data (see docs/CACHING.md). It is emptied when this layout goes away,
+  // so signing out, which leaves it, drops whatever the previous account had loaded.
+  const [queryClient] = useState(getQueryClient)
+  useEffect(() => () => queryClient.clear(), [queryClient])
   // The sidebar only renders once the session has loaded in the browser, so reading storage here never
   // disagrees with the server render.
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
