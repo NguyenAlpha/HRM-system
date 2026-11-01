@@ -1,7 +1,8 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { FormEvent, useEffect, useRef, useState } from "react"
+import { FormEvent, useRef, useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 import { Loader2, PencilLine, Trash2, Upload } from "lucide-react"
 import { toast } from "sonner"
 
@@ -35,7 +36,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
-import { SectionError, workforceApi } from "@/components/workforce/workforce-shared"
+import { COMPANY_PROFILE_KEY, SectionError, useCompanyProfile, workforceApi } from "@/components/workforce/workforce-shared"
 import { apiErrorMessage, friendlyErrorMessage } from "@/lib/api-helpers"
 import { authorizedRequest } from "@/lib/auth/client"
 import { formatDateTime } from "@/lib/format-date"
@@ -48,22 +49,15 @@ export function CompanyProfilePage() {
   const { session } = usePortalSession()
   const canManage = session.account.permissions.some((permission) => permission.code === "company.manage")
   const isCompanyOwner = session.account.roles.some((role) => role.code === "COMPANY_OWNER")
-  const [company, setCompany] = useState<CompanyProfile | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [revision, setRevision] = useState(0)
+  const queryClient = useQueryClient()
+  const { data: company, error: loadError } = useCompanyProfile()
+  const error = loadError ? apiErrorMessage(loadError) : null
   const [editing, setEditing] = useState(false)
 
-  useEffect(() => {
-    let active = true
-    workforceApi<CompanyProfile>("company")
-      .then((result) => { if (active) { setCompany(result); setError(null) } })
-      .catch((caught: unknown) => { if (active) setError(apiErrorMessage(caught)) })
-    return () => { active = false }
-  }, [revision])
-
-  // Reloads the card and, through the server layout, the name and logo in the sidebar.
+  // Reloads the card and every cached copy (the printed headers), and, through the server layout,
+  // the name and logo in the sidebar.
   function reload() {
-    setRevision((value) => value + 1)
+    void queryClient.invalidateQueries({ queryKey: COMPANY_PROFILE_KEY })
     router.refresh()
   }
 

@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { Check, Printer } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -14,8 +13,8 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { logoUrl } from "@/lib/branding"
-import { money, workforceApi } from "@/components/workforce/workforce-shared"
-import { PAYROLL_PERIOD_STATUS_LABELS, type CompanyProfile, type PayrollPeriodStatus, type Payslip } from "@/lib/workforce"
+import { money, useCompanyProfile } from "@/components/workforce/workforce-shared"
+import { PAYROLL_PERIOD_STATUS_LABELS, type PayrollPeriodStatus, type Payslip } from "@/lib/workforce"
 
 export const PERIOD_TONE: Record<PayrollPeriodStatus, "default" | "secondary" | "outline" | "destructive"> = {
   DRAFT: "outline",
@@ -84,16 +83,8 @@ function Line({ label, amount, sign = "", strong = false }: { label: string; amo
 /** One employee's payslip laid out like a printed slip: who, earnings, deductions, net pay; "In" prints just the slip. */
 /** The company's logo, name, tax code and address heading a printed sheet; shown only on paper. */
 export function CompanyPrintHeader() {
-  const [company, setCompany] = useState<CompanyProfile | null>(null)
-
-  useEffect(() => {
-    let active = true
-    // Printing still works without it, so a failure just leaves the header out.
-    workforceApi<CompanyProfile>("company")
-      .then((result) => { if (active) setCompany(result) })
-      .catch(() => undefined)
-    return () => { active = false }
-  }, [])
+  // Printing still works without it, so a failure just leaves the header out.
+  const { data: company } = useCompanyProfile()
 
   if (!company) return null
   const logo = logoUrl(company.logoUpdatedAt)

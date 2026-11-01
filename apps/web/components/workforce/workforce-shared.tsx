@@ -1,11 +1,13 @@
 "use client"
 
 import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
 
 import { TableCell, TableRow } from "@/components/ui/table"
 import { apiErrorMessage } from "@/lib/api-helpers"
 import { authorizedRequest } from "@/lib/auth/client"
+import type { CompanyProfile } from "@/lib/workforce"
 
 /** What every workforce section receives from the page shell. */
 export type WorkforceContext = {
@@ -23,6 +25,22 @@ export const workforceApi = <T,>(path: string, method = "GET", body?: unknown) =
     method,
     ...(body === undefined ? {} : { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
   })
+
+/** Cache key of the company profile (see docs/CACHING.md). */
+export const COMPANY_PROFILE_KEY = ["company-profile"] as const
+
+/**
+ * The company profile, fetched once and shared by its own page and every printed header. It rarely
+ * changes and only its page edits it (which invalidates the key), so it stays fresh for 30 minutes.
+ */
+export function useCompanyProfile() {
+  return useQuery({
+    queryKey: COMPANY_PROFILE_KEY,
+    queryFn: () => workforceApi<CompanyProfile>("company"),
+    staleTime: 30 * 60_000,
+    gcTime: 30 * 60_000,
+  })
+}
 
 /** Today in the business time zone, as YYYY-MM-DD. */
 export const today = () => new Intl.DateTimeFormat("en-CA", {
