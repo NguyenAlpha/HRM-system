@@ -3,6 +3,7 @@
 import type { components } from "@/lib/api-schema"
 import { authorizedRequest } from "@/lib/auth/client"
 import type { Portal } from "@/lib/auth/types"
+import { getQueryClient } from "@/lib/query-client"
 
 // DTO types come from the API's OpenAPI spec; run `npm run gen:api` after changing them.
 type Schemas = components["schemas"]
@@ -103,6 +104,29 @@ export function employeeListQuery(page: number, size: number, filters: EmployeeF
 
 export function employeeRequest<T>(portal: Portal, path: string, init?: RequestInit): Promise<T> {
   return authorizedRequest<T>(portal, `/employees${path}`, { ...init, cache: "no-store" })
+}
+
+// Cache of employee list pages and details (see docs/CACHING.md). Writes made from the employee pages
+// call invalidateEmployees(); changes made elsewhere show once these short lifetimes run out.
+const EMPLOYEES_KEY = ["employees"] as const
+export const EMPLOYEE_LIST_STALE_TIME = 60_000
+const EMPLOYEE_DETAIL_STALE_TIME = 30_000
+
+/** Cache key of one page of the employee list, `query` being its query string. */
+export const employeeListKey = (portal: Portal, query: string) => [...EMPLOYEES_KEY, portal, "list", query] as const
+
+/** One employee's profile, shared by the view, edit and assignment dialogs. */
+export function fetchEmployeeDetail(portal: Portal, employeeId: number): Promise<EmployeeDetail> {
+  return getQueryClient().fetchQuery({
+    queryKey: [...EMPLOYEES_KEY, portal, "detail", employeeId],
+    queryFn: () => employeeRequest<EmployeeDetail>(portal, `/${employeeId}`),
+    staleTime: EMPLOYEE_DETAIL_STALE_TIME,
+  })
+}
+
+/** Marks every cached employee list page and detail stale, after a change to any employee. */
+export function invalidateEmployees() {
+  void getQueryClient().invalidateQueries({ queryKey: EMPLOYEES_KEY })
 }
 
 export function employeeMutation<T>(portal: Portal, path: string, method: "POST" | "PUT" | "DELETE", body?: unknown): Promise<T> {

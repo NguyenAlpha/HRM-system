@@ -14,6 +14,7 @@ Hiện áp dụng cho:
 | Danh bạ nhân sự cho ô chọn nhân sự (`EmployeePicker`) | `["employee-directory", portal]` | 0, làm mới ở nền | [§6](#6-ô-chọn-nhân-sự-employeepicker) |
 | Phiếu lương của tôi (`/payslips`), phiếu mới nhất và từng năm | `["my-payslips", employeeId, "latest" \| năm]` | 5 phút | [§7](#7-phiếu-lương-của-tôi) |
 | Danh mục cho dropdown: đơn vị, địa điểm, chức danh, ca | `["reference-options", portal, đường dẫn]` | 30 phút | [§8](#8-danh-mục-cho-dropdown) |
+| Danh sách nhân sự (`/employees`) theo trang, bộ lọc, sắp xếp; chi tiết một nhân sự | `["employees", portal, "list", query]`, `["employees", portal, "detail", id]` | 1 phút; 30 giây | [§9](#9-danh-sách-và-chi-tiết-nhân-sự) |
 
 Các trang khác vẫn tự gọi API bằng `useEffect` như cũ.
 
@@ -190,7 +191,26 @@ Cache nằm ngay trong các hàm `get…Options` của [`lib/reference.ts`](../l
 - **Đã đo:** đăng nhập `hr`, mở `/employees`, mở "Thêm nhân sự" 3 lần, sang Đơn từ rồi quay lại: **4** request
   danh mục (mỗi danh mục một lần), trước đây khoảng 17. Sửa một đơn vị ở `/organization` thì lần sau tải lại.
 
-## 9. Cách trình bày khi demo
+## 9. Danh sách và chi tiết nhân sự
+
+Danh sách nhân sự vẫn **phân trang và lọc ở server** (công ty lớn không tải hết được), nhưng mỗi tổ hợp trang, bộ
+lọc và sắp xếp được cache dưới khóa riêng trong
+[`components/employee/employee-manager.tsx`](../components/employee/employee-manager.tsx). Quay về trang 1 hoặc
+xóa bộ lọc vừa thêm thì bảng hiện ngay, không gọi API. Tổ hợp chưa xem vẫn hiện khung đang tải như cũ.
+
+Chi tiết một nhân sự (`GET /employees/{id}`) lấy qua `fetchEmployeeDetail()` trong
+[`lib/employee.ts`](../lib/employee.ts), dùng chung cho dialog **Xem**, **Sửa hồ sơ** và **Thay đổi phân công**.
+Xem xong bấm Sửa thì không tải lại.
+
+- **`staleTime`:** danh sách 1 phút, chi tiết 30 giây. Ngắn hơn các mục khác vì hồ sơ nhân sự còn bị đổi từ nơi
+  khác (duyệt nghỉ việc, cấp tài khoản…). Những thay đổi đó hiện ra khi hết thời gian này, hoặc khi bấm "Tải lại".
+- **Invalidation:** `invalidateEmployees()` xóa cả danh sách lẫn chi tiết. Nó được gọi sau mọi thao tác ghi trên
+  trang danh sách (thêm, sửa, phân công, xác nhận thử việc, cấp tài khoản, nút "Tải lại") và trên trang chi tiết
+  nhân sự (`/employees/{id}`, kể cả xóa). Riêng trang chi tiết luôn tải mới, không đọc cache.
+- **Đã đo:** sang trang 2 rồi về trang 1 thì **0** request; xem một nhân sự rồi bấm "Sửa hồ sơ" thì **0** request;
+  lưu xong thì danh sách và chi tiết được tải lại.
+
+## 10. Cách trình bày khi demo
 
 Chạy `npm run dev` (Devtools chỉ có trong chế độ dev, bản build production không có).
 
@@ -209,11 +229,13 @@ Chạy `npm run dev` (Devtools chỉ có trong chế độ dev, bản build prod
    **không có thêm request nào**.
 6. **Danh mục:** đăng nhập `hr`, mở `/employees`, lọc Network bằng `active=true`. Mở và đóng "Thêm nhân sự" vài
    lần: chỉ lần đầu có request địa điểm và ca, các lần sau không có.
-7. **TanStack Query Devtools:** bấm biểu tượng TanStack ở **góc trên bên phải** (góc dưới phải là nút của
+7. **Danh sách nhân sự:** mở `/employees`, lọc Network bằng `employees`. Sang trang 2 rồi về trang 1: lần về
+   không có request. Bấm một nhân sự để xem, rồi bấm "Sửa hồ sơ": không có request mới.
+8. **TanStack Query Devtools:** bấm biểu tượng TanStack ở **góc trên bên phải** (góc dưới phải là nút của
    Next.js). Bảng hiện các khóa `["payroll-periods",2025]`, `["payroll-periods",2026]` cùng trạng thái
    `fresh` / `stale` / `inactive`, và thời điểm lấy dữ liệu.
 
-## 10. Áp dụng cho trang khác
+## 11. Áp dụng cho trang khác
 
 1. Đặt hằng khóa cache cạnh code của domain, ví dụ `export const EMPLOYEES_KEY = ["employees"] as const`.
 2. Trong component, thay cặp `useState` + `useEffect` gọi API bằng `useQuery({ queryKey: [...KEY, ...tham số],

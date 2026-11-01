@@ -52,6 +52,7 @@ import {
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_END_LABELS,
   employeeRequest,
+  invalidateEmployees,
   EMPLOYMENT_STATUS_LABELS,
   EMPLOYMENT_TYPE_LABELS,
   GENDER_LABELS,
@@ -150,10 +151,12 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
     return () => { active = false }
   }, [hasValidEmployeeId, numericEmployeeId, onSessionExpired, portal, revision, session])
 
+  // Runs after every change made here too, so cached list pages and dialogs drop their copy.
   function reload() {
     setLoading(true)
     setError(null)
     setRevision((value) => value + 1)
+    invalidateEmployees()
   }
 
   async function cancelEnd() {
@@ -537,7 +540,7 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
         <EmployeeDeleteDialog
           employee={detail}
           onClose={() => setDeleting(false)}
-          onDeleted={() => router.replace(backHref)}
+          onDeleted={() => { invalidateEmployees(); router.replace(backHref) }}
           onSessionExpired={onSessionExpired}
         />
       )}

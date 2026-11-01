@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { BadgeCheck, BriefcaseBusiness, Eye, KeyRound, Pencil, Plus, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 
@@ -36,9 +37,13 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import {
+  EMPLOYEE_LIST_STALE_TIME,
+  employeeListKey,
   employeeListQuery,
   employeeRequest,
   EMPLOYMENT_STATUS_LABELS,
+  fetchEmployeeDetail,
+  invalidateEmployees,
   type EmployeeDetail,
   type EmployeeFilters,
   type EmployeeSummary,
@@ -84,11 +89,7 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
     canProvisionAccount,
   } = capabilities
   const canEdit = canReadDetail && canUpdate
-  const [data, setData] = useState<Page<EmployeeSummary> | null>(null)
   const [page, setPage] = useState(0)
-  const [revision, setRevision] = useState(0)
-  const [loadedQuery, setLoadedQuery] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [sheetRevision, setSheetRevision] = useState(0)
   const [editing, setEditing] = useState<EmployeeDetail | null>(null)
@@ -122,32 +123,18 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
     organizationUnitId: filters.organizationUnitId,
     positionId: filters.positionId,
   }, sortParam(sort))
-  const requestKey = `${query}#${revision}`
-  // Each response records the query it answered, so picking the value already selected or typing
-  // back to the same keyword cannot leave the table loading; a keyword still settling counts too.
-  const loading = loadedQuery !== requestKey || keyword !== filters.keyword
+  // Each page, filter and sort combination is cached under its own key, so going back to one already
+  // seen (page 1, a cleared filter) shows it at once; a keyword still settling counts as loading.
+  const { data, error: failure, isPending, isFetching } = useQuery({
+    queryKey: employeeListKey(portal, query),
+    queryFn: () => employeeRequest<Page<EmployeeSummary>>(portal, query),
+    staleTime: EMPLOYEE_LIST_STALE_TIME,
+  })
+  const error = failure ? apiErrorMessage(failure) : null
+  const loading = isPending || keyword !== filters.keyword
 
-  useEffect(() => {
-    let active = true
-    employeeRequest<Page<EmployeeSummary>>(portal, query)
-      .then((result) => {
-        if (!active) return
-        if (page > 0 && page >= result.totalPages) {
-          setPage(Math.max(0, result.totalPages - 1))
-          return
-        }
-        setData(result)
-        setError(null)
-        setLoadedQuery(requestKey)
-      })
-      .catch((caught: unknown) => {
-        if (!active) return
-        if (isPortalSessionExpired(caught)) onSessionExpired()
-        setError(apiErrorMessage(caught))
-        setLoadedQuery(requestKey)
-      })
-    return () => { active = false }
-  }, [portal, page, query, requestKey, onSessionExpired])
+  // A page past the end (the last row of the last page was removed) falls back to the new last page.
+  if (data && page > 0 && page >= data.totalPages) setPage(Math.max(0, data.totalPages - 1))
 
   function changeFilters(next: Partial<EmployeeFilters>) {
     setPage(0)
@@ -159,9 +146,9 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
     setSort(next)
   }
 
+  // Also after every change made from this page: other pages and details may show the changed employee.
   function reload() {
-    setError(null)
-    setRevision((value) => value + 1)
+    invalidateEmployees()
   }
 
   function openEdit(detail: EmployeeDetail) {
@@ -170,8 +157,7 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
 
   async function openEditFromList(employeeId: number) {
     try {
-      const detail = await employeeRequest<EmployeeDetail>(portal, `/${employeeId}`)
-      openEdit(detail)
+      openEdit(await fetchEmployeeDetail(portal, employeeId))
     } catch (caught) {
       if (isPortalSessionExpired(caught)) onSessionExpired()
       toast.error("Không thể tải hồ sơ nhân sự", { description: apiErrorMessage(caught) })
@@ -187,8 +173,8 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
             {data ? `${data.totalElements.toLocaleString("vi-VN")} nhân sự trong phạm vi của bạn` : "Đang tải danh sách…"}
           </p>
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
-              <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
+            <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading || isFetching}>
+              <RefreshCw className={loading || isFetching ? "animate-spin" : ""} /> Tải lại
             </Button>
             {canCreate && (
               <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
@@ -351,7 +337,7 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
           </div>
 
           <Pagination page={page} totalPages={data?.totalPages ?? 0} totalElements={data?.totalElements ?? 0} disabled={loading}
-            onChange={(next) => { setError(null); setPage(next) }} />
+            onChange={setPage} />
         </div>
       </div>
 

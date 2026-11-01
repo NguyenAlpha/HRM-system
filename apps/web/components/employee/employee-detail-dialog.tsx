@@ -22,7 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import {
   EDUCATION_LEVEL_LABELS,
-  employeeRequest,
+  fetchEmployeeDetail,
   EMPLOYMENT_STATUS_LABELS,
   GENDER_LABELS,
   type EmployeeDetail,
@@ -56,7 +56,7 @@ export function EmployeeDetailDialog({ portal, employeeId, canUpdate, canProvisi
 
   useEffect(() => {
     let active = true
-    employeeRequest<EmployeeDetail>(portal, `/${employeeId}`)
+    fetchEmployeeDetail(portal, employeeId)
       .then((result) => {
         if (active) setDetail(result)
       })

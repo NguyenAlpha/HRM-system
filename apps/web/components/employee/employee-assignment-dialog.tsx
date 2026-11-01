@@ -31,7 +31,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import {
   employeeMutation,
-  employeeRequest,
+  fetchEmployeeDetail,
   EMPLOYMENT_TYPE_LABELS,
   EMPLOYMENT_TYPES,
   type AssignEmployeeInput,
@@ -152,7 +152,7 @@ export function EmployeeAssignmentDialog({ employee, onClose, onAssigned, onSess
     let active = true
 
     Promise.all([
-      employeeRequest<EmployeeDetail>("hrm", `/${employee.id}`),
+      fetchEmployeeDetail("hrm", employee.id),
       getOrganizationUnitOptions("hrm"),
       getWorkLocationOptions("hrm"),
       getJobPositionOptions("hrm"),
