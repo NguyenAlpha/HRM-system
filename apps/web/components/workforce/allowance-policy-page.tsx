@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Briefcase, Eye, Loader2, Pencil, Plus, RefreshCw, Trash2, TrendingUp } from "lucide-react"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
@@ -56,6 +57,12 @@ const yearsText = (rule: Pick<SeniorityAllowance, "minYears" | "maxYears">) =>
   rule.maxYears === null ? `Từ ${rule.minYears} năm` : `${rule.minYears} – dưới ${rule.maxYears} năm`
 
 /** Company-wide position and seniority allowances that payroll reads for every employee. */
+// Cache keys of the two policy lists (see docs/CACHING.md). Switching tabs unmounts the other list, so
+// without the cache every switch fetched it again; they rarely change and every edit here invalidates them.
+const POSITION_ALLOWANCES_KEY = ["position-allowances"] as const
+const SENIORITY_ALLOWANCES_KEY = ["seniority-allowances"] as const
+const POLICY_STALE_TIME = 10 * 60_000
+
 export function AllowancePolicyPage() {
   const { session } = usePortalSession()
   const permissions = useMemo(
@@ -106,23 +113,15 @@ export function AllowancePolicyPage() {
 }
 
 function PositionAllowances({ canManage }: { canManage: boolean }) {
-  const [positions, setPositions] = useState<PositionAllowanceSummary[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [revision, setRevision] = useState(0)
-  const [loadedRevision, setLoadedRevision] = useState(-1)
   const [selected, setSelected] = useState<PositionAllowanceSummary | null>(null)
-  const loading = loadedRevision !== revision
-  const reload = () => setRevision((value) => value + 1)
-  const { busy, run } = useWorkforceAction(reload)
-
-  useEffect(() => {
-    let active = true
-    workforceApi<PositionAllowanceSummary[]>("compensation/position-allowances")
-      .then((result) => { if (active) { setPositions(result); setError(null) } })
-      .catch((caught: unknown) => { if (active) setError(apiErrorMessage(caught)) })
-      .finally(() => { if (active) setLoadedRevision(revision) })
-    return () => { active = false }
-  }, [revision])
+  const queryClient = useQueryClient()
+  const { data: positions = [], error: failure, isPending: loading, isFetching, refetch } = useQuery({
+    queryKey: POSITION_ALLOWANCES_KEY,
+    queryFn: () => workforceApi<PositionAllowanceSummary[]>("compensation/position-allowances"),
+    staleTime: POLICY_STALE_TIME,
+  })
+  const error = failure ? apiErrorMessage(failure) : null
+  const { busy, run } = useWorkforceAction(() => void queryClient.invalidateQueries({ queryKey: POSITION_ALLOWANCES_KEY }))
 
   return (
     <>
@@ -130,8 +129,8 @@ function PositionAllowances({ canManage }: { canManage: boolean }) {
         <p className="text-sm text-muted-foreground">
           Trả theo tỷ lệ công như lương cơ bản, theo chức danh trong phân công chính của từng ngày.
         </p>
-        <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
-          <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
+        <Button type="button" variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching}>
+          <RefreshCw className={isFetching ? "animate-spin" : ""} /> Tải lại
         </Button>
       </div>
 
@@ -303,28 +302,17 @@ function PositionAllowanceDialog({ position, canManage, busy, run, onClose }: {
 }
 
 function SeniorityAllowances({ canManage }: { canManage: boolean }) {
-  const [rules, setRules] = useState<SeniorityAllowance[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [revision, setRevision] = useState(0)
-  const [loadedRevision, setLoadedRevision] = useState(-1)
   const [adding, setAdding] = useState(false)
-  const loading = loadedRevision !== revision
-  const reload = () => setRevision((value) => value + 1)
-  const { busy, run } = useWorkforceAction(reload)
-
-  useEffect(() => {
-    let active = true
-    workforceApi<SeniorityAllowance[]>("compensation/seniority-allowances")
+  const queryClient = useQueryClient()
+  const { data: rules = [], error: failure, isPending: loading, isFetching, refetch } = useQuery({
+    queryKey: SENIORITY_ALLOWANCES_KEY,
+    queryFn: () => workforceApi<SeniorityAllowance[]>("compensation/seniority-allowances")
       // Group by tier so each tier's changes sit together, newest first within a tier.
-      .then((result) => {
-        if (!active) return
-        setRules(result.toSorted((a, b) => a.minYears - b.minYears || b.effectiveFrom.localeCompare(a.effectiveFrom)))
-        setError(null)
-      })
-      .catch((caught: unknown) => { if (active) setError(apiErrorMessage(caught)) })
-      .finally(() => { if (active) setLoadedRevision(revision) })
-    return () => { active = false }
-  }, [revision])
+      .then((result) => result.toSorted((a, b) => a.minYears - b.minYears || b.effectiveFrom.localeCompare(a.effectiveFrom))),
+    staleTime: POLICY_STALE_TIME,
+  })
+  const error = failure ? apiErrorMessage(failure) : null
+  const { busy, run } = useWorkforceAction(() => void queryClient.invalidateQueries({ queryKey: SENIORITY_ALLOWANCES_KEY }))
 
   return (
     <>
@@ -333,11 +321,11 @@ function SeniorityAllowances({ canManage }: { canManage: boolean }) {
           % lương cơ bản theo số năm thâm niên tròn tính từ ngày bắt đầu thâm niên; mỗi năm thâm niên thuộc đúng một bậc.
         </p>
         <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
-            <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
+          <Button type="button" variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching}>
+            <RefreshCw className={isFetching ? "animate-spin" : ""} /> Tải lại
           </Button>
           {canManage && (
-            <Button type="button" size="sm" onClick={() => setAdding(true)} disabled={loading}><Pencil /> Sửa bảng</Button>
+            <Button type="button" size="sm" onClick={() => setAdding(true)} disabled={isFetching}><Pencil /> Sửa bảng</Button>
           )}
         </div>
       </div>

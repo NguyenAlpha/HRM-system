@@ -10,6 +10,7 @@ Hiện áp dụng cho:
 |:--------|:-----------|:------------|:----|
 | Danh sách kỳ lương (`/payroll`), theo năm | `["payroll-periods", năm]` | 5 phút | [§3](#3-danh-sách-kỳ-lương-hoạt-động-thế-nào) |
 | Thông tin doanh nghiệp (`GET /workforce/company`) | `["company-profile"]` | 30 phút | [§4](#4-thông-tin-doanh-nghiệp) |
+| Phụ cấp chức vụ và phụ cấp thâm niên (`/allowances`) | `["position-allowances"]`, `["seniority-allowances"]` | 10 phút | [§5](#5-chính-sách-phụ-cấp) |
 
 Các trang khác vẫn tự gọi API bằng `useEffect` như cũ.
 
@@ -99,7 +100,21 @@ phiếu lương** lại gọi `GET /workforce/company` một lần. Giờ ba nơ
   gọi `invalidateQueries({ queryKey: COMPANY_PROFILE_KEY })`, nên mọi nơi khác thấy bản mới ngay.
 - **Đã đo:** mở 4 phiếu lương liên tiếp chỉ phát sinh **1** request `/workforce/company`, trước đây là 4.
 
-## 5. Cách trình bày khi demo
+## 5. Chính sách phụ cấp
+
+Trang `/allowances` có hai tab, mỗi tab một danh sách: `GET /workforce/compensation/position-allowances` và
+`GET /workforce/compensation/seniority-allowances`. Tab không hiện thì bị gỡ khỏi trang, nên trước đây **mỗi lần
+chuyển tab** lại gọi API của tab đó. Giờ mỗi danh sách có một khóa cache trong
+[`components/workforce/allowance-policy-page.tsx`](../components/workforce/allowance-policy-page.tsx).
+
+- **`staleTime` 10 phút:** chính sách phụ cấp ít khi đổi.
+- **Invalidation:** đặt mức phụ cấp chức vụ (trong dialog lịch sử) hoặc sửa bảng thâm niên gọi
+  `invalidateQueries` cho đúng khóa của danh sách đó, nên bảng tải lại ngay.
+- **"Tải lại":** gọi `refetch()`, chỉ lấy lại danh sách của tab đang mở.
+- **Đã đo:** chuyển qua lại giữa hai tab 3 lần chỉ phát sinh **2** request, mỗi danh sách một lần. Trước đây là 7.
+- Lịch sử mức phụ cấp của một chức danh (dialog) vẫn gọi API mỗi lần mở, chưa cache.
+
+## 6. Cách trình bày khi demo
 
 Chạy `npm run dev` (Devtools chỉ có trong chế độ dev, bản build production không có).
 
@@ -111,11 +126,13 @@ Chạy `npm run dev` (Devtools chỉ có trong chế độ dev, bản build prod
    - Bấm "Tải lại": thêm 1 request.
 3. **Thông tin doanh nghiệp:** mở một kỳ lương, lọc Network bằng `company`, rồi mở và đóng liên tiếp vài phiếu
    lương. Chỉ phiếu đầu tiên tạo request, các phiếu sau lấy từ cache.
-4. **TanStack Query Devtools:** bấm biểu tượng TanStack ở **góc trên bên phải** (góc dưới phải là nút của
+4. **Chính sách phụ cấp:** mở `/allowances`, lọc Network bằng `allowances`, chuyển qua lại giữa hai tab vài lần.
+   Mỗi danh sách chỉ có một request ở lần đầu.
+5. **TanStack Query Devtools:** bấm biểu tượng TanStack ở **góc trên bên phải** (góc dưới phải là nút của
    Next.js). Bảng hiện các khóa `["payroll-periods",2025]`, `["payroll-periods",2026]` cùng trạng thái
    `fresh` / `stale` / `inactive`, và thời điểm lấy dữ liệu.
 
-## 6. Áp dụng cho trang khác
+## 7. Áp dụng cho trang khác
 
 1. Đặt hằng khóa cache cạnh code của domain, ví dụ `export const EMPLOYEES_KEY = ["employees"] as const`.
 2. Trong component, thay cặp `useState` + `useEffect` gọi API bằng `useQuery({ queryKey: [...KEY, ...tham số],
