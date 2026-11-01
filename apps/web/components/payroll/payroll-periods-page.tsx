@@ -1,11 +1,12 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Loader2, Plus, RefreshCw, Table2 } from "lucide-react"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
-import { PeriodStatusBadge, periodLabel } from "@/components/payroll/payroll-shared"
+import { PAYROLL_PERIODS_KEY, PeriodStatusBadge, periodLabel } from "@/components/payroll/payroll-shared"
 import { PageHeader } from "@/components/portal/page-header"
 import { YearPicker } from "@/components/report/report-shared"
 import { usePortalSession } from "@/components/portal/portal-shell"
@@ -47,25 +48,19 @@ export function PayrollPeriodsPage() {
   const canCalculate = permissions.has("payroll.calculate")
   const currentYear = Number(today().slice(0, 4))
   const [year, setYear] = useState(currentYear)
-  const [periods, setPeriods] = useState<PayrollPeriod[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [revision, setRevision] = useState(0)
-  const [loadedKey, setLoadedKey] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
-  const requestKey = `${year}#${revision}`
-  const loading = canRead && loadedKey !== requestKey
-  const reload = () => setRevision((value) => value + 1)
-
-  useEffect(() => {
-    if (!canRead) return
-    let active = true
+  const queryClient = useQueryClient()
+  // Each year is cached under its own key: stepping back to a year already seen shows it from memory
+  // without calling the API. The payroll sheet page marks the list stale whenever it changes a period.
+  const { data: periods = [], error, isPending, isFetching, refetch } = useQuery({
+    queryKey: [...PAYROLL_PERIODS_KEY, year],
     // A year holds at most one live period per month, so one request covers it.
-    workforceApi<Page<PayrollPeriod>>(`payroll/periods?year=${year}&size=100&sort=periodStart,desc`)
-      .then((page) => { if (active) { setPeriods(page.content); setError(null) } })
-      .catch((caught: unknown) => { if (active) setError(apiErrorMessage(caught)) })
-      .finally(() => { if (active) setLoadedKey(requestKey) })
-    return () => { active = false }
-  }, [canRead, year, requestKey])
+    queryFn: () => workforceApi<Page<PayrollPeriod>>(`payroll/periods?year=${year}&size=100&sort=periodStart,desc`)
+      .then((page) => page.content),
+    enabled: canRead,
+    staleTime: 5 * 60_000,
+  })
+  const loading = canRead && isPending
 
   const open = (period: PayrollPeriod) => router.push(`/payroll/${period.id}`)
 
@@ -87,15 +82,15 @@ export function PayrollPeriodsPage() {
                 <p className="text-sm text-muted-foreground">Chọn một kỳ để xem bảng lương của toàn bộ nhân viên.</p>
               </div>
               <div className="flex gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
-                  <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
+                <Button type="button" variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching}>
+                  <RefreshCw className={isFetching ? "animate-spin" : ""} /> Tải lại
                 </Button>
                 {canCalculate && (
                   <Button type="button" size="sm" onClick={() => setCreating(true)}><Plus /> Tạo kỳ lương</Button>
                 )}
               </div>
             </div>
-              <SectionError error={error} />
+              <SectionError error={error ? apiErrorMessage(error) : null} />
               <div className="rounded-xl border bg-card">
                 <Table>
                   <TableHeader>
@@ -146,7 +141,10 @@ export function PayrollPeriodsPage() {
       {creating && (
         <CreatePeriodDialog
           onClose={() => setCreating(false)}
-          onCreated={(period) => router.push(`/payroll/${period.id}`)}
+          onCreated={(period) => {
+            void queryClient.invalidateQueries({ queryKey: PAYROLL_PERIODS_KEY })
+            router.push(`/payroll/${period.id}`)
+          }}
         />
       )}
     </>

@@ -131,4 +131,5 @@ tiếng Việt. Thêm mã lỗi mới bên backend thì nhớ thêm câu tương
 | BFF chuyển request sang endpoint backend nào | Hàm `handle…Request` tương ứng trong `lib/auth/server.ts` |
 | Kiểu dữ liệu của response | `lib/api-schema.ts` (sinh lại bằng `npm run gen:api` khi API đổi) |
 | File chạy ở đâu | Có `"use client"` ở đầu file: chạy trên trình duyệt. Route Handler và `lib/auth/server.ts`: chạy trên server |
+| Dữ liệu nào được cache ở trình duyệt, khi nào gọi lại API | [CACHING.md](./CACHING.md) |
 | Trang mới cần bảo vệ đăng nhập | Thêm đường dẫn vào `HRM_PAGES` và `config.matcher` trong `proxy.ts` |

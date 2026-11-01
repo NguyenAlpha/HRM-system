@@ -115,7 +115,7 @@ flowchart TB
 |---|---|
 | Backend | Java 25, Spring Boot 4.0 (Spring Framework 7), Spring Security 7 + OAuth2 Resource Server, Spring Data JPA / Hibernate, Bean Validation, Flyway, springdoc-openapi 3.0, fastexcel, Lombok |
 | Database | PostgreSQL 16 (33 tables, `btree_gist` exclusion constraints) |
-| Frontend | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, shadcn/ui + Base UI, React Hook Form + Zod, openapi-typescript |
+| Frontend | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, shadcn/ui + Base UI, React Hook Form + Zod, TanStack Query, openapi-typescript |
 | Infrastructure | Azure App Service + Azure Database for PostgreSQL Flexible Server, Vercel, Docker Compose for local PostgreSQL, GitHub Actions CI |
 
 ## Project structure

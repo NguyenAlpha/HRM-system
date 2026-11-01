@@ -1,0 +1,103 @@
+# Cache dữ liệu phía trình duyệt (TanStack Query)
+
+Web giữ lại dữ liệu đã lấy từ API trong **RAM của tab trình duyệt**. Khi người dùng quay lại dữ liệu đã xem,
+trang hiện ngay từ bộ nhớ mà không gọi lại API, nên cũng không truy vấn lại database. Việc này do thư viện
+[TanStack Query](https://tanstack.com/query/latest) (React Query v5) quản lý.
+
+Hiện mới áp dụng cho **danh sách kỳ lương** (`/payroll`). Các trang khác vẫn tự gọi API bằng `useEffect` như cũ.
+
+## 1. Cache nằm ở đâu
+
+```
+[Trình duyệt]  ──►  [Next.js server (BFF)]  ──►  [Spring Boot API]  ──►  [PostgreSQL]
+  QueryClient
+  (RAM của tab)
+```
+
+- **Tài nguyên:** RAM của tab trình duyệt trên máy người dùng. Không lưu xuống ổ đĩa (không dùng
+  `localStorage`), nên F5 hoặc đóng tab là mất.
+- **Phạm vi:** mỗi người dùng một bản riêng, không chia sẻ giữa người dùng hay giữa các tab.
+- **Tiết kiệm được:** một lần đọc cache trúng bỏ qua cả 3 chặng: trình duyệt → BFF → API → database.
+
+So sánh với tầng của backend:
+
+| Backend (Spring) | Web |
+|:-----------------|:----|
+| Controller | Component trang trong `components/` |
+| Service + cache (`@Cacheable`) | `QueryClient` + `useQuery` |
+| `@CacheEvict` | `queryClient.invalidateQueries(...)` |
+| Repository | Hàm gọi API trong `lib/<domain>.ts`, `workforceApi` |
+
+## 2. Thành phần trong code
+
+| Ở đâu | Vai trò |
+|:------|:--------|
+| [`components/portal/portal-shell.tsx`](../components/portal/portal-shell.tsx) | Tạo **một** `QueryClient` cho mỗi phiên đăng nhập và bọc mọi trang bằng `QueryClientProvider`. Đây là chỗ quản lý cache chung |
+| [`components/payroll/payroll-shared.tsx`](../components/payroll/payroll-shared.tsx) | `PAYROLL_PERIODS_KEY`: tiền tố khóa cache của danh sách kỳ lương |
+| [`components/payroll/payroll-periods-page.tsx`](../components/payroll/payroll-periods-page.tsx) | Đọc danh sách bằng `useQuery`, mỗi năm một khóa |
+| [`components/payroll/payroll-period-page.tsx`](../components/payroll/payroll-period-page.tsx) | Đánh dấu danh sách hết hạn sau mỗi thay đổi trên kỳ lương |
+
+### Vòng đời cache
+
+- `QueryClient` sống cùng layout `PortalShell`. Đăng xuất hoặc hết phiên sẽ rời layout đó, nên cache bị bỏ.
+  Người đăng nhập sau trên cùng tab **không thấy** dữ liệu của người trước.
+- `retry: false`: lỗi hiện ngay như các trang khác, không tự gửi lại 3 lần. Việc làm mới access token đã có
+  `authorizedRequest` lo.
+
+## 3. Danh sách kỳ lương hoạt động thế nào
+
+```ts
+useQuery({
+  queryKey: [...PAYROLL_PERIODS_KEY, year],      // ["payroll-periods", 2026]
+  queryFn: () => workforceApi(`payroll/periods?year=${year}&size=100&sort=periodStart,desc`),
+  staleTime: 5 * 60_000,
+})
+```
+
+| Thao tác | Có gọi API không |
+|:---------|:-----------------|
+| Mở trang lần đầu (năm hiện tại) | Có |
+| Bấm sang năm chưa xem | Có |
+| Quay lại năm đã xem, trong vòng 5 phút | **Không**, lấy từ cache |
+| Quay lại năm đã xem sau hơn 5 phút | Hiện ngay dữ liệu cũ, đồng thời tải bản mới ở nền |
+| Bấm "Tải lại" | Có, chỉ năm đang xem |
+| Mở một kỳ rồi quay lại danh sách, không thay đổi gì | **Không** |
+| Tính lương, duyệt, trả, khóa, hủy, mở lại kỳ, thêm/xóa khoản cộng trừ, tạo kỳ mới | Danh sách bị đánh dấu hết hạn, quay lại sẽ tải lại |
+
+Các thông số:
+
+- **`staleTime` (5 phút):** thời gian dữ liệu còn "tươi". Trong khoảng này đọc cache không gọi API.
+- **`gcTime` (mặc định 5 phút):** dữ liệu không còn trang nào dùng sẽ bị xóa khỏi RAM sau thời gian này.
+- **Invalidation:** `payroll-period-page.tsx` gọi `invalidateQueries({ queryKey: PAYROLL_PERIODS_KEY })` trong
+  `reload()`, hàm chạy sau mỗi thao tác thành công. Khóa là tiền tố, nên mọi năm đều bị đánh dấu.
+
+Giới hạn: người **khác** đổi kỳ lương thì trang này không biết ngay. Dữ liệu có thể cũ tối đa 5 phút, hoặc đến
+khi bấm "Tải lại".
+
+## 4. Cách trình bày khi demo
+
+Chạy `npm run dev` (Devtools chỉ có trong chế độ dev, bản build production không có).
+
+1. Đăng nhập bằng tài khoản có quyền xem lương, ví dụ `accountant` / `password`, rồi mở **Kỳ lương**.
+2. **Tab Network** (F12 → Network → Fetch/XHR, gõ `periods` vào ô lọc):
+   - Mở trang: thấy 1 request `payroll/periods?year=2026`.
+   - Bấm `‹` sang 2025: thêm 1 request `year=2025`.
+   - Bấm `›` về 2026 rồi `‹` về 2025: **không có request mới**.
+   - Bấm "Tải lại": thêm 1 request.
+3. **TanStack Query Devtools:** bấm biểu tượng TanStack ở **góc trên bên phải** (góc dưới phải là nút của
+   Next.js). Bảng hiện các khóa `["payroll-periods",2025]`, `["payroll-periods",2026]` cùng trạng thái
+   `fresh` / `stale` / `inactive`, và thời điểm lấy dữ liệu.
+
+## 5. Áp dụng cho trang khác
+
+1. Đặt hằng khóa cache cạnh code của domain, ví dụ `export const EMPLOYEES_KEY = ["employees"] as const`.
+2. Trong component, thay cặp `useState` + `useEffect` gọi API bằng `useQuery({ queryKey: [...KEY, ...tham số],
+   queryFn })`. Mọi tham số làm đổi kết quả (năm, trang, bộ lọc) phải nằm trong `queryKey`.
+3. Chọn `staleTime` theo mức độ dữ liệu hay đổi.
+4. Sau mỗi thao tác ghi làm đổi dữ liệu đó, gọi `queryClient.invalidateQueries({ queryKey: KEY })`.
+5. **Không** đưa dữ liệu nhạy cảm vào nơi lưu bền như `localStorage`. Cache này chỉ nằm trong RAM là có chủ đích.
+
+## Thuật ngữ để tra cứu
+
+client-side caching, server state management, stale-while-revalidate, cache invalidation, query key,
+`staleTime` / `gcTime`.

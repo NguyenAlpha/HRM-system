@@ -27,6 +27,9 @@ export const PERIOD_TONE: Record<PayrollPeriodStatus, "default" | "secondary" | 
 }
 
 /** "09/2026" for a period or a payslip's period. */
+/** Cache key prefix of the payroll periods list; the year is appended per query (see docs/CACHING.md). */
+export const PAYROLL_PERIODS_KEY = ["payroll-periods"] as const
+
 export const periodLabel = (year: number, month: number) => `${String(month).padStart(2, "0")}/${year}`
 
 export const payslipInsurance = (slip: Payslip) =>

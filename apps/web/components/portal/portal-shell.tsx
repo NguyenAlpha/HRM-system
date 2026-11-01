@@ -2,6 +2,8 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react"
 
 import { PortalSidebar } from "@/components/portal/portal-sidebar"
@@ -38,6 +40,9 @@ export function PortalShell({ portal, branding, children }: { portal: Portal; br
   const { loginPath } = PORTAL_CONFIG[portal]
   const [session, setSession] = useState<SessionData | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // The browser-side cache of API data (see docs/CACHING.md). It lives with this layout, so signing out,
+  // which leaves it, drops whatever the previous account had loaded.
+  const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }))
   // The sidebar only renders once the session has loaded in the browser, so reading storage here never
   // disagrees with the server render.
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
@@ -85,12 +90,16 @@ export function PortalShell({ portal, branding, children }: { portal: Portal; br
   }
 
   return (
-    <PortalSessionContext.Provider value={{ portal, session, setSession, onSessionExpired }}>
-      <main className={`portal-shell ${portal === "admin" ? "admin-shell" : "hrm-shell"} ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
-        <PortalSidebar portal={portal} account={session.account} branding={branding}
-          collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
-        <section className="portal-content">{children}</section>
-      </main>
-    </PortalSessionContext.Provider>
+    <QueryClientProvider client={queryClient}>
+      <PortalSessionContext.Provider value={{ portal, session, setSession, onSessionExpired }}>
+        <main className={`portal-shell ${portal === "admin" ? "admin-shell" : "hrm-shell"} ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
+          <PortalSidebar portal={portal} account={session.account} branding={branding}
+            collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+          <section className="portal-content">{children}</section>
+        </main>
+      </PortalSessionContext.Provider>
+      {/* Renders nothing in a production build; top-right because Next's dev badge sits bottom-right. */}
+      <ReactQueryDevtools initialIsOpen={false} buttonPosition="top-right" />
+    </QueryClientProvider>
   )
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 import {
   ArrowLeft,
   Ban,
@@ -19,6 +20,7 @@ import {
 
 import { ActionsMenu, RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
+  PAYROLL_PERIODS_KEY,
   PayslipDialog,
   PeriodSteps,
   hours,
@@ -94,7 +96,13 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
   const [markingPaid, setMarkingPaid] = useState(false)
   const [calculating, setCalculating] = useState(false)
   const [reopening, setReopening] = useState(false)
-  const reload = () => setRevision((value) => value + 1)
+  const queryClient = useQueryClient()
+  // Every change made here can move the period's status or totals, so the cached periods list is marked
+  // stale and fetched again when the user goes back to it.
+  const reload = () => {
+    setRevision((value) => value + 1)
+    void queryClient.invalidateQueries({ queryKey: PAYROLL_PERIODS_KEY })
+  }
   const { busy, run } = useWorkforceAction(reload)
   const loading = loadedRevision !== revision
   const validId = /^[1-9]\d*$/.test(periodId)
