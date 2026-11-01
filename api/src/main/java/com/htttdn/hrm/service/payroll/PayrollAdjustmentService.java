@@ -44,10 +44,11 @@ public class PayrollAdjustmentService {
     private final EmployeeAccessScopeService employeeAccessScopeService;
     private final PayrollPeriodInvalidator payrollPeriodInvalidator;
 
-    @PreAuthorize("hasAuthority('payroll.calculate')")
+    // Read like the period's payslips, so the approver (who never holds payroll.calculate) sees what they approve.
+    @PreAuthorize("hasAuthority('report.payroll.read')")
     @Transactional(readOnly = true)
     public List<PayrollAdjustmentResponse> list(Long periodId) {
-        employeeAccessScopeService.requireCompanyWide(PAYROLL_CALCULATE);
+        employeeAccessScopeService.requireCompanyWide("report.payroll.read");
         payrollPeriodRepository.getRequired(periodId);
         return adjustmentRepository.findByPayrollPeriodIdOrderByIdAsc(periodId).stream()
             .map(PayrollAdjustmentService::toResponse).toList();

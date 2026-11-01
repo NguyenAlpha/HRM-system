@@ -93,6 +93,15 @@ class PayrollAdjustmentServiceTest {
     }
 
     @Test
+    void listingAdjustmentsNeedsThePayrollReadScopeLikeThePayslips() {
+        when(payrollPeriodRepository.getRequired(1L)).thenReturn(period(PayrollPeriodStatus.CALCULATED));
+
+        service().list(1L);
+
+        verify(employeeAccessScopeService).requireCompanyWide("report.payroll.read");
+    }
+
+    @Test
     void deletingAnAdjustmentRemovesItFromTheDraftPeriod() {
         PayrollAdjustment adjustment = PayrollAdjustment.builder().id(5L).build();
         when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period(PayrollPeriodStatus.DRAFT));
