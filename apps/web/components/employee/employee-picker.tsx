@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 
 import {
@@ -25,13 +26,15 @@ const SHOWN_MATCHES = 50
 /**
  * Every employee the caller may list, shared by all pickers: searching filters it in memory, so typing
  * never calls the API. Employees and their accounts change in many places, so rather than invalidating
- * it from each, a picker that appears shows the cached copy at once and refreshes it in the background.
+ * it from each, a picker that starts using it shows the cached copy at once and refreshes it in the
+ * background. With `enabled` false it only reads what is already cached.
  */
-export function useEmployeeDirectory(portal: Portal) {
+export function useEmployeeDirectory(portal: Portal, enabled = true) {
   return useQuery({
     queryKey: [...EMPLOYEE_DIRECTORY_KEY, portal],
     queryFn: () => employeeRequest<Page<EmployeeSummary>>(portal, `?page=0&size=${DIRECTORY_SIZE}&sort=employeeCode,asc`)
       .then((page) => page.content),
+    enabled,
   })
 }
 
@@ -58,7 +61,10 @@ export function EmployeePicker({
   /** Marks the field as failing form validation. */
   invalid?: boolean
 }) {
-  const { data: directory, isPending } = useEmployeeDirectory(portal)
+  // Fetched only once the user opens the picker (or it already holds a value to name), since many
+  // pages show a picker that is seldom used.
+  const [opened, setOpened] = useState(false)
+  const { data: directory, isLoading, isError } = useEmployeeDirectory(portal, opened || value !== null)
   const candidates = filter ? (directory ?? []).filter(filter) : directory ?? []
   const selected = candidates.find((employee) => employee.id === value) ?? null
 
@@ -70,12 +76,16 @@ export function EmployeePicker({
       itemToStringLabel={label}
       isItemEqualToValue={(item, current) => item.id === current.id}
       limit={SHOWN_MATCHES}
-      disabled={disabled || isPending}
+      disabled={disabled}
+      onOpenChange={(open) => { if (open) setOpened(true) }}
     >
-      <ComboboxInput id={id} className="w-full" disabled={disabled || isPending} aria-invalid={invalid}
-        showClear={clearable && selected !== null} placeholder={isPending ? "Đang tải..." : placeholder} />
+      <ComboboxInput id={id} className="w-full" disabled={disabled} aria-invalid={invalid}
+        onFocus={() => setOpened(true)} showClear={clearable && selected !== null} placeholder={placeholder} />
       <ComboboxContent>
-        <ComboboxEmpty>Không tìm thấy nhân sự phù hợp.</ComboboxEmpty>
+        <ComboboxEmpty>
+          {isLoading ? "Đang tải danh sách nhân sự..."
+            : isError ? "Không tải được danh sách nhân sự." : "Không tìm thấy nhân sự phù hợp."}
+        </ComboboxEmpty>
         <ComboboxList>
           {(employee: EmployeeSummary) => (
             <ComboboxItem key={employee.id} value={employee}>{label(employee)}</ComboboxItem>

@@ -5,7 +5,7 @@ import { FormEvent, useState } from "react"
 import { Loader2, UserRoundCog } from "lucide-react"
 import { toast } from "sonner"
 
-import { EmployeePicker, useEmployeeDirectory } from "@/components/employee/employee-picker"
+import { EmployeePicker } from "@/components/employee/employee-picker"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -35,8 +35,6 @@ type TransferInput = components["schemas"]["TransferCompanyOwnerRequest"]
  */
 export function CompanyOwnerTransferCard({ ownAccountId }: { ownAccountId: number }) {
   const router = useRouter()
-  const { error: directoryError } = useEmployeeDirectory("hrm")
-  const loadError = directoryError ? apiErrorMessage(directoryError) : null
   const [recipient, setRecipient] = useState<EmployeeSummary | null>(null)
   const [reason, setReason] = useState("")
   const [confirming, setConfirming] = useState(false)
@@ -71,7 +69,6 @@ export function CompanyOwnerTransferCard({ ownAccountId }: { ownAccountId: numbe
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <SectionError error={loadError} />
         <form onSubmit={startConfirming} className="grid gap-4">
           <div className="grid gap-1.5">
             <Label htmlFor="owner-transfer-employee">Người nhận</Label>

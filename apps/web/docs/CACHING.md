@@ -131,6 +131,11 @@ Cách làm mới khác các mục trên: `staleTime` để mặc định là 0. 
 vậy mỗi lần một ô chọn xuất hiện, nó hiện ngay bản trong cache rồi **tải lại ở nền** (stale-while-revalidate).
 Gõ tìm thì vẫn không bao giờ gọi API.
 
+**Chỉ tải khi cần (lazy loading):** nhiều trang có sẵn ô chọn nhưng ít khi dùng, ví dụ Chuyển giao Company Owner.
+Vì vậy danh bạ chỉ được tải khi người dùng **bấm vào ô chọn**, không tải lúc mở trang. Ngoại lệ là ô đã có sẵn
+giá trị, như quản lý hiện tại trong dialog phân công: phải tải để hiện được tên người đó.
+`useEmployeeDirectory(portal, false)` chỉ đọc bản đã có trong cache mà không gọi API.
+
 Giới hạn: 2000 là cỡ trang lớn nhất mặc định của Spring, đủ cho quy mô ứng dụng nội bộ một công ty. Công ty
 lớn hơn thì đổi bên trong `EmployeePicker` sang tìm ở server (gửi `keyword`), nơi dùng không phải sửa.
 
@@ -161,8 +166,9 @@ Chạy `npm run dev` (Devtools chỉ có trong chế độ dev, bản build prod
    lương. Chỉ phiếu đầu tiên tạo request, các phiếu sau lấy từ cache.
 4. **Chính sách phụ cấp:** mở `/allowances`, lọc Network bằng `allowances`, chuyển qua lại giữa hai tab vài lần.
    Mỗi danh sách chỉ có một request ở lần đầu.
-5. **Ô chọn nhân sự:** đăng nhập `owner`, mở `/company`, lọc Network bằng `employees`. Mở trang có đúng 1 request.
-   Gõ vào ô "Người nhận" (ví dụ `tran`, `nv000`) thì danh sách thu hẹp ngay mà **không có request nào**.
+5. **Ô chọn nhân sự:** đăng nhập `owner`, mở `/company`, lọc Network bằng `employees`. Mở trang **chưa có request nào**.
+   Bấm vào ô "Người nhận": có đúng 1 request. Gõ tiếp (ví dụ `tran`, `nv000`) thì danh sách thu hẹp ngay mà
+   **không có thêm request nào**.
 6. **TanStack Query Devtools:** bấm biểu tượng TanStack ở **góc trên bên phải** (góc dưới phải là nút của
    Next.js). Bảng hiện các khóa `["payroll-periods",2025]`, `["payroll-periods",2026]` cùng trạng thái
    `fresh` / `stale` / `inactive`, và thời điểm lấy dữ liệu.

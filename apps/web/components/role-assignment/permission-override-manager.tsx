@@ -9,7 +9,7 @@ import { toast } from "sonner"
 
 import { todayIso } from "@/components/account/account-access"
 import { ErrorAlert } from "@/components/common/list-controls"
-import { EmployeePicker, useEmployeeDirectory } from "@/components/employee/employee-picker"
+import { EmployeePicker } from "@/components/employee/employee-picker"
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
   AlertDialog,
@@ -118,7 +118,6 @@ export function PermissionOverrideManager({ portal, onSessionExpired }: {
     [permissionOptions],
   )
 
-  const { error: directoryError } = useEmployeeDirectory(portal)
 
   async function selectAccount(nextAccountId: string | null) {
     const value = nextAccountId ?? ""
@@ -251,7 +250,7 @@ export function PermissionOverrideManager({ portal, onSessionExpired }: {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-5">
-          <ErrorAlert error={error ?? (directoryError ? apiErrorMessage(directoryError) : null)} />
+          <ErrorAlert error={error} />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5">

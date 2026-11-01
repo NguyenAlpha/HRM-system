@@ -6,7 +6,7 @@ import { toast } from "sonner"
 
 import { scopeLabel, validityLabel } from "@/components/account/account-access"
 import { ErrorAlert } from "@/components/common/list-controls"
-import { EmployeePicker, useEmployeeDirectory } from "@/components/employee/employee-picker"
+import { EmployeePicker } from "@/components/employee/employee-picker"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -35,13 +35,11 @@ export function RoleRevocationRequestDialog({ onClose, onCreated, onSessionExpir
   onCreated: () => void
   onSessionExpired: () => void
 }) {
-  const { error: directoryError } = useEmployeeDirectory("hrm")
   const [employee, setEmployee] = useState<EmployeeSummary | null>(null)
   const [assignments, setAssignments] = useState<AccountRoleAssignment[] | null>(null)
   const [assignmentId, setAssignmentId] = useState("")
   const [reason, setReason] = useState("")
-  const [actionError, setError] = useState<string | null>(null)
-  const error = actionError ?? (directoryError ? apiErrorMessage(directoryError) : null)
+  const [error, setError] = useState<string | null>(null)
   const [running, setRunning] = useState(false)
 
   function chooseEmployee(next: EmployeeSummary | null) {

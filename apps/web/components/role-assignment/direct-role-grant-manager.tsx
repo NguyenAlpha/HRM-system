@@ -102,7 +102,8 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
   const [optionsError, setOptionsError] = useState<string | null>(null)
   // A grant can create the employee's account, so starting over refreshes the directory too.
   const queryClient = useQueryClient()
-  const { data: employees = [] } = useEmployeeDirectory(portal)
+  // Only reads what the picker has loaded: a picked employee is always in it.
+  const { data: employees = [] } = useEmployeeDirectory(portal, false)
   const [roles, setRoles] = useState<Role[]>([])
   const [orgUnits, setOrgUnits] = useState<OrganizationUnitOption[]>([])
   const [workLocations, setWorkLocations] = useState<WorkLocationOption[]>([])
