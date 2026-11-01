@@ -11,6 +11,7 @@ Hiện áp dụng cho:
 | Danh sách kỳ lương (`/payroll`), theo năm | `["payroll-periods", năm]` | 5 phút | [§3](#3-danh-sách-kỳ-lương-hoạt-động-thế-nào) |
 | Thông tin doanh nghiệp (`GET /workforce/company`) | `["company-profile"]` | 30 phút | [§4](#4-thông-tin-doanh-nghiệp) |
 | Phụ cấp chức vụ và phụ cấp thâm niên (`/allowances`) | `["position-allowances"]`, `["seniority-allowances"]` | 10 phút | [§5](#5-chính-sách-phụ-cấp) |
+| Danh bạ nhân sự cho ô chọn nhân sự (`EmployeePicker`) | `["employee-directory", portal]` | 0, làm mới ở nền | [§6](#6-ô-chọn-nhân-sự-employeepicker) |
 
 Các trang khác vẫn tự gọi API bằng `useEffect` như cũ.
 
@@ -114,7 +115,28 @@ chuyển tab** lại gọi API của tab đó. Giờ mỗi danh sách có một 
 - **Đã đo:** chuyển qua lại giữa hai tab 3 lần chỉ phát sinh **2** request, mỗi danh sách một lần. Trước đây là 7.
 - Lịch sử mức phụ cấp của một chức danh (dialog) vẫn gọi API mỗi lần mở, chưa cache.
 
-## 6. Cách trình bày khi demo
+## 6. Ô chọn nhân sự (`EmployeePicker`)
+
+Đây là đúng ví dụ "tải danh sách một lần, tìm kiếm trên danh sách đã có" của đề bài.
+[`components/employee/employee-picker.tsx`](../components/employee/employee-picker.tsx) gồm:
+
+- **`useEmployeeDirectory(portal)`:** tải **toàn bộ** nhân sự trong phạm vi quyền của người dùng bằng một request
+  (`GET /employees?size=2000&sort=employeeCode,asc`) và để trong cache.
+- **`EmployeePicker`:** ô chọn có ô gõ tìm (Combobox của shadcn/Base UI). Gõ mã hoặc tên thì **lọc ngay trên RAM**,
+  không gọi API. Tìm không cần dấu: gõ `tran` ra "Trần Thị Bình". Danh sách hiện tối đa 50 kết quả, gõ thêm để
+  thu hẹp. Mỗi nơi dùng truyền `filter` riêng, ví dụ chỉ người có tài khoản đang hoạt động.
+
+Cách làm mới khác các mục trên: `staleTime` để mặc định là 0. Nhân sự và tài khoản bị thay đổi ở rất nhiều chỗ
+(tạo, sửa, phân công nhân sự, kích hoạt hoặc khóa tài khoản…), gắn `invalidateQueries` vào từng chỗ dễ sót. Vì
+vậy mỗi lần một ô chọn xuất hiện, nó hiện ngay bản trong cache rồi **tải lại ở nền** (stale-while-revalidate).
+Gõ tìm thì vẫn không bao giờ gọi API.
+
+Giới hạn: 2000 là cỡ trang lớn nhất mặc định của Spring, đủ cho quy mô ứng dụng nội bộ một công ty. Công ty
+lớn hơn thì đổi bên trong `EmployeePicker` sang tìm ở server (gửi `keyword`), nơi dùng không phải sửa.
+
+Đang dùng ở: Chuyển giao Company Owner (`/company`).
+
+## 7. Cách trình bày khi demo
 
 Chạy `npm run dev` (Devtools chỉ có trong chế độ dev, bản build production không có).
 
@@ -128,11 +150,13 @@ Chạy `npm run dev` (Devtools chỉ có trong chế độ dev, bản build prod
    lương. Chỉ phiếu đầu tiên tạo request, các phiếu sau lấy từ cache.
 4. **Chính sách phụ cấp:** mở `/allowances`, lọc Network bằng `allowances`, chuyển qua lại giữa hai tab vài lần.
    Mỗi danh sách chỉ có một request ở lần đầu.
-5. **TanStack Query Devtools:** bấm biểu tượng TanStack ở **góc trên bên phải** (góc dưới phải là nút của
+5. **Ô chọn nhân sự:** đăng nhập `owner`, mở `/company`, lọc Network bằng `employees`. Mở trang có đúng 1 request.
+   Gõ vào ô "Người nhận" (ví dụ `tran`, `nv000`) thì danh sách thu hẹp ngay mà **không có request nào**.
+6. **TanStack Query Devtools:** bấm biểu tượng TanStack ở **góc trên bên phải** (góc dưới phải là nút của
    Next.js). Bảng hiện các khóa `["payroll-periods",2025]`, `["payroll-periods",2026]` cùng trạng thái
    `fresh` / `stale` / `inactive`, và thời điểm lấy dữ liệu.
 
-## 7. Áp dụng cho trang khác
+## 8. Áp dụng cho trang khác
 
 1. Đặt hằng khóa cache cạnh code của domain, ví dụ `export const EMPLOYEES_KEY = ["employees"] as const`.
 2. Trong component, thay cặp `useState` + `useEffect` gọi API bằng `useQuery({ queryKey: [...KEY, ...tham số],

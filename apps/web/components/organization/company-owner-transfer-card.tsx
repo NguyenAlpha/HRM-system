@@ -1,10 +1,11 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { FormEvent, useEffect, useMemo, useState } from "react"
+import { FormEvent, useState } from "react"
 import { Loader2, UserRoundCog } from "lucide-react"
 import { toast } from "sonner"
 
+import { EmployeePicker, useEmployeeDirectory } from "@/components/employee/employee-picker"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -17,13 +18,6 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { SectionError } from "@/components/workforce/workforce-shared"
 import type { components } from "@/lib/api-schema"
@@ -31,8 +25,7 @@ import { apiErrorMessage } from "@/lib/api-helpers"
 import { authorizedRequest, logout } from "@/lib/auth/client"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import { AuthApiError } from "@/lib/auth/types"
-import { employeeRequest, type EmployeeSummary } from "@/lib/employee"
-import type { Page } from "@/lib/pagination"
+import type { EmployeeSummary } from "@/lib/employee"
 
 type TransferInput = components["schemas"]["TransferCompanyOwnerRequest"]
 
@@ -42,35 +35,17 @@ type TransferInput = components["schemas"]["TransferCompanyOwnerRequest"]
  */
 export function CompanyOwnerTransferCard({ ownAccountId }: { ownAccountId: number }) {
   const router = useRouter()
-  const [employees, setEmployees] = useState<EmployeeSummary[] | null>(null)
-  const [loadError, setLoadError] = useState<string | null>(null)
-  const [employeeId, setEmployeeId] = useState("")
+  const { error: directoryError } = useEmployeeDirectory("hrm")
+  const loadError = directoryError ? apiErrorMessage(directoryError) : null
+  const [recipient, setRecipient] = useState<EmployeeSummary | null>(null)
   const [reason, setReason] = useState("")
   const [confirming, setConfirming] = useState(false)
 
-  useEffect(() => {
-    let active = true
-    employeeRequest<Page<EmployeeSummary>>("hrm", "?page=0&size=100")
-      .then((page) => { if (active) setEmployees(page.content) })
-      .catch((caught: unknown) => { if (active) setLoadError(apiErrorMessage(caught)) })
-    return () => { active = false }
-  }, [])
-
   // The API accepts only an active account of an employee still working and not leaving.
-  const candidates = useMemo(
-    () => (employees ?? []).filter((employee) => employee.account?.status === "ACTIVE"
-      && employee.account.id !== ownAccountId
-      && (employee.employmentStatus === "ACTIVE" || employee.employmentStatus === "PROBATION")
-      && employee.terminationDate === null),
-    [employees, ownAccountId],
-  )
-  const items = useMemo(
-    () => Object.fromEntries(candidates.map((employee) => [
-      String(employee.id), `${employee.fullName} (${employee.account?.username})`,
-    ])),
-    [candidates],
-  )
-  const recipient = candidates.find((employee) => String(employee.id) === employeeId) ?? null
+  const isCandidate = (employee: EmployeeSummary) => employee.account?.status === "ACTIVE"
+    && employee.account.id !== ownAccountId
+    && (employee.employmentStatus === "ACTIVE" || employee.employmentStatus === "PROBATION")
+    && employee.terminationDate === null
 
   function startConfirming(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -100,18 +75,9 @@ export function CompanyOwnerTransferCard({ ownAccountId }: { ownAccountId: numbe
         <form onSubmit={startConfirming} className="grid gap-4">
           <div className="grid gap-1.5">
             <Label htmlFor="owner-transfer-employee">Người nhận</Label>
-            <Select value={employeeId} items={items} onValueChange={(value) => setEmployeeId(value ?? "")} disabled={!employees}>
-              <SelectTrigger id="owner-transfer-employee" className="w-full">
-                <SelectValue placeholder={employees ? "Chọn nhân sự..." : "Đang tải..."} />
-              </SelectTrigger>
-              <SelectContent>
-                {candidates.map((employee) => (
-                  <SelectItem key={employee.id} value={String(employee.id)}>
-                    {employee.fullName} ({employee.account?.username})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <EmployeePicker id="owner-transfer-employee" portal="hrm" value={recipient?.id ?? null} onChange={setRecipient}
+              filter={isCandidate}
+              label={(employee) => `${employee.employeeCode} · ${employee.fullName} (${employee.account?.username})`} />
             <p className="text-xs text-muted-foreground">Chỉ hiện nhân sự đang làm việc có tài khoản đã kích hoạt.</p>
           </div>
           <div className="grid gap-1.5">
