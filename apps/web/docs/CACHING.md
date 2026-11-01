@@ -150,6 +150,7 @@ lớn hơn thì đổi bên trong `EmployeePicker` sang tìm ở server (gửi `
 | `/role-grant` | Ghi đè quyền | Có tài khoản |
 | `/employees` | Quản lý trực tiếp khi thêm nhân sự | Đang làm việc (chính thức hoặc thử việc); có nút xóa để bỏ chọn |
 | `/employees` | Quản lý trực tiếp khi thay đổi phân công | Như trên, trừ chính nhân sự đang phân công |
+| `/payroll/{id}` | Khoản cộng/trừ của kỳ | Mọi nhân sự; API từ chối người không làm việc trong kỳ |
 
 Cấp role trực tiếp có thể tạo tài khoản mới, nên "Cấp tiếp" gọi `invalidateQueries` cho danh bạ.
 

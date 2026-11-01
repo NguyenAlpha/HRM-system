@@ -5,6 +5,7 @@ import { Loader2, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
+import { EmployeePicker } from "@/components/employee/employee-picker"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { money, workforceApi } from "@/components/workforce/workforce-shared"
 import { apiErrorMessage } from "@/lib/api-helpers"
-import { findEmployeeByCode } from "@/lib/employee"
+import type { EmployeeSummary } from "@/lib/employee"
 import type { PayrollAdjustment, PayrollAdjustmentType, WorkforceBody } from "@/lib/workforce"
 
 export const PAYROLL_ADJUSTMENT_TYPES = [
@@ -38,7 +39,7 @@ export function PayrollAdjustmentsPanel({ periodId, editable, onChanged }: {
   onChanged: () => void
 }) {
   const [rows, setRows] = useState<PayrollAdjustment[]>([])
-  const [employeeCode, setEmployeeCode] = useState("")
+  const [employee, setEmployee] = useState<EmployeeSummary | null>(null)
   const [type, setType] = useState<PayrollAdjustmentType>("BONUS")
   const [description, setDescription] = useState("")
   const [amount, setAmount] = useState("")
@@ -71,9 +72,8 @@ export function PayrollAdjustmentsPanel({ periodId, editable, onChanged }: {
 
   function add(event: React.FormEvent) {
     event.preventDefault()
+    if (!employee) return
     void act(async () => {
-      const employee = await findEmployeeByCode("hrm", employeeCode)
-      if (!employee) throw new Error(`Không tìm thấy nhân viên có mã ${employeeCode.trim()}.`)
       await workforceApi(`payroll/periods/${periodId}/adjustments`, "POST", {
         employeeId: employee.id, type, description: description.trim(), amount: Number(amount),
       } satisfies WorkforceBody["CreatePayrollAdjustmentRequest"])
@@ -117,11 +117,11 @@ export function PayrollAdjustmentsPanel({ periodId, editable, onChanged }: {
         </Table>
       </div>
 
-      {editable && <form className="grid gap-2 sm:grid-cols-[8rem_14rem_1fr_9rem_auto] sm:items-end" onSubmit={add}>
+      {editable && <form className="grid gap-2 sm:grid-cols-[16rem_14rem_1fr_9rem_auto] sm:items-end" onSubmit={add}>
         <div className="grid gap-1.5">
-          <Label htmlFor={`adjustment-employee-${periodId}`}>Mã nhân viên</Label>
-          <Input id={`adjustment-employee-${periodId}`} required placeholder="NV0001" value={employeeCode}
-            onChange={(event) => setEmployeeCode(event.target.value)} />
+          <Label htmlFor={`adjustment-employee-${periodId}`}>Nhân viên</Label>
+          {/* The API refuses anyone not employed during the period, with a message shown below. */}
+          <EmployeePicker id={`adjustment-employee-${periodId}`} portal="hrm" value={employee?.id ?? null} onChange={setEmployee} />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor={`adjustment-type-${periodId}`}>Loại</Label>
@@ -142,7 +142,7 @@ export function PayrollAdjustmentsPanel({ periodId, editable, onChanged }: {
           <Input id={`adjustment-amount-${periodId}`} required type="number" min="1" step="1" value={amount}
             onChange={(event) => setAmount(event.target.value)} />
         </div>
-        <Button type="submit" disabled={busy}>{busy && <Loader2 className="animate-spin" />} Thêm</Button>
+        <Button type="submit" disabled={busy || !employee}>{busy && <Loader2 className="animate-spin" />} Thêm</Button>
       </form>}
 
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
