@@ -69,6 +69,10 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 - Before working in `apps/web`, read `apps/web/AGENTS.md` and the relevant Next.js guide in `apps/web/node_modules/next/dist/docs/`. This applies to answering Next.js questions too, not just writing code.
 
+## 7. API (`api`)
+
+- Before working in `api`, read `api/AGENTS.md`.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
