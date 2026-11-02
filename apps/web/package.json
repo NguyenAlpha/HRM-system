@@ -2,12 +2,13 @@
   "name": "hrm-web",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@11.1.1",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "npm run check:api && next typegen && tsc --noEmit",
+    "typecheck": "pnpm check:api && next typegen && tsc --noEmit",
     "gen:api": "openapi-typescript openapi.json -o lib/api-schema.ts",
     "check:api": "openapi-typescript openapi.json -o lib/api-schema.ts --check",
     "test:e2e": "playwright test"

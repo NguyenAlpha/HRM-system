@@ -62,7 +62,7 @@ Ràng buộc: check theo trạng thái giống `chk_role_assignment_requests_res
   `POST /{id}/approve`, `/reject`, `/cancel`.
 - Trang `/role-requests` thêm tab "Ngoại lệ quyền": HR gửi và theo dõi, Owner duyệt hoặc từ chối cùng chỗ với
   đề nghị role.
-- Sinh lại OpenAPI snapshot và `npm run gen:api` sau khi thêm DTO.
+- Sinh lại OpenAPI snapshot và `pnpm gen:api` sau khi thêm DTO.
 
 ## 6. Câu hỏi cần chốt trước khi làm
 

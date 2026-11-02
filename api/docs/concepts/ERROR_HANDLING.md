@@ -85,7 +85,7 @@ Lỗi do BFF tự tạo (không có cookie phiên, đường dẫn không nằm 
 2. Ném bằng exception có status phù hợp (bảng mục 2).
 3. Thêm câu tiếng Việt vào `ERROR_MESSAGES` trong `apps/web/lib/api-helpers.ts`.
 4. Ghi mã lỗi vào bảng "Lỗi" của endpoint trong `api/docs/api/*.md`.
-5. Chạy `npm run gen:api` nếu response DTO thay đổi.
+5. Chạy `pnpm gen:api` nếu response DTO thay đổi.
 
 ## Code
 

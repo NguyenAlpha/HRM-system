@@ -13,16 +13,18 @@ Cài đặt các công cụ sau:
 | Công cụ | Phiên bản |
 |:--------|:----------|
 | Java JDK | 25 |
-| Node.js | 20.9 trở lên |
-| npm | 10 trở lên |
+| Node.js | 22.13 trở lên |
+| pnpm | 11 trở lên |
 | Docker | Docker Desktop hoặc Docker Engine có Compose |
+
+Chưa có pnpm thì cài bằng `npm install -g pnpm`.
 
 Kiểm tra phiên bản:
 
 ```powershell
 java -version
 node --version
-npm --version
+pnpm --version
 docker --version
 docker compose version
 ```
@@ -142,8 +144,8 @@ PowerShell trên Windows:
 ```powershell
 Set-Location apps/web
 Copy-Item .env.example .env.local
-npm ci
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 macOS/Linux:
@@ -151,8 +153,8 @@ macOS/Linux:
 ```bash
 cd apps/web
 cp .env.example .env.local
-npm ci
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Nội dung local mặc định:
@@ -229,9 +231,9 @@ Kiểm tra web:
 
 ```powershell
 Set-Location apps/web
-npm run lint
-npm run typecheck
-npm run build
+pnpm lint
+pnpm typecheck
+pnpm build
 ```
 
 Trên macOS/Linux, thay `./mvnw.cmd` bằng `./mvnw`.
@@ -307,7 +309,7 @@ lsof -i :8080
 
 - Xác nhận API vẫn chạy tại `http://localhost:8080`.
 - Kiểm tra `API_URL` trong `apps/web/.env.local`.
-- Restart `npm run dev` sau khi thay đổi file môi trường.
+- Restart `pnpm dev` sau khi thay đổi file môi trường.
 
 ### Đăng nhập thành công nhưng cookie không được lưu
 

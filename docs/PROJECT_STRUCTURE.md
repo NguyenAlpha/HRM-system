@@ -141,7 +141,7 @@ apps/web/
 │                                     # attendance/leave/payroll-section và các panel con
 ├── lib/
 │   ├── api-helpers.ts                # Chuẩn hóa lỗi trả về từ BFF
-│   ├── api-schema.ts                 # Type sinh từ openapi.json (npm run gen:api)
+│   ├── api-schema.ts                 # Type sinh từ openapi.json (pnpm gen:api)
 │   ├── account.ts                    # Client account và vòng đời tài khoản
 │   ├── activation.ts                 # Client kích hoạt account
 │   ├── company-owner.ts              # Client bootstrap Company Owner
@@ -165,7 +165,8 @@ apps/web/
 ├── .env.example                      # Biến môi trường mẫu
 ├── openapi.json                      # Bản chụp spec OpenAPI, do OpenApiSnapshotTest ghi
 ├── package.json                      # Scripts và dependencies
-├── package-lock.json
+├── pnpm-lock.yaml
+├── pnpm-workspace.yaml               # Cấu hình pnpm (script cài đặt được phép chạy)
 ├── tsconfig.json
 ├── next.config.mjs
 ├── postcss.config.mjs
@@ -225,9 +226,9 @@ Backend tests nằm trong `api/src/test/java/`, bao gồm:
 Frontend hiện có các script kiểm tra trong `apps/web/package.json`:
 
 ```text
-npm run lint
-npm run typecheck   # gồm check:api: lib/api-schema.ts phải khớp openapi.json
-npm run build
+pnpm lint
+pnpm typecheck   # gồm check:api: lib/api-schema.ts phải khớp openapi.json
+pnpm build
 ```
 
 ## 6. Thư mục không thuộc source chính
@@ -244,10 +245,10 @@ apps/web/tsconfig.tsbuildinfo
 ```
 
 - `api/target/` chứa class đã compile, test reports và file JAR do Maven tạo.
-- `apps/web/node_modules/` chứa dependencies cài bằng npm.
+- `apps/web/node_modules/` chứa dependencies cài bằng pnpm.
 - `apps/web/.next/` chứa output build của Next.js.
 - `.idea/` chứa cấu hình IntelliJ IDEA của từng máy.
-- `apps/web/next-env.d.ts` do Next.js tự sinh lại khi chạy `next dev`, `next build` hoặc `npm run typecheck`
+- `apps/web/next-env.d.ts` do Next.js tự sinh lại khi chạy `next dev`, `next build` hoặc `pnpm typecheck`
   (script này chạy `next typegen` trước) và nằm trong `.gitignore`.
 - `apps/web/AGENTS.md` do Next.js tự sinh lại khi chạy `next dev`.
 

@@ -2,8 +2,8 @@
 
 ## Yêu cầu
 
-- Node.js 20.9 trở lên
-- npm 10 trở lên
+- Node.js 22.13 trở lên
+- pnpm 11 trở lên
 - HRM API đang chạy và kết nối được tới PostgreSQL
 
 ## Chạy local
@@ -18,8 +18,8 @@ Chuẩn bị và chạy web từ thư mục `apps/web`:
 
 ```powershell
 Copy-Item .env.example .env.local
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Mở `http://localhost:3000`. Trang `/` tự chuyển tới `/login`.
@@ -67,7 +67,7 @@ Hai file sinh tự động, không sửa tay và luôn commit cùng thay đổi 
 | File | Sinh bởi | Nội dung |
 |:-----|:---------|:---------|
 | `openapi.json` | `OpenApiSnapshotTest` ở `api/` | Bản chụp spec OpenAPI của API |
-| `lib/api-schema.ts` | `npm run gen:api` | TypeScript type sinh từ `openapi.json` bằng `openapi-typescript` |
+| `lib/api-schema.ts` | `pnpm gen:api` | TypeScript type sinh từ `openapi.json` bằng `openapi-typescript` |
 
 Sau khi đổi DTO hoặc endpoint ở `api/` (không cần bật API):
 
@@ -75,8 +75,8 @@ Sau khi đổi DTO hoặc endpoint ở `api/` (không cần bật API):
 # trong api/
 ./mvnw.cmd test "-Dtest=OpenApiSnapshotTest" "-Dopenapi.snapshot.update=true"
 # trong apps/web/
-npm run gen:api
-npm run typecheck
+pnpm gen:api
+pnpm typecheck
 ```
 
 Typecheck báo lỗi ở những chỗ frontend không còn khớp DTO mới.
@@ -85,7 +85,7 @@ Quên một trong hai bước sẽ bị chặn:
 
 - Quên cập nhật `openapi.json`: `OpenApiSnapshotTest` fail khi chạy `./mvnw.cmd test`, liệt kê path
   và schema bị lệch.
-- Quên `npm run gen:api`: `npm run typecheck` fail ở bước `check:api` với thông báo
+- Quên `pnpm gen:api`: `pnpm typecheck` fail ở bước `check:api` với thông báo
   `Generated types are not up-to-date`.
 
 `.gitattributes` giữ hai file này ở LF trên mọi máy; `check:api` so sánh từng byte nên CRLF do
@@ -104,9 +104,9 @@ sinh ra coi field đó luôn có giá trị.
 ## Lệnh kiểm tra
 
 ```powershell
-npm run lint
-npm run typecheck
-npm run build
+pnpm lint
+pnpm typecheck
+pnpm build
 ```
 
 CI (`.github/workflows/ci.yml`) chạy ba lệnh này cùng `./mvnw test` của API (trên PostgreSQL
@@ -119,11 +119,11 @@ các test này. Cần bật API (port 8080) trước; web dev server được Pl
 chưa có.
 
 ```powershell
-npx playwright install chromium   # lần đầu
-npm run test:e2e                  # chạy toàn bộ
-npx playwright test --ui          # xem từng bước trên trình duyệt
-npx playwright show-report        # báo cáo HTML sau khi chạy
-npx playwright codegen http://localhost:3000/login   # ghi thao tác thành code test
+pnpm exec playwright install chromium   # lần đầu
+pnpm test:e2e                           # chạy toàn bộ
+pnpm exec playwright test --ui          # xem từng bước trên trình duyệt
+pnpm exec playwright show-report        # báo cáo HTML sau khi chạy
+pnpm exec playwright codegen http://localhost:3000/login   # ghi thao tác thành code test
 ```
 
 Tài khoản seed dùng trong test khai báo ở `e2e/auth.ts`: `admin / Admin@123` (cổng Admin),
@@ -183,7 +183,7 @@ components/                   # UI chia theo tính năng, không theo portal
 ├── portal/portal-shell.tsx   # PortalShell (khung dùng chung) và hook usePortalSession()
 ├── common/                   # Thành phần dùng chung mọi tính năng (ErrorAlert, Pagination)
 lib/                          # API client, kiểu dữ liệu và auth helpers
-├── api-schema.ts             # Type sinh từ openapi.json (npm run gen:api), không sửa tay
+├── api-schema.ts             # Type sinh từ openapi.json (pnpm gen:api), không sửa tay
 openapi.json                  # Bản chụp spec OpenAPI do OpenApiSnapshotTest ghi, không sửa tay
 proxy.ts                      # Điều hướng sơ bộ dựa trên sự tồn tại của cookie
 ```

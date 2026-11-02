@@ -4,15 +4,15 @@ Frontend Next.js 16 của hệ thống HRM, sử dụng App Router, React 19, Ty
 
 ## Yêu cầu
 
-- Node.js 20.9 trở lên
-- npm 10 trở lên
+- Node.js 22.13 trở lên
+- pnpm 11 trở lên
 
 ## Chạy local
 
 ```bash
 cp .env.example .env.local
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Mở [http://localhost:3000](http://localhost:3000). Spring Boot API mặc định chạy tại `http://localhost:8080`; thay `API_URL` trong `.env.local` nếu dùng địa chỉ khác.
@@ -49,11 +49,11 @@ Mỗi trang tự ẩn thao tác không có quyền để cải thiện trải ng
 ## Lệnh kiểm tra
 
 ```bash
-npm run dev       # server phát triển
-npm run build     # tạo production build
-npm run start     # chạy production build
-npm run lint      # ESLint
-npm run typecheck # kiểm tra TypeScript
+pnpm dev       # server phát triển
+pnpm build     # tạo production build
+pnpm start     # chạy production build
+pnpm lint      # ESLint
+pnpm typecheck # kiểm tra TypeScript
 ```
 
 ## Cấu trúc

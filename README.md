@@ -143,7 +143,7 @@ HRM-system/
 
 ## Getting started
 
-Requirements: Java 25, Node.js 20.9+, npm 10+, Docker.
+Requirements: Java 25, Node.js 22.13+, pnpm 11+, Docker.
 
 ```bash
 # 1. Database
@@ -156,8 +156,8 @@ sh ./mvnw spring-boot:run          # Windows: ./mvnw.cmd spring-boot:run
 # 3. Web (http://localhost:3000), in another terminal
 cd apps/web
 cp .env.example .env.local         # Windows: Copy-Item .env.example .env.local
-npm ci
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Flyway applies the migrations and the seeders load the company, RBAC, demo staff, attendance and past payroll
@@ -177,9 +177,9 @@ cd api
 sh ./mvnw test                     # needs the PostgreSQL container running
 
 cd ../apps/web
-npm run lint
-npm run typecheck                  # also fails if lib/api-schema.ts is stale against openapi.json
-npm run build
+pnpm lint
+pnpm typecheck                     # also fails if lib/api-schema.ts is stale against openapi.json
+pnpm build
 ```
 
 Some integration tests assume a clean database. Point `DB_URL` at a separate test database instead of the one

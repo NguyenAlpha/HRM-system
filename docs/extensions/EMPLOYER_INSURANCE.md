@@ -67,7 +67,7 @@ Làm theo thứ tự A → B → C → D. Mỗi task là một commit; sau mỗi
 - `PayrollSummaryReportResponse.PayrollAmounts`: thêm các khoản tương ứng cho báo cáo năm.
 - File Excel bảng lương kỳ (`/export`): thêm cột phần doanh nghiệp.
 - Cập nhật OpenAPI snapshot (`-Dtest=OpenApiSnapshotTest -Dopenapi.snapshot.update=true`), chạy
-  `npm run gen:api`, sửa `PAYROLL.md` và `REPORT.md`.
+  `pnpm gen:api`, sửa `PAYROLL.md` và `REPORT.md`.
 
 ### Task D — Web
 

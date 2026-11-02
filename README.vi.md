@@ -143,7 +143,7 @@ HRM-system/
 
 ## Chạy local
 
-Yêu cầu: Java 25, Node.js 20.9+, npm 10+, Docker.
+Yêu cầu: Java 25, Node.js 22.13+, pnpm 11+, Docker.
 
 ```bash
 # 1. Database
@@ -156,8 +156,8 @@ sh ./mvnw spring-boot:run          # Windows: ./mvnw.cmd spring-boot:run
 # 3. Web (http://localhost:3000), mở terminal khác
 cd apps/web
 cp .env.example .env.local         # Windows: Copy-Item .env.example .env.local
-npm ci
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Lần khởi động đầu, Flyway áp dụng migration và các seeder nạp công ty, RBAC, nhân viên demo, chấm công và các kỳ
@@ -177,9 +177,9 @@ cd api
 sh ./mvnw test                     # cần container PostgreSQL đang chạy
 
 cd ../apps/web
-npm run lint
-npm run typecheck                  # báo lỗi nếu lib/api-schema.ts lệch với openapi.json
-npm run build
+pnpm lint
+pnpm typecheck                     # báo lỗi nếu lib/api-schema.ts lệch với openapi.json
+pnpm build
 ```
 
 Một số test tích hợp giả định database sạch. Hãy trỏ `DB_URL` đến một database test riêng thay vì database đang

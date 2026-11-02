@@ -59,7 +59,7 @@ apps/web/
 | `components/<domain>/` | Controller + view: nhận thao tác người dùng và hiển thị |
 | `lib/<domain>.ts` | Service phía client: gói các lời gọi API của domain |
 | `app/api/**/route.ts` + [`lib/auth/server.ts`](../lib/auth/server.ts) | API Gateway: xác thực, whitelist đường dẫn, chuyển tiếp |
-| [`lib/api-schema.ts`](../lib/api-schema.ts) | DTO, sinh từ Swagger bằng `npm run gen:api` |
+| [`lib/api-schema.ts`](../lib/api-schema.ts) | DTO, sinh từ Swagger bằng `pnpm gen:api` |
 | `components/ui/` | Thư viện component dùng chung |
 
 ## 3. Luồng mở trang "Nhân sự"
@@ -129,7 +129,7 @@ tiếng Việt. Thêm mã lỗi mới bên backend thì nhớ thêm câu tương
 | Một URL hiển thị gì | `app/.../page.tsx`, rồi component nó render trong `components/` |
 | Một nút gọi API nào | Hàm trong `lib/<domain>.ts`, rồi Route Handler trong `app/api/session/...` |
 | BFF chuyển request sang endpoint backend nào | Hàm `handle…Request` tương ứng trong `lib/auth/server.ts` |
-| Kiểu dữ liệu của response | `lib/api-schema.ts` (sinh lại bằng `npm run gen:api` khi API đổi) |
+| Kiểu dữ liệu của response | `lib/api-schema.ts` (sinh lại bằng `pnpm gen:api` khi API đổi) |
 | File chạy ở đâu | Có `"use client"` ở đầu file: chạy trên trình duyệt. Route Handler và `lib/auth/server.ts`: chạy trên server |
 | Dữ liệu nào được cache ở trình duyệt, khi nào gọi lại API | [CACHING.md](./CACHING.md) |
 | Trang mới cần bảo vệ đăng nhập | Thêm đường dẫn vào `HRM_PAGES` và `config.matcher` trong `proxy.ts` |

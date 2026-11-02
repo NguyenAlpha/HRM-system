@@ -227,7 +227,7 @@ nhân sự rồi quay lại: 11 (đã tải lại vì có thao tác ghi).
 
 ## 11. Cách trình bày khi demo
 
-Chạy `npm run dev` (Devtools chỉ có trong chế độ dev, bản build production không có).
+Chạy `pnpm dev` (Devtools chỉ có trong chế độ dev, bản build production không có).
 
 1. Đăng nhập bằng tài khoản có quyền xem lương, ví dụ `accountant` / `password`, rồi mở **Kỳ lương**.
 2. **Tab Network** (F12 → Network → Fetch/XHR, gõ `periods` vào ô lọc):
