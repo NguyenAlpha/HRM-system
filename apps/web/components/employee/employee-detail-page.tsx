@@ -211,6 +211,15 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
   )
   // An end set for a later day: the employee keeps working until then.
   const scheduledEnd = detail?.scheduledEndStatus ? detail.scheduledEndStatus as EmploymentEndStatus : null
+  // The "…" menu is left out when none of its items apply, so it never opens empty.
+  const hasMenuActions = detail != null && (
+    (detail.account != null && canReadAccount)
+    || canReadAttendance
+    || (canManageAssignments && (detail.employmentStatus === "ACTIVE" || detail.employmentStatus === "PROBATION"))
+    || (canConfirmProbation && detail.employmentStatus === "PROBATION")
+    || (canManageLifecycle && (!isEmploymentEnded(detail.employmentStatus) || scheduledEnd != null))
+    || canDeleteEmployee
+  )
   const displayedError = hasValidEmployeeId ? error : "Mã nhân sự trên đường dẫn không hợp lệ."
   const displayedLoading = hasValidEmployeeId && loading
 
@@ -251,36 +260,37 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
               <Pencil /> Sửa hồ sơ
             </Button>
           )}
-          <ActionsMenu label={detail?.fullName ?? "hồ sơ"} outline>
-            {detail?.account && canReadAccount && (
-              <RowActionLink icon={KeyRound} href={`${PORTAL_CONFIG[portal].pagePrefix}/accounts/${detail.account.id}`}>
-                Xem tài khoản
-              </RowActionLink>
-            )}
-            {detail && canReadAttendance && (
-              <RowActionLink icon={CalendarCheck} href={`/attendance?employeeId=${detail.id}`}>Xem chấm công</RowActionLink>
-            )}
-            <RowActionItem icon={RefreshCw} onClick={reload} disabled={displayedLoading}>Tải lại</RowActionItem>
-            {/* Same rule as the employee list: only people still working can be reassigned. */}
-            {detail && canManageAssignments
-              && (detail.employmentStatus === "ACTIVE" || detail.employmentStatus === "PROBATION") && (
-              <RowActionItem icon={BriefcaseBusiness} onClick={() => setAssigning(true)}>Thay đổi phân công</RowActionItem>
-            )}
-            {detail && canConfirmProbation && detail.employmentStatus === "PROBATION" && (
-              <RowActionItem icon={BadgeCheck} onClick={() => setConfirming(true)}>Xác nhận chính thức</RowActionItem>
-            )}
-            {detail && canManageLifecycle && !isEmploymentEnded(detail.employmentStatus) && (
-              <RowActionItem icon={LogOut} onClick={() => setEndingEmployment(true)}>
-                {scheduledEnd ? "Đổi lịch kết thúc" : "Kết thúc làm việc"}
-              </RowActionItem>
-            )}
-            {detail && canManageLifecycle && scheduledEnd && (
-              <RowActionItem icon={CalendarX} onClick={() => setCancellingEnd(true)}>Hủy lịch kết thúc</RowActionItem>
-            )}
-            {detail && canDeleteEmployee && (
-              <RowActionItem icon={Trash2} destructive onClick={() => setDeleting(true)}>Xóa hồ sơ</RowActionItem>
-            )}
-          </ActionsMenu>
+          {hasMenuActions && (
+            <ActionsMenu label={detail?.fullName ?? "hồ sơ"} outline>
+              {detail?.account && canReadAccount && (
+                <RowActionLink icon={KeyRound} href={`${PORTAL_CONFIG[portal].pagePrefix}/accounts/${detail.account.id}`}>
+                  Xem tài khoản
+                </RowActionLink>
+              )}
+              {detail && canReadAttendance && (
+                <RowActionLink icon={CalendarCheck} href={`/attendance?employeeId=${detail.id}`}>Xem chấm công</RowActionLink>
+              )}
+              {/* Same rule as the employee list: only people still working can be reassigned. */}
+              {detail && canManageAssignments
+                && (detail.employmentStatus === "ACTIVE" || detail.employmentStatus === "PROBATION") && (
+                <RowActionItem icon={BriefcaseBusiness} onClick={() => setAssigning(true)}>Thay đổi phân công</RowActionItem>
+              )}
+              {detail && canConfirmProbation && detail.employmentStatus === "PROBATION" && (
+                <RowActionItem icon={BadgeCheck} onClick={() => setConfirming(true)}>Xác nhận chính thức</RowActionItem>
+              )}
+              {detail && canManageLifecycle && !isEmploymentEnded(detail.employmentStatus) && (
+                <RowActionItem icon={LogOut} onClick={() => setEndingEmployment(true)}>
+                  {scheduledEnd ? "Đổi lịch kết thúc" : "Kết thúc làm việc"}
+                </RowActionItem>
+              )}
+              {detail && canManageLifecycle && scheduledEnd && (
+                <RowActionItem icon={CalendarX} onClick={() => setCancellingEnd(true)}>Hủy lịch kết thúc</RowActionItem>
+              )}
+              {detail && canDeleteEmployee && (
+                <RowActionItem icon={Trash2} destructive onClick={() => setDeleting(true)}>Xóa hồ sơ</RowActionItem>
+              )}
+            </ActionsMenu>
+          )}
         </div>
       </header>
 

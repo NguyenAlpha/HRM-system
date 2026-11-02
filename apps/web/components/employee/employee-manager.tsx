@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { BadgeCheck, BriefcaseBusiness, Eye, KeyRound, Pencil, Plus, RefreshCw } from "lucide-react"
+import { BadgeCheck, BriefcaseBusiness, Eye, KeyRound, Pencil, Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import { ACCOUNT_STATUS_LABELS } from "@/components/account/account-actions"
@@ -125,7 +125,7 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
   }, sortParam(sort))
   // Each page, filter and sort combination is cached under its own key, so going back to one already
   // seen (page 1, a cleared filter) shows it at once; a keyword still settling counts as loading.
-  const { data, error: failure, isPending, isFetching } = useQuery({
+  const { data, error: failure, isPending } = useQuery({
     queryKey: employeeListKey(portal, query),
     queryFn: () => employeeRequest<Page<EmployeeSummary>>(portal, query),
     staleTime: EMPLOYEE_LIST_STALE_TIME,
@@ -173,9 +173,6 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
             {data ? `${data.totalElements.toLocaleString("vi-VN")} nhân sự trong phạm vi của bạn` : "Đang tải danh sách…"}
           </p>
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading || isFetching}>
-              <RefreshCw className={loading || isFetching ? "animate-spin" : ""} /> Tải lại
-            </Button>
             {canCreate && (
               <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
                 <Plus /> Thêm nhân sự

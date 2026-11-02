@@ -23,10 +23,8 @@ type ChartPoint = TrafficPoint & { errors: number }
 /**
  * Requests, errors and mean processing time of the whole API over the last hour, day or week:
  * three charts on one shared time axis, since the three measures differ in scale and unit.
- * Reloads whenever `revision` changes.
  */
-export function ApiTrafficTimelineCard({ revision, onSessionExpired }: {
-  revision: number
+export function ApiTrafficTimelineCard({ onSessionExpired }: {
   onSessionExpired: () => void
 }) {
   const [range, setRange] = useState<TimelineRange>("HOUR")
@@ -47,7 +45,7 @@ export function ApiTrafficTimelineCard({ revision, onSessionExpired }: {
         setError(apiErrorMessage(caught))
       })
     return () => { active = false }
-  }, [range, revision, onSessionExpired])
+  }, [range, onSessionExpired])
 
   // A shown timeline for another range is stale; show the skeleton instead.
   const current = timeline?.range === range ? timeline : null

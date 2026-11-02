@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Loader2, Pencil, Plus, RefreshCw, ShieldCheck, Trash2 } from "lucide-react"
+import { Loader2, Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Pagination, ErrorAlert } from "@/components/common/list-controls"
@@ -220,9 +220,6 @@ export function RoleManager({ portal, onSessionExpired }: { portal: Portal; onSe
             <CardDescription>Tạo, sửa và xóa vai trò tùy chỉnh trong doanh nghiệp.</CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
-              <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
-            </Button>
             <Button type="button" size="sm" onClick={openCreate}>
               <Plus /> Thêm vai trò
             </Button>

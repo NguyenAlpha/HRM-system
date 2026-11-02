@@ -3,20 +3,7 @@
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
-import {
-  ArrowLeft,
-  Ban,
-  Calculator,
-  CheckCheck,
-  Eye,
-  FileSpreadsheet,
-  Loader2,
-  Lock,
-  RefreshCw,
-  Search,
-  Undo2,
-  Wallet,
-} from "lucide-react"
+import { ArrowLeft, Ban, Calculator, CheckCheck, Eye, FileSpreadsheet, Loader2, Lock, Search, Undo2, Wallet } from "lucide-react"
 
 import { ActionsMenu, RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
@@ -186,11 +173,12 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
               <FileSpreadsheet /> Xuất Excel
             </Button>
           )}
-          <ActionsMenu label={title} outline>
-            <RowActionItem icon={RefreshCw} onClick={reload} disabled={loading}>Tải lại</RowActionItem>
-            {canReopen && <RowActionItem icon={Undo2} disabled={busy} onClick={() => setReopening(true)}>Hủy duyệt</RowActionItem>}
-            {canCancel && <RowActionItem icon={Ban} destructive disabled={busy} onClick={() => setConfirm("cancel")}>Hủy kỳ</RowActionItem>}
-          </ActionsMenu>
+          {(canReopen || canCancel) && (
+            <ActionsMenu label={title} outline>
+              {canReopen && <RowActionItem icon={Undo2} disabled={busy} onClick={() => setReopening(true)}>Hủy duyệt</RowActionItem>}
+              {canCancel && <RowActionItem icon={Ban} destructive disabled={busy} onClick={() => setConfirm("cancel")}>Hủy kỳ</RowActionItem>}
+            </ActionsMenu>
+          )}
         </div>
       </header>
 

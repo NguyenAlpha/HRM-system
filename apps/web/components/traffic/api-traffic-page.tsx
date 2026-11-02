@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { RefreshCw } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import { PageHeader } from "@/components/portal/page-header"
@@ -10,7 +9,6 @@ import { StatTile } from "@/components/report/report-shared"
 import { ApiTrafficTimelineCard } from "@/components/traffic/api-traffic-timeline"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -50,8 +48,6 @@ export function ApiTrafficPage() {
   const canRead = session.account.permissions.some((permission) => permission.code === "system.traffic.read")
   const [traffic, setTraffic] = useState<ApiTraffic | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [revision, setRevision] = useState(0)
-  const [loading, setLoading] = useState(true)
   const [sort, setSort] = useState<Sort>("requests")
 
   useEffect(() => {
@@ -68,14 +64,8 @@ export function ApiTrafficPage() {
         if (isPortalSessionExpired(caught)) onSessionExpired()
         setError(apiErrorMessage(caught))
       })
-      .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [canRead, revision, onSessionExpired])
-
-  function reload() {
-    setLoading(true)
-    setRevision((value) => value + 1)
-  }
+  }, [canRead, onSessionExpired])
 
   const displayedError = canRead ? error : "Tài khoản của bạn không có quyền xem lưu lượng API."
   const endpoints = traffic ? [...traffic.endpoints].sort(SORTS[sort].compare) : null
@@ -85,11 +75,6 @@ export function ApiTrafficPage() {
       <PageHeader
         title="Lưu lượng API"
         description="Số request, thời gian xử lý và số lỗi của từng API. Số liệu nằm trong bộ nhớ, tính từ lần khởi động backend gần nhất."
-        actions={canRead && (
-          <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
-            <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
-          </Button>
-        )}
       />
 
       {displayedError && (
@@ -111,7 +96,7 @@ export function ApiTrafficPage() {
             ) : Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-[106px] rounded-xl" />)}
           </div>
 
-          <ApiTrafficTimelineCard revision={revision} onSessionExpired={onSessionExpired} />
+          <ApiTrafficTimelineCard onSessionExpired={onSessionExpired} />
 
           <Card>
             <CardHeader>

@@ -129,7 +129,7 @@ export function AccountDetailPage({ accountId: rawAccountId }: { accountId: stri
             )}
           </div>
         </div>
-        {/* The linked employee profile stays visible; account lifecycle actions and reload sit in the "…" menu. */}
+        {/* The linked employee profile stays visible; account lifecycle actions sit in the "…" menu. */}
         <div className="flex flex-wrap items-center gap-2">
           {account?.employeeId != null && canReadEmployee && (
             <Button variant="outline" nativeButton={false}
@@ -137,15 +137,16 @@ export function AccountDetailPage({ accountId: rawAccountId }: { accountId: stri
               <UserRound /> Hồ sơ nhân sự
             </Button>
           )}
-          <ActionsMenu label={account?.username ?? "tài khoản"} outline>
-            <RowActionItem icon={RefreshCw} onClick={reload} disabled={loading}>Tải lại</RowActionItem>
-            {actions.map((kind) => (
-              <RowActionItem key={kind} icon={ACCOUNT_ACTIONS[kind].icon} destructive={ACCOUNT_ACTIONS[kind].destructive}
-                onClick={() => setPending(kind)}>
-                {ACCOUNT_ACTIONS[kind].label}
-              </RowActionItem>
-            ))}
-          </ActionsMenu>
+          {actions.length > 0 && (
+            <ActionsMenu label={account?.username ?? "tài khoản"} outline>
+              {actions.map((kind) => (
+                <RowActionItem key={kind} icon={ACCOUNT_ACTIONS[kind].icon} destructive={ACCOUNT_ACTIONS[kind].destructive}
+                  onClick={() => setPending(kind)}>
+                  {ACCOUNT_ACTIONS[kind].label}
+                </RowActionItem>
+              ))}
+            </ActionsMenu>
+          )}
         </div>
       </header>
 

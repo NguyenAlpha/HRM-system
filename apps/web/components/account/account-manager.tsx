@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Eye, RefreshCw, ShieldMinus } from "lucide-react"
+import { Eye, ShieldMinus } from "lucide-react"
 
 import {
   ALL_OPTION,
@@ -28,7 +28,6 @@ import {
 } from "@/components/account/account-actions"
 import { AccountDetailDialog } from "@/components/account/account-detail-dialog"
 import { RevokeRoleDialog } from "@/components/account/revoke-role-dialog"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -134,9 +133,6 @@ export function AccountManager({ portal, viewer, onSessionExpired }: {
                 : "Danh sách tài khoản đăng nhập (chỉ xem). Bấm vào một dòng để xem role và permission."}
             </CardDescription>
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
-            <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
-          </Button>
         </CardHeader>
         <CardContent className="grid gap-4">
           <ErrorAlert error={error} />

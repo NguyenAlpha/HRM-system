@@ -48,7 +48,6 @@ export function RolePermissions({ portal, role, onClose, onSessionExpired }: {
   const [query, setQuery] = useState("")
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
-  const [revision, setRevision] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const disabled = busy || loading
   const dirty = !equalIds(selectedIds, savedIds)
@@ -101,13 +100,7 @@ export function RolePermissions({ portal, role, onClose, onSessionExpired }: {
         setLoading(false)
       })
     return () => { active = false }
-  }, [portal, role.id, role.isSystem, revision, onSessionExpired])
-
-  function reload() {
-    setLoading(true)
-    setError(null)
-    setRevision((value) => value + 1)
-  }
+  }, [portal, role.id, role.isSystem, onSessionExpired])
 
   function togglePermission(permissionId: number) {
     setSelectedIds((current) => {
@@ -276,7 +269,6 @@ export function RolePermissions({ portal, role, onClose, onSessionExpired }: {
 
         <DialogFooter>
           <DialogClose render={<Button type="button" variant="outline" />}>Đóng</DialogClose>
-          <Button type="button" variant="outline" onClick={reload} disabled={disabled}>Tải lại</Button>
           {!role.isSystem && (
             <>
               <Button

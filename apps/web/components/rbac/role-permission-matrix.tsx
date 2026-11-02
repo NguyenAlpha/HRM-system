@@ -1,7 +1,7 @@
 "use client"
 
 import { Fragment, useEffect, useMemo, useState } from "react"
-import { Check, RefreshCw } from "lucide-react"
+import { Check } from "lucide-react"
 
 import { ErrorAlert } from "@/components/common/list-controls"
 import { Badge } from "@/components/ui/badge"
@@ -30,7 +30,6 @@ export function RolePermissionMatrix({ portal, onSessionExpired }: { portal: Por
   const [roles, setRoles] = useState<RoleWithPermissions[]>([])
   const [permissions, setPermissions] = useState<Permission[]>([])
   const [hiddenModules, setHiddenModules] = useState<Set<PermissionModule>>(new Set())
-  const [revision, setRevision] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -53,7 +52,7 @@ export function RolePermissionMatrix({ portal, onSessionExpired }: { portal: Por
         setLoading(false)
       })
     return () => { active = false }
-  }, [portal, revision, onSessionExpired])
+  }, [portal, onSessionExpired])
 
   const grantedByRole = useMemo(
     () => new Map(roles.map((role) => [role.id, new Set(role.permissions.map((permission) => permission.id))])),
@@ -66,12 +65,6 @@ export function RolePermissionMatrix({ portal, onSessionExpired }: { portal: Por
     [permissions],
   )
   const visibleGroups = groups.filter((group) => !hiddenModules.has(group.module))
-
-  function reload() {
-    setLoading(true)
-    setError(null)
-    setRevision((value) => value + 1)
-  }
 
   function toggleModule(module: PermissionModule) {
     setHiddenModules((current) => {
@@ -91,9 +84,6 @@ export function RolePermissionMatrix({ portal, onSessionExpired }: { portal: Por
             Mỗi cột là một vai trò, mỗi dòng là một quyền; dấu tích cho biết vai trò đang có quyền đó.
           </CardDescription>
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
-          <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
-        </Button>
       </CardHeader>
       <CardContent className="grid gap-4">
         <ErrorAlert error={error} />

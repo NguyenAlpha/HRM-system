@@ -1,7 +1,7 @@
 "use client"
 
 import { FormEvent, useEffect, useState } from "react"
-import { ChevronLeft, ChevronRight, Loader2, Plus, RefreshCw, Trash2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Loader2, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { ErrorAlert } from "@/components/common/list-controls"
@@ -96,9 +96,6 @@ export function CompanyHolidayManager({ canManage }: { canManage: boolean }) {
           </Button>
         </div>
         <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
-            <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
-          </Button>
           {canManage && (
             <Button type="button" size="sm" onClick={() => setAdding(true)}><Plus /> Thêm ngày lễ</Button>
           )}

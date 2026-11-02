@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Loader2, Plus, RefreshCw, ShieldMinus } from "lucide-react"
+import { Loader2, Plus, ShieldMinus } from "lucide-react"
 import { toast } from "sonner"
 
 import { todayIso } from "@/components/account/account-access"
@@ -365,9 +365,6 @@ export function PermissionOverrideManager({ portal, onSessionExpired }: {
             <div className="grid gap-3">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="font-medium">Lịch sử ngoại lệ</h3>
-                <Button type="button" variant="outline" size="sm" onClick={() => { void refreshOverrides() }} disabled={loadingOverrides}>
-                  <RefreshCw className={loadingOverrides ? "animate-spin" : ""} /> Tải lại
-                </Button>
               </div>
               <div className="rounded-xl border">
                 <Table>

@@ -1,11 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { RefreshCw } from "lucide-react"
 
 import { Pagination, ErrorAlert } from "@/components/common/list-controls"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -44,7 +42,6 @@ export function PermissionManager({ portal, onSessionExpired }: { portal: Portal
   const [data, setData] = useState<Page<Permission> | null>(null)
   const [page, setPage] = useState(0)
   const [moduleFilter, setModuleFilter] = useState("")
-  const [revision, setRevision] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -67,13 +64,7 @@ export function PermissionManager({ portal, onSessionExpired }: { portal: Portal
         setLoading(false)
       })
     return () => { active = false }
-  }, [portal, page, moduleFilter, revision, onSessionExpired])
-
-  function reload() {
-    setLoading(true)
-    setError(null)
-    setRevision((value) => value + 1)
-  }
+  }, [portal, page, moduleFilter, onSessionExpired])
 
   return (
     <Card>
@@ -84,9 +75,6 @@ export function PermissionManager({ portal, onSessionExpired }: { portal: Portal
             Permission được định nghĩa trong code; bạn chỉ có thể xem và chọn quyền để ủy quyền cho vai trò tùy chỉnh.
           </CardDescription>
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
-          <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
-        </Button>
       </CardHeader>
       <CardContent className="grid gap-4">
         <ErrorAlert error={error} />

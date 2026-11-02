@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react"
+import { Loader2, Pencil, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { PhoneInput } from "@/components/common/phone-input"
@@ -212,16 +212,13 @@ export function WorkLocationManager({ portal, canManage, onSessionExpired }: {
 
   return (
     <>
-      <div className="flex items-center justify-end gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
-          <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
-        </Button>
-        {canManage && (
+      {canManage && (
+        <div className="flex items-center justify-end gap-2">
           <Button type="button" size="sm" onClick={openCreate}>
             <Plus /> Thêm địa điểm
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       <ErrorAlert error={error} />
 

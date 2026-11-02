@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Check, Loader2, Plus, RefreshCw, ShieldMinus, Undo2, X } from "lucide-react"
+import { Check, Loader2, Plus, ShieldMinus, Undo2, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { Pagination, ErrorAlert } from "@/components/common/list-controls"
@@ -308,9 +308,6 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
-              <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
-            </Button>
             {canRequest && (
               <Button type="button" variant="outline" size="sm" onClick={() => setRevocationOpen(true)}>
                 <ShieldMinus /> Đề xuất thu hồi

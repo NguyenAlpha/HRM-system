@@ -77,7 +77,6 @@ useQuery({
 | Bấm sang năm chưa xem | Có |
 | Quay lại năm đã xem, trong vòng 5 phút | **Không**, lấy từ cache |
 | Quay lại năm đã xem sau hơn 5 phút | Hiện ngay dữ liệu cũ, đồng thời tải bản mới ở nền |
-| Bấm "Tải lại" | Có, chỉ năm đang xem |
 | Mở một kỳ rồi quay lại danh sách, không thay đổi gì | **Không** |
 | Tính lương, duyệt, trả, khóa, hủy, mở lại kỳ, thêm/xóa khoản cộng trừ, tạo kỳ mới | Danh sách bị đánh dấu hết hạn, quay lại sẽ tải lại |
 
@@ -89,7 +88,7 @@ Các thông số:
   `reload()`, hàm chạy sau mỗi thao tác thành công. Khóa là tiền tố, nên mọi năm đều bị đánh dấu.
 
 Giới hạn: người **khác** đổi kỳ lương thì trang này không biết ngay. Dữ liệu có thể cũ tối đa 5 phút, hoặc đến
-khi bấm "Tải lại".
+khi tải lại cả trang (F5), vì F5 xóa cache trong RAM.
 
 ## 4. Thông tin doanh nghiệp
 
@@ -118,7 +117,6 @@ chuyển tab** lại gọi API của tab đó. Giờ mỗi danh sách có một 
 - **`staleTime` 10 phút:** chính sách phụ cấp ít khi đổi.
 - **Invalidation:** đặt mức phụ cấp chức vụ (trong dialog lịch sử) hoặc sửa bảng thâm niên gọi
   `invalidateQueries` cho đúng khóa của danh sách đó, nên bảng tải lại ngay.
-- **"Tải lại":** gọi `refetch()`, chỉ lấy lại danh sách của tab đang mở.
 - **Đã đo:** chuyển qua lại giữa hai tab 3 lần chỉ phát sinh **2** request, mỗi danh sách một lần. Trước đây là 7.
 - Lịch sử mức phụ cấp của một chức danh (dialog) vẫn gọi API mỗi lần mở, chưa cache.
 
@@ -204,9 +202,9 @@ Chi tiết một nhân sự (`GET /employees/{id}`) lấy qua `fetchEmployeeDeta
 Xem xong bấm Sửa thì không tải lại.
 
 - **`staleTime`:** danh sách 1 phút, chi tiết 30 giây. Ngắn hơn các mục khác vì hồ sơ nhân sự còn bị đổi từ nơi
-  khác (duyệt nghỉ việc, cấp tài khoản…). Những thay đổi đó hiện ra khi hết thời gian này, hoặc khi bấm "Tải lại".
+  khác (duyệt nghỉ việc, cấp tài khoản…). Những thay đổi đó hiện ra khi hết thời gian này, hoặc khi tải lại cả trang (F5).
 - **Invalidation:** `invalidateEmployees()` xóa cả danh sách lẫn chi tiết. Nó được gọi sau mọi thao tác ghi trên
-  trang danh sách (thêm, sửa, phân công, xác nhận thử việc, cấp tài khoản, nút "Tải lại") và trên trang chi tiết
+  trang danh sách (thêm, sửa, phân công, xác nhận thử việc, cấp tài khoản) và trên trang chi tiết
   nhân sự (`/employees/{id}`, kể cả xóa). Riêng trang chi tiết luôn tải mới, không đọc cache.
 - **Đã đo:** sang trang 2 rồi về trang 1 thì **0** request; xem một nhân sự rồi bấm "Sửa hồ sơ" thì **0** request;
   lưu xong thì danh sách và chi tiết được tải lại.
@@ -236,7 +234,6 @@ Chạy `npm run dev` (Devtools chỉ có trong chế độ dev, bản build prod
    - Mở trang: thấy 1 request `payroll/periods?year=2026`.
    - Bấm `‹` sang 2025: thêm 1 request `year=2025`.
    - Bấm `›` về 2026 rồi `‹` về 2025: **không có request mới**.
-   - Bấm "Tải lại": thêm 1 request.
 3. **Thông tin doanh nghiệp:** mở một kỳ lương, lọc Network bằng `company`, rồi mở và đóng liên tiếp vài phiếu
    lương. Chỉ phiếu đầu tiên tạo request, các phiếu sau lấy từ cache.
 4. **Chính sách phụ cấp:** mở `/allowances`, lọc Network bằng `allowances`, chuyển qua lại giữa hai tab vài lần.

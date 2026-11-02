@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Pencil, Power, PowerOff, RefreshCw, RotateCcw, Timer, TimerOff } from "lucide-react"
+import { Pencil, Power, PowerOff, RotateCcw, Timer, TimerOff } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
@@ -51,7 +51,6 @@ export function RateLimitPage() {
   const [stats, setStats] = useState<RateLimitStats | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [revision, setRevision] = useState(0)
-  const [loading, setLoading] = useState(true)
   const [autoRefresh, setAutoRefresh] = useState(true)
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null)
   const [editing, setEditing] = useState<RateLimitPolicyStats | null>(null)
@@ -72,7 +71,6 @@ export function RateLimitPage() {
         if (isPortalSessionExpired(caught)) onSessionExpired()
         setError(apiErrorMessage(caught))
       })
-      .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [canRead, revision, onSessionExpired])
 
@@ -84,11 +82,6 @@ export function RateLimitPage() {
     }, AUTO_REFRESH_MS)
     return () => clearInterval(timer)
   }, [canRead, autoRefresh])
-
-  function reload() {
-    setLoading(true)
-    setRevision((value) => value + 1)
-  }
 
   const displayedError = canRead ? error : "Tài khoản của bạn không có quyền xem thống kê giới hạn truy cập."
   const totalBlocked = stats?.policies.reduce((sum, policy) => sum + policy.blocked, 0) ?? 0
@@ -111,9 +104,6 @@ export function RateLimitPage() {
               onClick={() => setAutoRefresh((value) => !value)}>
               {autoRefresh ? <Timer /> : <TimerOff />}
               Tự động làm mới: {autoRefresh ? "Bật" : "Tắt"}
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
-              <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
             </Button>
           </div>
         )}

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, type ReactNode } from "react"
-import { Ban, Check, FileX2, Loader2, RefreshCw, X } from "lucide-react"
+import { Ban, Check, FileX2, Loader2, X } from "lucide-react"
 
 import { ErrorAlert, Pagination } from "@/components/common/list-controls"
 import { ALL_OPTION, FilterSelect, ListToolbar, useDebouncedValue } from "@/components/common/list-filters"
@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -170,7 +170,6 @@ function AllResignations({ revision, actions }: { revision: number; actions: Act
   const { portal } = usePortalSession()
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS)
   const [page, setPage] = useState(0)
-  const [reloads, setReloads] = useState(0)
   const [data, setData] = useState<{ key: string; page: Page<ResignationRequest> } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [unitOptions, setUnitOptions] = useState<{ value: string; label: string }[]>([])
@@ -189,7 +188,7 @@ function AllResignations({ revision, actions }: { revision: number; actions: Act
   if (keyword.trim()) params.set("keyword", keyword.trim())
   if (filters.status) params.set("status", filters.status)
   if (filters.organizationUnitId) params.set("organizationUnitId", filters.organizationUnitId)
-  const key = `${params}#${revision}#${reloads}`
+  const key = `${params}#${revision}`
   const loading = data?.key !== key || keyword !== filters.keyword
 
   useEffect(() => {
@@ -202,7 +201,7 @@ function AllResignations({ revision, actions }: { revision: number; actions: Act
         setData({ key, page: { content: [], number: 0, totalElements: 0, totalPages: 0 } })
       })
     return () => { active = false }
-    // `key` is built from `params` and the reload counters.
+    // `key` is built from `params` and the revision counter.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
 
@@ -218,11 +217,6 @@ function AllResignations({ revision, actions }: { revision: number; actions: Act
       <CardHeader>
         <CardTitle>Tất cả đơn nghỉ việc</CardTitle>
         <CardDescription>Đơn của nhân viên trong phạm vi bạn được giao. HR theo dõi để chuẩn bị bàn giao và tuyển thay thế.</CardDescription>
-        <CardAction>
-          <Button type="button" variant="outline" size="sm" disabled={loading} onClick={() => setReloads((value) => value + 1)}>
-            <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
-          </Button>
-        </CardAction>
       </CardHeader>
       <CardContent className="grid gap-4">
         <ErrorAlert error={error} />

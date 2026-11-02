@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { Briefcase, Eye, Loader2, Pencil, Plus, RefreshCw, Trash2, TrendingUp } from "lucide-react"
+import { Briefcase, Eye, Loader2, Pencil, Plus, Trash2, TrendingUp } from "lucide-react"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { PageHeader } from "@/components/portal/page-header"
@@ -115,7 +115,7 @@ export function AllowancePolicyPage() {
 function PositionAllowances({ canManage }: { canManage: boolean }) {
   const [selected, setSelected] = useState<PositionAllowanceSummary | null>(null)
   const queryClient = useQueryClient()
-  const { data: positions = [], error: failure, isPending: loading, isFetching, refetch } = useQuery({
+  const { data: positions = [], error: failure, isPending: loading } = useQuery({
     queryKey: POSITION_ALLOWANCES_KEY,
     queryFn: () => workforceApi<PositionAllowanceSummary[]>("compensation/position-allowances"),
     staleTime: POLICY_STALE_TIME,
@@ -129,9 +129,6 @@ function PositionAllowances({ canManage }: { canManage: boolean }) {
         <p className="text-sm text-muted-foreground">
           Trả theo tỷ lệ công như lương cơ bản, theo chức danh trong phân công chính của từng ngày.
         </p>
-        <Button type="button" variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching}>
-          <RefreshCw className={isFetching ? "animate-spin" : ""} /> Tải lại
-        </Button>
       </div>
 
       <SectionError error={error} />
@@ -304,7 +301,7 @@ function PositionAllowanceDialog({ position, canManage, busy, run, onClose }: {
 function SeniorityAllowances({ canManage }: { canManage: boolean }) {
   const [adding, setAdding] = useState(false)
   const queryClient = useQueryClient()
-  const { data: rules = [], error: failure, isPending: loading, isFetching, refetch } = useQuery({
+  const { data: rules = [], error: failure, isPending: loading, isFetching } = useQuery({
     queryKey: SENIORITY_ALLOWANCES_KEY,
     queryFn: () => workforceApi<SeniorityAllowance[]>("compensation/seniority-allowances")
       // Group by tier so each tier's changes sit together, newest first within a tier.
@@ -321,9 +318,6 @@ function SeniorityAllowances({ canManage }: { canManage: boolean }) {
           % lương cơ bản theo số năm thâm niên tròn tính từ ngày bắt đầu thâm niên; mỗi năm thâm niên thuộc đúng một bậc.
         </p>
         <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching}>
-            <RefreshCw className={isFetching ? "animate-spin" : ""} /> Tải lại
-          </Button>
           {canManage && (
             <Button type="button" size="sm" onClick={() => setAdding(true)} disabled={isFetching}><Pencil /> Sửa bảng</Button>
           )}

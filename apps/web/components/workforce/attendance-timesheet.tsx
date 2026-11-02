@@ -1,14 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Eye, RefreshCw } from "lucide-react"
+import { Eye } from "lucide-react"
 
 import { ErrorAlert } from "@/components/common/list-controls"
 import { ALL_OPTION, FilterSelect, ListToolbar, useDebouncedValue } from "@/components/common/list-filters"
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { usePortalSession } from "@/components/portal/portal-shell"
-import { Button } from "@/components/ui/button"
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
@@ -74,7 +73,6 @@ export function AttendanceTimesheet({ month, onOpen }: { month: string; onOpen: 
   const keyword = useDebouncedValue(keywordInput.trim())
   const [unitId, setUnitId] = useState("")
   const [unitOptions, setUnitOptions] = useState<{ value: string; label: string }[]>([])
-  const [reloads, setReloads] = useState(0)
   const [data, setData] = useState<{ key: string; rows: TimesheetRow[]; holidays: CompanyHoliday[] } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const { first, last } = monthRange(month)
@@ -90,7 +88,7 @@ export function AttendanceTimesheet({ month, onOpen }: { month: string; onOpen: 
   const params = new URLSearchParams({ year: month.slice(0, 4), month: String(Number(month.slice(5, 7))) })
   if (keyword) params.set("keyword", keyword)
   if (unitId) params.set("organizationUnitId", unitId)
-  const key = `${params}#${reloads}`
+  const key = params.toString()
   const loading = data?.key !== key || keyword !== keywordInput.trim()
 
   useEffect(() => {
@@ -102,7 +100,7 @@ export function AttendanceTimesheet({ month, onOpen }: { month: string; onOpen: 
       .then(([rows, holidays]) => { if (active) { setData({ key, rows, holidays }); setError(null) } })
       .catch((caught: unknown) => { if (active) { setData({ key, rows: [], holidays: [] }); setError(apiErrorMessage(caught)) } })
     return () => { active = false }
-    // `key` is built from `params` and the reload counter; the holidays follow the same month.
+    // `key` is built from `params`; the holidays follow the same month.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
 
@@ -117,11 +115,6 @@ export function AttendanceTimesheet({ month, onOpen }: { month: string; onOpen: 
         <CardDescription>
           Nhân viên trong phạm vi bạn được giao có làm việc trong tháng. Bấm một dòng để xem và chỉnh công chi tiết của người đó.
         </CardDescription>
-        <CardAction>
-          <Button type="button" variant="outline" size="sm" disabled={loading} onClick={() => setReloads((value) => value + 1)}>
-            <RefreshCw className={loading ? "animate-spin" : ""} /> Tải lại
-          </Button>
-        </CardAction>
       </CardHeader>
       <CardContent className="grid gap-4">
         <ErrorAlert error={error} />
