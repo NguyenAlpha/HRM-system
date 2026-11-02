@@ -24,6 +24,7 @@ import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.RoleAssignmentRequestRepository;
 import com.htttdn.hrm.repository.RoleRepository;
+import com.htttdn.hrm.service.rbac.RoleAssignmentPolicy;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,7 +34,8 @@ import lombok.RequiredArgsConstructor;
  *
  * <p>{@code daysAgo} là ngày gửi; {@code effectiveFromDaysAgo} và {@code effectiveToDaysAgo} là hiệu
  * lực của role, số âm là ngày sắp tới. Scope {@code ORG_UNIT} và {@code LOCATION} lấy đơn vị và địa
- * điểm của phân công hiện hành, như role khai báo trong file seed.
+ * điểm của phân công hiện hành, như role khai báo trong file seed; scope phải hợp lệ với role theo
+ * {@link RoleAssignmentPolicy}.
  */
 @Component
 @RequiredArgsConstructor
@@ -44,6 +46,7 @@ class SeedRoleRequestWriter {
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final RoleAssignmentRequestRepository roleAssignmentRequestRepository;
     private final RoleRepository roleRepository;
+    private final RoleAssignmentPolicy roleAssignmentPolicy;
     private final SeedTimestamps seedTimestamps;
 
     void write(StaffEntry entry, Account account, OrganizationUnit unit, WorkLocation location, Account owner) {
@@ -65,6 +68,7 @@ class SeedRoleRequestWriter {
                 throw invalid(entry, "a role request needs an owner-approved role, scope, status and reason;"
                     + " rejected and cancelled requests need a note");
             }
+            roleAssignmentPolicy.validateScope(role, item.scope());
             LocalDate effectiveFrom = today.minusDays(item.effectiveFromDaysAgo());
             LocalDate effectiveTo = item.effectiveToDaysAgo() == null ? null : today.minusDays(item.effectiveToDaysAgo());
             Instant requestedAt = today.minusDays(item.daysAgo()).atTime(LocalTime.of(10, 0)).atZone(ClockConfig.BUSINESS_ZONE).toInstant();

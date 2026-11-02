@@ -56,6 +56,7 @@ import com.htttdn.hrm.repository.RoleRepository;
 import com.htttdn.hrm.repository.WorkLocationRepository;
 import com.htttdn.hrm.repository.WorkShiftRepository;
 import com.htttdn.hrm.service.employee.EmployeeCodeGenerator;
+import com.htttdn.hrm.service.rbac.RoleAssignmentPolicy;
 
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
@@ -72,7 +73,8 @@ import lombok.RequiredArgsConstructor;
  * <p>{@code assignments} liệt kê các giai đoạn phân công chính từ cũ đến mới; mỗi giai đoạn bắt đầu
  * ngày 1 của tháng cách ngày chạy seed {@code monthsAgo} tháng và kết thúc ngay trước giai đoạn sau, giai đoạn cuối
  * là phân công hiện hành. Ngày vào làm là ngày bắt đầu giai đoạn đầu tiên; role có hiệu lực từ ngày
- * đó. Scope {@code ORG_UNIT} và {@code LOCATION} lấy đơn vị và địa điểm của phân công hiện hành.
+ * đó. Scope {@code ORG_UNIT} và {@code LOCATION} lấy đơn vị và địa điểm của phân công hiện hành. Scope phải
+ * hợp lệ với role theo {@link RoleAssignmentPolicy}, như khi gán qua API.
  *
  * <p>{@code salaries} và {@code payrollProfiles} (hồ sơ bảo hiểm/thuế) là lịch sử theo thời gian như
  * phân công: từ cũ đến mới, mục đầu bắt đầu đúng ngày vào làm, mỗi mục kết thúc ngay trước mục sau.
@@ -245,6 +247,7 @@ public class StaffSeeder implements ApplicationRunner {
     private final EmployeePayrollProfileRepository employeePayrollProfileRepository;
     private final EmployeeTaxDependentRepository employeeTaxDependentRepository;
     private final RoleRepository roleRepository;
+    private final RoleAssignmentPolicy roleAssignmentPolicy;
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final OrganizationUnitRepository organizationUnitRepository;
     private final WorkLocationRepository workLocationRepository;
@@ -339,6 +342,7 @@ public class StaffSeeder implements ApplicationRunner {
 
         entry.roles().forEach((code, scope) -> {
             Role role = roleRepository.findByCodeAndDeletedAtIsNull(code).orElseThrow(() -> missing(entry, "role", code));
+            roleAssignmentPolicy.validateScope(role, scope);
             // Like EmploymentLifecycleService.endEmploymentAs, AUTO and SYSTEM_ONLY roles are left to their own workflows.
             boolean revoked = terminationDate != null
                 && role.getGrantPolicy() != RoleGrantPolicy.AUTO && role.getGrantPolicy() != RoleGrantPolicy.SYSTEM_ONLY;
