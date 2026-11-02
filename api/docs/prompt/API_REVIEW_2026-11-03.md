@@ -111,3 +111,28 @@ Lần chạy đầu tiên, chưa có dữ liệu so sánh.
 - Dữ liệu `staff.json` chưa được kiểm toàn bộ theo mọi quy tắc (chỉ phạm vi role); cần lỗi 3(b) để kiểm tự động.
 - Web (`apps/web`) ngoài phạm vi; chỉ ghi nhận: dev server (`pnpm dev`) trả 404 cho mọi route BFF dạng
   `[...path]`, bản build (`next build` + `next start`) chạy đúng.
+
+## Phụ lục — Điểm theo thang 10 (bổ sung sau cùng ngày)
+
+Lần chạy dùng kết quả Đạt/Chưa đạt; phụ lục này tính lại cùng danh sách lỗi theo
+[cách chấm điểm](./API_REVIEW_PROMPT.md#cách-chấm-điểm) mới, làm mốc so sánh cho lần sau. Mã lỗi theo ánh xạ Lỗi n →
+`API-00n`.
+
+**Điểm tổng: 7,0 / 10 — Khá.** Trung bình có trọng số là 8,9 nhưng còn `API-001` (Cao) chưa sửa nên áp trần 7,0.
+
+| # | Tiêu chí | Trọng số | Điểm | Lỗi đã trừ | Ghi chú |
+|---|---|---|---|---|---|
+| 1 | Phân quyền và phạm vi dữ liệu | 15% | 10 | — | |
+| 2 | Bảo vệ dữ liệu nhạy cảm | 10% | 10 | — | |
+| 3 | Quy trình duyệt đúng nghiệp vụ | 10% | 4 | `API-001` Cao −4, `API-002` TB −2 | |
+| 4 | Toàn vẹn bảng lương | 15% | 10 | — | Công thức thuế/bảo hiểm ngoài phạm vi tiêu chí |
+| 5 | Toàn vẹn dữ liệu và đồng thời | 10% | 9,5 | `API-006` Thấp −0,5 | |
+| 6 | Thời gian và hiệu lực | 8% | 9,5 | `API-005` Thấp −0,5 | Lúc chạy tiêu chí 6 chỉ kiểm `Clock` |
+| 7 | Validation và lỗi trả về | 7% | 9,5 | `API-004` Thấp −0,5 | |
+| 8 | Dữ liệu seed khớp quy tắc | 5% | 8 | — | Kiểm một phần (chỉ phạm vi role) → tối đa 8 |
+| 9 | Kiểm thử | 8% | 8 | `API-003` TB −2 | |
+| 10 | Bảo trì và tài liệu | 4% | 10 | — | Lệch tài liệu đã sửa trong ngày |
+| 11 | Vòng đời và tham chiếu | 8% | Chưa kiểm | — | Tiêu chí được thêm sau lần chạy |
+
+Tổng có trọng số: 821,5 / 92 (bỏ tiêu chí 11) = 8,93 → 8,9; trần 7,0 do còn một lỗi Cao.
+

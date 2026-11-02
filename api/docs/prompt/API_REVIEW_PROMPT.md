@@ -28,19 +28,37 @@ Chỉ đánh giá và ghi kết quả, **không sửa code** trong lần chạy 
 
 ### Bộ tiêu chí
 
-| # | Tiêu chí | Cần kiểm |
-|---|---|---|
-| 1 | Phân quyền và phạm vi dữ liệu | Mọi method controller gọi được có `@PreAuthorize` hoặc kiểm tra tương đương (người duyệt, chính chủ, `EmployeeAccessScopeService`); thao tác trên nhân viên có kiểm tra phạm vi; thao tác chung cả công ty gọi `requireCompanyWide`; permission `companyWide` đánh dấu đúng |
-| 2 | Bảo vệ dữ liệu nhạy cảm | CCCD, ngân hàng, mã số thuế, lương chỉ xuất hiện ở endpoint có quyền tương ứng; log không in mật khẩu, token, dữ liệu nhạy cảm |
-| 3 | Quy trình duyệt đúng nghiệp vụ | Người duyệt chọn đúng theo phân công đang hiệu lực; đơn không bị kẹt khi người duyệt nghỉ việc/đổi quản lý; trạng thái đơn chuyển hợp lệ |
-| 4 | Toàn vẹn bảng lương | Đổi đầu vào (lương, phụ cấp, phân công, khấu trừ, chấm công, ngày lễ) sau khi tính thì kỳ lương phải tính lại hoặc bị chặn; tách người tính/người duyệt; kỳ hủy không còn phiếu lương |
-| 5 | Toàn vẹn dữ liệu và đồng thời | Ràng buộc DB (unique, exclusion) cho bất biến quan trọng; chỗ nào chỉ dựa vào khóa trong code |
-| 6 | Thời gian và hiệu lực | Không có `LocalDate.now()`/`Instant.now()` thiếu `Clock` ngoài seeder; mọi truy vấn "hiện tại" trên dữ liệu theo khoảng hiệu lực (phân công, lương, phụ cấp, lần gán role) xét theo ngày chứ không lấy bản ghi "mở" (`…EffectiveToIsNull`), vì bản ghi có thể hẹn ngày tương lai |
-| 7 | Validation và lỗi trả về | `@RequestBody` có `@Valid`; trường chuỗi có `@Size` khớp cột DB; lỗi trả mã `ErrorCode` để web dịch, không lộ 500 |
-| 8 | Dữ liệu seed khớp quy tắc | Seeder có đi qua cùng kiểm tra với API không; dữ liệu demo có vi phạm quy tắc nào (phạm vi role, hạn mức phép…) |
-| 9 | Kiểm thử | Toàn bộ test pass; service nào không có test; có test giữ các phần khớp nhau (permission ↔ code, seed ↔ quy tắc) không |
-| 10 | Bảo trì và tài liệu | Code chết (permission/ErrorCode/endpoint không dùng); số liệu và mô tả trong `api/docs` (kể cả `concepts/`) khớp code |
-| 11 | Vòng đời và tham chiếu | Khi một thực thể kết thúc (nhân viên nghỉ việc, tài khoản bị khóa, role bị thu hồi/xóa, đơn vị/địa điểm ngừng hoạt động), những thứ đang tham chiếu tới nó được xử lý: đơn chờ người đó duyệt, phân công có quản lý là người đó, lần gán role theo đơn vị đó, phạm vi dữ liệu |
+| # | Tiêu chí | Trọng số | Cần kiểm |
+|---|---|---|---|
+| 1 | Phân quyền và phạm vi dữ liệu | 15% | Mọi method controller gọi được có `@PreAuthorize` hoặc kiểm tra tương đương (người duyệt, chính chủ, `EmployeeAccessScopeService`); thao tác trên nhân viên có kiểm tra phạm vi; thao tác chung cả công ty gọi `requireCompanyWide`; permission `companyWide` đánh dấu đúng |
+| 2 | Bảo vệ dữ liệu nhạy cảm | 10% | CCCD, ngân hàng, mã số thuế, lương chỉ xuất hiện ở endpoint có quyền tương ứng; log không in mật khẩu, token, dữ liệu nhạy cảm |
+| 3 | Quy trình duyệt đúng nghiệp vụ | 10% | Người duyệt chọn đúng theo phân công đang hiệu lực; đơn không bị kẹt khi người duyệt nghỉ việc/đổi quản lý; trạng thái đơn chuyển hợp lệ |
+| 4 | Toàn vẹn bảng lương | 15% | Đổi đầu vào (lương, phụ cấp, phân công, khấu trừ, chấm công, ngày lễ) sau khi tính thì kỳ lương phải tính lại hoặc bị chặn; tách người tính/người duyệt; kỳ hủy không còn phiếu lương |
+| 5 | Toàn vẹn dữ liệu và đồng thời | 10% | Ràng buộc DB (unique, exclusion) cho bất biến quan trọng; chỗ nào chỉ dựa vào khóa trong code |
+| 6 | Thời gian và hiệu lực | 8% | Không có `LocalDate.now()`/`Instant.now()` thiếu `Clock` ngoài seeder; mọi truy vấn "hiện tại" trên dữ liệu theo khoảng hiệu lực (phân công, lương, phụ cấp, lần gán role) xét theo ngày chứ không lấy bản ghi "mở" (`…EffectiveToIsNull`), vì bản ghi có thể hẹn ngày tương lai |
+| 7 | Validation và lỗi trả về | 7% | `@RequestBody` có `@Valid`; trường chuỗi có `@Size` khớp cột DB; lỗi trả mã `ErrorCode` để web dịch, không lộ 500 |
+| 8 | Dữ liệu seed khớp quy tắc | 5% | Seeder có đi qua cùng kiểm tra với API không; dữ liệu demo có vi phạm quy tắc nào (phạm vi role, hạn mức phép…) |
+| 9 | Kiểm thử | 8% | Toàn bộ test pass; service nào không có test; có test giữ các phần khớp nhau (permission ↔ code, seed ↔ quy tắc) không |
+| 10 | Bảo trì và tài liệu | 4% | Code chết (permission/ErrorCode/endpoint không dùng); số liệu và mô tả trong `api/docs` (kể cả `concepts/`) khớp code |
+| 11 | Vòng đời và tham chiếu | 8% | Khi một thực thể kết thúc (nhân viên nghỉ việc, tài khoản bị khóa, role bị thu hồi/xóa, đơn vị/địa điểm ngừng hoạt động), những thứ đang tham chiếu tới nó được xử lý: đơn chờ người đó duyệt, phân công có quản lý là người đó, lần gán role theo đơn vị đó, phạm vi dữ liệu |
+
+### Cách chấm điểm
+
+Điểm suy ra từ danh sách lỗi theo quy tắc cố định, không chấm theo cảm nhận: cùng một danh sách lỗi thì luôn ra cùng
+một điểm.
+
+1. **Gắn lỗi vào tiêu chí:** mỗi lỗi thuộc đúng **một** tiêu chí mà nó vi phạm trực tiếp nhất (trường "thuộc tiêu
+   chí"; khác với "tìm ra nhờ"). Không trừ một lỗi ở hai tiêu chí.
+2. **Điểm tiêu chí** bắt đầu từ 10, trừ theo mỗi lỗi **chưa sửa**: Cao −4, Trung bình −2, Thấp −0,5; thấp nhất 0.
+3. **Kiểm một phần:** tiêu chí chỉ kiểm được một phần thì điểm tối đa 8 và ghi rõ phần chưa kiểm. **Chưa kiểm:** không
+   chấm, bỏ khỏi điểm tổng.
+4. **Điểm tổng** = trung bình có trọng số của các tiêu chí đã chấm (chia cho tổng trọng số của chúng), làm tròn 1 chữ
+   số thập phân.
+5. **Trần:** còn lỗi Cao chưa sửa thì điểm tổng tối đa 7,0; còn từ hai lỗi Cao thì tối đa 5,0.
+6. **Xếp loại:** 9,0–10 Tốt · 7,0–8,9 Khá · 5,0–6,9 Trung bình · dưới 5,0 Yếu.
+
+Trọng số là lựa chọn của project (phần nào sai thì đắt nhất); đổi trọng số thì ghi vào "Lịch sử thay đổi", vì điểm
+các lần chạy chỉ so sánh được khi cùng trọng số.
 
 ### Gợi ý lệnh kiểm
 
@@ -64,12 +82,13 @@ Chỉ đánh giá và ghi kết quả, **không sửa code** trong lần chạy 
 Lưu thành `api/docs/prompt/API_REVIEW_<yyyy-MM-dd>.md` (ngày chạy), gồm:
 
 1. **Thông tin lần chạy**: ngày, commit (`git log --oneline -1`), số test và kết quả, người/agent chạy.
-2. **Bảng tiêu chí**: mỗi tiêu chí một dòng với kết quả `Đạt` / `Đạt có lưu ý` / `Chưa đạt` / `Chưa kiểm` và
-   bằng chứng ngắn.
-3. **Danh sách lỗi**: mỗi lỗi có mã ổn định `API-<số>`, mức độ (Cao/Trung bình/Thấp), vị trí `file:dòng`, mô tả,
-   tình huống gây lỗi cụ thể, đề xuất sửa, **tìm ra nhờ** (số tiêu chí, hoặc "ngoài tiêu chí"), trạng thái
-   (`Chưa sửa` / `Đã sửa <commit>`).
-4. **So sánh với lần trước**: lỗi đã sửa (kèm commit), lỗi còn tồn, lỗi mới.
+2. **Điểm**: điểm tổng /10, xếp loại, trần áp dụng (nếu có), và bảng mỗi tiêu chí một dòng: trọng số, điểm /10
+   (hoặc "Chưa kiểm"), các lỗi đã trừ (mã và mức), bằng chứng ngắn.
+3. **Danh sách lỗi**: mỗi lỗi có mã ổn định `API-<số>`, mức độ (Cao/Trung bình/Thấp), **thuộc tiêu chí** (đúng một),
+   vị trí `file:dòng`, mô tả, tình huống gây lỗi cụ thể, đề xuất sửa, **tìm ra nhờ** (số tiêu chí, hoặc "ngoài tiêu
+   chí"), trạng thái (`Chưa sửa` / `Đã sửa <commit>`).
+4. **So sánh với lần trước**: điểm tổng và điểm từng tiêu chí trước → sau; lỗi đã sửa (kèm commit), lỗi còn tồn,
+   lỗi mới.
 5. **Phạm vi chưa kiểm**.
 
 ---
@@ -80,3 +99,4 @@ Lưu thành `api/docs/prompt/API_REVIEW_<yyyy-MM-dd>.md` (ngày chạy), gồm:
 |---|---|---|
 | 2026-11-03 | Bản đầu tiên | — |
 | 2026-11-03 | Đọc `concepts/` trước; gộp tiêu chí thời gian thành "Thời gian và hiệu lực"; thêm tiêu chí 11 "Vòng đời và tham chiếu"; bỏ đánh giá kích thước class; sửa gợi ý lệnh đối chiếu permission, kiểm tra quyền, độ phủ test; mã lỗi `API-<số>` và trường "tìm ra nhờ"; bước tùy chọn đối chiếu công thức lương. Lỗi 1–6 của lần chạy 2026-11-03 tương ứng `API-001`…`API-006`. | [PROMPT_REVIEW_API_REVIEW_2026-11-03](./PROMPT_REVIEW_API_REVIEW_2026-11-03.md) |
+| 2026-11-03 | Chuyển từ Đạt/Chưa đạt sang thang điểm 10: trọng số từng tiêu chí, trừ điểm theo mức lỗi, trần khi còn lỗi Cao, trường "thuộc tiêu chí". Điểm của lần chạy 2026-11-03 được tính lại theo thang này (phụ lục trong file kết quả). | Yêu cầu của người dùng |
