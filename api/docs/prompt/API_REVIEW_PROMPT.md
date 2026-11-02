@@ -99,4 +99,4 @@ Lưu thành `api/docs/prompt/API_REVIEW_<yyyy-MM-dd>.md` (ngày chạy), gồm:
 |---|---|---|
 | 2026-11-03 | Bản đầu tiên | — |
 | 2026-11-03 | Đọc `concepts/` trước; gộp tiêu chí thời gian thành "Thời gian và hiệu lực"; thêm tiêu chí 11 "Vòng đời và tham chiếu"; bỏ đánh giá kích thước class; sửa gợi ý lệnh đối chiếu permission, kiểm tra quyền, độ phủ test; mã lỗi `API-<số>` và trường "tìm ra nhờ"; bước tùy chọn đối chiếu công thức lương. Lỗi 1–6 của lần chạy 2026-11-03 tương ứng `API-001`…`API-006`. | [PROMPT_REVIEW_API_REVIEW_2026-11-03](./PROMPT_REVIEW_API_REVIEW_2026-11-03.md) |
-| 2026-11-03 | Chuyển từ Đạt/Chưa đạt sang thang điểm 10: trọng số từng tiêu chí, trừ điểm theo mức lỗi, trần khi còn lỗi Cao, trường "thuộc tiêu chí". Điểm của lần chạy 2026-11-03 được tính lại theo thang này (phụ lục trong file kết quả). | Yêu cầu của người dùng |
+| 2026-11-03 | Chuyển từ Đạt/Chưa đạt sang thang điểm 10: trọng số từng tiêu chí, trừ điểm theo mức lỗi, trần khi còn lỗi Cao, trường "thuộc tiêu chí". File kết quả 2026-11-03 được chuyển sang định dạng này (điểm tổng 7,0). | Yêu cầu của người dùng |
