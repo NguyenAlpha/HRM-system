@@ -67,8 +67,9 @@ Kết quả sắp xếp theo tên role, sau đó theo code. Đây là danh mục
 
 `allowedScopeTypes` được lấy từ cùng policy mà backend dùng để validate request:
 
-- System role trả đúng scope cố định của role đó.
-- Custom role đang hỗ trợ `SELF`, `COMPANY`, `ORG_UNIT` và `LOCATION`.
+- Role có permission `companyWide` chỉ có `COMPANY`.
+- Role khác, kể cả system role như `HR_MANAGER` và `MANAGER`, có `SELF`, `COMPANY`, `ORG_UNIT` và `LOCATION`.
+  Xem [RBAC: Permission toàn công ty](./RBAC.md#permission-toàn-công-ty-và-scope-của-role).
 - `requiresApproval=true` tương ứng với `OWNER_APPROVAL`.
 
 ### Lỗi

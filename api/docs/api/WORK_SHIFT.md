@@ -10,9 +10,9 @@ Quản lý danh mục ca làm việc dùng trong phân công nhân sự, chấm 
 |:---------|:-----------|:------|
 | `GET /api/work-shifts` | `organization.read` | Lấy danh sách ca không phân trang và lọc theo trạng thái hoặc ca qua đêm |
 | `GET /api/work-shifts/{shiftId}` | `organization.read` | Lấy chi tiết một ca làm việc |
-| `POST /api/work-shifts` | `organization.manage` | Tạo ca làm việc mới |
-| `PUT /api/work-shifts/{shiftId}` | `organization.manage` | Cập nhật nội dung và trạng thái ca làm việc |
-| `DELETE /api/work-shifts/{shiftId}` | `organization.manage` | Xóa mềm ca không còn được dùng bởi phân công hiện tại hoặc tương lai |
+| `POST /api/work-shifts` | `organization.manage`, phạm vi `COMPANY` | Tạo ca làm việc mới |
+| `PUT /api/work-shifts/{shiftId}` | `organization.manage`, phạm vi `COMPANY` | Cập nhật nội dung và trạng thái ca làm việc |
+| `DELETE /api/work-shifts/{shiftId}` | `organization.manage`, phạm vi `COMPANY` | Xóa mềm ca không còn được dùng bởi phân công hiện tại hoặc tương lai |
 
 Tất cả endpoint yêu cầu Bearer token. `HR_MANAGER`, `DIRECTOR` và `COMPANY_OWNER` được seed `organization.read`; chỉ `COMPANY_OWNER` được seed `organization.manage`.
 

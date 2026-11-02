@@ -11,20 +11,20 @@ Quản lý danh mục cơ cấu tổ chức, địa điểm làm việc và ch�
 | `GET /api/organization-units` | `organization.read` | Lấy danh sách đơn vị tổ chức không phân trang và lọc theo trạng thái, loại hoặc parent |
 | `GET /api/organization-units/tree` | `organization.read` | Lấy toàn bộ cơ cấu tổ chức dạng cây |
 | `GET /api/organization-units/{unitId}` | `organization.read` | Lấy chi tiết một đơn vị tổ chức |
-| `POST /api/organization-units` | `organization.manage` | Tạo một đơn vị tổ chức mới |
-| `PUT /api/organization-units/{unitId}` | `organization.manage` | Đổi parent, tên hoặc trạng thái active của đơn vị |
-| `DELETE /api/organization-units/{unitId}` | `organization.manage` | Xóa mềm đơn vị không còn được sử dụng |
+| `POST /api/organization-units` | `organization.manage`, phạm vi `COMPANY` | Tạo một đơn vị tổ chức mới |
+| `PUT /api/organization-units/{unitId}` | `organization.manage`, phạm vi `COMPANY` | Đổi parent, tên hoặc trạng thái active của đơn vị |
+| `DELETE /api/organization-units/{unitId}` | `organization.manage`, phạm vi `COMPANY` | Xóa mềm đơn vị không còn được sử dụng |
 | `GET /api/work-locations` | `organization.read` | Lấy danh sách địa điểm không phân trang và lọc theo trạng thái, loại hoặc parent |
 | `GET /api/work-locations/tree` | `organization.read` | Lấy toàn bộ hệ thống địa điểm dạng cây |
 | `GET /api/work-locations/{locationId}` | `organization.read` | Lấy chi tiết một địa điểm làm việc |
-| `POST /api/work-locations` | `organization.manage` | Tạo một địa điểm làm việc mới |
-| `PUT /api/work-locations/{locationId}` | `organization.manage` | Đổi parent, thông tin liên hệ hoặc trạng thái active của địa điểm |
-| `DELETE /api/work-locations/{locationId}` | `organization.manage` | Xóa mềm địa điểm không còn được sử dụng |
+| `POST /api/work-locations` | `organization.manage`, phạm vi `COMPANY` | Tạo một địa điểm làm việc mới |
+| `PUT /api/work-locations/{locationId}` | `organization.manage`, phạm vi `COMPANY` | Đổi parent, thông tin liên hệ hoặc trạng thái active của địa điểm |
+| `DELETE /api/work-locations/{locationId}` | `organization.manage`, phạm vi `COMPANY` | Xóa mềm địa điểm không còn được sử dụng |
 | `GET /api/job-positions` | `organization.read` | Lấy danh sách chức danh không phân trang và lọc theo trạng thái hoặc loại quản lý |
 | `GET /api/job-positions/{positionId}` | `organization.read` | Lấy chi tiết một chức danh |
-| `POST /api/job-positions` | `organization.manage` | Tạo một chức danh mới |
-| `PUT /api/job-positions/{positionId}` | `organization.manage` | Cập nhật nội dung và trạng thái chức danh |
-| `DELETE /api/job-positions/{positionId}` | `organization.manage` | Xóa mềm chức danh không còn được sử dụng |
+| `POST /api/job-positions` | `organization.manage`, phạm vi `COMPANY` | Tạo một chức danh mới |
+| `PUT /api/job-positions/{positionId}` | `organization.manage`, phạm vi `COMPANY` | Cập nhật nội dung và trạng thái chức danh |
+| `DELETE /api/job-positions/{positionId}` | `organization.manage`, phạm vi `COMPANY` | Xóa mềm chức danh không còn được sử dụng |
 | `GET /api/company` | Đã đăng nhập | Xem thông tin doanh nghiệp |
 | `PUT /api/company` | `company.manage` | Cập nhật thông tin doanh nghiệp |
 

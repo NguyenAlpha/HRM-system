@@ -28,6 +28,7 @@ import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.OrganizationUnitRepository;
 import com.htttdn.hrm.repository.RoleAssignmentRequestRepository;
+import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,6 +41,7 @@ public class OrganizationUnitService {
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final RoleAssignmentRequestRepository roleAssignmentRequestRepository;
+    private final EmployeeAccessScopeService employeeAccessScopeService;
     private final Clock clock;
 
     @PreAuthorize("hasAuthority('organization.read')")
@@ -88,6 +90,7 @@ public class OrganizationUnitService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public OrganizationUnitResponse create(CreateOrganizationUnitRequest request) {
+        employeeAccessScopeService.requireCompanyWide("organization.manage");
         String code = request.code().trim();
         if (organizationUnitRepository.existsByCodeAndDeletedAtIsNull(code)) {
             throw codeTaken();
@@ -111,6 +114,7 @@ public class OrganizationUnitService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public OrganizationUnitResponse update(Long unitId, UpdateOrganizationUnitRequest request) {
+        employeeAccessScopeService.requireCompanyWide("organization.manage");
         OrganizationUnit unit = organizationUnitRepository.getRequiredForUpdate(unitId);
         OrganizationUnit parent = resolveParent(request.parentUnitId(), request.isActive());
         validateHierarchy(unit.getUnitType(), parent);
@@ -126,6 +130,7 @@ public class OrganizationUnitService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public void softDelete(Long unitId) {
+        employeeAccessScopeService.requireCompanyWide("organization.manage");
         OrganizationUnit unit = organizationUnitRepository.getRequiredForUpdate(unitId);
         if (organizationUnitRepository.existsByParentUnitIdAndDeletedAtIsNull(unitId)) {
             throw resourceInUse("Organization unit still has child units");

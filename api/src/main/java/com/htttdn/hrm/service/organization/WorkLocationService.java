@@ -28,6 +28,7 @@ import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.RoleAssignmentRequestRepository;
 import com.htttdn.hrm.repository.WorkLocationRepository;
+import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import com.htttdn.hrm.util.Strings;
 
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class WorkLocationService {
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
     private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final RoleAssignmentRequestRepository roleAssignmentRequestRepository;
+    private final EmployeeAccessScopeService employeeAccessScopeService;
     private final Clock clock;
 
     @PreAuthorize("hasAuthority('organization.read')")
@@ -90,6 +92,7 @@ public class WorkLocationService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public WorkLocationResponse create(CreateWorkLocationRequest request) {
+        employeeAccessScopeService.requireCompanyWide("organization.manage");
         String code = request.code().trim();
         if (workLocationRepository.existsByCodeAndDeletedAtIsNull(code)) {
             throw codeTaken();
@@ -115,6 +118,7 @@ public class WorkLocationService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public WorkLocationResponse update(Long locationId, UpdateWorkLocationRequest request) {
+        employeeAccessScopeService.requireCompanyWide("organization.manage");
         WorkLocation location = workLocationRepository.getRequiredForUpdate(locationId);
         WorkLocation parent = resolveParent(request.parentLocationId(), request.isActive());
         validateHierarchy(location.getLocationType(), parent);
@@ -132,6 +136,7 @@ public class WorkLocationService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public void softDelete(Long locationId) {
+        employeeAccessScopeService.requireCompanyWide("organization.manage");
         WorkLocation location = workLocationRepository.getRequiredForUpdate(locationId);
         if (workLocationRepository.existsByParentLocationIdAndDeletedAtIsNull(locationId)) {
             throw resourceInUse("Work location still has child locations");

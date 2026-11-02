@@ -23,6 +23,7 @@ import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.WorkShiftRepository;
+import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -36,6 +37,7 @@ public class WorkShiftService {
     private final WorkShiftRepository workShiftRepository;
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
+    private final EmployeeAccessScopeService employeeAccessScopeService;
     private final Clock clock;
 
     @PreAuthorize("hasAuthority('organization.read')")
@@ -57,6 +59,7 @@ public class WorkShiftService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public WorkShiftResponse create(CreateWorkShiftRequest request) {
+        employeeAccessScopeService.requireCompanyWide("organization.manage");
         String code = request.code().trim();
         if (workShiftRepository.existsByCodeAndDeletedAtIsNull(code)) {
             throw codeTaken();
@@ -91,6 +94,7 @@ public class WorkShiftService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public WorkShiftResponse update(Long shiftId, UpdateWorkShiftRequest request) {
+        employeeAccessScopeService.requireCompanyWide("organization.manage");
         WorkShift shift = workShiftRepository.getRequiredForUpdate(shiftId);
         validateSchedule(
             request.startTime(),
@@ -122,6 +126,7 @@ public class WorkShiftService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public void softDelete(Long shiftId) {
+        employeeAccessScopeService.requireCompanyWide("organization.manage");
         WorkShift shift = workShiftRepository.getRequiredForUpdate(shiftId);
         if (employeeAssignmentRepository.existsCurrentOrFutureByShiftId(shiftId, LocalDate.now(clock))) {
             throw resourceInUse("Work shift is used by a current or future employee assignment");

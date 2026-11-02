@@ -9646,6 +9646,9 @@
           "code" : {
             "type" : "string"
           },
+          "companyWide" : {
+            "type" : "boolean"
+          },
           "description" : {
             "type" : "string"
           },
@@ -9664,7 +9667,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "assignmentPolicy", "code", "description", "id", "isActive", "module", "name" ]
+        "required" : [ "assignmentPolicy", "code", "companyWide", "description", "id", "isActive", "module", "name" ]
       },
       "Point" : {
         "type" : "object",
@@ -10269,6 +10272,13 @@
       "RoleResponse" : {
         "type" : "object",
         "properties" : {
+          "allowedScopeTypes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "SELF", "COMPANY", "ORG_UNIT", "LOCATION" ]
+            }
+          },
           "code" : {
             "type" : "string"
           },
@@ -10290,7 +10300,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "code", "description", "grantPolicy", "id", "isSystem", "name" ]
+        "required" : [ "allowedScopeTypes", "code", "description", "grantPolicy", "id", "isSystem", "name" ]
       },
       "RoleWithPermissionsResponse" : {
         "type" : "object",

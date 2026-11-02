@@ -40,7 +40,7 @@ public class RoleSeeder implements ApplicationRunner {
         new RoleDefinition(
             "HR_MANAGER",
             "Quản lý nhân sự",
-            "Quản lý nghiệp vụ nhân sự trên toàn công ty",
+            "Quản lý nghiệp vụ nhân sự trong phạm vi được giao: toàn công ty, một đơn vị hoặc một địa điểm",
             RoleGrantPolicy.OWNER_APPROVAL
         ),
         new RoleDefinition(

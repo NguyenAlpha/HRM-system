@@ -23,6 +23,7 @@ import com.htttdn.hrm.repository.JobPositionRepository;
 import com.htttdn.hrm.repository.PositionAllowanceRuleRepository;
 import com.htttdn.hrm.repository.SeniorityAllowanceRuleRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
+import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import com.htttdn.hrm.util.Strings;
 
 import jakarta.annotation.Nullable;
@@ -44,6 +45,7 @@ public class AllowancePolicyService {
     private final JobPositionRepository jobPositionRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final PayrollPeriodInvalidator payrollPeriodInvalidator;
+    private final EmployeeAccessScopeService employeeAccessScopeService;
     private final Clock clock;
 
     @PreAuthorize("hasAuthority('compensation.manage')")
@@ -51,6 +53,7 @@ public class AllowancePolicyService {
         Long jobPositionId,
         SetPositionAllowanceCommand command
     ) {
+        employeeAccessScopeService.requireCompanyWide("compensation.manage");
         validateAmount(command.monthlyAmount(), "monthlyAmount");
         requireDate(command.effectiveFrom());
         JobPosition position = jobPositionRepository.getRequiredActiveForUpdate(jobPositionId);
@@ -125,6 +128,7 @@ public class AllowancePolicyService {
      */
     @PreAuthorize("hasAuthority('compensation.manage')")
     public List<SeniorityAllowanceView> setSeniorityAllowances(SetSeniorityAllowancesCommand command) {
+        employeeAccessScopeService.requireCompanyWide("compensation.manage");
         requireDate(command.effectiveFrom());
         List<SeniorityTier> tiers = requireContiguousTiers(command.tiers());
         payrollPeriodInvalidator.invalidateFrom(command.effectiveFrom());

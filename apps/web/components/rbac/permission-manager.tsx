@@ -31,6 +31,7 @@ import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import type { Portal } from "@/lib/auth/types"
 import type { Page } from "@/lib/pagination"
 import {
+  COMPANY_WIDE_PERMISSION_HINT,
   PERMISSION_MODULES,
   rbacRequest,
   type Permission,
@@ -132,7 +133,12 @@ export function PermissionManager({ portal, onSessionExpired }: { portal: Portal
                     <code className="text-xs">{permission.code}</code>
                     <span className="block text-xs text-muted-foreground">#{permission.id}</span>
                   </TableCell>
-                  <TableCell className="font-medium">{permission.name}</TableCell>
+                  <TableCell className="font-medium">
+                    {permission.name}
+                    {permission.companyWide && (
+                      <Badge variant="outline" className="ml-1.5" title={COMPANY_WIDE_PERMISSION_HINT}>Toàn công ty</Badge>
+                    )}
+                  </TableCell>
                   <TableCell><Badge variant="secondary">{permission.module}</Badge></TableCell>
                   <TableCell>
                     <Badge variant={permission.assignmentPolicy === "DELEGABLE" ? "secondary" : "outline"}>

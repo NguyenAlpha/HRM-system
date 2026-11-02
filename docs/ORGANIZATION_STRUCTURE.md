@@ -138,7 +138,7 @@ EMPLOYEE @ SELF
 | Role | Scope điển hình | Trạng thái | Mục đích |
 |---|---|---|---|
 | `EMPLOYEE` | `SELF` | System role đã seed | Tự xem hồ sơ, đơn từ, chấm công và phiếu lương |
-| `HR_MANAGER` | `COMPANY` | System role đã seed | Quản trị nghiệp vụ nhân sự trên toàn công ty |
+| `HR_MANAGER` | `COMPANY` | System role đã seed | Quản trị nghiệp vụ nhân sự; gán `ORG_UNIT`/`LOCATION` cho HR một đơn vị hoặc chi nhánh |
 | `PAYROLL_ACCOUNTANT` | `COMPANY` | System role đã seed | Tính và kiểm tra bảng lương |
 | `PAYROLL_APPROVER` | `COMPANY` | System role đã seed | Duyệt, xác nhận thanh toán và khóa kỳ lương |
 | `DIRECTOR` | `COMPANY` | System role đã seed | Phê duyệt cuối các quyết định nghiệp vụ |

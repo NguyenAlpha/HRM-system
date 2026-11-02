@@ -19,6 +19,7 @@ import com.htttdn.hrm.entity.JobPosition;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.JobPositionRepository;
+import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import com.htttdn.hrm.util.Strings;
 
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class JobPositionService {
 
     private final JobPositionRepository jobPositionRepository;
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
+    private final EmployeeAccessScopeService employeeAccessScopeService;
     private final Clock clock;
 
     @PreAuthorize("hasAuthority('organization.read')")
@@ -51,6 +53,7 @@ public class JobPositionService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public JobPositionResponse create(CreateJobPositionRequest request) {
+        employeeAccessScopeService.requireCompanyWide("organization.manage");
         String code = request.code().trim();
         if (jobPositionRepository.existsByCodeAndDeletedAtIsNull(code)) {
             throw codeTaken();
@@ -71,6 +74,7 @@ public class JobPositionService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public JobPositionResponse update(Long positionId, UpdateJobPositionRequest request) {
+        employeeAccessScopeService.requireCompanyWide("organization.manage");
         JobPosition position = jobPositionRepository.getRequiredForUpdate(positionId);
         position.setTitle(request.title().trim());
         position.setDescription(Strings.trimToNull(request.description()));
@@ -81,6 +85,7 @@ public class JobPositionService {
 
     @PreAuthorize("hasAuthority('organization.manage')")
     public void softDelete(Long positionId) {
+        employeeAccessScopeService.requireCompanyWide("organization.manage");
         JobPosition position = jobPositionRepository.getRequiredForUpdate(positionId);
         if (employeeAssignmentRepository.existsCurrentOrFutureByPositionId(
             positionId,

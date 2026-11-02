@@ -687,9 +687,10 @@ Ví dụ dữ liệu:
 | `module` | VARCHAR(30) | NOT NULL | Phân hệ |
 | `description` | TEXT | NOT NULL | Mô tả quyền |
 | `assignment_policy` | VARCHAR(20) | NOT NULL | `DELEGABLE` / `SYSTEM_ONLY` |
+| `company_wide` | BOOLEAN | NOT NULL, DEFAULT false | Thao tác là việc chung cả công ty; role chứa permission này chỉ được gán scope `COMPANY` |
 | `is_active` | BOOLEAN | NOT NULL, DEFAULT true | Trạng thái |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
-| `updated_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Lần cuối seeder đổi `name`, `description` hoặc `assignment_policy` |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Lần cuối seeder đổi `name`, `description`, `assignment_policy` hoặc `company_wide` |
 
 ### `roles` — Mẫu vai trò
 
@@ -798,6 +799,7 @@ Bảng cấu hình kỹ thuật, không phải dữ liệu nghiệp vụ. Mỗi 
 Danh mục quyền thuộc sở hữu của code: `PermissionSeeder` là nguồn chuẩn, không thêm permission
 qua API. Catalog hiện có 48 code trên 8 module của `PermissionModule`. Code đánh dấu `(S)` có
 `assignment_policy = SYSTEM_ONLY`, chỉ seeder gán cho system role; các code còn lại là `DELEGABLE`.
+Code có `company_wide = true` là các dòng `(C)` trong [bảng permission của RBAC](../api/RBAC.md#permission-mặc-định-của-system-role).
 
 ```text
 EMPLOYEE (14)

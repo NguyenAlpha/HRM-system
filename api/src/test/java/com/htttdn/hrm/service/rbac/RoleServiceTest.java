@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.htttdn.hrm.dto.request.role.CreateRoleRequest;
+import com.htttdn.hrm.dto.request.role.GrantPermissionRequest;
 import com.htttdn.hrm.dto.request.role.ReplaceRolePermissionsRequest;
 import com.htttdn.hrm.dto.request.role.UpdateRoleRequest;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
@@ -25,6 +26,7 @@ import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
+import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.PermissionRepository;
 import com.htttdn.hrm.repository.RolePermissionRepository;
 import com.htttdn.hrm.repository.RoleRepository;
@@ -34,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,6 +49,8 @@ class RoleServiceTest {
     @Mock private RolePermissionRepository rolePermissionRepository;
     @Mock private CurrentAccountProvider currentAccountProvider;
     @Mock private AccountRoleAssignmentCommandService roleAssignmentCommandService;
+    @Mock private AccountRoleAssignmentRepository accountRoleAssignmentRepository;
+    @Mock private RoleAssignmentPolicy roleAssignmentPolicy;
 
     @Test
     void replacePermissionsAddsAndRemovesMappingsInOneOperation() {
@@ -172,6 +177,46 @@ class RoleServiceTest {
         verify(roleAssignmentCommandService).revokeDeletedRole(role, actor, "Role đã bị xóa");
     }
 
+    @Test
+    void grantPermissionRejectsCompanyWidePermissionWhileRoleIsAssignedNarrower() {
+        Role role = role(false);
+        Permission permission = permission(5L, "payroll.calculate", PermissionAssignmentPolicy.DELEGABLE);
+        permission.setCompanyWide(true);
+        when(roleRepository.getRequired(10L)).thenReturn(role);
+        when(permissionRepository.getRequired(5L)).thenReturn(permission);
+        when(accountRoleAssignmentRepository.existsCurrentOrFutureNarrowerThanCompanyByRoleId(eq(10L), any()))
+            .thenReturn(true);
+
+        ConflictException exception = assertThrows(
+            ConflictException.class,
+            () -> service().grantPermission(10L, new GrantPermissionRequest(5L))
+        );
+
+        assertEquals(ErrorCode.ROLE_SCOPE_CONFLICT, exception.getErrorCode());
+        assertEquals("permissionId", exception.getField());
+        verify(rolePermissionRepository, never()).save(any());
+    }
+
+    @Test
+    void replacePermissionsRejectsAddingCompanyWidePermissionWhileRoleIsAssignedNarrower() {
+        Role role = role(false);
+        Permission permission = permission(5L, "payroll.calculate", PermissionAssignmentPolicy.DELEGABLE);
+        permission.setCompanyWide(true);
+        when(roleRepository.getRequiredForUpdate(10L)).thenReturn(role);
+        when(permissionRepository.findAllById(any())).thenReturn(List.of(permission));
+        when(rolePermissionRepository.findByIdRoleId(10L)).thenReturn(List.of());
+        when(accountRoleAssignmentRepository.existsCurrentOrFutureNarrowerThanCompanyByRoleId(eq(10L), any()))
+            .thenReturn(true);
+
+        ConflictException exception = assertThrows(
+            ConflictException.class,
+            () -> service().replacePermissions(10L, new ReplaceRolePermissionsRequest(List.of(5L)))
+        );
+
+        assertEquals(ErrorCode.ROLE_SCOPE_CONFLICT, exception.getErrorCode());
+        verify(rolePermissionRepository, never()).saveAll(any());
+    }
+
     private Role role(boolean system) {
         return Role.builder().id(10L).code("CUSTOM_ROLE").name("Custom role").isSystem(system).build();
     }
@@ -205,8 +250,10 @@ class RoleServiceTest {
             roleRepository,
             permissionRepository,
             rolePermissionRepository,
+            accountRoleAssignmentRepository,
             currentAccountProvider,
             roleAssignmentCommandService,
+            roleAssignmentPolicy,
             Clock.system(ClockConfig.BUSINESS_ZONE)
         );
     }

@@ -20,6 +20,7 @@ import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.repository.AttendanceRecordRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.WorkShiftRepository;
+import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -31,6 +32,7 @@ class WorkShiftServiceTest {
     @Mock private WorkShiftRepository workShiftRepository;
     @Mock private EmployeeAssignmentRepository employeeAssignmentRepository;
     @Mock private AttendanceRecordRepository attendanceRecordRepository;
+    @Mock private EmployeeAccessScopeService employeeAccessScopeService;
 
     @ParameterizedTest
     @CsvSource(nullValues = "NULL", value = {
@@ -83,6 +85,6 @@ class WorkShiftServiceTest {
 
     private WorkShiftService service() {
         return new WorkShiftService(workShiftRepository, employeeAssignmentRepository, attendanceRecordRepository,
-            Clock.system(ClockConfig.BUSINESS_ZONE));
+            employeeAccessScopeService, Clock.system(ClockConfig.BUSINESS_ZONE));
     }
 }

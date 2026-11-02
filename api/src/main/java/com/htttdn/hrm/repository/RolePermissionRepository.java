@@ -26,6 +26,9 @@ public interface RolePermissionRepository extends JpaRepository<RolePermission, 
 
     boolean existsByIdRoleIdAndIdPermissionId(Long roleId, Long permissionId);
 
+    /** Role có permission nào chỉ dùng được ở phạm vi toàn công ty không. */
+    boolean existsByIdRoleIdAndPermissionCompanyWideTrue(Long roleId);
+
     @Query("""
         SELECT rolePermission
         FROM RolePermission rolePermission

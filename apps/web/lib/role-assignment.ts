@@ -25,8 +25,6 @@ export type PermissionOverrideEffect = AccountPermissionOverride["effect"]
 export type PermissionOverrideStatus = AccountPermissionOverride["status"]
 
 // The label records below must list every enum value, so a value added in the API fails typecheck.
-export const ROLE_SCOPE_TYPES = ["SELF", "COMPANY", "ORG_UNIT", "LOCATION"] as const satisfies readonly RoleScopeType[]
-
 export const ROLE_ASSIGNMENT_STATUSES = [
   "PENDING", "APPROVED", "REJECTED", "CANCELLED",
 ] as const satisfies readonly RoleAssignmentRequestStatus[]
@@ -44,6 +42,14 @@ export const ROLE_SCOPE_LABELS: Record<RoleScopeType, string> = {
   ORG_UNIT: "Đơn vị tổ chức",
   LOCATION: "Địa điểm làm việc",
 }
+
+/** The API derives a role's scopes from its permissions: one company-wide permission leaves only COMPANY. */
+export function isCompanyOnly(scopes: readonly RoleScopeType[]) {
+  return scopes.length === 1 && scopes[0] === "COMPANY"
+}
+
+export const COMPANY_ONLY_ROLE_HINT =
+  "Vai trò có quyền dùng chung cho cả công ty (như tính lương, quản lý danh mục tổ chức) nên chỉ gán được với phạm vi toàn công ty."
 
 export const PERMISSION_OVERRIDE_EFFECT_LABELS: Record<PermissionOverrideEffect, string> = {
   GRANT: "Cấp thêm",

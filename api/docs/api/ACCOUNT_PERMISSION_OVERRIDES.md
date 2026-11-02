@@ -27,7 +27,7 @@ Authorization được tính riêng trên từng role assignment:
 
 Vì vậy, `REVOKE` trên một assignment không loại permission do assignment khác cấp. Override dùng cùng scope `SELF`, `COMPANY`, `ORG_UNIT` hoặc `LOCATION` của assignment cha.
 
-Chỉ permission active có `assignmentPolicy=DELEGABLE` được override. Permission `SYSTEM_ONLY` luôn bị từ chối.
+Chỉ permission active có `assignmentPolicy=DELEGABLE` được override. Permission `SYSTEM_ONLY` luôn bị từ chối. Permission `companyWide` chỉ `GRANT` được trên assignment scope `COMPANY` (danh sách lựa chọn cũng không đưa ra nó cho assignment khác).
 
 ---
 

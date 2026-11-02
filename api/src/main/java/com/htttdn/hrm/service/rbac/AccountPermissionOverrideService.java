@@ -24,6 +24,7 @@ import com.htttdn.hrm.entity.enums.AccountStatus;
 import com.htttdn.hrm.entity.enums.PermissionAssignmentPolicy;
 import com.htttdn.hrm.entity.enums.PermissionOverrideEffect;
 import com.htttdn.hrm.entity.enums.PermissionOverrideStatus;
+import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ForbiddenException;
@@ -44,7 +45,8 @@ import lombok.RequiredArgsConstructor;
  * <p>{@code GRANT} thêm permission role không có; {@code REVOKE} bớt permission role đang có. Ngoại lệ chỉ
  * tác động lên lần gán chứa nó, nên phạm vi đi theo lần gán đó, và REVOKE không lấy đi permission mà lần gán
  * khác của cùng tài khoản vẫn cho (cách tính: {@link AccountAuthorizationService}). Chỉ permission
- * {@code DELEGABLE} được dùng. Ngoại lệ không bị xóa, chỉ thu hồi để giữ lịch sử.
+ * {@code DELEGABLE} được dùng; permission toàn công ty chỉ GRANT được trên lần gán {@code COMPANY}, như quy tắc
+ * phạm vi của role ({@link RoleAssignmentPolicy}). Ngoại lệ không bị xóa, chỉ thu hồi để giữ lịch sử.
  *
  * <p>{@link CanManagePermissionOverrides} trên class → mọi method cần {@code account.permission.override.manage}.
  */
@@ -90,7 +92,7 @@ public class AccountPermissionOverrideService {
      * @param accountId    tài khoản sở hữu lần gán
      * @param assignmentId lần gán
      * @return permission {@code DELEGABLE} đang active, theo module rồi mã; {@code REVOKE} nếu role đã có,
-     *         {@code GRANT} nếu chưa
+     *         {@code GRANT} nếu chưa; bỏ permission toàn công ty mà lần gán không phải {@code COMPANY} chưa có
      * @throws com.htttdn.hrm.exception.ResourceNotFoundException lần gán không có hoặc thuộc tài khoản khác (→ 404)
      */
     @Transactional(readOnly = true)
@@ -99,6 +101,8 @@ public class AccountPermissionOverrideService {
         return permissionRepository
             .findByIsActiveTrueAndAssignmentPolicyOrderByModuleAscCodeAsc(PermissionAssignmentPolicy.DELEGABLE)
             .stream()
+            .filter(permission -> canGrantOnScope(assignment, permission)
+                || defaultEffect(assignment, permission) == PermissionOverrideEffect.REVOKE)
             .map(permission -> new PermissionOverrideOptionResponse(
                 permission.getId(),
                 permission.getCode(),
@@ -246,7 +250,8 @@ public class AccountPermissionOverrideService {
 
     /**
      * Permission phải active, {@code DELEGABLE}, và hiệu ứng phải thật sự đổi gì đó: GRANT cái role chưa có,
-     * REVOKE cái role đang có (→ 409 {@code PERMISSION_OVERRIDE_NOT_ALLOWED}).
+     * REVOKE cái role đang có; GRANT permission toàn công ty cần lần gán {@code COMPANY}
+     * (→ 409 {@code PERMISSION_OVERRIDE_NOT_ALLOWED}).
      */
     private void validatePermission(
         AccountRoleAssignment assignment,
@@ -267,6 +272,17 @@ public class AccountPermissionOverrideService {
                 "The requested effect does not change the role's default permission"
             );
         }
+        if (requestedEffect == PermissionOverrideEffect.GRANT && !canGrantOnScope(assignment, permission)) {
+            throw new ConflictException(
+                ErrorCode.PERMISSION_OVERRIDE_NOT_ALLOWED,
+                "Company-wide permissions can only be granted on a COMPANY-scoped role assignment"
+            );
+        }
+    }
+
+    /** Permission toàn công ty chỉ có nghĩa trên lần gán {@code COMPANY}; permission khác thì lần gán nào cũng được. */
+    private boolean canGrantOnScope(AccountRoleAssignment assignment, Permission permission) {
+        return !permission.isCompanyWide() || assignment.getScopeType() == RoleScopeType.COMPANY;
     }
 
     /** Hiệu ứng ngoại lệ có nghĩa với permission này: role có sẵn → {@code REVOKE}, chưa có → {@code GRANT}. */

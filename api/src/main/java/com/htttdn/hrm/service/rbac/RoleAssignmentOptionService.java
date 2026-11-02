@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.htttdn.hrm.dto.response.roleassignment.RoleAssignmentOptionResponse;
 import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
-import com.htttdn.hrm.entity.enums.RoleScopeType;
 import com.htttdn.hrm.repository.RoleRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -40,10 +39,6 @@ public class RoleAssignmentOptionService {
     }
 
     private RoleAssignmentOptionResponse toResponse(Role role) {
-        // allowedScopes là Set không thứ tự → sắp theo thứ tự khai báo enum để web hiển thị ổn định.
-        List<RoleScopeType> allowedScopeTypes = roleAssignmentPolicy.allowedScopes(role).stream()
-            .sorted(Comparator.comparingInt(RoleScopeType::ordinal))
-            .toList();
         return new RoleAssignmentOptionResponse(
             role.getId(),
             role.getCode(),
@@ -51,7 +46,7 @@ public class RoleAssignmentOptionService {
             role.getDescription(),
             role.getGrantPolicy(),
             role.getGrantPolicy() == RoleGrantPolicy.OWNER_APPROVAL,
-            allowedScopeTypes
+            roleAssignmentPolicy.allowedScopes(role)
         );
     }
 }

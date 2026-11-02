@@ -22,6 +22,7 @@ import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.OrganizationUnitRepository;
 import com.htttdn.hrm.repository.RoleAssignmentRequestRepository;
+import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 
 @ExtendWith(MockitoExtension.class)
 class OrganizationUnitServiceTest {
@@ -29,6 +30,7 @@ class OrganizationUnitServiceTest {
     @Mock private EmployeeAssignmentRepository employeeAssignmentRepository;
     @Mock private AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     @Mock private RoleAssignmentRequestRepository roleAssignmentRequestRepository;
+    @Mock private EmployeeAccessScopeService employeeAccessScopeService;
 
     private final OrganizationUnit inactiveBoard = OrganizationUnit.builder().id(1L).code("B")
         .name("Board").unitType(OrganizationUnitType.BOARD).isActive(false).build();
@@ -59,6 +61,6 @@ class OrganizationUnitServiceTest {
 
     private OrganizationUnitService service() {
         return new OrganizationUnitService(organizationUnitRepository, employeeAssignmentRepository,
-            accountRoleAssignmentRepository, roleAssignmentRequestRepository, Clock.system(ClockConfig.BUSINESS_ZONE));
+            accountRoleAssignmentRepository, roleAssignmentRequestRepository, employeeAccessScopeService, Clock.system(ClockConfig.BUSINESS_ZONE));
     }
 }

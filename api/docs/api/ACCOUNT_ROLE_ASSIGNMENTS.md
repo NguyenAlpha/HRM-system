@@ -27,15 +27,15 @@ API gán trực tiếp chỉ chấp nhận role có `grantPolicy=HR_ASSIGNABLE` 
 | Role | Scope được phép | Ghi chú |
 |:-----|:----------------|:--------|
 | `EMPLOYEE` | `SELF` | Hệ thống tự gán khi tạo account; API này không được gán/thu hồi |
-| `HR_MANAGER` | `COMPANY` | Company Owner gán sau khi hồ sơ nhân sự và account đã được tạo |
-| `MANAGER` | `LOCATION`, `ORG_UNIT` | Quản lý đơn vị; truyền `workLocationId` hoặc `organizationUnitId` của chi nhánh/phòng ban được giao |
+| `HR_MANAGER` | Mọi scope | Company Owner gán sau khi hồ sơ nhân sự và account đã được tạo; `COMPANY` cho HR trung tâm, `ORG_UNIT`/`LOCATION` cho HR một đơn vị hoặc chi nhánh |
+| `MANAGER` | Mọi scope | Quản lý đơn vị; thường truyền `workLocationId` hoặc `organizationUnitId` của chi nhánh/phòng ban được giao |
 | `PAYROLL_ACCOUNTANT` | `COMPANY` | Không truyền ID phạm vi |
 | `PAYROLL_APPROVER` | `COMPANY` | Không truyền ID phạm vi |
 | `DIRECTOR` | `COMPANY` | Company Owner đầu tiên được gán tự động; chỉ một assignment được phép hiệu lực trong cùng khoảng thời gian trên toàn doanh nghiệp |
 | `COMPANY_OWNER` | `COMPANY` | Không được gán/thu hồi qua API này; bootstrap đầu tiên dùng workflow riêng và chỉ được tồn tại một assignment chưa thu hồi |
 | `SYSTEM_ADMIN` | — | Không được quản lý qua API role nghiệp vụ này |
 
-Role tùy chỉnh không bị giới hạn bởi bảng policy trên nhưng vẫn phải tuân thủ cấu trúc scope. Account nhận role nghiệp vụ phải liên kết với employee và không được ở trạng thái `DISABLED`.
+Scope được phép suy ra từ permission của role, không khai báo theo từng role: role có permission `companyWide` chỉ gán được `COMPANY`, role khác nhận mọi scope; role tùy chỉnh theo cùng quy tắc (xem [RBAC: Permission toàn công ty](./RBAC.md#permission-toàn-công-ty-và-scope-của-role)). Account nhận role nghiệp vụ phải liên kết với employee và không được ở trạng thái `DISABLED`.
 
 Workflow bootstrap được phép gọi đường gán role nội bộ cho `DIRECTOR` hoặc `COMPANY_OWNER` sau khi chính workflow đã kiểm tra permission chuyên biệt. Đường nội bộ này không phải endpoint và không làm cho API role assignment tổng quát được phép gán `COMPANY_OWNER`. Xem [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md).
 

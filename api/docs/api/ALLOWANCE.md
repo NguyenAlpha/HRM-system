@@ -18,11 +18,11 @@ Phụ cấp chức vụ đặt theo chức danh, phụ cấp thâm niên đặt 
 |:---------|:------|:------|
 | `GET /api/compensation/position-allowances` | `compensation.read` | Mọi chức danh kèm phụ cấp đang áp dụng hôm nay |
 | `GET /api/compensation/job-positions/{jobPositionId}/allowances` | `compensation.read` | Lịch sử phụ cấp chức vụ của một chức danh |
-| `POST /api/compensation/job-positions/{jobPositionId}/allowances` | `compensation.manage` | Đặt mức phụ cấp chức vụ mới |
+| `POST /api/compensation/job-positions/{jobPositionId}/allowances` | `compensation.manage`, phạm vi `COMPANY` | Đặt mức phụ cấp chức vụ mới |
 | `GET /api/compensation/seniority-allowances` | `compensation.read` | Các bậc phụ cấp thâm niên |
-| `POST /api/compensation/seniority-allowances` | `compensation.manage` | Khai báo cả bảng phụ cấp thâm niên mới |
+| `POST /api/compensation/seniority-allowances` | `compensation.manage`, phạm vi `COMPANY` | Khai báo cả bảng phụ cấp thâm niên mới |
 
-Chính sách áp dụng chung cho cả công ty nên chỉ xét permission, không xét scope. Role mặc định có cả `compensation.read` và `compensation.manage`: `HR_MANAGER`, `PAYROLL_ACCOUNTANT`; `DIRECTOR` và `COMPANY_OWNER` chỉ có `compensation.read` (xem). Thiếu token trả `401 UNAUTHORIZED`, thiếu permission trả `403 FORBIDDEN`.
+Chính sách áp dụng chung cho cả công ty: xem chỉ cần permission, còn đặt chính sách cần `compensation.manage` ở phạm vi `COMPANY` (chỉ có ở phạm vi đơn vị/địa điểm thì trả `403 FORBIDDEN`). Role mặc định có cả `compensation.read` và `compensation.manage`: `HR_MANAGER`, `PAYROLL_ACCOUNTANT`; `DIRECTOR` và `COMPANY_OWNER` chỉ có `compensation.read` (xem). Thiếu token trả `401 UNAUTHORIZED`, thiếu permission trả `403 FORBIDDEN`.
 
 ---
 

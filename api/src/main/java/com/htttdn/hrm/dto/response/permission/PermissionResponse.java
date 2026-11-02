@@ -10,6 +10,7 @@ public record PermissionResponse(
     PermissionModule module,
     String description,
     PermissionAssignmentPolicy assignmentPolicy,
+    boolean companyWide,
     Boolean isActive
 ) {
 }

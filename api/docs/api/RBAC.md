@@ -33,6 +33,28 @@ Quản lý role tùy chỉnh và quan hệ permission của role. Danh mục per
 - Custom role mới phải khai báo `grantPolicy`; policy quyết định workflow nào được phép cấp role đó cho account.
 - `COMPANY_OWNER` chọn permission có sẵn để cấu hình custom role, không tự định nghĩa capability mới cho hệ thống.
 
+### Permission toàn công ty và scope của role
+
+Mỗi permission có cờ `companyWide`, khai báo trong `PermissionSeeder` cùng tên và mô tả. `companyWide=true` nghĩa là
+mọi thao tác của permission là việc chung cả công ty, không chia theo đơn vị hay địa điểm được: kỳ lương
+(`payroll.calculate`, `payroll.approve`, `payroll.mark_paid`, `payroll.lock`), danh mục tổ chức (`organization.manage`),
+tài khoản và RBAC (`account.read`, `account.manage`, `account.activation.manage`, `account.role.assign`, `rbac.manage`),
+phê duyệt cuối và các permission `SYSTEM_ONLY` của Company Owner/System Admin. Danh sách đầy đủ là các dòng `(C)` ở
+[bảng permission mặc định](#permission-mặc-định-của-system-role).
+
+Scope được phép của một role suy ra từ permission của nó, như nhau cho system role và custom role:
+
+- Role có ít nhất một permission `companyWide` chỉ gán được với scope `COMPANY`.
+- Role khác gán được với `SELF`, `COMPANY`, `ORG_UNIT` hoặc `LOCATION`; chọn scope nào là quyết định nghiệp vụ của
+  người gán (VD `HR_MANAGER` theo một chi nhánh, `MANAGER` toàn công ty).
+- Không thêm được permission `companyWide` vào custom role đang có assignment `SELF`/`ORG_UNIT`/`LOCATION` chưa hết hạn
+  (`409 ROLE_SCOPE_CONFLICT`), và không `GRANT` được nó bằng permission override trên assignment như vậy.
+
+Permission làm việc theo từng nhân viên thì không đánh dấu, kể cả khi vài thao tác của nó cần toàn công ty
+(VD `attendance.manage` tạo công cả tháng, `compensation.manage` đặt chính sách phụ cấp): các thao tác đó tự kiểm tra
+scope `COMPANY` lúc chạy và trả `403 FORBIDDEN` nếu chỉ có scope hẹp hơn. `RoleResponse.allowedScopeTypes` và
+`RoleAssignmentOptionResponse.allowedScopeTypes` trả danh sách scope được phép để client chỉ hiển thị lựa chọn hợp lệ.
+
 ### Chính sách cấp role
 
 | `grantPolicy` | Ý nghĩa |
@@ -137,6 +159,7 @@ Danh sách permission phản ánh đầy đủ mapping đã lưu, bao gồm cả
           "module": "ACCOUNT",
           "description": "Gán và thu hồi vai trò của tài khoản",
           "assignmentPolicy": "DELEGABLE",
+          "companyWide": false,
           "isActive": true
         },
         {
@@ -146,6 +169,7 @@ Danh sách permission phản ánh đầy đủ mapping đã lưu, bao gồm cả
           "module": "RBAC",
           "description": "Xem danh mục quyền và quản lý vai trò tùy chỉnh cùng quan hệ phân quyền",
           "assignmentPolicy": "DELEGABLE",
+          "companyWide": false,
           "isActive": true
         }
       ]
@@ -203,7 +227,8 @@ Tạo role tùy chỉnh. Role mới luôn có `isSystem=false`.
     "name": "Quản trị phân quyền",
     "description": "Quản lý vai trò tùy chỉnh trong doanh nghiệp",
     "isSystem": false,
-    "grantPolicy": "OWNER_APPROVAL"
+    "grantPolicy": "OWNER_APPROVAL",
+    "allowedScopeTypes": ["SELF", "COMPANY", "ORG_UNIT", "LOCATION"]
   },
   "error": null
 }
@@ -247,7 +272,8 @@ Endpoint sử dụng các tham số [phân trang](#phân-trang) chung.
         "name": "Quản trị viên hệ thống",
         "description": "Khởi tạo Chủ sở hữu doanh nghiệp đầu tiên, không tham gia nghiệp vụ nội bộ công ty",
         "isSystem": true,
-        "grantPolicy": "SYSTEM_ONLY"
+        "grantPolicy": "SYSTEM_ONLY",
+        "allowedScopeTypes": ["COMPANY"]
       },
       {
         "id": 7,
@@ -255,7 +281,8 @@ Endpoint sử dụng các tham số [phân trang](#phân-trang) chung.
         "name": "Quản trị phân quyền",
         "description": "Quản lý vai trò tùy chỉnh trong doanh nghiệp",
         "isSystem": false,
-        "grantPolicy": "OWNER_APPROVAL"
+        "grantPolicy": "OWNER_APPROVAL",
+        "allowedScopeTypes": ["SELF", "COMPANY", "ORG_UNIT", "LOCATION"]
       }
     ],
     "totalElements": 2,
@@ -292,7 +319,8 @@ Lấy chi tiết một role chưa bị xóa mềm.
     "name": "Quản trị phân quyền",
     "description": "Quản lý vai trò tùy chỉnh trong doanh nghiệp",
     "isSystem": false,
-    "grantPolicy": "OWNER_APPROVAL"
+    "grantPolicy": "OWNER_APPROVAL",
+    "allowedScopeTypes": ["SELF", "COMPANY", "ORG_UNIT", "LOCATION"]
   },
   "error": null
 }
@@ -340,7 +368,8 @@ Cập nhật tên, mô tả và chính sách cấp của custom role. System rol
     "name": "Quản trị role và permission",
     "description": "Mô tả mới",
     "isSystem": false,
-    "grantPolicy": "HR_ASSIGNABLE"
+    "grantPolicy": "HR_ASSIGNABLE",
+    "allowedScopeTypes": ["SELF", "COMPANY", "ORG_UNIT", "LOCATION"]
   },
   "error": null
 }
@@ -403,6 +432,7 @@ Lấy toàn bộ permission đã gán cho một role. Danh sách không phân tr
       "module": "RBAC",
       "description": "Xem danh mục quyền và quản lý vai trò tùy chỉnh cùng quan hệ phân quyền",
       "assignmentPolicy": "DELEGABLE",
+      "companyWide": false,
       "isActive": true
     }
   ],
@@ -464,6 +494,7 @@ API lưu quan hệ ngay cả khi permission đang inactive. Role chưa bị xóa
 | 404 | `PERMISSION_NOT_FOUND` | Permission không tồn tại |
 | 404 | `RESOURCE_NOT_FOUND` | Account trong claim `accountId` không còn tồn tại |
 | 409 | `CONFLICT` | Permission đã được gán, permission là `SYSTEM_ONLY` hoặc role đích là system role |
+| 409 | `ROLE_SCOPE_CONFLICT` | Permission `companyWide` nhưng role đang có assignment scope hẹp hơn `COMPANY` |
 
 ---
 
@@ -503,6 +534,7 @@ API lưu quan hệ ngay cả khi permission đang inactive. Role chưa bị xóa
       "module": "EMPLOYEE",
       "description": "Xem chi tiết hồ sơ nhân viên trong phạm vi được phân công",
       "assignmentPolicy": "DELEGABLE",
+      "companyWide": false,
       "isActive": true
     }
   ],
@@ -521,6 +553,7 @@ API lưu quan hệ ngay cả khi permission đang inactive. Role chưa bị xóa
 | 404 | `PERMISSION_NOT_FOUND` | Có permission ID không tồn tại |
 | 404 | `RESOURCE_NOT_FOUND` | Account trong claim `accountId` không còn tồn tại |
 | 409 | `CONFLICT` | Role đích là system role hoặc danh sách chứa permission `SYSTEM_ONLY` |
+| 409 | `ROLE_SCOPE_CONFLICT` | Thêm permission `companyWide` trong khi role đang có assignment scope hẹp hơn `COMPANY` |
 
 ---
 
@@ -582,6 +615,7 @@ GET /api/permissions?module=RBAC&page=0&size=20&sort=code,asc
         "module": "RBAC",
         "description": "Xem danh mục quyền và quản lý vai trò tùy chỉnh cùng quan hệ phân quyền",
         "assignmentPolicy": "DELEGABLE",
+        "companyWide": false,
         "isActive": true
       }
     ],
@@ -620,6 +654,7 @@ Lấy chi tiết một permission.
     "module": "EMPLOYEE",
     "description": "Cho phép xuất danh sách nhân viên trong phạm vi được giao",
     "assignmentPolicy": "DELEGABLE",
+    "companyWide": false,
     "isActive": true
   },
   "error": null
@@ -680,7 +715,8 @@ không có trong bảng vì permission của chúng do người có `rbac.manage
 
 Ký hiệu cột: **EMP** `EMPLOYEE`, **HRM** `HR_MANAGER`, **MGR** `MANAGER`, **PAC** `PAYROLL_ACCOUNTANT`,
 **PAP** `PAYROLL_APPROVER`, **DIR** `DIRECTOR`, **CO** `COMPANY_OWNER`, **SA** `SYSTEM_ADMIN`.
-Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho custom role.
+Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho custom role. Permission đánh dấu `(C)` có
+`companyWide=true`: role chứa nó chỉ được gán với scope `COMPANY` (xem [Permission toàn công ty](#permission-toàn-công-ty-và-scope-của-role)).
 
 ### Module `EMPLOYEE`
 
@@ -696,7 +732,7 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 | `employee.assignment.read` | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `employee.assignment.manage` | | ✓ | | | | ✓ | ✓ | |
 | `employee.lifecycle.manage` | | ✓ | | | | ✓ | ✓ | |
-| `employee.lifecycle.approve` | | | | | | ✓ | | |
+| `employee.lifecycle.approve` `(C)` | | | | | | ✓ | | |
 | `employee.delete` | | ✓ | | | | ✓ | ✓ | |
 | `employee.sensitive.read` | | ✓ | | | | | | |
 | `employee.sensitive.manage` | | ✓ | | | | | | |
@@ -705,27 +741,27 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 
 | Permission | EMP | HRM | MGR | PAC | PAP | DIR | CO | SA |
 |:-----------|:---:|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
-| `account.read` | | | | | | | ✓ | ✓ |
-| `account.manage` | | | | | | | ✓ | ✓ |
+| `account.read` `(C)` | | | | | | | ✓ | ✓ |
+| `account.manage` `(C)` | | | | | | | ✓ | ✓ |
 | `account.provision` | | ✓ | | | | | ✓ | ✓ |
-| `account.activation.manage` | | | | | | | ✓ | ✓ |
-| `account.role.assign` | | | | | | | ✓ | |
+| `account.activation.manage` `(C)` | | | | | | | ✓ | ✓ |
+| `account.role.assign` `(C)` | | | | | | | ✓ | |
 | `role.assignment.request` | | ✓ | | | | | | |
-| `role.assignment.approve` `(S)` | | | | | | | ✓ | |
-| `account.permission.override.manage` `(S)` | | | | | | | ✓ | |
-| `system.rate_limit.read` `(S)` | | | | | | | | ✓ |
-| `system.rate_limit.manage` `(S)` | | | | | | | | ✓ |
-| `system.traffic.read` `(S)` | | | | | | | | ✓ |
+| `role.assignment.approve` `(S)` `(C)` | | | | | | | ✓ | |
+| `account.permission.override.manage` `(S)` `(C)` | | | | | | | ✓ | |
+| `system.rate_limit.read` `(S)` `(C)` | | | | | | | | ✓ |
+| `system.rate_limit.manage` `(S)` `(C)` | | | | | | | | ✓ |
+| `system.traffic.read` `(S)` `(C)` | | | | | | | | ✓ |
 
 ### Module `ORGANIZATION`
 
 | Permission | EMP | HRM | MGR | PAC | PAP | DIR | CO | SA |
 |:-----------|:---:|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
 | `organization.read` | | ✓ | ✓ | | | ✓ | ✓ | ✓ |
-| `organization.manage` | | | | | | | ✓ | ✓ |
-| `organization.change.approve` | | | | | | ✓ | | |
-| `organization.company_owner.bootstrap` `(S)` | | | | | | | | ✓ |
-| `company.manage` `(S)` | | | | | | | ✓ | |
+| `organization.manage` `(C)` | | | | | | | ✓ | ✓ |
+| `organization.change.approve` `(C)` | | | | | | ✓ | | |
+| `organization.company_owner.bootstrap` `(S)` `(C)` | | | | | | | | ✓ |
+| `company.manage` `(S)` `(C)` | | | | | | | ✓ | |
 
 ### Module `REQUEST`
 
@@ -735,7 +771,7 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 | `request.self.create` | ✓ | | | | | | | |
 | `request.self.cancel` | ✓ | | | | | | | |
 | `request.read` | | ✓ | ✓ | | | ✓ | ✓ | |
-| `request.final_approve` | | | | | | ✓ | | |
+| `request.final_approve` `(C)` | | | | | | ✓ | | |
 | `request.manage` | | ✓ | | | | | | |
 
 ### Module `ATTENDANCE`
@@ -755,10 +791,10 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 | `payroll.self.print` | ✓ | | | | | | | |
 | `compensation.read` | | ✓ | | ✓ | | ✓ | ✓ | |
 | `compensation.manage` | | ✓ | | ✓ | | | | |
-| `payroll.calculate` | | | | ✓ | | | | |
-| `payroll.approve` | | | | | ✓ | | | |
-| `payroll.mark_paid` | | | | | ✓ | | | |
-| `payroll.lock` | | | | | ✓ | | | |
+| `payroll.calculate` `(C)` | | | | ✓ | | | | |
+| `payroll.approve` `(C)` | | | | | ✓ | | | |
+| `payroll.mark_paid` `(C)` | | | | | ✓ | | | |
+| `payroll.lock` `(C)` | | | | | ✓ | | | |
 
 ### Module `REPORT`
 
@@ -771,7 +807,7 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 
 | Permission | EMP | HRM | MGR | PAC | PAP | DIR | CO | SA |
 |:-----------|:---:|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
-| `rbac.manage` | | | | | | | ✓ | ✓ |
+| `rbac.manage` `(C)` | | | | | | | ✓ | ✓ |
 
 ### Tổng số permission mỗi role
 

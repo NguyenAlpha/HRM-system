@@ -31,6 +31,10 @@ const PERMISSION_MODULE_SET: Record<PermissionModule, true> = {
 }
 export const PERMISSION_MODULES = Object.keys(PERMISSION_MODULE_SET) as PermissionModule[]
 
+// Tooltip of the "Toàn công ty" badge; the API only assigns a role holding such a permission with COMPANY scope.
+export const COMPANY_WIDE_PERMISSION_HINT =
+  "Việc chung của cả công ty, không chia theo đơn vị hay địa điểm: vai trò có quyền này chỉ gán được với phạm vi toàn công ty."
+
 export function rbacRequest<T>(portal: Portal, path: string, init?: RequestInit): Promise<T> {
   return authorizedRequest<T>(portal, `/rbac${path}`, { ...init, cache: "no-store" })
 }

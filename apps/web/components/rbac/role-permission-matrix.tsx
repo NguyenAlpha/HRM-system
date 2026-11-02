@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import type { Portal } from "@/lib/auth/types"
 import {
+  COMPANY_WIDE_PERMISSION_HINT,
   getPermissionOptions,
   PERMISSION_MODULES,
   rbacRequest,
@@ -157,6 +158,9 @@ export function RolePermissionMatrix({ portal, onSessionExpired }: { portal: Por
                         <td className="sticky left-0 z-10 border-b bg-background px-3 py-2">
                           <span className="flex flex-wrap items-center gap-1.5 font-medium">
                             {permission.name}
+                            {permission.companyWide && (
+                              <Badge variant="outline" title={COMPANY_WIDE_PERMISSION_HINT}>Toàn công ty</Badge>
+                            )}
                             {!permission.isActive && <Badge variant="outline">tạm tắt</Badge>}
                           </span>
                           <code className="block text-xs text-muted-foreground">{permission.code}</code>

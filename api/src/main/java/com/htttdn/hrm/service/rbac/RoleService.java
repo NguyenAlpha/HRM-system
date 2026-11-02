@@ -2,6 +2,7 @@ package com.htttdn.hrm.service.rbac;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -35,6 +36,7 @@ import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
+import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.PermissionRepository;
 import com.htttdn.hrm.repository.RolePermissionRepository;
 import com.htttdn.hrm.repository.RoleRepository;
@@ -62,8 +64,10 @@ public class RoleService {
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final RolePermissionRepository rolePermissionRepository;
+    private final AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     private final CurrentAccountProvider currentAccountProvider;
     private final AccountRoleAssignmentCommandService roleAssignmentCommandService;
+    private final RoleAssignmentPolicy roleAssignmentPolicy;
     private final Clock clock;
 
     /**
@@ -184,13 +188,17 @@ public class RoleService {
      * @param request permission cần thêm
      * @throws com.htttdn.hrm.exception.ResourceNotFoundException role hoặc permission không có (→ 404)
      * @throws ConflictException role hệ thống, permission {@code SYSTEM_ONLY}, hoặc role đã có permission này
-     *         (→ 409 {@code CONFLICT})
+     *         (→ 409 {@code CONFLICT}); permission toàn công ty cho role đang gán theo phạm vi hẹp hơn
+     *         (→ 409 {@code ROLE_SCOPE_CONFLICT})
      */
     public void grantPermission(Long roleId, GrantPermissionRequest request) {
         Role role = roleRepository.getRequired(roleId);
         rejectSystemRolePermissionChange(role);
         Permission permission = permissionRepository.getRequired(request.permissionId());
         rejectNonDelegablePermission(permission, "permissionId");
+        if (permission.isCompanyWide()) {
+            rejectNarrowerAssignments(role, "permissionId");
+        }
 
         RolePermissionId id = new RolePermissionId(roleId, request.permissionId());
         if (rolePermissionRepository.existsById(id)) {
@@ -220,7 +228,8 @@ public class RoleService {
      * @return permission của role sau khi lưu, sắp theo mã
      * @throws com.htttdn.hrm.exception.ResourceNotFoundException role hoặc một permission không có
      *         (→ 404 {@code ROLE_NOT_FOUND} / {@code PERMISSION_NOT_FOUND})
-     * @throws ConflictException role hệ thống hoặc có permission {@code SYSTEM_ONLY} (→ 409 {@code CONFLICT})
+     * @throws ConflictException role hệ thống hoặc có permission {@code SYSTEM_ONLY} (→ 409 {@code CONFLICT});
+     *         thêm permission toàn công ty cho role đang gán theo phạm vi hẹp hơn (→ 409 {@code ROLE_SCOPE_CONFLICT})
      */
     public List<PermissionResponse> replacePermissions(
         Long roleId,
@@ -270,6 +279,9 @@ public class RoleService {
                 .createdByAccount(grantedBy)
                 .build())
             .toList();
+        if (addedMappings.stream().anyMatch(mapping -> mapping.getPermission().isCompanyWide())) {
+            rejectNarrowerAssignments(role, "permissionIds");
+        }
         if (!addedMappings.isEmpty()) {
             rolePermissionRepository.saveAll(addedMappings);
         }
@@ -302,6 +314,23 @@ public class RoleService {
             throw new ConflictException(
                 ErrorCode.CONFLICT,
                 "System role permissions are defined by the application and cannot be modified"
+            );
+        }
+    }
+
+    /**
+     * Permission toàn công ty làm role chỉ gán được {@code COMPANY} ({@link RoleAssignmentPolicy#allowedScopes}), nên
+     * không thêm được khi role còn lần gán theo đơn vị/địa điểm/bản thân chưa hết hạn (→ 409 {@code ROLE_SCOPE_CONFLICT}).
+     */
+    private void rejectNarrowerAssignments(Role role, String field) {
+        if (accountRoleAssignmentRepository.existsCurrentOrFutureNarrowerThanCompanyByRoleId(
+            role.getId(),
+            LocalDate.now(clock)
+        )) {
+            throw new ConflictException(
+                ErrorCode.ROLE_SCOPE_CONFLICT,
+                "Company-wide permissions need COMPANY scope, but this role is assigned with a narrower scope",
+                field
             );
         }
     }
@@ -350,7 +379,8 @@ public class RoleService {
             role.getName(),
             role.getDescription(),
             role.getIsSystem(),
-            role.getGrantPolicy()
+            role.getGrantPolicy(),
+            roleAssignmentPolicy.allowedScopes(role)
         );
     }
 }

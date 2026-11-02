@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import type { Portal } from "@/lib/auth/types"
 import {
+  COMPANY_WIDE_PERMISSION_HINT,
   getPermissionOptions,
   PERMISSION_MODULES,
   rbacMutation,
@@ -56,6 +57,9 @@ export function RolePermissions({ portal, role, onClose, onSessionExpired }: {
     () => catalog.filter((permission) => permission.assignmentPolicy === "DELEGABLE"),
     [catalog],
   )
+  const selectsCompanyWide = role.isSystem
+    ? assigned.some((permission) => permission.companyWide)
+    : selectablePermissions.some((permission) => permission.companyWide && selectedIds.has(permission.id))
   const displayedPermissions = useMemo(() => {
     const source = role.isSystem ? assigned : selectablePermissions
     const normalizedQuery = query.trim().toLowerCase()
@@ -197,6 +201,11 @@ export function RolePermissions({ portal, role, onClose, onSessionExpired }: {
               </>
             )}
           </div>
+          {selectsCompanyWide && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Vai trò có quyền &ldquo;Toàn công ty&rdquo; nên chỉ gán được với phạm vi toàn công ty.
+            </p>
+          )}
 
           <div className="mt-4 grid gap-4">
             {loading && Array.from({ length: 3 }).map((_, index) => (
@@ -247,6 +256,9 @@ export function RolePermissions({ portal, role, onClose, onSessionExpired }: {
                         <span className="min-w-0">
                           <span className="flex flex-wrap items-center gap-1.5 text-sm font-medium">
                             {permission.name}
+                            {permission.companyWide && (
+                              <Badge variant="outline" title={COMPANY_WIDE_PERMISSION_HINT}>Toàn công ty</Badge>
+                            )}
                             {!permission.isActive && <Badge variant="outline">tạm tắt</Badge>}
                           </span>
                           <code className="mt-0.5 block truncate text-xs text-muted-foreground">{permission.code}</code>

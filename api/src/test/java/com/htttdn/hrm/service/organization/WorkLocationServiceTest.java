@@ -22,6 +22,7 @@ import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.repository.EmployeeAssignmentRepository;
 import com.htttdn.hrm.repository.RoleAssignmentRequestRepository;
 import com.htttdn.hrm.repository.WorkLocationRepository;
+import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 
 @ExtendWith(MockitoExtension.class)
 class WorkLocationServiceTest {
@@ -29,6 +30,7 @@ class WorkLocationServiceTest {
     @Mock private EmployeeAssignmentRepository employeeAssignmentRepository;
     @Mock private AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     @Mock private RoleAssignmentRequestRepository roleAssignmentRequestRepository;
+    @Mock private EmployeeAccessScopeService employeeAccessScopeService;
 
     private final WorkLocation inactiveHeadOffice = WorkLocation.builder().id(1L).code("HO").name("Head office")
         .locationType(LocationType.HEAD_OFFICE).address("1 Street").isActive(false).build();
@@ -59,6 +61,6 @@ class WorkLocationServiceTest {
 
     private WorkLocationService service() {
         return new WorkLocationService(workLocationRepository, employeeAssignmentRepository,
-            accountRoleAssignmentRepository, roleAssignmentRequestRepository, Clock.system(ClockConfig.BUSINESS_ZONE));
+            accountRoleAssignmentRepository, roleAssignmentRequestRepository, employeeAccessScopeService, Clock.system(ClockConfig.BUSINESS_ZONE));
     }
 }

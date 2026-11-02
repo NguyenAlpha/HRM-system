@@ -44,8 +44,9 @@ import {
 import { rbacRequest, type Role } from "@/lib/rbac"
 import {
   assignAccountRoleDirect,
+  COMPANY_ONLY_ROLE_HINT,
+  isCompanyOnly,
   ROLE_SCOPE_LABELS,
-  ROLE_SCOPE_TYPES,
   type AccountRoleAssignment,
   type RoleScopeType,
 } from "@/lib/role-assignment"
@@ -118,11 +119,17 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
     reset,
     control,
     setError,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<GrantValues>({ resolver: zodResolver(grantSchema), defaultValues: EMPTY_VALUES })
 
   const selectedEmployeeId = useWatch({ control, name: "employeeId" })
   const selectedScopeType = useWatch({ control, name: "scopeType" })
+  const selectedRoleCode = useWatch({ control, name: "roleCode" })
+  const selectedRole = useMemo(
+    () => roles.find((role) => role.code === selectedRoleCode) ?? null,
+    [roles, selectedRoleCode],
+  )
   const selectedEmployee = useMemo(
     () => employees.find((employee) => String(employee.id) === selectedEmployeeId) ?? null,
     [employees, selectedEmployeeId],
@@ -133,8 +140,8 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
     [roles],
   )
   const scopeItems = useMemo(
-    () => Object.fromEntries(ROLE_SCOPE_TYPES.map((scope) => [scope, ROLE_SCOPE_LABELS[scope]])),
-    [],
+    () => Object.fromEntries((selectedRole?.allowedScopeTypes ?? []).map((scope) => [scope, ROLE_SCOPE_LABELS[scope]])),
+    [selectedRole],
   )
   const orgUnitItems = useMemo(
     () => Object.fromEntries(orgUnits.map((unit) => [String(unit.id), unit.name])),
@@ -320,7 +327,17 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
               control={control}
               name="roleCode"
               render={({ field }) => (
-                <Select value={field.value} items={roleItems} onValueChange={field.onChange} disabled={loadingOptions}>
+                <Select
+                  value={field.value}
+                  items={roleItems}
+                  onValueChange={(value) => {
+                    field.onChange(value)
+                    // Scopes follow the role's permissions, so pick again from the new role's list.
+                    const role = roles.find((item) => item.code === value)
+                    setValue("scopeType", role?.allowedScopeTypes[0] ?? "")
+                  }}
+                  disabled={loadingOptions}
+                >
                   <SelectTrigger id="grant-role" className="w-full" aria-invalid={!!errors.roleCode}>
                     <SelectValue placeholder={loadingOptions ? "Đang tải..." : "Chọn role..."} />
                   </SelectTrigger>
@@ -335,26 +352,29 @@ export function DirectRoleGrantManager({ portal, onSessionExpired }: { portal: P
             {errors.roleCode && <p className="text-xs font-medium text-destructive">{errors.roleCode.message}</p>}
           </div>
 
-          <div className="grid gap-1.5">
-            <Label htmlFor="grant-scope">Phạm vi</Label>
-            <Controller
-              control={control}
-              name="scopeType"
-              render={({ field }) => (
-                <Select value={field.value} items={scopeItems} onValueChange={field.onChange}>
-                  <SelectTrigger id="grant-scope" className="w-full" aria-invalid={!!errors.scopeType}>
-                    <SelectValue placeholder="Chọn phạm vi..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ROLE_SCOPE_TYPES.map((scope) => (
-                      <SelectItem key={scope} value={scope}>{ROLE_SCOPE_LABELS[scope]}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.scopeType && <p className="text-xs font-medium text-destructive">{errors.scopeType.message}</p>}
-          </div>
+          {selectedRole && (
+            <div className="grid gap-1.5">
+              <Label htmlFor="grant-scope">Phạm vi</Label>
+              <Controller
+                control={control}
+                name="scopeType"
+                render={({ field }) => (
+                  <Select value={field.value} items={scopeItems} onValueChange={field.onChange}>
+                    <SelectTrigger id="grant-scope" className="w-full" aria-invalid={!!errors.scopeType}>
+                      <SelectValue placeholder="Chọn phạm vi..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedRole.allowedScopeTypes.map((scope) => (
+                        <SelectItem key={scope} value={scope}>{ROLE_SCOPE_LABELS[scope]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.scopeType && <p className="text-xs font-medium text-destructive">{errors.scopeType.message}</p>}
+              {isCompanyOnly(selectedRole.allowedScopeTypes) && <p className="text-xs text-muted-foreground">{COMPANY_ONLY_ROLE_HINT}</p>}
+            </div>
+          )}
 
           {selectedScopeType === "ORG_UNIT" && (
             <div className="grid gap-1.5">

@@ -52,8 +52,10 @@ import type { Page } from "@/lib/pagination"
 import {
   approveRoleAssignmentRequest,
   cancelRoleAssignmentRequest,
+  COMPANY_ONLY_ROLE_HINT,
   createRoleAssignmentRequest,
   getAvailableRoles,
+  isCompanyOnly,
   listRoleAssignmentRequests,
   rejectRoleAssignmentRequest,
   ROLE_ASSIGNMENT_STATUS_LABELS,
@@ -513,6 +515,9 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
                     )}
                   />
                   {errors.scopeType && <p className="text-xs font-medium text-destructive">{errors.scopeType.message}</p>}
+                  {isCompanyOnly(selectedRole.allowedScopeTypes) && (
+                    <p className="text-xs text-muted-foreground">{COMPANY_ONLY_ROLE_HINT}</p>
+                  )}
                 </div>
               )}
 

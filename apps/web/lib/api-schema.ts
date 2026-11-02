@@ -3390,6 +3390,7 @@ export interface components {
             /** @enum {string} */
             assignmentPolicy: "DELEGABLE" | "SYSTEM_ONLY";
             code: string;
+            companyWide: boolean;
             description: string;
             /** Format: int64 */
             id: number;
@@ -3626,6 +3627,7 @@ export interface components {
             workLocationName: string | null;
         };
         RoleResponse: {
+            allowedScopeTypes: ("SELF" | "COMPANY" | "ORG_UNIT" | "LOCATION")[];
             code: string;
             description: string | null;
             /** @enum {string} */

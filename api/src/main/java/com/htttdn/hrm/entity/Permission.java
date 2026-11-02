@@ -48,6 +48,10 @@ public class Permission extends AuditedEntity {
     @Column(name = "assignment_policy", nullable = false, length = 20)
     private PermissionAssignmentPolicy assignmentPolicy;
 
+    /** Chỉ có nghĩa ở phạm vi toàn công ty: role chứa permission này chỉ được gán với scope {@code COMPANY}. */
+    @Column(name = "company_wide", nullable = false)
+    private boolean companyWide;
+
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
 }

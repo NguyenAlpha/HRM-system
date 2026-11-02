@@ -16,17 +16,19 @@ trong [RBAC.md](../api/RBAC.md); phạm vi dữ liệu của một lần gán n�
 
 | Role | `grant_policy` | Scope cho phép | Được cấp thế nào |
 |:-----|:---------------|:---------------|:-----------------|
-| `EMPLOYEE` | `AUTO` | `SELF` (khi tự gán) | Tự gán với scope `SELF` khi cấp account cho nhân viên |
-| `MANAGER` | `HR_ASSIGNABLE` | `ORG_UNIT`, `LOCATION` | HR đề xuất là có hiệu lực ngay |
-| `HR_MANAGER` | `OWNER_APPROVAL` | `COMPANY` | HR đề xuất, Company Owner duyệt |
+| `EMPLOYEE` | `AUTO` | Mọi scope; tự gán `SELF` | Tự gán với scope `SELF` khi cấp account cho nhân viên |
+| `MANAGER` | `HR_ASSIGNABLE` | Mọi scope | HR đề xuất là có hiệu lực ngay |
+| `HR_MANAGER` | `OWNER_APPROVAL` | Mọi scope | HR đề xuất, Company Owner duyệt |
 | `PAYROLL_ACCOUNTANT` | `OWNER_APPROVAL` | `COMPANY` | HR đề xuất, Company Owner duyệt |
 | `PAYROLL_APPROVER` | `OWNER_APPROVAL` | `COMPANY` | HR đề xuất, Company Owner duyệt |
 | `DIRECTOR` | `OWNER_APPROVAL` | `COMPANY` | HR đề xuất, Company Owner duyệt; hoặc gán lúc khởi tạo doanh nghiệp |
 | `COMPANY_OWNER` | `SYSTEM_ONLY` | `COMPANY` | Workflow khởi tạo doanh nghiệp của System Admin; sau đó chỉ Owner hiện tại [chuyển giao](../api/COMPANY_OWNER_TRANSFER.md) |
-| `SYSTEM_ADMIN` | `SYSTEM_ONLY` | — | Chỉ seeder |
+| `SYSTEM_ADMIN` | `SYSTEM_ONLY` | `COMPANY` | Chỉ seeder |
 
-Scope cho phép của system role khai báo trong `RoleAssignmentPolicy.SYSTEM_ROLE_SCOPES`. Custom role (do Company Owner
-tạo) nhận mọi scope.
+Scope cho phép không khai báo theo từng role mà suy ra từ permission (`RoleAssignmentPolicy.allowedScopes`), như nhau cho
+system role và custom role: role có permission `companyWide` (VD `payroll.calculate`, `organization.manage`, phê duyệt
+cuối) chỉ gán được `COMPANY`, role khác nhận mọi scope. Chọn scope nào cho role làm việc theo từng nhân viên là quyết định
+nghiệp vụ của người gán. Xem [RBAC: Permission toàn công ty](../api/RBAC.md#permission-toàn-công-ty-và-scope-của-role).
 
 ## 3. Các đường cấp role
 
@@ -82,7 +84,7 @@ override đều thu hồi refresh token của account. Endpoint: [ACCOUNT_PERMIS
 
 ## Code
 
-- [`RoleAssignmentPolicy`](../../src/main/java/com/htttdn/hrm/service/RoleAssignmentPolicy.java): scope cho phép của từng role
+- [`RoleAssignmentPolicy`](../../src/main/java/com/htttdn/hrm/service/RoleAssignmentPolicy.java): scope cho phép của role, suy ra từ permission
 - [`AccountRoleAssignmentCommandService`](../../src/main/java/com/htttdn/hrm/service/AccountRoleAssignmentCommandService.java): `validateGrantPolicy`, `revoke`
 - [`RoleAssignmentRequestService`](../../src/main/java/com/htttdn/hrm/service/RoleAssignmentRequestService.java): `create`, `createRevocation`, `approve`
 - [`CompanyOwnerAccountGuard`](../../src/main/java/com/htttdn/hrm/service/CompanyOwnerAccountGuard.java)

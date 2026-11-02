@@ -97,6 +97,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   DIRECTOR_ALREADY_ASSIGNED:
     "Công ty đã có Giám đốc trong khoảng thời gian này. Hãy thu hồi vai trò Giám đốc hiện tại trước khi bổ nhiệm người mới.",
   ROLE_ASSIGNMENT_NOT_ALLOWED: "Không được phép gán vai trò này.",
+  ROLE_SCOPE_CONFLICT:
+    "Vai trò đang được gán theo đơn vị, địa điểm hoặc bản thân, nên không thêm được quyền chỉ áp dụng toàn công ty. Hãy thu hồi các lần gán đó hoặc tạo vai trò riêng.",
   ROLE_ASSIGNMENT_REQUEST_NOT_FOUND: "Không tìm thấy đề xuất.",
   ROLE_ASSIGNMENT_REQUEST_EXISTS: "Đã có đề xuất tương tự đang chờ duyệt.",
   ROLE_ASSIGNMENT_REQUEST_ALREADY_PROCESSED: "Đề xuất này đã được xử lý.",

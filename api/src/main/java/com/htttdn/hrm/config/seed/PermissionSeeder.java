@@ -21,8 +21,14 @@ import lombok.RequiredArgsConstructor;
  * Khởi tạo catalog permission chuẩn được API sử dụng để phân quyền.
  *
  * <p>Permission code được lưu nguyên dạng authority, ví dụ {@code employee.read}; không thêm
- * prefix {@code ROLE_}. Seeder tạo permission còn thiếu, đồng bộ tên, mô tả và chính sách gán
+ * prefix {@code ROLE_}. Seeder tạo permission còn thiếu, đồng bộ tên, mô tả, chính sách gán và cờ toàn công ty
  * chuẩn, đồng thời từ chối chạy nếu một code chuẩn đã tồn tại với module sai hoặc đã bị vô hiệu hóa.
+ *
+ * <p>{@link PermissionDefinition#companyWideOnly} đánh dấu permission mà mọi thao tác là việc chung cả công ty
+ * (kỳ lương, danh mục tổ chức, tài khoản, RBAC, phê duyệt cuối), không chia theo đơn vị/địa điểm được. Role chứa
+ * permission này chỉ gán được với scope {@code COMPANY} ({@code RoleAssignmentPolicy}). Permission có thao tác
+ * theo từng nhân viên thì không đánh dấu, kể cả khi vài thao tác của nó cần toàn công ty (VD {@code attendance.manage}
+ * tạo công cả tháng): các thao tác đó tự gọi {@code EmployeeAccessScopeService.requireCompanyWide}.
  */
 @Component
 @Order(200)
@@ -50,15 +56,15 @@ public class PermissionSeeder implements ApplicationRunner {
             "Phê duyệt vòng đời nhân viên",
             PermissionModule.EMPLOYEE,
             "Phê duyệt cuối các nghiệp vụ trong vòng đời nhân viên"
-        ),
+        ).companyWideOnly(),
 
-        permission("account.read", "Xem tài khoản", PermissionModule.ACCOUNT, "Xem các tài khoản đăng nhập trong hệ thống"),
+        permission("account.read", "Xem tài khoản", PermissionModule.ACCOUNT, "Xem các tài khoản đăng nhập trong hệ thống").companyWideOnly(),
         permission(
             "account.manage",
             "Quản lý tài khoản",
             PermissionModule.ACCOUNT,
             "Khóa, mở lại và quản lý trạng thái tài khoản đăng nhập"
-        ),
+        ).companyWideOnly(),
         permission(
             "account.provision",
             "Cấp tài khoản nhân viên",
@@ -70,8 +76,8 @@ public class PermissionSeeder implements ApplicationRunner {
             "Quản lý kích hoạt tài khoản",
             PermissionModule.ACCOUNT,
             "Quản lý kích hoạt tài khoản và khôi phục mật khẩu"
-        ),
-        permission("account.role.assign", "Phân quyền tài khoản", PermissionModule.ACCOUNT, "Gán và thu hồi vai trò của tài khoản"),
+        ).companyWideOnly(),
+        permission("account.role.assign", "Phân quyền tài khoản", PermissionModule.ACCOUNT, "Gán và thu hồi vai trò của tài khoản").companyWideOnly(),
         permission(
             "role.assignment.request",
             "Đề xuất cấp vai trò",
@@ -83,31 +89,31 @@ public class PermissionSeeder implements ApplicationRunner {
             "Quản lý ngoại lệ quyền tài khoản",
             PermissionModule.ACCOUNT,
             "Cấp và thu hồi ngoại lệ quyền trên từng lần gán vai trò"
-        ),
+        ).companyWideOnly(),
         systemPermission(
             "role.assignment.approve",
             "Phê duyệt cấp vai trò",
             PermissionModule.ACCOUNT,
             "Phê duyệt hoặc từ chối yêu cầu cấp vai trò nghiệp vụ cho tài khoản nhân viên"
-        ),
+        ).companyWideOnly(),
         systemPermission(
             "system.rate_limit.read",
             "Xem thống kê giới hạn truy cập",
             PermissionModule.ACCOUNT,
             "Xem cấu hình giới hạn truy cập API và số request bị chặn theo IP, tài khoản"
-        ),
+        ).companyWideOnly(),
         systemPermission(
             "system.rate_limit.manage",
             "Chỉnh giới hạn truy cập",
             PermissionModule.ACCOUNT,
             "Sửa hạn mức, bật/tắt từng mức giới hạn truy cập API và khôi phục giá trị mặc định"
-        ),
+        ).companyWideOnly(),
         systemPermission(
             "system.traffic.read",
             "Xem lưu lượng API",
             PermissionModule.ACCOUNT,
             "Xem số request, thời gian xử lý và số lỗi của từng API từ lần khởi động gần nhất"
-        ),
+        ).companyWideOnly(),
 
         permission(
             "organization.read",
@@ -120,30 +126,30 @@ public class PermissionSeeder implements ApplicationRunner {
             "Quản lý danh mục tổ chức",
             PermissionModule.ORGANIZATION,
             "Tạo, cập nhật, ngừng sử dụng và xóa mềm danh mục tổ chức và ca làm việc"
-        ),
+        ).companyWideOnly(),
         permission(
             "organization.change.approve",
             "Phê duyệt thay đổi cơ cấu",
             PermissionModule.ORGANIZATION,
             "Phê duyệt cuối các thay đổi về cơ cấu tổ chức"
-        ),
+        ).companyWideOnly(),
         systemPermission(
             "organization.company_owner.bootstrap",
             "Khởi tạo Chủ sở hữu doanh nghiệp",
             PermissionModule.ORGANIZATION,
             "Khởi tạo tài khoản Chủ sở hữu doanh nghiệp đầu tiên của công ty"
-        ),
+        ).companyWideOnly(),
         systemPermission(
             "company.manage",
             "Cập nhật thông tin doanh nghiệp",
             PermissionModule.ORGANIZATION,
             "Cập nhật tên, mã số thuế, liên hệ và địa chỉ của doanh nghiệp"
-        ),
+        ).companyWideOnly(),
         permission("request.self.read", "Xem đơn cá nhân", PermissionModule.REQUEST, "Xem các đơn từ của chính mình"),
         permission("request.self.create", "Tạo đơn cá nhân", PermissionModule.REQUEST, "Tạo và gửi đơn từ của chính mình"),
         permission("request.self.cancel", "Hủy đơn cá nhân", PermissionModule.REQUEST, "Hủy các đơn của chính mình khi còn đủ điều kiện"),
         permission("request.read", "Xem đơn của nhân viên", PermissionModule.REQUEST, "Xem đơn từ của nhân viên trong phạm vi được phân công"),
-        permission("request.final_approve", "Phê duyệt cuối đơn từ", PermissionModule.REQUEST, "Phê duyệt cuối các đơn từ được trình lên cấp cao hơn"),
+        permission("request.final_approve", "Phê duyệt cuối đơn từ", PermissionModule.REQUEST, "Phê duyệt cuối các đơn từ được trình lên cấp cao hơn").companyWideOnly(),
         permission("request.manage", "Quản lý đơn của nhân viên", PermissionModule.REQUEST, "Quản lý đơn từ của nhân viên trong phạm vi được phân công"),
 
         permission("attendance.self.read", "Xem chấm công cá nhân", PermissionModule.ATTENDANCE, "Xem dữ liệu chấm công của chính mình"),
@@ -155,10 +161,10 @@ public class PermissionSeeder implements ApplicationRunner {
         permission("payroll.self.print", "Tải phiếu lương cá nhân", PermissionModule.PAYROLL, "In hoặc tải phiếu lương của chính mình"),
         permission("compensation.read", "Xem chế độ đãi ngộ", PermissionModule.PAYROLL, "Xem lương và chế độ đãi ngộ trong phạm vi được phân công"),
         permission("compensation.manage", "Quản lý chế độ đãi ngộ", PermissionModule.PAYROLL, "Quản lý lương và chế độ đãi ngộ trong phạm vi được phân công"),
-        permission("payroll.calculate", "Tính bảng lương", PermissionModule.PAYROLL, "Tính toán và kiểm tra bảng lương"),
-        permission("payroll.approve", "Phê duyệt bảng lương", PermissionModule.PAYROLL, "Phê duyệt các kỳ lương"),
-        permission("payroll.mark_paid", "Xác nhận đã trả lương", PermissionModule.PAYROLL, "Đánh dấu bảng lương đã được thanh toán"),
-        permission("payroll.lock", "Khóa kỳ lương", PermissionModule.PAYROLL, "Khóa các kỳ lương đã hoàn tất"),
+        permission("payroll.calculate", "Tính bảng lương", PermissionModule.PAYROLL, "Tính toán và kiểm tra bảng lương").companyWideOnly(),
+        permission("payroll.approve", "Phê duyệt bảng lương", PermissionModule.PAYROLL, "Phê duyệt các kỳ lương").companyWideOnly(),
+        permission("payroll.mark_paid", "Xác nhận đã trả lương", PermissionModule.PAYROLL, "Đánh dấu bảng lương đã được thanh toán").companyWideOnly(),
+        permission("payroll.lock", "Khóa kỳ lương", PermissionModule.PAYROLL, "Khóa các kỳ lương đã hoàn tất").companyWideOnly(),
 
         permission("report.hr.read", "Xem báo cáo nhân sự", PermissionModule.REPORT, "Xem các báo cáo về nhân sự"),
         permission("report.payroll.read", "Xem báo cáo tiền lương", PermissionModule.REPORT, "Xem các báo cáo về tiền lương"),
@@ -167,7 +173,7 @@ public class PermissionSeeder implements ApplicationRunner {
             "Quản lý phân quyền",
             PermissionModule.RBAC,
             "Xem danh mục quyền và quản lý vai trò tùy chỉnh cùng quan hệ phân quyền"
-        )
+        ).companyWideOnly()
     );
 
     private final PermissionRepository permissionRepository;
@@ -188,6 +194,7 @@ public class PermissionSeeder implements ApplicationRunner {
                 .module(definition.module())
                 .description(definition.description())
                 .assignmentPolicy(definition.assignmentPolicy())
+                .companyWide(definition.companyWide())
                 .isActive(true)
                 .build());
             createdCount++;
@@ -204,12 +211,14 @@ public class PermissionSeeder implements ApplicationRunner {
         }
         if (permission.getName().equals(definition.name())
             && permission.getDescription().equals(definition.description())
-            && permission.getAssignmentPolicy() == definition.assignmentPolicy()) {
+            && permission.getAssignmentPolicy() == definition.assignmentPolicy()
+            && permission.isCompanyWide() == definition.companyWide()) {
             return;
         }
         permission.setName(definition.name());
         permission.setDescription(definition.description());
         permission.setAssignmentPolicy(definition.assignmentPolicy());
+        permission.setCompanyWide(definition.companyWide());
     }
 
     private static PermissionDefinition permission(
@@ -223,7 +232,8 @@ public class PermissionSeeder implements ApplicationRunner {
             name,
             module,
             description,
-            PermissionAssignmentPolicy.DELEGABLE
+            PermissionAssignmentPolicy.DELEGABLE,
+            false
         );
     }
 
@@ -238,7 +248,8 @@ public class PermissionSeeder implements ApplicationRunner {
             name,
             module,
             description,
-            PermissionAssignmentPolicy.SYSTEM_ONLY
+            PermissionAssignmentPolicy.SYSTEM_ONLY,
+            false
         );
     }
 
@@ -247,7 +258,12 @@ public class PermissionSeeder implements ApplicationRunner {
         String name,
         PermissionModule module,
         String description,
-        PermissionAssignmentPolicy assignmentPolicy
+        PermissionAssignmentPolicy assignmentPolicy,
+        boolean companyWide
     ) {
+        /** Bản sao đánh dấu permission chỉ có nghĩa ở phạm vi toàn công ty. */
+        PermissionDefinition companyWideOnly() {
+            return new PermissionDefinition(code, name, module, description, assignmentPolicy, true);
+        }
     }
 }

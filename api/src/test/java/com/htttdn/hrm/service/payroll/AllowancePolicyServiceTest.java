@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Account;
 import com.htttdn.hrm.entity.JobPosition;
 import com.htttdn.hrm.entity.PayrollPeriod;
@@ -20,6 +21,7 @@ import com.htttdn.hrm.entity.SeniorityAllowanceRule;
 import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
 import com.htttdn.hrm.exception.BusinessException;
 import com.htttdn.hrm.exception.ConflictException;
+import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.repository.AccountRepository;
 import com.htttdn.hrm.repository.JobPositionRepository;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
@@ -28,12 +30,14 @@ import com.htttdn.hrm.repository.PayslipRepository;
 import com.htttdn.hrm.repository.PositionAllowanceRuleRepository;
 import com.htttdn.hrm.repository.SeniorityAllowanceRuleRepository;
 import com.htttdn.hrm.security.CurrentAccountProvider;
+import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -51,6 +55,7 @@ class AllowancePolicyServiceTest {
     @Mock private PayslipItemRepository payslipItemRepository;
     @Mock private AccountRepository accountRepository;
     @Mock private CurrentAccountProvider currentAccountProvider;
+    @Mock private EmployeeAccessScopeService employeeAccessScopeService;
 
     @Test
     void setPositionAllowanceInvalidatesCalculatedPeriodAndRemovesStalePayslip() {
@@ -87,6 +92,20 @@ class AllowancePolicyServiceTest {
         assertThrows(ConflictException.class, () -> service().setPositionAllowance(3L,
             new AllowancePolicyService.SetPositionAllowanceCommand(new BigDecimal("5000000"), SEPTEMBER, null)));
         verify(positionRuleRepository, never()).save(any());
+    }
+
+    @Test
+    void allowancePoliciesNeedCompensationManageAcrossTheWholeCompany() {
+        // Allowance rules apply to everyone, so compensation.manage held only for a unit or location is not enough.
+        doThrow(new ForbiddenException(ErrorCode.FORBIDDEN, "COMPANY scope required"))
+            .when(employeeAccessScopeService).requireCompanyWide("compensation.manage");
+
+        assertThrows(ForbiddenException.class, () -> service().setPositionAllowance(3L,
+            new AllowancePolicyService.SetPositionAllowanceCommand(new BigDecimal("5000000"), SEPTEMBER, null)));
+        assertThrows(ForbiddenException.class, () -> service().setSeniorityAllowances(table(
+            tier(0, 5, "5"), tier(5, null, "7"))));
+        verify(positionRuleRepository, never()).save(any());
+        verify(seniorityRuleRepository, never()).save(any());
     }
 
     @Test
@@ -154,6 +173,7 @@ class AllowancePolicyServiceTest {
             jobPositionRepository,
             currentAccountProvider,
             new PayrollPeriodInvalidator(payrollPeriodRepository, payslipRepository, payslipItemRepository),
+            employeeAccessScopeService,
             Clock.system(ClockConfig.BUSINESS_ZONE)
         );
     }

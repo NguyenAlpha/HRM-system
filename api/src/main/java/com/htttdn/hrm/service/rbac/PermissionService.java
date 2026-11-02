@@ -53,6 +53,7 @@ public class PermissionService {
             permission.getModule(),
             permission.getDescription(),
             permission.getAssignmentPolicy(),
+            permission.isCompanyWide(),
             permission.getIsActive()
         );
     }

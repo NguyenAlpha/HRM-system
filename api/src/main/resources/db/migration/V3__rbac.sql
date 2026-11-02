@@ -11,9 +11,12 @@ CREATE TABLE permissions (
     description TEXT NOT NULL,
     -- Phân biệt permission có thể gán cho custom role và permission dành riêng cho system role.
     assignment_policy VARCHAR(20) NOT NULL,
+    -- true: thao tác của permission là việc chung cả công ty (kỳ lương, danh mục tổ chức…), không chia theo
+    -- đơn vị/địa điểm; role chứa permission này chỉ được gán với scope COMPANY.
+    company_wide BOOLEAN NOT NULL DEFAULT false,
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    -- PermissionSeeder cập nhật khi name, description hoặc assignment_policy trong code thay đổi.
+    -- PermissionSeeder cập nhật khi name, description, assignment_policy hoặc company_wide trong code thay đổi.
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     -- Keep the database constraint aligned with PermissionModule and the seeded catalog.
     CONSTRAINT chk_permissions_module CHECK (
