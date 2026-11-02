@@ -25,7 +25,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** GET /api/system/traffic/stats: who may read it, what it counts, and no /actuator exposure. */
 @SpringBootTest(properties = {
     "company.seed.enabled=false",
-    "rbac.seed.enabled=false",
     "admin.seed.enabled=false",
     "owner.seed.enabled=false",
     "staff.seed.enabled=false",

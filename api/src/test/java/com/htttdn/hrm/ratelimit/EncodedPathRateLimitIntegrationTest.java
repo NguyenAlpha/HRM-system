@@ -18,7 +18,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
     "company.seed.enabled=false",
-    "rbac.seed.enabled=false",
     "admin.seed.enabled=false",
     "owner.seed.enabled=false",
     "staff.seed.enabled=false",

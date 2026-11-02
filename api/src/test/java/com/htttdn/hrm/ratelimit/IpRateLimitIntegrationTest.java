@@ -19,7 +19,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** The per-IP layer in front of Spring Security, with the real filter chain. */
 @SpringBootTest(properties = {
     "company.seed.enabled=false",
-    "rbac.seed.enabled=false",
     "admin.seed.enabled=false",
     "owner.seed.enabled=false",
     "staff.seed.enabled=false",

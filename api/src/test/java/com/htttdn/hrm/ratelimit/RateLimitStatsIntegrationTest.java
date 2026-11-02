@@ -23,7 +23,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** GET /api/system/rate-limit/stats: who may read it and what it reports. */
 @SpringBootTest(properties = {
     "company.seed.enabled=false",
-    "rbac.seed.enabled=false",
     "admin.seed.enabled=false",
     "owner.seed.enabled=false",
     "staff.seed.enabled=false",

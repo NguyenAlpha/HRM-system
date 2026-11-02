@@ -172,15 +172,10 @@ public class RolePermissionSeeder implements ApplicationRunner {
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final RolePermissionRepository rolePermissionRepository;
-    private final RbacSeedProperties properties;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (!properties.enabled()) {
-            return;
-        }
-
         int createdCount = 0;
         List<RolePermission> invalidCustomMappings = rolePermissionRepository.findAll().stream()
             .filter(mapping -> !Boolean.TRUE.equals(mapping.getRole().getIsSystem()))

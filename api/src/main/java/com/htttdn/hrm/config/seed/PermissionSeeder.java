@@ -171,15 +171,10 @@ public class PermissionSeeder implements ApplicationRunner {
     );
 
     private final PermissionRepository permissionRepository;
-    private final RbacSeedProperties properties;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (!properties.enabled()) {
-            return;
-        }
-
         int createdCount = 0;
         for (PermissionDefinition definition : DEFAULT_PERMISSIONS) {
             Permission existingPermission = permissionRepository.findByCode(definition.code()).orElse(null);

@@ -23,7 +23,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** The per-user layer after JWT verification, with real signed tokens. */
 @SpringBootTest(properties = {
     "company.seed.enabled=false",
-    "rbac.seed.enabled=false",
     "admin.seed.enabled=false",
     "owner.seed.enabled=false",
     "staff.seed.enabled=false",

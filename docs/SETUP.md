@@ -113,7 +113,6 @@ phải khai báo thêm biến môi trường.
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3000` | Origin được phép gọi API |
 | `API_DOCS_ENABLED` | `true` | Bật `/v3/api-docs` và Swagger UI; đặt `false` ngoài môi trường phát triển |
 | `COMPANY_SEED_ENABLED` | `true` | Seed company profile, work locations, organization units và job positions cơ bản |
-| `RBAC_SEED_ENABLED` | `true` | Seed role, permission và mapping |
 | `ADMIN_SEED_ENABLED` | `true` | Seed system admin |
 
 Thông tin admin có thể được thay bằng:

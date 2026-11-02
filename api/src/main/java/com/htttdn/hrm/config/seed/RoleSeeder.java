@@ -82,15 +82,10 @@ public class RoleSeeder implements ApplicationRunner {
     );
 
     private final RoleRepository roleRepository;
-    private final RbacSeedProperties properties;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (!properties.enabled()) {
-            return;
-        }
-
         int createdCount = 0;
         for (RoleDefinition definition : DEFAULT_ROLES) {
             Role existingRole = roleRepository.findByCodeAndDeletedAtIsNull(definition.code()).orElse(null);
