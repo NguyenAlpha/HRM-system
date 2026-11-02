@@ -43,7 +43,6 @@ class EmployeeLifecycleAccessTest {
     @CsvSource({
         "employee.update",
         "employee.probation.confirm",
-        "employee.lifecycle.approve",
         "NONE"
     })
     void employmentEndIsDeniedWithoutLifecycleManagePermission(String permission) throws Exception {

@@ -19,7 +19,8 @@ import lombok.RequiredArgsConstructor;
  *
  * <p>Phạm vi được phép suy ra từ permission của role, áp dụng như nhau cho role hệ thống và role tự tạo: role có
  * permission chỉ dùng được ở phạm vi toàn công ty ({@code Permission.companyWide}, VD {@code payroll.calculate})
- * chỉ được gán {@code COMPANY}; role khác được chọn mọi phạm vi. Không có danh sách phạm vi riêng cho từng role.
+ * chỉ được gán {@code COMPANY}; role khác được chọn mọi phạm vi. Ngoại lệ duy nhất là {@link #COMPANY_IDENTITY_ROLES}:
+ * code coi người giữ hai role này là của cả công ty, không phải do permission.
  */
 @Component
 @RequiredArgsConstructor
@@ -31,6 +32,12 @@ public class RoleAssignmentPolicy {
     );
 
     private static final List<RoleScopeType> ALL_SCOPES = List.of(RoleScopeType.values());
+
+    /**
+     * Giám đốc và Chủ sở hữu là người duyệt dự phòng cho mọi nhân viên ({@code ApproverResolver}) và mỗi lúc chỉ có
+     * một người, nên luôn chỉ gán {@code COMPANY} dù permission của role có chia theo phạm vi được.
+     */
+    private static final Set<String> COMPANY_IDENTITY_ROLES = Set.of(SystemRoles.DIRECTOR, SystemRoles.COMPANY_OWNER);
 
     private final RolePermissionRepository rolePermissionRepository;
 
@@ -48,9 +55,10 @@ public class RoleAssignmentPolicy {
         return requiresCompanyScope(role) ? List.of(RoleScopeType.COMPANY) : ALL_SCOPES;
     }
 
-    /** Role có permission nào chỉ dùng được ở phạm vi toàn công ty không. */
+    /** Role chỉ gán được toàn công ty: Giám đốc/Chủ sở hữu, hoặc role có permission chỉ dùng ở phạm vi toàn công ty. */
     public boolean requiresCompanyScope(Role role) {
-        return rolePermissionRepository.existsByIdRoleIdAndPermissionCompanyWideTrue(role.getId());
+        return COMPANY_IDENTITY_ROLES.contains(role.getCode())
+            || rolePermissionRepository.existsByIdRoleIdAndPermissionCompanyWideTrue(role.getId());
     }
 
     /**

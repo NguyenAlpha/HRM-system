@@ -797,42 +797,44 @@ Bảng cấu hình kỹ thuật, không phải dữ liệu nghiệp vụ. Mỗi 
 ### 5.1. Danh mục permission code
 
 Danh mục quyền thuộc sở hữu của code: `PermissionSeeder` là nguồn chuẩn, không thêm permission
-qua API. Catalog hiện có 48 code trên 8 module của `PermissionModule`. Code đánh dấu `(S)` có
+qua API. Catalog hiện có 47 code trên 8 module của `PermissionModule`. Code đánh dấu `(S)` có
 `assignment_policy = SYSTEM_ONLY`, chỉ seeder gán cho system role; các code còn lại là `DELEGABLE`.
 Code có `company_wide = true` là các dòng `(C)` trong [bảng permission của RBAC](../api/RBAC.md#permission-mặc-định-của-system-role).
 
 ```text
-EMPLOYEE (14)
+EMPLOYEE (13)
 profile.self.read                 profile.self.update
 employee.list.read                employee.read
 employee.create                   employee.update
 employee.probation.confirm        employee.delete
 employee.assignment.read          employee.assignment.manage
-employee.lifecycle.manage         employee.lifecycle.approve
+employee.lifecycle.manage
 employee.sensitive.read           employee.sensitive.manage
 
-ACCOUNT (8)
+ACCOUNT (11)
 account.read                      account.manage
 account.provision                 account.activation.manage
 account.role.assign               role.assignment.request
 role.assignment.approve (S)       account.permission.override.manage (S)
+system.rate_limit.read (S)        system.rate_limit.manage (S)
+system.traffic.read (S)
 
-ORGANIZATION (5)
+ORGANIZATION (4)
 organization.read                 organization.manage
-organization.change.approve       organization.company_owner.bootstrap (S)
+organization.company_owner.bootstrap (S)
 company.manage (S)
 
-REQUEST (6)
+REQUEST (5)
 request.self.read                 request.self.create
 request.self.cancel               request.read
-request.final_approve             request.manage
+request.manage
 
 ATTENDANCE (4)
 attendance.self.read              attendance.read
 attendance.manage                 holiday.read
 
-PAYROLL (8)
-payroll.self.read                 payroll.self.print
+PAYROLL (7)
+payroll.self.read
 compensation.read                 compensation.manage
 payroll.calculate                 payroll.approve
 payroll.mark_paid                 payroll.lock

@@ -26,8 +26,9 @@ trong [RBAC.md](../api/RBAC.md); phạm vi dữ liệu của một lần gán n�
 | `SYSTEM_ADMIN` | `SYSTEM_ONLY` | `COMPANY` | Chỉ seeder |
 
 Scope cho phép không khai báo theo từng role mà suy ra từ permission (`RoleAssignmentPolicy.allowedScopes`), như nhau cho
-system role và custom role: role có permission `companyWide` (VD `payroll.calculate`, `organization.manage`, phê duyệt
-cuối) chỉ gán được `COMPANY`, role khác nhận mọi scope. Chọn scope nào cho role làm việc theo từng nhân viên là quyết định
+system role và custom role: role có permission `companyWide` (VD `payroll.calculate`, `organization.manage`) chỉ gán
+được `COMPANY`, role khác nhận mọi scope. Riêng `DIRECTOR` và `COMPANY_OWNER` luôn chỉ `COMPANY` vì code coi người giữ
+chúng là người duyệt dự phòng cho cả công ty. Chọn scope nào cho role làm việc theo từng nhân viên là quyết định
 nghiệp vụ của người gán. Xem [RBAC: Permission toàn công ty](../api/RBAC.md#permission-toàn-công-ty-và-scope-của-role).
 
 ## 3. Các đường cấp role

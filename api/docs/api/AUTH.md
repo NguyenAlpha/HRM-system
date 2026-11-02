@@ -407,13 +407,13 @@ Lấy thông tin account, role và permission hiện hành. Endpoint yêu cầu 
     ],
     "permissions": [
       {
-        "code": "employee.lifecycle.approve",
-        "name": "Phê duyệt vòng đời nhân viên",
+        "code": "employee.read",
+        "name": "Xem chi tiết nhân viên",
         "module": "EMPLOYEE"
       },
       {
-        "code": "request.final_approve",
-        "name": "Phê duyệt cuối đơn từ",
+        "code": "request.read",
+        "name": "Xem đơn của nhân viên",
         "module": "REQUEST"
       }
     ]

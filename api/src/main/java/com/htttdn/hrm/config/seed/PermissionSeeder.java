@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
  * chuẩn, đồng thời từ chối chạy nếu một code chuẩn đã tồn tại với module sai hoặc đã bị vô hiệu hóa.
  *
  * <p>{@link PermissionDefinition#companyWideOnly} đánh dấu permission mà mọi thao tác là việc chung cả công ty
- * (kỳ lương, danh mục tổ chức, tài khoản, RBAC, phê duyệt cuối), không chia theo đơn vị/địa điểm được. Role chứa
+ * (kỳ lương, danh mục tổ chức, tài khoản, RBAC), không chia theo đơn vị/địa điểm được. Role chứa
  * permission này chỉ gán được với scope {@code COMPANY} ({@code RoleAssignmentPolicy}). Permission có thao tác
  * theo từng nhân viên thì không đánh dấu, kể cả khi vài thao tác của nó cần toàn công ty (VD {@code attendance.manage}
  * tạo công cả tháng): các thao tác đó tự gọi {@code EmployeeAccessScopeService.requireCompanyWide}.
@@ -51,12 +51,6 @@ public class PermissionSeeder implements ApplicationRunner {
         permission("employee.delete", "Xóa hồ sơ nhân viên", PermissionModule.EMPLOYEE, "Xóa mềm hồ sơ nhân viên chưa phát sinh dữ liệu nghiệp vụ"),
         permission("employee.sensitive.read", "Xem dữ liệu nhân sự nhạy cảm", PermissionModule.EMPLOYEE, "Xem dữ liệu nhân sự nhạy cảm trong phạm vi được phân công"),
         permission("employee.sensitive.manage", "Quản lý dữ liệu nhân sự nhạy cảm", PermissionModule.EMPLOYEE, "Cập nhật dữ liệu nhân sự nhạy cảm trong phạm vi được phân công"),
-        permission(
-            "employee.lifecycle.approve",
-            "Phê duyệt vòng đời nhân viên",
-            PermissionModule.EMPLOYEE,
-            "Phê duyệt cuối các nghiệp vụ trong vòng đời nhân viên"
-        ).companyWideOnly(),
 
         permission("account.read", "Xem tài khoản", PermissionModule.ACCOUNT, "Xem các tài khoản đăng nhập trong hệ thống").companyWideOnly(),
         permission(
@@ -127,12 +121,6 @@ public class PermissionSeeder implements ApplicationRunner {
             PermissionModule.ORGANIZATION,
             "Tạo, cập nhật, ngừng sử dụng và xóa mềm danh mục tổ chức và ca làm việc"
         ).companyWideOnly(),
-        permission(
-            "organization.change.approve",
-            "Phê duyệt thay đổi cơ cấu",
-            PermissionModule.ORGANIZATION,
-            "Phê duyệt cuối các thay đổi về cơ cấu tổ chức"
-        ).companyWideOnly(),
         systemPermission(
             "organization.company_owner.bootstrap",
             "Khởi tạo Chủ sở hữu doanh nghiệp",
@@ -149,7 +137,6 @@ public class PermissionSeeder implements ApplicationRunner {
         permission("request.self.create", "Tạo đơn cá nhân", PermissionModule.REQUEST, "Tạo và gửi đơn từ của chính mình"),
         permission("request.self.cancel", "Hủy đơn cá nhân", PermissionModule.REQUEST, "Hủy các đơn của chính mình khi còn đủ điều kiện"),
         permission("request.read", "Xem đơn của nhân viên", PermissionModule.REQUEST, "Xem đơn từ của nhân viên trong phạm vi được phân công"),
-        permission("request.final_approve", "Phê duyệt cuối đơn từ", PermissionModule.REQUEST, "Phê duyệt cuối các đơn từ được trình lên cấp cao hơn").companyWideOnly(),
         permission("request.manage", "Quản lý đơn của nhân viên", PermissionModule.REQUEST, "Quản lý đơn từ của nhân viên trong phạm vi được phân công"),
 
         permission("attendance.self.read", "Xem chấm công cá nhân", PermissionModule.ATTENDANCE, "Xem dữ liệu chấm công của chính mình"),
@@ -158,7 +145,6 @@ public class PermissionSeeder implements ApplicationRunner {
         permission("holiday.read", "Xem lịch nghỉ lễ", PermissionModule.ATTENDANCE, "Xem các ngày nghỉ lễ, Tết của công ty"),
 
         permission("payroll.self.read", "Xem phiếu lương cá nhân", PermissionModule.PAYROLL, "Xem phiếu lương của chính mình"),
-        permission("payroll.self.print", "Tải phiếu lương cá nhân", PermissionModule.PAYROLL, "In hoặc tải phiếu lương của chính mình"),
         permission("compensation.read", "Xem chế độ đãi ngộ", PermissionModule.PAYROLL, "Xem lương và chế độ đãi ngộ trong phạm vi được phân công"),
         permission("compensation.manage", "Quản lý chế độ đãi ngộ", PermissionModule.PAYROLL, "Quản lý lương và chế độ đãi ngộ trong phạm vi được phân công"),
         permission("payroll.calculate", "Tính bảng lương", PermissionModule.PAYROLL, "Tính toán và kiểm tra bảng lương").companyWideOnly(),

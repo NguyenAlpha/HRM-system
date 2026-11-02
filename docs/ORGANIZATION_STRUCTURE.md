@@ -185,7 +185,7 @@ Dữ liệu seed được chia theo trách nhiệm và chạy theo `@Order`. M�
 | 80 | `WorkShiftSeeder` | `COMPANY_SEED_ENABLED` | Ca hành chính `OFFICE_DAY` 08:00–17:00 |
 | 90 | `CompanyHolidaySeeder` | `COMPANY_SEED_ENABLED` | Ngày lễ, Tết hưởng nguyên lương năm 2025 và 2026 theo Điều 112 Bộ luật Lao động 2019 (lễ rơi vào Chủ nhật được nghỉ bù); năm đã có ngày lễ nào thì bỏ qua cả năm |
 | 100 | `RoleSeeder` | Luôn chạy | 8 system role |
-| 200 | `PermissionSeeder` | Luôn chạy | Danh mục 48 permission |
+| 200 | `PermissionSeeder` | Luôn chạy | Danh mục 47 permission |
 | 300 | `RolePermissionSeeder` | Luôn chạy | Permission mặc định của từng system role |
 | 400 | `SystemAdminSeeder` | `ADMIN_SEED_ENABLED` (mặc định bật) | Account bootstrap và gán role `SYSTEM_ADMIN` đã có sẵn |
 | 500 | `CompanyOwnerSeeder` | `OWNER_SEED_ENABLED` (mặc định bật) | Company Owner `owner`/`password` (role `COMPANY_OWNER`, `DIRECTOR`, `PAYROLL_APPROVER`, `EMPLOYEE`), phân công tại `BOARD`, lương cơ bản 50.000.000, hồ sơ bảo hiểm/thuế (đóng trên 50.000.000, vùng 1), 2 con phụ thuộc, chấm công 2 năm |

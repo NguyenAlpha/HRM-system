@@ -35,11 +35,11 @@ Phân quyền mặc định của các system role:
 |:-----|:-----------------------------|
 | `HR_MANAGER` | Toàn bộ quyền đọc, tạo, sửa, xác nhận thử việc, phân công, thực thi vòng đời và xóa mềm; thêm quyền dữ liệu nhạy cảm |
 | `PAYROLL_ACCOUNTANT`, `PAYROLL_APPROVER` | `employee.list.read`, `employee.read`, `employee.assignment.read` |
-| `DIRECTOR` | Toàn bộ quyền Employee thông thường và `employee.lifecycle.approve` |
-| `COMPANY_OWNER` | Toàn bộ quyền Employee thông thường; không mặc định quyền dữ liệu nhạy cảm hoặc phê duyệt vòng đời |
+| `DIRECTOR` | Toàn bộ quyền Employee thông thường; không mặc định quyền dữ liệu nhạy cảm |
+| `COMPANY_OWNER` | Toàn bộ quyền Employee thông thường; không mặc định quyền dữ liệu nhạy cảm |
 | `SYSTEM_ADMIN` | `employee.list.read`, `employee.read`, `employee.assignment.read` |
 
-`employee.lifecycle.manage` là quyền thực thi thay đổi đã hợp lệ (ví dụ hoàn tất nghỉ việc), còn `employee.lifecycle.approve` là quyền phê duyệt cuối. Hai quyền này không thay thế nhau.
+`employee.lifecycle.manage` là quyền thực thi thay đổi vòng đời (ví dụ kết thúc làm việc). Đơn nghỉ việc không duyệt bằng permission: người duyệt là quản lý trực tiếp, nếu không có thì Giám đốc, rồi Chủ sở hữu (`ApproverResolver`).
 
 ---
 

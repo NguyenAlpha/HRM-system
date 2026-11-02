@@ -37,6 +37,15 @@ class RoleAssignmentPolicyTest {
     }
 
     @Test
+    void directorIsOnlyCompanyScopedWhateverItsPermissions() {
+        // The Director is everyone's fallback approver, so the role is company-wide by itself.
+        Role director = Role.builder().id(6L).code(SystemRoles.DIRECTOR).isSystem(true).build();
+        RoleAssignmentPolicy policy = new RoleAssignmentPolicy(rolePermissionRepository);
+
+        assertEquals(List.of(RoleScopeType.COMPANY), policy.allowedScopes(director));
+    }
+
+    @Test
     void roleWithoutCompanyWidePermissionsTakesAnyScope() {
         when(rolePermissionRepository.existsByIdRoleIdAndPermissionCompanyWideTrue(5L)).thenReturn(false);
         RoleAssignmentPolicy policy = new RoleAssignmentPolicy(rolePermissionRepository);

@@ -39,12 +39,14 @@ Mỗi permission có cờ `companyWide`, khai báo trong `PermissionSeeder` cùn
 mọi thao tác của permission là việc chung cả công ty, không chia theo đơn vị hay địa điểm được: kỳ lương
 (`payroll.calculate`, `payroll.approve`, `payroll.mark_paid`, `payroll.lock`), danh mục tổ chức (`organization.manage`),
 tài khoản và RBAC (`account.read`, `account.manage`, `account.activation.manage`, `account.role.assign`, `rbac.manage`),
-phê duyệt cuối và các permission `SYSTEM_ONLY` của Company Owner/System Admin. Danh sách đầy đủ là các dòng `(C)` ở
+và các permission `SYSTEM_ONLY` của Company Owner/System Admin. Danh sách đầy đủ là các dòng `(C)` ở
 [bảng permission mặc định](#permission-mặc-định-của-system-role).
 
 Scope được phép của một role suy ra từ permission của nó, như nhau cho system role và custom role:
 
 - Role có ít nhất một permission `companyWide` chỉ gán được với scope `COMPANY`.
+- `DIRECTOR` và `COMPANY_OWNER` luôn chỉ gán `COMPANY`, không do permission: code coi người giữ hai role này là người
+  duyệt dự phòng cho mọi nhân viên (`ApproverResolver`) và mỗi lúc chỉ có một người.
 - Role khác gán được với `SELF`, `COMPANY`, `ORG_UNIT` hoặc `LOCATION`; chọn scope nào là quyết định nghiệp vụ của
   người gán (VD `HR_MANAGER` theo một chi nhánh, `MANAGER` toàn công ty).
 - Không thêm được permission `companyWide` vào custom role đang có assignment `SELF`/`ORG_UNIT`/`LOCATION` chưa hết hạn
@@ -700,8 +702,6 @@ Permission dành cho danh mục tổ chức:
 | `organization.read` | Xem cơ cấu tổ chức, địa điểm, chức danh và ca làm việc |
 | `organization.manage` | Tạo, cập nhật, ngừng sử dụng và xóa mềm các danh mục tổ chức và ca làm việc |
 
-`organization.change.approve` tiếp tục là quyền phê duyệt nghiệp vụ dành cho `DIRECTOR`, không được dùng thay cho quyền CRUD danh mục.
-
 `SYSTEM_ADMIN` sử dụng riêng permission `organization.company_owner.bootstrap` tại `POST /api/system/organization/company-owner` để tạo Company Owner đầu tiên. Workflow và giới hạn chống tạo trùng được mô tả trong [Organization Company Owner Bootstrap](./ORGANIZATION_COMPANY_OWNER_ADMIN.md).
 
 ---
@@ -732,7 +732,6 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 | `employee.assignment.read` | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `employee.assignment.manage` | | ✓ | | | | ✓ | ✓ | |
 | `employee.lifecycle.manage` | | ✓ | | | | ✓ | ✓ | |
-| `employee.lifecycle.approve` `(C)` | | | | | | ✓ | | |
 | `employee.delete` | | ✓ | | | | ✓ | ✓ | |
 | `employee.sensitive.read` | | ✓ | | | | | | |
 | `employee.sensitive.manage` | | ✓ | | | | | | |
@@ -759,7 +758,6 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 |:-----------|:---:|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
 | `organization.read` | | ✓ | ✓ | | | ✓ | ✓ | ✓ |
 | `organization.manage` `(C)` | | | | | | | ✓ | ✓ |
-| `organization.change.approve` `(C)` | | | | | | ✓ | | |
 | `organization.company_owner.bootstrap` `(S)` `(C)` | | | | | | | | ✓ |
 | `company.manage` `(S)` `(C)` | | | | | | | ✓ | |
 
@@ -771,7 +769,6 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 | `request.self.create` | ✓ | | | | | | | |
 | `request.self.cancel` | ✓ | | | | | | | |
 | `request.read` | | ✓ | ✓ | | | ✓ | ✓ | |
-| `request.final_approve` `(C)` | | | | | | ✓ | | |
 | `request.manage` | | ✓ | | | | | | |
 
 ### Module `ATTENDANCE`
@@ -788,7 +785,6 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 | Permission | EMP | HRM | MGR | PAC | PAP | DIR | CO | SA |
 |:-----------|:---:|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
 | `payroll.self.read` | ✓ | | | | | | | |
-| `payroll.self.print` | ✓ | | | | | | | |
 | `compensation.read` | | ✓ | | ✓ | | ✓ | ✓ | |
 | `compensation.manage` | | ✓ | | ✓ | | | | |
 | `payroll.calculate` `(C)` | | | | ✓ | | | | |
@@ -813,7 +809,7 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 
 | EMP | HRM | MGR | PAC | PAP | DIR | CO | SA |
 |:---:|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
-| 9 | 23 | 7 | 7 | 7 | 15 | 25 | 13 |
+| 8 | 23 | 7 | 7 | 7 | 12 | 26 | 14 |
 
 Một vài ranh giới dễ hiểu nhầm:
 
@@ -826,8 +822,9 @@ Một vài ranh giới dễ hiểu nhầm:
 - `COMPANY_OWNER` có thêm `report.hr.read`, `report.payroll.read`, `attendance.read` và `request.read`
   để theo dõi báo cáo, bảng công và đơn nghỉ toàn công ty, nhưng không có `attendance.manage`,
   `request.manage` hay quyền tính/duyệt lương: chủ doanh nghiệp xem, việc nghiệp vụ thuộc HR và kế toán.
-- `DIRECTOR` phê duyệt `employee.lifecycle.approve`, `request.final_approve` và
-  `organization.change.approve` nhưng không quản trị account hay RBAC.
+- `DIRECTOR` không có permission phê duyệt riêng: Giám đốc duyệt đơn nghỉ và đơn nghỉ việc khi nhân viên
+  không có quản lý trực tiếp (`ApproverResolver` chọn người duyệt, không xét permission), và không quản trị
+  account hay RBAC.
 - `SYSTEM_ADMIN` quản trị *truy cập* (tài khoản, role, permission override, danh mục tổ chức) và chỉ *xem* hồ sơ nhân sự; nghiệp vụ nhân sự, chấm công, lương, báo cáo và dữ liệu nhạy cảm thuộc các role nghiệp vụ. Tài khoản đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được khóa, phát mã kích hoạt, đổi role hoặc permission override, và tài khoản đang giữ `SYSTEM_ADMIN` cũng chỉ một System Admin khác được làm các việc đó (mở khóa vẫn được phép), nên người quản trị truy cập không chiếm được quyền chủ doanh nghiệp và ngược lại. Không ai được đổi permission override trên chính account của mình.
 - Chỉ `HR_MANAGER` có `employee.sensitive.read` và `employee.sensitive.manage`.
 - `MANAGER` (Quản lý đơn vị, `HR_ASSIGNABLE`) là role chỉ đọc cho quản lý chi nhánh hoặc trưởng
