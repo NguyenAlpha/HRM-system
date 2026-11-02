@@ -23,7 +23,7 @@ Tiêu chí được xây dựng từ `DATABASE_SCHEMA.md` (bản thiết kế c�
 
 | Nguồn | Cách sử dụng |
 |---|---|
-| `.claude/CLAUDE.md` tại thời điểm review | Hướng dẫn làm việc cũ; file không còn trong repository |
+| `../../../AGENTS.md` tại thời điểm review | Hướng dẫn làm việc cũ; file không còn trong repository |
 | [OVERVIEW.md](../../../docs/OVERVIEW.md) | Tại thời điểm review tài liệu còn ở giai đoạn khởi đầu; bản hiện hành đã được cập nhật theo code V34 |
 | `DATABASE_SCHEMA.md` (bản thiết kế cũ, đã xóa), [ENTITY_ATTRIBUTES.md](./ENTITY_ATTRIBUTES.md) | Ý định nghiệp vụ và mô hình 19 bảng ban đầu |
 | [Migration V1–V8](../../src/main/resources/db/migration) | Căn cứ cho cấu trúc được tạo thực tế: **20 bảng**, có thêm `refresh_tokens` |
