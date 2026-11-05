@@ -9,8 +9,11 @@ import org.springframework.boot.ApplicationArguments;
 
 import com.htttdn.hrm.entity.CompanyProfile;
 import com.htttdn.hrm.repository.CompanyProfileRepository;
+import com.htttdn.hrm.service.organization.CompanyProfileService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -27,14 +30,14 @@ class CompanyProfileSeederTest {
     private ApplicationArguments applicationArguments;
 
     @Test
-    void doesNothingWhenDisabled() {
+    void doesNothingWhenDisabled() throws Exception {
         createSeeder(false).run(applicationArguments);
 
         verifyNoInteractions(companyProfileRepository);
     }
 
     @Test
-    void createsTheSingleCompanyProfileWhenMissing() {
+    void createsTheSingleCompanyProfileWhenMissing() throws Exception {
         when(companyProfileRepository.existsById(CompanyProfileSeeder.COMPANY_PROFILE_ID)).thenReturn(false);
 
         createSeeder(true).run(applicationArguments);
@@ -50,10 +53,13 @@ class CompanyProfileSeederTest {
         assertEquals("contact@hrm.local", profile.getEmail());
         assertEquals("Ho Chi Minh City, Vietnam", profile.getAddress());
         assertEquals("Asia/Ho_Chi_Minh", profile.getTimezone());
+        assertEquals("image/png", profile.getLogoContentType());
+        assertTrue(profile.getLogo().length > 0 && profile.getLogo().length <= CompanyProfileService.MAX_LOGO_BYTES);
+        assertNotNull(profile.getLogoUpdatedAt());
     }
 
     @Test
-    void retainsExistingCompanyProfile() {
+    void retainsExistingCompanyProfile() throws Exception {
         when(companyProfileRepository.existsById(CompanyProfileSeeder.COMPANY_PROFILE_ID)).thenReturn(true);
 
         createSeeder(true).run(applicationArguments);

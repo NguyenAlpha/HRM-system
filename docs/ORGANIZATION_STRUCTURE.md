@@ -179,7 +179,7 @@ Dữ liệu seed được chia theo trách nhiệm và chạy theo `@Order`. M�
 
 | Thứ tự | Seeder | Cờ cấu hình | Dữ liệu tạo |
 |---|---|---|---|
-| 50 | `CompanyProfileSeeder` | `COMPANY_SEED_ENABLED` (mặc định bật) | Hồ sơ doanh nghiệp |
+| 50 | `CompanyProfileSeeder` | `COMPANY_SEED_ENABLED` (mặc định bật) | Hồ sơ doanh nghiệp, logo mẫu `seed/company-logo.png` |
 | 60 | `OrganizationStructureSeeder` | `COMPANY_SEED_ENABLED` | 5 địa điểm `HO`, `BRANCH-01`, `BRANCH-02`, `WAREHOUSE-01`, `WAREHOUSE-02`; đơn vị `BOARD` và 3 phòng ban `HR`, `ACCOUNTING`, `OPERATIONS` |
 | 70 | `JobPositionSeeder` | `COMPANY_SEED_ENABLED` | 7 chức danh |
 | 80 | `WorkShiftSeeder` | `COMPANY_SEED_ENABLED` | Ca hành chính `OFFICE_DAY` 08:00–17:00 |
