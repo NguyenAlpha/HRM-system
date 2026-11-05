@@ -50,8 +50,8 @@ một điểm.
 1. **Gắn lỗi vào tiêu chí:** mỗi lỗi thuộc đúng **một** tiêu chí mà nó vi phạm trực tiếp nhất (trường "thuộc tiêu
    chí"; khác với "tìm ra nhờ"). Không trừ một lỗi ở hai tiêu chí.
 2. **Điểm tiêu chí** bắt đầu từ 10, trừ theo mỗi lỗi **chưa sửa**: Cao −4, Trung bình −2, Thấp −0,5; thấp nhất 0.
-3. **Kiểm một phần:** tiêu chí chỉ kiểm được một phần thì điểm tối đa 8 và ghi rõ phần chưa kiểm. **Chưa kiểm:** không
-   chấm, bỏ khỏi điểm tổng.
+3. **Kiểm một phần:** tiêu chí chỉ kiểm được một phần thì điểm = min(10 − tổng trừ, 8) và ghi rõ phần chưa kiểm.
+   **Chưa kiểm:** không chấm, bỏ khỏi điểm tổng.
 4. **Điểm tổng** = trung bình có trọng số của các tiêu chí đã chấm (chia cho tổng trọng số của chúng), làm tròn 1 chữ
    số thập phân.
 5. **Trần:** còn lỗi Cao chưa sửa thì điểm tổng tối đa 7,0; còn từ hai lỗi Cao thì tối đa 5,0.
@@ -100,3 +100,4 @@ Lưu thành `api/docs/prompt/API_REVIEW_<yyyy-MM-dd>.md` (ngày chạy), gồm:
 | 2026-11-03 | Bản đầu tiên | — |
 | 2026-11-03 | Đọc `concepts/` trước; gộp tiêu chí thời gian thành "Thời gian và hiệu lực"; thêm tiêu chí 11 "Vòng đời và tham chiếu"; bỏ đánh giá kích thước class; sửa gợi ý lệnh đối chiếu permission, kiểm tra quyền, độ phủ test; mã lỗi `API-<số>` và trường "tìm ra nhờ"; bước tùy chọn đối chiếu công thức lương. Lỗi 1–6 của lần chạy 2026-11-03 tương ứng `API-001`…`API-006`. | [PROMPT_REVIEW_API_REVIEW_2026-11-03](./PROMPT_REVIEW_API_REVIEW_2026-11-03.md) |
 | 2026-11-03 | Chuyển từ Đạt/Chưa đạt sang thang điểm 10: trọng số từng tiêu chí, trừ điểm theo mức lỗi, trần khi còn lỗi Cao, trường "thuộc tiêu chí". File kết quả 2026-11-03 được chuyển sang định dạng này (điểm tổng 7,0). | Yêu cầu của người dùng |
+| 2026-11-05 | Quy tắc 3: kiểm một phần = min(10 − tổng trừ, 8), cùng câu chữ với `/review-prompt-create` và prompt web. Điểm lần 2026-11-03 không đổi (tiêu chí 8 kiểm một phần, không có lỗi trừ, vẫn 8). | Đồng bộ theo [PROMPT_REVIEW_WEB_REVIEW_2026-11-05](../../../apps/web/docs/prompt/PROMPT_REVIEW_WEB_REVIEW_2026-11-05.md) |
