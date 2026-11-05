@@ -6,6 +6,7 @@ Backend rules that the code alone does not tell you. The root `AGENTS.md` still 
 
 - `./mvnw test` needs PostgreSQL: run `docker compose up -d database` from the repo root. A `Connection refused` at `flywayInitializer` means the database is down, not a code bug.
 - Integration tests must pass on both the seeded dev database and an empty one: create rows with random codes inside a `@Transactional` test, never assert global counts, never reuse seeded codes.
+- `SeedDataIntegrationTest` runs every seeder on a throwaway database it creates (about two minutes), so a seed file that breaks a rule fails the build. `PermissionCatalogueTest` fails when a permission is catalogued but never checked, or checked but not catalogued.
 
 ## Database
 
