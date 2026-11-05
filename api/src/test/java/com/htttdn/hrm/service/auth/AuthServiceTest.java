@@ -77,7 +77,7 @@ class AuthServiceTest {
                 )),
                 List.of(new AuthorizationPermission(
                     "organization.company_owner.bootstrap", "Khởi tạo Chủ sở hữu doanh nghiệp",
-                    PermissionModule.ORGANIZATION
+                    PermissionModule.ORGANIZATION, true
                 ))
             )
         );

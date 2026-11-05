@@ -168,7 +168,8 @@ public class AuthService {
                 .map(permission -> new AuthPermissionResponse(
                     permission.code(),
                     permission.name(),
-                    permission.module()
+                    permission.module(),
+                    permission.companyScope()
                 ))
                 .toList()
         );

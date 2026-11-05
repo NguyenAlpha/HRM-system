@@ -32,6 +32,7 @@ import {
   workforceApi,
 } from "@/components/workforce/workforce-shared"
 import { apiErrorMessage } from "@/lib/api-helpers"
+import { companyScopePermissions } from "@/lib/auth/config"
 import type {
   PositionAllowance,
   PositionAllowanceSummary,
@@ -70,7 +71,8 @@ export function AllowancePolicyPage() {
     [session],
   )
   const canRead = permissions.has("compensation.read")
-  const canManage = permissions.has("compensation.manage")
+  // Allowance policies apply to the whole company: the API needs compensation.manage on COMPANY scope.
+  const canManage = companyScopePermissions(session.account.permissions).has("compensation.manage")
   const [tab, setTab] = useState("positions")
 
   return (

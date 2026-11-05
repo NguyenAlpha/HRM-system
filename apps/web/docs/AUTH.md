@@ -81,7 +81,8 @@ BFF giữ cùng response envelope với API:
         {
           "code": "profile.self.read",
           "name": "Xem hồ sơ cá nhân",
-          "module": "EMPLOYEE"
+          "module": "EMPLOYEE",
+          "companyScope": false
         }
       ]
     },
@@ -107,6 +108,9 @@ Response lỗi:
 
 `accessToken` và `refreshToken` từ Spring Boot không xuất hiện trong body BFF trả về browser.
 Giao diện hiển thị `name`; các kiểm tra điều hướng hoặc phân quyền phía client vẫn dùng `code`.
+`companyScope` cho biết quyền có từ một lần gán phạm vi `COMPANY` hay không: mục và nút của thao tác chung cả công
+ty (kỳ lương, báo cáo quỹ lương, chuẩn bị bảng công cả tháng, chính sách phụ cấp) chỉ hiện khi cờ này bật
+(`companyScopePermissions` trong `lib/auth/config.ts`), vì API từ chối người chỉ có quyền ở một đơn vị/địa điểm.
 
 ### Login
 

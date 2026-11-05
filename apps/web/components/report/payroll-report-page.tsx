@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { EmptyRow, money, today, workforceApi } from "@/components/workforce/workforce-shared"
 import { apiErrorMessage } from "@/lib/api-helpers"
 import type { components } from "@/lib/api-schema"
+import { companyScopePermissions } from "@/lib/auth/config"
 import { PAYROLL_PERIOD_STATUS_LABELS } from "@/lib/workforce"
 
 type Schemas = components["schemas"]
@@ -37,7 +38,7 @@ const COLUMNS: [string, (amounts: Amounts) => number][] = [
 /** Payroll cost, employee insurance and personal income tax withheld, month by month and by unit. */
 export function PayrollReportPage() {
   const { session } = usePortalSession()
-  const canRead = session.account.permissions.some((permission) => permission.code === "report.payroll.read")
+  const canRead = companyScopePermissions(session.account.permissions).has("report.payroll.read")
   const currentYear = Number(today().slice(0, 4))
   const [year, setYear] = useState(currentYear)
   const [report, setReport] = useState<{ year: number; data: PayrollSummary | null; error?: string } | null>(null)

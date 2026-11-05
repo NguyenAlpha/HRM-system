@@ -174,12 +174,14 @@ Tài khoản được tìm theo thứ tự username → email → mã nhân viê
         {
           "code": "organization.company_owner.bootstrap",
           "name": "Khởi tạo Chủ sở hữu doanh nghiệp",
-          "module": "ORGANIZATION"
+          "module": "ORGANIZATION",
+          "companyScope": true
         },
         {
           "code": "rbac.manage",
           "name": "Quản lý phân quyền",
-          "module": "RBAC"
+          "module": "RBAC",
+          "companyScope": true
         }
       ]
     }
@@ -196,7 +198,7 @@ Tài khoản được tìm theo thứ tự username → email → mã nhân viê
 | `expiresIn` | Thời hạn access token tính bằng giây |
 | `account.employee` | Thông tin định danh nhân viên (`id`, `employeeCode`, `fullName`); `null` với account hệ thống không gắn employee |
 | `account.roles` | Các role đang có hiệu lực, gồm code kỹ thuật, tên hiển thị và phạm vi áp dụng |
-| `account.permissions` | Hợp quyền đang có hiệu lực, gồm code kỹ thuật, tên hiển thị và module |
+| `account.permissions` | Hợp quyền đang có hiệu lực, gồm code kỹ thuật, tên hiển thị và module. `companyScope = true` khi quyền đến từ một lần gán phạm vi `COMPANY`: chỉ khi đó các thao tác chung cả công ty (kỳ lương, chuẩn bị bảng công cả tháng, chính sách phụ cấp) mới nhận quyền này, nên web dùng cờ này để ẩn/hiện chúng |
 
 `SYSTEM_ADMIN` có `organization.company_owner.bootstrap` cùng các permission quản trị truy cập. `SYSTEM_ADMIN` quản trị *truy cập* (tài khoản, role, permission override, danh mục tổ chức) và chỉ *xem* hồ sơ nhân sự; nghiệp vụ nhân sự, chấm công, lương, báo cáo và dữ liệu nhạy cảm thuộc các role nghiệp vụ. Tài khoản đang giữ `COMPANY_OWNER` chỉ một Company Owner khác được khóa, phát mã kích hoạt, đổi role hoặc permission override, và tài khoản đang giữ `SYSTEM_ADMIN` cũng chỉ một System Admin khác được làm các việc đó (mở khóa vẫn được phép), nên người quản trị truy cập không chiếm được quyền chủ doanh nghiệp và ngược lại. Với scope `ORG_UNIT` hoặc `LOCATION`, response trả cả ID và tên đối tượng phạm vi tương ứng để client có thể hiển thị trực tiếp.
 
@@ -293,12 +295,14 @@ Cấu trúc response giống login, nhưng cả `accessToken` và `refreshToken`
         {
           "code": "organization.company_owner.bootstrap",
           "name": "Khởi tạo Chủ sở hữu doanh nghiệp",
-          "module": "ORGANIZATION"
+          "module": "ORGANIZATION",
+          "companyScope": true
         },
         {
           "code": "rbac.manage",
           "name": "Quản lý phân quyền",
-          "module": "RBAC"
+          "module": "RBAC",
+          "companyScope": true
         }
       ]
     }
@@ -409,12 +413,14 @@ Lấy thông tin account, role và permission hiện hành. Endpoint yêu cầu 
       {
         "code": "employee.read",
         "name": "Xem chi tiết nhân viên",
-        "module": "EMPLOYEE"
+        "module": "EMPLOYEE",
+        "companyScope": true
       },
       {
         "code": "request.read",
         "name": "Xem đơn của nhân viên",
-        "module": "REQUEST"
+        "module": "REQUEST",
+        "companyScope": true
       }
     ]
   },

@@ -2538,6 +2538,7 @@ export interface components {
         };
         AuthPermissionResponse: {
             code: string;
+            companyScope: boolean;
             /** @enum {string} */
             module: "EMPLOYEE" | "ACCOUNT" | "ORGANIZATION" | "REQUEST" | "ATTENDANCE" | "PAYROLL" | "RBAC" | "REPORT";
             name: string;

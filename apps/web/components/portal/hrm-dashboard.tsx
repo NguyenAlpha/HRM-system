@@ -13,6 +13,7 @@ import {
   Wallet,
 } from "lucide-react"
 
+import { companyScopePermissions } from "@/lib/auth/config"
 import { formatDate } from "@/lib/format-date"
 import { PeriodStatusBadge, periodLabel } from "@/components/payroll/payroll-shared"
 import { PageHeader } from "@/components/portal/page-header"
@@ -78,7 +79,7 @@ export function HrmDashboard() {
     () => workforceApi<Page<ResignationRequest>>("resignation-requests/pending?size=1"), "pending-resignations")
   const pendingOvertime = useWidget(true, () => workforceApi<OvertimeApprovalItem[]>("attendance/overtime/pending"), "pending-ot")
   const pendingRoles = useWidget(has("role.assignment.approve"), () => listRoleAssignmentRequests(0, "PENDING"), "pending-roles")
-  const periods = useWidget(has("report.payroll.read"),
+  const periods = useWidget(companyScopePermissions(account.permissions).has("report.payroll.read"),
     () => workforceApi<Page<PayrollPeriod>>("payroll/periods?size=12&sort=periodStart,desc"), "periods")
 
   // Company-wide people figures.

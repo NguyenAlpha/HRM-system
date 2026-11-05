@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -78,9 +79,15 @@ public class AccountAuthorizationService {
 
         Set<String> roles = new LinkedHashSet<>();
         Set<String> permissions = new LinkedHashSet<>();
+        // Permissions held on a COMPANY assignment pass EmployeeAccessScopeService.requireCompanyWide.
+        Set<String> companyScopePermissions = new HashSet<>();
         for (AccountRoleAssignment assignment : context.assignments()) {
             roles.add(assignment.getRole().getCode());
-            permissions.addAll(effectivePermissions(assignment, context));
+            Set<String> granted = effectivePermissions(assignment, context);
+            permissions.addAll(granted);
+            if (assignment.getScopeType() == RoleScopeType.COMPANY) {
+                companyScopePermissions.addAll(granted);
+            }
         }
 
         // Mỗi lần gán thành một dòng (role + phạm vi); web dùng danh sách này để hiển thị phạm vi hiện có.
@@ -104,7 +111,8 @@ public class AccountAuthorizationService {
             .map(permission -> new AuthorizationPermission(
                 permission.getCode(),
                 permission.getName(),
-                permission.getModule()
+                permission.getModule(),
+                companyScopePermissions.contains(permission.getCode())
             ))
             .sorted(Comparator.comparing(AuthorizationPermission::code))
             .toList();
@@ -327,10 +335,12 @@ public class AccountAuthorizationService {
     ) {
     }
 
+    /** {@code companyScope}: held on a {@code COMPANY} assignment, so operations needing the whole company pass. */
     public record AuthorizationPermission(
         String code,
         String name,
-        PermissionModule module
+        PermissionModule module,
+        boolean companyScope
     ) {
     }
 

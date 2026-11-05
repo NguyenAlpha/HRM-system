@@ -7369,6 +7369,9 @@
           "code" : {
             "type" : "string"
           },
+          "companyScope" : {
+            "type" : "boolean"
+          },
           "module" : {
             "type" : "string",
             "enum" : [ "EMPLOYEE", "ACCOUNT", "ORGANIZATION", "REQUEST", "ATTENDANCE", "PAYROLL", "RBAC", "REPORT" ]
@@ -7377,7 +7380,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "code", "module", "name" ]
+        "required" : [ "code", "companyScope", "module", "name" ]
       },
       "AuthResponse" : {
         "type" : "object",

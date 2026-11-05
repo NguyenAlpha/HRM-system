@@ -96,6 +96,43 @@ class AccountAuthorizationServiceTest {
     }
 
     @Test
+    void marksOnlyPermissionsHeldOnACompanyAssignmentAsCompanyScope() {
+        Role hrRole = Role.builder().id(1L).code("HR_MANAGER").name("HR Manager").build();
+        Role viewerRole = Role.builder().id(2L).code("VIEWER").name("Viewer").build();
+        AccountRoleAssignment branchHr = AccountRoleAssignment.builder()
+            .id(11L)
+            .role(hrRole)
+            .scopeType(RoleScopeType.LOCATION)
+            .workLocation(WorkLocation.builder().id(50L).name("Ha Noi").build())
+            .build();
+        AccountRoleAssignment companyViewer = AccountRoleAssignment.builder()
+            .id(12L)
+            .role(viewerRole)
+            .scopeType(RoleScopeType.COMPANY)
+            .build();
+        Permission payrollRead = Permission.builder().id(21L).code("report.payroll.read")
+            .name("Payroll reports").module(com.htttdn.hrm.entity.enums.PermissionModule.REPORT).build();
+        Permission employeeRead = Permission.builder().id(22L).code("employee.read")
+            .name("View employees").module(com.htttdn.hrm.entity.enums.PermissionModule.EMPLOYEE).build();
+
+        when(assignmentRepository.findActiveWithRoleByAccountId(eq(7L), any()))
+            .thenReturn(List.of(branchHr, companyViewer));
+        when(rolePermissionRepository.findActiveByRoleIds(List.of(1L, 2L))).thenReturn(List.of(
+            rolePermission(hrRole, payrollRead),
+            rolePermission(hrRole, employeeRead),
+            rolePermission(viewerRole, employeeRead)
+        ));
+        when(overrideRepository.findActiveByAssignmentIds(eq(List.of(11L, 12L)), any())).thenReturn(List.of());
+
+        var permissions = service().getSnapshot(7L).permissionDetails();
+
+        assertEquals(List.of("employee.read", "report.payroll.read"),
+            permissions.stream().map(AccountAuthorizationService.AuthorizationPermission::code).toList());
+        assertEquals(List.of(true, false),
+            permissions.stream().map(AccountAuthorizationService.AuthorizationPermission::companyScope).toList());
+    }
+
+    @Test
     void returnsOnlyScopesWhoseAssignmentEffectivelyGrantsPermission() {
         Role employeeRole = Role.builder().id(1L).code("EMPLOYEE").name("Employee").build();
         Role managerRole = Role.builder().id(2L).code("BRANCH_MANAGER").name("Branch Manager").build();

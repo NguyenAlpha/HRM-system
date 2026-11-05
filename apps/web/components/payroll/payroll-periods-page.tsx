@@ -32,6 +32,7 @@ import {
   workforceApi,
 } from "@/components/workforce/workforce-shared"
 import { apiErrorMessage } from "@/lib/api-helpers"
+import { companyScopePermissions } from "@/lib/auth/config"
 import type { Page } from "@/lib/pagination"
 import type { PayrollPeriod, WorkforceBody } from "@/lib/workforce"
 import { formatDate, formatDateRange } from "@/lib/format-date"
@@ -44,7 +45,7 @@ export function PayrollPeriodsPage() {
     () => new Set(session.account.permissions.map((permission) => permission.code)),
     [session],
   )
-  const canRead = permissions.has("report.payroll.read")
+  const canRead = companyScopePermissions(session.account.permissions).has("report.payroll.read")
   const canCalculate = permissions.has("payroll.calculate")
   const currentYear = Number(today().slice(0, 4))
   const [year, setYear] = useState(currentYear)

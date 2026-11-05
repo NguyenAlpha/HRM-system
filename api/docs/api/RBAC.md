@@ -55,7 +55,8 @@ Scope được phép của một role suy ra từ permission của nó, như nha
 Permission làm việc theo từng nhân viên thì không đánh dấu, kể cả khi vài thao tác của nó cần toàn công ty
 (VD `attendance.manage` tạo công cả tháng, `compensation.manage` đặt chính sách phụ cấp): các thao tác đó tự kiểm tra
 scope `COMPANY` lúc chạy và trả `403 FORBIDDEN` nếu chỉ có scope hẹp hơn. `RoleResponse.allowedScopeTypes` và
-`RoleAssignmentOptionResponse.allowedScopeTypes` trả danh sách scope được phép để client chỉ hiển thị lựa chọn hợp lệ.
+`RoleAssignmentOptionResponse.allowedScopeTypes` trả danh sách scope được phép để client chỉ hiển thị lựa chọn hợp lệ. Phiên đăng nhập (`/api/auth/me`) đánh dấu từng permission bằng `companyScope` (có từ lần gán `COMPANY` hay
+không) để web chỉ hiện các thao tác đó cho người qua được kiểm tra này.
 
 ### Chính sách cấp role
 

@@ -36,7 +36,7 @@ import {
 
 import { BrandMark } from "@/components/portal/brand-mark"
 import { logout } from "@/lib/auth/client"
-import { PORTAL_CONFIG } from "@/lib/auth/config"
+import { companyScopePermissions, PORTAL_CONFIG } from "@/lib/auth/config"
 import type { AccountSummary, Portal } from "@/lib/auth/types"
 import type { Branding } from "@/lib/branding"
 
@@ -115,13 +115,15 @@ export function PortalSidebar({ portal, account, branding, collapsed, onToggle }
     (permission) => permission.code === "report.hr.read" || permission.code === "report.payroll.read",
   )
   const canReadHrReports = account.permissions.some((permission) => permission.code === "report.hr.read")
-  const canReadPayrollReports = account.permissions.some((permission) => permission.code === "report.payroll.read")
+  // Payroll periods and the payroll report cover the whole company: the API needs report.payroll.read on COMPANY scope.
+  const companyScope = companyScopePermissions(account.permissions)
+  const canReadPayrollReports = companyScope.has("report.payroll.read")
   const canReadAttendance = account.permissions.some((permission) => permission.code === "attendance.read")
   const canUseAttendance = account.permissions.some((permission) =>
     ["attendance.self.read", "attendance.read", "attendance.manage"].includes(permission.code))
   const canUseLeave = account.permissions.some((permission) =>
     ["request.self.read", "request.read", "request.self.create"].includes(permission.code))
-  const canReadPayrollPeriods = account.permissions.some((permission) => permission.code === "report.payroll.read")
+  const canReadPayrollPeriods = companyScope.has("report.payroll.read")
   const canReadOwnPayslips = !!account.employee
     && account.permissions.some((permission) => permission.code === "payroll.self.read")
   const canReadCompensation = account.permissions.some((permission) => permission.code === "compensation.read")

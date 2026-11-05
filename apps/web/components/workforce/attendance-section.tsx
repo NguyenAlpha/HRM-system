@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { CalendarDays, CalendarPlus, Clock, List, Loader2, LogIn, UserX, Zap, type LucideIcon } from "lucide-react"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
+import { usePortalSession } from "@/components/portal/portal-shell"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,6 +22,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { apiErrorMessage } from "@/lib/api-helpers"
+import { companyScopePermissions } from "@/lib/auth/config"
 import type { Page } from "@/lib/pagination"
 import {
   ATTENDANCE_STATUS_LABELS,
@@ -123,6 +125,8 @@ const statusLabel = (day: Day, record: AttendanceRecord) =>
 export function AttendanceSection({ employeeId, permissions, month }: WorkforceContext) {
   const canReadAttendance = permissions.has("attendance.self.read") || permissions.has("attendance.read")
   const canManage = permissions.has("attendance.manage")
+  // Preparing a month covers every employee: the API needs attendance.manage on COMPANY scope.
+  const canPrepareMonth = companyScopePermissions(usePortalSession().session.account.permissions).has("attendance.manage")
   const canReadHolidays = permissions.has("holiday.read")
 
   // Null until the month has loaded, so the summary never shows the calendar's workdays against zero payable days.
@@ -193,7 +197,7 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
                 <LogIn /> Nhập giờ ngày khác
               </Button>
             )}
-            {canManage && (
+            {canPrepareMonth && (
               <Button type="button" size="sm" variant="outline" disabled={busy}
                 onClick={() => void run("Đã chuẩn bị bảng công",
                   () => workforceApi(`attendance/prepare?year=${month.slice(0, 4)}&month=${Number(month.slice(5, 7))}`, "POST"))}>

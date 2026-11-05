@@ -1,4 +1,4 @@
-import type { AuthRole, Portal } from "@/lib/auth/types"
+import type { AuthPermission, AuthRole, Portal } from "@/lib/auth/types"
 
 interface PortalConfig {
   accessCookie: string
@@ -31,4 +31,13 @@ export const PORTAL_CONFIG: Record<Portal, PortalConfig> = {
 
 export function isSystemAdmin(roles: AuthRole[]): boolean {
   return roles.some((role) => role.code === "SYSTEM_ADMIN")
+}
+
+/**
+ * Codes of the permissions held on a COMPANY-scope role assignment. The API runs operations that cover the whole
+ * company (payroll periods, preparing the month's attendance, allowance policies) only for these, so a holder
+ * scoped to one unit or location must not be offered them on the permission code alone.
+ */
+export function companyScopePermissions(permissions: AuthPermission[]): Set<string> {
+  return new Set(permissions.filter((permission) => permission.companyScope).map((permission) => permission.code))
 }
