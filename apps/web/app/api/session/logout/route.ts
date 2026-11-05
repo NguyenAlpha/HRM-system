@@ -1,5 +1,5 @@
 import { handleLogout } from "@/lib/auth/server"
 
-export async function POST() {
-  return handleLogout("hrm")
+export async function POST(request: Request) {
+  return handleLogout(request, "hrm")
 }

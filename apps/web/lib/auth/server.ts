@@ -131,7 +131,30 @@ function portalMismatch(portal: Portal): NextResponse {
   )
 }
 
+/**
+ * 403 for a write sent from another site, null otherwise. Browsers always send `Origin` on a cross-site POST, so this
+ * stops a page elsewhere from signing the user in to its own account, signing them out or using their session.
+ */
+function foreignOrigin(request: Request): NextResponse | null {
+  const origin = request.headers.get("origin")
+  if (origin && origin !== new URL(request.url).origin) {
+    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
+  }
+  return null
+}
+
+/** A form on another site can only post `text/plain`, so a JSON body is required where the body carries credentials. */
+function requireJson(request: Request, message: string): NextResponse | null {
+  if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !== "application/json") {
+    return NextResponse.json(failure("VALIDATION_ERROR", message), { status: 400 })
+  }
+  return null
+}
+
 export async function handleLogin(request: Request, portal: Portal): Promise<NextResponse> {
+  const rejected = foreignOrigin(request) ?? requireJson(request, "Dữ liệu đăng nhập không hợp lệ")
+  if (rejected) return rejected
+
   let body: unknown
   try {
     body = await request.json()
@@ -162,7 +185,10 @@ export async function handleLogin(request: Request, portal: Portal): Promise<Nex
   return response
 }
 
-export async function handleRefresh(portal: Portal): Promise<NextResponse> {
+export async function handleRefresh(request: Request, portal: Portal): Promise<NextResponse> {
+  const rejected = foreignOrigin(request)
+  if (rejected) return rejected
+
   const cookieStore = await cookies()
   const refreshToken = cookieStore.get(PORTAL_CONFIG[portal].refreshCookie)?.value
   if (!refreshToken) {
@@ -228,7 +254,10 @@ export async function handleMe(portal: Portal): Promise<NextResponse> {
   }))
 }
 
-export async function handleLogout(portal: Portal): Promise<NextResponse> {
+export async function handleLogout(request: Request, portal: Portal): Promise<NextResponse> {
+  const rejected = foreignOrigin(request)
+  if (rejected) return rejected
+
   const cookieStore = await cookies()
   const config = PORTAL_CONFIG[portal]
   const accessToken = cookieStore.get(config.accessCookie)?.value
@@ -251,6 +280,9 @@ export async function handleLogout(portal: Portal): Promise<NextResponse> {
 }
 
 export async function handleChangePassword(request: Request, portal: Portal): Promise<NextResponse> {
+  const rejected = foreignOrigin(request) ?? requireJson(request, "Dữ liệu đổi mật khẩu không hợp lệ")
+  if (rejected) return rejected
+
   const cookieStore = await cookies()
   const accessToken = cookieStore.get(PORTAL_CONFIG[portal].accessCookie)?.value
   if (!accessToken) {
@@ -308,10 +340,8 @@ function rejectUnlisted(routes: Route[], path: string, method: string): NextResp
 
 /** Writes must come from this site; the access token comes from the portal's cookie. */
 async function sessionAccessToken(request: Request, portal: Portal): Promise<string | NextResponse> {
-  const origin = request.headers.get("origin")
-  if (request.method !== "GET" && origin && origin !== new URL(request.url).origin) {
-    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
-  }
+  const rejected = request.method === "GET" ? null : foreignOrigin(request)
+  if (rejected) return rejected
   const accessToken = (await cookies()).get(PORTAL_CONFIG[portal].accessCookie)?.value
   if (!accessToken) {
     const message = portal === "admin" ? "Phiên quản trị đã hết hạn" : "Phiên đăng nhập đã hết hạn"
@@ -634,10 +664,8 @@ export async function handleAccountActivationRequest(request: Request, token: st
     return NextResponse.json(failure("VALIDATION_ERROR", "Thiếu mã kích hoạt"), { status: 400 })
   }
 
-  const origin = request.headers.get("origin")
-  if (origin && origin !== new URL(request.url).origin) {
-    return NextResponse.json(failure("FORBIDDEN", "Nguồn yêu cầu không hợp lệ"), { status: 403 })
-  }
+  const rejected = foreignOrigin(request)
+  if (rejected) return rejected
 
   return apiResult(await callApi<unknown>(`/api/account-activations/${encodeURIComponent(token)}/complete`, {
     method: "POST",

@@ -219,9 +219,9 @@ Ngoài error được chuyển tiếp từ Spring Boot, BFF có thể trả:
 
 | HTTP | Code | Nguyên nhân |
 |:----:|:-----|:------------|
-| `400` | `VALIDATION_ERROR` | Request body không phải JSON hợp lệ |
+| `400` | `VALIDATION_ERROR` | Request body không phải JSON hợp lệ; đăng nhập và đổi mật khẩu không gửi `Content-Type: application/json` (form HTML ở trang khác chỉ gửi được `text/plain`) |
 | `401` | `UNAUTHORIZED` | Thiếu cookie cần thiết cho thao tác |
-| `403` | `FORBIDDEN` | Header `Origin` khác origin của BFF |
+| `403` | `FORBIDDEN` | Request ghi có header `Origin` khác origin của BFF, ở mọi handler kể cả đăng nhập, làm mới phiên, đăng xuất và đổi mật khẩu |
 | `403` | `ADMIN_PORTAL_REQUIRED` | Admin dùng HRM portal |
 | `403` | `ADMIN_ACCESS_REQUIRED` | Account thường dùng Admin portal |
 | `405` | `METHOD_NOT_ALLOWED` | Method không được handler hỗ trợ |

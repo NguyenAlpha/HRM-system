@@ -139,6 +139,11 @@ duyệt, rồi kiểm tra phép năm "Đã dùng"/"Còn lại" và "Công tính 
 ghi thật vào database: mỗi lần chạy dùng một ngày thiếu công và nửa ngày phép, không hoàn tác. Khi
 tháng không còn ngày nào như vậy, test báo skip thay vì fail.
 
+`e2e/bff-guards.spec.ts` gọi thẳng các route BFF: request ghi có `Origin` lạ bị chặn 403 ở mọi handler, đăng nhập
+bằng body `text/plain` bị chặn 400, đường dẫn ngoài whitelist trả 404/405, tài khoản thường bị chặn ở `/admin/login`.
+Case cuối xóa access cookie của `hr` rồi mở trang nhân sự (gọi nhiều API cùng lúc) và kiểm tra chỉ có một lần
+`/refresh`: API coi refresh token dùng lại là bị đánh cắp và thu hồi mọi phiên.
+
 Case sai mật khẩu dùng tên đăng nhập ngẫu nhiên, nên không làm tài khoản thật bị giới hạn 5 lần
 sai/15 phút.
 
