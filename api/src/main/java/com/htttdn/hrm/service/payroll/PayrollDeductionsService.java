@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htttdn.hrm.dto.request.ValidationPatterns;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.Employee;
 import com.htttdn.hrm.entity.EmployeePayrollProfile;
@@ -29,7 +30,9 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 import lombok.RequiredArgsConstructor;
 
@@ -231,7 +234,11 @@ public class PayrollDeductionsService {
     public record Profile(Long id, Long employeeId, LocalDate effectiveFrom, @Nullable LocalDate effectiveTo,
         boolean taxResident, boolean socialInsurance, boolean healthInsurance,
         boolean unemploymentInsurance, BigDecimal insuranceSalary, short wageRegion) {}
-    public record DependentCommand(@NotBlank String fullName, @Nullable String identifier,
+    public record DependentCommand(
+        @NotBlank @Size(max = 200)
+        @Pattern(regexp = ValidationPatterns.PERSON_NAME, message = ValidationPatterns.PERSON_NAME_MESSAGE)
+        String fullName,
+        @Nullable String identifier,
         @NotNull LocalDate effectiveFrom, @Nullable LocalDate effectiveTo) {}
     public record Dependent(Long id, Long employeeId, String fullName, @Nullable String identifier,
         LocalDate effectiveFrom, @Nullable LocalDate effectiveTo) {}

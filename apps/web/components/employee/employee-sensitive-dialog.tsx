@@ -28,6 +28,7 @@ import {
   type EmployeeDetail,
   type EmployeeSensitiveData,
 } from "@/lib/employee"
+import { PERSON_NAME_MESSAGE, personNameError } from "@/lib/person-name"
 
 const sensitiveSchema = z.object({
   nationalId: z.string().max(15, "Tối đa 15 ký tự"),
@@ -36,7 +37,8 @@ const sensitiveSchema = z.object({
   taxCode: z.string().max(20, "Tối đa 20 ký tự"),
   bankName: z.string().max(50, "Tối đa 50 ký tự"),
   bankAccountNumber: z.string().max(20, "Tối đa 20 ký tự"),
-  bankAccountHolder: z.string().max(50, "Tối đa 50 ký tự"),
+  bankAccountHolder: z.string().max(50, "Tối đa 50 ký tự")
+    .refine((value) => personNameError(value) === "", PERSON_NAME_MESSAGE),
 }).refine((data) => !data.personalEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.personalEmail), {
   message: "Email cá nhân không hợp lệ",
   path: ["personalEmail"],

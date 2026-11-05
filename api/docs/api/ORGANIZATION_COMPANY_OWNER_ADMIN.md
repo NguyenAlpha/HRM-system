@@ -50,7 +50,7 @@ Tạo đồng thời hồ sơ employee tối thiểu, account đăng nhập và 
 | Field | Type | Bắt buộc | Ràng buộc |
 |:------|:-----|:--------:|:----------|
 | `company` | object | ✅ | Thông tin doanh nghiệp, ghi đè bản ghi `company_profile` (tạo nếu chưa có); ràng buộc như `PUT /api/company` trong [ORGANIZATION.md](ORGANIZATION.md#thông-tin-doanh-nghiệp) |
-| `employee.fullName` | string | ✅ | Không rỗng, tối đa 200 ký tự |
+| `employee.fullName` | string | ✅ | Không rỗng, tối đa 30 ký tự; chỉ gồm chữ cái, khoảng trắng và các dấu `.` `'` `-` |
 | `employee.workEmail` | string | ✅ | Email hợp lệ, tối đa 100 ký tự, duy nhất không phân biệt hoa thường |
 | `employee.phone` | string | ❌ | 8–11 chữ số, có thể bắt đầu bằng `+` (ví dụ `0912345678`, `+84912345678`) |
 | `employee.hireDate` | date | ✅ | Ngày bắt đầu làm việc trong hồ sơ HRM |

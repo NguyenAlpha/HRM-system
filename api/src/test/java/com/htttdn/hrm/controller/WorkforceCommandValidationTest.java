@@ -46,6 +46,7 @@ class WorkforceCommandValidationTest {
         "POST|/api/compensation/employees/1/salary-history|{\"baseSalary\":1000000,\"effectiveFrom\":\"2026-01-01\",\"reason\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}|reason",
         "POST|/api/compensation/employees/1/payroll-profiles|{\"effectiveFrom\":\"2026-01-01\",\"taxResident\":true,\"socialInsurance\":true,\"healthInsurance\":true,\"unemploymentInsurance\":true,\"insuranceSalary\":5000000,\"wageRegion\":5}|wageRegion",
         "POST|/api/compensation/employees/1/tax-dependents|{\"fullName\":\"Dependent\"}|effectiveFrom",
+        "POST|/api/compensation/employees/1/tax-dependents|{\"fullName\":\"33333333333\",\"effectiveFrom\":\"2026-01-01\"}|fullName",
         "PUT|/api/compensation/employees/1/tax-dependents/1/end|{}|effectiveTo",
         "POST|/api/leave-requests/1/approve|{\"comment\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}|comment",
         "POST|/api/resignation-requests/1/approve|{\"comment\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}|comment",

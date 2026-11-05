@@ -1,7 +1,10 @@
 package com.htttdn.hrm.dto.request.employee;
 
+import com.htttdn.hrm.dto.request.ValidationPatterns;
+
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record UpdateEmployeeSensitiveRequest(
@@ -30,6 +33,7 @@ public record UpdateEmployeeSensitiveRequest(
     String bankAccountNumber,
 
     @Size(max = 50)
+    @Pattern(regexp = ValidationPatterns.PERSON_NAME, message = ValidationPatterns.PERSON_NAME_MESSAGE)
     @Nullable
     String bankAccountHolder
 ) {

@@ -458,7 +458,7 @@ Người phụ thuộc của nhân viên, mới nhất trước. Mỗi phần t�
 
 | Field | Type | Bắt buộc | Ràng buộc |
 |:------|:-----|:--------:|:----------|
-| `fullName` | string | ✅ | Không rỗng; không trùng tên với người phụ thuộc khác của nhân viên có khoảng hiệu lực chồng lấn |
+| `fullName` | string | ✅ | Không rỗng, tối đa 200 ký tự; chỉ gồm chữ cái, khoảng trắng và các dấu `.` `'` `-`; không trùng tên với người phụ thuộc khác của nhân viên có khoảng hiệu lực chồng lấn |
 | `identifier` | string | | Số định danh; chuỗi trắng lưu `null` |
 | `effectiveFrom` | date | ✅ | Không trước ngày vào làm |
 | `effectiveTo` | date | | Không trước `effectiveFrom`; bỏ trống nếu còn giảm trừ |

@@ -7681,7 +7681,8 @@
           "fullName" : {
             "type" : "string",
             "maxLength" : 30,
-            "minLength" : 0
+            "minLength" : 0,
+            "pattern" : "^\\s*([\\p{L}\\p{M}]+([ .'-]+[\\p{L}\\p{M}]+)*\\.?)?\\s*$"
           },
           "hireDate" : {
             "type" : "string",
@@ -7712,7 +7713,8 @@
           "fullName" : {
             "type" : "string",
             "maxLength" : 40,
-            "minLength" : 0
+            "minLength" : 0,
+            "pattern" : "^\\s*([\\p{L}\\p{M}]+([ .'-]+[\\p{L}\\p{M}]+)*\\.?)?\\s*$"
           },
           "gender" : {
             "type" : [ "string", "null" ],
@@ -8178,7 +8180,9 @@
           },
           "fullName" : {
             "type" : "string",
-            "minLength" : 1
+            "maxLength" : 200,
+            "minLength" : 0,
+            "pattern" : "^\\s*([\\p{L}\\p{M}]+([ .'-]+[\\p{L}\\p{M}]+)*\\.?)?\\s*$"
           },
           "identifier" : {
             "type" : [ "string", "null" ]
@@ -10772,7 +10776,8 @@
           "fullName" : {
             "type" : "string",
             "maxLength" : 40,
-            "minLength" : 0
+            "minLength" : 0,
+            "pattern" : "^\\s*([\\p{L}\\p{M}]+([ .'-]+[\\p{L}\\p{M}]+)*\\.?)?\\s*$"
           },
           "gender" : {
             "type" : [ "string", "null" ],
@@ -10820,7 +10825,8 @@
           "bankAccountHolder" : {
             "type" : [ "string", "null" ],
             "maxLength" : 50,
-            "minLength" : 0
+            "minLength" : 0,
+            "pattern" : "^\\s*([\\p{L}\\p{M}]+([ .'-]+[\\p{L}\\p{M}]+)*\\.?)?\\s*$"
           },
           "bankAccountNumber" : {
             "type" : [ "string", "null" ],

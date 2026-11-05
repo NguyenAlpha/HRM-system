@@ -88,7 +88,7 @@ Endpoint này chỉ tạo `Employee` và `EmployeeAssignment`:
 
 | Field | Bắt buộc | Ràng buộc |
 |:------|:--------:|:----------|
-| `fullName` | ✅ | Không rỗng, tối đa 200 ký tự |
+| `fullName` | ✅ | Không rỗng, tối đa 40 ký tự; chỉ gồm chữ cái, khoảng trắng và các dấu `.` `'` `-` (không có chữ số) |
 | `dateOfBirth` | ✅ | Ngày ISO `YYYY-MM-DD`; phải đủ 17 tuổi tính theo ngày hiện tại tại Việt Nam |
 | `gender` | ❌ | `MALE`, `FEMALE`, `OTHER`, `UNDISCLOSED` |
 | `highestEducationLevel` | ❌ | `HIGH_SCHOOL`, `COLLEGE`, `BACHELOR`, `MASTER`, `DOCTORATE` |
@@ -421,7 +421,7 @@ Cập nhật các thông tin hồ sơ thông thường được lưu trực ti�
 
 | Field | Cột trong `employees` | Bắt buộc | Ràng buộc |
 |:------|:----------------------|:--------:|:----------|
-| `fullName` | `full_name` | ✅ | Không rỗng, tối đa 200 ký tự |
+| `fullName` | `full_name` | ✅ | Không rỗng, tối đa 40 ký tự; chỉ gồm chữ cái, khoảng trắng và các dấu `.` `'` `-` |
 | `dateOfBirth` | `date_of_birth` | ❌ | Ngày ISO `YYYY-MM-DD`, nếu có phải đủ 17 tuổi tính theo ngày hiện tại tại Việt Nam; `null` để xóa |
 | `gender` | `gender` | ❌ | `MALE`, `FEMALE`, `OTHER`, `UNDISCLOSED`; `null` để xóa |
 | `highestEducationLevel` | `highest_education_level` | ❌ | `HIGH_SCHOOL`, `COLLEGE`, `BACHELOR`, `MASTER`, `DOCTORATE`; `null` để xóa |
@@ -840,7 +840,7 @@ Cập nhật toàn bộ nhóm trường nhạy cảm. Đây là API **thay thế
 | `taxCode` | | Tối đa 30 ký tự |
 | `bankName` | | Tối đa 150 ký tự |
 | `bankAccountNumber` | | Tối đa 50 ký tự |
-| `bankAccountHolder` | | Tối đa 200 ký tự |
+| `bankAccountHolder` | | Tối đa 50 ký tự; chỉ gồm chữ cái, khoảng trắng và các dấu `.` `'` `-` |
 
 `taxCode` là dữ liệu đầu vào của tính thuế TNCN; thiếu trường này không chặn tính lương nhưng khiến hồ sơ thuế không đầy đủ.
 

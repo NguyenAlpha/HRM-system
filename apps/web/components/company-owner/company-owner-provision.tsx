@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { phoneSchema } from "@/lib/phone"
+import { PERSON_NAME_MESSAGE, PERSON_NAME_PATTERN } from "@/lib/person-name"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import { usernameSchema } from "@/lib/account"
 import { bootstrapCompanyOwner, type CompanyOwnerProvisioningResult } from "@/lib/company-owner"
@@ -42,7 +43,8 @@ const bootstrapSchema = z
       .regex(/^$|^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Email không hợp lệ")
       .optional(),
     companyAddress: z.string().trim().optional(),
-    fullName: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự"),
+    fullName: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự")
+      .regex(PERSON_NAME_PATTERN, PERSON_NAME_MESSAGE),
     workEmail: z
       .string()
       .trim()

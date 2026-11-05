@@ -48,6 +48,7 @@ import {
   type Gender,
 } from "@/lib/employee"
 import { phoneSchema } from "@/lib/phone"
+import { PERSON_NAME_MESSAGE, PERSON_NAME_PATTERN } from "@/lib/person-name"
 import { positionsForOrganizationUnit } from "@/lib/organization-position-filter"
 import { isEligibleEmployeeBirthDate } from "@/lib/employee-birth-date"
 import {
@@ -72,7 +73,8 @@ const EMPLOYMENT_TYPE_ITEMS: Record<string, string> = { ...EMPLOYMENT_TYPE_LABEL
 
 const createEmployeeSchema = z
   .object({
-    fullName: z.string().trim().min(1, "Bắt buộc").max(40, "Tối đa 40 ký tự"),
+    fullName: z.string().trim().min(1, "Bắt buộc").max(40, "Tối đa 40 ký tự")
+      .regex(PERSON_NAME_PATTERN, PERSON_NAME_MESSAGE),
     hireDate: z.string().min(1, "Bắt buộc"),
     dateOfBirth: z.string().min(1, "Bắt buộc chọn ngày sinh")
       .refine((value) => !value || isEligibleEmployeeBirthDate(value), "Nhân sự phải đủ 17 tuổi"),

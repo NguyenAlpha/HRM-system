@@ -33,6 +33,7 @@ import { apiErrorMessage } from "@/lib/api-helpers"
 import type { Page } from "@/lib/pagination"
 import type { PayrollProfile, Payslip, SalaryHistory, TaxDependent, WorkforceBody } from "@/lib/workforce"
 import { formatDate, formatDateRange } from "@/lib/format-date"
+import { personNameError } from "@/lib/person-name"
 
 type Form = "salary" | "profile" | "dependent"
 
@@ -401,7 +402,12 @@ function DependentDialog({ defaultDate, maxDate, busy, onClose, onSubmit }: {
       onSubmit={() => onSubmit({ fullName: fullName.trim(), identifier: identifier.trim() || null, effectiveFrom, effectiveTo: null })}>
       <div className="grid gap-1.5">
         <Label htmlFor="dependent-name">Họ tên</Label>
-        <Input id="dependent-name" required value={fullName} onChange={(event) => setFullName(event.target.value)} />
+        <Input id="dependent-name" required maxLength={200} value={fullName}
+          onChange={(event) => {
+            setFullName(event.target.value)
+            // Blocks the submit with the browser's own message, like the required check above.
+            event.target.setCustomValidity(personNameError(event.target.value))
+          }} />
       </div>
       <div className="grid gap-1.5">
         <Label htmlFor="dependent-identifier">Số định danh (CCCD / mã số thuế)</Label>

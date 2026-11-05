@@ -16,6 +16,7 @@ import jakarta.validation.constraints.Size;
 public record CreateEmployeeProfileRequest(
     @NotBlank
     @Size(max = 40)
+    @Pattern(regexp = ValidationPatterns.PERSON_NAME, message = ValidationPatterns.PERSON_NAME_MESSAGE)
     String fullName,
 
     @NotNull

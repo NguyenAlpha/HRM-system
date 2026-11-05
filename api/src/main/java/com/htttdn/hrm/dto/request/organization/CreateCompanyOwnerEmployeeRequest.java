@@ -14,6 +14,7 @@ import jakarta.validation.constraints.Size;
 public record CreateCompanyOwnerEmployeeRequest(
     @NotBlank
     @Size(max = 30)
+    @Pattern(regexp = ValidationPatterns.PERSON_NAME, message = ValidationPatterns.PERSON_NAME_MESSAGE)
     String fullName,
 
     @NotBlank

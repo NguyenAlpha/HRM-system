@@ -41,6 +41,7 @@ import {
   type UpdateEmployeeInput,
 } from "@/lib/employee"
 import { phoneSchema } from "@/lib/phone"
+import { PERSON_NAME_MESSAGE, PERSON_NAME_PATTERN } from "@/lib/person-name"
 import type { Portal } from "@/lib/auth/types"
 import { isEligibleEmployeeBirthDate } from "@/lib/employee-birth-date"
 
@@ -52,7 +53,8 @@ const EDUCATION_ITEMS: Record<string, string> = { [EDU_NONE]: "Không chọn", .
 
 const employeeEditSchema = z
   .object({
-    fullName: z.string().trim().min(1, "Bắt buộc").max(40, "Tối đa 40 ký tự"),
+    fullName: z.string().trim().min(1, "Bắt buộc").max(40, "Tối đa 40 ký tự")
+      .regex(PERSON_NAME_PATTERN, PERSON_NAME_MESSAGE),
     dateOfBirth: z.string().refine((value) => !value || isEligibleEmployeeBirthDate(value),
       "Nhân sự phải đủ 17 tuổi"),
     gender: z.string(),
