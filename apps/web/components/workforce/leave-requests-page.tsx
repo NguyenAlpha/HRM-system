@@ -609,7 +609,7 @@ function ReviewDialog({ review, busy, onClose, onSubmit }: {
           </DialogHeader>
           <div className="mt-4 grid gap-1.5">
             <Label htmlFor="review-comment">Ghi chú {approve ? "(không bắt buộc)" : "cho nhân viên"}</Label>
-            <Textarea id="review-comment" rows={3} value={comment} onChange={(event) => setComment(event.target.value)} />
+            <Textarea id="review-comment" rows={3} maxLength={100} value={comment} onChange={(event) => setComment(event.target.value)} />
           </div>
           <DialogFooter className="mt-4">
             <Button type="button" variant="outline" onClick={onClose}>Đóng</Button>

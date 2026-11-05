@@ -27,6 +27,7 @@ import com.htttdn.hrm.service.leave.LeaveRequestService.LeaveRequestView;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 
 import lombok.RequiredArgsConstructor;
 
@@ -84,14 +85,14 @@ public class LeaveRequestController {
     }
 
     @PostMapping("/{id}/approve")
-    public ApiResult<LeaveRequestView> approve(@PathVariable Long id, @RequestBody(required = false) ReviewBody body) {
+    public ApiResult<LeaveRequestView> approve(@PathVariable Long id, @Valid @RequestBody(required = false) ReviewBody body) {
         return ApiResult.ok(service.approve(id, body == null ? null : body.comment()));
     }
 
     @PostMapping("/{id}/reject")
-    public ApiResult<LeaveRequestView> reject(@PathVariable Long id, @RequestBody(required = false) ReviewBody body) {
+    public ApiResult<LeaveRequestView> reject(@PathVariable Long id, @Valid @RequestBody(required = false) ReviewBody body) {
         return ApiResult.ok(service.reject(id, body == null ? null : body.comment()));
     }
 
-    public record ReviewBody(@Nullable String comment) { }
+    public record ReviewBody(@Nullable @Size(max = 100) String comment) { }
 }

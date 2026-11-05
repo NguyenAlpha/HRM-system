@@ -25,6 +25,7 @@ import com.htttdn.hrm.service.employee.ResignationRequestService.ResignationRequ
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 
 import lombok.RequiredArgsConstructor;
 
@@ -74,17 +75,17 @@ public class ResignationRequestController {
 
     @PostMapping("/{id}/approve")
     public ApiResult<ResignationRequestView> approve(@PathVariable Long id,
-        @RequestBody(required = false) ApproveResignationBody body) {
+        @Valid @RequestBody(required = false) ApproveResignationBody body) {
         return ApiResult.ok(service.approve(id, body == null ? null : body.comment(), body == null ? null : body.lastWorkingDate()));
     }
 
     @PostMapping("/{id}/reject")
-    public ApiResult<ResignationRequestView> reject(@PathVariable Long id, @RequestBody RejectResignationBody body) {
+    public ApiResult<ResignationRequestView> reject(@PathVariable Long id, @Valid @RequestBody RejectResignationBody body) {
         return ApiResult.ok(service.reject(id, body.comment()));
     }
 
     /** {@code lastWorkingDate} replaces the day the employee asked for. */
-    public record ApproveResignationBody(@Nullable String comment, @Nullable LocalDate lastWorkingDate) { }
+    public record ApproveResignationBody(@Nullable @Size(max = 100) String comment, @Nullable LocalDate lastWorkingDate) { }
 
-    public record RejectResignationBody(String comment) { }
+    public record RejectResignationBody(@Size(max = 100) String comment) { }
 }

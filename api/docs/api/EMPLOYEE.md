@@ -573,8 +573,8 @@ thúc theo lịch đó rồi mới hoàn tất. HR hủy lịch thì đơn bị 
 |:---------|:-----------|:------|
 | `POST /api/resignation-requests` | `request.self.create` (chính mình) hoặc `request.manage` (trong scope) | Nộp đơn, đơn vào `PENDING` ngay |
 | `POST /api/resignation-requests/{id}/cancel` | `request.self.cancel` hoặc `request.manage` | Rút đơn `PENDING` |
-| `POST /api/resignation-requests/{id}/approve` | Người duyệt đã chốt của đơn | Duyệt; body tùy chọn `{ "comment", "lastWorkingDate" }` để đổi ngày làm việc cuối |
-| `POST /api/resignation-requests/{id}/reject` | Người duyệt đã chốt của đơn | Từ chối; body `{ "comment" }` bắt buộc |
+| `POST /api/resignation-requests/{id}/approve` | Người duyệt đã chốt của đơn | Duyệt; body tùy chọn `{ "comment", "lastWorkingDate" }` để đổi ngày làm việc cuối; `comment` tối đa 100 ký tự |
+| `POST /api/resignation-requests/{id}/reject` | Người duyệt đã chốt của đơn | Từ chối; body `{ "comment" }` bắt buộc, tối đa 100 ký tự |
 | `GET /api/resignation-requests/{id}` | `request.self.read` (chính mình), người duyệt, hoặc `request.read` (trong scope) | Chi tiết đơn |
 | `GET /api/resignation-requests` | `request.read` (trong scope) | Đơn của mọi nhân viên trong scope; lọc `keyword`, `organizationUnitId`, `status`; sort `createdAt`, `lastWorkingDate`, `status` |
 | `GET /api/resignation-requests/employees/{employeeId}` | `request.self.read` (chính mình) hoặc `request.read` (trong scope) | Đơn của một nhân viên, mới nhất trước |

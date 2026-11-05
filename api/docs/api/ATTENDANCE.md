@@ -540,6 +540,8 @@ Chỉ người duyệt đã chốt của đơn (`approverEmployeeId`) duyệt ho
 }
 ```
 
+`comment` tối đa 100 ký tự; dài hơn trả `400 VALIDATION_ERROR` với `field = comment`.
+
 Khi duyệt, hệ thống:
 
 1. Kiểm tra các ngày nghỉ chưa có đơn đã duyệt nào khác (mỗi ngày một đơn).

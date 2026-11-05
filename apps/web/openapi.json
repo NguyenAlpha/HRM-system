@@ -7142,7 +7142,9 @@
         "type" : "object",
         "properties" : {
           "comment" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "maxLength" : 100,
+            "minLength" : 0
           },
           "lastWorkingDate" : {
             "type" : [ "string", "null" ],
@@ -9980,7 +9982,9 @@
         "type" : "object",
         "properties" : {
           "comment" : {
-            "type" : "string"
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
           }
         }
       },
@@ -10078,7 +10082,9 @@
         "type" : "object",
         "properties" : {
           "comment" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "maxLength" : 100,
+            "minLength" : 0
           }
         }
       },

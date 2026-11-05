@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * The attendance, leave and payroll command records are validated by Bean Validation before the
+ * The attendance, leave, resignation and payroll command records are validated by Bean Validation before the
  * service runs; each case breaks exactly one field so the reported field is deterministic.
  */
 @SpringBootTest(properties = {
@@ -45,7 +45,10 @@ class WorkforceCommandValidationTest {
         "POST|/api/compensation/employees/1/salary-history|{\"baseSalary\":0,\"effectiveFrom\":\"2026-01-01\"}|baseSalary",
         "POST|/api/compensation/employees/1/payroll-profiles|{\"effectiveFrom\":\"2026-01-01\",\"taxResident\":true,\"socialInsurance\":true,\"healthInsurance\":true,\"unemploymentInsurance\":true,\"insuranceSalary\":5000000,\"wageRegion\":5}|wageRegion",
         "POST|/api/compensation/employees/1/tax-dependents|{\"fullName\":\"Dependent\"}|effectiveFrom",
-        "PUT|/api/compensation/employees/1/tax-dependents/1/end|{}|effectiveTo"
+        "PUT|/api/compensation/employees/1/tax-dependents/1/end|{}|effectiveTo",
+        "POST|/api/leave-requests/1/approve|{\"comment\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}|comment",
+        "POST|/api/resignation-requests/1/approve|{\"comment\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}|comment",
+        "POST|/api/resignation-requests/1/reject|{\"comment\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}|comment"
     })
     void invalidCommandIsRejectedWithTheOffendingField(String method, String path, String body, String field)
         throws Exception {

@@ -405,7 +405,7 @@ function ReviewDialog({ review, busy, run, onClose }: { review: Review; busy: bo
             )}
             <div className="grid gap-1.5">
               <Label htmlFor="review-comment">{approve ? "Ghi chú (không bắt buộc)" : "Lý do từ chối"}</Label>
-              <Textarea id="review-comment" rows={3} required={!approve} value={comment}
+              <Textarea id="review-comment" rows={3} maxLength={100} required={!approve} value={comment}
                 onChange={(event) => setComment(event.target.value)} />
             </div>
           </div>
