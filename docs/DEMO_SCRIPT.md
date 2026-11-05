@@ -60,11 +60,10 @@ Có sẵn: kỳ **09/2026** ở trạng thái **Đã tính**, do `accountant` t�
 
 ## 4. Cấp quyền cần chủ doanh nghiệp duyệt (khoảng 2 phút)
 
-Có sẵn: một yêu cầu cấp vai trò **Quản lý nhân sự**, phạm vi một đơn vị, cho `employee` (NV0003).
+Có sẵn: một yêu cầu cấp vai trò **Quản lý nhân sự**, phạm vi toàn công ty, cho `employee` (NV0003).
 
-1. Với `owner`, mở **Yêu cầu cấp quyền** rồi duyệt.
-2. `employee` đăng xuất rồi đăng nhập lại: menu có thêm các chức năng nhân sự, nhưng chỉ cho nhân viên thuộc đơn vị
-   đó.
+1. Với `owner`, mở **Đề xuất role** rồi duyệt.
+2. `employee` đăng xuất rồi đăng nhập lại: menu có thêm các chức năng nhân sự.
 
 Điểm để nói: có các chính sách cấp vai trò khác nhau (HR gán được, hoặc phải chủ doanh nghiệp duyệt). Quyền mới chỉ
 có hiệu lực từ phiên đăng nhập mới.
@@ -89,3 +88,27 @@ có hiệu lực từ phiên đăng nhập mới.
 2. Mở `/admin/login`, đăng nhập `admin` (bản live: mật khẩu `ADMIN_SEED_PASSWORD` trong
    `api/.azure-shared-quiktech.env`; máy local: `Admin@123`). Xem các trang **Rate limit** và **Traffic** để thấy
    lượt vừa bị chặn.
+
+## 8. Tiếp nhận nhân sự mới: hồ sơ, tài khoản, vai trò (khoảng 4 phút)
+
+1. Với `hr`, mở **Danh sách nhân sự** → **Thêm nhân sự**. Nhập họ tên, ngày vào làm là hôm nay, ngày sinh, **email
+   công việc** (bắt buộc để cấp tài khoản, ví dụ `nv.moi@hrm.local`), đơn vị **Phòng Vận hành**, địa điểm, vị trí,
+   quản lý trực tiếp → **Tạo hồ sơ**. Mã nhân viên do hệ thống tự sinh; lúc này chưa có tài khoản đăng nhập.
+2. Ở dòng nhân sự vừa tạo, bấm **Cấp tài khoản**, nhập tên đăng nhập (ví dụ `nv.moi`) → **Cấp tài khoản**. Hệ thống
+   tạo tài khoản ở trạng thái chờ kích hoạt, tự gán vai trò nền **Nhân viên** (`EMPLOYEE`, phạm vi `SELF`), rồi
+   hiện link và mã kích hoạt **chỉ một lần**. Sao chép link.
+3. Mở link ở cửa sổ ẩn danh (trang `/activate`), đặt mật khẩu, rồi đăng nhập `nv.moi`: menu chỉ có các chức năng
+   cá nhân như `employee` ở phần 1.
+4. Quay lại `hr`, mở **Đề xuất role** → **Đề xuất cấp role**:
+   - chọn nhân sự `nv.moi`, role **Quản lý** (`MANAGER`), phạm vi **Đơn vị tổ chức** → Phòng Vận hành, hiệu lực từ
+     hôm nay, nhập lý do → gửi. `MANAGER` là role HR gán được nên đề xuất được duyệt và có hiệu lực ngay;
+   - đổi thử role sang **Kế toán lương** (`PAYROLL_ACCOUNTANT`): ô phạm vi chỉ còn **Toàn công ty**, vì role này có
+     quyền tính lương, là việc chung cả công ty. Không cần gửi; role này phải chờ chủ doanh nghiệp duyệt như phần 4.
+5. `nv.moi` đăng xuất rồi đăng nhập lại: menu có thêm **Danh sách nhân sự**, **Đơn nghỉ**… nhưng chỉ thấy người của
+   Phòng Vận hành, và không thấy lương hay dữ liệu nhạy cảm.
+
+Điểm để nói: hồ sơ, tài khoản và quyền là ba bước tách nhau. HR không biết mật khẩu của nhân viên, vì nhân viên tự
+đặt qua link kích hoạt. Phạm vi gán được suy ra từ quyền của role, không phải người gán tự chọn tùy ý.
+
+> ⚠️ Trên bản live, nhân sự và tài khoản tạo ở đây được giữ lại. Dùng tên dễ nhận ra, và mỗi lần demo dùng tên đăng
+> nhập và email mới, vì hai giá trị này không được trùng.
