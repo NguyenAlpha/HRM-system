@@ -278,7 +278,7 @@ function PositionAllowanceDialog({ position, canManage, busy, run, onClose }: {
               </div>
               <div className="grid gap-1.5 sm:col-span-2">
                 <Label htmlFor="position-allowance-note">Ghi chú</Label>
-                <Input id="position-allowance-note" value={note} onChange={(event) => setNote(event.target.value)} />
+                <Input id="position-allowance-note" maxLength={250} value={note} onChange={(event) => setNote(event.target.value)} />
               </div>
               <p className="text-xs text-muted-foreground sm:col-span-2">
                 Nhập 0 để bỏ phụ cấp từ ngày hiệu lực. Ngày hiệu lực phải sau ngày bắt đầu của mức đang áp dụng.
@@ -491,7 +491,7 @@ function SeniorityTableDialog({ current, busy, run, onClose }: {
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="seniority-note">Ghi chú</Label>
-                <Input id="seniority-note" value={note} onChange={(event) => setNote(event.target.value)} />
+                <Input id="seniority-note" maxLength={250} value={note} onChange={(event) => setNote(event.target.value)} />
               </div>
             </div>
           </div>

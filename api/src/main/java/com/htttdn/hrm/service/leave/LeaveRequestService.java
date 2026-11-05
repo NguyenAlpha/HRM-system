@@ -30,6 +30,7 @@ import com.htttdn.hrm.util.Strings;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import lombok.RequiredArgsConstructor;
 
@@ -352,8 +353,8 @@ public class LeaveRequestService {
         @Nullable LeaveSalaryTreatment salaryTreatment,
         @NotNull Instant startAt,
         @NotNull Instant endAt,
-        @NotBlank String reason,
-        @Nullable String attachmentUrl
+        @NotBlank @Size(max = 500) String reason,
+        @Nullable @Size(max = 500) String attachmentUrl
     ) {
     }
 

@@ -277,7 +277,7 @@ function EditCompanyDialog({ company, onClose, onSaved }: {
             </div>
             <div className="grid gap-1.5 sm:col-span-2">
               <Label htmlFor="company-address">Địa chỉ</Label>
-              <Textarea id="company-address" rows={2} value={address} onChange={(event) => setAddress(event.target.value)} />
+              <Textarea id="company-address" rows={2} maxLength={200} value={address} onChange={(event) => setAddress(event.target.value)} />
             </div>
           </div>
           <DialogFooter className="mt-4">

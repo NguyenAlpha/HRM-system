@@ -41,7 +41,7 @@ import { formatDate } from "@/lib/format-date"
 const employmentEndSchema = z.object({
   endStatus: z.enum(EMPLOYMENT_END_STATUSES),
   terminationDate: z.string().min(1, "Bắt buộc"),
-  terminationReason: z.string().trim().min(1, "Bắt buộc"),
+  terminationReason: z.string().trim().min(1, "Bắt buộc").max(500, "Tối đa 500 ký tự"),
 })
 
 type EmploymentEndValues = z.infer<typeof employmentEndSchema>

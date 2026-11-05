@@ -33,6 +33,8 @@ public record CompanyProfileRequest(
     @Nullable
     String email,
 
+    @Size(max = 200)
+
     @Nullable
     String address
 ) {

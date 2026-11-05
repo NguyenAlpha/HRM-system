@@ -26,6 +26,7 @@ public record CreateWorkLocationRequest(
     LocationType locationType,
 
     @NotBlank
+    @Size(max = 200)
     String address,
 
     @Pattern(regexp = ValidationPatterns.PHONE, message = ValidationPatterns.PHONE_MESSAGE)

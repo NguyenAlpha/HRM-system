@@ -24,6 +24,8 @@ public record UpdateSelfProfileRequest(
     @Nullable
     String personalEmail,
 
+    @Size(max = 200)
+
     @Nullable
     String address,
 

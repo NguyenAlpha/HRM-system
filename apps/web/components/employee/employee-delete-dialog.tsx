@@ -27,7 +27,7 @@ import {
 } from "@/lib/employee"
 
 const deleteSchema = z.object({
-  deletionReason: z.string().trim().min(1, "Bắt buộc"),
+  deletionReason: z.string().trim().min(1, "Bắt buộc").max(500, "Tối đa 500 ký tự"),
 })
 
 type DeleteValues = z.infer<typeof deleteSchema>

@@ -26,6 +26,7 @@ import com.htttdn.hrm.security.CurrentAccountProvider;
 import com.htttdn.hrm.util.Strings;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -229,16 +230,16 @@ public class PayrollDeductionsService {
 
     public record ProfileCommand(@NotNull LocalDate effectiveFrom, @NotNull Boolean taxResident,
         @NotNull Boolean socialInsurance, @NotNull Boolean healthInsurance,
-        @NotNull Boolean unemploymentInsurance, @NotNull @PositiveOrZero BigDecimal insuranceSalary,
+        @NotNull Boolean unemploymentInsurance, @NotNull @PositiveOrZero @Digits(integer = 13, fraction = 2) BigDecimal insuranceSalary,
         @NotNull @Min(1) @Max(4) Short wageRegion) {}
     public record Profile(Long id, Long employeeId, LocalDate effectiveFrom, @Nullable LocalDate effectiveTo,
         boolean taxResident, boolean socialInsurance, boolean healthInsurance,
         boolean unemploymentInsurance, BigDecimal insuranceSalary, short wageRegion) {}
     public record DependentCommand(
-        @NotBlank @Size(max = 200)
+        @NotBlank @Size(max = 40)
         @Pattern(regexp = ValidationPatterns.PERSON_NAME, message = ValidationPatterns.PERSON_NAME_MESSAGE)
         String fullName,
-        @Nullable String identifier,
+        @Nullable @Size(max = 20) String identifier,
         @NotNull LocalDate effectiveFrom, @Nullable LocalDate effectiveTo) {}
     public record Dependent(Long id, Long employeeId, String fullName, @Nullable String identifier,
         LocalDate effectiveFrom, @Nullable LocalDate effectiveTo) {}

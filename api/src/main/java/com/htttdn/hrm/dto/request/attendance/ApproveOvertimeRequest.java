@@ -2,6 +2,7 @@ package com.htttdn.hrm.dto.request.attendance;
 
 import java.math.BigDecimal;
 
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -15,6 +16,7 @@ public record ApproveOvertimeRequest(
 
     @NotNull
     @Positive
+    @Digits(integer = 4, fraction = 4)
     BigDecimal overtimeMultiplier,
 
     @Nullable Boolean taxExempt

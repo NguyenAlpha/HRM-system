@@ -43,7 +43,7 @@ const bootstrapSchema = z
       .regex(/^$|^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Email không hợp lệ")
       .optional(),
     companyAddress: z.string().trim().optional(),
-    fullName: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự")
+    fullName: z.string().trim().min(1, "Bắt buộc").max(40, "Tối đa 40 ký tự")
       .regex(PERSON_NAME_PATTERN, PERSON_NAME_MESSAGE),
     workEmail: z
       .string()
@@ -182,7 +182,7 @@ export function CompanyOwnerProvision({ onSessionExpired }: { onSessionExpired: 
 
           <div className="grid gap-1.5">
             <Label htmlFor="company-address">Địa chỉ</Label>
-            <Textarea id="company-address" rows={2} {...register("companyAddress")} />
+            <Textarea id="company-address" rows={2} maxLength={200} {...register("companyAddress")} />
           </div>
 
           <Separator />

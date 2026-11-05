@@ -48,6 +48,10 @@ class WorkforceCommandValidationTest {
         "POST|/api/compensation/employees/1/tax-dependents|{\"fullName\":\"Dependent\"}|effectiveFrom",
         "POST|/api/compensation/employees/1/tax-dependents|{\"fullName\":\"33333333333\",\"effectiveFrom\":\"2026-01-01\"}|fullName",
         "PUT|/api/compensation/employees/1/tax-dependents/1/end|{}|effectiveTo",
+        "POST|/api/compensation/employees/1/tax-dependents|{\"fullName\":\"Nguyễn aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"effectiveFrom\":\"2026-01-01\"}|fullName",
+        "POST|/api/compensation/employees/1/tax-dependents|{\"fullName\":\"Nguyễn An\",\"identifier\":\"111111111111111111111\",\"effectiveFrom\":\"2026-01-01\"}|identifier",
+        "POST|/api/compensation/employees/1/salary-history|{\"baseSalary\":100000000000000,\"effectiveFrom\":\"2026-01-01\"}|baseSalary",
+        "POST|/api/leave-requests|{\"employeeId\":1,\"leaveType\":\"ANNUAL\",\"startAt\":\"2026-01-05T01:00:00Z\",\"endAt\":\"2026-01-05T05:00:00Z\",\"reason\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}|reason",
         "POST|/api/leave-requests/1/approve|{\"comment\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}|comment",
         "POST|/api/resignation-requests/1/approve|{\"comment\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}|comment",
         "POST|/api/resignation-requests/1/reject|{\"comment\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}|comment"

@@ -567,7 +567,7 @@ function CreateLeaveDialog({ canManage, self, busy, run, onClose }: {
             </>}
             <div className="grid gap-1.5 sm:col-span-2">
               <Label htmlFor="leave-reason">Lý do</Label>
-              <Textarea id="leave-reason" required rows={2} value={reason} onChange={(event) => setReason(event.target.value)} />
+              <Textarea id="leave-reason" required rows={2} maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} />
             </div>
           </div>
           <DialogFooter className="mt-4">

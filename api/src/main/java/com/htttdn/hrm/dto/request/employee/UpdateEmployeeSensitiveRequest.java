@@ -17,6 +17,8 @@ public record UpdateEmployeeSensitiveRequest(
     @Nullable
     String personalEmail,
 
+    @Size(max = 200)
+
     @Nullable
     String address,
 

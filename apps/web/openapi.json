@@ -5224,7 +5224,8 @@
           },
           "note" : {
             "type" : "string",
-            "minLength" : 1
+            "maxLength" : 100,
+            "minLength" : 0
           },
           "payableMinutes" : {
             "type" : "integer",
@@ -7223,7 +7224,9 @@
             "format" : "int64"
           },
           "reason" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "maxLength" : 500,
+            "minLength" : 0
           },
           "shiftId" : {
             "type" : [ "integer", "null" ],
@@ -7567,7 +7570,9 @@
         "type" : "object",
         "properties" : {
           "address" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "maxLength" : 200,
+            "minLength" : 0
           },
           "code" : {
             "type" : "string",
@@ -7680,7 +7685,7 @@
         "properties" : {
           "fullName" : {
             "type" : "string",
-            "maxLength" : 30,
+            "maxLength" : 40,
             "minLength" : 0,
             "pattern" : "^\\s*([\\p{L}\\p{M}]+([ .'-]+[\\p{L}\\p{M}]+)*\\.?)?\\s*$"
           },
@@ -7779,7 +7784,9 @@
             "pattern" : "^[A-Z][A-Z0-9_-]*$"
           },
           "description" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "maxLength" : 1000,
+            "minLength" : 0
           },
           "isManagerial" : {
             "type" : "boolean"
@@ -7796,7 +7803,9 @@
         "type" : "object",
         "properties" : {
           "attachmentUrl" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "maxLength" : 500,
+            "minLength" : 0
           },
           "employeeId" : {
             "type" : "integer",
@@ -7812,7 +7821,8 @@
           },
           "reason" : {
             "type" : "string",
-            "minLength" : 1
+            "maxLength" : 500,
+            "minLength" : 0
           },
           "salaryTreatment" : {
             "type" : [ "string", "null" ],
@@ -7957,7 +7967,8 @@
           },
           "reason" : {
             "type" : "string",
-            "minLength" : 1
+            "maxLength" : 500,
+            "minLength" : 0
           },
           "requestedLastWorkingDate" : {
             "type" : "string",
@@ -8017,7 +8028,9 @@
             "pattern" : "(?!ROLE_)[A-Z][A-Z0-9_]*"
           },
           "description" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "maxLength" : 1000,
+            "minLength" : 0
           },
           "grantPolicy" : {
             "type" : "string",
@@ -8051,7 +8064,8 @@
         "properties" : {
           "address" : {
             "type" : "string",
-            "minLength" : 1
+            "maxLength" : 200,
+            "minLength" : 0
           },
           "code" : {
             "type" : "string",
@@ -8180,12 +8194,14 @@
           },
           "fullName" : {
             "type" : "string",
-            "maxLength" : 200,
+            "maxLength" : 40,
             "minLength" : 0,
             "pattern" : "^\\s*([\\p{L}\\p{M}]+([ .'-]+[\\p{L}\\p{M}]+)*\\.?)?\\s*$"
           },
           "identifier" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "maxLength" : 20,
+            "minLength" : 0
           }
         },
         "required" : [ "effectiveFrom", "fullName" ]
@@ -8496,7 +8512,8 @@
           },
           "terminationReason" : {
             "type" : "string",
-            "minLength" : 1
+            "maxLength" : 500,
+            "minLength" : 0
           }
         },
         "required" : [ "endStatus", "terminationDate", "terminationReason" ]
@@ -10542,7 +10559,9 @@
             "type" : "number"
           },
           "note" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "maxLength" : 250,
+            "minLength" : 0
           }
         },
         "required" : [ "effectiveFrom", "monthlyAmount" ]
@@ -10558,7 +10577,9 @@
             "format" : "date"
           },
           "note" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "maxLength" : 250,
+            "minLength" : 0
           },
           "reason" : {
             "type" : [ "string", "null" ],
@@ -10576,7 +10597,9 @@
             "format" : "date"
           },
           "note" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "maxLength" : 250,
+            "minLength" : 0
           },
           "tiers" : {
             "type" : "array",
@@ -10593,7 +10616,8 @@
         "properties" : {
           "deletionReason" : {
             "type" : "string",
-            "minLength" : 1
+            "maxLength" : 500,
+            "minLength" : 0
           }
         },
         "required" : [ "deletionReason" ]
@@ -10820,7 +10844,9 @@
         "type" : "object",
         "properties" : {
           "address" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "maxLength" : 200,
+            "minLength" : 0
           },
           "bankAccountHolder" : {
             "type" : [ "string", "null" ],
@@ -10860,7 +10886,9 @@
         "type" : "object",
         "properties" : {
           "description" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "maxLength" : 1000,
+            "minLength" : 0
           },
           "isActive" : {
             "type" : "boolean"
@@ -10898,7 +10926,9 @@
         "type" : "object",
         "properties" : {
           "description" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "maxLength" : 1000,
+            "minLength" : 0
           },
           "grantPolicy" : {
             "type" : "string",
@@ -10916,7 +10946,9 @@
         "type" : "object",
         "properties" : {
           "address" : {
-            "type" : [ "string", "null" ]
+            "type" : [ "string", "null" ],
+            "maxLength" : 200,
+            "minLength" : 0
           },
           "graduationYear" : {
             "type" : [ "integer", "null" ],
@@ -10955,7 +10987,8 @@
         "properties" : {
           "address" : {
             "type" : "string",
-            "minLength" : 1
+            "maxLength" : 200,
+            "minLength" : 0
           },
           "isActive" : {
             "type" : "boolean"

@@ -402,7 +402,7 @@ function DependentDialog({ defaultDate, maxDate, busy, onClose, onSubmit }: {
       onSubmit={() => onSubmit({ fullName: fullName.trim(), identifier: identifier.trim() || null, effectiveFrom, effectiveTo: null })}>
       <div className="grid gap-1.5">
         <Label htmlFor="dependent-name">Họ tên</Label>
-        <Input id="dependent-name" required maxLength={200} value={fullName}
+        <Input id="dependent-name" required maxLength={40} value={fullName}
           onChange={(event) => {
             setFullName(event.target.value)
             // Blocks the submit with the browser's own message, like the required check above.
@@ -411,7 +411,7 @@ function DependentDialog({ defaultDate, maxDate, busy, onClose, onSubmit }: {
       </div>
       <div className="grid gap-1.5">
         <Label htmlFor="dependent-identifier">Số định danh (CCCD / mã số thuế)</Label>
-        <Input id="dependent-identifier" value={identifier} onChange={(event) => setIdentifier(event.target.value)} />
+        <Input id="dependent-identifier" maxLength={20} value={identifier} onChange={(event) => setIdentifier(event.target.value)} />
       </div>
       <div className="grid gap-1.5">
         <Label htmlFor="dependent-from">Giảm trừ từ ngày</Label>

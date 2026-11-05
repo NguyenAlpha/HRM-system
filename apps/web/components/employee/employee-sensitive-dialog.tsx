@@ -180,7 +180,7 @@ export function EmployeeSensitiveDialog({ employee, onClose, onSaved, onSessionE
 
             <div className="grid gap-2 sm:col-span-2">
               <Label htmlFor="address">Địa chỉ</Label>
-              <Textarea id="address" rows={2} {...register("address")} disabled={loading} />
+              <Textarea id="address" rows={2} maxLength={200} {...register("address")} disabled={loading} />
             </div>
           </div>
 

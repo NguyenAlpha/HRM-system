@@ -10,6 +10,8 @@ public record UpdateJobPositionRequest(
     @Size(max = 30)
     String title,
 
+    @Size(max = 1000)
+
     @Nullable
     String description,
 

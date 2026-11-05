@@ -313,7 +313,7 @@ function EditProfileDialog({ profile, onClose, onSaved }: {
             </div>
             <div className="grid gap-1.5 sm:col-span-2">
               <Label htmlFor="self-address">Địa chỉ</Label>
-              <Input id="self-address" value={address} onChange={(event) => setAddress(event.target.value)} />
+              <Input id="self-address" maxLength={200} value={address} onChange={(event) => setAddress(event.target.value)} />
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="self-education">Trình độ cao nhất</Label>

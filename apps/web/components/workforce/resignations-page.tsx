@@ -347,7 +347,7 @@ function CreateDialog({ employeeId, busy, run, onClose }: { employeeId: number; 
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="resign-reason">Lý do</Label>
-              <Textarea id="resign-reason" required rows={3} value={reason} onChange={(event) => setReason(event.target.value)} />
+              <Textarea id="resign-reason" required rows={3} maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} />
             </div>
           </div>
           <DialogFooter className="mt-4">

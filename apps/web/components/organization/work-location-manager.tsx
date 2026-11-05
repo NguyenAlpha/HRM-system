@@ -67,7 +67,7 @@ const locationSchema = z.object({
   code: z.string().trim().min(1, "Bắt buộc").max(20, "Tối đa 20 ký tự").regex(CODE_PATTERN, "Chữ hoa, số, gạch dưới/ngang; bắt đầu bằng chữ cái"),
   name: z.string().trim().min(1, "Bắt buộc").max(30, "Tối đa 30 ký tự"),
   locationType: z.string().min(1, "Bắt buộc"),
-  address: z.string().trim().min(1, "Bắt buộc"),
+  address: z.string().trim().min(1, "Bắt buộc").max(200, "Tối đa 200 ký tự"),
   phone: phoneSchema,
   parentLocationId: z.string().optional(),
   isActive: z.string(),

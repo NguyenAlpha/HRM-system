@@ -18,6 +18,8 @@ public record CreateRoleRequest(
     @Size(max = 30)
     String name,
 
+    @Size(max = 1000)
+
     @Nullable
     String description,
 

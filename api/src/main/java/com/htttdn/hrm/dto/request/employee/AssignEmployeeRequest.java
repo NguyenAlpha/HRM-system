@@ -6,6 +6,7 @@ import com.htttdn.hrm.entity.enums.EmploymentType;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 public record AssignEmployeeRequest(
     @NotNull
@@ -30,6 +31,7 @@ public record AssignEmployeeRequest(
     LocalDate effectiveFrom,
 
     @Nullable
+    @Size(max = 500)
     String reason
 ) {
 }

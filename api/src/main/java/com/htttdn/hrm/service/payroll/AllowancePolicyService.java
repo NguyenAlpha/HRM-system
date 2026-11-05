@@ -28,9 +28,11 @@ import com.htttdn.hrm.util.Strings;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 import lombok.RequiredArgsConstructor;
 
@@ -238,15 +240,15 @@ public class AllowancePolicyService {
     }
 
     public record SetPositionAllowanceCommand(
-        @NotNull @PositiveOrZero BigDecimal monthlyAmount,
+        @NotNull @PositiveOrZero @Digits(integer = 13, fraction = 2) BigDecimal monthlyAmount,
         @NotNull LocalDate effectiveFrom,
-        @Nullable String note
+        @Nullable @Size(max = 250) String note
     ) {
     }
 
     public record SetSeniorityAllowancesCommand(
         @NotNull LocalDate effectiveFrom,
-        @Nullable String note,
+        @Nullable @Size(max = 250) String note,
         @NotEmpty List<@Valid @NotNull SeniorityTier> tiers
     ) {
     }
@@ -255,7 +257,7 @@ public class AllowancePolicyService {
     public record SeniorityTier(
         @NotNull @PositiveOrZero Integer minYears,
         @Nullable Integer maxYears,
-        @NotNull @PositiveOrZero BigDecimal percentage
+        @NotNull @PositiveOrZero @Digits(integer = 4, fraction = 4) BigDecimal percentage
     ) {
     }
 

@@ -17,6 +17,7 @@ public record UpdateWorkLocationRequest(
     String name,
 
     @NotBlank
+    @Size(max = 200)
     String address,
 
     @Pattern(regexp = ValidationPatterns.PHONE, message = ValidationPatterns.PHONE_MESSAGE)

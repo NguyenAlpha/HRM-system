@@ -5,6 +5,7 @@ import com.htttdn.hrm.entity.enums.AttendanceStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 public record AdjustAttendanceRequest(
     @NotNull
@@ -27,6 +28,7 @@ public record AdjustAttendanceRequest(
     AttendanceStatus status,
 
     @NotBlank
+    @Size(max = 100)
     String note
 ) {
 }

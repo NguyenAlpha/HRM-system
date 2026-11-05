@@ -636,7 +636,7 @@ function AbsenceDialog({ record, busy, onClose, onSubmit }: {
           </DialogHeader>
           <div className="mt-4 grid gap-1.5">
             <Label htmlFor="absence-note">Lý do và căn cứ</Label>
-            <Textarea id="absence-note" required rows={3} value={note} onChange={(event) => setNote(event.target.value)} />
+            <Textarea id="absence-note" required rows={3} maxLength={100} value={note} onChange={(event) => setNote(event.target.value)} />
           </div>
           <DialogFooter className="mt-4">
             <Button type="button" variant="outline" onClick={onClose}>Hủy</Button>
