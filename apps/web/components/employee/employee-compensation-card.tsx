@@ -323,7 +323,7 @@ function SalaryDialog({ defaultDate, maxDate, busy, onClose, onSubmit }: {
       </div>
       <div className="grid gap-1.5">
         <Label htmlFor="salary-reason">Lý do</Label>
-        <Input id="salary-reason" placeholder="VD: Mức lương ban đầu, điều chỉnh định kỳ" value={reason}
+        <Input id="salary-reason" placeholder="VD: Mức lương ban đầu, điều chỉnh định kỳ" maxLength={250} value={reason}
           onChange={(event) => setReason(event.target.value)} />
       </div>
     </FormDialog>

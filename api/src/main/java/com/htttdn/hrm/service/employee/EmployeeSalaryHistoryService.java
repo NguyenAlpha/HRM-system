@@ -25,6 +25,7 @@ import com.htttdn.hrm.util.Strings;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 import lombok.RequiredArgsConstructor;
 
@@ -137,7 +138,7 @@ public class EmployeeSalaryHistoryService {
     public record SetSalaryCommand(
         @NotNull @Positive BigDecimal baseSalary,
         @NotNull LocalDate effectiveFrom,
-        @Nullable String reason,
+        @Nullable @Size(max = 250) String reason,
         @Nullable String note
     ) {
     }

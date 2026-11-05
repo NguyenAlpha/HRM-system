@@ -358,7 +358,7 @@ Trả một [`SalaryHistoryView`](#salaryhistoryview).
 |:------|:-----|:--------:|:----------|
 | `baseSalary` | number | ✅ | Lớn hơn 0 |
 | `effectiveFrom` | date | ✅ | Không trước ngày vào làm; phải sau ngày bắt đầu của mức đang mở |
-| `reason` | string | | Chuỗi trắng được lưu là `null` |
+| `reason` | string | | Tối đa 250 ký tự; chuỗi trắng được lưu là `null` |
 | `note` | string | | Chuỗi trắng được lưu là `null` |
 
 #### Response `201 Created`
