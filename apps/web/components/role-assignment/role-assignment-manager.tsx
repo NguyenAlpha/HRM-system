@@ -11,6 +11,7 @@ import { Pagination, ErrorAlert } from "@/components/common/list-controls"
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { EmployeePicker } from "@/components/employee/employee-picker"
 import { RoleRevocationRequestDialog } from "@/components/role-assignment/role-revocation-request-dialog"
+import { today } from "@/components/workforce/workforce-shared"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -48,6 +49,7 @@ import {
 } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
+import { formatDate, formatDateRange } from "@/lib/format-date"
 import type { Page } from "@/lib/pagination"
 import {
   approveRoleAssignmentRequest,
@@ -357,6 +359,7 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
                   <TableHead>Nhân sự</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Phạm vi</TableHead>
+                  <TableHead>Hiệu lực</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead>Người gửi</TableHead>
                   <TableHead className="text-right">Thao tác</TableHead>
@@ -366,7 +369,7 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
                 {loading &&
                   Array.from({ length: 5 }).map((_, index) => (
                     <TableRow key={index}>
-                      {Array.from({ length: 6 }).map((__, cell) => (
+                      {Array.from({ length: 7 }).map((__, cell) => (
                         <TableCell key={cell}><Skeleton className="h-4 w-full" /></TableCell>
                       ))}
                     </TableRow>
@@ -394,6 +397,9 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
                         {request.organizationUnitName && <span className="block text-xs text-muted-foreground">{request.organizationUnitName}</span>}
                         {request.workLocationName && <span className="block text-xs text-muted-foreground">{request.workLocationName}</span>}
                       </TableCell>
+                      <TableCell className="text-sm whitespace-nowrap">
+                        {formatDateRange(request.effectiveFrom, request.effectiveTo, "không thời hạn")}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={statusBadgeVariant(request.status)}>{ROLE_ASSIGNMENT_STATUS_LABELS[request.status]}</Badge>
                       </TableCell>
@@ -415,7 +421,7 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
 
                 {!loading && data?.content.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                       Chưa có đề xuất nào.
                     </TableCell>
                   </TableRow>
@@ -611,6 +617,10 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
               {actionTarget?.request.requestType === "REVOKE" ? "Của" : "Cho"} {actionTarget?.request.employeeName} ({actionTarget?.request.employeeCode})
               {actionTarget?.action === "approve" && actionTarget.request.requestType === "REVOKE"
                 && ". Role mất hiệu lực ngay và mọi phiên đăng nhập của tài khoản bị thu hồi."}
+              {actionTarget?.action === "approve" && actionTarget.request.requestType === "GRANT"
+                && (actionTarget.request.effectiveFrom > today()
+                  ? `. Role chỉ có hiệu lực từ ${formatDate(actionTarget.request.effectiveFrom)}, không phải ngay khi duyệt.`
+                  : ". Role có hiệu lực ngay; nhân sự cần đăng nhập lại để thấy quyền mới.")}
             </DialogDescription>
           </DialogHeader>
 
