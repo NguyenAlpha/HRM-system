@@ -447,7 +447,7 @@ export async function handleWorkforceRequest(request: Request, segments: string[
   const exportFile = PAYROLL_EXPORT.test(path)
   const logoUpload = path === "company/logo" && request.method === "PUT"
   if (!exportFile && !logoUpload) {
-    return forwardWithSession(request, "hrm", `/api/${path}`, ["from", "to", "year", "fromYear", "month", "page",
+    return forwardWithSession(request, "hrm", `/api/${path}`, ["from", "to", "year", "month", "page",
       "size", "sort", "date", "keyword", "organizationUnitId", "status", "leaveType"])
   }
 

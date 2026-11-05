@@ -34,15 +34,24 @@ Access token và refresh token được lưu trong bộ cookie `HttpOnly` riêng
 
 | Route | Chức năng |
 | --- | --- |
-| `/employees`, `/employees/{id}` | Danh sách, tạo và xem hồ sơ nhân viên |
-| `/accounts` | Gửi lại lời mời, đặt lại mật khẩu, vô hiệu hóa và kích hoạt lại tài khoản |
+| `/dashboard` | Tổng quan: việc chờ xử lý và số liệu nhanh theo quyền |
+| `/profile` | Hồ sơ của tôi: xem và sửa các trường được phép |
+| `/employees`, `/employees/{id}` | Danh sách, tạo và xem hồ sơ nhân viên (kèm lương, bảo hiểm, người phụ thuộc) |
+| `/accounts`, `/accounts/{id}` | Gửi lại lời mời, đặt lại mật khẩu, vô hiệu hóa và kích hoạt lại tài khoản |
 | `/organization` | Đơn vị, địa điểm, vị trí và ca làm việc |
+| `/company` | Thông tin và logo doanh nghiệp |
 | `/attendance` | Chuẩn bị bảng công, vào/ra ca, xử lý công và tăng ca |
 | `/leave-requests` | Tạo và xử lý đơn nghỉ phép |
-| `/payslips` | Lương, bảo hiểm, người phụ thuộc, kỳ lương và phiếu lương |
-| `/reports/workforce` | Báo cáo nhân sự và phân bố lương cơ bản |
+| `/resignations` | Tạo và xử lý đơn nghỉ việc |
+| `/payroll`, `/payroll/{id}` | Kỳ lương: tạo, tính, duyệt, trả, khóa, xuất Excel và phiếu lương của kỳ |
+| `/payslips` | Phiếu lương của tôi |
+| `/allowances` | Chính sách phụ cấp chức vụ và thâm niên |
+| `/reports/workforce`, `/reports/turnover`, `/reports/monthly` | Cơ cấu nhân sự, biến động nhân sự, tình hình nhân sự theo tháng |
+| `/reports/attendance`, `/reports/leave`, `/reports/payroll` | Tổng hợp chấm công, phép năm, quỹ lương, bảo hiểm và thuế |
 | `/rbac`, `/role-grant`, `/role-requests` | Custom role, gán role và yêu cầu cấp role |
-| `/admin/employees`, `/admin/accounts`, `/admin/company-owner`, `/admin/organization`, `/admin/rbac` | Quản trị truy cập: tài khoản, định nghĩa role, danh mục tổ chức (cấp role và permission override thuộc Company Owner); nhân sự chỉ xem và cấp tài khoản |
+| `/admin` | Tổng quan Admin Console |
+| `/admin/employees`, `/admin/employees/{id}`, `/admin/accounts`, `/admin/accounts/{id}`, `/admin/company-owner`, `/admin/organization`, `/admin/rbac` | Quản trị truy cập: tài khoản, định nghĩa role, danh mục tổ chức (cấp role và permission override thuộc Company Owner); nhân sự chỉ xem và cấp tài khoản |
+| `/admin/rate-limit`, `/admin/traffic` | Giới hạn truy cập API và lưu lượng API |
 
 Mỗi trang tự ẩn thao tác không có quyền để cải thiện trải nghiệm; Spring Boot API vẫn là nơi quyết định authorization và scope dữ liệu.
 
