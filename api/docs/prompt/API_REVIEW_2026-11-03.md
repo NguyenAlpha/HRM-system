@@ -82,7 +82,7 @@ code nào kiểm tra (`17df8519`).
 - **Đề xuất:** (a) Test so danh mục permission với mọi mã permission dùng trong code, hai chiều. (b) Test sau khi seed:
   mọi lần gán role hợp lệ theo `RoleAssignmentPolicy`, phép năm đã dùng không vượt hạn mức.
 - **Tìm ra nhờ:** tiêu chí 9
-- **Trạng thái:** Chưa sửa
+- **Trạng thái:** Đã sửa
 
 ### API-004 — Ý kiến duyệt/từ chối không giới hạn độ dài
 
@@ -93,7 +93,7 @@ code nào kiểm tra (`17df8519`).
   để web đối chiếu.
 - **Đề xuất:** Thêm `@Size` và giới hạn tương ứng trên web.
 - **Tìm ra nhờ:** tiêu chí 7
-- **Trạng thái:** Chưa sửa
+- **Trạng thái:** Đã sửa
 
 ### API-005 — Số giờ một ngày nghỉ lấy theo ca mới nhất
 
