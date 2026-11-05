@@ -80,7 +80,7 @@
     "roleRequests": [
       { "role": "HR_MANAGER", "scope": "COMPANY", "requestedBy": "hr", "status": "APPROVED", "daysAgo": 100, "effectiveFromDaysAgo": 95, "effectiveToDaysAgo": 70, "reason": "Kiêm nhiệm quản lý nhân sự trong thời gian tuyển dụng cao điểm", "note": "Đồng ý, trong thời gian tuyển dụng cao điểm." },
       { "role": "PAYROLL_ACCOUNTANT", "scope": "COMPANY", "requestedBy": "hr", "status": "CANCELLED", "daysAgo": 60, "effectiveFromDaysAgo": 55, "reason": "Hỗ trợ tính lương mùa cao điểm", "note": "Đã sắp xếp được kế toán khác hỗ trợ." },
-      { "role": "HR_MANAGER", "scope": "COMPANY", "requestedBy": "hr", "status": "PENDING", "daysAgo": 2, "effectiveFromDaysAgo": -14, "effectiveToDaysAgo": -30, "reason": "Phụ trách nhân sự phòng khi chị Bình nghỉ phép về quê" }
+      { "role": "HR_MANAGER", "scope": "COMPANY", "requestedBy": "hr", "status": "PENDING", "daysAgo": 2, "effectiveFromDaysAgo": 0, "effectiveToDaysAgo": -30, "reason": "Hỗ trợ chị Bình xử lý hồ sơ nhân sự trong tháng" }
     ]
   },
   {
