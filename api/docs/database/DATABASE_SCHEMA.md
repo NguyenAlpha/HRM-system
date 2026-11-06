@@ -18,7 +18,8 @@
 - Database: PostgreSQL.
 - Khóa chính dùng `BIGSERIAL`.
 - Thời điểm dùng `TIMESTAMPTZ`, ngày nghiệp vụ dùng `DATE`.
-- Tiền dùng `NUMERIC(15,2)`, phần trăm/hệ số dùng `NUMERIC(8,4)`, thời lượng dùng phút `INTEGER`.
+- Tiền dùng `NUMERIC(15,2)`; tỷ lệ bảo hiểm và thuế suất dùng `NUMERIC(6,5)`, phần trăm/hệ số khác dùng `NUMERIC(8,4)`;
+  thời lượng dùng phút `INTEGER`.
 - Hệ thống chỉ phục vụ một doanh nghiệp nên không lặp `company_id` trong các bảng nghiệp vụ.
 - Bảng danh mục được xóa mềm bằng `deleted_at`; bảng giao dịch và lịch sử không xóa mà đổi trạng thái.
 - Lương, CCCD và tài khoản ngân hàng là dữ liệu nhạy cảm, phải che hoặc mã hóa khi triển khai.
@@ -447,8 +448,13 @@ erDiagram
 | `email` | VARCHAR(100) | | Email liên hệ |
 | `address` | TEXT | | Địa chỉ đăng ký |
 | `timezone` | VARCHAR(50) | NOT NULL, DEFAULT `Asia/Ho_Chi_Minh` | Múi giờ nghiệp vụ |
+| `logo` | BYTEA | | Logo hiển thị trên giao diện (PNG/JPEG/WebP, tối đa 512 KB) |
+| `logo_content_type` | VARCHAR(20) | | Kiểu MIME của logo |
+| `logo_updated_at` | TIMESTAMPTZ | | Thời điểm cập nhật logo |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
+
+> Ba cột logo cùng có hoặc cùng trống (`chk_company_profile_logo`).
 
 ### `work_locations` — Trụ sở, chi nhánh và kho
 
@@ -724,6 +730,7 @@ Giá trị `grant_policy`: `AUTO` cấp ngay khi account được tạo, `HR_ASS
 | Tên cột | Kiểu | Ràng buộc | Ý nghĩa |
 |---|---|---|---|
 | `id` | BIGSERIAL | PK | Khóa chính |
+| `request_type` | VARCHAR(20) | NOT NULL, DEFAULT `GRANT` | `GRANT` tạo assignment mới khi duyệt / `REVOKE` thu hồi `target_assignment_id` khi duyệt |
 | `account_id` | BIGINT | FK → accounts, NOT NULL | Tài khoản được đề xuất cấp vai trò |
 | `role_id` | BIGINT | FK → roles, NOT NULL | Vai trò được đề xuất |
 | `scope_type` | VARCHAR(20) | NOT NULL | `SELF` / `COMPANY` / `ORG_UNIT` / `LOCATION` |
@@ -742,9 +749,11 @@ Giá trị `grant_policy`: `AUTO` cấp ngay khi account được tạo, `HR_ASS
 | `cancelled_at` | TIMESTAMPTZ | | Thời điểm hủy |
 | `cancellation_reason` | TEXT | | Lý do hủy |
 | `account_role_assignment_id` | BIGINT | UNIQUE, FK → account_role_assignments | Assignment sinh ra khi duyệt |
+| `target_assignment_id` | BIGINT | FK → account_role_assignments | Assignment cần thu hồi (chỉ với `REVOKE`); role, scope và thời gian của request được sao từ assignment này |
 | `updated_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Thời điểm cập nhật cuối |
 
-> Không cho phép hai request `PENDING` cùng tài khoản, vai trò, phạm vi và khoảng hiệu lực chồng lấn.
+> Không cho phép hai request `GRANT` `PENDING` cùng tài khoản, vai trò, phạm vi và khoảng hiệu lực chồng lấn; mỗi
+> assignment chỉ có một request `REVOKE` `PENDING` (`uq_role_assignment_requests_pending_revoke`).
 
 ### `account_role_assignments` — Gán vai trò và phạm vi
 
@@ -778,6 +787,9 @@ Giá trị `grant_policy`: `AUTO` cấp ngay khi account được tạo, `HR_ASS
 | `reason` | TEXT | NOT NULL | Lý do |
 | `granted_by_account_id` | BIGINT | FK → accounts, NOT NULL | Người thiết lập |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
+| `revoked_by_account_id` | BIGINT | FK → accounts | Người thu hồi |
+| `revoked_at` | TIMESTAMPTZ | | Thời điểm thu hồi |
+| `revocation_reason` | TEXT | | Lý do thu hồi |
 
 ### `rate_limit_policy_settings` — Hạn mức giới hạn truy cập do quản trị viên chỉnh
 
@@ -1332,6 +1344,9 @@ CREATE INDEX idx_units_parent
 CREATE INDEX idx_employees_status
   ON employees (employment_status) WHERE deleted_at IS NULL;
 
+CREATE INDEX idx_employees_scheduled_end
+  ON employees (termination_date) WHERE scheduled_end_status IS NOT NULL;
+
 CREATE INDEX idx_assignments_employee_period
   ON employee_assignments (employee_id, effective_from, effective_to);
 
@@ -1386,6 +1401,12 @@ CREATE INDEX idx_role_assignment_requests_status_requested
 CREATE INDEX idx_leave_requests_employee_status
   ON leave_requests (employee_id, status, start_at);
 
+CREATE INDEX idx_leave_requests_approver_status
+  ON leave_requests (approver_employee_id, status);
+
+CREATE INDEX idx_resignation_requests_approver_status
+  ON resignation_requests (approver_employee_id, status);
+
 CREATE INDEX idx_employee_payroll_profiles_effective
   ON employee_payroll_profiles (employee_id, effective_from, effective_to);
 
@@ -1409,16 +1430,16 @@ CREATE INDEX idx_payslip_items_payslip
 ### 12.1. CHECK constraints chính
 
 ```sql
-ALTER TABLE company_profile ADD CONSTRAINT chk_single_company
+ALTER TABLE company_profile ADD CONSTRAINT chk_company_profile_single
   CHECK (id = 1);
 
-ALTER TABLE work_locations ADD CONSTRAINT chk_location_type
+ALTER TABLE work_locations ADD CONSTRAINT chk_work_locations_type
   CHECK (location_type IN ('HEAD_OFFICE', 'BRANCH', 'WAREHOUSE'));
 
-ALTER TABLE employees ADD CONSTRAINT chk_employee_status
+ALTER TABLE employees ADD CONSTRAINT chk_employees_status
   CHECK (employment_status IN ('PROBATION', 'ACTIVE', 'RESIGNED', 'TERMINATED', 'RETIRED'));
 
-ALTER TABLE employees ADD CONSTRAINT chk_employee_dates
+ALTER TABLE employees ADD CONSTRAINT chk_employees_dates
   CHECK (
     seniority_start_date >= hire_date
     AND (termination_date IS NULL OR termination_date >= hire_date)
@@ -1449,20 +1470,20 @@ ALTER TABLE leave_requests ADD CONSTRAINT chk_leave_status
 ALTER TABLE leave_requests ADD CONSTRAINT chk_leave_period
   CHECK (end_at > start_at AND requested_minutes > 0);
 
-ALTER TABLE accounts ADD CONSTRAINT chk_account_status
+ALTER TABLE accounts ADD CONSTRAINT chk_accounts_status
   CHECK (status IN ('PENDING', 'ACTIVE', 'DISABLED'));
 
-ALTER TABLE account_role_assignments ADD CONSTRAINT chk_role_scope
+ALTER TABLE account_role_assignments ADD CONSTRAINT chk_account_role_assignments_scope
   CHECK (
     (scope_type IN ('SELF', 'COMPANY') AND organization_unit_id IS NULL AND work_location_id IS NULL)
     OR (scope_type = 'ORG_UNIT' AND organization_unit_id IS NOT NULL AND work_location_id IS NULL)
     OR (scope_type = 'LOCATION' AND organization_unit_id IS NULL AND work_location_id IS NOT NULL)
   );
 
-ALTER TABLE account_permission_overrides ADD CONSTRAINT chk_override_effect
+ALTER TABLE account_permission_overrides ADD CONSTRAINT chk_account_permission_overrides_effect
   CHECK (effect IN ('GRANT', 'REVOKE'));
 
-ALTER TABLE attendance_records ADD CONSTRAINT chk_attendance_status
+ALTER TABLE attendance_records ADD CONSTRAINT chk_attendance_records_status
   CHECK (status IN (
     'PRESENT', 'PAID_LEAVE', 'UNPAID_LEAVE', 'MATERNITY_LEAVE',
     'SICK_LEAVE', 'UNAUTHORIZED_ABSENCE', 'HOLIDAY', 'MISSING_PUNCH'
@@ -1478,7 +1499,7 @@ ALTER TABLE attendance_records ADD CONSTRAINT chk_attendance_overtime_approval
     )
   );
 
-ALTER TABLE payroll_periods ADD CONSTRAINT chk_payroll_status
+ALTER TABLE payroll_periods ADD CONSTRAINT chk_payroll_periods_status
   CHECK (status IN ('DRAFT', 'CALCULATED', 'APPROVED', 'PAID', 'LOCKED', 'CANCELLED'));
 
 ALTER TABLE payslips ADD CONSTRAINT chk_payslip_allowance_total
@@ -1512,22 +1533,27 @@ ALTER TABLE payroll_adjustments ADD CONSTRAINT chk_payroll_adjustment_type
   ));
 ```
 
-### 12.2. Quy tắc do Service layer kiểm tra
+### 12.2. Quy tắc nghiệp vụ ngoài CHECK ở trên
+
+Database chặn bằng exclusion constraint hoặc CHECK:
+
+- Phân công chính của một nhân viên không được chồng khoảng hiệu lực (`excl_employee_primary_assignment_overlap`).
+- Lịch sử lương cơ bản của cùng nhân viên không được chồng khoảng hiệu lực (`excl_employee_salary_history_overlap`).
+- Quy tắc phụ cấp của cùng chức vụ không được chồng khoảng hiệu lực (`excl_position_allowance_rule_overlap`).
+- Các khoảng thâm niên trong cùng giai đoạn chính sách không được chồng lấn (`excl_seniority_allowance_rule_overlap`).
+- Đơn nghỉ đã duyệt không được chồng với đơn nghỉ đã duyệt khác của cùng nhân viên (`excl_approved_leave_request_overlap`).
+- Người tính lương không được đồng thời là người duyệt (`chk_payroll_approver_separation`).
+
+Chỉ Service layer kiểm tra:
 
 - Kho phải có cha là trụ sở hoặc chi nhánh; trụ sở/chi nhánh không có cha.
 - Quản lý trực tiếp không được là chính nhân viên.
-- Phân công chính của một nhân viên không được chồng khoảng hiệu lực.
-- Lịch sử lương cơ bản của cùng nhân viên không được chồng khoảng hiệu lực.
-- Quy tắc phụ cấp của cùng chức vụ không được chồng khoảng hiệu lực.
-- Các khoảng thâm niên trong cùng giai đoạn chính sách không được chồng lấn.
-- Đơn nghỉ đã duyệt không được chồng với đơn nghỉ đã duyệt khác của cùng nhân viên.
 - `PAID_LEAVE`, `UNPAID_LEAVE`, `MATERNITY_LEAVE`, `SICK_LEAVE` phải tham chiếu đơn nghỉ đã duyệt phù hợp.
 - Khi nhân viên nghỉ việc, phải kết thúc phân công và vô hiệu hóa tài khoản trong cùng transaction.
 - Bản ghi chấm công đã dùng trong kỳ lương từ `APPROVED` trở lên không được sửa.
 - Chỉ tăng ca đã được duyệt mới được đưa vào lương.
 - Khi tính lương phải snapshot từng nguồn vào `payslip_items`.
 - Tổng dòng `payslip_items` theo từng loại phải khớp các trường tổng trên `payslips`.
-- Người tính lương không được đồng thời là người duyệt.
 - Kỳ lương từ `APPROVED` trở đi cùng phiếu lương con là immutable.
 
 ---
@@ -1590,7 +1616,7 @@ dữ liệu cũ, database mới không cần. Mỗi khi file baseline đổi, da
 | `V5__leave.sql` | `leave_requests` | 6 |
 | `V6__attendance.sql` | `company_holidays`, `attendance_records` và trigger số phút theo lịch | 7 |
 | `V7__payroll.sql` | Hồ sơ khấu trừ, quy tắc thuế/bảo hiểm, `payroll_periods`, `payroll_adjustments`, `payslips`, `payslip_items` | 8 |
-| `V8__reference_data.sql` | Quy tắc thuế TNCN, bảo hiểm từ 2020 đến 2026 và quy tắc phép năm | 6, 8.4 |
+| `V8__reference_data.sql` | Quy tắc thuế TNCN, bảo hiểm từ 2020 đến 2026 | 8.4 |
 
 `V8` nạp dữ liệu pháp lý dùng chung. Danh mục permission, role,
 mapping, cơ cấu tổ chức, ca làm việc và tài khoản mẫu do các seeder trong
