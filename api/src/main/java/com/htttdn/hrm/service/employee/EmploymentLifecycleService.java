@@ -2,6 +2,8 @@ package com.htttdn.hrm.service.employee;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -179,8 +181,9 @@ public class EmploymentLifecycleService {
         Employee employee, EmploymentStatus endStatus, LocalDate terminationDate, String terminationReason, Account actor
     ) {
         requireNotCompanyOwner(employee);
-        employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employee.getId())
-            .ifPresent(assignment -> requireNotBeforeAssignment(assignment, terminationDate));
+        // Only checked here: a transfer scheduled after the last day is removed when the employment ends,
+        // so cancelling the end keeps it.
+        assignmentOnLastDay(employee.getId(), terminationDate);
         employee.setTerminationDate(terminationDate);
         employee.setTerminationReason(terminationReason);
         employee.setScheduledEndStatus(endStatus);
@@ -216,8 +219,7 @@ public class EmploymentLifecycleService {
         employee.setScheduledEndStatus(null);
         employee.setScheduledEndByAccount(null);
 
-        employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employeeId)
-            .ifPresent(assignment -> closeAssignmentAtTermination(assignment, terminationDate));
+        closeAssignmentsAtTermination(employeeId, terminationDate);
         closePayrollInputsAtTermination(employeeId, terminationDate);
         leaveRequestService.cancelOpenRequestsAfter(employeeId, terminationDate);
         deleteUntouchedDaysAfter(employeeId, terminationDate);
@@ -280,18 +282,37 @@ public class EmploymentLifecycleService {
         return !from.isAfter(terminationDate) && (to == null || to.isAfter(terminationDate));
     }
 
-    private void closeAssignmentAtTermination(EmployeeAssignment assignment, LocalDate terminationDate) {
-        requireNotBeforeAssignment(assignment, terminationDate);
-        assignment.setEffectiveTo(terminationDate);
+    /**
+     * Closes the primary assignment in effect on the last working day at that day and deletes the ones
+     * starting after it: a transfer scheduled for later never applied, nothing refers to it, and payroll
+     * stops at the last day anyway.
+     */
+    private void closeAssignmentsAtTermination(Long employeeId, LocalDate terminationDate) {
+        assignmentOnLastDay(employeeId, terminationDate)
+            .ifPresent(assignment -> assignment.setEffectiveTo(terminationDate));
+        employeeAssignmentRepository.deleteAll(
+            employeeAssignmentRepository.findPrimaryRunningOnOrAfterForUpdate(employeeId, terminationDate).stream()
+                .filter(assignment -> assignment.getEffectiveFrom().isAfter(terminationDate))
+                .toList());
     }
 
-    private void requireNotBeforeAssignment(EmployeeAssignment assignment, LocalDate terminationDate) {
-        if (terminationDate.isBefore(assignment.getEffectiveFrom())) {
+    /**
+     * The primary assignment in effect on the last working day. Empty when the employee has none from that
+     * day on; refused when they only have assignments starting after it (→ 400).
+     */
+    private Optional<EmployeeAssignment> assignmentOnLastDay(Long employeeId, LocalDate terminationDate) {
+        List<EmployeeAssignment> running =
+            employeeAssignmentRepository.findPrimaryRunningOnOrAfterForUpdate(employeeId, terminationDate);
+        Optional<EmployeeAssignment> onLastDay = running.stream()
+            .filter(assignment -> !assignment.getEffectiveFrom().isAfter(terminationDate))
+            .findFirst();
+        if (onLastDay.isEmpty() && !running.isEmpty()) {
             throw new BusinessException(
                 ErrorCode.VALIDATION_ERROR,
                 "terminationDate must not be before the current assignment start date",
                 "terminationDate"
             );
         }
+        return onLastDay;
     }
 }

@@ -498,7 +498,7 @@ Kết thúc làm việc theo một trong ba hình thức: `RESIGNED` (nghỉ vi�
 Khi kết thúc, một lần chạy thay đổi năm thứ trong cùng transaction:
 
 1. `employmentStatus` chuyển sang `endStatus`, ghi `terminationDate` và `terminationReason`.
-2. Phân công chính đang mở được đóng lại tại `terminationDate`.
+2. Phân công chính đang hiệu lực ở `terminationDate` được đóng lại tại ngày đó; đợt chuyển công tác đã hẹn bắt đầu sau `terminationDate` bị xóa vì chưa từng có hiệu lực. Khi chỉ mới hẹn ngày kết thúc thì đợt chuyển vẫn giữ, nên hủy lịch hẹn không làm mất nó.
 3. Account liên kết chuyển sang `DISABLED` và toàn bộ refresh token của account bị thu hồi, nên các phiên đang đăng nhập không refresh được nữa. Đơn nghỉ và đơn nghỉ việc `PENDING` đang chờ nhân viên này duyệt được chuyển cho người duyệt hệ thống chọn lại ([Người duyệt](./ATTENDANCE.md#người-duyệt)).
 4. Các role nghiệp vụ account còn giữ bị thu hồi như khi gọi [API thu hồi role](./ACCOUNT_ROLE_ASSIGNMENTS.md#post-apiaccountsaccountidrole-assignmentsassignmentidrevoke): ghi `revokedAt`, người thu hồi là người gọi, `revocationReason` là `Kết thúc làm việc: <terminationReason>`. Assignment đã bắt đầu được đóng `effectiveTo` tại `terminationDate`; assignment chưa bắt đầu giữ nguyên ngày. Assignment đã kết thúc trước `terminationDate` giữ nguyên làm lịch sử. Role `AUTO` (`EMPLOYEE`) và `SYSTEM_ONLY` (`COMPANY_OWNER`, `SYSTEM_ADMIN`) không bị đụng tới. Nhờ vậy assignment `DIRECTOR` của người nghỉ không còn chặn việc bổ nhiệm Giám đốc mới. [Đề xuất role](./ROLE_ASSIGNMENT_REQUESTS.md) đang `PENDING` của account chuyển `CANCELLED` với cùng lý do, vì không còn duyệt được.
 5. Lương cơ bản, hồ sơ bảo hiểm/thuế và người phụ thuộc còn chạy quá `terminationDate` được đóng tại ngày đó, nên không mục nào còn hiện là "hiện tại". Lương đã dừng ở ngày đó nên không phiếu lương nào đổi. Riêng khi kết thúc ngay với `terminationDate` đã qua (khác ngày đã hẹn), kỳ lương có phiếu của nhân viên kết thúc sau ngày đó mà đã tính thì quay về `DRAFT` để tính lại; đã duyệt, đã trả hoặc đã khóa thì bị từ chối. Từ lúc lên lịch hoặc kết thúc, các mục này và phân công mới không được có hiệu lực sau `terminationDate` (xem [PAYROLL.md](./PAYROLL.md#sau-ngày-làm-việc-cuối)); hồ sơ và dữ liệu nhạy cảm vẫn sửa được. Đơn nghỉ `DRAFT`/`PENDING` có ngày nghỉ sau `terminationDate` chuyển `CANCELLED` với `reviewComment` `Tự hủy: đơn có ngày nghỉ sau ngày làm việc cuối`; đơn nằm trọn trong thời gian làm việc vẫn chờ người duyệt, đơn đã duyệt giữ nguyên. Hủy lịch hẹn không khôi phục các đơn đã hủy.
@@ -529,7 +529,7 @@ chỉ lên lịch, `employmentStatus` giữ nguyên và `scheduledEndStatus` là
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
-| 400 | `VALIDATION_ERROR` | Thiếu field bắt buộc, `endStatus` không phải trạng thái kết thúc, `terminationDate` trước `hireDate` hoặc trước ngày bắt đầu phân công hiện tại |
+| 400 | `VALIDATION_ERROR` | Thiếu field bắt buộc, `endStatus` không phải trạng thái kết thúc, `terminationDate` trước `hireDate`, hoặc không có phân công chính nào hiệu lực ở ngày đó mà chỉ có phân công bắt đầu sau |
 | 401 | `UNAUTHORIZED` | Thiếu hoặc sai access token |
 | 403 | `FORBIDDEN` | Thiếu `employee.lifecycle.manage` hoặc employee nằm ngoài scope được giao |
 | 404 | `EMPLOYEE_NOT_FOUND` | Employee không tồn tại hoặc đã bị xóa mềm |

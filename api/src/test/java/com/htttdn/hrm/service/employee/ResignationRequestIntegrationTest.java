@@ -196,6 +196,35 @@ class ResignationRequestIntegrationTest {
     }
 
     @Test
+    void employmentEndsBeforeATransferScheduledForLaterAndTheTransferIsDropped() {
+        Long transferId = scheduleTransfer(staff, today.plusDays(25));
+        authenticateAs(staff, "employee.lifecycle.manage");
+
+        // Scheduling an earlier end, then cancelling it, keeps the transfer.
+        lifecycleService.endEmployment(staff.employeeId(), EmploymentStatus.RESIGNED, today.plusDays(14), "Nghỉ việc");
+        lifecycleService.cancelScheduledEnd(staff.employeeId());
+        entityManager.flush();
+        assertEquals(1, assignmentCount(transferId));
+
+        lifecycleService.endEmployment(staff.employeeId(), EmploymentStatus.TERMINATED, today, "Chấm dứt hợp đồng");
+        entityManager.flush();
+
+        assertEquals("TERMINATED", employeeStatus(staff));
+        assertEquals(0, assignmentCount(transferId));
+        assertEquals(today, jdbc.queryForObject(
+            "SELECT effective_to FROM employee_assignments WHERE employee_id = ?", LocalDate.class, staff.employeeId()));
+    }
+
+    @Test
+    void aResignationBeforeATransferScheduledForLaterCanBeApproved() {
+        scheduleTransfer(staff, today.plusDays(25));
+        ResignationRequestView pending = resign(staff, today.plusDays(14));
+
+        authenticateAs(manager, EMPLOYEE);
+        assertEquals(ResignationRequestStatus.APPROVED, service.approve(pending.id(), null, null).status());
+    }
+
+    @Test
     void theLastWorkingDayCannotBeInThePast() {
         assertThrows(BusinessException.class, () -> resign(staff, today.minusDays(1)));
     }
@@ -209,6 +238,20 @@ class ResignationRequestIntegrationTest {
     private ResignationRequestView resign(Person person, LocalDate lastWorkingDate) {
         authenticateAs(person, EMPLOYEE);
         return service.create(new CreateResignationRequestRequest(person.employeeId(), lastWorkingDate, "Chuyển công tác"));
+    }
+
+    /** Moves the person under no manager from {@code from}, as HR scheduling a transfer does. */
+    private Long scheduleTransfer(Person person, LocalDate from) {
+        jdbc.update("UPDATE employee_assignments SET effective_to = ? WHERE employee_id = ?", from.minusDays(1), person.employeeId());
+        return id("""
+            INSERT INTO employee_assignments(employee_id, organization_unit_id, work_location_id, position_id,
+                shift_id, employment_type, effective_from, created_by_account_id)
+            VALUES (?, ?, ?, ?, ?, 'FULL_TIME', ?, ?) RETURNING id
+            """, person.employeeId(), unitId, locationId, positionId, shiftId, from, creatorAccountId);
+    }
+
+    private int assignmentCount(Long assignmentId) {
+        return jdbc.queryForObject("SELECT count(*) FROM employee_assignments WHERE id = ?", Integer.class, assignmentId);
     }
 
     private String employeeStatus(Person person) {

@@ -3,6 +3,7 @@ package com.htttdn.hrm.service.employee;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import com.htttdn.hrm.service.auth.RefreshTokenService;
@@ -54,6 +55,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
 class EmployeeServiceTest {
@@ -249,8 +251,8 @@ class EmployeeServiceTest {
         Account account = Account.builder().id(5L).status(AccountStatus.ACTIVE).build();
         LocalDate endDate = LocalDate.of(2026, 10, 24);
         when(employeeRepository.getRequired(1L)).thenReturn(employee);
-        when(employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(1L))
-            .thenReturn(Optional.of(assignment));
+        when(employeeAssignmentRepository.findPrimaryRunningOnOrAfterForUpdate(eq(1L), any()))
+            .thenReturn(List.of(assignment));
         when(accountRepository.findByEmployeeId(1L)).thenReturn(Optional.of(account));
         stubActor();
 
@@ -305,8 +307,8 @@ class EmployeeServiceTest {
         Account account = Account.builder().id(5L).status(AccountStatus.ACTIVE).build();
         LocalDate endDate = LocalDate.of(2026, 10, 27);
         when(employeeRepository.getRequired(1L)).thenReturn(employee);
-        when(employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(1L))
-            .thenReturn(Optional.of(assignment));
+        when(employeeAssignmentRepository.findPrimaryRunningOnOrAfterForUpdate(eq(1L), any()))
+            .thenReturn(List.of(assignment));
         Account actor = stubActor();
 
         var result = lifecycleService().endEmployment(1L, EmploymentStatus.TERMINATED, endDate, "Reason");
@@ -330,8 +332,8 @@ class EmployeeServiceTest {
         Employee employee = employee(1L);
         EmployeeAssignment assignment = EmployeeAssignment.builder().effectiveFrom(LocalDate.of(2026, 11, 1)).build();
         when(employeeRepository.getRequired(1L)).thenReturn(employee);
-        when(employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(1L))
-            .thenReturn(Optional.of(assignment));
+        when(employeeAssignmentRepository.findPrimaryRunningOnOrAfterForUpdate(eq(1L), any()))
+            .thenReturn(List.of(assignment));
         stubActor();
 
         BusinessException exception = assertThrows(BusinessException.class,
@@ -352,8 +354,8 @@ class EmployeeServiceTest {
         EmployeeAssignment assignment = EmployeeAssignment.builder().effectiveFrom(LocalDate.of(2025, 1, 1)).build();
         Account account = Account.builder().id(5L).status(AccountStatus.ACTIVE).build();
         when(employeeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(employee));
-        when(employeeAssignmentRepository.findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(1L))
-            .thenReturn(Optional.of(assignment));
+        when(employeeAssignmentRepository.findPrimaryRunningOnOrAfterForUpdate(eq(1L), any()))
+            .thenReturn(List.of(assignment));
         when(accountRepository.findByEmployeeId(1L)).thenReturn(Optional.of(account));
 
         lifecycleService().completeScheduledEnd(1L);

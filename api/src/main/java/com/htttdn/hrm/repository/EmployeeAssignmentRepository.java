@@ -25,7 +25,23 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
         """)
     List<Long> findPrimaryEmployeeIdsOverlapping(@Param("from") LocalDate from, @Param("to") LocalDate to);
 
-    Optional<EmployeeAssignment> findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(Long employeeId);
+    /**
+     * Primary assignments still running on {@code date} or starting after it, latest start first: the one in
+     * effect that day and any transfer scheduled for later.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT assignment
+        FROM EmployeeAssignment assignment
+        WHERE assignment.employee.id = :employeeId
+          AND assignment.isPrimary = true
+          AND (assignment.effectiveTo IS NULL OR assignment.effectiveTo >= :date)
+        ORDER BY assignment.effectiveFrom DESC
+        """)
+    List<EmployeeAssignment> findPrimaryRunningOnOrAfterForUpdate(
+        @Param("employeeId") Long employeeId,
+        @Param("date") LocalDate date
+    );
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
