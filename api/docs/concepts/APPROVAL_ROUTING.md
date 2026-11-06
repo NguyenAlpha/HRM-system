@@ -71,6 +71,8 @@ DRAFT ──submit──▶ PENDING ──approve──▶ APPROVED
 - Job `ResignationCompletionJob` chạy 00:10 hằng ngày (và một lần khi khởi động): đơn đã duyệt có ngày làm việc
   cuối **trước hôm nay** thì kết thúc làm việc với trạng thái `RESIGNED`, ghi người duyệt là người thực hiện.
   Kết thúc làm việc sẽ khóa account và thu hồi role. Nếu HR đã kết thúc làm việc trước đó thì job bỏ qua.
+- HR kết thúc làm việc khi đơn còn `PENDING` thì đơn tự chuyển `CANCELLED` (ý kiến `Tự hủy: nhân viên đã kết thúc
+  làm việc`), không nằm lại trong danh sách chờ của người duyệt.
 
 ## 5. Tăng ca
 

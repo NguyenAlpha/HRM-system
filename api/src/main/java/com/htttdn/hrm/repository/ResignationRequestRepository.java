@@ -73,6 +73,16 @@ public interface ResignationRequestRepository
         """)
     Optional<ResignationRequest> findByIdForUpdate(@Param("id") Long id);
 
+    /** The employee's request still waiting for a decision, if any (at most one, uq_resignation_requests_open). */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT request
+        FROM ResignationRequest request
+        WHERE request.employee.id = :employeeId
+          AND request.status = com.htttdn.hrm.entity.enums.ResignationRequestStatus.PENDING
+        """)
+    Optional<ResignationRequest> findPendingForUpdate(@Param("employeeId") Long employeeId);
+
     /** Pending requests waiting on {@code approverEmployeeId}, locked as deciding one locks it. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""

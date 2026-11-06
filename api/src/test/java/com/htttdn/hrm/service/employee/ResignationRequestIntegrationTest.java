@@ -216,6 +216,22 @@ class ResignationRequestIntegrationTest {
     }
 
     @Test
+    void endingTheEmploymentCancelsThePendingResignation() {
+        ResignationRequestView pending = resign(staff, today.plusDays(30));
+        authenticateAs(staff, "employee.lifecycle.manage");
+
+        lifecycleService.endEmployment(staff.employeeId(), EmploymentStatus.TERMINATED, today, "Chấm dứt hợp đồng");
+        entityManager.flush();
+
+        // Otherwise it stays in the approver's queue, and approving it fails with EMPLOYMENT_ALREADY_ENDED.
+        var request = jdbc.queryForMap("SELECT * FROM resignation_requests WHERE id = ?", pending.id());
+        assertEquals("CANCELLED", request.get("status"));
+        assertEquals("Tự hủy: nhân viên đã kết thúc làm việc", request.get("review_comment"));
+        authenticateAs(manager, EMPLOYEE);
+        assertTrue(service.listPending(Pageable.unpaged()).getContent().stream().noneMatch(view -> view.id().equals(pending.id())));
+    }
+
+    @Test
     void aResignationBeforeATransferScheduledForLaterCanBeApproved() {
         scheduleTransfer(staff, today.plusDays(25));
         ResignationRequestView pending = resign(staff, today.plusDays(14));

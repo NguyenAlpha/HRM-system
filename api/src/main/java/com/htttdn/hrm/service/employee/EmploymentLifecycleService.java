@@ -1,6 +1,7 @@
 package com.htttdn.hrm.service.employee;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -60,6 +61,7 @@ import lombok.RequiredArgsConstructor;
 public class EmploymentLifecycleService {
 
     private static final String EMPLOYEE_LIFECYCLE_MANAGE = "employee.lifecycle.manage";
+    private static final String ENDED_RESIGNATION_COMMENT = "Tự hủy: nhân viên đã kết thúc làm việc";
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeAssignmentRepository employeeAssignmentRepository;
@@ -198,7 +200,8 @@ public class EmploymentLifecycleService {
      * approved resignation once its last working day has passed, where {@code actor} is the approver.
      *
      * <p>Các bước: đổi trạng thái + xóa lịch hẹn → đóng phân công chính ở ngày cuối → đóng lương, hồ sơ
-     * thuế, người phụ thuộc → hủy đơn nghỉ nháp/chờ duyệt có ngày sau ngày cuối → xóa ngày công tạo sẵn còn
+     * thuế, người phụ thuộc → hủy đơn nghỉ nháp/chờ duyệt có ngày sau ngày cuối và đơn nghỉ việc đang chờ
+     * duyệt → xóa ngày công tạo sẵn còn
      * trống sau ngày cuối → khóa tài khoản ({@code DISABLED}), thu hồi mọi refresh token và thu hồi role
      * nghiệp vụ → chuyển các đơn đang chờ người này duyệt sang người duyệt mới
      * ({@link PendingApprovalRerouter}). Access token đang dùng vẫn chạy tới khi hết hạn (request không kiểm tra lại trạng thái
@@ -222,6 +225,13 @@ public class EmploymentLifecycleService {
         closeAssignmentsAtTermination(employeeId, terminationDate);
         closePayrollInputsAtTermination(employeeId, terminationDate);
         leaveRequestService.cancelOpenRequestsAfter(employeeId, terminationDate);
+        // A resignation still waiting can no longer be approved (409 EMPLOYMENT_ALREADY_ENDED), so it would
+        // sit in the approver's queue for good.
+        resignationRequestRepository.findPendingForUpdate(employeeId).ifPresent(request -> {
+            request.setStatus(ResignationRequestStatus.CANCELLED);
+            request.setReviewComment(ENDED_RESIGNATION_COMMENT);
+            request.setReviewedAt(Instant.now(clock));
+        });
         deleteUntouchedDaysAfter(employeeId, terminationDate);
         accountRepository.findByEmployeeId(employeeId).ifPresent(account -> {
             account.setStatus(AccountStatus.DISABLED);
