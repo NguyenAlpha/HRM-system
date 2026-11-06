@@ -30,7 +30,7 @@ public class EmployeeProvisioningService {
 
     public Employee createActiveMinimalEmployee(MinimalEmployeeCommand command) {
         String workEmail = command.workEmail().trim().toLowerCase(Locale.ROOT);
-        if (employeeRepository.existsByWorkEmailIgnoreCase(workEmail)) {
+        if (employeeRepository.existsByWorkEmailIgnoreCaseAndDeletedAtIsNull(workEmail)) {
             throw new ConflictException(
                 ErrorCode.EMAIL_TAKEN,
                 "Work email is already taken",

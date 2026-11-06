@@ -12,7 +12,7 @@ CREATE TABLE employees (
     major VARCHAR(200),
     institution VARCHAR(200),
     graduation_year SMALLINT,
-    national_id VARCHAR(30) UNIQUE,
+    national_id VARCHAR(30),
     personal_email VARCHAR(100),
     work_email VARCHAR(100),
     phone VARCHAR(20),
@@ -64,9 +64,15 @@ CREATE INDEX idx_employees_scheduled_end ON employees (termination_date) WHERE s
 CREATE UNIQUE INDEX uq_employees_employee_code_lower
     ON employees (LOWER(employee_code));
 
+-- CCCD và email công việc chỉ unique giữa các hồ sơ chưa xóa: xóa mềm chỉ dành cho hồ sơ tạo nhầm, nên hồ sơ đúng
+-- tạo lại sau đó phải dùng được CCCD và email thật của người đó. Mã nhân viên thì không dùng lại (xem trên).
 CREATE UNIQUE INDEX uq_employees_work_email_lower
     ON employees (LOWER(work_email))
-    WHERE work_email IS NOT NULL;
+    WHERE work_email IS NOT NULL AND deleted_at IS NULL;
+
+CREATE UNIQUE INDEX uq_employees_national_id
+    ON employees (national_id)
+    WHERE national_id IS NOT NULL AND deleted_at IS NULL;
 
 -- Thâm niên mặc định tính từ ngày vào làm khi không được nhập riêng.
 CREATE FUNCTION set_employee_seniority_start_date()

@@ -54,11 +54,12 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
 
     boolean existsByEmployeeCodeIgnoreCase(String employeeCode);
 
-    boolean existsByWorkEmailIgnoreCase(String workEmail);
+    // Hồ sơ đã xóa mềm không giữ email công việc và CCCD (uq_employees_work_email_lower, uq_employees_national_id).
+    boolean existsByWorkEmailIgnoreCaseAndDeletedAtIsNull(String workEmail);
 
-    boolean existsByWorkEmailIgnoreCaseAndIdNot(String workEmail, Long id);
+    boolean existsByWorkEmailIgnoreCaseAndIdNotAndDeletedAtIsNull(String workEmail, Long id);
 
-    boolean existsByNationalIdAndIdNot(String nationalId, Long id);
+    boolean existsByNationalIdAndIdNotAndDeletedAtIsNull(String nationalId, Long id);
 
     Page<Employee> findByDeletedAtIsNull(Pageable pageable);
 

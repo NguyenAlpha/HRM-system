@@ -314,7 +314,7 @@ public class EmployeeService {
     private void updateWorkEmail(Employee employee, String requestedWorkEmail) {
         String workEmail = normalizeEmail(requestedWorkEmail);
         if (workEmail != null
-            && employeeRepository.existsByWorkEmailIgnoreCaseAndIdNot(workEmail, employee.getId())) {
+            && employeeRepository.existsByWorkEmailIgnoreCaseAndIdNotAndDeletedAtIsNull(workEmail, employee.getId())) {
             throw new ConflictException(ErrorCode.EMAIL_TAKEN, "Work email is already taken", "workEmail");
         }
 
@@ -368,11 +368,11 @@ public class EmployeeService {
     }
 
     /**
-     * Email công việc mới không được trùng nhân viên nào (kể cả đã xóa mềm — unique index phủ mọi dòng)
+     * Email công việc mới không được trùng nhân viên chưa xóa nào (hồ sơ tạo nhầm đã xóa mềm không giữ email)
      * hay tài khoản nào, vì sau này nó thành email đăng nhập.
      */
     private void validateCreateUniqueness(String workEmail) {
-        if (workEmail != null && (employeeRepository.existsByWorkEmailIgnoreCase(workEmail)
+        if (workEmail != null && (employeeRepository.existsByWorkEmailIgnoreCaseAndDeletedAtIsNull(workEmail)
             || accountRepository.existsByEmailIgnoreCase(workEmail))) {
             throw new ConflictException(ErrorCode.EMAIL_TAKEN, "Work email is already taken", "employee.workEmail");
         }

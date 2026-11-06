@@ -64,13 +64,13 @@ public class Employee extends AuditedEntity {
     @Column(name = "graduation_year")
     private Short graduationYear;
 
-    @Column(name = "national_id", unique = true, length = 30)
+    @Column(name = "national_id", length = 30)
     private String nationalId;
 
     @Column(name = "personal_email", length = 100)
     private String personalEmail;
 
-    @Column(name = "work_email", unique = true, length = 100)
+    @Column(name = "work_email", length = 100)
     private String workEmail;
 
     @Column(length = 20)

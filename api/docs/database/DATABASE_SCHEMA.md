@@ -39,7 +39,9 @@ Nhân viên nghỉ việc
   → giữ nguyên chấm công và phiếu lương lịch sử
 ```
 
-Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`.
+Chỉ hồ sơ được tạo nhầm mới dùng `employees.deleted_at`. Hồ sơ đã xóa mềm giữ mã nhân viên (không dùng lại) nhưng
+trả lại CCCD và email công việc: hai cột này chỉ unique giữa các hồ sơ chưa xóa, để hồ sơ đúng tạo lại sau đó
+dùng được giá trị thật của người đó.
 
 ### 1.2. Danh sách 32 bảng nghiệp vụ
 
@@ -60,7 +62,7 @@ Database runtime có 32 bảng này cùng bảng cấu hình kỹ thuật `rate_
 
 ### 1.3. Sơ đồ quan hệ tổng quát
 
-Sơ đồ có đủ 33 bảng nghiệp vụ và các thuộc tính nghiệp vụ chính. Các cột kỹ thuật, người tạo/người duyệt và quan hệ kiểm toán được trình bày trong phần định nghĩa bảng bên dưới để sơ đồ dễ đọc. Chính sách thâm niên được áp dụng bằng thuật toán theo số năm và thời gian hiệu lực, không có khóa ngoại trực tiếp từ nhân viên. `company_holidays` đứng độc lập trong sơ đồ vì nó sửa lịch làm việc chung chứ không tham chiếu bản ghi nào.
+Sơ đồ có đủ 32 bảng nghiệp vụ và các thuộc tính nghiệp vụ chính. Các cột kỹ thuật, người tạo/người duyệt và quan hệ kiểm toán được trình bày trong phần định nghĩa bảng bên dưới để sơ đồ dễ đọc. Chính sách thâm niên được áp dụng bằng thuật toán theo số năm và thời gian hiệu lực, không có khóa ngoại trực tiếp từ nhân viên. `company_holidays` đứng độc lập trong sơ đồ vì nó sửa lịch làm việc chung chứ không tham chiếu bản ghi nào.
 
 ```mermaid
 erDiagram
@@ -523,9 +525,9 @@ erDiagram
 | `major` | VARCHAR(200) | | Chuyên ngành |
 | `institution` | VARCHAR(200) | | Cơ sở đào tạo |
 | `graduation_year` | SMALLINT | | Năm tốt nghiệp |
-| `national_id` | VARCHAR(30) | UNIQUE | CCCD/hộ chiếu |
+| `national_id` | VARCHAR(30) | UNIQUE khi `deleted_at IS NULL` (`uq_employees_national_id`) | CCCD/hộ chiếu |
 | `personal_email` | VARCHAR(100) | | Email cá nhân |
-| `work_email` | VARCHAR(100) | UNIQUE theo `LOWER` | Email công việc |
+| `work_email` | VARCHAR(100) | UNIQUE theo `LOWER` khi `deleted_at IS NULL` (`uq_employees_work_email_lower`) | Email công việc |
 | `phone` | VARCHAR(20) | | Số điện thoại |
 | `address` | TEXT | | Địa chỉ liên hệ |
 | `tax_code` | VARCHAR(30) | | Mã số thuế cá nhân |
