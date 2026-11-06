@@ -80,6 +80,7 @@ class EmployeeServiceTest {
     @Mock private PayrollPeriodInvalidator payrollPeriodInvalidator;
     @Mock private ResignationRequestRepository resignationRequestRepository;
     @Mock private LeaveRequestService leaveRequestService;
+    @Mock private PendingApprovalRerouter pendingApprovalRerouter;
 
     @Test
     void createUsesServerGeneratedCodeFromInitialPosition() {
@@ -478,6 +479,7 @@ class EmployeeServiceTest {
             resignationRequestRepository,
             leaveRequestService,
             attendanceRecordRepository,
+            pendingApprovalRerouter,
             TODAY
         );
     }

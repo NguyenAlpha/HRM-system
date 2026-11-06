@@ -73,6 +73,17 @@ public interface ResignationRequestRepository
         """)
     Optional<ResignationRequest> findByIdForUpdate(@Param("id") Long id);
 
+    /** Pending requests waiting on {@code approverEmployeeId}, locked as deciding one locks it. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT request
+        FROM ResignationRequest request
+        JOIN FETCH request.employee
+        WHERE request.approverEmployee.id = :approverEmployeeId
+          AND request.status = com.htttdn.hrm.entity.enums.ResignationRequestStatus.PENDING
+        """)
+    List<ResignationRequest> findPendingByApproverForUpdate(@Param("approverEmployeeId") Long approverEmployeeId);
+
     /** Đơn nghỉ việc theo id, không có thì 404 {@code REQUEST_NOT_FOUND}. Xem {@link AccountRepository#getRequired}. */
     default ResignationRequest getRequired(Long id) {
         return findById(id).orElseThrow(() -> notFound(id));

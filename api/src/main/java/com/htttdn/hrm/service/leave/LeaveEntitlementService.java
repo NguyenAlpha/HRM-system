@@ -174,8 +174,9 @@ public class LeaveEntitlementService {
     }
 
     private int standardDayMinutes(Long employeeId) {
+        // The shift of the assignment in effect today, not of a transfer scheduled for later.
         return employeeAssignmentRepository
-            .findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employeeId)
+            .findCurrentPrimary(employeeId, LocalDate.now(clock))
             .map(assignment -> assignment.getShift() == null
                 ? null
                 : assignment.getShift().getStandardWorkMinutes())

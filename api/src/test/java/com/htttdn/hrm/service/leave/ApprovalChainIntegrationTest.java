@@ -10,7 +10,13 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.htttdn.hrm.config.ClockConfig;
+import com.htttdn.hrm.dto.request.employeerequest.CreateResignationRequestRequest;
+import com.htttdn.hrm.entity.enums.EmploymentStatus;
+import com.htttdn.hrm.service.account.AccountAdminService;
 import com.htttdn.hrm.service.attendance.AttendanceCalendarService;
+import com.htttdn.hrm.service.employee.EmploymentLifecycleService;
+import com.htttdn.hrm.service.employee.ResignationRequestService;
 import com.htttdn.hrm.service.attendance.AttendanceQueryService;
 import com.htttdn.hrm.service.attendance.OvertimeService;
 import org.junit.jupiter.api.AfterEach;
@@ -37,6 +43,8 @@ import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.repository.WorkShiftRepository;
 import com.htttdn.hrm.service.leave.LeaveRequestService.LeaveRequestView;
 
+import jakarta.persistence.EntityManager;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -62,6 +70,11 @@ class ApprovalChainIntegrationTest {
     @Autowired private AttendanceQueryService attendanceQueryService;
     @Autowired private AttendanceCalendarService calendarService;
     @Autowired private WorkShiftRepository workShiftRepository;
+    @Autowired private LeaveEntitlementService leaveEntitlementService;
+    @Autowired private ResignationRequestService resignationRequestService;
+    @Autowired private EmploymentLifecycleService lifecycleService;
+    @Autowired private AccountAdminService accountAdminService;
+    @Autowired private EntityManager entityManager;
 
     private Long unitId;
     private Long locationId;
@@ -178,6 +191,60 @@ class ApprovalChainIntegrationTest {
         assertNull(directorLeave.approverEmployeeId());
         assertTrue(directorLeave.reviewComment().startsWith("Tự ghi nhận"));
         assertEquals(LeaveRequestStatus.APPROVED, ownerLeave.status());
+    }
+
+    @Test
+    void aTransferScheduledForLaterKeepsTodaysManagerAndShift() {
+        LocalDate today = LocalDate.now(ClockConfig.BUSINESS_ZONE);
+        Long halfDayShiftId = workShiftRepository.saveAndFlush(WorkShift.builder()
+            .code("APH_" + suffix()).name("Ca nửa ngày")
+            .startTime(LocalTime.of(8, 0)).endTime(LocalTime.of(12, 0))
+            .breakMinutes(0).standardWorkMinutes(240).graceLateMinutes(0).crossesMidnight(false).isActive(true)
+            .build()).getId();
+        // From next month the staff moves under the director, on a half-day shift.
+        jdbc.update("UPDATE employee_assignments SET effective_to = ? WHERE employee_id = ?",
+            today.plusDays(29), staff.employeeId());
+        jdbc.update("""
+            INSERT INTO employee_assignments(employee_id, organization_unit_id, work_location_id, position_id,
+                shift_id, manager_employee_id, employment_type, effective_from, created_by_account_id)
+            VALUES (?, ?, ?, ?, ?, ?, 'FULL_TIME', ?, ?)
+            """, staff.employeeId(), unitId, locationId, positionId, halfDayShiftId, director.employeeId(),
+            today.plusDays(30), creatorAccountId);
+
+        assertEquals(manager.employeeId(), submitLeave(staff).approverEmployeeId());
+        assertEquals(480, leaveEntitlementService.getBalance(staff.employeeId(), today.getYear()).standardDayMinutes());
+    }
+
+    @Test
+    void pendingRequestsMoveOnWhenTheirApproverLeaves() {
+        LeaveRequestView leave = submitLeave(staff);
+        authenticateAs(staff, EMPLOYEE);
+        Long resignationId = resignationRequestService.create(new CreateResignationRequestRequest(
+            staff.employeeId(), LocalDate.now(ClockConfig.BUSINESS_ZONE).plusDays(30), "Chuyển công tác")).id();
+        assertEquals(manager.employeeId(), leave.approverEmployeeId());
+
+        grant(hr, "HR_MANAGER");
+        authenticateAs(hr, "employee.lifecycle.manage");
+        lifecycleService.endEmployment(manager.employeeId(), EmploymentStatus.RESIGNED,
+            LocalDate.now(ClockConfig.BUSINESS_ZONE), "Nghỉ việc");
+
+        assertEquals(director.employeeId(), approverOf("leave_requests", leave.id()));
+        assertEquals(director.employeeId(), approverOf("resignation_requests", resignationId));
+        authenticateAs(director, EMPLOYEE);
+        assertEquals(LeaveRequestStatus.APPROVED, leaveRequestService.approve(leave.id(), "OK").status());
+    }
+
+    @Test
+    void pendingRequestsMoveOnWhenTheirApproversAccountIsSuspendedOrDeleted() {
+        LeaveRequestView leave = submitLeave(staff);
+        authenticateAs(hr, "account.manage");
+        accountAdminService.suspend(manager.accountId());
+        assertEquals(director.employeeId(), approverOf("leave_requests", leave.id()));
+
+        // The director's account goes too: the request moves up to the Company Owner.
+        authenticateAs(hr, "account.manage");
+        accountAdminService.delete(director.accountId(), "Tài khoản tạo nhầm");
+        assertEquals(owner.employeeId(), approverOf("leave_requests", leave.id()));
     }
 
     @Test
@@ -378,6 +445,11 @@ class ApprovalChainIntegrationTest {
             INSERT INTO account_role_assignments(account_id, role_id, scope_type, effective_from, granted_by_account_id)
             SELECT ?, id, 'COMPANY', '2025-01-01', ? FROM roles WHERE code = ?
             """, person.accountId(), creatorAccountId, roleCode);
+    }
+
+    private Long approverOf(String table, Long requestId) {
+        entityManager.flush();
+        return id("SELECT approver_employee_id FROM " + table + " WHERE id = ?", requestId);
     }
 
     private Long id(String sql, Object... args) {

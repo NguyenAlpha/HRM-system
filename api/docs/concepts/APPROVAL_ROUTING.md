@@ -9,7 +9,8 @@ nhưng không nằm trong tuyến duyệt.
 `ApproverResolver.approverFor(employee)` chọn người **đầu tiên hợp lệ** trong chuỗi:
 
 ```text
-1. Quản lý trực tiếp   (manager_employee_id của phân công chính đang mở)
+1. Quản lý trực tiếp   (manager_employee_id của phân công chính đang hiệu lực hôm nay;
+                        đợt chuyển công tác hẹn ngày sau chỉ có tác dụng từ ngày đó)
 2. Giám đốc            (người giữ role DIRECTOR)
 3. Company Owner       (người giữ role COMPANY_OWNER)
 ```
@@ -35,6 +36,11 @@ chỉ người được gán sớm nhất được chọn.
 
 Hệ quả của việc **chốt người duyệt lúc nộp**: nếu quản lý đổi sau khi đơn đã nộp, đơn vẫn nằm ở người duyệt cũ.
 Muốn chuyển cho người mới thì nhân viên hủy đơn rồi nộp lại. Tăng ca thì luôn đi theo tuyến quản lý hiện tại.
+
+Riêng khi người duyệt **không còn duyệt được** (kết thúc làm việc, account bị tạm khóa hoặc bị xóa), các đơn nghỉ và
+đơn nghỉ việc `PENDING` đang chờ họ được chuyển ngay cho người `approverFor` chọn lại lúc đó
+([`PendingApprovalRerouter`](../../src/main/java/com/htttdn/hrm/service/employee/PendingApprovalRerouter.java)). Nếu
+không còn ai duyệt được thì đơn giữ người duyệt cũ và hệ thống ghi log cảnh báo.
 
 Không tìm được người duyệt nào thì báo `409 APPROVER_NOT_FOUND`. Cách xử lý: gán quản lý trực tiếp cho phân công
 chính, hoặc bổ nhiệm Giám đốc / Company Owner.

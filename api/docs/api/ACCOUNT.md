@@ -219,6 +219,8 @@ Response giống endpoint gửi lại lời mời. Account `PENDING` phải dùn
 ## POST `/api/accounts/{accountId}/suspend`
 
 Chuyển account `ACTIVE` sang `DISABLED` và thu hồi toàn bộ refresh token. Thao tác có tính idempotent nếu account đã `DISABLED`.
+Đơn nghỉ và đơn nghỉ việc `PENDING` đang chờ nhân viên của account duyệt được chuyển cho người duyệt hệ thống chọn lại
+([Người duyệt](./ATTENDANCE.md#người-duyệt)). Kích hoạt lại account không đưa các đơn đó về.
 
 Không được tự suspend account đang đăng nhập và không dùng endpoint này để hủy account `PENDING`.
 
@@ -254,7 +256,8 @@ mọi refresh token và mã kích hoạt bị thu hồi; các role nghiệp vụ
 được đóng `effectiveTo` tại ngày xóa, assignment đã kết thúc trước đó giữ nguyên làm lịch sử, role
 `AUTO`/`SYSTEM_ONLY` giữ nguyên; đề xuất role đang `PENDING` của account chuyển `CANCELLED` với cùng lý do. Dòng dữ liệu vẫn còn nên mọi
 bản ghi account đã duyệt hay ghi nhận vẫn trỏ đúng người, và username/email không được dùng lại.
-Nhân viên của account được cấp account mới.
+Nhân viên của account được cấp account mới. Đơn nghỉ và đơn nghỉ việc `PENDING` đang chờ nhân viên của account duyệt được chuyển cho người duyệt hệ thống chọn lại
+([Người duyệt](./ATTENDANCE.md#người-duyệt)).
 
 Không được tự xóa account đang đăng nhập; account `COMPANY_OWNER`/`SYSTEM_ADMIN` chỉ người giữ cùng role xóa
 được. Xóa lần nữa trả `409 ACCOUNT_STATUS_TRANSITION_NOT_ALLOWED`. Response là `AccountResponse` sau khi xóa.

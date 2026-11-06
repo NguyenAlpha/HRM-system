@@ -60,8 +60,10 @@ public class ApproverResolver {
         if (owner != null && owner.getId().equals(employee.getId())) {
             return Optional.empty();
         }
+        // The manager of the assignment in effect today: a transfer scheduled for later does not move
+        // today's requests to the future manager.
         Employee manager = employeeAssignmentRepository
-            .findFirstByEmployeeIdAndIsPrimaryTrueAndEffectiveToIsNull(employee.getId())
+            .findCurrentPrimary(employee.getId(), LocalDate.now(clock))
             .map(EmployeeAssignment::getManagerEmployee)
             .orElse(null);
         return Stream.of(manager, director, owner)

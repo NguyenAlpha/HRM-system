@@ -654,7 +654,7 @@ Mỗi nhân viên được **12 ngày phép năm** (Bộ luật Lao động 2019
 - Làm cả năm: 12 ngày.
 - Vào làm hoặc nghỉ việc giữa năm: 12 × số tháng làm việc / 12; tháng vào làm và tháng có ngày làm việc cuối đều tính trọn tháng. Vào làm tháng 9 được 4 ngày, tháng 10 được 3 ngày; nghỉ việc tháng 3 được 3 ngày.
 
-Không cộng phép theo thâm niên, không chuyển phép dư sang năm sau và HR không điều chỉnh tay. Hạn mức **không lưu trong database** mà được tính mỗi lần từ `employees.hire_date` và `employees.termination_date` (kể cả ngày cuối đã hẹn); số ngày quy ra phút theo `standard_work_minutes` của ca trong phân công chính đang mở, không có ca thì dùng 480 phút.
+Không cộng phép theo thâm niên, không chuyển phép dư sang năm sau và HR không điều chỉnh tay. Hạn mức **không lưu trong database** mà được tính mỗi lần từ `employees.hire_date` và `employees.termination_date` (kể cả ngày cuối đã hẹn); số ngày quy ra phút theo `standard_work_minutes` của ca trong phân công chính đang hiệu lực hôm nay, không có ca thì dùng 480 phút.
 
 Một đơn `ANNUAL` trừ vào hạn mức của năm chứa nó, nên đơn phải nằm trọn trong một năm; nghỉ qua Tết Dương lịch thì tạo hai đơn, ví dụ 31/12 và 02/01–04/01 (`400 ANNUAL_LEAVE_CROSSES_YEAR`). Chỉ `ANNUAL` trừ vào số dư. `SICK`, `MATERNITY`, `UNPAID` và `OTHER` đi theo quy trình riêng và không ảnh hưởng hạn mức.
 
@@ -684,5 +684,5 @@ Endpoint kỳ lương: `POST /api/payroll/periods`, `GET /api/payroll/periods`, 
 - Cổng HRM có `/attendance`, `/leave-requests`, `/payslips`; tất cả yêu cầu đi qua BFF allowlist và API kiểm tra quyền cùng phạm vi truy cập.
 - Giới hạn hiện tại: mỗi ca có một khoảng nghỉ. Mô hình chỉ lưu một cặp chấm vào/ra và một đơn nghỉ cho mỗi nhân viên mỗi ngày, nên mỗi ngày chỉ có một đơn nghỉ, dù cùng loại hay khác loại (ví dụ sáng nghỉ phép năm, chiều nghỉ ốm). Lịch lễ chỉ nạp sẵn cho 2025 và 2026; từ 2027 HR tự khai báo.
 - Giới hạn đã chọn: đơn nghỉ đã duyệt không hủy được, kể cả khi chưa tới ngày nghỉ, vì trường hợp này hiếm gặp. Nhân viên chỉ gửi đơn khi đã chắc chắn; ngày nghỉ trọn ca đã duyệt không nhận giờ chấm công.
-- Giới hạn đã chọn: người duyệt được chốt lúc gửi đơn và không tự đổi. Nếu người đó nghỉ việc hoặc mất quyền khi đơn còn `PENDING`, nhân viên hủy đơn rồi tạo đơn mới để hệ thống chọn lại người duyệt.
+- Người duyệt được chốt lúc gửi đơn và không tự đổi khi quản lý thay đổi; muốn chuyển cho quản lý mới thì nhân viên hủy đơn rồi gửi lại. Riêng khi người duyệt kết thúc làm việc, bị tạm khóa hoặc bị xóa tài khoản, các đơn `PENDING` đang chờ họ (cả đơn nghỉ việc) được chuyển ngay cho người duyệt hệ thống chọn lại lúc đó.
 - Giới hạn đã chọn: đơn nghỉ được duyệt trước khi HR đặt ngày làm việc cuối sớm hơn thì giữ nguyên, kể cả các ngày nghỉ sau ngày cuối (đơn đã duyệt không hủy được). Các ngày đó vẫn trừ vào phép năm, nên số phép còn lại của người đã nghỉ có thể âm, và vẫn hiện trong báo cáo tình hình tháng; lương không tính các ngày sau ngày cuối. Đơn nháp/chờ duyệt sau ngày cuối thì bị hủy, và ngày công tạo sẵn còn trống sau ngày cuối bị xóa.

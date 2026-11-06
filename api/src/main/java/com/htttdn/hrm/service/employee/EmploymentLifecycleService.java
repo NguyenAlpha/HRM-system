@@ -75,6 +75,7 @@ public class EmploymentLifecycleService {
     private final ResignationRequestRepository resignationRequestRepository;
     private final LeaveRequestService leaveRequestService;
     private final AttendanceRecordRepository attendanceRecordRepository;
+    private final PendingApprovalRerouter pendingApprovalRerouter;
     private final Clock clock;
 
     /**
@@ -196,7 +197,8 @@ public class EmploymentLifecycleService {
      * <p>Các bước: đổi trạng thái + xóa lịch hẹn → đóng phân công chính ở ngày cuối → đóng lương, hồ sơ
      * thuế, người phụ thuộc → hủy đơn nghỉ nháp/chờ duyệt có ngày sau ngày cuối → xóa ngày công tạo sẵn còn
      * trống sau ngày cuối → khóa tài khoản ({@code DISABLED}), thu hồi mọi refresh token và thu hồi role
-     * nghiệp vụ. Access token đang dùng vẫn chạy tới khi hết hạn (request không kiểm tra lại trạng thái
+     * nghiệp vụ → chuyển các đơn đang chờ người này duyệt sang người duyệt mới
+     * ({@link PendingApprovalRerouter}). Access token đang dùng vẫn chạy tới khi hết hạn (request không kiểm tra lại trạng thái
      * tài khoản), sau đó không làm mới được nữa.
      *
      * @param actor người ghi nhận việc thu hồi role: HR thao tác, người hẹn, hoặc người duyệt đơn nghỉ việc
@@ -225,6 +227,7 @@ public class EmploymentLifecycleService {
             roleAssignmentCommandService.revokeHeldRoles(
                 account.getId(), terminationDate, actor, "Kết thúc làm việc: " + terminationReason.trim());
         });
+        pendingApprovalRerouter.rerouteFrom(employee);
     }
 
     /**

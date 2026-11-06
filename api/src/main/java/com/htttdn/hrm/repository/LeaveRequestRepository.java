@@ -46,6 +46,17 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
         """)
     Optional<LeaveRequest> findByIdForUpdate(@Param("id") Long id);
 
+    /** Pending requests waiting on {@code approverEmployeeId}, locked as deciding one locks it. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT request
+        FROM LeaveRequest request
+        JOIN FETCH request.employee
+        WHERE request.approverEmployee.id = :approverEmployeeId
+          AND request.status = com.htttdn.hrm.entity.enums.LeaveRequestStatus.PENDING
+        """)
+    List<LeaveRequest> findPendingByApproverForUpdate(@Param("approverEmployeeId") Long approverEmployeeId);
+
     boolean existsByEmployeeId(Long employeeId);
 
     /** Whether another request of the employee in {@code statuses} touches [{@code from}, {@code to}). */

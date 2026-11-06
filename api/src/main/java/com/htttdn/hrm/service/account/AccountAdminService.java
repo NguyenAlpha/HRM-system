@@ -15,6 +15,7 @@ import com.htttdn.hrm.service.rbac.AccountAuthorizationService;
 import com.htttdn.hrm.service.rbac.AccountRoleAssignmentCommandService;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import com.htttdn.hrm.service.auth.RefreshTokenService;
+import com.htttdn.hrm.service.employee.PendingApprovalRerouter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -61,6 +62,7 @@ public class AccountAdminService {
     private final AccountAuthorizationService accountAuthorizationService;
     private final AccountRoleAssignmentRepository roleAssignmentRepository;
     private final AccountRoleAssignmentCommandService roleAssignmentCommandService;
+    private final PendingApprovalRerouter pendingApprovalRerouter;
     private final Clock clock;
 
     @PreAuthorize("hasAuthority('account.provision')")
@@ -145,6 +147,7 @@ public class AccountAdminService {
         account.setStatus(AccountStatus.DISABLED);
         refreshTokenService.revokeAll(accountId);
         accountActivationService.revokeAll(accountId);
+        rerouteApprovals(account);
         return toResponse(accountRepository.saveAndFlush(account));
     }
 
@@ -196,7 +199,15 @@ public class AccountAdminService {
         accountActivationService.revokeAll(accountId);
         // As at termination, AUTO and SYSTEM_ONLY roles are left to their own workflows.
         roleAssignmentCommandService.revokeHeldRoles(accountId, LocalDate.now(clock), actor, "Xóa tài khoản: " + trimmed);
+        rerouteApprovals(account);
         return toResponse(accountRepository.saveAndFlush(account));
+    }
+
+    /** A suspended or deleted account cannot decide the requests waiting on its employee, so they move on. */
+    private void rerouteApprovals(Account account) {
+        if (account.getEmployee() != null) {
+            pendingApprovalRerouter.rerouteFrom(account.getEmployee());
+        }
     }
 
     private AccountInvitationResponse issueInvitation(Long accountId) {
