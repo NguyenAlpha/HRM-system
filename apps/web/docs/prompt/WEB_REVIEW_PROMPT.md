@@ -43,6 +43,8 @@ vi có chủ đích (web nội bộ, đồ án); không cần liệt kê chúng 
   - `openapi.json` ↔ `lib/api-schema.ts` (`pnpm check:api`).
 - Quyền ở UI chỉ để ẩn/hiện; API mới là nơi quyết định. Lỗi ở tiêu chí 3 là lệch giữa hai bên (nút hiện mà API trả
   403, hoặc ẩn mất chức năng người dùng có quyền), không phải "UI thiếu kiểm tra quyền".
+- **Tái hiện trước khi ghi:** lỗi nghi ngờ về luồng (phiên, BFF, ẩn/hiện theo quyền, form) thì thử bằng `curl` tới BFF
+  hoặc thao tác trên trình duyệt, với web và API đang chạy, rồi ghi request hay các bước cùng kết quả vào "Tình huống".
 - Phần nào không kiểm được thì ghi rõ "chưa kiểm" và lý do, không bỏ qua im lặng.
 - Đọc file kết quả gần nhất `WEB_REVIEW_*.md` trong `apps/web/docs/prompt/` (nếu có) để so sánh: lỗi nào đã sửa, lỗi
   nào còn, lỗi nào mới. Giữ nguyên mã lỗi `WEB-<số>` của lỗi cũ; lỗi mới lấy số tiếp theo.
@@ -52,7 +54,7 @@ vi có chủ đích (web nội bộ, đồ án); không cần liệt kê chúng 
 | # | Tiêu chí | Trọng số | Cần kiểm |
 |---|---|---|---|
 | 1 | Phiên đăng nhập và BFF | 20% | Token chỉ nằm trong cookie `HttpOnly` (`Secure` theo môi trường, `SameSite=Lax`), không xuất hiện trong body trả về trình duyệt, `localStorage`, URL hay log; mọi Route Handler chặn method lạ (405) và request ghi có `Origin` khác (403); refresh gộp một lần cho các request đồng thời và chỉ thử lại một lần; refresh thất bại thì xóa cookie (trừ 429); hai portal không dùng chung cookie, đăng nhập nhầm portal bị thu hồi token; đăng xuất/đổi mật khẩu xóa cookie; route handler không cần phiên (`account-activations`, `branding`) không gắn Bearer |
-| 2 | Whitelist BFF khớp API | 12% | Mỗi route + method trong các danh sách `*_ROUTES` có endpoint thật; mỗi lời gọi trong `lib/*.ts` và `components/` đi qua một route có trong whitelist; mỗi query param trang gửi có trong `queryKeys` của handler (nếu không, bộ lọc bị bỏ âm thầm); các handler một endpoint (reference, cấp tài khoản, Company Owner, thống kê hệ thống, rate limit) trỏ đúng đường dẫn API |
+| 2 | Whitelist BFF khớp API | 12% | Mỗi route + method trong các danh sách `*_ROUTES` có endpoint thật; mỗi lời gọi trong `lib/*.ts` và `components/` đi qua một route có trong whitelist; mỗi query param trang gửi có trong `queryKeys` của handler (nếu không, bộ lọc bị bỏ âm thầm); các handler một endpoint (reference, cấp tài khoản, Company Owner, thống kê hệ thống, rate limit) trỏ đúng đường dẫn API; chiều ngược: mỗi endpoint API mà web không gọi tới được có lý do (dùng ngoài web có chủ đích), không thì là endpoint thừa hoặc chức năng thiếu |
 | 3 | Ẩn/hiện theo quyền khớp API | 12% | **Bắt buộc:** mã quyền web dùng đều có trong `PermissionSeeder`; mọi mục sidebar (cả hai portal) khớp quyền của lời gọi API đầu tiên của trang; với mọi permission mà `company-wide-gaps.mjs` liệt kê, web có thao tác nào hiện chỉ theo mã quyền không; trang Admin Console và HRM Workspace không lộ chức năng của portal kia. **Lấy mẫu** (ghi trang đã xem): nút thao tác trong từng trang so với quyền của endpoint nút gọi. Làm đủ phần bắt buộc thì tiêu chí không bị coi là kiểm một phần |
 | 4 | Form khớp ràng buộc API | 10% | **Bắt buộc:** mọi trường có `@Size` trong DTO có `zod .max`/`maxLength` bằng nó ở form tương ứng; mọi cột văn bản `VARCHAR(n)` mà DTO không có `@Size` có giới hạn ở cả DTO và form (vượt độ dài cột thì `GlobalExceptionHandler.handleDataIntegrity` trả `409 CONFLICT` câu chung, người dùng không biết sửa gì); nút gửi bị khóa khi đang gửi. **Lấy mẫu** (ghi form đã xem): trường bắt buộc khớp `@NotNull`/`@NotBlank`, khoảng ngày (từ ≤ đến) và giá trị số kiểm như API, lỗi theo `field` của API hiện đúng ô. Làm đủ phần bắt buộc thì tiêu chí không bị coi là kiểm một phần |
 | 5 | Đồng bộ type và danh mục với API | 8% | `pnpm check:api` sạch; không có type tự viết tay trùng với type trong `lib/api-schema.ts`; mọi `ErrorCode` có câu tiếng Việt; bảng nhãn của enum API khai báo `Record<Enum, string>` để TypeScript bắt thiếu nhãn (bảng `Record<string, string>` cho enum là lỗi) |
@@ -68,8 +70,23 @@ vi có chủ đích (web nội bộ, đồ án); không cần liệt kê chúng 
 Điểm suy ra từ danh sách lỗi theo quy tắc cố định, không chấm theo cảm nhận: cùng một danh sách lỗi thì luôn ra cùng
 một điểm.
 
+Mức độ của mỗi lỗi xét theo hậu quả và mức thường gặp:
+
+- **Cao:** hậu quả nặng (lộ token hay dữ liệu nhạy cảm, người khác đọc hoặc ghi được dữ liệu hay phiên của người dùng,
+  người có quyền không làm được việc, trang hoặc nút hiện ra rồi trả lỗi, mất dữ liệu đã nhập, tiền hay ngày hiển thị
+  sai) xảy ra khi dùng bình thường.
+- **Trung bình:** hậu quả nặng nhưng cần một điều kiện ít gặp (role gán phạm vi hẹp, dữ liệu đặc biệt, đầu/cuối tháng
+  hay giờ khuya theo giờ Việt Nam); hoặc luồng công khai, chạm phiên hay quyền mà không có test nào.
+- **Thấp:** hậu quả nặng nhưng hiếm (nhiều điều kiện ít gặp cùng lúc; trang lạ phải dụ người dùng mở rồi người dùng
+  còn tự làm thêm bước khác, như login CSRF); hậu quả nhẹ dù thường gặp (câu báo lỗi chung chung, khóa thừa, tài liệu
+  lệch, code chết); thiếu test cho luồng khác.
+
 1. **Gắn lỗi vào tiêu chí:** mỗi lỗi thuộc đúng **một** tiêu chí mà nó vi phạm trực tiếp nhất (trường "thuộc tiêu
-   chí"; khác với "tìm ra nhờ"). Không trừ một lỗi ở hai tiêu chí.
+   chí"; khác với "tìm ra nhờ"). Không trừ một lỗi ở hai tiêu chí. Khi hai tiêu chí có phần chung:
+   - thiếu test hoặc test hỏng thuộc tiêu chí 10, kể cả khi phần chưa có test thuộc tiêu chí khác;
+   - tài liệu khẳng định sai về một hành vi mà code cũng sai thì lỗi thuộc tiêu chí của hành vi đó (VD `AUTH.md` nói
+     mọi handler kiểm `Origin` mà handler phiên không kiểm: tiêu chí 1), không phải tiêu chí 11;
+   - ngày hiển thị sai định dạng thuộc tiêu chí 7, không phải 9.
 2. **Điểm tiêu chí** bắt đầu từ 10, trừ theo mỗi lỗi **chưa sửa**: Cao −4, Trung bình −2, Thấp −0,5; thấp nhất 0.
 3. **Kiểm một phần:** tiêu chí chỉ kiểm được một phần thì điểm = min(10 − tổng trừ, 8) và ghi rõ phần chưa kiểm.
    **Chưa kiểm:** không chấm, bỏ khỏi điểm tổng.
@@ -93,8 +110,13 @@ Chạy trong `apps/web/` trừ khi ghi khác.
 - Whitelist BFF ↔ API: `node docs/prompt/scripts/bff-vs-openapi.mjs .` (in số cặp route + method đã kiểm và các route
   không có endpoint). Script chỉ đọc các danh sách có trong biến `PREFIX`: đối chiếu với
   `grep -n "_ROUTES: Route\[\]" lib/auth/server.ts`; danh sách mới chưa có trong `PREFIX` sẽ bị bỏ qua mà không báo.
-  Script không kiểm các handler một endpoint và không kiểm chiều ngược (endpoint API web chưa mở): hai phần này kiểm
-  tay.
+  Script không kiểm các handler một endpoint có trỏ đúng đường dẫn API không: phần này kiểm tay.
+  - Phần sau của script là chiều ngược: endpoint trong `openapi.json` mà không danh sách `*_ROUTES` nào, không
+    `REFERENCE_RESOURCES` (`handleReferenceRequest`) và không đường dẫn API viết sẵn trong `app/api`, `lib` tới được.
+    Đường dẫn viết sẵn không xét method, và luật của `handleReferenceRequest` (danh sách/tạo, sửa/xóa một mục) được
+    chép vào script: đổi handler thì sửa script. Lần 2026-11-06: 159 endpoint, 132 qua danh sách, 19 qua đường dẫn viết
+    sẵn, 8 không tới được (đọc một mục hoặc dạng cây của bốn danh mục tổ chức, `GET /api/resignation-requests/{id}`,
+    `GET /api/employees/{employeeId}/assignments/current`), chưa xét có thừa không.
 - Lời gọi trang ↔ whitelist: `node docs/prompt/scripts/callers-vs-bff.mjs .` đối chiếu mọi `workforceApi(...)` với
   `WORKFORCE_ROUTES`; dòng `X` là lời gọi không có route, dòng `?` là đường dẫn ghép từ biến (`${base}/…`) hoặc chọn
   hành động trong `${…}`, kiểm tay (lần 2026-11-05: 43 khớp, 9 kiểm tay, 0 lỗi). Lời gọi qua `authorizedRequest` ở
@@ -185,11 +207,13 @@ Lưu thành `apps/web/docs/prompt/WEB_REVIEW_<yyyy-MM-dd>.md` (ngày chạy), g�
 
 1. **Thông tin lần chạy**: ngày, commit (`git log --oneline -1`), kết quả `typecheck`/`lint`/`build`, số test E2E và
    kết quả, web chạy bằng `pnpm dev` hay `pnpm start` khi chạy E2E, người/agent chạy.
-2. **Điểm**: điểm tổng /10, xếp loại, trần áp dụng (nếu có), và bảng mỗi tiêu chí một dòng: trọng số, điểm /10
-   (hoặc "Chưa kiểm"), các lỗi đã trừ (mã và mức), bằng chứng ngắn.
+2. **Điểm**: điểm tổng /10, trung bình có trọng số trước khi áp trần, xếp loại, trần áp dụng (nếu có), và bảng mỗi
+   tiêu chí một dòng: trọng số, điểm /10 (hoặc "Chưa kiểm"), các lỗi đã trừ (mã và mức), bằng chứng ngắn (tối đa hai
+   câu; chi tiết để ở từng lỗi).
 3. **Danh sách lỗi**: mỗi lỗi có mã ổn định `WEB-<số>`, mức độ (Cao/Trung bình/Thấp), **thuộc tiêu chí** (đúng một),
    vị trí `file:dòng`, mô tả, tình huống gây lỗi cụ thể, đề xuất sửa, **tìm ra nhờ** (số tiêu chí, hoặc "ngoài tiêu
-   chí"), trạng thái (`Chưa sửa` / `Đã sửa <commit>`).
+   chí"), **xác nhận bằng** (`curl` tới BFF / thao tác trên trình duyệt / E2E / đọc code), trạng thái (`Chưa sửa` /
+   `Đã sửa <commit>`).
 4. **So sánh với lần trước**: điểm tổng và điểm từng tiêu chí trước → sau; lỗi đã sửa (kèm commit), lỗi còn tồn,
    lỗi mới.
 5. **Phạm vi chưa kiểm**.
@@ -202,3 +226,4 @@ Lưu thành `apps/web/docs/prompt/WEB_REVIEW_<yyyy-MM-dd>.md` (ngày chạy), g�
 |---|---|---|
 | 2026-11-05 | Bản đầu tiên, sinh bằng /review-prompt-create | — |
 | 2026-11-05 | Tiêu chí 3 và 4 tách phần bắt buộc / lấy mẫu; tiêu chí 4 so cả độ dài cột DB khi DTO không có `@Size`; cặp `requireCompanyWide` ↔ `companyWide`; kiểm một phần = min(10 − trừ, 8); thêm script `callers-vs-bff.mjs`, `query-params.mjs`, `company-wide-gaps.mjs` và lệnh dò `Origin`; sửa ghi chú `toISOString` và E2E; thêm lệnh heuristic cho tiêu chí 6, 9; accessibility và hiệu năng ngoài phạm vi. Điểm tiêu chí 3, 4 của lần 2026-11-05 không so trực tiếp được với lần sau. | [PROMPT_REVIEW_WEB_REVIEW_2026-11-05](./PROMPT_REVIEW_WEB_REVIEW_2026-11-05.md) |
+| 2026-11-06 | Định nghĩa mức Cao/Trung bình/Thấp với ví dụ của web; quy tắc gắn khi hai tiêu chí có phần chung (test → 10, tài liệu sai cùng code sai → tiêu chí của hành vi, định dạng ngày → 7); nguyên tắc tái hiện trước khi ghi; tiêu chí 2 và `bff-vs-openapi.mjs` thêm chiều ngược (endpoint API web không gọi tới được); file kết quả có "xác nhận bằng", trung bình trước trần, bằng chứng tối đa hai câu. Xếp lại `WEB-001`…`WEB-007` theo định nghĩa: chỉ `WEB-006` đổi, Thấp → Trung bình (luồng chạm phiên và quyền không có test nào, cùng mức với `API-011`); chấm lại lần 1 thì 9,4 → 9,2, lần 2 (10,0) không đổi vì `WEB-006` đã sửa; không sửa file kết quả cũ. Tiêu chí 2 có thể ra lỗi mới ở chiều ngược nên không so trực tiếp với các lần trước. | Đồng bộ theo [PROMPT_REVIEW_API_REVIEW_2026-11-05](../../../../api/docs/prompt/PROMPT_REVIEW_API_REVIEW_2026-11-05.md) |

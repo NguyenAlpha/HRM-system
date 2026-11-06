@@ -169,10 +169,12 @@ cũng chạy lại.
 | Dọn | `taskkill` dừng đúng tiến trình đang nghe cổng 18080, DB tạm đã xóa; chạy hai lần (sau bản đầu và sau bản sửa) |
 | Lệnh một dòng | `EffectiveToIsNull`: 4 chỗ như ghi chú; `@RequestBody` không `@Valid`: 2 dòng; bảng seeder ghi thẳng: 22 repository; số liệu tài liệu: 11 dòng, lệch đúng `API-013` (29 controller trong khi có 32; "33 bảng") |
 
-## Đề xuất thay đổi chung (chưa áp dụng)
+## Đề xuất thay đổi chung
 
 Các thay đổi sau không riêng gì HRM API. Theo quy tắc của skill, chỉ đề xuất cho skill `/review-prompt-create` và prompt
-web (`apps/web/docs/prompt/WEB_REVIEW_PROMPT.md`), chưa sửa:
+web (`apps/web/docs/prompt/WEB_REVIEW_PROMPT.md`), chưa sửa. **Đã áp dụng ngày 2026-11-06** theo yêu cầu của người
+dùng (xem "Lịch sử thay đổi" của skill và của prompt web); khi xếp lại lỗi web theo định nghĩa ở mục 1, `WEB-006` đổi
+từ Thấp sang Trung bình.
 
 1. **Định nghĩa mức độ** (thay đổi 9) vào quy tắc chấm của `/review-prompt-create` và prompt web. Trước khi áp dụng
    cho prompt web, xếp lại các lỗi `WEB-001`…`WEB-007` theo định nghĩa để chắc không lỗi nào đổi mức.
