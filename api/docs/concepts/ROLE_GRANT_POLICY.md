@@ -61,8 +61,9 @@ trùng lần gán đang có cùng role và scope trong khoảng thời gian ch�
   `HR_ASSIGNABLE` bị thu hồi ngay; role `OWNER_APPROVAL` chờ Company Owner duyệt. Khi duyệt, hệ thống kiểm tra lại
   lần gán vẫn còn hiệu lực. Mỗi lần gán chỉ có tối đa một đề xuất thu hồi đang chờ.
 - **Thu hồi trực tiếp:** người có `account.role.assign`.
-- Role `AUTO` và `SYSTEM_ONLY` **không** thu hồi được qua các đường này; chúng do workflow riêng quản lý (ví dụ
-  `EMPLOYEE` mất khi nhân viên nghỉ việc).
+- Role `AUTO` và `SYSTEM_ONLY` **không** thu hồi được qua các đường này; chúng do workflow riêng quản lý. Riêng
+  `EMPLOYEE` (`AUTO`) vẫn giữ khi nhân viên nghỉ việc: account bị khóa nên không đăng nhập được nữa, lần gán còn lại
+  làm lịch sử (xem [RBAC.md](../api/RBAC.md)).
 - Thu hồi đặt `revoked_at`, kéo `effective_to` về hôm nay và **thu hồi mọi refresh token** của account (xem
   [TOKEN_LIFECYCLE.md](./TOKEN_LIFECYCLE.md#6-khi-nào-mọi-phiên-bị-thu-hồi)).
 
@@ -85,9 +86,9 @@ override đều thu hồi refresh token của account. Endpoint: [ACCOUNT_PERMIS
 
 ## Code
 
-- [`RoleAssignmentPolicy`](../../src/main/java/com/htttdn/hrm/service/RoleAssignmentPolicy.java): scope cho phép của role, suy ra từ permission
-- [`AccountRoleAssignmentCommandService`](../../src/main/java/com/htttdn/hrm/service/AccountRoleAssignmentCommandService.java): `validateGrantPolicy`, `revoke`
-- [`RoleAssignmentRequestService`](../../src/main/java/com/htttdn/hrm/service/RoleAssignmentRequestService.java): `create`, `createRevocation`, `approve`
-- [`CompanyOwnerAccountGuard`](../../src/main/java/com/htttdn/hrm/service/CompanyOwnerAccountGuard.java)
+- [`RoleAssignmentPolicy`](../../src/main/java/com/htttdn/hrm/service/rbac/RoleAssignmentPolicy.java): scope cho phép của role, suy ra từ permission
+- [`AccountRoleAssignmentCommandService`](../../src/main/java/com/htttdn/hrm/service/rbac/AccountRoleAssignmentCommandService.java): `validateGrantPolicy`, `revoke`
+- [`RoleAssignmentRequestService`](../../src/main/java/com/htttdn/hrm/service/rbac/RoleAssignmentRequestService.java): `create`, `createRevocation`, `approve`
+- [`CompanyOwnerAccountGuard`](../../src/main/java/com/htttdn/hrm/service/account/CompanyOwnerAccountGuard.java)
 - Seed: [`RoleSeeder`](../../src/main/java/com/htttdn/hrm/config/seed/RoleSeeder.java), [`RolePermissionSeeder`](../../src/main/java/com/htttdn/hrm/config/seed/RolePermissionSeeder.java)
 - Endpoint: [ACCOUNT_ROLE_ASSIGNMENTS.md](../api/ACCOUNT_ROLE_ASSIGNMENTS.md), [ROLE_ASSIGNMENT_REQUESTS.md](../api/ROLE_ASSIGNMENT_REQUESTS.md)

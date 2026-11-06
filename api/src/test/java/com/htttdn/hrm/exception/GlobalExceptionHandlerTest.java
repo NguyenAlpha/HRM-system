@@ -1,12 +1,16 @@
 package com.htttdn.hrm.exception;
 
+import java.util.List;
 import java.util.Set;
 
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
@@ -23,9 +27,9 @@ class GlobalExceptionHandlerTest {
     @Test
     void appExceptionPreservesStatusCodeMessageAndField() {
         var exception = new ConflictException(
-            ErrorCode.EMPLOYEE_CODE_TAKEN,
-            "Employee code already exists",
-            "employeeCode"
+            ErrorCode.JOB_POSITION_CODE_TAKEN,
+            "Job position code is already taken",
+            "code"
         );
 
         var response = handler.handleAppException(exception);
@@ -35,9 +39,9 @@ class GlobalExceptionHandlerTest {
         assertNotNull(result);
         assertFalse(result.success());
         assertNull(result.data());
-        assertEquals(ErrorCode.EMPLOYEE_CODE_TAKEN.name(), result.error().code());
-        assertEquals("Employee code already exists", result.error().message());
-        assertEquals("employeeCode", result.error().field());
+        assertEquals(ErrorCode.JOB_POSITION_CODE_TAKEN.name(), result.error().code());
+        assertEquals("Job position code is already taken", result.error().message());
+        assertEquals("code", result.error().field());
     }
 
     @Test
@@ -84,6 +88,26 @@ class GlobalExceptionHandlerTest {
         assertEquals(Set.of(HttpMethod.GET), response.getHeaders().getAllow());
         assertNotNull(response.getBody());
         assertEquals(ErrorCode.METHOD_NOT_ALLOWED.name(), response.getBody().error().code());
+    }
+
+    @Test
+    void missingRequiredParameterReturnsValidationErrorWithItsName() {
+        var response = handler.handleMissingParameter(new MissingServletRequestParameterException("year", "Integer"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(ErrorCode.VALIDATION_ERROR.name(), response.getBody().error().code());
+        assertEquals("year", response.getBody().error().field());
+    }
+
+    @Test
+    void unsupportedContentTypeReturnsUnsupportedMediaType() {
+        var response = handler.handleUnsupportedMediaType(
+            new HttpMediaTypeNotSupportedException(MediaType.TEXT_PLAIN, List.of(MediaType.APPLICATION_JSON)));
+
+        assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(ErrorCode.UNSUPPORTED_MEDIA_TYPE.name(), response.getBody().error().code());
     }
 
     @Test

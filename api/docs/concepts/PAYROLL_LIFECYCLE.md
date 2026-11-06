@@ -73,7 +73,7 @@ Khi dữ liệu đầu vào thay đổi với ngày hiệu lực nằm trong m�
 | Người phụ thuộc (thêm, kết thúc) | Về `DRAFT` (xét theo tháng trả lương) | Chặn | `PayrollDeductionsService.addDependent`, `endDependent` |
 | Khoản cộng/trừ nhập tay | Về `DRAFT` | Chỉ thêm/xóa được khi kỳ `DRAFT` hoặc `CALCULATED` | `PayrollAdjustmentService` |
 | Ngày lễ công ty | Về `DRAFT` | Chặn | `CompanyHolidayService` |
-| Chấm công (gồm do duyệt đơn nghỉ, tăng ca) | **Không** về `DRAFT`, nhưng `approve` bị chặn tới khi tính lại | Chặn sửa | `AttendanceService.assertAttendanceEditable`, `PayrollService.approve` |
+| Chấm công (gồm do duyệt đơn nghỉ, tăng ca) | **Không** về `DRAFT`, nhưng `approve` bị chặn tới khi tính lại | Chặn sửa | `AttendanceEditGuard.requireEditable`, `PayrollService.approve` |
 | Phụ cấp chức vụ / thâm niên | Về `DRAFT`, xóa phiếu | Chặn | `AllowancePolicyService.setPositionAllowance`, `setSeniorityAllowance` |
 | Phân công chính (chức danh, ca, đơn vị, quản lý) | Về `DRAFT`, xóa phiếu | Chặn | `EmployeeAssignmentService.assign` |
 | Giờ của ca làm | — | Chặn nếu ca đã có dữ liệu chấm công | `WorkShiftService.update` |
@@ -99,8 +99,9 @@ chéo nhau.
 
 ## Code
 
-- [`PayrollService`](../../src/main/java/com/htttdn/hrm/service/PayrollService.java): `createPeriod`, `calculate`,
+- [`PayrollService`](../../src/main/java/com/htttdn/hrm/service/payroll/PayrollService.java): `createPeriod`, `calculate`,
   `approve`, `markPaid`, `lock`, `cancel`
-- [`PayrollDeductionsService`](../../src/main/java/com/htttdn/hrm/service/PayrollDeductionsService.java): `invalidate`
-- [`EmployeeSalaryHistoryService`](../../src/main/java/com/htttdn/hrm/service/EmployeeSalaryHistoryService.java): `setSalary`
+- [`PayrollPeriodInvalidator`](../../src/main/java/com/htttdn/hrm/service/payroll/PayrollPeriodInvalidator.java): `invalidateFrom`,
+  `invalidateEmployeeFrom`, `invalidateTaxPaymentsBetween`
+- [`EmployeeSalaryHistoryService`](../../src/main/java/com/htttdn/hrm/service/employee/EmployeeSalaryHistoryService.java): `setSalary`
 - [`PayrollPeriodRepository`](../../src/main/java/com/htttdn/hrm/repository/PayrollPeriodRepository.java): các truy vấn `…ForUpdate`

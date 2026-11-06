@@ -138,9 +138,9 @@ thất bại và người dùng phải đăng nhập lại.
 
 ## Code
 
-- [`AuthService`](../../src/main/java/com/htttdn/hrm/service/AuthService.java): `login`, `refresh`, `changePassword`
-- [`RefreshTokenService`](../../src/main/java/com/htttdn/hrm/service/RefreshTokenService.java): `create`, `rotate`, `revokeAll`
-- [`AccountActivationService`](../../src/main/java/com/htttdn/hrm/service/AccountActivationService.java)
+- [`AuthService`](../../src/main/java/com/htttdn/hrm/service/auth/AuthService.java): `login`, `refresh`, `changePassword`
+- [`RefreshTokenService`](../../src/main/java/com/htttdn/hrm/service/auth/RefreshTokenService.java): `create`, `rotate`, `revokeAll`
+- [`AccountActivationService`](../../src/main/java/com/htttdn/hrm/service/account/AccountActivationService.java)
 - [`JwtService`](../../src/main/java/com/htttdn/hrm/security/JwtService.java),
   [`ApplicationConfig`](../../src/main/java/com/htttdn/hrm/config/ApplicationConfig.java) (encoder, decoder, chuyển claim thành authority)
 - Web: [`apps/web/lib/auth/server.ts`](../../../apps/web/lib/auth/server.ts), [`apps/web/lib/auth/client.ts`](../../../apps/web/lib/auth/client.ts)

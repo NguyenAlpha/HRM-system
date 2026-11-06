@@ -17,9 +17,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
@@ -132,6 +134,17 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiResult<?>> handleMissingParameter(MissingServletRequestParameterException exception) {
+        return ResponseEntity.badRequest().body(
+            ApiResult.fail(ErrorDetail.of(
+                ErrorCode.VALIDATION_ERROR,
+                "Missing required parameter",
+                exception.getParameterName()
+            ))
+        );
+    }
+
     @ExceptionHandler(MissingServletRequestPartException.class)
     public ResponseEntity<ApiResult<?>> handleMissingPart(MissingServletRequestPartException exception) {
         return ResponseEntity.badRequest().body(
@@ -148,6 +161,16 @@ public class GlobalExceptionHandler {
                 ErrorCode.METHOD_NOT_ALLOWED,
                 "Request method " + exception.getMethod() + " is not supported for this path"
             )));
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiResult<?>> handleUnsupportedMediaType(HttpMediaTypeNotSupportedException exception) {
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(
+            ApiResult.fail(ErrorDetail.of(
+                ErrorCode.UNSUPPORTED_MEDIA_TYPE,
+                "Content type " + exception.getContentType() + " is not supported for this path"
+            ))
+        );
     }
 
     @ExceptionHandler(BadCredentialsException.class)

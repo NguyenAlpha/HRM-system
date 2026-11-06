@@ -114,15 +114,15 @@ dashboard): Prometheus định kỳ lấy chính các timer này và lưu lại 
 
 ## Code
 
-- [`ApiTrafficService`](../../src/main/java/com/htttdn/hrm/service/ApiTrafficService.java),
-  [`ApiTrafficTimeline`](../../src/main/java/com/htttdn/hrm/service/ApiTrafficTimeline.java),
+- [`ApiTrafficService`](../../src/main/java/com/htttdn/hrm/service/system/ApiTrafficService.java),
+  [`ApiTrafficTimeline`](../../src/main/java/com/htttdn/hrm/service/system/ApiTrafficTimeline.java),
   [`ApiTrafficTimelineFilter`](../../src/main/java/com/htttdn/hrm/config/ApiTrafficTimelineFilter.java),
   [`timeline/`](../../src/main/java/com/htttdn/hrm/timeline) (`TimelineRange`, `TimelineRing`),
   [`ApiTrafficController`](../../src/main/java/com/htttdn/hrm/controller/ApiTrafficController.java),
   [`ApiTrafficResponse`](../../src/main/java/com/htttdn/hrm/dto/response/traffic/ApiTrafficResponse.java)
 - Test: [`ApiTrafficIntegrationTest`](../../src/test/java/com/htttdn/hrm/controller/ApiTrafficIntegrationTest.java)
   (phân quyền, đếm request và lỗi theo route, API theo thời gian, `/actuator` không bị mở),
-  [`ApiTrafficTimelineTest`](../../src/test/java/com/htttdn/hrm/service/ApiTrafficTimelineTest.java)
+  [`ApiTrafficTimelineTest`](../../src/test/java/com/htttdn/hrm/service/system/ApiTrafficTimelineTest.java)
 - Web: [`api-traffic-page.tsx`](../../../apps/web/components/traffic/api-traffic-page.tsx),
   [`api-traffic-timeline.tsx`](../../../apps/web/components/traffic/api-traffic-timeline.tsx),
   [`timeline-chart.tsx`](../../../apps/web/components/common/timeline-chart.tsx) (dùng chung với trang giới hạn truy cập)

@@ -106,8 +106,7 @@ nhất: service inject `Clock` và gọi `LocalDate.now(clock)`. **Không dùng 
 múi giờ của JVM; trên máy chủ chạy UTC, từ 00:00 đến 06:59 giờ Việt Nam nó vẫn trả về ngày hôm trước (role chưa hết
 hạn, phân công mới chưa có hiệu lực, phạm vi dữ liệu tính theo ngày cũ).
 
-Một số chỗ có từ trước dùng `LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"))` trực tiếp (job định kỳ, chấm công, phép
-năm…); kết quả giống nhau. Test cần cố định "hôm nay" thì truyền `Clock.fixed(...)` vào constructor của service.
+Test cần cố định "hôm nay" thì truyền `Clock.fixed(...)` vào constructor của service.
 
 ## Code
 
@@ -115,7 +114,7 @@ năm…); kết quả giống nhau. Test cần cố định "hôm nay" thì truy
   [`V4__employment_and_salary.sql`](../../src/main/resources/db/migration/V4__employment_and_salary.sql),
   [`V5__leave.sql`](../../src/main/resources/db/migration/V5__leave.sql),
   [`V7__payroll.sql`](../../src/main/resources/db/migration/V7__payroll.sql)
-- Ghi theo mẫu đóng/mở: [`EmployeeSalaryHistoryService.setSalary`](../../src/main/java/com/htttdn/hrm/service/EmployeeSalaryHistoryService.java),
-  [`AllowancePolicyService`](../../src/main/java/com/htttdn/hrm/service/AllowancePolicyService.java),
-  [`EmployeeAssignmentService`](../../src/main/java/com/htttdn/hrm/service/EmployeeAssignmentService.java)
+- Ghi theo mẫu đóng/mở: [`EmployeeSalaryHistoryService.setSalary`](../../src/main/java/com/htttdn/hrm/service/employee/EmployeeSalaryHistoryService.java),
+  [`AllowancePolicyService`](../../src/main/java/com/htttdn/hrm/service/payroll/AllowancePolicyService.java),
+  [`EmployeeAssignmentService`](../../src/main/java/com/htttdn/hrm/service/employee/EmployeeAssignmentService.java)
 - Xử lý vi phạm ràng buộc: [`GlobalExceptionHandler`](../../src/main/java/com/htttdn/hrm/exception/GlobalExceptionHandler.java)

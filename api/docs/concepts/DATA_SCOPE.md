@@ -107,8 +107,8 @@ hôm nay ở `BRANCH-01` hoặc địa điểm con như kho `WAREHOUSE-02`. Hồ
 
 ## Code
 
-- [`EmployeeAccessScopeService`](../../src/main/java/com/htttdn/hrm/service/EmployeeAccessScopeService.java):
+- [`EmployeeAccessScopeService`](../../src/main/java/com/htttdn/hrm/service/rbac/EmployeeAccessScopeService.java):
   `resolve`, `toSpecification`, `visibleOnLastDay`
-- [`AccountAuthorizationService`](../../src/main/java/com/htttdn/hrm/service/AccountAuthorizationService.java):
+- [`AccountAuthorizationService`](../../src/main/java/com/htttdn/hrm/service/rbac/AccountAuthorizationService.java):
   `getScopes`, `loadContext`, `effectivePermissions`
 - [`AccountRoleAssignmentRepository.findActiveWithRoleByAccountId`](../../src/main/java/com/htttdn/hrm/repository/AccountRoleAssignmentRepository.java)

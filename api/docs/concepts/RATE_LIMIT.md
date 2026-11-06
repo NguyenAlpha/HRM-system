@@ -335,9 +335,9 @@ tra mức đó đếm riêng và trả `429` khi hết lượt.
   `RateLimitService`, `RateLimitTimeline`, `ClientIpResolver`, `IpRateLimitFilter`, `UserRateLimitFilter`,
   `LoginAttemptLimiter`, `RateLimitResponses`
 - [`SecurityConfig`](../../src/main/java/com/htttdn/hrm/config/SecurityConfig.java): thứ tự filter, header CORS
-- [`AuthService.login`](../../src/main/java/com/htttdn/hrm/service/AuthService.java),
+- [`AuthService.login`](../../src/main/java/com/htttdn/hrm/service/auth/AuthService.java),
   [`RateLimitStatsController`](../../src/main/java/com/htttdn/hrm/controller/RateLimitStatsController.java),
-  [`RateLimitSettingsService`](../../src/main/java/com/htttdn/hrm/service/RateLimitSettingsService.java),
+  [`RateLimitSettingsService`](../../src/main/java/com/htttdn/hrm/service/system/RateLimitSettingsService.java),
   [`RateLimitPolicySetting`](../../src/main/java/com/htttdn/hrm/entity/RateLimitPolicySetting.java),
   [`V2__employees_and_accounts.sql`](../../src/main/resources/db/migration/V2__employees_and_accounts.sql)
 - Web: [`client-ip.ts`](../../../apps/web/lib/client-ip.ts), [`rate-limit.ts`](../../../apps/web/lib/rate-limit.ts),

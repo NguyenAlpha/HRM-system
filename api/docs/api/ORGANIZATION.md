@@ -27,8 +27,12 @@ Quản lý danh mục cơ cấu tổ chức, địa điểm làm việc và ch�
 | `DELETE /api/job-positions/{positionId}` | `organization.manage`, phạm vi `COMPANY` | Xóa mềm chức danh không còn được sử dụng |
 | `GET /api/company` | Đã đăng nhập | Xem thông tin doanh nghiệp |
 | `PUT /api/company` | `company.manage` | Cập nhật thông tin doanh nghiệp |
+| `PUT /api/company/logo` | `company.manage` | Thay logo doanh nghiệp |
+| `DELETE /api/company/logo` | `company.manage` | Xóa logo doanh nghiệp |
+| `GET /api/public/branding` | Công khai | Tên doanh nghiệp và thời điểm đổi logo, cho trang đăng nhập |
+| `GET /api/public/branding/logo` | Công khai | Ảnh logo |
 
-Tất cả endpoint yêu cầu Bearer token. `HR_MANAGER`, `DIRECTOR` và `COMPANY_OWNER` được seed `organization.read`; `COMPANY_OWNER` và `SYSTEM_ADMIN` được seed `organization.manage`; `SYSTEM_ADMIN` cũng có `organization.read`. `company.manage` là permission `SYSTEM_ONLY` chỉ seed cho `COMPANY_OWNER`.
+Trừ hai endpoint `/api/public/branding`, mọi endpoint yêu cầu Bearer token. `HR_MANAGER`, `DIRECTOR` và `COMPANY_OWNER` được seed `organization.read`; `COMPANY_OWNER` và `SYSTEM_ADMIN` được seed `organization.manage`; `SYSTEM_ADMIN` cũng có `organization.read`. `company.manage` là permission `SYSTEM_ONLY` chỉ seed cho `COMPANY_OWNER`.
 
 ---
 
@@ -448,6 +452,7 @@ Trả `404 RESOURCE_NOT_FOUND` nếu doanh nghiệp chưa được khởi tạo.
     "phone": "02812345678",
     "email": "lienhe@acme.vn",
     "address": "1 Lê Lợi, Quận 1, TP.HCM",
+    "logoUpdatedAt": null,
     "updatedAt": "2026-10-16T10:00:00Z"
   }
 }
@@ -459,11 +464,48 @@ Thay toàn bộ các trường; trường tùy chọn để trống hoặc `null
 
 | Field | Type | Bắt buộc | Ràng buộc |
 |:------|:-----|:--------:|:----------|
-| `code` | string | ✅ | Mã doanh nghiệp, tối đa 30 ký tự |
-| `name` | string | ✅ | Tên doanh nghiệp, tối đa 200 ký tự |
+| `code` | string | ✅ | Mã doanh nghiệp, tối đa 20 ký tự |
+| `name` | string | ✅ | Tên doanh nghiệp, tối đa 40 ký tự |
 | `taxCode` | string | ❌ | Mã số thuế, tối đa 30 ký tự |
 | `phone` | string | ❌ | 8–11 chữ số, có thể bắt đầu bằng `+` (ví dụ `0912345678`, `+84912345678`) |
-| `email` | string | ❌ | Email hợp lệ, tối đa 100 ký tự |
-| `address` | string | ❌ | Địa chỉ đăng ký |
+| `email` | string | ❌ | Email hợp lệ, tối đa 30 ký tự |
+| `address` | string | ❌ | Địa chỉ đăng ký, tối đa 200 ký tự |
 
 Múi giờ (`timezone`) không sửa qua API.
+
+### PUT `/api/company/logo`
+
+`multipart/form-data` với part `file`. Loại ảnh xác định theo chữ ký của file, không theo `Content-Type` client gửi:
+chỉ nhận PNG, JPEG, WebP (SVG bị từ chối vì có thể chứa script), tối đa 512 KB. Trả thông tin doanh nghiệp như
+`GET /api/company`, với `logoUpdatedAt` là thời điểm vừa đổi.
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 400 | `COMPANY_LOGO_INVALID` | File rỗng, quá 512 KB hoặc không phải PNG/JPEG/WebP (`field: "file"`) |
+| 400 | `VALIDATION_ERROR` | Thiếu part `file`, hoặc vượt giới hạn upload của server |
+| 403 | `FORBIDDEN` | Không có `company.manage` |
+
+### DELETE `/api/company/logo`
+
+Xóa logo; `logoUpdatedAt` về `null`. Không có logo thì vẫn trả `200`.
+
+### GET `/api/public/branding`
+
+Không cần token: trang đăng nhập hiển thị tên doanh nghiệp trước khi ai đăng nhập. `logoUpdatedAt` là `null` khi
+chưa có logo, và đổi mỗi lần thay logo nên client dùng làm phiên bản để bỏ cache.
+
+```json
+{
+  "success": true,
+  "data": {
+    "name": "Công ty TNHH ACME",
+    "logoUpdatedAt": "2026-10-20T08:00:00Z"
+  }
+}
+```
+
+### GET `/api/public/branding/logo`
+
+Không cần token. Trả chính file ảnh (không bọc `ApiResult`) với `Content-Type` đã lưu, `Cache-Control: public,
+max-age=3600` và `ETag` theo thời điểm đổi logo; gửi lại `If-None-Match` trùng thì nhận `304`. Chưa có logo thì
+trả `404` không có body.

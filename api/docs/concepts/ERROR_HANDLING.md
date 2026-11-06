@@ -38,7 +38,9 @@ Tất cả kế thừa `AppException` (mang `ErrorCode`, `message`, `field`, `st
 | `HttpMessageNotReadableException` (JSON hỏng) | 400 | `VALIDATION_ERROR` |
 | `MethodArgumentTypeMismatchException` (sai kiểu tham số) | 400 | `VALIDATION_ERROR` kèm tên tham số |
 | `NoResourceFoundException` | 404 | `RESOURCE_NOT_FOUND` |
+| `MissingServletRequestParameterException` (thiếu tham số bắt buộc) | 400 | `VALIDATION_ERROR` kèm tên tham số |
 | `HttpRequestMethodNotSupportedException` | 405 | `METHOD_NOT_ALLOWED` |
+| `HttpMediaTypeNotSupportedException` (sai `Content-Type`) | 415 | `UNSUPPORTED_MEDIA_TYPE` |
 | `BadCredentialsException` | 401 | `INVALID_CREDENTIALS` |
 | `AccessDeniedException` (`@PreAuthorize` không qua) | 403 | `FORBIDDEN` |
 | `OptimisticLockingFailureException` | 409 | `CONCURRENT_MODIFICATION` |

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -22,6 +23,7 @@ import com.htttdn.hrm.repository.AccountRoleAssignmentRepository;
 import com.htttdn.hrm.service.rbac.RoleAssignmentPolicy;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -51,6 +53,7 @@ class SeedDataIntegrationTest {
     @Autowired private AccountRepository accountRepository;
     @Autowired private AccountRoleAssignmentRepository accountRoleAssignmentRepository;
     @Autowired private RoleAssignmentPolicy roleAssignmentPolicy;
+    @Autowired private JdbcTemplate jdbc;
 
     @DynamicPropertySource
     static void emptyDatabase(DynamicPropertyRegistry registry) throws SQLException {
@@ -76,6 +79,29 @@ class SeedDataIntegrationTest {
                 () -> assignment.getAccount().getUsername() + " holds " + assignment.getRole().getCode()
                     + " on " + assignment.getScopeType());
         }
+    }
+
+    @Test
+    void everySeededPendingRequestWaitsOnSomeoneWhoCanApproveIt() {
+        // The seeders pick approvers their own way; this is the rule ApproverResolver applies: another person, still
+        // employed, with an ACTIVE account.
+        List<String> stuck = jdbc.queryForList("""
+            SELECT pending.kind || ' #' || pending.id FROM (
+                SELECT 'leave request' AS kind, id, employee_id, approver_employee_id FROM leave_requests WHERE status = 'PENDING'
+                UNION ALL
+                SELECT 'resignation request', id, employee_id, approver_employee_id FROM resignation_requests WHERE status = 'PENDING'
+            ) pending
+            LEFT JOIN employees approver ON approver.id = pending.approver_employee_id
+            LEFT JOIN accounts account ON account.employee_id = approver.id AND account.deleted_at IS NULL
+            WHERE approver.id IS NULL
+               OR approver.id = pending.employee_id
+               OR approver.deleted_at IS NOT NULL
+               OR approver.employment_status IN ('RESIGNED', 'TERMINATED', 'RETIRED')
+               OR account.status IS DISTINCT FROM 'ACTIVE'
+            ORDER BY 1
+            """, String.class);
+
+        assertEquals(List.of(), stuck);
     }
 
     private static void execute(String sql) throws SQLException {

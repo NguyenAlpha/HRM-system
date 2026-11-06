@@ -60,7 +60,7 @@ DRAFT ──submit──▶ PENDING ──approve──▶ APPROVED
 - Khi duyệt (`applyApproval`), hệ thống:
   1. chặn nếu đã có đơn được duyệt trùng thời gian (database cũng chặn bằng `EXCLUDE USING GIST` trên `tstzrange`);
   2. kiểm tra còn đủ phép năm;
-  3. ghi ngày nghỉ vào chấm công (`AttendanceService.applyApprovedLeave`). Ngày thuộc kỳ lương đã duyệt thì bị chặn.
+  3. ghi ngày nghỉ vào chấm công (`LeaveAttendanceService.applyApprovedLeave`). Ngày thuộc kỳ lương đã duyệt thì bị chặn.
 
 ## 4. Đơn nghỉ việc
 
@@ -84,8 +84,8 @@ DRAFT ──submit──▶ PENDING ──approve──▶ APPROVED
 
 ## Code
 
-- [`ApproverResolver`](../../src/main/java/com/htttdn/hrm/service/ApproverResolver.java): `approverFor`, `decidedBy`, `isTopManagement`
-- [`LeaveRequestService`](../../src/main/java/com/htttdn/hrm/service/LeaveRequestService.java): `submit`, `approve`, `applyApproval`
-- [`ResignationRequestService`](../../src/main/java/com/htttdn/hrm/service/ResignationRequestService.java): `create`, `approve`, `complete`
-- [`AttendanceService`](../../src/main/java/com/htttdn/hrm/service/AttendanceService.java): `approveOvertime`, `listOvertimeAwaitingDecision`
+- [`ApproverResolver`](../../src/main/java/com/htttdn/hrm/service/employee/ApproverResolver.java): `approverFor`, `decidedBy`, `isTopManagement`
+- [`LeaveRequestService`](../../src/main/java/com/htttdn/hrm/service/leave/LeaveRequestService.java): `submit`, `approve`, `applyApproval`
+- [`ResignationRequestService`](../../src/main/java/com/htttdn/hrm/service/employee/ResignationRequestService.java): `create`, `approve`, `complete`
+- [`OvertimeService`](../../src/main/java/com/htttdn/hrm/service/attendance/OvertimeService.java): `approveOvertime`, `listOvertimeAwaitingDecision`
 - Endpoint: [ATTENDANCE.md](../api/ATTENDANCE.md), [EMPLOYEE.md](../api/EMPLOYEE.md) (đơn nghỉ việc)

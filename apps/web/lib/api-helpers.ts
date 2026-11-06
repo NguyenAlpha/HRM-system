@@ -27,7 +27,6 @@ const ERROR_MESSAGES: Record<string, string> = {
   ACCOUNT_ACTIVATION_NOT_ALLOWED: "Tài khoản này không thể kích hoạt.",
   EMPLOYEE_NOT_FOUND: "Không tìm thấy nhân viên.",
   EMPLOYEE_ASSIGNMENT_NOT_FOUND: "Không tìm thấy phân công.",
-  EMPLOYEE_CODE_TAKEN: "Mã nhân viên đã tồn tại.",
   EMPLOYMENT_STATUS_TRANSITION_NOT_ALLOWED: "Không thể đổi trạng thái làm việc như vậy.",
   EMPLOYMENT_ALREADY_ENDED: "Nhân sự đã kết thúc làm việc.",
   EMPLOYMENT_END_NOT_SCHEDULED: "Nhân sự không có lịch kết thúc làm việc nào.",
@@ -110,6 +109,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   VALIDATION_ERROR: "Dữ liệu nhập chưa hợp lệ. Vui lòng kiểm tra lại.",
   RESOURCE_NOT_FOUND: "Không tìm thấy dữ liệu.",
   METHOD_NOT_ALLOWED: FALLBACK_MESSAGE,
+  UNSUPPORTED_MEDIA_TYPE: FALLBACK_MESSAGE,
   CONFLICT: "Dữ liệu trùng hoặc mâu thuẫn với dữ liệu đã có.",
   CONCURRENT_MODIFICATION: "Dữ liệu vừa được người khác thay đổi. Vui lòng tải lại trang.",
   // The BFF normally replaces the message with one that says how long to wait.

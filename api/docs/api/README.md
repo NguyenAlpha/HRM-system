@@ -1,6 +1,6 @@
 # Tài liệu API HRM
 
-Các endpoint trả envelope `ApiResult`. Trừ đăng nhập, refresh và kích hoạt account, endpoint đều yêu cầu JWT hợp lệ; quyền cụ thể được kiểm tra tại service bằng permission và phạm vi dữ liệu.
+Các endpoint trả envelope `ApiResult`. Trừ đăng nhập, refresh, kích hoạt account và `/api/public/branding` (tên và logo doanh nghiệp cho trang đăng nhập), endpoint đều yêu cầu JWT hợp lệ; quyền cụ thể được kiểm tra tại service bằng permission và phạm vi dữ liệu.
 
 ## Danh mục hiện hành
 
@@ -17,7 +17,7 @@ năng theo module thay vì theo endpoint, đọc [docs/FEATURES.md](../../../doc
 | [RBAC.md](RBAC.md) | `/api/roles/*`, `/api/permissions/*` |
 | [ROLE_ASSIGNMENT_REQUESTS.md](ROLE_ASSIGNMENT_REQUESTS.md) | `/api/role-assignment-requests/*` |
 | [EMPLOYEE.md](EMPLOYEE.md) | `/api/employees/*`, `/api/employees/{employeeId}/assignments`, `/api/employees/{employeeId}/sensitive`, `/api/resignation-requests/*` |
-| [ORGANIZATION.md](ORGANIZATION.md) | `/api/organization-units/*`, `/api/work-locations/*`, `/api/job-positions/*`, `/api/company` |
+| [ORGANIZATION.md](ORGANIZATION.md) | `/api/organization-units/*`, `/api/work-locations/*`, `/api/job-positions/*`, `/api/company`, `/api/company/logo`, `/api/public/branding/*` |
 | [ORGANIZATION_COMPANY_OWNER_ADMIN.md](ORGANIZATION_COMPANY_OWNER_ADMIN.md) | `/api/system/organization/company-owner` |
 | [COMPANY_OWNER_TRANSFER.md](COMPANY_OWNER_TRANSFER.md) | `/api/company-owner/transfer` |
 | [RATE_LIMIT.md](../concepts/RATE_LIMIT.md#7-thống-kê) | `/api/system/rate-limit/stats`, `/api/system/rate-limit/timeline`, `/api/system/rate-limit/policies/{policy}` |
@@ -48,7 +48,9 @@ thích riêng trong [tài liệu cơ chế](../concepts/README.md).
   `field: "name"`, `message: "phải có từ 0 đến 40 ký tự"`; các message khác là tiếng Anh dành cho
   developer, web tự hiển thị câu tiếng Việt theo `error.code`.
 - Đường dẫn không có endpoint trả `404 RESOURCE_NOT_FOUND`; method không được endpoint hỗ trợ trả
-  `405 METHOD_NOT_ALLOWED` kèm header `Allow`. Chỉ lỗi ngoài dự kiến mới trả `500 INTERNAL_ERROR`.
+  `405 METHOD_NOT_ALLOWED` kèm header `Allow`. Thiếu tham số bắt buộc trả `400 VALIDATION_ERROR` với `field` là tên
+  tham số; `Content-Type` không hỗ trợ trả `415 UNSUPPORTED_MEDIA_TYPE`. Chỉ lỗi ngoài dự kiến mới trả
+  `500 INTERNAL_ERROR`.
 
 ## OpenAPI và Swagger UI
 
