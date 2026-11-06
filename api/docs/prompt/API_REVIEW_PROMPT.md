@@ -18,6 +18,10 @@ Chỉ đánh giá và ghi kết quả, **không sửa code** trong lần chạy 
 trừ hai cặp khớp với API (`ErrorCode` ↔ bản dịch, `openapi.json` ↔ `lib/api-schema.ts`); không cần liệt kê nó ở mục
 "Phạm vi chưa kiểm".
 
+Lược đồ database (ràng buộc, kiểu, `NOT NULL`, `CHECK` ↔ enum, khóa ngoại, index, migration, `api/docs/database/`)
+thuộc [DB_REVIEW_PROMPT.md](./DB_REVIEW_PROMPT.md), không trừ điểm ở đây. Prompt này giữ phần code dùng DB: khóa
+`FOR UPDATE` và transaction, truy vấn theo ngày hiệu lực, `@Size` ↔ độ dài cột, dữ liệu seed.
+
 ### Nguyên tắc
 
 - Mỗi kết luận phải có bằng chứng: đường dẫn `file:dòng`, lệnh đã chạy hoặc kết quả truy vấn. Không kết luận
@@ -39,12 +43,12 @@ trừ hai cặp khớp với API (`ErrorCode` ↔ bản dịch, `openapi.json` �
 | 2 | Bảo vệ dữ liệu nhạy cảm | 10% | CCCD, ngân hàng, mã số thuế, lương chỉ xuất hiện ở endpoint có quyền tương ứng; log không in mật khẩu, token, dữ liệu nhạy cảm |
 | 3 | Quy trình duyệt đúng nghiệp vụ | 10% | Người duyệt chọn đúng theo phân công đang hiệu lực; đơn không bị kẹt khi người duyệt nghỉ việc/đổi quản lý; trạng thái đơn chuyển hợp lệ |
 | 4 | Toàn vẹn bảng lương | 15% | Đổi đầu vào (lương, phụ cấp, phân công, khấu trừ, chấm công, ngày lễ) sau khi tính thì kỳ lương phải tính lại hoặc bị chặn; tách người tính/người duyệt; kỳ hủy không còn phiếu lương |
-| 5 | Toàn vẹn dữ liệu và đồng thời | 10% | Mỗi bất biến nêu trong `concepts/` (cột "Điều kiện thêm" ở `PAYROLL_LIFECYCLE.md` §2, cột "Không được chồng lấn theo" ở `EFFECTIVE_DATING.md` §2, "một Giám đốc"…) được giữ bằng ràng buộc DB (unique, exclusion) hoặc bằng khóa `FOR UPDATE` trên mọi dòng mà giao dịch cạnh tranh cùng đọc; ghi rõ bất biến nào chỉ nằm trong code |
+| 5 | Toàn vẹn dữ liệu và đồng thời | 10% | Mỗi bất biến nêu trong `concepts/` (cột "Điều kiện thêm" ở `PAYROLL_LIFECYCLE.md` §2, cột "Không được chồng lấn theo" ở `EFFECTIVE_DATING.md` §2, "một Giám đốc"…) mà DB không chặn (xem tiêu chí 1 của file `DB_REVIEW_*.md` mới nhất) được giữ bằng khóa `FOR UPDATE` trên mọi dòng mà giao dịch cạnh tranh cùng đọc; thiếu ràng buộc DB thuộc prompt DB, không trừ ở đây |
 | 6 | Thời gian và hiệu lực | 8% | Không có `LocalDate.now()`/`Instant.now()` thiếu `Clock` ngoài seeder; mọi truy vấn "hiện tại" trên dữ liệu theo khoảng hiệu lực (phân công, lương, phụ cấp, lần gán role) xét theo ngày chứ không lấy bản ghi "mở" (`…EffectiveToIsNull`), vì bản ghi có thể hẹn ngày tương lai |
 | 7 | Validation và lỗi trả về | 7% | `@RequestBody` có `@Valid`; trường chuỗi có `@Size` khớp cột DB; lỗi trả mã `ErrorCode` để web dịch, không lộ 500, kể cả request sai dạng (thiếu tham số bắt buộc, sai `Content-Type`, JSON hỏng) |
 | 8 | Dữ liệu seed khớp quy tắc | 5% | **Bắt buộc:** `SeedDataIntegrationTest` pass; `seed-checks.sql` trả 0 dòng trên DB tạm vừa seed; mỗi bảng seeder ghi thẳng bằng repository mà có quy tắc nghiệp vụ (đơn, phân công, gán role, chấm công) được so với kiểm tra của service cùng loại. Làm đủ phần bắt buộc thì tiêu chí không bị coi là kiểm một phần |
 | 9 | Kiểm thử | 8% | Toàn bộ test pass; service nào không có test; có test giữ các phần khớp nhau (permission ↔ code, seed ↔ quy tắc) không |
-| 10 | Bảo trì và tài liệu | 4% | Code chết (permission, `ErrorCode` không dùng); link, tên class/method, số liệu và mô tả trong `api/docs` (kể cả `concepts/`) khớp code; mỗi endpoint có trong tài liệu |
+| 10 | Bảo trì và tài liệu | 4% | Code chết (permission, `ErrorCode` không dùng); link, tên class/method, số liệu và mô tả trong `api/docs` (kể cả `concepts/`, trừ `api/docs/database/` thuộc prompt DB) khớp code; mỗi endpoint có trong tài liệu |
 | 11 | Vòng đời và tham chiếu | 8% | Khi một thực thể kết thúc (nhân viên nghỉ việc, tài khoản bị khóa, role bị thu hồi/xóa, đơn vị/địa điểm ngừng hoạt động), những thứ đang tham chiếu tới nó được xử lý: đơn chờ người đó duyệt, đơn đang mở của chính người đó, phân công có quản lý là người đó, lần gán role theo đơn vị đó, phạm vi dữ liệu |
 
 ### Cách chấm điểm
@@ -231,3 +235,4 @@ Lưu thành `api/docs/prompt/API_REVIEW_<yyyy-MM-dd>.md` (ngày chạy), gồm:
 | 2026-11-03 | Chuyển từ Đạt/Chưa đạt sang thang điểm 10: trọng số từng tiêu chí, trừ điểm theo mức lỗi, trần khi còn lỗi Cao, trường "thuộc tiêu chí". File kết quả 2026-11-03 được chuyển sang định dạng này (điểm tổng 7,0). | Yêu cầu của người dùng |
 | 2026-11-05 | Quy tắc 3: kiểm một phần = min(10 − tổng trừ, 8), cùng câu chữ với `/review-prompt-create` và prompt web. Điểm lần 2026-11-03 không đổi (tiêu chí 8 kiểm một phần, không có lỗi trừ, vẫn 8). | Đồng bộ theo [PROMPT_REVIEW_WEB_REVIEW_2026-11-05](../../../apps/web/docs/prompt/PROMPT_REVIEW_WEB_REVIEW_2026-11-05.md) |
 | 2026-11-05 | Gợi ý lệnh dùng script `controller-calls.mjs`, `request-sizes.mjs`, `error-codes.mjs`, `docs-vs-code.mjs`, `seed-checks.sql` kèm kết quả đã xét; bỏ đối chiếu permission bằng tay (đã có `PermissionCatalogueTest`); sửa lệnh `Clock`; thêm lệnh đầu vào bảng lương; mục chạy test và API trên DB tạm (tài khoản, dò lỗi trả về, dọn) và nguyên tắc tái hiện trước khi ghi; tiêu chí 5 xét từng bất biến trong `concepts/`; tiêu chí 7 gồm request sai dạng; tiêu chí 8 có phần bắt buộc; tiêu chí 10 bỏ "endpoint không dùng", thêm link và endpoint thiếu tài liệu; tiêu chí 11 gồm đơn của chính người kết thúc, đơn kẹt ở người duyệt thuộc tiêu chí 3; định nghĩa mức Cao/Trung bình/Thấp (giữ nguyên mức mọi lỗi cũ); file kết quả có "xác nhận bằng", trung bình trước trần, bằng chứng tối đa hai câu. Điểm tiêu chí 8 không còn so trực tiếp với các lần trước (trước luôn bị trần 8 vì kiểm một phần); các tiêu chí khác vẫn so được. | [PROMPT_REVIEW_API_REVIEW_2026-11-05](./PROMPT_REVIEW_API_REVIEW_2026-11-05.md) |
+| 2026-11-06 | Phần lược đồ chuyển sang [DB_REVIEW_PROMPT.md](./DB_REVIEW_PROMPT.md): tiêu chí 5 chỉ xét khóa `FOR UPDATE` cho bất biến DB không chặn, tiêu chí 10 bỏ `api/docs/database/`. `API-006` đóng ở lần chạy sau với trạng thái "Chuyển sang `DB-007`"; `API-013` bỏ phần `DATABASE_SCHEMA.md:62` (nay là `DB-008`). Tiêu chí 5 tăng 0,5 so với lần 2026-11-05 chỉ vì chuyển lỗi, không phải vì sửa; tiêu chí 10 không đổi (`API-013` còn các phần khác) | [PROMPT_REVIEW_DB_REVIEW_2026-11-06](./PROMPT_REVIEW_DB_REVIEW_2026-11-06.md) |

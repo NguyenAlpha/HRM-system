@@ -44,12 +44,15 @@ liệt kê ở mục "Phạm vi chưa kiểm":
 ### Nguyên tắc
 
 - Mỗi kết luận có bằng chứng: `file:dòng` của migration, dòng in ra của script, kết quả truy vấn. Không kết luận theo
-  tên cột.
+  tên cột. Số dòng lấy bằng `grep -n` (VD `grep -n "CREATE TABLE" api/src/main/resources/db/migration/*.sql`), không
+  ước theo trí nhớ.
 - Ưu tiên lỗi giữa các phần:
   - enum Java (`@Enumerated`) ↔ `CHECK (... IN (...))` ↔ `VARCHAR(n)`;
   - field entity ↔ `NOT NULL`;
   - bảng có `effective_from` ↔ `CHECK` khoảng ngày và `EXCLUDE` ↔ bảng ở `EFFECTIVE_DATING.md` §2;
-  - bảng có `deleted_at` ↔ unique có `WHERE deleted_at IS NULL`;
+  - bảng có `deleted_at` ↔ unique có `WHERE deleted_at IS NULL` ↔ kiểm tra trùng trong repository (`existsBy…` có
+    `DeletedAtIsNull` không);
+  - khóa ngoại không index ↔ truy vấn repository lọc theo nó;
   - chỗ code xóa cứng ↔ `ON DELETE` của khóa ngoại trỏ tới bảng đó;
   - cột `status` ↔ `CHECK` ràng các cột đi kèm (người duyệt, thời điểm);
   - `DATABASE_SCHEMA.md` (bảng, cột, kiểu, `NOT NULL`, §11, §12, §1.2, §15) ↔ lược đồ thật;
@@ -59,9 +62,13 @@ liệt kê ở mục "Phạm vi chưa kiểm":
 - Phần không kiểm được ghi "chưa kiểm" và lý do.
 - Đọc file kết quả gần nhất `DB_REVIEW_*.md` trong `api/docs/prompt/` (nếu có) để so sánh; giữ mã lỗi `DB-<số>` qua các
   lần chạy, lỗi mới lấy số tiếp theo.
-- **Tạm thời, cho tới khi prompt API được sửa sau lần chạy DB đầu tiên:** lỗi đã có mã `API-<số>` trong file
-  `API_REVIEW_*.md` mới nhất (VD `API-006` "một Giám đốc" không có ràng buộc DB; phần "33 bảng" của `API-013`) thì chỉ
-  ghi tham chiếu ở tiêu chí tương ứng, không tạo mã mới, không trừ điểm.
+- **Lỗi nhận từ prompt API** (chuyển ngày 2026-11-06): "thiếu ràng buộc DB" và lỗi trong `DATABASE_SCHEMA.md` giờ chỉ
+  thuộc prompt này. Hai lỗi cũ mang mã mới, ghi "trước là …" trong mô tả:
+  - `API-006` ("một Giám đốc", không trùng lần gán role: `account_role_assignments` không có `EXCLUDE`) → `DB-007`,
+    tiêu chí 1;
+  - phần "33 bảng" của `API-013` (`DATABASE_SCHEMA.md` ghi 33 ở một chỗ, 32 ở chỗ khác) → `DB-008`, tiêu chí 8.
+
+  Lỗi mới thuộc phần lược đồ mà file `API_REVIEW_*.md` mới nhất vẫn ghi mã API thì cũng lấy mã `DB-<số>` mới.
 
 ### Bộ tiêu chí
 
@@ -70,11 +77,11 @@ liệt kê ở mục "Phạm vi chưa kiểm":
 | 1 | Bất biến nghiệp vụ có ràng buộc DB | 20% | **Bắt buộc:** mỗi bảng có `effective_from` có `CHECK` khoảng ngày và `EXCLUDE` đúng cột nêu ở `EFFECTIVE_DATING.md` §2, hoặc lý do ghi rõ (`schema-checks.sql` mục 3); mỗi quy tắc "chỉ một … đang mở" có unique một phần; mỗi bảng có `status` có `CHECK` ràng cột đi kèm (mục 7), hoặc dữ liệu cho thấy thêm được an toàn (mục 8); tổng phiếu lương ↔ dòng chi tiết (mục 9); từng dòng ở §12.2 "Quy tắc do Service layer kiểm tra" được xét: DB đã chặn, nên chặn, hay chỉ code giữ được (ghi lý do). Làm đủ phần bắt buộc thì tiêu chí không bị coi là kiểm một phần |
 | 2 | Enum Java ↔ `CHECK` ↔ độ dài cột | 12% | Mọi cột `@Enumerated` có `CHECK` nhận đúng các hằng Java (thiếu thì lưu bị từ chối, thừa là giá trị chết) và `VARCHAR(n)` đủ dài cho hằng dài nhất (`entity-vs-schema.mjs` phần 1); `CHECK` cố ý hẹp hơn enum có lý do |
 | 3 | `NOT NULL` và kiểu dữ liệu | 12% | Cột `NOT NULL` không có `DEFAULT` thì field entity khai báo không null (`entity-vs-schema.mjs` phần 2); kiểu theo §1: thời điểm `TIMESTAMPTZ`, ngày nghiệp vụ `DATE`, tiền `NUMERIC(15,2)`, tỷ lệ/hệ số có độ chính xác đủ, phút `INTEGER` (`schema-checks.sql` mục 4, 5); cột không entity nào map (dữ liệu chết hoặc chỉ SQL ghi) |
-| 4 | Xóa mềm, khóa ngoại và xóa cứng | 10% | Unique trên bảng có `deleted_at` có `WHERE deleted_at IS NULL`, hoặc ý định "không dùng lại" ghi trong migration/tài liệu (mục 2); mỗi bảng code xóa cứng có khóa ngoại trỏ tới với `ON DELETE` phù hợp hoặc code xóa bảng con trước (mục 6 ↔ `grep delete`) |
-| 5 | Index | 10% | **Bắt buộc:** mỗi khóa ngoại không có index (mục 1, trừ khóa ngoại audit `*_by_account_id` chỉ đếm) được xét có truy vấn nào lọc hay join theo nó không. **Lấy mẫu** (ghi truy vấn đã xem): `EXPLAIN` với `enable_seqscan = off` cho truy vấn nặng (bảng chấm công tháng, đơn chờ duyệt, phân công theo quản lý, báo cáo) |
+| 4 | Xóa mềm, khóa ngoại và xóa cứng | 10% | Unique trên bảng có `deleted_at` có `WHERE deleted_at IS NULL`, hoặc ý định "không dùng lại" ghi trong migration/tài liệu (mục 2); với unique không có ý định ghi, xem kiểm tra trùng trong repository có tính bản ghi đã xóa không (`repo-usage.mjs` phần 2) và thử xóa mềm rồi dùng lại giá trị trên DB tạm; mỗi bảng code xóa cứng có khóa ngoại trỏ tới với `ON DELETE` phù hợp hoặc code xóa bảng con trước (mục 6 ↔ `grep delete`) |
+| 5 | Index | 10% | **Bắt buộc:** mỗi khóa ngoại không có index (mục 1, trừ khóa ngoại audit `*_by_account_id` chỉ đếm) được xét có truy vấn nào lọc hay join theo nó không, và truy vấn đó chạy thường hay hiếm (`repo-usage.mjs` phần 1 in các dòng repository dùng cột; mở method và chỗ gọi để biết tần suất). **Lấy mẫu** (ghi truy vấn đã xem): `EXPLAIN` với `enable_seqscan = off` cho truy vấn nặng (bảng chấm công tháng, đơn chờ duyệt, phân công theo quản lý, báo cáo) |
 | 6 | Dữ liệu tham chiếu trong migration | 8% | Quy tắc thuế và bảo hiểm phủ liên tục 01/01/2020–31/12/2026 (mục 10), bậc thuế liền nhau, bậc đầu từ 0, chỉ bậc cuối mở (mục 11); mỗi dòng có `source_reference` |
-| 7 | Migration và quy ước baseline | 8% | Chỉ có `V1`–`V8`, không file vá; `flyway_schema_history` trên DB mới có đủ 8 dòng thành công; bản sao trong `api/target/classes` không lệch; mỗi bảng nằm ở file của domain như §15; trigger và chú thích trong migration đúng với hành vi |
-| 8 | Tài liệu schema khớp migration | 15% | `doc-vs-schema.mjs` (bảng, cột, kiểu, `NOT NULL`, §11 index, §12.1 tên constraint, §1.2 danh sách bảng, §15 file migration); số liệu trong tài liệu (số bảng…); §12.2 không ghi là "service kiểm" cho quy tắc DB đã chặn; `EFFECTIVE_DATING.md` §2–3 khớp `EXCLUDE` thật; trigger (mục 12) có trong tài liệu |
+| 7 | Migration và quy ước baseline | 8% | Chỉ có `V1`–`V8`, không file vá; `flyway_schema_history` trên DB mới có đủ 8 dòng thành công; bản sao trong `api/target/classes` không lệch; mỗi bảng nằm ở file của domain như §15; trigger đúng với hành vi. **Bắt buộc:** đọc mọi dòng chú thích `--` (`grep -n "^\s*--" api/src/main/resources/db/migration/*.sql`, 68 dòng lần 2026-11-06) và đối chiếu câu nào nêu quy tắc hay ý định (VD "cố ý giữ", "không cho hai…", "mặc định tính từ…") với ràng buộc hay `DEFAULT` thật |
+| 8 | Tài liệu schema khớp migration | 15% | `doc-vs-schema.mjs` (bảng, cột, kiểu, `NOT NULL`, §11 index, §12.1 tên constraint, §1.2 danh sách bảng, §15 file migration); số liệu trong tài liệu (số bảng…); §12.2 không ghi là "service kiểm" cho quy tắc DB đã chặn (đọc từng dòng); mỗi câu ở §1 và §15 nói migration chứa gì hay dùng kiểu gì thì kiểm bằng `grep` trong migration hoặc `schema-checks.sql` mục 5; `EFFECTIVE_DATING.md` §2–3 khớp `EXCLUDE` thật; trigger (mục 12) có trong tài liệu |
 | 9 | Kiểm thử giữ lược đồ khớp | 5% | Test nào giữ các cặp ở mục "Nguyên tắc" (VD `SeedDataIntegrationTest` chạy migration trên DB trống; `validate` lúc khởi động); cặp nào chưa có test giữ (enum ↔ `CHECK`, tài liệu ↔ lược đồ) |
 
 ### Cách chấm điểm
@@ -137,6 +144,7 @@ grep "Payroll seed" /tmp/hrm_db_api.log
 docker exec -i hrm-database-1 psql -U hrm-user -d hrm_rev_db -At -F '|' < api/docs/prompt/scripts/schema-export.sql > /tmp/hrm_schema.txt
 node api/docs/prompt/scripts/entity-vs-schema.mjs /tmp/hrm_schema.txt
 node api/docs/prompt/scripts/doc-vs-schema.mjs /tmp/hrm_schema.txt
+node api/docs/prompt/scripts/repo-usage.mjs /tmp/hrm_schema.txt
 docker exec -i hrm-database-1 psql -U hrm-user -d hrm_rev_db -q < api/docs/prompt/scripts/schema-checks.sql
 ```
 
@@ -154,13 +162,21 @@ docker exec -i hrm-database-1 psql -U hrm-user -d hrm_rev_db -q < api/docs/promp
 
   Script chỉ đọc số bảng ở tiêu đề §1.2; số ở chỗ khác thì xem bằng
   `grep -noE "\b[0-9]+ (bảng|index|constraint|cột|migration)" api/docs/database/DATABASE_SCHEMA.md` (lần tạo prompt:
-  dòng 62 ghi "33 bảng", dòng 43 và 57 ghi 32, chính là phần của `API-013`).
+  dòng 62 ghi "33 bảng", dòng 43 và 57 ghi 32, nay là `DB-008`).
+- `repo-usage.mjs` (tiêu chí 4, 5): so theo tên field và tên method nên đọc từng dòng; chỉ xem repository của chính
+  entity, join viết ở repository khác không thấy. Lần 2026-11-06:
+  - phần 1: 15 khóa ngoại như mục 1; 4 không dòng nào dùng (`employee_assignments.manager_employee_id`,
+    `payslips.insurance_rule_id`, `payroll_profile_id`, `tax_rule_id`); còn lại là kiểm tra chặn xóa danh mục/role
+    (`existsCurrentOrFutureBy…`, `existsBy…AndStatus`, `existsByShiftId`) hoặc lọc kèm cột đã có index
+    (`findByPayrollPeriodIdAndEmployeeId…`), đều hiếm hoặc đã nhanh;
+  - phần 2: mọi kiểm tra trùng của `employees` và `accounts` tính cả bản ghi đã xóa; `roles` có cả hai kiểu
+    (`existsByCode` và `existsByCodeAndDeletedAtIsNull`).
 - `schema-checks.sql`, kết quả lần tạo prompt (mục "must be 0 rows" phải ra 0):
   - Mục 1: 15 khóa ngoại không có index, cộng 28 khóa ngoại audit.
   - Mục 2: 6 unique không loại bản ghi đã xóa (`employees`: `national_id`, `employee_code`, `work_email`; `accounts`:
     `username`, `email`; `roles.code`). Chú thích ở `V2` nói `accounts` cố ý giữ username/email, và `employee_code`
     không dùng lại theo §3; các unique còn lại chưa có ý định ghi ở đâu.
-  - Mục 3: chỉ `account_role_assignments` không có `EXCLUDE` (`API-006`).
+  - Mục 3: chỉ `account_role_assignments` không có `EXCLUDE` (`DB-007`, trước là `API-006`).
   - Mục 4: 0 dòng. Mục 5: 33 cột tiền `(15,2)`; tỷ lệ bảo hiểm/thuế `(6,5)` trong khi §1 ghi tỷ lệ là `NUMERIC(8,4)`.
   - Mục 7: `attendance_records`, `leave_requests`, `payroll_periods` không có `CHECK` trạng thái ↔ cột đi kèm.
   - Mục 8–11: 0 dòng.
@@ -168,9 +184,10 @@ docker exec -i hrm-database-1 psql -U hrm-user -d hrm_rev_db -q < api/docs/promp
   `grep -rhoE "\b\w+Repository\.(delete\w*)\(" api/src/main/java/com/htttdn/hrm/service | sort | uniq -c`. Lần tạo
   prompt: phiếu lương (xóa dòng chi tiết trước), chấm công, ngày lễ, khoản cộng/trừ, `role_permissions`, cấu hình rate
   limit; mọi khóa ngoại là `NO ACTION`.
+
 **Thử ràng buộc nghi là thiếu (tiêu chí 1).** Trên `hrm_rev_db`, bọc câu lệnh vi phạm trong `BEGIN; … ROLLBACK;`. VD
 chép một lần gán role đang hiệu lực thành lần gán thứ hai trùng role, scope và ngày. `INSERT 0 1` nghĩa là DB nhận
-(lần tạo prompt: nhận, đúng `API-006`); bảng có `EXCLUDE` sẽ báo `conflicting key value violates exclusion constraint`:
+(lần 2026-11-06: nhận, `DB-007`); bảng có `EXCLUDE` sẽ báo `conflicting key value violates exclusion constraint`:
 
 ```bash
 docker exec -i hrm-database-1 psql -U hrm-user -d hrm_rev_db <<'SQL'
@@ -180,6 +197,20 @@ INSERT INTO account_role_assignments (account_id, role_id, scope_type, organizat
 SELECT account_id, role_id, scope_type, organization_unit_id, work_location_id,
        effective_from, effective_to, granted_by_account_id, 'probe: duplicate assignment'
 FROM account_role_assignments WHERE revoked_at IS NULL ORDER BY id LIMIT 1;
+ROLLBACK;
+SQL
+```
+
+Unique trên bảng xóa mềm (tiêu chí 4): xóa mềm một hồ sơ rồi cho hồ sơ khác dùng lại giá trị của nó. Báo
+`duplicate key value violates unique constraint` nghĩa là giá trị bị giữ dù hồ sơ đã xóa (lần 2026-11-06: báo với
+`employees_national_id_key`, `DB-002`); đổi `national_id` thành cột khác ở mục 2 để thử tiếp:
+
+```bash
+docker exec -i hrm-database-1 psql -U hrm-user -d hrm_rev_db <<'SQL'
+BEGIN;
+UPDATE employees SET deleted_at = now() WHERE id = (SELECT min(id) FROM employees WHERE national_id IS NOT NULL);
+UPDATE employees SET national_id = (SELECT national_id FROM employees WHERE deleted_at IS NOT NULL ORDER BY id LIMIT 1)
+WHERE id = (SELECT max(id) FROM employees WHERE deleted_at IS NULL);
 ROLLBACK;
 SQL
 ```
@@ -232,7 +263,8 @@ Lưu thành `api/docs/prompt/DB_REVIEW_<yyyy-MM-dd>.md` (ngày chạy), gồm:
    (`Chưa sửa` / `Đã sửa <commit>`).
 4. **So sánh với lần trước**: điểm tổng và điểm từng tiêu chí trước → sau; lỗi đã sửa (kèm commit), lỗi còn tồn,
    lỗi mới.
-5. **Chuyển cho prompt API**: dữ liệu vi phạm do code ghi và lỗi đã có mã `API-<số>` gặp lại ở đây (mã, một dòng).
+5. **Chuyển cho prompt API**: dữ liệu vi phạm do code ghi, và lỗi về code dùng DB (khóa, truy vấn) thấy trong lúc chạy
+   (một dòng mỗi việc).
 6. **Phạm vi chưa kiểm**.
 
 ---
@@ -242,3 +274,4 @@ Lưu thành `api/docs/prompt/DB_REVIEW_<yyyy-MM-dd>.md` (ngày chạy), gồm:
 | Ngày | Thay đổi | Review |
 |---|---|---|
 | 2026-11-06 | Bản đầu tiên, sinh bằng /review-prompt-create. Ranh giới với prompt API chốt với người dùng; `API-006` và phần "33 bảng" của `API-013` tạm chỉ ghi tham chiếu cho tới khi prompt API được sửa | — |
+| 2026-11-06 | Script `repo-usage.mjs` (khóa ngoại không index ↔ dòng repository dùng cột; unique trên bảng xóa mềm ↔ kiểm tra trùng có tính bản ghi đã xóa không) cho tiêu chí 4, 5; câu SQL thử xóa mềm rồi dùng lại giá trị; tiêu chí 7 có phần bắt buộc đọc mọi chú thích migration; tiêu chí 8 kiểm từng câu §1, §15 bằng `grep`; số dòng lấy bằng `grep -n`; nhận "thiếu ràng buộc DB" và lỗi `DATABASE_SCHEMA.md` từ prompt API: `API-006` → `DB-007`, phần "33 bảng" của `API-013` → `DB-008`. Tiêu chí 1 và 8 không còn so trực tiếp với lần 2026-11-06 (mỗi tiêu chí thêm một lỗi Thấp đã biết, −0,5); tiêu chí 7 cũng vậy (lần đầu chưa đọc hết chú thích mà vẫn chấm 10, theo quy tắc phải là 8) | [PROMPT_REVIEW_DB_REVIEW_2026-11-06](./PROMPT_REVIEW_DB_REVIEW_2026-11-06.md) |
