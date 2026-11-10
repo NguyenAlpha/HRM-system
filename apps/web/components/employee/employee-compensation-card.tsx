@@ -128,13 +128,32 @@ export function EmployeeCompensationCard({ employeeId, hireDate, lastDay, permis
             đính chính trước khi chốt lương tháng cuối.
           </p>
         )}
-        <Tabs defaultValue="salary">
+        <Tabs defaultValue={canReadPayslips ? "payslips" : "salary"}>
           <TabsList>
+            {canReadPayslips && <TabsTrigger value="payslips">Phiếu lương</TabsTrigger>}
             <TabsTrigger value="salary">Lương cơ bản</TabsTrigger>
             <TabsTrigger value="profile">Bảo hiểm & thuế</TabsTrigger>
             <TabsTrigger value="dependents">Người phụ thuộc</TabsTrigger>
-            {canReadPayslips && <TabsTrigger value="payslips">Phiếu lương</TabsTrigger>}
           </TabsList>
+
+          {canReadPayslips && (
+            <TabsContent value="payslips" className="mt-4 grid gap-3">
+              <ListTable headers={["Tháng", "Tổng thu nhập", "Khấu trừ", "Thực nhận", "Thao tác"]} alignRight={[1, 2, 3, 4]}
+                empty="Chưa có phiếu lương.">
+                {payslips.map((slip) => (
+                  <TableRow key={slip.id} className="cursor-pointer" onClick={() => setSelectedPayslip(slip)}>
+                    <TableCell className="font-medium">{periodLabel(slip.periodYear, slip.periodMonth)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{money(slip.grossPay)}</TableCell>
+                    <TableCell className="text-right tabular-nums">−{money(payslipDeductions(slip))}</TableCell>
+                    <TableCell className="text-right font-semibold tabular-nums">{money(slip.netPay)}</TableCell>
+                    <RowActionsCell label={periodLabel(slip.periodYear, slip.periodMonth)}>
+                      <RowActionItem icon={Eye} onClick={() => setSelectedPayslip(slip)}>Xem phiếu lương</RowActionItem>
+                    </RowActionsCell>
+                  </TableRow>
+                ))}
+              </ListTable>
+            </TabsContent>
+          )}
 
           <TabsContent value="salary" className="mt-4 grid gap-3">
             <Toolbar hint="Lương tháng theo hợp đồng; phải phủ mọi ngày làm việc của kỳ cần tính.">
@@ -190,25 +209,6 @@ export function EmployeeCompensationCard({ employeeId, hireDate, lastDay, permis
               ))}
             </ListTable>
           </TabsContent>
-
-          {canReadPayslips && (
-            <TabsContent value="payslips" className="mt-4 grid gap-3">
-              <ListTable headers={["Tháng", "Tổng thu nhập", "Khấu trừ", "Thực nhận", "Thao tác"]} alignRight={[1, 2, 3, 4]}
-                empty="Chưa có phiếu lương.">
-                {payslips.map((slip) => (
-                  <TableRow key={slip.id} className="cursor-pointer" onClick={() => setSelectedPayslip(slip)}>
-                    <TableCell className="font-medium">{periodLabel(slip.periodYear, slip.periodMonth)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{money(slip.grossPay)}</TableCell>
-                    <TableCell className="text-right tabular-nums">−{money(payslipDeductions(slip))}</TableCell>
-                    <TableCell className="text-right font-semibold tabular-nums">{money(slip.netPay)}</TableCell>
-                    <RowActionsCell label={periodLabel(slip.periodYear, slip.periodMonth)}>
-                      <RowActionItem icon={Eye} onClick={() => setSelectedPayslip(slip)}>Xem phiếu lương</RowActionItem>
-                    </RowActionsCell>
-                  </TableRow>
-                ))}
-              </ListTable>
-            </TabsContent>
-          )}
         </Tabs>
       </CardContent>
 
