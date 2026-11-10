@@ -4,11 +4,11 @@ import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, ChevronLeft, ChevronRight, UserRound } from "lucide-react"
 
+import { MonthInput } from "@/components/common/month-input"
 import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AttendanceSection, OvertimeApprovals } from "@/components/workforce/attendance-section"
@@ -89,8 +89,7 @@ export function AttendancePage({ initialTab, initialEmployeeId }: { initialTab?:
             <div className="flex items-center gap-1">
               <Button type="button" variant="outline" size="icon" aria-label="Tháng trước"
                 onClick={() => setMonth(shiftMonth(month, -1))}><ChevronLeft /></Button>
-              <Input id="attendance-month" type="month" className="w-56" value={month}
-                onChange={(event) => { if (event.target.value) setMonth(event.target.value) }} />
+              <MonthInput id="attendance-month" className="w-36" value={month} onChange={setMonth} />
               <Button type="button" variant="outline" size="icon" aria-label="Tháng sau"
                 onClick={() => setMonth(shiftMonth(month, 1))}><ChevronRight /></Button>
             </div>

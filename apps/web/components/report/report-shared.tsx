@@ -5,7 +5,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import { Button } from "@/components/ui/button"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
-import { Input } from "@/components/ui/input"
+import { MonthInput } from "@/components/common/month-input"
 
 /** A cell of an exported table; numbers stay numbers so Excel can sum them. */
 type CsvCell = string | number | null | undefined
@@ -50,7 +50,7 @@ export function YearPicker({ year, maxYear, onChange }: { year: number; maxYear?
   )
 }
 
-/** Previous / next month around a YYYY-MM month, with the month input between. */
+/** Previous / next month around a YYYY-MM month, with the month picker between. */
 export function MonthPicker({ month, onChange }: { month: string; onChange: (month: string) => void }) {
   const shift = (by: number) => {
     const date = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)) - 1 + by, 1))
@@ -59,8 +59,7 @@ export function MonthPicker({ month, onChange }: { month: string; onChange: (mon
   return (
     <div className="flex items-center gap-1">
       <Button type="button" variant="outline" size="icon-sm" aria-label="Tháng trước" onClick={() => shift(-1)}><ChevronLeft /></Button>
-      <Input type="month" aria-label="Tháng" className="w-56" value={month}
-        onChange={(event) => { if (event.target.value) onChange(event.target.value) }} />
+      <MonthInput className="w-36" value={month} onChange={onChange} />
       <Button type="button" variant="outline" size="icon-sm" aria-label="Tháng sau" onClick={() => shift(1)}><ChevronRight /></Button>
     </div>
   )
