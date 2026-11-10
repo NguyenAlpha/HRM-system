@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Calculator, CalendarX, Eye, Loader2, Plus } from "lucide-react"
+import { Calculator, CalendarCheck, CalendarX, Eye, Loader2, Plus } from "lucide-react"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { PayslipDialog, payslipDeductions, periodLabel } from "@/components/payroll/payroll-shared"
@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AttendanceSection } from "@/components/workforce/attendance-section"
 import {
   EmptyRow,
   SectionError,
@@ -135,7 +136,7 @@ export function EmployeeCompensationCard({ employeeId, hireDate, lastDay, permis
 
           {canReadPayslips && (
             <TabsContent value="payslips" className="mt-4 grid gap-3">
-              <PayslipsTab employeeId={employeeId} onSelect={setSelectedPayslip} />
+              <PayslipsTab employeeId={employeeId} permissions={permissions} onSelect={setSelectedPayslip} />
             </TabsContent>
           )}
 
@@ -223,9 +224,15 @@ export function EmployeeCompensationCard({ employeeId, hireDate, lastDay, permis
  * One employee's payslips a year at a time, newest year first, like the employee's own page.
  * Each year is cached under its own key, so stepping back to a year already seen shows it at once.
  */
-function PayslipsTab({ employeeId, onSelect }: { employeeId: number; onSelect: (slip: Payslip) => void }) {
+function PayslipsTab({ employeeId, permissions, onSelect }: {
+  employeeId: number
+  permissions: ReadonlySet<string>
+  onSelect: (slip: Payslip) => void
+}) {
+  const canReadAttendance = permissions.has("attendance.read")
   const [pickedYear, setPickedYear] = useState<number | null>(null)
   const [explaining, setExplaining] = useState<Payslip | null>(null)
+  const [attendanceOf, setAttendanceOf] = useState<Payslip | null>(null)
   const path = `payroll/employees/${employeeId}/payslips`
   // The newest payslip picks the year shown first (null: none yet).
   const latestQuery = useQuery({
@@ -262,11 +269,29 @@ function PayslipsTab({ employeeId, onSelect }: { employeeId: number; onSelect: (
             <RowActionsCell label={periodLabel(slip.periodYear, slip.periodMonth)}>
               <RowActionItem icon={Eye} onClick={() => onSelect(slip)}>Xem phiếu lương</RowActionItem>
               <RowActionItem icon={Calculator} onClick={() => setExplaining(slip)}>Xem cách tính lương</RowActionItem>
+              {canReadAttendance && (
+                <RowActionItem icon={CalendarCheck} onClick={() => setAttendanceOf(slip)}>Xem chấm công</RowActionItem>
+              )}
             </RowActionsCell>
           </TableRow>
         ))}
       </ListTable>
       {explaining && <PayslipCalculationDialog payslip={explaining} onClose={() => setExplaining(null)} />}
+      {attendanceOf && (
+        <Dialog open onOpenChange={(open) => { if (!open) setAttendanceOf(null) }}>
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-6xl">
+            <DialogHeader>
+              <DialogTitle>Chấm công tháng {periodLabel(attendanceOf.periodYear, attendanceOf.periodMonth)}</DialogTitle>
+              <DialogDescription>
+                {attendanceOf.employeeCodeSnapshot} · {attendanceOf.employeeNameSnapshot}. Bảng công mà phiếu lương tháng này dựa vào.
+              </DialogDescription>
+            </DialogHeader>
+            <AttendanceSection employeeId={employeeId} permissions={permissions}
+              employeeLabel={`${attendanceOf.employeeCodeSnapshot} · ${attendanceOf.employeeNameSnapshot}`}
+              month={`${attendanceOf.periodYear}-${String(attendanceOf.periodMonth).padStart(2, "0")}`} />
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   )
 }
