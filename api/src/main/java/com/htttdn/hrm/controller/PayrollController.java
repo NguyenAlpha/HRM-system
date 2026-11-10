@@ -23,11 +23,13 @@ import com.htttdn.hrm.dto.request.payroll.ReopenPayrollPeriodRequest;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.dto.response.payroll.PayrollPeriodResponse;
+import com.htttdn.hrm.dto.response.payroll.PayslipCalculationResponse;
 import com.htttdn.hrm.dto.response.payroll.PayslipResponse;
 import com.htttdn.hrm.service.payroll.PayrollExportService;
 import com.htttdn.hrm.service.payroll.PayrollExportService.PayrollExport;
 import com.htttdn.hrm.service.payroll.PayrollQueryService;
 import com.htttdn.hrm.service.payroll.PayrollService;
+import com.htttdn.hrm.service.payroll.PayslipCalculationService;
 
 import jakarta.validation.Valid;
 
@@ -42,6 +44,7 @@ public class PayrollController {
     private final PayrollService service;
     private final PayrollQueryService queryService;
     private final PayrollExportService exportService;
+    private final PayslipCalculationService calculationService;
 
     @PostMapping("/periods")
     public ApiResult<PayrollPeriodResponse> create(@Valid @RequestBody CreatePayrollPeriodRequest request) {
@@ -110,6 +113,12 @@ public class PayrollController {
     @GetMapping("/payslips/{id}")
     public ApiResult<PayslipResponse> payslip(@PathVariable Long id) {
         return ApiResult.ok(queryService.getPayslip(id));
+    }
+
+    /** The rates, deductions and tax brackets a payslip was calculated with, to explain it step by step. */
+    @GetMapping("/payslips/{id}/calculation")
+    public ApiResult<PayslipCalculationResponse> payslipCalculation(@PathVariable Long id) {
+        return ApiResult.ok(calculationService.getCalculation(id));
     }
 
     @GetMapping("/employees/{employeeId}/payslips")

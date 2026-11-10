@@ -2849,6 +2849,33 @@
         "tags" : [ "payroll-controller" ]
       }
     },
+    "/api/payroll/payslips/{id}/calculation" : {
+      "get" : {
+        "operationId" : "payslipCalculation",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultPayslipCalculationResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "payroll-controller" ]
+      }
+    },
     "/api/payroll/periods" : {
       "get" : {
         "operationId" : "list_4",
@@ -6731,6 +6758,29 @@
         },
         "required" : [ "data", "error", "success" ]
       },
+      "ApiResultPayslipCalculationResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/PayslipCalculationResponse"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
       "ApiResultPayslipResponse" : {
         "type" : "object",
         "properties" : {
@@ -9475,6 +9525,41 @@
         },
         "required" : [ "amounts", "organizationUnit" ]
       },
+      "PayslipCalculationResponse" : {
+        "type" : "object",
+        "properties" : {
+          "companyWorkdays" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "dependentCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "dependentDeduction" : {
+            "type" : "number"
+          },
+          "healthRate" : {
+            "type" : "number"
+          },
+          "personalDeduction" : {
+            "type" : "number"
+          },
+          "socialRate" : {
+            "type" : "number"
+          },
+          "taxBrackets" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TaxBracketStep"
+            }
+          },
+          "unemploymentRate" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "companyWorkdays", "dependentCount", "dependentDeduction", "healthRate", "personalDeduction", "socialRate", "taxBrackets", "unemploymentRate" ]
+      },
       "PayslipItemResponse" : {
         "type" : "object",
         "properties" : {
@@ -10616,6 +10701,27 @@
           }
         },
         "required" : [ "deletionReason" ]
+      },
+      "TaxBracketStep" : {
+        "type" : "object",
+        "properties" : {
+          "lowerBound" : {
+            "type" : "number"
+          },
+          "rate" : {
+            "type" : "number"
+          },
+          "tax" : {
+            "type" : "number"
+          },
+          "taxedIncome" : {
+            "type" : "number"
+          },
+          "upperBound" : {
+            "type" : [ "number", "null" ]
+          }
+        },
+        "required" : [ "lowerBound", "rate", "tax", "taxedIncome", "upperBound" ]
       },
       "TimesheetRowResponse" : {
         "type" : "object",

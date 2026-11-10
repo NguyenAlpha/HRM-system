@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Eye, Printer } from "lucide-react"
+import { Calculator, Eye, Printer } from "lucide-react"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
@@ -14,6 +14,7 @@ import {
   payslipInsurance,
   periodLabel,
 } from "@/components/payroll/payroll-shared"
+import { PayslipCalculationDialog } from "@/components/payroll/payslip-calculation-dialog"
 import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import { YearPicker } from "@/components/report/report-shared"
@@ -34,6 +35,7 @@ export function MyPayslipsPage() {
   const employeeId = self?.id
   const [pickedYear, setPickedYear] = useState<number | null>(null)
   const [selected, setSelected] = useState<Payslip | null>(null)
+  const [explaining, setExplaining] = useState<Payslip | null>(null)
   const path = `payroll/employees/${employeeId}/payslips`
 
   // The newest payslip heads the page and picks the year shown first (null: none released yet).
@@ -81,7 +83,10 @@ export function MyPayslipsPage() {
                   {latest.positionSnapshot} · {latest.organizationUnitSnapshot} · Công {hours(latest.payableWorkMinutes)}
                 </CardDescription>
               </div>
-              <Button type="button" variant="outline" onClick={() => setSelected(latest)}><Eye /> Xem phiếu lương</Button>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" onClick={() => setSelected(latest)}><Eye /> Xem phiếu lương</Button>
+                <Button type="button" variant="outline" onClick={() => setExplaining(latest)}><Calculator /> Xem cách tính lương</Button>
+              </div>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-3">
               <div>
@@ -134,6 +139,7 @@ export function MyPayslipsPage() {
                         <TableCell className="text-right font-semibold tabular-nums">{money(slip.netPay)}</TableCell>
                         <RowActionsCell label={periodLabel(slip.periodYear, slip.periodMonth)}>
                           <RowActionItem icon={Eye} onClick={() => setSelected(slip)}>Xem phiếu lương</RowActionItem>
+                          <RowActionItem icon={Calculator} onClick={() => setExplaining(slip)}>Xem cách tính lương</RowActionItem>
                         </RowActionsCell>
                       </TableRow>
                     ))}
@@ -151,6 +157,7 @@ export function MyPayslipsPage() {
       </div>
 
       {selected && <PayslipDialog payslip={selected} onClose={() => setSelected(null)} />}
+      {explaining && <PayslipCalculationDialog payslip={explaining} onClose={() => setExplaining(null)} />}
     </>
   )
 }

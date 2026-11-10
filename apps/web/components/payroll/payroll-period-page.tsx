@@ -15,6 +15,7 @@ import {
   payslipInsurance,
   periodLabel,
 } from "@/components/payroll/payroll-shared"
+import { PayslipCalculationDialog } from "@/components/payroll/payslip-calculation-dialog"
 import { usePortalSession } from "@/components/portal/portal-shell"
 import {
   AlertDialog,
@@ -80,6 +81,7 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
   const [loadedRevision, setLoadedRevision] = useState(-1)
   const [search, setSearch] = useState("")
   const [selected, setSelected] = useState<Payslip | null>(null)
+  const [explaining, setExplaining] = useState<Payslip | null>(null)
   const [confirm, setConfirm] = useState<Confirm | null>(null)
   const [markingPaid, setMarkingPaid] = useState(false)
   const [calculating, setCalculating] = useState(false)
@@ -280,6 +282,7 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
                       <TableCell className="text-right font-semibold tabular-nums text-primary">{amount(slip.netPay)}</TableCell>
                       <RowActionsCell label={slip.employeeCodeSnapshot}>
                         <RowActionItem icon={Eye} onClick={() => setSelected(slip)}>Xem phiếu lương</RowActionItem>
+                        <RowActionItem icon={Calculator} onClick={() => setExplaining(slip)}>Xem cách tính lương</RowActionItem>
                       </RowActionsCell>
                     </TableRow>
                   ))}
@@ -327,6 +330,7 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
       </div>
 
       {selected && <PayslipDialog payslip={selected} onClose={() => setSelected(null)} />}
+      {explaining && <PayslipCalculationDialog payslip={explaining} onClose={() => setExplaining(null)} />}
 
       {calculating && period && (
         <CalculateDialog period={period} busy={busy} onClose={() => setCalculating(false)}

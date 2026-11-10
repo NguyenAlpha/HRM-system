@@ -455,6 +455,7 @@ const WORKFORCE_ROUTES: Route[] = [
   { pattern: new RegExp(`^payroll/periods/${ID}/adjustments/${ID}$`), methods: ["DELETE"] },
   { pattern: new RegExp(`^payroll/periods/${ID}/(?:calculate|approve|reopen|mark-paid|lock|cancel)$`), methods: ["POST"] },
   { pattern: new RegExp(`^payroll/payslips/${ID}$`), methods: ["GET"] },
+  { pattern: new RegExp(`^payroll/payslips/${ID}/calculation$`), methods: ["GET"] },
   { pattern: new RegExp(`^payroll/employees/${ID}/payslips$`), methods: ["GET"] },
   { pattern: new RegExp(`^compensation/employees/${ID}/salary-history$`), methods: ["GET", "POST"] },
   { pattern: new RegExp(`^compensation/employees/${ID}/salary-history/effective$`), methods: ["GET"] },

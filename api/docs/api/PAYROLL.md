@@ -40,6 +40,7 @@ Quy trình một tháng:
 | `POST /api/payroll/periods/{periodId}/adjustments` | `payroll.calculate`, phạm vi `COMPANY` | Thêm khoản cộng/trừ |
 | `DELETE /api/payroll/periods/{periodId}/adjustments/{adjustmentId}` | `payroll.calculate`, phạm vi `COMPANY` | Xóa khoản cộng/trừ |
 | `GET /api/payroll/payslips/{id}` | `payroll.self.read` (chính mình) hoặc `report.payroll.read` (trong scope) | Chi tiết phiếu lương |
+| `GET /api/payroll/payslips/{id}/calculation` | Như xem phiếu lương | Tham số đã dùng để tính phiếu, để giải thích cách tính |
 | `GET /api/payroll/employees/{employeeId}/payslips` | `payroll.self.read` (chính mình) hoặc `report.payroll.read` (trong scope) | Phiếu lương của một nhân viên |
 
 ### Sau ngày làm việc cuối
@@ -713,6 +714,40 @@ Trả [`PayslipResponse`](#payslipresponse).
 |:----:|:-------------|:-----------|
 | 403 | `FORBIDDEN` | Phiếu của người khác mà không có `report.payroll.read` trong scope, hoặc nhân viên xem phiếu của kỳ chưa duyệt |
 | 404 | `PAYSLIP_NOT_FOUND` | Phiếu không tồn tại |
+
+### GET `/api/payroll/payslips/{id}/calculation`
+
+Các tham số mà phiếu lương không lưu nhưng cần để giải thích từng bước [Công thức](#công-thức), lấy theo đúng
+bộ quy tắc bảo hiểm và thuế phiếu đã dùng (`insuranceRuleId`, `taxRuleId`). Web dùng cho mục **Xem cách tính
+lương** ở trang `/payslips` (thẻ tháng mới nhất và menu "…" của lịch sử) và ở menu "…" của bảng lương kỳ
+`/payroll/{id}`. Quyền và lỗi giống `GET /api/payroll/payslips/{id}`.
+
+```json
+{
+  "companyWorkdays": 27,
+  "socialRate": 0.08,
+  "healthRate": 0.015,
+  "unemploymentRate": 0.01,
+  "personalDeduction": 15500000.00,
+  "dependentDeduction": 6200000.00,
+  "dependentCount": 2,
+  "taxBrackets": [
+    { "lowerBound": 0.00, "upperBound": 10000000.00, "rate": 0.05, "taxedIncome": 10000000.00, "tax": 500000.00 },
+    { "lowerBound": 10000000.00, "upperBound": 30000000.00, "rate": 0.10, "taxedIncome": 20000000.00, "tax": 2000000.00 },
+    { "lowerBound": 30000000.00, "upperBound": 60000000.00, "rate": 0.20, "taxedIncome": 509722.23, "tax": 101944.45 },
+    { "lowerBound": 60000000.00, "upperBound": 100000000.00, "rate": 0.30, "taxedIncome": 0, "tax": 0.00 },
+    { "lowerBound": 100000000.00, "upperBound": null, "rate": 0.35, "taxedIncome": 0, "tax": 0.00 }
+  ]
+}
+```
+
+| Field | Ý nghĩa |
+|:------|:--------|
+| `companyWorkdays` | Số ngày công chuẩn của kỳ (thứ 2–thứ 7 trừ ngày lễ công ty), mẫu số khi chia lương theo ngày |
+| `socialRate`, `healthRate`, `unemploymentRate` | Tỉ lệ BHXH, BHYT, BHTN phần người lao động |
+| `personalDeduction`, `dependentDeduction` | Giảm trừ bản thân và giảm trừ mỗi người phụ thuộc mỗi tháng |
+| `dependentCount` | Số người phụ thuộc, đếm cùng mốc ngày như lúc tính (ngày trả lương, hoặc ngày làm cuối nếu nghỉ việc trước đó) |
+| `taxBrackets` | Mọi bậc của biểu thuế; `upperBound` là `null` ở bậc cuối; `taxedIncome` là phần `taxableIncome` nằm trong bậc, `tax = taxedIncome × rate` |
 
 ### GET `/api/payroll/employees/{employeeId}/payslips`
 
