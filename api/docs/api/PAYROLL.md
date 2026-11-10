@@ -93,10 +93,10 @@ DRAFT ──calculate──▶ CALCULATED ──approve──▶ APPROVED ──
 - Tăng ca (`overtimePay`) = giờ tăng ca **đã duyệt** × đơn giá giờ × hệ số đã duyệt, cộng theo từng ngày; đơn giá giờ = lương tháng có hiệu lực ngày đó ÷ (số ngày làm việc chuẩn của tháng × phút chuẩn của ca ngày đó) × 60. Phút công thường và phút tăng ca được tách riêng, nên tăng ca không làm tăng công tính lương. Hệ số tối thiểu: 150% ngày thường, 200% Chủ nhật, 300% ngày lễ công ty. Chưa tính cộng thêm cho ca đêm.
 - `grossPay = basicSalaryPay + allowancePay + overtimePay + otherEarningsPay`, trong đó `otherEarningsPay` là tổng thưởng và phụ cấp khác nhập tay (xem [Khoản cộng/trừ nhập tay](#khoản-cộngtrừ-nhập-tay)).
 - BHXH/BHYT/BHTN phần nhân viên dùng **lương đóng bảo hiểm do HR nhập** (`insuranceSalary` của hồ sơ), theo trạng thái tham gia và trần có hiệu lực trong tháng làm việc. Căn cứ này tách khỏi `grossPay`; tăng ca không tự động trở thành căn cứ đóng.
-- Thu nhập tính thuế = `max(0, grossPay − taxExemptOvertimePay − taxExemptOtherEarnings − BHXH − BHYT − BHTN − giảm trừ bản thân − giảm trừ người phụ thuộc)`. Người duyệt tăng ca chỉ đánh dấu `taxExempt: true` sau khi đối soát điều kiện và giới hạn pháp luật; tăng ca chưa xác nhận vẫn chịu thuế. Thuế TNCN tính theo bậc lũy tiến tại **ngày trả lương dự kiến** (`taxPaymentDate`); số người phụ thuộc cũng lấy tại ngày đó, trừ người nghỉ việc trước ngày trả lương: lấy tại ngày làm cuối, vì nghỉ việc đóng người phụ thuộc ở ngày đó. Nguồn: [hướng dẫn miễn thuế tiền tăng ca năm 2026](https://media.chinhphu.vn/cac-truong-hop-tien-luong-tien-cong-duoc-mien-thue-tncn-102260715163431228.htm).
+- Thu nhập tính thuế = `max(0, grossPay − taxExemptOtherEarnings − BHXH − BHYT − BHTN − giảm trừ bản thân − giảm trừ người phụ thuộc)`. Tiền tăng ca chịu thuế như lương: app không tách phần chênh lệch được miễn thuế theo luật (đơn giản hóa có chủ đích). Thuế TNCN tính theo bậc lũy tiến tại **ngày trả lương dự kiến** (`taxPaymentDate`); số người phụ thuộc cũng lấy tại ngày đó, trừ người nghỉ việc trước ngày trả lương: lấy tại ngày làm cuối, vì nghỉ việc đóng người phụ thuộc ở ngày đó.
 - `netPay = grossPay − BHXH − BHYT − BHTN − thuế TNCN − otherDeductions`. Khấu trừ khác (tạm ứng, phạt) trừ sau thuế và không làm giảm thu nhập tính thuế.
 
-Phiếu lương lưu snapshot mã, tên, đơn vị, địa điểm của nhân viên, số tiền bảo hiểm từng loại, hai căn cứ đóng sau khi áp trần, phần tăng ca miễn thuế, thu nhập tính thuế, thuế và `netPay`, nên phiếu đã tính không đổi khi hồ sơ nhân viên đổi sau đó.
+Phiếu lương lưu snapshot mã, tên, đơn vị, địa điểm của nhân viên, số tiền bảo hiểm từng loại, hai căn cứ đóng sau khi áp trần, thu nhập tính thuế, thuế và `netPay`, nên phiếu đã tính không đổi khi hồ sơ nhân viên đổi sau đó.
 
 ---
 
@@ -224,7 +224,6 @@ Tiền là số thập phân VND (`BigDecimal`, 2 chữ số thập phân). Ngà
   "basicSalaryPay": 14930555.56,
   "allowancePay": 0.00,
   "overtimePay": 520833.33,
-  "taxExemptOvertimePay": 0.00,
   "otherEarningsPay": 0.00,
   "taxExemptOtherEarnings": 0.00,
   "grossPay": 15451388.89,
@@ -259,7 +258,7 @@ Tiền là số thập phân VND (`BigDecimal`, 2 chữ số thập phân). Ngà
 | `scheduledWorkMinutes` / `payableWorkMinutes` | Phút công chuẩn theo lịch / phút được trả lương thường |
 | `approvedOvertimeMinutes` | Tổng phút tăng ca đã duyệt |
 | `basicSalaryPay`, `allowancePay`, `overtimePay`, `otherEarningsPay`, `grossPay` | Các khoản thu nhập theo [Công thức](#công-thức) |
-| `taxExemptOvertimePay`, `taxExemptOtherEarnings` | Phần tăng ca và phụ cấp khác được miễn thuế |
+| `taxExemptOtherEarnings` | Phần phụ cấp khác được miễn thuế |
 | `insuranceSalaryBase`, `unemploymentInsuranceBase` | Căn cứ đóng BHXH/BHYT và BHTN sau khi áp trần |
 | `employeeSocialInsurance`, `employeeHealthInsurance`, `employeeUnemploymentInsurance` | Bảo hiểm phần nhân viên |
 | `taxableIncome`, `personalIncomeTax` | Thu nhập tính thuế và thuế TNCN |
@@ -684,7 +683,7 @@ Trả [`PayrollPeriodResponse`](#payrollperiodresponse) với `status: "CANCELLE
 
 Tải bảng lương của kỳ dạng `bang-luong-<năm>-<tháng>.xlsx` (`Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, `Content-Disposition: attachment`). Client nên gửi `Accept` gồm cả kiểu xlsx và `application/json`, vì lỗi vẫn trả envelope JSON như các endpoint khác.
 
-File có một sheet, mỗi dòng một phiếu lương của kỳ, sắp theo mã nhân viên: mã, họ tên, đơn vị, địa điểm, lương hợp đồng, phút công chuẩn/được trả/tăng ca, lương theo công, phụ cấp, tiền tăng ca, tăng ca miễn thuế, thưởng và phụ cấp khác, phụ cấp khác miễn thuế, tổng thu nhập, BHXH, BHYT, BHTN, thu nhập tính thuế, thuế TNCN, khấu trừ khác và thực nhận. Dòng cuối là công thức `SUM` cho các cột tiền. Dữ liệu lấy từ snapshot trên phiếu lương, nên file của kỳ đã duyệt không đổi theo hồ sơ hiện tại. Trên web, nút **Xuất Excel** nằm trên trang bảng lương `/payroll/{id}` của mỗi kỳ đã tính trở đi.
+File có một sheet, mỗi dòng một phiếu lương của kỳ, sắp theo mã nhân viên: mã, họ tên, đơn vị, địa điểm, lương hợp đồng, phút công chuẩn/được trả/tăng ca, lương theo công, phụ cấp, tiền tăng ca, thưởng và phụ cấp khác, phụ cấp khác miễn thuế, tổng thu nhập, BHXH, BHYT, BHTN, thu nhập tính thuế, thuế TNCN, khấu trừ khác và thực nhận. Dòng cuối là công thức `SUM` cho các cột tiền. Dữ liệu lấy từ snapshot trên phiếu lương, nên file của kỳ đã duyệt không đổi theo hồ sơ hiện tại. Trên web, nút **Xuất Excel** nằm trên trang bảng lương `/payroll/{id}` của mỗi kỳ đã tính trở đi.
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
@@ -806,7 +805,7 @@ Thuế TNCN chọn theo **ngày trả lương** (`taxPaymentDate`), bảo hiểm
 ## Giới hạn cần xử lý thủ công
 
 - Chưa hỗ trợ người không cư trú, hoa hồng tính tự động, khoản giảm trừ tự nguyện khác, truy thu, hoàn thuế và quyết toán năm. Không tự động gửi tờ khai thuế hay bảo hiểm.
-- Chưa tách giờ làm đêm để cộng hệ số riêng. Tăng ca Chủ nhật/ngày lễ cần chấm vào/ra và duyệt, không tự duyệt. Việc kiểm tra trần giờ làm thêm trong ngày/năm và chứng từ miễn thuế vẫn do người duyệt tăng ca thực hiện trước khi chọn `taxExempt`.
+- Chưa tách giờ làm đêm để cộng hệ số riêng. Tăng ca Chủ nhật/ngày lễ cần chấm vào/ra và duyệt, không tự duyệt. Việc kiểm tra trần giờ làm thêm trong ngày/năm vẫn do người duyệt tăng ca thực hiện. Tiền tăng ca chịu thuế toàn bộ, không tách phần chênh lệch được miễn thuế theo luật.
 - Tính thuế theo một lần trả lương trong một tháng. Nếu ngày trả thực tế đổi tháng hoặc có thêm đợt trả/thưởng cùng tháng, kế toán phải đối soát. Kỳ `APPROVED` chưa trả có thể hủy duyệt để tính lại với ngày trả mới.
 - Hồ sơ bảo hiểm được chọn theo ngày cuối nhân viên làm việc trong kỳ; trường hợp thay đổi chế độ trong cùng tháng và các ngoại lệ luật định cần đối soát bằng tay. Dữ liệu quy tắc nạp sẵn từ 01/01/2020 đến hết năm 2026.
 - Nếu một nhân viên thuộc kỳ nhưng toàn bộ khoảng làm việc rơi vào ngày lễ/Chủ nhật, hệ thống báo lỗi yêu cầu đối soát thủ công thay vì bỏ qua nhân viên hoặc tiền tăng ca của họ.

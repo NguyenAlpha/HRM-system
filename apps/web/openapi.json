@@ -7129,15 +7129,9 @@
           "overtimeMinutes" : {
             "type" : "integer",
             "format" : "int32"
-          },
-          "overtimeMultiplier" : {
-            "type" : "number"
-          },
-          "taxExempt" : {
-            "type" : [ "boolean", "null" ]
           }
         },
-        "required" : [ "overtimeMinutes", "overtimeMultiplier" ]
+        "required" : [ "overtimeMinutes" ]
       },
       "ApproveResignationBody" : {
         "type" : "object",
@@ -7273,9 +7267,6 @@
           "overtimeMultiplier" : {
             "type" : "number"
           },
-          "overtimeTaxExempt" : {
-            "type" : "boolean"
-          },
           "payableMinutes" : {
             "type" : "integer",
             "format" : "int32"
@@ -7309,7 +7300,7 @@
             "format" : "int32"
           }
         },
-        "required" : [ "checkInAt", "checkOutAt", "earlyLeaveMinutes", "employeeId", "id", "lateMinutes", "overtimeMinutes", "overtimeMultiplier", "overtimeTaxExempt", "payableMinutes", "scheduledEndAt", "scheduledMinutes", "scheduledStartAt", "shiftId", "status", "workDate", "workedMinutes" ]
+        "required" : [ "checkInAt", "checkOutAt", "earlyLeaveMinutes", "employeeId", "id", "lateMinutes", "overtimeMinutes", "overtimeMultiplier", "payableMinutes", "scheduledEndAt", "scheduledMinutes", "scheduledStartAt", "shiftId", "status", "workDate", "workedMinutes" ]
       },
       "AuthAccountResponse" : {
         "type" : "object",
@@ -8901,11 +8892,18 @@
           "employeeName" : {
             "type" : "string"
           },
+          "extraMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "overtimeMultiplier" : {
+            "type" : "number"
+          },
           "record" : {
             "$ref" : "#/components/schemas/AttendanceRecordResponse"
           }
         },
-        "required" : [ "employeeCode", "employeeName", "record" ]
+        "required" : [ "employeeCode", "employeeName", "extraMinutes", "overtimeMultiplier", "record" ]
       },
       "Pageable" : {
         "type" : "object",
@@ -9601,9 +9599,6 @@
           "taxExemptOtherEarnings" : {
             "type" : "number"
           },
-          "taxExemptOvertimePay" : {
-            "type" : "number"
-          },
           "taxableIncome" : {
             "type" : "number"
           },
@@ -9614,7 +9609,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "allowancePay", "approvedOvertimeMinutes", "basicSalaryPay", "contractualBasicSalary", "employeeCodeSnapshot", "employeeHealthInsurance", "employeeId", "employeeNameSnapshot", "employeeSocialInsurance", "employeeUnemploymentInsurance", "grossPay", "id", "insuranceSalaryBase", "items", "netPay", "organizationUnitSnapshot", "otherDeductions", "otherEarningsPay", "overtimePay", "payableWorkMinutes", "payrollPeriodId", "periodMonth", "periodYear", "personalIncomeTax", "positionSnapshot", "scheduledWorkMinutes", "taxExemptOtherEarnings", "taxExemptOvertimePay", "taxableIncome", "unemploymentInsuranceBase", "workLocationSnapshot" ]
+        "required" : [ "allowancePay", "approvedOvertimeMinutes", "basicSalaryPay", "contractualBasicSalary", "employeeCodeSnapshot", "employeeHealthInsurance", "employeeId", "employeeNameSnapshot", "employeeSocialInsurance", "employeeUnemploymentInsurance", "grossPay", "id", "insuranceSalaryBase", "items", "netPay", "organizationUnitSnapshot", "otherDeductions", "otherEarningsPay", "overtimePay", "payableWorkMinutes", "payrollPeriodId", "periodMonth", "periodYear", "personalIncomeTax", "positionSnapshot", "scheduledWorkMinutes", "taxExemptOtherEarnings", "taxableIncome", "unemploymentInsuranceBase", "workLocationSnapshot" ]
       },
       "PermissionGrantSource" : {
         "type" : "object",

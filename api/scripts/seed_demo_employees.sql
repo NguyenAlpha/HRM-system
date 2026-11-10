@@ -379,7 +379,7 @@ INSERT INTO attendance_records (
     scheduled_start_at, scheduled_end_at, scheduled_minutes,
     check_in_at, check_out_at, worked_minutes, payable_minutes, leave_minutes,
     late_minutes, early_leave_minutes, overtime_minutes, overtime_multiplier,
-    overtime_tax_exempt, overtime_approved_by_account_id, overtime_approved_at,
+    overtime_approved_by_account_id, overtime_approved_at,
     status, note, updated_by_account_id, created_at, updated_at
 )
 SELECT e.id, x.day, s.id,
@@ -396,7 +396,7 @@ SELECT e.id, x.day, s.id,
        coalesce(x.worked, CASE WHEN x.holiday_name IS NULL THEN 480 ELSE 0 END),
        coalesce(x.payable, CASE WHEN x.holiday_name IS NULL THEN 480 ELSE 0 END),
        coalesce(x.leave_minutes, 0), coalesce(x.late, 0), coalesce(x.early, 0),
-       coalesce(x.overtime, 0), coalesce(x.multiplier, 1), false,
+       coalesce(x.overtime, 0), coalesce(x.multiplier, 1),
        CASE WHEN x.overtime > 0 THEN admin.id ELSE NULL END,
        CASE WHEN x.overtime > 0 THEN ((x.day + 1)::text || ' 09:00+07')::timestamptz ELSE NULL END,
        coalesce(x.status, CASE WHEN x.holiday_name IS NULL THEN 'PRESENT' ELSE 'HOLIDAY' END),

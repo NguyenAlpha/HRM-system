@@ -1,27 +1,12 @@
 package com.htttdn.hrm.dto.request.attendance;
 
-import java.math.BigDecimal;
-
-import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 
-import jakarta.annotation.Nullable;
-
+/** The approver's overtime decision; the multiplier is not chosen, it follows the day (see OvertimeService). */
 public record ApproveOvertimeRequest(
     @NotNull
     @PositiveOrZero
-    Integer overtimeMinutes,
-
-    @NotNull
-    @Positive
-    @Digits(integer = 4, fraction = 4)
-    BigDecimal overtimeMultiplier,
-
-    @Nullable Boolean taxExempt
+    Integer overtimeMinutes
 ) {
-    public ApproveOvertimeRequest(Integer overtimeMinutes, BigDecimal overtimeMultiplier) {
-        this(overtimeMinutes, overtimeMultiplier, false);
-    }
 }

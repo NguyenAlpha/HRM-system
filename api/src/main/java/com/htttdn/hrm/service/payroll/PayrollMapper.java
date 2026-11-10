@@ -80,7 +80,6 @@ public class PayrollMapper {
             payslip.getBaseSalaryPay(),
             payslip.getAllowancePay(),
             payslip.getOvertimePay(),
-            payslip.getTaxExemptOvertimePay(),
             payslip.getOtherEarningsPay(),
             payslip.getTaxExemptOtherEarnings(),
             payslip.getGrossPay(),

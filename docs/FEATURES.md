@@ -175,7 +175,7 @@ Sau khi bàn giao, chỉ Company Owner sửa thông tin doanh nghiệp qua `PUT 
 ## 7. Ngày lễ và chấm công
 
 Lịch làm việc chuẩn là thứ 2 đến thứ 7, trừ ngày trong `company_holidays`. Ngày lễ được hưởng nguyên
-lương vì không tính vào số ngày công chuẩn của tháng; đi làm ngày lễ được duyệt tăng ca hệ số tối thiểu 3.
+lương vì không tính vào số ngày công chuẩn của tháng; đi làm ngày lễ được duyệt tăng ca hệ số 3.
 Lịch lễ, Tết 2025 và 2026 (11 ngày mỗi năm) được seed sẵn; từ 2027 HR tự khai báo.
 
 Giờ vào/ra được ghi qua `POST /api/attendance/punches` với thời điểm cụ thể; sau này máy chấm công
@@ -200,8 +200,8 @@ Trạng thái ngày công: `PRESENT`, `PAID_LEAVE`, `UNPAID_LEAVE`, `MATERNITY_L
 trùng. Backend tự chạy việc này cho tháng hiện tại lúc khởi động và 00:05 mỗi đêm, bỏ qua
 (và ghi log) nhân viên thiếu phân công/ca; tắt bằng `attendance.auto-prepare.enabled=false`. Kỳ lương không chuyển sang `CALCULATED` khi còn `MISSING_PUNCH`.
 
-Duyệt tăng ca ghi cả số phút, hệ số và cờ miễn thuế. Hệ số tối thiểu 1,5 ngày thường, 2 Chủ nhật,
-3 ngày lễ. Giờ chấm vào Chủ nhật hoặc ngày lễ không thành công thường, chỉ được trả khi duyệt
+Duyệt tăng ca ghi số phút; hệ số do hệ thống đặt theo loại ngày: 1,5 ngày thường,
+2 Chủ nhật, 3 ngày lễ. Tiền tăng ca chịu thuế TNCN như lương. Giờ chấm vào Chủ nhật hoặc ngày lễ không thành công thường, chỉ được trả khi duyệt
 tăng ca.
 
 Chi tiết: [api/docs/api/ATTENDANCE.md](../api/docs/api/ATTENDANCE.md).
@@ -272,7 +272,7 @@ bất biến.
 
 Phiếu lương tính: lương cơ bản theo phút được trả lương, phụ cấp chức vụ, phụ cấp thâm niên, tăng
 ca, rồi trừ BHXH/BHYT/BHTN phần nhân viên và thuế TNCN lũy tiến. Phiếu lưu lại căn cứ đóng sau
-trần, số tăng ca miễn thuế, thu nhập tính thuế và cả `id` của bộ quy tắc đã dùng.
+trần, thu nhập tính thuế và cả `id` của bộ quy tắc đã dùng.
 
 Hai vai trò tách nhau có chủ đích: `PAYROLL_ACCOUNTANT` tính nhưng không duyệt, `PAYROLL_APPROVER`
 duyệt nhưng không tính.

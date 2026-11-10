@@ -95,8 +95,8 @@ public class PayslipCalculator {
     private record ProratedPay(BigDecimal basicSalary, BigDecimal positionAllowance, BigDecimal seniorityAllowance) {
     }
 
-    /** Tăng ca đã duyệt trong kỳ: tổng phút, tổng tiền, phần miễn thuế và mỗi ngày một dòng phiếu lương. */
-    private record OvertimePay(long minutes, BigDecimal amount, BigDecimal taxExempt, List<PayslipItem> items) {
+    /** Tăng ca đã duyệt trong kỳ: tổng phút, tổng tiền và mỗi ngày một dòng phiếu lương. */
+    private record OvertimePay(long minutes, BigDecimal amount, List<PayslipItem> items) {
     }
 
     /** Các khoản điều chỉnh của kỳ: khoản cộng, phần cộng miễn thuế, khoản trừ và các dòng phiếu lương. */
@@ -131,9 +131,9 @@ public class PayslipCalculator {
 
         BigDecimal allowancePay = prorated.positionAllowance().add(prorated.seniorityAllowance());
         BigDecimal grossPay = prorated.basicSalary().add(allowancePay).add(overtime.amount()).add(adjustments.earnings());
-        // Thu nhập chịu thuế: bỏ phần tăng ca và phụ cấp được miễn thuế.
+        // Thu nhập chịu thuế: bỏ phần phụ cấp được miễn thuế; tiền tăng ca chịu thuế như lương.
         InsuranceTaxCalculator.Deduction deduction = deductions(period, employee, inputs,
-            grossPay.subtract(overtime.taxExempt()).subtract(adjustments.taxExempt()));
+            grossPay.subtract(adjustments.taxExempt()));
         BigDecimal netPay = grossPay.subtract(deduction.social()).subtract(deduction.health())
             .subtract(deduction.unemployment()).subtract(deduction.incomeTax()).subtract(adjustments.deductions());
         // Thực nhận âm (khoản trừ điều chỉnh hoặc bảo hiểm lớn hơn thu nhập) → kế toán phải xử lý tay, không
@@ -160,7 +160,6 @@ public class PayslipCalculator {
             .seniorityAllowancePay(prorated.seniorityAllowance())
             .allowancePay(allowancePay)
             .overtimePay(overtime.amount())
-            .taxExemptOvertimePay(overtime.taxExempt())
             .otherEarningsPay(adjustments.earnings())
             .taxExemptOtherEarnings(adjustments.taxExempt())
             .grossPay(grossPay)
@@ -207,8 +206,8 @@ public class PayslipCalculator {
      * Mỗi ngày có tăng ca đã duyệt: đơn giá giờ = lương hiệu lực ngày đó / (số ngày công cả tháng × giờ ca),
      * nhân số giờ và hệ số tăng ca.
      *
-     * <p>Số phút, hệ số và việc miễn thuế do người duyệt chọn khi duyệt tăng ca
-     * ({@code OvertimeService}). Một query lương cho mỗi ngày tăng ca: chấp nhận được vì mỗi người chỉ có
+     * <p>Số phút do người duyệt chọn, hệ số do hệ thống đặt theo loại ngày khi duyệt tăng ca
+     * ({@code OvertimeService}). Tiền tăng ca chịu thuế TNCN như lương. Một query lương cho mỗi ngày tăng ca: chấp nhận được vì mỗi người chỉ có
      * vài ngày tăng ca một tháng.
      *
      * @throws BusinessException không có lương hiệu lực vào ngày tăng ca (→ 400 {@code PAYROLL_INPUT_MISSING})
@@ -216,7 +215,6 @@ public class PayslipCalculator {
     private OvertimePay overtime(Employee employee, Inputs inputs) {
         long minutes = 0;
         BigDecimal overtimePay = BigDecimal.ZERO;
-        BigDecimal taxExemptOvertimePay = BigDecimal.ZERO;
         List<PayslipItem> items = new ArrayList<>();
         for (AttendanceRecord record : inputs.attendanceRecords()) {
             if (!hasApprovedOvertime(record)) {
@@ -234,9 +232,6 @@ public class PayslipCalculator {
             BigDecimal amount = overtimeHourlyRate.multiply(hours).multiply(record.getOvertimeMultiplier())
                 .setScale(2, RoundingMode.HALF_UP);
             overtimePay = overtimePay.add(amount);
-            if (record.isOvertimeTaxExempt()) {
-                taxExemptOvertimePay = taxExemptOvertimePay.add(amount);
-            }
             items.add(PayslipItem.builder()
                 .componentType(PayslipItemType.OVERTIME)
                 .componentCode("OVERTIME_" + record.getWorkDate())
@@ -247,7 +242,7 @@ public class PayslipCalculator {
                 .amount(amount)
                 .build());
         }
-        return new OvertimePay(minutes, overtimePay, taxExemptOvertimePay, items);
+        return new OvertimePay(minutes, overtimePay, items);
     }
 
     /**

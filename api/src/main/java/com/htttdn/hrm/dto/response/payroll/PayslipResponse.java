@@ -21,7 +21,6 @@ public record PayslipResponse(
     BigDecimal basicSalaryPay,
     BigDecimal allowancePay,
     BigDecimal overtimePay,
-    BigDecimal taxExemptOvertimePay,
     BigDecimal otherEarningsPay,
     BigDecimal taxExemptOtherEarnings,
     BigDecimal grossPay,

@@ -41,7 +41,6 @@ public class PayrollExportService {
         new Column("Lương theo công", Payslip::getBaseSalaryPay, true),
         new Column("Phụ cấp", Payslip::getAllowancePay, true),
         new Column("Tiền tăng ca", Payslip::getOvertimePay, true),
-        new Column("Tăng ca miễn thuế", Payslip::getTaxExemptOvertimePay, true),
         new Column("Thưởng, phụ cấp khác", Payslip::getOtherEarningsPay, true),
         new Column("Phụ cấp khác miễn thuế", Payslip::getTaxExemptOtherEarnings, true),
         new Column("Tổng thu nhập", Payslip::getGrossPay, true),

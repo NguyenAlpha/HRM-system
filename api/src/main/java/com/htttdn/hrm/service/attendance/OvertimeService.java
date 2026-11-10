@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +34,8 @@ import lombok.RequiredArgsConstructor;
  *
  * <p>Tăng ca là phần {@code workedMinutes} vượt quá giờ được trả của ngày (xem
  * {@link AttendanceService}). Không ai tự khai tăng ca: người duyệt của nhân viên (theo
- * {@link ApproverResolver}) quyết định bao nhiêu phút được trả và hệ số. Chưa quyết định thì tính lương
+ * {@link ApproverResolver}) quyết định bao nhiêu phút được trả; hệ số theo loại ngày ({@link #multiplierFor}).
+ * Chưa quyết định thì tính lương
  * không trả phần đó ({@code PayslipCalculator} chỉ lấy ngày có {@code overtimeApprovedAt}).
  */
 @Service
@@ -58,30 +60,19 @@ public class OvertimeService {
      * duyệt của nhân viên đó, kiểm tra trong {@link #requireOvertimeApprover}.
      *
      * @param attendanceId ngày công có giờ làm dư
-     * @param request số phút được trả (0 = không trả), hệ số và có miễn thuế TNCN không
+     * @param request số phút được trả (0 = không trả); hệ số do hệ thống đặt
      * @return ngày công sau khi ghi quyết định
      * @throws com.htttdn.hrm.exception.ResourceNotFoundException không có ngày công (→ 404)
      * @throws com.htttdn.hrm.exception.ConflictException ngày thuộc kỳ lương đã chốt (→ 409)
      * @throws ForbiddenException người đăng nhập không phải người duyệt của nhân viên (→ 403)
      * @throws BusinessException chưa có giờ ra (→ 400 {@code OVERTIME_ATTENDANCE_INCOMPLETE}), số phút vượt phần
-     *         làm dư (→ 400 {@code OVERTIME_EXCEEDS_EXTRA_TIME}), hoặc hệ số thấp hơn mức tối thiểu của ngày
-     *         (→ 400 {@code VALIDATION_ERROR})
+     *         làm dư (→ 400 {@code OVERTIME_EXCEEDS_EXTRA_TIME})
      */
     @PreAuthorize("isAuthenticated()")
     public AttendanceRecordResponse approveOvertime(Long attendanceId, ApproveOvertimeRequest request) {
         AttendanceRecord record = attendanceEditGuard.getEditableForUpdate(attendanceId);
         requireOvertimeApprover(record.getEmployee());
-        // Phút làm dư = phút làm trừ phần đã tính lương ngày thường. Phút nghỉ có lương cũng nằm trong
-        // payableMinutes nhưng không phải giờ làm → trừ ra trước. Ngày không có lịch (Chủ nhật, lễ):
-        // mọi phút làm đều là tăng ca.
-        boolean scheduledDay = !attendanceCalendarService.scheduleFor(record.getEmployee().getId(),
-            record.getWorkDate(), record.getWorkDate()).isEmpty();
-        int paidLeaveMinutes = record.getLeaveRequest() != null
-            && record.getLeaveRequest().getSalaryTreatment() == LeaveSalaryTreatment.EMPLOYER_PAID
-                ? record.getLeaveMinutes() : 0;
-        int regularWorkedMinutes = scheduledDay
-            ? Math.min(record.getWorkedMinutes(), Math.max(0, record.getPayableMinutes() - paidLeaveMinutes)) : 0;
-        int availableMinutes = Math.max(0, record.getWorkedMinutes() - regularWorkedMinutes);
+        int availableMinutes = extraMinutes(record);
         if (record.getCheckOutAt() == null) {
             throw new BusinessException(ErrorCode.OVERTIME_ATTENDANCE_INCOMPLETE, "Overtime requires completed attendance");
         }
@@ -90,21 +81,10 @@ public class OvertimeService {
                 "Overtime cannot include regular payable time: at most " + availableMinutes + " minutes",
                 "overtimeMinutes");
         }
-        // Hệ số tối thiểu theo loại ngày: lễ 300%, Chủ nhật 200%, ngày thường 150%.
-        BigDecimal minimumMultiplier = attendanceCalendarService.isCompanyHoliday(record.getWorkDate())
-            ? BigDecimal.valueOf(3)
-            : record.getWorkDate().getDayOfWeek() == DayOfWeek.SUNDAY
-                ? BigDecimal.valueOf(2) : BigDecimal.valueOf(1.5);
-        if (request.overtimeMinutes() > 0 && request.overtimeMultiplier().compareTo(minimumMultiplier) < 0) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
-                "Overtime multiplier must be at least " + minimumMultiplier + " on " + record.getWorkDate(),
-                "overtimeMultiplier");
-        }
         // The decision is recorded even for zero minutes, so the day leaves the approver's queue.
         Instant now = Instant.now(clock);
         record.setOvertimeMinutes(request.overtimeMinutes());
-        record.setOvertimeMultiplier(request.overtimeMultiplier());
-        record.setOvertimeTaxExempt(request.overtimeMinutes() > 0 && Boolean.TRUE.equals(request.taxExempt()));
+        record.setOvertimeMultiplier(request.overtimeMinutes() > 0 ? multiplierFor(record.getWorkDate()) : BigDecimal.ONE);
         record.setOvertimeApprovedByAccount(currentAccountProvider.account());
         record.setOvertimeApprovedAt(now);
 
@@ -140,9 +120,40 @@ public class OvertimeService {
             .map(record -> new OvertimeApprovalItemResponse(
                 attendanceMapper.toResponse(record),
                 record.getEmployee().getEmployeeCode(),
-                record.getEmployee().getFullName()
+                record.getEmployee().getFullName(),
+                extraMinutes(record),
+                multiplierFor(record.getWorkDate())
             ))
             .toList();
+    }
+
+    /**
+     * Phút làm dư = phút làm trừ phần đã tính lương ngày thường. Phút nghỉ có lương cũng nằm trong
+     * payableMinutes nhưng không phải giờ làm → trừ ra trước. Ngày không có lịch (Chủ nhật, lễ):
+     * mọi phút làm đều là tăng ca.
+     *
+     * @return số phút tối đa được duyệt là tăng ca
+     */
+    private int extraMinutes(AttendanceRecord record) {
+        boolean scheduledDay = !attendanceCalendarService.scheduleFor(record.getEmployee().getId(),
+            record.getWorkDate(), record.getWorkDate()).isEmpty();
+        int paidLeaveMinutes = record.getLeaveRequest() != null
+            && record.getLeaveRequest().getSalaryTreatment() == LeaveSalaryTreatment.EMPLOYER_PAID
+                ? record.getLeaveMinutes() : 0;
+        int regularWorkedMinutes = scheduledDay
+            ? Math.min(record.getWorkedMinutes(), Math.max(0, record.getPayableMinutes() - paidLeaveMinutes)) : 0;
+        return Math.max(0, record.getWorkedMinutes() - regularWorkedMinutes);
+    }
+
+    /**
+     * Hệ số tăng ca theo loại ngày, mức tối thiểu của Bộ luật Lao động 2019 (Điều 98): lễ 300%,
+     * Chủ nhật 200%, ngày thường 150%. Người duyệt không chọn hệ số.
+     */
+    private BigDecimal multiplierFor(LocalDate workDate) {
+        if (attendanceCalendarService.isCompanyHoliday(workDate)) {
+            return BigDecimal.valueOf(3);
+        }
+        return workDate.getDayOfWeek() == DayOfWeek.SUNDAY ? BigDecimal.valueOf(2) : new BigDecimal("1.5");
     }
 
     /**

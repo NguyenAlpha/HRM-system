@@ -24,7 +24,6 @@ public record AttendanceRecordResponse(
     Integer earlyLeaveMinutes,
     Integer overtimeMinutes,
     BigDecimal overtimeMultiplier,
-    boolean overtimeTaxExempt,
     AttendanceStatus status
 ) {
 }

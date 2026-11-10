@@ -78,9 +78,8 @@ DRAFT ──submit──▶ PENDING ──approve──▶ APPROVED
 
 - Chấm công có giờ làm vượt ca thì xuất hiện trong danh sách chờ của người duyệt
   (`listOvertimeAwaitingDecision`, tab "Tăng ca chờ duyệt" trên web).
-- Người duyệt nhập số phút được trả và hệ số. Hệ số tối thiểu: 1,5 ngày thường, 2 Chủ nhật, 3 ngày lễ công ty. Nhập
+- Người duyệt nhập số phút được trả; hệ số do hệ thống đặt: 1,5 ngày thường, 2 Chủ nhật, 3 ngày lễ công ty. Nhập
   0 phút nghĩa là không trả tăng ca; quyết định vẫn được ghi để ngày đó rời khỏi danh sách chờ.
-- Đánh dấu tăng ca miễn thuế (`taxExempt`) là quyết định của người duyệt sau khi đối soát điều kiện pháp luật.
 
 ## Code
 

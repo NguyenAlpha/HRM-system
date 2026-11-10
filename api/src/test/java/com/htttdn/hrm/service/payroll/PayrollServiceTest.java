@@ -269,7 +269,6 @@ class PayrollServiceTest {
             .overtimeMultiplier(new BigDecimal("1.5"))
             .overtimeApprovedByAccount(actor)
             .overtimeApprovedAt(Instant.now())
-            .overtimeTaxExempt(true)
             .workDate(LocalDate.of(2026, 1, 15))
             .build();
 
@@ -319,13 +318,12 @@ class PayrollServiceTest {
         assertEquals(new BigDecimal("38461.54"), payslip.getPositionAllowancePay());
         assertEquals(new BigDecimal("19230.77"), payslip.getSeniorityAllowancePay());
         assertEquals(new BigDecimal("72115.38"), payslip.getOvertimePay());
-        assertEquals(new BigDecimal("72115.38"), payslip.getTaxExemptOvertimePay());
         // Bonus and the non-taxable allowance are earnings; only the bonus is taxable.
         assertEquals(new BigDecimal("600000"), payslip.getOtherEarningsPay());
         assertEquals(new BigDecimal("100000"), payslip.getTaxExemptOtherEarnings());
         assertEquals(new BigDecimal("1114423.07"), payslip.getGrossPay());
         verify(insuranceTaxCalculator).calculate(eq(2L), eq(end), eq(end), eq(end),
-            eq(new BigDecimal("942307.69")), eq(0L));
+            eq(new BigDecimal("1014423.07")), eq(0L));
         // The deduction comes off after tax.
         assertEquals(new BigDecimal("200000"), payslip.getOtherDeductions());
         assertEquals(new BigDecimal("914423.07"), payslip.getNetPay());

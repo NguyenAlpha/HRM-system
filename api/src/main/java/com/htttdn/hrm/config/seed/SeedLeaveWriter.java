@@ -209,7 +209,6 @@ class SeedLeaveWriter {
         record.setEarlyLeaveMinutes(0);
         record.setOvertimeMinutes(0);
         record.setOvertimeMultiplier(BigDecimal.ONE);
-        record.setOvertimeTaxExempt(false);
         record.setOvertimeApprovedByAccount(null);
         record.setOvertimeApprovedAt(null);
     }

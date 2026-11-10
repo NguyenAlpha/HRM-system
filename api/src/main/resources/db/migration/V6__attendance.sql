@@ -25,7 +25,6 @@ CREATE TABLE attendance_records (
     early_leave_minutes INTEGER NOT NULL DEFAULT 0 CHECK (early_leave_minutes >= 0),
     overtime_minutes INTEGER NOT NULL DEFAULT 0 CHECK (overtime_minutes >= 0),
     overtime_multiplier NUMERIC(8,4) NOT NULL DEFAULT 1 CHECK (overtime_multiplier > 0),
-    overtime_tax_exempt BOOLEAN NOT NULL DEFAULT false,
     overtime_approved_by_account_id BIGINT REFERENCES accounts (id),
     overtime_approved_at TIMESTAMPTZ,
     status VARCHAR(30) NOT NULL,

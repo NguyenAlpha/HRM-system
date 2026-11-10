@@ -108,7 +108,7 @@ class AttendanceServiceTest {
         stubApproverOf(record);
 
         BusinessException thrown = assertThrows(BusinessException.class, () -> overtimeService().approveOvertime(1L,
-            new ApproveOvertimeRequest(60, new java.math.BigDecimal("1.5"))));
+            new ApproveOvertimeRequest(60)));
         assertEquals(ErrorCode.OVERTIME_EXCEEDS_EXTRA_TIME, thrown.getErrorCode());
     }
 
@@ -118,6 +118,8 @@ class AttendanceServiceTest {
         when(currentAccountProvider.account()).thenReturn(Account.builder().id(9L).employee(manager).build());
         AttendanceRecord leaversDay = record(LocalDate.of(2026, 1, 10));
         leaversDay.setCheckOutAt(Instant.now());
+        leaversDay.setWorkedMinutes(540);
+        leaversDay.setPayableMinutes(480);
         when(attendanceRecordRepository.findOvertimeAwaitingDecision()).thenReturn(List.of(leaversDay));
         when(approverResolver.decidedBy(manager, List.of(leaversDay.getEmployee()))).thenReturn(List.of(2L));
 
@@ -127,7 +129,7 @@ class AttendanceServiceTest {
     }
 
     @Test
-    void holidayOvertimeRejectsMultiplierBelowThree() {
+    void holidayOvertimeIsPaidAtThreeTimes() {
         LocalDate holiday = LocalDate.of(2026, 1, 1);
         AttendanceRecord record = record(holiday);
         record.setCheckOutAt(Instant.now());
@@ -138,8 +140,9 @@ class AttendanceServiceTest {
         when(attendanceCalendarService.isCompanyHoliday(holiday)).thenReturn(true);
         stubApproverOf(record);
 
-        assertThrows(BusinessException.class, () -> overtimeService().approveOvertime(1L,
-            new ApproveOvertimeRequest(120, new java.math.BigDecimal("2.0"))));
+        overtimeService().approveOvertime(1L, new ApproveOvertimeRequest(120));
+
+        assertEquals(0, new java.math.BigDecimal("3").compareTo(record.getOvertimeMultiplier()));
     }
 
     @Test

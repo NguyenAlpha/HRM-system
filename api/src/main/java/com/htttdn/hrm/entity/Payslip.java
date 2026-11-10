@@ -81,9 +81,6 @@ public class Payslip extends AuditedEntity {
     @Column(name = "overtime_pay", nullable = false, precision = 15, scale = 2)
     private BigDecimal overtimePay;
 
-    @Column(name = "tax_exempt_overtime_pay", nullable = false, precision = 15, scale = 2)
-    private BigDecimal taxExemptOvertimePay;
-
     @Column(name = "other_earnings_pay", nullable = false, precision = 15, scale = 2)
     private BigDecimal otherEarningsPay;
 

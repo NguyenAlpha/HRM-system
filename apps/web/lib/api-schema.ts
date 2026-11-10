@@ -2443,8 +2443,6 @@ export interface components {
         ApproveOvertimeRequest: {
             /** Format: int32 */
             overtimeMinutes: number;
-            overtimeMultiplier: number;
-            taxExempt?: boolean | null;
         };
         ApproveResignationBody: {
             comment?: string | null;
@@ -2501,7 +2499,6 @@ export interface components {
             /** Format: int32 */
             overtimeMinutes: number;
             overtimeMultiplier: number;
-            overtimeTaxExempt: boolean;
             /** Format: int32 */
             payableMinutes: number;
             /** Format: date-time */
@@ -3089,6 +3086,9 @@ export interface components {
         OvertimeApprovalItemResponse: {
             employeeCode: string;
             employeeName: string;
+            /** Format: int32 */
+            extraMinutes: number;
+            overtimeMultiplier: number;
             record: components["schemas"]["AttendanceRecordResponse"];
         };
         Pageable: {
@@ -3364,7 +3364,6 @@ export interface components {
             /** Format: int32 */
             scheduledWorkMinutes: number;
             taxExemptOtherEarnings: number;
-            taxExemptOvertimePay: number;
             taxableIncome: number;
             unemploymentInsuranceBase: number;
             workLocationSnapshot: string;

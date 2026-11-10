@@ -365,7 +365,6 @@ public class AttendanceService {
     private static void clearOvertimeDecision(AttendanceRecord record) {
         record.setOvertimeMinutes(0);
         record.setOvertimeMultiplier(BigDecimal.ONE);
-        record.setOvertimeTaxExempt(false);
         record.setOvertimeApprovedByAccount(null);
         record.setOvertimeApprovedAt(null);
     }

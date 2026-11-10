@@ -1,6 +1,5 @@
 package com.htttdn.hrm.service.leave;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -252,7 +251,7 @@ class ApprovalChainIntegrationTest {
         Long staffDay = overtimeDay(staff);
         Long directorDay = overtimeDay(director);
         Long ownerDay = overtimeDay(owner);
-        ApproveOvertimeRequest noOvertime = new ApproveOvertimeRequest(0, BigDecimal.ONE);
+        ApproveOvertimeRequest noOvertime = new ApproveOvertimeRequest(0);
 
         authenticateAs(hr, "attendance.read", "attendance.manage");
         assertThrows(ForbiddenException.class, () -> overtimeService.approveOvertime(staffDay, noOvertime));

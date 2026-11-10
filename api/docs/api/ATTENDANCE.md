@@ -294,21 +294,17 @@ Trả `AttendanceRecordResponse` sau điều chỉnh.
 
 ```json
 {
-  "overtimeMinutes": 60,
-  "overtimeMultiplier": 1.5,
-  "taxExempt": false
+  "overtimeMinutes": 60
 }
 ```
 
 | Field | Type | Bắt buộc | Ràng buộc |
 |:------|:-----|:--------:|:----------|
 | `overtimeMinutes` | int | ✅ | ≥ 0; không lấy từ phần công thường hoặc nghỉ có lương |
-| `overtimeMultiplier` | decimal | ✅ | > 0; khi `overtimeMinutes > 0` tối thiểu 1,5 ngày thường, 2 vào Chủ nhật, 3 vào ngày lễ đã khai báo |
-| `taxExempt` | boolean | | Mặc định `false` (chịu thuế). Chỉ chọn `true` khi HR đã xác nhận khoản tăng ca đủ điều kiện miễn thuế |
 
 ### Response `200 OK`
 
-Trả `AttendanceRecordResponse` với `overtimeMinutes`, `overtimeMultiplier` và `overtimeTaxExempt` mới.
+Trả `AttendanceRecordResponse` với `overtimeMinutes` và `overtimeMultiplier` mới. Người duyệt không chọn hệ số: khi `overtimeMinutes > 0` hệ thống đặt `overtimeMultiplier` theo loại ngày (Bộ luật Lao động 2019, Điều 98): 3 vào ngày lễ đã khai báo, 2 vào Chủ nhật, 1,5 các ngày khác; khi bằng 0 hệ số là 1.
 
 ### Lỗi
 
@@ -316,7 +312,6 @@ Trả `AttendanceRecordResponse` với `overtimeMinutes`, `overtimeMultiplier` v
 |:----:|:-------------|:-----------|
 | 400 | `OVERTIME_ATTENDANCE_INCOMPLETE` | Ngày chưa chấm ra |
 | 400 | `OVERTIME_EXCEEDS_EXTRA_TIME` | Số phút vượt phần làm ngoài công thường (`field` là `overtimeMinutes`) |
-| 400 | `VALIDATION_ERROR` | Hệ số dưới mức tối thiểu |
 | 403 | `FORBIDDEN` | Người gọi không phải người duyệt của nhân viên |
 | 404 | `ATTENDANCE_NOT_FOUND` | Bản ghi công không tồn tại |
 
@@ -333,14 +328,16 @@ Các ngày đã chấm ra, có giờ làm vượt phần công được trả (`
     {
       "record": { "id": 812, "employeeId": 25, "workDate": "2026-03-03", "workedMinutes": 600, "payableMinutes": 480, "overtimeMinutes": 0 },
       "employeeCode": "NV0025",
-      "employeeName": "Nguyễn Văn A"
+      "employeeName": "Nguyễn Văn A",
+      "extraMinutes": 120,
+      "overtimeMultiplier": 1.5
     }
   ],
   "error": null
 }
 ```
 
-`record` là `AttendanceRecordResponse` đầy đủ (ví dụ rút gọn).
+`record` là `AttendanceRecordResponse` đầy đủ (ví dụ rút gọn). `extraMinutes` là số phút tối đa được duyệt là tăng ca (phút làm trừ phần công thường; ngày không có lịch thì là mọi phút làm). `overtimeMultiplier` là hệ số hệ thống sẽ áp dụng nếu duyệt tăng ca cho ngày đó.
 
 ---
 
@@ -369,7 +366,6 @@ Lấy chi tiết một bản ghi công.
     "earlyLeaveMinutes": 0,
     "overtimeMinutes": 0,
     "overtimeMultiplier": 1,
-    "overtimeTaxExempt": false,
     "status": "PRESENT"
   },
   "error": null

@@ -144,7 +144,7 @@ Hệ thống hỗ trợ quản lý tập trung hồ sơ nhân viên, cơ cấu t
 ### 8. Quản lý chấm công và tăng ca
 
 - **Người sử dụng:** Nhân viên xem bảng công của mình; HR ghi nhận và đối soát giờ chấm; quản lý trực tiếp duyệt tăng ca.
-- **Luồng chính:** Hệ thống chuẩn bị bản ghi công cho tháng. Giờ vào/ra lấy từ máy chấm công của công ty và được ghi vào hệ thống qua API ghi nhận giờ chấm; nhân viên không tự chấm trên web mà chỉ xem bảng công của mình. HR xử lý ngày thiếu lần chấm, xem và điều chỉnh dữ liệu thuộc phạm vi quản lý. Người duyệt xác nhận số phút tăng ca và hệ số tương ứng.
+- **Luồng chính:** Hệ thống chuẩn bị bản ghi công cho tháng. Giờ vào/ra lấy từ máy chấm công của công ty và được ghi vào hệ thống qua API ghi nhận giờ chấm; nhân viên không tự chấm trên web mà chỉ xem bảng công của mình. HR xử lý ngày thiếu lần chấm, xem và điều chỉnh dữ liệu thuộc phạm vi quản lý. Người duyệt xác nhận số phút tăng ca; hệ số do hệ thống đặt theo loại ngày.
 - **Quy tắc:** Ngày làm việc chưa có dữ liệu được đánh dấu `MISSING_PUNCH`; tính lương không thể hoàn tất khi kỳ còn trạng thái này. Giờ làm vào Chủ nhật hoặc ngày lễ chỉ được tính trả theo quy trình duyệt tăng ca. Khi kỳ lương đã duyệt, việc sửa dữ liệu công liên quan bị chặn.
 - **Kết quả:** Bảng công phản ánh ngày làm, nghỉ và tăng ca đã được đối soát để làm đầu vào cho kỳ lương.
 
@@ -153,9 +153,9 @@ Hệ thống hỗ trợ quản lý tập trung hồ sơ nhân viên, cơ cấu t
 1. HR chuẩn bị bảng công tháng. Với ngày làm việc chưa có dữ liệu, hệ thống tạo bản ghi `MISSING_PUNCH`; gọi lại thao tác chuẩn bị không tạo trùng.
 2. Giờ vào và giờ ra của từng ngày được ghi nhận từ máy chấm công qua `POST /api/attendance/punches` (quyền `attendance.manage`); HR cũng dùng đường này để nhập hoặc sửa giờ chấm kèm ghi chú. Hệ thống đối chiếu ca hiệu lực trong ngày để tính phút đã làm, phút được trả lương, phút đến muộn và phút về sớm.
 3. HR xem bản ghi theo nhân viên và thời gian, đối soát những ngày thiếu lần chấm hoặc vắng mặt, nhập số phút và ghi chú hợp lệ. Đơn nghỉ được duyệt có thể tự cập nhật phút nghỉ trên bảng công.
-4. Quản lý trực tiếp của nhân viên (nếu không có thì Giám đốc, rồi Chủ doanh nghiệp) duyệt tăng ca, xác nhận số phút, hệ số và việc khoản tăng ca có được đánh dấu miễn thuế hay không. Phút tăng ca được tách khỏi phút công thường.
+4. Quản lý trực tiếp của nhân viên (nếu không có thì Giám đốc, rồi Chủ doanh nghiệp) duyệt tăng ca, xác nhận số phút (hệ số do hệ thống đặt theo loại ngày); tiền tăng ca chịu thuế TNCN như lương. Phút tăng ca được tách khỏi phút công thường.
 
-**Trạng thái ngày công:** Bảng công có thể ghi đi làm, nghỉ có lương, nghỉ không lương, nghỉ thai sản, nghỉ ốm, vắng không phép, ngày lễ hoặc thiếu dữ liệu chấm công. `MISSING_PUNCH` phải được giải quyết trước khi tính lương. Một ngày Chủ nhật hoặc ngày lễ không tự sinh phút công thường dù có chấm vào/ra; tiền tăng ca chỉ phát sinh sau bước duyệt với hệ số tối thiểu tương ứng.
+**Trạng thái ngày công:** Bảng công có thể ghi đi làm, nghỉ có lương, nghỉ không lương, nghỉ thai sản, nghỉ ốm, vắng không phép, ngày lễ hoặc thiếu dữ liệu chấm công. `MISSING_PUNCH` phải được giải quyết trước khi tính lương. Một ngày Chủ nhật hoặc ngày lễ không tự sinh phút công thường dù có chấm vào/ra; tiền tăng ca chỉ phát sinh sau bước duyệt với hệ số tương ứng.
 
 **Giới hạn hiện tại:** Mỗi nhân viên trong một ngày có một cặp chấm vào/ra và tối đa một đơn nghỉ gắn với ngày đó. Việc kết nối trực tiếp với máy chấm công vật lý chưa được triển khai; hiện giờ chấm được đưa vào qua API ghi nhận giờ chấm. Dữ liệu công ảnh hưởng kỳ lương đã `APPROVED` trở đi bị khóa; thay đổi ở kỳ mới tính nhưng chưa duyệt đòi hỏi tính lại.
 

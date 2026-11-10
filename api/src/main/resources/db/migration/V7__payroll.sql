@@ -166,8 +166,6 @@ CREATE TABLE payslips (
     position_allowance_pay NUMERIC(15,2) NOT NULL DEFAULT 0,
     seniority_allowance_pay NUMERIC(15,2) NOT NULL DEFAULT 0,
     overtime_pay NUMERIC(15,2) NOT NULL DEFAULT 0 CHECK (overtime_pay >= 0),
-    tax_exempt_overtime_pay NUMERIC(15,2) NOT NULL DEFAULT 0
-        CHECK (tax_exempt_overtime_pay >= 0 AND tax_exempt_overtime_pay <= overtime_pay),
     -- Tổng khoản thu nhập nhập tay của kỳ và phần trong đó không chịu thuế.
     other_earnings_pay NUMERIC(15,2) NOT NULL DEFAULT 0 CHECK (other_earnings_pay >= 0),
     tax_exempt_other_earnings NUMERIC(15,2) NOT NULL DEFAULT 0

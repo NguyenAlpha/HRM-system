@@ -159,7 +159,7 @@ export function PayslipDialog({ payslip, onClose }: { payslip: Payslip; onClose:
           <div>Căn cứ đóng BHXH/BHYT: <span className="text-foreground">{money(payslip.insuranceSalaryBase)}</span></div>
           <div>Căn cứ đóng BHTN: <span className="text-foreground">{money(payslip.unemploymentInsuranceBase)}</span></div>
           <div>Thu nhập tính thuế sau giảm trừ: <span className="text-foreground">{money(payslip.taxableIncome)}</span></div>
-          <div>Phần miễn thuế (tăng ca, phụ cấp): <span className="text-foreground">{money(payslip.taxExemptOvertimePay + payslip.taxExemptOtherEarnings)}</span></div>
+          <div>Phụ cấp miễn thuế: <span className="text-foreground">{money(payslip.taxExemptOtherEarnings)}</span></div>
         </dl>
       </DialogContent>
     </Dialog>

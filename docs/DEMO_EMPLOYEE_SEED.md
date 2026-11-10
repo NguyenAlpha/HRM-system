@@ -291,7 +291,7 @@ Các trường chung cho **mọi bản ghi** (kể cả ngày lễ và Chủ nh�
 | `scheduled_start_at`, `scheduled_end_at` | `work_date 08:00+07`, `work_date 17:00+07` |
 | `scheduled_minutes` | `480` (nghỉ giữa ca 12:00–13:00; `grace_late_minutes=15`) |
 | `leave_request_id` | `null`, trừ ô `LP`, `L`, `S`, `U` tham chiếu khóa đơn ở mục 8.3 |
-| `overtime_minutes`, `overtime_multiplier`, `overtime_tax_exempt` | `0`, `1.0000`, `false`, trừ ô `OT`, `H+`, `CN+` |
+| `overtime_minutes`, `overtime_multiplier` | `0`, `1.0000`, trừ ô `OT`, `H+`, `CN+` |
 | `overtime_approved_by_account_id`, `overtime_approved_at` | `null`, trừ ô `OT`, `H+`, `CN+` |
 | `updated_by_account_id` | `null`, trừ ô `A` đã được HR điều chỉnh thủ công |
 | `created_at` | `work_date 07:00+07` (snapshot demo, trước giờ vào ca) |
@@ -400,8 +400,7 @@ ca. `OT hệ số` có bốn chữ số thập phân trong database.
 | 2026-10-07 | PAY | A | ∅ | ∅ | 0 | 0 | 0 | 0 | 0 | 0 | 1.0000 | `UNAUTHORIZED_ABSENCE` | ∅ |
 | 2026-10-10 | INT | M | 08:05 | ∅ | 0 | 0 | 0 | 0 | 0 | 0 | 1.0000 | `MISSING_PUNCH` | ∅ |
 
-`overtime_tax_exempt=false` cho cả ba ca tăng ca: đây là cờ nghiệp vụ demo, không tự suy
-ra miễn thuế theo pháp luật. Với `H+`, `CN+`, `OT`, `overtime_approved_by_account_id`
+Với `H+`, `CN+`, `OT`, `overtime_approved_by_account_id`
 trỏ account HR có quyền `attendance.overtime.approve`; `overtime_approved_at` và
 `updated_at` đều là **09:00+07 ngày kế tiếp**. Phút tăng ca không cộng vào
 `payable_minutes` của ngày công chuẩn. Các ô này có `note` lần lượt là
@@ -607,8 +606,8 @@ mục 8.1 cho trường không ghi trong bảng. `leave_request_id` tra bằng k
 | 2026-10-09 | KHO-002 | T | 08:25 | 17:00 | 455 | 455 | 0 | 10 | 0 | 0 | 1.0000 | `PRESENT` | ∅ |
 
 Với `H+`, `CN+`, `OT`, dùng account HR có quyền `attendance.overtime.approve` và đặt
-`overtime_approved_at=updated_at` lúc `09:00+07` ngày kế tiếp;
-`overtime_tax_exempt=false`. `note` tương ứng là `Trực kho ngày lễ demo`,
+`overtime_approved_at=updated_at` lúc `09:00+07` ngày kế tiếp.
+`note` tương ứng là `Trực kho ngày lễ demo`,
 `Trực vận hành Chủ nhật demo`, `Tăng ca dự án demo`. Với `A`, account HR là
 `updated_by_account_id`, `updated_at=2026-10-08 09:00+07`,
 `note="Vắng không phép, HR đã xác nhận"`. Các ô `T`, `L`, `LP`, `E`, `S`, `U`

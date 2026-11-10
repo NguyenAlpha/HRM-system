@@ -359,7 +359,6 @@ function ListView({ days, actions, emptyText }: { days: Day[]; actions: DayActio
                   <TableCell className="text-right tabular-nums">{hours(record.payableMinutes)} / {hours(record.scheduledMinutes)}</TableCell>
                   <TableCell className="text-right tabular-nums">
                     {record.overtimeMinutes > 0 ? `${hours(record.overtimeMinutes)} × ${record.overtimeMultiplier}` : "—"}
-                    {record.overtimeMinutes > 0 && record.overtimeTaxExempt && <span className="block text-xs text-muted-foreground">miễn thuế</span>}
                   </TableCell>
                   <RowActionsCell label={`ngày ${formatDate(record.workDate)}`}>
                     {recordActions(day, record, actions).map(({ key, icon, label, destructive, onClick }) => (
@@ -445,21 +444,19 @@ function DayDialog({ day, actions, onClose }: { day: Day; actions: DayActions; o
 /**
  * Overtime waiting for the signed-in employee's decision, with the decision dialog. Overtime goes to
  * the employee's approver (direct manager, else Director, else Owner), not to a permission holder.
- * `holidays` covers the queued days; they set each day's minimum multiplier.
  */
-export function OvertimeApprovals({ items, holidays, onDecided }: {
+export function OvertimeApprovals({ items, onDecided }: {
   items: OvertimeApprovalItem[]
-  holidays: CompanyHoliday[]
   onDecided: () => void
 }) {
-  const [approving, setApproving] = useState<AttendanceRecord | null>(null)
+  const [approving, setApproving] = useState<OvertimeApprovalItem | null>(null)
   const { busy, run } = useWorkforceAction(onDecided)
   return (
     <>
       <OvertimeQueueCard items={items} busy={busy} onDecide={setApproving} />
       {approving && (
-        <OvertimeDialog record={approving} holidays={holidays} busy={busy} onClose={() => setApproving(null)}
-          onSubmit={(body) => run("Đã lưu quyết định tăng ca", () => workforceApi(`attendance/${approving.id}/overtime-approval`, "POST", body))} />
+        <OvertimeDialog item={approving} busy={busy} onClose={() => setApproving(null)}
+          onSubmit={(body) => run("Đã lưu quyết định tăng ca", () => workforceApi(`attendance/${approving.record.id}/overtime-approval`, "POST", body))} />
       )}
     </>
   )
@@ -469,7 +466,7 @@ export function OvertimeApprovals({ items, holidays, onDecided }: {
 function OvertimeQueueCard({ items, busy, onDecide }: {
   items: OvertimeApprovalItem[]
   busy: boolean
-  onDecide: (record: AttendanceRecord) => void
+  onDecide: (item: OvertimeApprovalItem) => void
 }) {
   return (
     <Card>
@@ -493,7 +490,9 @@ function OvertimeQueueCard({ items, busy, onDecide }: {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map(({ record, employeeCode, employeeName }) => (
+              {items.map((item) => {
+                const { record, employeeCode, employeeName } = item
+                return (
                 <TableRow key={record.id}>
                   <TableCell>
                     <span className="font-medium">{employeeName}</span>
@@ -507,10 +506,11 @@ function OvertimeQueueCard({ items, busy, onDecide }: {
                   <TableCell className="text-right tabular-nums">{hours(record.workedMinutes)}</TableCell>
                   <TableCell className="text-right tabular-nums">{hours(record.payableMinutes)}</TableCell>
                   <RowActionsCell label={`tăng ca ngày ${formatDate(record.workDate)}`}>
-                    <RowActionItem icon={Zap} disabled={busy} onClick={() => onDecide(record)}>Quyết định tăng ca</RowActionItem>
+                    <RowActionItem icon={Zap} disabled={busy} onClick={() => onDecide(item)}>Quyết định tăng ca</RowActionItem>
                   </RowActionsCell>
                 </TableRow>
-              ))}
+                )
+              })}
             </TableBody>
           </Table>
         </div>
@@ -650,28 +650,26 @@ function AbsenceDialog({ record, busy, onClose, onSubmit }: {
   )
 }
 
-function OvertimeDialog({ record, holidays, busy, onClose, onSubmit }: {
-  record: AttendanceRecord
-  holidays: CompanyHoliday[]
+/** Which kind of day each system-set overtime multiplier belongs to. */
+const OVERTIME_DAY_KIND: Record<number, string> = { 1.5: "ngày thường", 2: "Chủ nhật", 3: "ngày lễ" }
+
+function OvertimeDialog({ item, busy, onClose, onSubmit }: {
+  item: OvertimeApprovalItem
   busy: boolean
   onClose: () => void
   onSubmit: (body: WorkforceBody["ApproveOvertimeRequest"]) => Promise<boolean>
 }) {
-  // The server enforces the same minimums: 300% on company holidays, 200% on Sundays, 150% otherwise.
-  const minimum = holidays.some((holiday) => holiday.holidayDate === record.workDate) ? 3
-    : new Date(`${record.workDate}T12:00:00Z`).getUTCDay() === 0 ? 2 : 1.5
-  const [minutes, setMinutes] = useState(String(record.overtimeMinutes))
-  const [multiplier, setMultiplier] = useState(String(record.overtimeMinutes > 0 ? record.overtimeMultiplier : minimum))
-  const [taxExempt, setTaxExempt] = useState(record.overtimeTaxExempt)
+  const { record, extraMinutes, overtimeMultiplier } = item
+  // Starts at all the extra time; the approver lowers it, or enters 0 to pay none.
+  const [minutes, setMinutes] = useState(String(extraMinutes))
   const [error, setError] = useState<string | null>(null)
 
   function submit(event: React.FormEvent) {
     event.preventDefault()
     const overtimeMinutes = Number(minutes)
-    const overtimeMultiplier = Number(multiplier)
     if (!Number.isInteger(overtimeMinutes) || overtimeMinutes < 0) { setError("Số phút không hợp lệ"); return }
-    if (!Number.isFinite(overtimeMultiplier) || overtimeMultiplier < minimum) { setError(`Hệ số tối thiểu là ${minimum}`); return }
-    void onSubmit({ overtimeMinutes, overtimeMultiplier, taxExempt: overtimeMinutes > 0 && taxExempt })
+    if (overtimeMinutes > extraMinutes) { setError(`Tối đa ${extraMinutes} phút`); return }
+    void onSubmit({ overtimeMinutes })
       .then((ok) => { if (ok) onClose() })
   }
 
@@ -682,20 +680,16 @@ function OvertimeDialog({ record, holidays, busy, onClose, onSubmit }: {
           <DialogHeader>
             <DialogTitle>Quyết định tăng ca ngày {formatDate(record.workDate)}</DialogTitle>
             <DialogDescription>
-              Đã làm {record.workedMinutes} phút, trong đó {record.payableMinutes} phút là công thường. Nhập 0 phút nếu phần giờ dư không tính tăng ca.
+              Đã làm {record.workedMinutes} phút, trong đó {extraMinutes} phút ngoài công thường. Nhập 0 phút nếu phần giờ dư không tính tăng ca.
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4 grid gap-4">
-            <MinutesField id="overtime-minutes" label="Phút tăng ca được duyệt" value={minutes} onChange={setMinutes} />
-            <div className="grid gap-1.5">
-              <Label htmlFor="overtime-multiplier">Hệ số (tối thiểu {minimum})</Label>
-              <Input id="overtime-multiplier" type="number" step="0.1" min={minimum} required value={multiplier}
-                onChange={(event) => setMultiplier(event.target.value)} />
-            </div>
-            <label className="flex items-start gap-2 text-sm">
-              <input type="checkbox" className="mt-1" checked={taxExempt} onChange={(event) => setTaxExempt(event.target.checked)} />
-              <span>Đã đối soát, phần tăng ca này đủ điều kiện miễn thuế TNCN. Bỏ chọn nếu chưa chắc; khi đó tiền tăng ca chịu thuế.</span>
-            </label>
+            <MinutesField id="overtime-minutes" label={`Phút tăng ca được duyệt (tối đa ${extraMinutes})`} value={minutes} onChange={setMinutes} />
+            {/* Set by the system from the kind of day (Labour Code art. 98): holiday 300%, Sunday 200%, other days 150%. */}
+            <p className="text-sm text-muted-foreground">
+              Hệ số tăng ca: <span className="font-medium text-foreground">{overtimeMultiplier.toLocaleString("vi-VN")}</span>{" "}
+              ({OVERTIME_DAY_KIND[overtimeMultiplier] ?? "theo loại ngày"}), hệ thống tự áp dụng.
+            </p>
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           </div>
           <DialogFooter className="mt-4">

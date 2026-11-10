@@ -266,7 +266,6 @@ erDiagram
         integer early_leave_minutes
         integer overtime_minutes
         numeric overtime_multiplier
-        boolean overtime_tax_exempt
         varchar status
     }
 
@@ -312,7 +311,6 @@ erDiagram
         numeric employee_social_insurance
         numeric employee_health_insurance
         numeric employee_unemployment_insurance
-        numeric tax_exempt_overtime_pay
         numeric taxable_income
         numeric personal_income_tax
         numeric other_deductions
@@ -982,7 +980,6 @@ Hạn mức phép năm **không có bảng riêng**: 12 ngày mỗi năm, vào l
 | `overtime_multiplier` | NUMERIC(8,4) | NOT NULL, DEFAULT 1, CHECK > 0 | Hệ số tăng ca |
 | `overtime_approved_by_account_id` | BIGINT | FK → accounts | Người duyệt tăng ca |
 | `overtime_approved_at` | TIMESTAMPTZ | | Thời điểm duyệt tăng ca |
-| `overtime_tax_exempt` | BOOLEAN | NOT NULL, DEFAULT false | Người duyệt xác nhận khoản tăng ca đủ điều kiện miễn thuế TNCN |
 | `status` | VARCHAR(30) | NOT NULL | Trạng thái ngày công |
 | `note` | TEXT | | Lý do điều chỉnh |
 | `updated_by_account_id` | BIGINT | FK → accounts | Người sửa cuối |
@@ -1009,7 +1006,7 @@ MISSING_PUNCH
 ## 8. Tính lương
 
 > Phần này trình bày nền tính gross của thiết kế lõi. Các khoản bảo hiểm, thuế, căn cứ đóng,
-> ngày trả lương và tăng ca miễn thuế được mô tả ở mục 8.3–8.4 và các bảng `payroll_periods`,
+> và ngày trả lương được mô tả ở mục 8.3–8.4 và các bảng `payroll_periods`,
 > `payslips`; công thức đầy đủ nằm trong [PAYROLL.md](../api/PAYROLL.md).
 
 ### 8.1. Nguồn dữ liệu tính lương
@@ -1048,7 +1045,7 @@ Tổng thu nhập
   + Tiền tăng ca
 
 Thu nhập tính thuế
-  = max(0, Tổng thu nhập - Tăng ca miễn thuế đã xác nhận
+  = max(0, Tổng thu nhập - Phụ cấp khác miễn thuế
              - BHXH - BHYT - BHTN
              - Giảm trừ bản thân - Giảm trừ người phụ thuộc)
 
@@ -1237,7 +1234,6 @@ Số liệu cụ thể của từng bộ quy tắc và nguồn tham chiếu nằ
 | `employee_social_insurance` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | BHXH phần nhân viên |
 | `employee_health_insurance` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | BHYT phần nhân viên |
 | `employee_unemployment_insurance` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | BHTN phần nhân viên |
-| `tax_exempt_overtime_pay` | NUMERIC(15,2) | NOT NULL, CHECK 0..overtime_pay | Tiền tăng ca đã xác nhận miễn thuế |
 | `taxable_income` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Thu nhập tính thuế sau giảm trừ |
 | `personal_income_tax` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Thuế TNCN |
 | `other_deductions` | NUMERIC(15,2) | NOT NULL, DEFAULT 0, CHECK >= 0 | Khấu trừ nhập tay sau thuế |
@@ -1519,8 +1515,6 @@ ALTER TABLE payslips ADD CONSTRAINT chk_payslip_total
                   - employee_unemployment_insurance
                   - personal_income_tax
                   - other_deductions
-    AND tax_exempt_overtime_pay >= 0
-    AND tax_exempt_overtime_pay <= overtime_pay
   );
 
 ALTER TABLE payslip_items ADD CONSTRAINT chk_payslip_item_type

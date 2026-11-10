@@ -26,7 +26,6 @@ public class AttendanceMapper {
             record.getEarlyLeaveMinutes(),
             record.getOvertimeMinutes(),
             record.getOvertimeMultiplier(),
-            record.isOvertimeTaxExempt(),
             record.getStatus()
         );
     }

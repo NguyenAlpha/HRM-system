@@ -14,7 +14,7 @@ import { AttendanceSection, OvertimeApprovals } from "@/components/workforce/att
 import { AttendanceTimesheet, type TimesheetEmployee } from "@/components/workforce/attendance-timesheet"
 import { today, workforceApi } from "@/components/workforce/workforce-shared"
 import { employeeRequest, type EmployeeDetail } from "@/lib/employee"
-import type { CompanyHoliday, OvertimeApprovalItem } from "@/lib/workforce"
+import type { OvertimeApprovalItem } from "@/lib/workforce"
 
 /** YYYY-MM shifted by a number of months. */
 function shiftMonth(month: string, by: number): string {
@@ -44,9 +44,8 @@ export function AttendancePage({ initialTab, initialEmployeeId }: { initialTab?:
   const [viewing, setViewing] = useState<TimesheetEmployee | null>(null)
   // While the employee asked for on the URL loads, the company timesheet is held back.
   const [opening, setOpening] = useState(initialEmployeeId !== undefined && canReadAll)
-  const [overtime, setOvertime] = useState<{ items: OvertimeApprovalItem[]; holidays: CompanyHoliday[] } | null>(null)
+  const [overtime, setOvertime] = useState<{ items: OvertimeApprovalItem[] } | null>(null)
   const [overtimeRevision, setOvertimeRevision] = useState(0)
-  const canReadHolidays = permissions.has("holiday.read")
 
   useEffect(() => {
     if (initialEmployeeId === undefined || !canReadAll) return
@@ -66,17 +65,10 @@ export function AttendancePage({ initialTab, initialEmployeeId }: { initialTab?:
   useEffect(() => {
     let active = true
     workforceApi<OvertimeApprovalItem[]>("attendance/overtime/pending")
-      .then(async (items) => {
-        // The queue spans any month; its holidays set the minimum multiplier of each day.
-        const dates = items.map((item) => item.record.workDate).sort()
-        const holidays = canReadHolidays && dates.length > 0
-          ? await workforceApi<CompanyHoliday[]>(`company-holidays?from=${dates[0]}&to=${dates[dates.length - 1]}`)
-          : []
-        if (active) setOvertime({ items, holidays })
-      })
-      .catch(() => { if (active) setOvertime({ items: [], holidays: [] }) })
+      .then((items) => { if (active) setOvertime({ items }) })
+      .catch(() => { if (active) setOvertime({ items: [] }) })
     return () => { active = false }
-  }, [canReadHolidays, overtimeRevision])
+  }, [overtimeRevision])
 
   const showOvertime = (overtime?.items.length ?? 0) > 0
   // The overtime tab disappears once its last day is decided (or when a link asked for it and nothing waits).
@@ -120,7 +112,7 @@ export function AttendancePage({ initialTab, initialEmployeeId }: { initialTab?:
         )}
 
         {(tab === "overtime" || (!canReadOwn && !canReadAll)) && showOvertime && overtime && (
-          <OvertimeApprovals items={overtime.items} holidays={overtime.holidays}
+          <OvertimeApprovals items={overtime.items}
             onDecided={() => setOvertimeRevision((value) => value + 1)} />
         )}
 
