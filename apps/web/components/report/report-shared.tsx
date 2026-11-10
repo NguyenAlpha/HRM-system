@@ -59,7 +59,7 @@ export function MonthPicker({ month, onChange }: { month: string; onChange: (mon
   return (
     <div className="flex items-center gap-1">
       <Button type="button" variant="outline" size="icon-sm" aria-label="Tháng trước" onClick={() => shift(-1)}><ChevronLeft /></Button>
-      <MonthInput className="w-36" value={month} onChange={onChange} />
+      <MonthInput value={month} onChange={onChange} />
       <Button type="button" variant="outline" size="icon-sm" aria-label="Tháng sau" onClick={() => shift(1)}><ChevronRight /></Button>
     </div>
   )

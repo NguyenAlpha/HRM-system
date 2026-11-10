@@ -29,7 +29,7 @@ export function MonthInput({ id, value, onChange, className }: {
       setOpen(next)
     }}>
       <PopoverTrigger render={
-        <Button id={id} type="button" variant="outline" className={cn("justify-between font-normal tabular-nums", className)} />
+        <Button id={id} type="button" variant="outline" className={cn("font-normal tabular-nums", className)} />
       }>
         {value.slice(5, 7)}/{value.slice(0, 4)} <CalendarDays className="text-muted-foreground" />
       </PopoverTrigger>
