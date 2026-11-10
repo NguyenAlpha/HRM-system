@@ -14,6 +14,11 @@ export function EmployeePage() {
     canAssign: permissionCodes.has("employee.assignment.manage"),
     canConfirmProbation: permissionCodes.has("employee.probation.confirm"),
     canProvisionAccount: permissionCodes.has("account.provision"),
+    canReadAccount: permissionCodes.has("account.read"),
+    // The attendance page lives in the HRM portal only.
+    canReadAttendance: portal === "hrm" && permissionCodes.has("attendance.read"),
+    canManageLifecycle: permissionCodes.has("employee.lifecycle.manage"),
+    canDelete: permissionCodes.has("employee.delete"),
   }
 
   return (

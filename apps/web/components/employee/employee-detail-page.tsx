@@ -3,14 +3,14 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { ArrowLeft, BadgeCheck, BriefcaseBusiness, CalendarCheck, CalendarX, KeyRound, Loader2, LogOut, Pencil, RefreshCw, Trash2 } from "lucide-react"
-import { toast } from "sonner"
+import { ArrowLeft, BadgeCheck, BriefcaseBusiness, CalendarCheck, CalendarX, KeyRound, LogOut, Pencil, RefreshCw, Trash2 } from "lucide-react"
 
 import { todayIso } from "@/components/account/account-access"
 import { ACCOUNT_STATUS_LABELS } from "@/components/account/account-actions"
 import { ErrorAlert } from "@/components/common/list-controls"
 import { ActionsMenu, RowActionItem, RowActionLink } from "@/components/common/row-actions"
 import { usePortalSession } from "@/components/portal/portal-shell"
+import { EmployeeCancelEndDialog } from "@/components/employee/employee-cancel-end-dialog"
 import { EmployeeAssignmentDialog } from "@/components/employee/employee-assignment-dialog"
 import { EmployeeConfirmDialog } from "@/components/employee/employee-confirm-dialog"
 import { EmployeeCompensationCard } from "@/components/employee/employee-compensation-card"
@@ -18,16 +18,6 @@ import { EmployeeDeleteDialog } from "@/components/employee/employee-delete-dial
 import { EmployeeEditDialog } from "@/components/employee/employee-edit-dialog"
 import { EmployeeEmploymentEndDialog } from "@/components/employee/employee-employment-end-dialog"
 import { EmployeeSensitiveCard } from "@/components/employee/employee-sensitive-card"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -48,7 +38,6 @@ import {
 } from "@/components/ui/table"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import {
-  cancelScheduledEmploymentEnd,
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_END_LABELS,
   employeeRequest,
@@ -114,7 +103,6 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
   const [assigning, setAssigning] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [cancellingEnd, setCancellingEnd] = useState(false)
-  const [cancelBusy, setCancelBusy] = useState(false)
 
   const numericEmployeeId = Number(employeeId)
   const hasValidEmployeeId = /^\d+$/.test(employeeId)
@@ -157,22 +145,6 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
     setError(null)
     setRevision((value) => value + 1)
     invalidateEmployees()
-  }
-
-  async function cancelEnd() {
-    if (!detail) return
-    setCancelBusy(true)
-    try {
-      await cancelScheduledEmploymentEnd(detail.id)
-      toast.success(`Đã hủy lịch kết thúc làm việc của ${detail.fullName}`)
-      setCancellingEnd(false)
-      reload()
-    } catch (caught) {
-      if (isPortalSessionExpired(caught)) onSessionExpired()
-      toast.error("Không thể hủy lịch kết thúc", { description: apiErrorMessage(caught) })
-    } finally {
-      setCancelBusy(false)
-    }
   }
 
   const currentAssignment = detail?.currentAssignment ?? null
@@ -526,25 +498,14 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
         />
       )}
 
-      <AlertDialog open={cancellingEnd} onOpenChange={(open) => { if (!open && !cancelBusy) setCancellingEnd(false) }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Hủy lịch kết thúc làm việc?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {detail?.fullName} ({detail?.employeeCode}) sẽ tiếp tục làm việc, không còn ngày nghỉ việc
-              {detail?.terminationDate ? ` ${formatDate(detail.terminationDate)}` : ""}. Đơn xin nghỉ việc đã duyệt
-              (nếu có) cũng bị hủy.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={cancelBusy}>Đóng</AlertDialogCancel>
-            <AlertDialogAction disabled={cancelBusy} onClick={(event) => { event.preventDefault(); void cancelEnd() }}>
-              {cancelBusy && <Loader2 className="animate-spin" />}
-              Hủy lịch
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {cancellingEnd && detail && (
+        <EmployeeCancelEndDialog
+          employee={detail}
+          onClose={() => setCancellingEnd(false)}
+          onCancelled={reload}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
 
       {deleting && detail && (
         <EmployeeDeleteDialog

@@ -2,15 +2,18 @@
 
 import { useEffect, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { BadgeCheck, BriefcaseBusiness, Eye, KeyRound, Pencil, Plus } from "lucide-react"
+import { BadgeCheck, BriefcaseBusiness, CalendarCheck, CalendarX, Eye, KeyRound, LogOut, Pencil, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { ACCOUNT_STATUS_LABELS } from "@/components/account/account-actions"
 import { EmployeeAssignmentDialog } from "@/components/employee/employee-assignment-dialog"
+import { EmployeeCancelEndDialog } from "@/components/employee/employee-cancel-end-dialog"
 import { EmployeeConfirmDialog } from "@/components/employee/employee-confirm-dialog"
 import { EmployeeCreateDialog } from "@/components/employee/employee-create-dialog"
+import { EmployeeDeleteDialog } from "@/components/employee/employee-delete-dialog"
 import { EmployeeDetailDialog } from "@/components/employee/employee-detail-dialog"
 import { EmployeeEditDialog } from "@/components/employee/employee-edit-dialog"
+import { EmployeeEmploymentEndDialog } from "@/components/employee/employee-employment-end-dialog"
 import { EmployeeProvisionDialog } from "@/components/employee/employee-provision-dialog"
 import {
   ALL_OPTION,
@@ -44,6 +47,7 @@ import {
   EMPLOYMENT_STATUS_LABELS,
   fetchEmployeeDetail,
   invalidateEmployees,
+  isEmploymentEnded,
   type EmployeeDetail,
   type EmployeeFilters,
   type EmployeeSummary,
@@ -73,6 +77,10 @@ type EmployeeCapabilities = {
   canAssign: boolean
   canConfirmProbation: boolean
   canProvisionAccount: boolean
+  canReadAccount: boolean
+  canReadAttendance: boolean
+  canManageLifecycle: boolean
+  canDelete: boolean
 }
 
 export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
@@ -87,6 +95,10 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
     canAssign,
     canConfirmProbation,
     canProvisionAccount,
+    canReadAccount,
+    canReadAttendance,
+    canManageLifecycle,
+    canDelete,
   } = capabilities
   const canEdit = canReadDetail && canUpdate
   const [page, setPage] = useState(0)
@@ -97,6 +109,10 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
   const [provisioning, setProvisioning] = useState<EmployeeSummary | null>(null)
   const [assigning, setAssigning] = useState<EmployeeSummary | null>(null)
   const [confirming, setConfirming] = useState<EmployeeSummary | null>(null)
+  // Ending needs the detail (its scheduled end status), so it opens once the detail has loaded.
+  const [endingEmployment, setEndingEmployment] = useState<EmployeeDetail | null>(null)
+  const [cancellingEnd, setCancellingEnd] = useState<EmployeeSummary | null>(null)
+  const [deleting, setDeleting] = useState<EmployeeSummary | null>(null)
   const [filters, setFilters] = useState<EmployeeFilters>(EMPTY_FILTERS)
   const [sort, setSort] = useState<SortState>(DEFAULT_SORT)
   const [unitOptions, setUnitOptions] = useState<{ value: string; label: string }[]>([])
@@ -155,9 +171,9 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
     setEditing(detail)
   }
 
-  async function openEditFromList(employeeId: number) {
+  async function openWithDetail(employeeId: number, open: (detail: EmployeeDetail) => void) {
     try {
-      openEdit(await fetchEmployeeDetail(portal, employeeId))
+      open(await fetchEmployeeDetail(portal, employeeId))
     } catch (caught) {
       if (isPortalSessionExpired(caught)) onSessionExpired()
       toast.error("Không thể tải hồ sơ nhân sự", { description: apiErrorMessage(caught) })
@@ -308,13 +324,33 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
                         </RowActionLink>
                       )}
                       {canEdit && (
-                        <RowActionItem icon={Pencil} onClick={() => { void openEditFromList(employee.id) }}>Sửa hồ sơ</RowActionItem>
+                        <RowActionItem icon={Pencil} onClick={() => { void openWithDetail(employee.id, openEdit) }}>Sửa hồ sơ</RowActionItem>
+                      )}
+                      {employee.account && canReadAccount && (
+                        <RowActionLink icon={KeyRound} href={`${PORTAL_CONFIG[portal].pagePrefix}/accounts/${employee.account.id}`}>
+                          Xem tài khoản
+                        </RowActionLink>
+                      )}
+                      {canReadAttendance && (
+                        <RowActionLink icon={CalendarCheck} href={`/attendance?employeeId=${employee.id}`}>Xem chấm công</RowActionLink>
                       )}
                       {canAssign && (employee.employmentStatus === "ACTIVE" || employee.employmentStatus === "PROBATION") && (
                         <RowActionItem icon={BriefcaseBusiness} onClick={() => setAssigning(employee)}>Thay đổi phân công</RowActionItem>
                       )}
                       {canConfirmProbation && employee.employmentStatus === "PROBATION" && (
                         <RowActionItem icon={BadgeCheck} onClick={() => setConfirming(employee)}>Xác nhận chính thức</RowActionItem>
+                      )}
+                      {/* Someone still working with a last day set has a scheduled end. */}
+                      {canManageLifecycle && !isEmploymentEnded(employee.employmentStatus) && (
+                        <RowActionItem icon={LogOut} onClick={() => { void openWithDetail(employee.id, setEndingEmployment) }}>
+                          {employee.terminationDate ? "Đổi lịch kết thúc" : "Kết thúc làm việc"}
+                        </RowActionItem>
+                      )}
+                      {canManageLifecycle && !isEmploymentEnded(employee.employmentStatus) && employee.terminationDate && (
+                        <RowActionItem icon={CalendarX} onClick={() => setCancellingEnd(employee)}>Hủy lịch kết thúc</RowActionItem>
+                      )}
+                      {canDelete && (
+                        <RowActionItem icon={Trash2} destructive onClick={() => setDeleting(employee)}>Xóa hồ sơ</RowActionItem>
                       )}
                     </RowActionsCell>
                   </TableRow>
@@ -396,6 +432,33 @@ export function EmployeeManager({ portal, capabilities, onSessionExpired }: {
           employee={confirming}
           onClose={() => setConfirming(null)}
           onConfirmed={() => { setSheetRevision((value) => value + 1); reload() }}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
+
+      {endingEmployment && (
+        <EmployeeEmploymentEndDialog
+          employee={endingEmployment}
+          onClose={() => setEndingEmployment(null)}
+          onCompleted={() => { setSheetRevision((value) => value + 1); reload() }}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
+
+      {cancellingEnd && (
+        <EmployeeCancelEndDialog
+          employee={cancellingEnd}
+          onClose={() => setCancellingEnd(null)}
+          onCancelled={() => { setSheetRevision((value) => value + 1); reload() }}
+          onSessionExpired={onSessionExpired}
+        />
+      )}
+
+      {deleting && (
+        <EmployeeDeleteDialog
+          employee={deleting}
+          onClose={() => setDeleting(null)}
+          onDeleted={reload}
           onSessionExpired={onSessionExpired}
         />
       )}

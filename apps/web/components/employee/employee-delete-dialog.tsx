@@ -23,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { apiErrorMessage, isPortalSessionExpired } from "@/lib/api-helpers"
 import {
   softDeleteEmployee,
-  type EmployeeDetail,
+  type EmployeeSummary,
 } from "@/lib/employee"
 
 const deleteSchema = z.object({
@@ -33,7 +33,7 @@ const deleteSchema = z.object({
 type DeleteValues = z.infer<typeof deleteSchema>
 
 export function EmployeeDeleteDialog({ employee, onClose, onDeleted, onSessionExpired }: {
-  employee: EmployeeDetail
+  employee: Pick<EmployeeSummary, "id" | "fullName" | "employeeCode">
   onClose: () => void
   onDeleted: () => void
   onSessionExpired: () => void
