@@ -94,6 +94,9 @@ export function MyPayslipsPage() {
               <div className="flex flex-wrap gap-2">
                 <Button type="button" variant="outline" onClick={() => setSelected(latest)}><Eye /> Xem phiếu lương</Button>
                 <Button type="button" variant="outline" onClick={() => setExplaining(latest)}><Calculator /> Xem cách tính lương</Button>
+                {canReadAttendance && (
+                  <Button type="button" variant="outline" onClick={() => setAttendanceOf(latest)}><CalendarCheck /> Xem chấm công</Button>
+                )}
               </div>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-3">
