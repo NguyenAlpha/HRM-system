@@ -22,6 +22,7 @@ import {
   Landmark,
   LayoutDashboard,
   LogOut,
+  Menu,
   Network,
   PanelLeftClose,
   PanelLeftOpen,
@@ -31,6 +32,7 @@ import {
   UserCheck,
   UsersRound,
   Wallet,
+  X,
   type LucideIcon,
 } from "lucide-react"
 
@@ -91,6 +93,8 @@ export function PortalSidebar({ portal, account, branding, collapsed, onToggle }
   const pathname = usePathname()
   const router = useRouter()
   const [signingOut, setSigningOut] = useState(false)
+  // Phones hide the menu under the header; this opens it below the brand row.
+  const [menuOpen, setMenuOpen] = useState(false)
   // The home link only matches itself; every other link also covers its sub-pages.
   const navClass = (href: string) => {
     const active = href === PORTAL_CONFIG[portal].homePath
@@ -194,7 +198,7 @@ export function PortalSidebar({ portal, account, branding, collapsed, onToggle }
     ]).filter((navGroup) => navGroup.links.length > 0)
 
   return (
-    <aside className="portal-sidebar">
+    <aside className={`portal-sidebar ${menuOpen ? "menu-open" : ""}`}>
       <div className="brand sidebar-brand">
         <BrandMark branding={branding} />
         <span className="min-w-0"><strong className="truncate">{branding.name}</strong><small>{admin ? "Admin Console" : "People Workspace"}</small></span>
@@ -202,13 +206,18 @@ export function PortalSidebar({ portal, account, branding, collapsed, onToggle }
           aria-label={collapsed ? "Mở rộng menu" : "Thu gọn menu"} title={collapsed ? "Mở rộng menu" : "Thu gọn menu"}>
           {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
         </button>
+        <button type="button" className="sidebar-menu-toggle" onClick={() => setMenuOpen(!menuOpen)}
+          aria-expanded={menuOpen} aria-label={menuOpen ? "Đóng menu" : "Mở menu"} title={menuOpen ? "Đóng menu" : "Mở menu"}>
+          {menuOpen ? <X /> : <Menu />}
+        </button>
       </div>
       <nav aria-label="Điều hướng chính">
         {groups.map((navGroup) => (
           <div key={navGroup.title ?? "main"} className="nav-group">
             {navGroup.title && <p className="nav-group-title">{navGroup.title}</p>}
             {navGroup.links.map((link) => (
-              <Link key={link.href} className={navClass(link.href)} href={link.href} title={collapsed ? link.label : undefined}>
+              <Link key={link.href} className={navClass(link.href)} href={link.href} title={collapsed ? link.label : undefined}
+                onClick={() => setMenuOpen(false)}>
                 <NavIcon href={link.href} /><span className="nav-label">{link.label}</span>
               </Link>
             ))}

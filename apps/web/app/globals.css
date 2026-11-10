@@ -106,16 +106,21 @@ button:disabled { cursor: wait; opacity: 0.64; }
 .sidebar-brand > span:not(.brand-mark) { display: grid; flex: 1; gap: 0.05rem; }
 .sidebar-toggle { display: grid; width: 1.75rem; height: 1.75rem; flex: 0 0 auto; place-items: center; margin-left: auto; border: 0; border-radius: 0.5rem; color: var(--muted-ink); background: transparent; cursor: pointer; }
 .sidebar-toggle:hover { color: var(--foreground); background: var(--accent); }
-.sidebar-toggle svg { width: 1rem; height: 1rem; }
+.sidebar-toggle svg, .sidebar-menu-toggle svg { width: 1rem; height: 1rem; }
+/* Phones only: opens the menu below the brand row. */
+.sidebar-menu-toggle { display: none; width: 2rem; height: 2rem; flex: 0 0 auto; place-items: center; margin-left: auto; border: 0; border-radius: 0.5rem; color: var(--foreground); background: transparent; cursor: pointer; }
+.sidebar-menu-toggle:hover { background: var(--accent); }
 /* Collapsed: an icon rail; the brand mark, toggle, avatar and logout stack in the narrow column. */
-.portal-shell.sidebar-collapsed { grid-template-columns: 4rem minmax(0, 1fr); }
-.sidebar-collapsed .portal-sidebar { padding-inline: 0.5rem; }
-.sidebar-collapsed .sidebar-brand { flex-direction: column; gap: 0.5rem; padding: 0; }
-.sidebar-collapsed .sidebar-toggle { margin-left: 0; }
-.sidebar-collapsed .sidebar-brand > span:not(.brand-mark), .sidebar-collapsed .nav-group-title, .sidebar-collapsed .nav-label,
-.sidebar-collapsed .sidebar-account > span:nth-child(2) { display: none; }
-.sidebar-collapsed .nav-item { justify-content: center; padding-inline: 0; }
-.sidebar-collapsed .sidebar-account { flex-direction: column; gap: 0.5rem; padding-inline: 0; }
+@media (width > 48rem) {
+  .portal-shell.sidebar-collapsed { grid-template-columns: 4rem minmax(0, 1fr); }
+  .sidebar-collapsed .portal-sidebar { padding-inline: 0.5rem; }
+  .sidebar-collapsed .sidebar-brand { flex-direction: column; gap: 0.5rem; padding: 0; }
+  .sidebar-collapsed .sidebar-toggle { margin-left: 0; }
+  .sidebar-collapsed .sidebar-brand > span:not(.brand-mark), .sidebar-collapsed .nav-group-title, .sidebar-collapsed .nav-label,
+  .sidebar-collapsed .sidebar-account > span:nth-child(2) { display: none; }
+  .sidebar-collapsed .nav-item { justify-content: center; padding-inline: 0; }
+  .sidebar-collapsed .sidebar-account { flex-direction: column; gap: 0.5rem; padding-inline: 0; }
+}
 /* Content is centred and capped so tables and cards stay readable on wide screens. */
 .portal-content { width: 100%; max-width: 76rem; margin: 0 auto; padding: 2rem clamp(1.25rem, 3vw, 2.5rem) 4rem; }
 .dashboard-loading { display: grid; min-height: 100vh; place-content: center; justify-items: center; gap: 0.8rem; color: var(--muted-ink); }
@@ -126,7 +131,10 @@ button:disabled { cursor: wait; opacity: 0.64; }
 @media (max-width: 48rem) {
   .portal-shell, .portal-shell.sidebar-collapsed { display: block; }
   .portal-sidebar { position: static; display: block; width: 100%; height: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 1rem 1.25rem; }
-  .portal-sidebar nav, .sidebar-account { display: none; }
+  .portal-sidebar nav, .sidebar-account, .sidebar-toggle { display: none; }
+  .sidebar-menu-toggle { display: grid; }
+  .portal-sidebar.menu-open nav { display: grid; margin-bottom: 0; }
+  .portal-sidebar.menu-open .sidebar-account { display: flex; margin-top: 1rem; padding-top: 1rem; }
   .portal-content { padding: 2rem 1.25rem 4rem; }
 }
 @media (prefers-reduced-motion: reduce) {
