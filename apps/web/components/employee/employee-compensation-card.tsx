@@ -2,10 +2,11 @@
 
 import { useEffect, useState, type ReactNode } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { CalendarX, Eye, Loader2, Plus } from "lucide-react"
+import { Calculator, CalendarX, Eye, Loader2, Plus } from "lucide-react"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { PayslipDialog, payslipDeductions, periodLabel } from "@/components/payroll/payroll-shared"
+import { PayslipCalculationDialog } from "@/components/payroll/payslip-calculation-dialog"
 import { YearPicker } from "@/components/report/report-shared"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -224,6 +225,7 @@ export function EmployeeCompensationCard({ employeeId, hireDate, lastDay, permis
  */
 function PayslipsTab({ employeeId, onSelect }: { employeeId: number; onSelect: (slip: Payslip) => void }) {
   const [pickedYear, setPickedYear] = useState<number | null>(null)
+  const [explaining, setExplaining] = useState<Payslip | null>(null)
   const path = `payroll/employees/${employeeId}/payslips`
   // The newest payslip picks the year shown first (null: none yet).
   const latestQuery = useQuery({
@@ -259,10 +261,12 @@ function PayslipsTab({ employeeId, onSelect }: { employeeId: number; onSelect: (
             <TableCell className="text-right font-semibold tabular-nums">{money(slip.netPay)}</TableCell>
             <RowActionsCell label={periodLabel(slip.periodYear, slip.periodMonth)}>
               <RowActionItem icon={Eye} onClick={() => onSelect(slip)}>Xem phiếu lương</RowActionItem>
+              <RowActionItem icon={Calculator} onClick={() => setExplaining(slip)}>Xem cách tính lương</RowActionItem>
             </RowActionsCell>
           </TableRow>
         ))}
       </ListTable>
+      {explaining && <PayslipCalculationDialog payslip={explaining} onClose={() => setExplaining(null)} />}
     </>
   )
 }
