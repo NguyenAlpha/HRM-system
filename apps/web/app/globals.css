@@ -74,7 +74,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .brand small { color: inherit; font-size: 0.72rem; opacity: 0.64; }
 .eyebrow { margin: 0; color: var(--primary); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.16em; }
 
-button:disabled { cursor: wait; opacity: 0.64; }
+button:disabled { cursor: default; opacity: 0.64; }
 
 /* Authenticated portals */
 .portal-shell { display: grid; min-height: 100vh; grid-template-columns: 15rem minmax(0, 1fr); background: var(--canvas); }
