@@ -757,7 +757,7 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 
 | Permission | EMP | HRM | MGR | PAC | PAP | DIR | CO | SA |
 |:-----------|:---:|:---:|:---:|:---:|:---:|:---:|:--:|:--:|
-| `organization.read` | | ✓ | ✓ | | | ✓ | ✓ | ✓ |
+| `organization.read` | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `organization.manage` `(C)` | | | | | | | ✓ | ✓ |
 | `organization.company_owner.bootstrap` `(S)` `(C)` | | | | | | | | ✓ |
 | `company.manage` `(S)` `(C)` | | | | | | | ✓ | |

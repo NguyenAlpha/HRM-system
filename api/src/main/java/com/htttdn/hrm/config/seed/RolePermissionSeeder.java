@@ -94,7 +94,8 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "compensation.read",
             "compensation.manage",
             "payroll.calculate",
-            "report.payroll.read"
+            "report.payroll.read",
+            "organization.read"
         )),
         role("PAYROLL_APPROVER", List.of(
             "employee.list.read",
@@ -103,7 +104,8 @@ public class RolePermissionSeeder implements ApplicationRunner {
             "payroll.approve",
             "payroll.mark_paid",
             "payroll.lock",
-            "report.payroll.read"
+            "report.payroll.read",
+            "organization.read"
         )),
         role("DIRECTOR", List.of(
             "employee.list.read",
