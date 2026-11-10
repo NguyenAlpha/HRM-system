@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react"
+import Link from "next/link"
+import { ArrowLeft, ChevronLeft, ChevronRight, UserRound } from "lucide-react"
 
 import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
@@ -38,6 +39,7 @@ export function AttendancePage({ initialTab, initialEmployeeId }: { initialTab?:
   )
   const canReadOwn = !!self && permissions.has("attendance.self.read")
   const canReadAll = permissions.has("attendance.read")
+  const canReadEmployee = permissions.has("employee.read")
   const [month, setMonth] = useState(today().slice(0, 7))
   const defaultTab: Tab = canReadAll ? "sheet" : "mine"
   const [selectedTab, setTab] = useState<Tab>(initialTab ?? defaultTab)
@@ -130,6 +132,12 @@ export function AttendancePage({ initialTab, initialEmployeeId }: { initialTab?:
                 <ArrowLeft className="size-4" /> Bảng công tổng hợp
               </button>
               <span className="font-medium">{viewing.employeeCode} · {viewing.fullName}</span>
+              {canReadEmployee && (
+                <Button variant="outline" size="sm" className="ml-auto" nativeButton={false}
+                  render={<Link href={`/employees/${viewing.id}`} />}>
+                  <UserRound /> Hồ sơ nhân sự
+                </Button>
+              )}
             </div>
             <AttendanceSection employeeId={viewing.id} employeeLabel={`${viewing.employeeCode} · ${viewing.fullName}`}
               permissions={permissions} month={month} />
