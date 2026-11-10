@@ -32,6 +32,8 @@ import com.htttdn.hrm.service.payroll.PayrollService;
 import com.htttdn.hrm.service.payroll.PayslipCalculationService;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 import lombok.RequiredArgsConstructor;
 
@@ -65,7 +67,17 @@ public class PayrollController {
 
     @GetMapping(value = "/periods/{id}/export", produces = XLSX)
     public ResponseEntity<byte[]> export(@PathVariable Long id) {
-        PayrollExport export = exportService.exportPeriod(id);
+        return xlsx(exportService.exportPeriod(id));
+    }
+
+    /** One employee's payslips of a year as an XLSX sheet, a row per month; same access as listing them. */
+    @GetMapping(value = "/employees/{employeeId}/payslips/export", produces = XLSX)
+    public ResponseEntity<byte[]> exportEmployeePayslips(@PathVariable Long employeeId,
+        @RequestParam @Min(2000) @Max(9999) int year) {
+        return xlsx(exportService.exportEmployeeYear(employeeId, (short) year));
+    }
+
+    private static ResponseEntity<byte[]> xlsx(PayrollExport export) {
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION,
                 ContentDisposition.attachment().filename(export.fileName()).build().toString())

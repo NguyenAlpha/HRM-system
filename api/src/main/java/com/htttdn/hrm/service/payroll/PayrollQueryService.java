@@ -6,6 +6,7 @@ import java.util.Set;
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -87,19 +88,31 @@ public class PayrollQueryService {
     @PreAuthorize("hasAnyAuthority('payroll.self.read', 'report.payroll.read')")
     public Page<PayslipResponse> listPayslipsForEmployee(Long employeeId, Short year, Pageable pageable) {
         SearchPatterns.requireSortable(pageable, PAYSLIP_SORTABLE);
+        return findPayslipsForEmployee(employeeId, year, pageable).map(payrollMapper::toResponse);
+    }
+
+    /**
+     * One employee's payslips of a year, January first, for the yearly payroll sheet: the same payslips
+     * {@link #listPayslipsForEmployee} lists, with the same access rules.
+     */
+    @PreAuthorize("hasAnyAuthority('payroll.self.read', 'report.payroll.read')")
+    public List<Payslip> listPayslipEntitiesForEmployeeYear(Long employeeId, short year) {
+        return findPayslipsForEmployee(employeeId, year, Pageable.unpaged(Sort.by("payrollPeriod.periodStart")))
+            .getContent();
+    }
+
+    private Page<Payslip> findPayslipsForEmployee(Long employeeId, Short year, Pageable pageable) {
         requirePayslipAccess(employeeId);
         if (currentAccountProvider.hasAuthority("report.payroll.read")
             && !currentAccountProvider.account().belongsTo(employeeId)) {
-            return (year == null
+            return year == null
                 ? payslipRepository.findByEmployeeId(employeeId, pageable)
-                : payslipRepository.findByEmployeeIdAndPayrollPeriodYear(employeeId, year, pageable))
-                .map(payrollMapper::toResponse);
+                : payslipRepository.findByEmployeeIdAndPayrollPeriodYear(employeeId, year, pageable);
         }
-        return (year == null
+        return year == null
             ? payslipRepository.findByEmployeeIdAndPayrollPeriodStatusIn(employeeId, PayrollPeriodStatus.RELEASED, pageable)
             : payslipRepository.findByEmployeeIdAndPayrollPeriodYearAndPayrollPeriodStatusIn(employeeId, year,
-                PayrollPeriodStatus.RELEASED, pageable))
-            .map(payrollMapper::toResponse);
+                PayrollPeriodStatus.RELEASED, pageable);
     }
 
     private void requirePayslipAccess(Long employeeId) {

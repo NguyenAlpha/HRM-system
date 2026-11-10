@@ -1028,6 +1028,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payroll/employees/{employeeId}/payslips/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["exportEmployeePayslips"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/payroll/payslips/{id}": {
         parameters: {
             query?: never;
@@ -6092,6 +6108,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultPagedResultPayslipResponse"];
+                };
+            };
+        };
+    };
+    exportEmployeePayslips: {
+        parameters: {
+            query: {
+                year: number;
+            };
+            header?: never;
+            path: {
+                employeeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
                 };
             };
         };

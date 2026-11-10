@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Calculator, CalendarCheck, Eye, Printer } from "lucide-react"
+import { Calculator, CalendarCheck, Eye, FileSpreadsheet, Printer } from "lucide-react"
 
-import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
+import { ActionsMenu, RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
   CompanyPrintHeader,
   MY_PAYSLIPS_KEY,
@@ -23,8 +23,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { EmptyRow, SectionError, money, workforceApi } from "@/components/workforce/workforce-shared"
+import { EmptyRow, SectionError, money, useWorkforceAction, workforceApi } from "@/components/workforce/workforce-shared"
 import { apiErrorMessage } from "@/lib/api-helpers"
+import { authorizedDownload } from "@/lib/auth/client"
 import type { Page } from "@/lib/pagination"
 import type { Payslip } from "@/lib/workforce"
 
@@ -113,7 +114,7 @@ export function MyPayslipsPage() {
         )}
 
         {latest && year !== undefined && (
-          <YearlyPayrollCard year={year} maxYear={latest.periodYear} payslips={payslips}
+          <YearlyPayrollCard employeeId={latest.employeeId} year={year} maxYear={latest.periodYear} payslips={payslips}
             onYearChange={setPickedYear} printable={!selected} />
         )}
 
@@ -188,11 +189,12 @@ const YEAR_COLUMNS: [string, (slip: Payslip) => number][] = [
 ]
 
 /**
- * A year of released payslips as one sheet: a line per month, the year's total under it, printable.
- * `payslips` are that year's, undefined while they load.
+ * A year of released payslips as one sheet: a line per month, the year's total under it, printable or
+ * downloadable as XLSX. `payslips` are that year's, undefined while they load.
  * `printable` is off while a payslip is open so printing then gives just that slip.
  */
-function YearlyPayrollCard({ year, maxYear, payslips, onYearChange, printable }: {
+function YearlyPayrollCard({ employeeId, year, maxYear, payslips, onYearChange, printable }: {
+  employeeId: number
   year: number
   maxYear: number
   payslips: Payslip[] | undefined
@@ -205,6 +207,7 @@ function YearlyPayrollCard({ year, maxYear, payslips, onYearChange, printable }:
     slip: slips.find((slip) => slip.periodMonth === index + 1),
   }))
   const first = slips[0]
+  const { busy, run } = useWorkforceAction(() => undefined)
 
   return (
     <Card className={printable ? "print-area" : undefined}>
@@ -217,9 +220,14 @@ function YearlyPayrollCard({ year, maxYear, payslips, onYearChange, printable }:
         </CardDescription>
         <CardAction className="flex items-center gap-2 print:hidden">
           <YearPicker year={year} maxYear={maxYear} onChange={onYearChange} />
-          <Button type="button" variant="outline" size="sm" onClick={() => window.print()} disabled={slips.length === 0}>
-            <Printer /> In bảng lương năm
-          </Button>
+          <ActionsMenu label={`bảng lương năm ${year}`} trigger={<><Printer /> In bảng lương năm</>}
+            disabled={slips.length === 0 || busy}>
+            <RowActionItem icon={Printer} onClick={() => window.print()}>In</RowActionItem>
+            <RowActionItem icon={FileSpreadsheet} onClick={() => void run("Đã tải bảng lương năm",
+              () => authorizedDownload("hrm", `/workforce/payroll/employees/${employeeId}/payslips/export?year=${year}`))}>
+              Xuất XLSX
+            </RowActionItem>
+          </ActionsMenu>
         </CardAction>
       </CardHeader>
       <CardContent>

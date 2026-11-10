@@ -2822,6 +2822,44 @@
         "tags" : [ "payroll-controller" ]
       }
     },
+    "/api/payroll/employees/{employeeId}/payslips/export" : {
+      "get" : {
+        "operationId" : "exportEmployeePayslips",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "employeeId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "in" : "query",
+          "name" : "year",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 9999,
+            "minimum" : 2000
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "payroll-controller" ]
+      }
+    },
     "/api/payroll/payslips/{id}" : {
       "get" : {
         "operationId" : "payslip",

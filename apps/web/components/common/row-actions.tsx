@@ -28,18 +28,30 @@ export function RowActionsCell({ label, children }: { label: string; children?: 
 
 /**
  * The "…" button and its menu on their own, for secondary actions outside a table (e.g. a page header).
- * `outline` gives the bordered button used next to other header buttons.
+ * `outline` gives the bordered button used next to other header buttons. `trigger` replaces the "…"
+ * with a labelled outline button, for a single action that offers several ways (e.g. print or export).
  */
-export function ActionsMenu({ label, outline = false, children }: { label: string; outline?: boolean; children: ReactNode }) {
+export function ActionsMenu({ label, outline = false, trigger, disabled, children }: {
+  label: string
+  outline?: boolean
+  trigger?: ReactNode
+  disabled?: boolean
+  children: ReactNode
+}) {
   return (
     <Menu.Root>
-      <Menu.Trigger
-        aria-label={`Mở menu thao tác cho ${label}`}
-        title="Thao tác"
-        render={<Button type="button" variant={outline ? "outline" : "ghost"} size={outline ? "icon" : "icon-sm"} />}
-      >
-        <Ellipsis />
-      </Menu.Trigger>
+      {trigger ? (
+        <Menu.Trigger disabled={disabled} render={<Button type="button" variant="outline" size="sm" />}>{trigger}</Menu.Trigger>
+      ) : (
+        <Menu.Trigger
+          aria-label={`Mở menu thao tác cho ${label}`}
+          title="Thao tác"
+          disabled={disabled}
+          render={<Button type="button" variant={outline ? "outline" : "ghost"} size={outline ? "icon" : "icon-sm"} />}
+        >
+          <Ellipsis />
+        </Menu.Trigger>
+      )}
       <Menu.Portal>
         <Menu.Positioner side="bottom" align="end" sideOffset={4} className="isolate z-50">
           <Menu.Popup className="min-w-44 origin-(--transform-origin) rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95">

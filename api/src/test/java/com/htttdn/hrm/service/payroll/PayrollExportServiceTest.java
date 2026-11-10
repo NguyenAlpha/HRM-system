@@ -40,6 +40,7 @@ class PayrollExportServiceTest {
     @Mock private PayrollPeriodRepository payrollPeriodRepository;
     @Mock private PayslipRepository payslipRepository;
     @Mock private EmployeeAccessScopeService employeeAccessScopeService;
+    @Mock private PayrollQueryService payrollQueryService;
 
     @Test
     void exportWritesOneRowPerPayslipSortedByCodeAndATotalRow() throws IOException {
@@ -61,6 +62,25 @@ class PayrollExportServiceTest {
         assertTrue(strings.contains("Tổng cộng"));
         // Net pay is the 21st column (U); the total row sums rows 2..3.
         assertTrue(sheet.contains("SUM(U2:U3)"), sheet);
+    }
+
+    @Test
+    void yearlyExportWritesOneRowPerMonthLedByTheMonth() throws IOException {
+        Payslip january = payslip("NV001", "Nguyễn Văn A", "11000000");
+        january.setPayrollPeriod(PayrollPeriod.builder().year((short) 2026).month((short) 1).build());
+        Payslip february = payslip("NV001", "Nguyễn Văn A", "9000000");
+        february.setPayrollPeriod(PayrollPeriod.builder().year((short) 2026).month((short) 2).build());
+        when(payrollQueryService.listPayslipEntitiesForEmployeeYear(7L, (short) 2026)).thenReturn(List.of(january, february));
+
+        var export = service().exportEmployeeYear(7L, (short) 2026);
+
+        assertEquals("bang-luong-NV001-2026.xlsx", export.fileName());
+        Map<String, String> parts = unzip(export.content());
+        String sheet = parts.get("xl/worksheets/sheet1.xml");
+        String strings = parts.getOrDefault("xl/sharedStrings.xml", "") + sheet;
+        assertTrue(strings.indexOf("01/2026") < strings.indexOf("02/2026"), "a row per month, January first");
+        // The month column shifts net pay to the 22nd column (V).
+        assertTrue(sheet.contains("SUM(V2:V3)"), sheet);
     }
 
     @Test
@@ -114,6 +134,6 @@ class PayrollExportServiceTest {
     }
 
     private PayrollExportService service() {
-        return new PayrollExportService(payrollPeriodRepository, payslipRepository, employeeAccessScopeService);
+        return new PayrollExportService(payrollPeriodRepository, payslipRepository, employeeAccessScopeService, payrollQueryService);
     }
 }

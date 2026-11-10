@@ -6,6 +6,7 @@ import java.io.UncheckedIOException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import com.htttdn.hrm.service.rbac.EmployeeAccessScopeService;
 import org.dhatim.fastexcel.Workbook;
@@ -21,7 +22,10 @@ import com.htttdn.hrm.repository.PayslipRepository;
 
 import lombok.RequiredArgsConstructor;
 
-/** Writes every payslip of one payroll period to a single XLSX sheet, one row per employee. */
+/**
+ * Writes payslips to a single XLSX sheet with a total row: every payslip of one payroll period, one row
+ * per employee, or one employee's payslips of a year, one row per month.
+ */
 @Service
 @RequiredArgsConstructor
 public class PayrollExportService {
@@ -53,9 +57,16 @@ public class PayrollExportService {
         new Column("Thực nhận", Payslip::getNetPay, true)
     );
 
+    /** The yearly sheet leads with the month; the other columns are the period sheet's. */
+    private static final List<Column> YEAR_COLUMNS = Stream.concat(
+        Stream.of(new Column("Tháng", payslip -> "%02d/%d".formatted(
+            payslip.getPayrollPeriod().getMonth(), payslip.getPayrollPeriod().getYear()), false)),
+        COLUMNS.stream()).toList();
+
     private final PayrollPeriodRepository payrollPeriodRepository;
     private final PayslipRepository payslipRepository;
     private final EmployeeAccessScopeService employeeAccessScopeService;
+    private final PayrollQueryService payrollQueryService;
 
     public record PayrollExport(String fileName, byte[] content) {}
 
@@ -68,21 +79,34 @@ public class PayrollExportService {
             .sorted(Comparator.comparing(Payslip::getEmployeeCodeSnapshot))
             .toList();
         String label = "%d-%02d".formatted(period.getYear(), period.getMonth());
-        return new PayrollExport("bang-luong-" + label + ".xlsx", write("Bảng lương " + label, payslips));
+        return new PayrollExport("bang-luong-" + label + ".xlsx", write("Bảng lương " + label, COLUMNS, payslips));
     }
 
-    private byte[] write(String sheetName, List<Payslip> payslips) {
+    /**
+     * One employee's payslips of a year, a row per month: the same payslips their payslip list shows the
+     * caller, so an employee's own sheet holds released months only.
+     */
+    @PreAuthorize("hasAnyAuthority('payroll.self.read', 'report.payroll.read')")
+    @Transactional(readOnly = true)
+    public PayrollExport exportEmployeeYear(Long employeeId, short year) {
+        List<Payslip> payslips = payrollQueryService.listPayslipEntitiesForEmployeeYear(employeeId, year);
+        String code = payslips.isEmpty() ? String.valueOf(employeeId) : payslips.getFirst().getEmployeeCodeSnapshot();
+        return new PayrollExport("bang-luong-%s-%d.xlsx".formatted(code, year),
+            write("Bảng lương " + year, YEAR_COLUMNS, payslips));
+    }
+
+    private byte[] write(String sheetName, List<Column> columns, List<Payslip> payslips) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
             Workbook workbook = new Workbook(out, "HRM", "1.0");
             Worksheet sheet = workbook.newWorksheet(sheetName);
-            for (int col = 0; col < COLUMNS.size(); col++) {
-                sheet.value(0, col, COLUMNS.get(col).header());
+            for (int col = 0; col < columns.size(); col++) {
+                sheet.value(0, col, columns.get(col).header());
                 sheet.style(0, col).bold().set();
             }
             for (int i = 0; i < payslips.size(); i++) {
-                for (int col = 0; col < COLUMNS.size(); col++) {
-                    Object value = COLUMNS.get(col).value().apply(payslips.get(i));
+                for (int col = 0; col < columns.size(); col++) {
+                    Object value = columns.get(col).value().apply(payslips.get(i));
                     if (value instanceof Number number) {
                         sheet.value(i + 1, col, number);
                     } else if (value != null) {
@@ -90,7 +114,7 @@ public class PayrollExportService {
                     }
                 }
             }
-            writeTotals(sheet, payslips.size());
+            writeTotals(sheet, columns, payslips.size());
             sheet.freezePane(2, 1);
             workbook.finish();
         } catch (IOException exception) {
@@ -100,12 +124,12 @@ public class PayrollExportService {
     }
 
     /** Adds a SUM row under the money columns and applies the money format to them. */
-    private void writeTotals(Worksheet sheet, int rowCount) {
+    private void writeTotals(Worksheet sheet, List<Column> columns, int rowCount) {
         int totalRow = rowCount + 1;
         sheet.value(totalRow, 0, "Tổng cộng");
         sheet.style(totalRow, 0).bold().set();
-        for (int col = 0; col < COLUMNS.size(); col++) {
-            if (!COLUMNS.get(col).money()) {
+        for (int col = 0; col < columns.size(); col++) {
+            if (!columns.get(col).money()) {
                 continue;
             }
             String letter = columnLetter(col);
