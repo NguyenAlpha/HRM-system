@@ -48,7 +48,7 @@ export function PermissionManager({ portal, onSessionExpired }: { portal: Portal
 
   useEffect(() => {
     let active = true
-    rbacRequest<Page<Permission>>(portal, `/permissions?page=${page}&size=10&sort=id,desc${moduleFilter ? `&module=${moduleFilter}` : ""}`)
+    rbacRequest<Page<Permission>>(portal, `/permissions?page=${page}&size=20&sort=id,desc${moduleFilter ? `&module=${moduleFilter}` : ""}`)
       .then((result) => {
         if (!active) return
         if (page > 0 && page >= result.totalPages) {
@@ -77,7 +77,7 @@ export function PermissionManager({ portal, onSessionExpired }: { portal: Portal
           </CardDescription>
         </div>
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent className="grid grid-cols-1 gap-4">
         <ErrorAlert error={error} />
 
         <Select
@@ -114,14 +114,13 @@ export function PermissionManager({ portal, onSessionExpired }: { portal: Portal
                 <TableHead>Module</TableHead>
                 <TableHead>Chính sách gán</TableHead>
                 <TableHead>Mô tả</TableHead>
-                <TableHead>Trạng thái</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading &&
                 Array.from({ length: 5 }).map((_, index) => (
                   <TableRow key={index}>
-                    {Array.from({ length: 6 }).map((__, cell) => (
+                    {Array.from({ length: 5 }).map((__, cell) => (
                       <TableCell key={cell}><Skeleton className="h-4 w-full" /></TableCell>
                     ))}
                   </TableRow>
@@ -130,13 +129,13 @@ export function PermissionManager({ portal, onSessionExpired }: { portal: Portal
               {!loading && data?.content.map((permission) => (
                 <TableRow key={permission.id}>
                   <TableCell>
-                    <code className="text-xs">{permission.code}</code>
+                    <code className="block text-xs md:max-w-36 md:truncate" title={permission.code}>{permission.code}</code>
                     <span className="block text-xs text-muted-foreground">#{permission.id}</span>
                   </TableCell>
                   <TableCell className="font-medium">
-                    {permission.name}
+                    <span className="block">{permission.name}</span>
                     {permission.companyWide && (
-                      <Badge variant="outline" className="ml-1.5" title={COMPANY_WIDE_PERMISSION_HINT}>Toàn công ty</Badge>
+                      <Badge variant="outline" className="mt-1" title={COMPANY_WIDE_PERMISSION_HINT}>Toàn công ty</Badge>
                     )}
                   </TableCell>
                   <TableCell><Badge variant="secondary">{permission.module}</Badge></TableCell>
@@ -145,18 +144,13 @@ export function PermissionManager({ portal, onSessionExpired }: { portal: Portal
                       {permission.assignmentPolicy === "DELEGABLE" ? "Có thể ủy quyền" : "Chỉ system role"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="max-w-xs text-sm text-muted-foreground text-wrap">{permission.description}</TableCell>
-                  <TableCell>
-                    <Badge variant={permission.isActive ? "secondary" : "outline"}>
-                      {permission.isActive ? "Hoạt động" : "Tạm tắt"}
-                    </Badge>
-                  </TableCell>
+                  <TableCell className="max-w-xs min-w-56 text-sm text-muted-foreground whitespace-normal break-words">{permission.description}</TableCell>
                 </TableRow>
               ))}
 
               {!loading && data?.content.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                     Chưa có quyền trong danh sách này.
                   </TableCell>
                 </TableRow>
