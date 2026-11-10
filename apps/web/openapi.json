@@ -7321,6 +7321,36 @@
         },
         "required" : [ "effectiveFrom", "employmentType", "organizationUnitId", "positionId", "workLocationId" ]
       },
+      "AssignmentShiftResponse" : {
+        "type" : "object",
+        "properties" : {
+          "breakMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "breakStartTime" : {
+            "type" : [ "string", "null" ]
+          },
+          "crossesMidnight" : {
+            "type" : "boolean"
+          },
+          "endTime" : {
+            "type" : "string"
+          },
+          "graceLateMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "standardWorkMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "startTime" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "breakMinutes", "breakStartTime", "crossesMidnight", "endTime", "graceLateMinutes", "standardWorkMinutes", "startTime" ]
+      },
       "AttendanceRecordResponse" : {
         "type" : "object",
         "properties" : {
@@ -8371,6 +8401,13 @@
           "positionTitle" : {
             "type" : "string"
           },
+          "shift" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/AssignmentShiftResponse"
+            }, {
+              "type" : "null"
+            } ]
+          },
           "shiftId" : {
             "type" : [ "integer", "null" ],
             "format" : "int64"
@@ -8386,7 +8423,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "effectiveFrom", "effectiveTo", "employeeId", "employmentType", "id", "isPrimary", "managerEmployeeId", "managerEmployeeName", "organizationUnitId", "organizationUnitName", "positionId", "positionTitle", "shiftId", "shiftName", "workLocationId", "workLocationName" ]
+        "required" : [ "effectiveFrom", "effectiveTo", "employeeId", "employmentType", "id", "isPrimary", "managerEmployeeId", "managerEmployeeName", "organizationUnitId", "organizationUnitName", "positionId", "positionTitle", "shift", "shiftId", "shiftName", "workLocationId", "workLocationName" ]
       },
       "EmployeeBalanceView" : {
         "type" : "object",

@@ -7,6 +7,7 @@ import { toast } from "sonner"
 
 import { PhoneInput } from "@/components/common/phone-input"
 import { InfoField } from "@/components/employee/employee-detail-page"
+import { ShiftName } from "@/components/employee/shift-name"
 import { formatDate } from "@/lib/format-date"
 import { PageHeader } from "@/components/portal/page-header"
 import { roleScope } from "@/components/portal/portal-dashboard"
@@ -145,7 +146,9 @@ export function MyProfilePage() {
                         <InfoField label="Chức danh" value={assignment.positionTitle} />
                         <InfoField label="Quản lý trực tiếp" value={assignment.managerEmployeeName} />
                         <InfoField label="Địa điểm" value={assignment.workLocationName} />
-                        <InfoField label="Ca làm việc" value={assignment.shiftName} />
+                        <InfoField label="Ca làm việc" value={assignment.shiftName && assignment.shift
+                          ? <ShiftName name={assignment.shiftName} shift={assignment.shift} />
+                          : assignment.shiftName} />
                         <InfoField label="Loại hợp đồng" value={EMPLOYMENT_TYPE_LABELS[assignment.employmentType]} />
                       </dl>
                     )

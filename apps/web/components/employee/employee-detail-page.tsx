@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { ArrowLeft, BadgeCheck, BriefcaseBusiness, CalendarCheck, CalendarX, KeyRound, LogOut, Pencil, RefreshCw, Trash2 } from "lucide-react"
 
 import { todayIso } from "@/components/account/account-access"
@@ -18,6 +18,7 @@ import { EmployeeDeleteDialog } from "@/components/employee/employee-delete-dial
 import { EmployeeEditDialog } from "@/components/employee/employee-edit-dialog"
 import { EmployeeEmploymentEndDialog } from "@/components/employee/employee-employment-end-dialog"
 import { EmployeeSensitiveCard } from "@/components/employee/employee-sensitive-card"
+import { ShiftName } from "@/components/employee/shift-name"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -53,7 +54,7 @@ import {
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import { formatDate } from "@/lib/format-date"
 
-export function InfoField({ label, value }: { label: string; value: string | null | undefined }) {
+export function InfoField({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="min-w-0">
       <dt className="text-xs text-muted-foreground">{label}</dt>
@@ -357,7 +358,9 @@ export function EmployeeDetailPage({ employeeId }: { employeeId: string }) {
                       <InfoField label="Đơn vị tổ chức" value={currentAssignment.organizationUnitName} />
                       <InfoField label="Chức danh" value={currentAssignment.positionTitle} />
                       <InfoField label="Địa điểm" value={currentAssignment.workLocationName} />
-                      <InfoField label="Ca làm việc" value={currentAssignment.shiftName} />
+                      <InfoField label="Ca làm việc" value={currentAssignment.shiftName && currentAssignment.shift
+                        ? <ShiftName name={currentAssignment.shiftName} shift={currentAssignment.shift} />
+                        : currentAssignment.shiftName} />
                       <InfoField label="Quản lý trực tiếp" value={currentAssignment.managerEmployeeName} />
                       <InfoField
                         label="Loại hình"

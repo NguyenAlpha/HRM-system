@@ -2520,6 +2520,18 @@ export interface components {
             /** Format: int64 */
             workLocationId: number;
         };
+        AssignmentShiftResponse: {
+            /** Format: int32 */
+            breakMinutes: number;
+            breakStartTime: string | null;
+            crossesMidnight: boolean;
+            endTime: string;
+            /** Format: int32 */
+            graceLateMinutes: number;
+            /** Format: int32 */
+            standardWorkMinutes: number;
+            startTime: string;
+        };
         AttendanceRecordResponse: {
             /** Format: date-time */
             checkInAt: string | null;
@@ -2891,6 +2903,7 @@ export interface components {
             /** Format: int64 */
             positionId: number;
             positionTitle: string;
+            shift: components["schemas"]["AssignmentShiftResponse"] | null;
             /** Format: int64 */
             shiftId: number | null;
             shiftName: string | null;

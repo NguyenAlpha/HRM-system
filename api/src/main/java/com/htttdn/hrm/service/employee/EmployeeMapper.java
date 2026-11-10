@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import org.springframework.stereotype.Component;
 
 import com.htttdn.hrm.dto.response.employee.EmployeeAccountSummaryResponse;
+import com.htttdn.hrm.dto.response.employee.AssignmentShiftResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeAssignmentResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeDetailResponse;
 import com.htttdn.hrm.dto.response.employee.EmployeeSummaryResponse;
@@ -90,6 +91,15 @@ public class EmployeeMapper {
             position.getTitle(),
             shift == null ? null : shift.getId(),
             shift == null ? null : shift.getName(),
+            shift == null ? null : new AssignmentShiftResponse(
+                shift.getStartTime(),
+                shift.getEndTime(),
+                shift.getBreakMinutes(),
+                shift.getBreakStartTime(),
+                shift.getStandardWorkMinutes(),
+                shift.getGraceLateMinutes(),
+                shift.getCrossesMidnight()
+            ),
             manager == null ? null : manager.getId(),
             manager == null ? null : manager.getFullName(),
             assignment.getEmploymentType(),

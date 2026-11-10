@@ -153,6 +153,7 @@ Client lấy `organizationUnitId`, `workLocationId` và `positionId` từ [Organ
       "positionTitle": "Chuyên viên nhân sự",
       "shiftId": null,
       "shiftName": null,
+      "shift": null,
       "managerEmployeeId": 50,
       "managerEmployeeName": "Trần Văn Bình",
       "employmentType": "FULL_TIME",
@@ -233,6 +234,15 @@ Các bộ lọc kết hợp theo AND và luôn nằm trong phạm vi dữ liệu
           "positionTitle": "Chuyên viên nhân sự",
           "shiftId": 1,
           "shiftName": "Ca hành chính",
+          "shift": {
+            "startTime": "08:00:00",
+            "endTime": "17:00:00",
+            "breakMinutes": 60,
+            "breakStartTime": "12:00:00",
+            "standardWorkMinutes": 480,
+            "graceLateMinutes": 5,
+            "crossesMidnight": false
+          },
           "managerEmployeeId": 50,
           "managerEmployeeName": "Trần Văn Bình",
           "employmentType": "FULL_TIME",
@@ -370,6 +380,15 @@ Endpoint không trả CCCD, email cá nhân, địa chỉ, mã số thuế hoặ
       "positionTitle": "Nhân viên",
       "shiftId": 2,
       "shiftName": "Ca hành chính",
+      "shift": {
+        "startTime": "08:00:00",
+        "endTime": "17:00:00",
+        "breakMinutes": 60,
+        "breakStartTime": "12:00:00",
+        "standardWorkMinutes": 480,
+        "graceLateMinutes": 5,
+        "crossesMidnight": false
+      },
       "managerEmployeeId": 50,
       "managerEmployeeName": "Trần Văn Bình",
       "employmentType": "FULL_TIME",
@@ -679,6 +698,15 @@ Endpoint chỉ trả employee nằm trong scope `employee.assignment.read` của
       "positionTitle": "Quản lý vận hành",
       "shiftId": 1,
       "shiftName": "Ca hành chính",
+      "shift": {
+        "startTime": "08:00:00",
+        "endTime": "17:00:00",
+        "breakMinutes": 60,
+        "breakStartTime": "12:00:00",
+        "standardWorkMinutes": 480,
+        "graceLateMinutes": 5,
+        "crossesMidnight": false
+      },
       "managerEmployeeId": 40,
       "managerEmployeeName": "Lê Văn Cường",
       "employmentType": "FULL_TIME",
@@ -697,6 +725,15 @@ Endpoint chỉ trả employee nằm trong scope `employee.assignment.read` của
       "positionTitle": "Chuyên viên nhân sự",
       "shiftId": 1,
       "shiftName": "Ca hành chính",
+      "shift": {
+        "startTime": "08:00:00",
+        "endTime": "17:00:00",
+        "breakMinutes": 60,
+        "breakStartTime": "12:00:00",
+        "standardWorkMinutes": 480,
+        "graceLateMinutes": 5,
+        "crossesMidnight": false
+      },
       "managerEmployeeId": 35,
       "managerEmployeeName": "Nguyễn Thị Hoa",
       "employmentType": "FULL_TIME",
@@ -709,7 +746,7 @@ Endpoint chỉ trả employee nằm trong scope `employee.assignment.read` của
 }
 ```
 
-Mỗi quan hệ danh mục trả cả ID kỹ thuật và tên hiển thị tại thời điểm đọc (`organizationUnitName`, `workLocationName`, `positionTitle`, `shiftName`, `managerEmployeeName`), nên client không cần gọi từng API chi tiết chỉ để dựng bảng lịch sử.
+Mỗi quan hệ danh mục trả cả ID kỹ thuật và tên hiển thị tại thời điểm đọc (`organizationUnitName`, `workLocationName`, `positionTitle`, `shiftName`, `managerEmployeeName`), nên client không cần gọi từng API chi tiết chỉ để dựng bảng lịch sử. Ca còn kèm giờ làm trong `shift` (giờ vào/ra, nghỉ giữa ca, công chuẩn, số phút được đi muộn; `null` khi chưa xếp ca), để nhân viên xem được ca của mình mà không cần `organization.read`. Đây là thông số **hiện tại** của ca: phân công cũ cũng hiện giờ mới nếu ca đã bị sửa.
 
 ---
 

@@ -17,6 +17,8 @@ public record EmployeeAssignmentResponse(
     String positionTitle,
     @Nullable Long shiftId,
     @Nullable String shiftName,
+    /** Hours of the shift, null when none is assigned. */
+    @Nullable AssignmentShiftResponse shift,
     @Nullable Long managerEmployeeId,
     @Nullable String managerEmployeeName,
     EmploymentType employmentType,
