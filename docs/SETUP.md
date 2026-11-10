@@ -219,7 +219,8 @@ Thực hiện lần lượt:
 3. Kiểm tra dashboard hiển thị account, role và permission.
 4. Thử refresh session và đăng xuất để kiểm tra cookie/session hoạt động.
 
-Chạy toàn bộ test backend:
+Chạy toàn bộ test backend (danh mục test, chạy trên database tạm và quy ước viết test: xem
+[api/docs/TESTING.md](../api/docs/TESTING.md)):
 
 ```powershell
 Set-Location api

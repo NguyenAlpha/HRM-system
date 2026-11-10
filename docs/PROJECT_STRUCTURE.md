@@ -215,6 +215,8 @@ Next.js Web :3000
 
 ## 5. Tests và kiểm tra chất lượng
 
+Cách chạy, các loại test và danh mục từng lớp test: [api/docs/TESTING.md](../api/docs/TESTING.md).
+
 Backend tests nằm trong `api/src/test/java/`, bao gồm:
 
 - Application context.
