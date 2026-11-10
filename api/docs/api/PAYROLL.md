@@ -42,6 +42,7 @@ Quy trình một tháng:
 | `GET /api/payroll/payslips/{id}` | `payroll.self.read` (chính mình) hoặc `report.payroll.read` (trong scope) | Chi tiết phiếu lương |
 | `GET /api/payroll/payslips/{id}/calculation` | Như xem phiếu lương | Tham số đã dùng để tính phiếu, để giải thích cách tính |
 | `GET /api/payroll/employees/{employeeId}/payslips` | `payroll.self.read` (chính mình) hoặc `report.payroll.read` (trong scope) | Phiếu lương của một nhân viên |
+| `GET /api/payroll/employees/{employeeId}/payslips/export` | Như dòng trên | Tải bảng lương năm của một nhân viên dạng Excel |
 
 ### Sau ngày làm việc cuối
 
@@ -755,6 +756,17 @@ Phiếu lương của một nhân viên, có phân trang (`page`, `size` mặc �
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
+| 403 | `FORBIDDEN` | Nhân viên khác mà không có `report.payroll.read` trong scope |
+
+### GET `/api/payroll/employees/{employeeId}/payslips/export`
+
+Tải bảng lương năm của một nhân viên dạng `bang-luong-<mã NV>-<năm>.xlsx`, cùng kiểu file và header như [xuất bảng lương của kỳ](#get-apipayrollperiodsidexport). Query `year` bắt buộc, từ 2000 đến 9999 (ngoài khoảng → `400 VALIDATION_ERROR`). Quyền và các phiếu được đưa vào giống hệt [danh sách phiếu lương](#get-apipayrollemployeesemployeeidpayslips) ở trên, nên file của chính mình chỉ có các tháng đã duyệt.
+
+Mỗi dòng một tháng, tháng 1 trước: cột đầu là tháng (`MM/yyyy`), các cột sau giống file của kỳ, dòng cuối là `SUM` các cột tiền. Năm không có phiếu nào vẫn trả file chỉ có tiêu đề và dòng tổng. Trên web, nút **In bảng lương năm** ở trang "Phiếu lương của tôi" mở menu **In** / **Xuất XLSX**.
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 400 | `VALIDATION_ERROR` | Thiếu `year` hoặc ngoài khoảng 2000–9999 |
 | 403 | `FORBIDDEN` | Nhân viên khác mà không có `report.payroll.read` trong scope |
 
 ---
