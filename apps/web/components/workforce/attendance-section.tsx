@@ -243,12 +243,19 @@ type DayActions = {
 export function monthTotals(days: Day[]) {
   const rows = days.flatMap((day) => day.record ? [day.record] : [])
   const lateDays = days.filter((day) => lateOrEarly(day) > 0)
+  // The shift length most days carry, for a standard day without one (before hiring, after the last day).
+  const shiftCounts = new Map<number, number>()
+  rows.forEach((row) => { if (row.scheduledMinutes > 0) shiftCounts.set(row.scheduledMinutes, (shiftCounts.get(row.scheduledMinutes) ?? 0) + 1) })
+  const usualShift = [...shiftCounts].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 0
   return {
     payableMinutes: rows.reduce((sum, row) => sum + row.payableMinutes, 0),
     payableDays: rows.reduce((sum, row) => sum + (row.scheduledMinutes > 0 ? row.payableMinutes / row.scheduledMinutes : 0), 0),
     // The company's workdays of the whole month, as payroll divides by: days before hiring or after the last
     // working day still count, and a Sunday or holiday worked has a record but is not part of the standard month.
     standardDays: days.filter((day) => !isOffDay(day)).length,
+    // Hours of those standard days, each by its own shift.
+    standardMinutes: days.filter((day) => !isOffDay(day))
+      .reduce((sum, day) => sum + (day.record?.scheduledMinutes || usualShift), 0),
     lateCount: lateDays.length,
     lateMinutes: lateDays.reduce((sum, day) => sum + lateOrEarly(day), 0),
     leaveDays: rows.filter((row) => FULL_DAY_LEAVE.has(row.status)).length,
@@ -262,7 +269,8 @@ function MonthSummary({ days }: { days: Day[] }) {
   const totals = monthTotals(days)
   // `below` is a smaller line under the value; `hint` sits beside it.
   const stats: { label: string; value: string; hint?: string; below?: string; alert?: boolean }[] = [
-    { label: "Công tính lương", value: hours(totals.payableMinutes), below: `${decimal(totals.payableDays)} / ${totals.standardDays} ngày` },
+    { label: "Công tính lương", value: hours(totals.payableMinutes), hint: `/ ${hours(totals.standardMinutes)}`,
+      below: `${decimal(totals.payableDays)} / ${totals.standardDays} ngày` },
     { label: "Muộn / về sớm", value: `${totals.lateCount} lần`, hint: totals.lateMinutes > 0 ? hours(totals.lateMinutes) : undefined },
     { label: "Nghỉ theo đơn", value: `${totals.leaveDays} ngày` },
     { label: "Tăng ca đã duyệt", value: hours(totals.overtimeMinutes) },
