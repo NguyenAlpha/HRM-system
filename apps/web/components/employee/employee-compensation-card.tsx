@@ -6,6 +6,7 @@ import { Calculator, CalendarCheck, CalendarX, Eye, Loader2, Plus } from "lucide
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { PayslipDialog, payslipDeductions, periodLabel } from "@/components/payroll/payroll-shared"
+import { PayslipAttendanceDialog } from "@/components/payroll/payslip-attendance-dialog"
 import { PayslipCalculationDialog } from "@/components/payroll/payslip-calculation-dialog"
 import { YearPicker } from "@/components/report/report-shared"
 import { Badge } from "@/components/ui/badge"
@@ -24,7 +25,6 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AttendanceSection } from "@/components/workforce/attendance-section"
 import {
   EmptyRow,
   SectionError,
@@ -278,19 +278,7 @@ function PayslipsTab({ employeeId, permissions, onSelect }: {
       </ListTable>
       {explaining && <PayslipCalculationDialog payslip={explaining} onClose={() => setExplaining(null)} />}
       {attendanceOf && (
-        <Dialog open onOpenChange={(open) => { if (!open) setAttendanceOf(null) }}>
-          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-6xl">
-            <DialogHeader>
-              <DialogTitle>Chấm công tháng {periodLabel(attendanceOf.periodYear, attendanceOf.periodMonth)}</DialogTitle>
-              <DialogDescription>
-                {attendanceOf.employeeCodeSnapshot} · {attendanceOf.employeeNameSnapshot}. Bảng công mà phiếu lương tháng này dựa vào.
-              </DialogDescription>
-            </DialogHeader>
-            <AttendanceSection employeeId={employeeId} permissions={permissions}
-              employeeLabel={`${attendanceOf.employeeCodeSnapshot} · ${attendanceOf.employeeNameSnapshot}`}
-              month={`${attendanceOf.periodYear}-${String(attendanceOf.periodMonth).padStart(2, "0")}`} />
-          </DialogContent>
-        </Dialog>
+        <PayslipAttendanceDialog payslip={attendanceOf} permissions={permissions} onClose={() => setAttendanceOf(null)} />
       )}
     </>
   )

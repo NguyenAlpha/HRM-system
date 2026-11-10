@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Calculator, Eye, Printer } from "lucide-react"
+import { Calculator, CalendarCheck, Eye, Printer } from "lucide-react"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
@@ -14,6 +14,7 @@ import {
   payslipInsurance,
   periodLabel,
 } from "@/components/payroll/payroll-shared"
+import { PayslipAttendanceDialog } from "@/components/payroll/payslip-attendance-dialog"
 import { PayslipCalculationDialog } from "@/components/payroll/payslip-calculation-dialog"
 import { PageHeader } from "@/components/portal/page-header"
 import { usePortalSession } from "@/components/portal/portal-shell"
@@ -31,11 +32,17 @@ import type { Payslip } from "@/lib/workforce"
 export function MyPayslipsPage() {
   const { session } = usePortalSession()
   const self = session.account.employee
-  const canRead = !!self && session.account.permissions.some((permission) => permission.code === "payroll.self.read")
+  const permissions = useMemo(
+    () => new Set(session.account.permissions.map((permission) => permission.code)),
+    [session],
+  )
+  const canRead = !!self && permissions.has("payroll.self.read")
+  const canReadAttendance = !!self && permissions.has("attendance.self.read")
   const employeeId = self?.id
   const [pickedYear, setPickedYear] = useState<number | null>(null)
   const [selected, setSelected] = useState<Payslip | null>(null)
   const [explaining, setExplaining] = useState<Payslip | null>(null)
+  const [attendanceOf, setAttendanceOf] = useState<Payslip | null>(null)
   const path = `payroll/employees/${employeeId}/payslips`
 
   // The newest payslip heads the page and picks the year shown first (null: none released yet).
@@ -140,6 +147,9 @@ export function MyPayslipsPage() {
                         <RowActionsCell label={periodLabel(slip.periodYear, slip.periodMonth)}>
                           <RowActionItem icon={Eye} onClick={() => setSelected(slip)}>Xem phiếu lương</RowActionItem>
                           <RowActionItem icon={Calculator} onClick={() => setExplaining(slip)}>Xem cách tính lương</RowActionItem>
+                          {canReadAttendance && (
+                            <RowActionItem icon={CalendarCheck} onClick={() => setAttendanceOf(slip)}>Xem chấm công</RowActionItem>
+                          )}
                         </RowActionsCell>
                       </TableRow>
                     ))}
@@ -158,6 +168,9 @@ export function MyPayslipsPage() {
 
       {selected && <PayslipDialog payslip={selected} onClose={() => setSelected(null)} />}
       {explaining && <PayslipCalculationDialog payslip={explaining} onClose={() => setExplaining(null)} />}
+      {attendanceOf && (
+        <PayslipAttendanceDialog payslip={attendanceOf} permissions={permissions} onClose={() => setAttendanceOf(null)} />
+      )}
     </>
   )
 }
