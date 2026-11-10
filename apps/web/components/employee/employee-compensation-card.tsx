@@ -1,10 +1,12 @@
 "use client"
 
 import { useEffect, useState, type ReactNode } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { CalendarX, Eye, Loader2, Plus } from "lucide-react"
 
 import { RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import { PayslipDialog, payslipDeductions, periodLabel } from "@/components/payroll/payroll-shared"
+import { YearPicker } from "@/components/report/report-shared"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -58,7 +60,6 @@ export function EmployeeCompensationCard({ employeeId, hireDate, lastDay, permis
   const [salaries, setSalaries] = useState<SalaryHistory[]>([])
   const [profiles, setProfiles] = useState<PayrollProfile[]>([])
   const [dependents, setDependents] = useState<TaxDependent[]>([])
-  const [payslips, setPayslips] = useState<Payslip[]>([])
   const [error, setError] = useState<string | null>(null)
   const [revision, setRevision] = useState(0)
   const [form, setForm] = useState<Form | null>(null)
@@ -74,22 +75,17 @@ export function EmployeeCompensationCard({ employeeId, hireDate, lastDay, permis
       workforceApi<SalaryHistory[]>(`${base}/salary-history`),
       workforceApi<PayrollProfile[]>(`${base}/payroll-profiles`),
       workforceApi<TaxDependent[]>(`${base}/tax-dependents`),
-      canReadPayslips
-        ? workforceApi<Page<Payslip>>(`payroll/employees/${employeeId}/payslips?size=100&sort=payrollPeriod.periodStart,desc`)
-          .then((page) => page.content)
-        : Promise.resolve([]),
     ])
-      .then(([loadedSalaries, loadedProfiles, loadedDependents, loadedPayslips]) => {
+      .then(([loadedSalaries, loadedProfiles, loadedDependents]) => {
         if (!active) return
         setSalaries(loadedSalaries)
         setProfiles(loadedProfiles)
         setDependents(loadedDependents)
-        setPayslips(loadedPayslips)
         setError(null)
       })
       .catch((caught: unknown) => { if (active) setError(apiErrorMessage(caught)) })
     return () => { active = false }
-  }, [base, canReadPayslips, employeeId, revision])
+  }, [base, revision])
 
   // An entry starting after the last working day never applied (added before the end was enforced).
   const afterEnd = (row: { effectiveFrom: string }) => lastDay !== null && row.effectiveFrom > lastDay
@@ -138,20 +134,7 @@ export function EmployeeCompensationCard({ employeeId, hireDate, lastDay, permis
 
           {canReadPayslips && (
             <TabsContent value="payslips" className="mt-4 grid gap-3">
-              <ListTable headers={["Tháng", "Tổng thu nhập", "Khấu trừ", "Thực nhận", "Thao tác"]} alignRight={[1, 2, 3, 4]}
-                empty="Chưa có phiếu lương.">
-                {payslips.map((slip) => (
-                  <TableRow key={slip.id} className="cursor-pointer" onClick={() => setSelectedPayslip(slip)}>
-                    <TableCell className="font-medium">{periodLabel(slip.periodYear, slip.periodMonth)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{money(slip.grossPay)}</TableCell>
-                    <TableCell className="text-right tabular-nums">−{money(payslipDeductions(slip))}</TableCell>
-                    <TableCell className="text-right font-semibold tabular-nums">{money(slip.netPay)}</TableCell>
-                    <RowActionsCell label={periodLabel(slip.periodYear, slip.periodMonth)}>
-                      <RowActionItem icon={Eye} onClick={() => setSelectedPayslip(slip)}>Xem phiếu lương</RowActionItem>
-                    </RowActionsCell>
-                  </TableRow>
-                ))}
-              </ListTable>
+              <PayslipsTab employeeId={employeeId} onSelect={setSelectedPayslip} />
             </TabsContent>
           )}
 
@@ -232,6 +215,55 @@ export function EmployeeCompensationCard({ employeeId, hireDate, lastDay, permis
       )}
       {selectedPayslip && <PayslipDialog payslip={selectedPayslip} onClose={() => setSelectedPayslip(null)} />}
     </Card>
+  )
+}
+
+/**
+ * One employee's payslips a year at a time, newest year first, like the employee's own page.
+ * Each year is cached under its own key, so stepping back to a year already seen shows it at once.
+ */
+function PayslipsTab({ employeeId, onSelect }: { employeeId: number; onSelect: (slip: Payslip) => void }) {
+  const [pickedYear, setPickedYear] = useState<number | null>(null)
+  const path = `payroll/employees/${employeeId}/payslips`
+  // The newest payslip picks the year shown first (null: none yet).
+  const latestQuery = useQuery({
+    queryKey: ["employee-payslips", employeeId, "latest"],
+    queryFn: () => workforceApi<Page<Payslip>>(`${path}?size=1&sort=payrollPeriod.periodStart,desc`)
+      .then((page) => page.content[0] ?? null),
+  })
+  const latest = latestQuery.data
+  const year = pickedYear ?? latest?.periodYear
+  const yearQuery = useQuery({
+    queryKey: ["employee-payslips", employeeId, year],
+    queryFn: () => workforceApi<Page<Payslip>>(`${path}?year=${year}&size=100&sort=payrollPeriod.periodStart,desc`)
+      .then((page) => page.content),
+    enabled: year !== undefined,
+  })
+  const payslips = latest === null ? [] : yearQuery.data ?? []
+  const loading = latestQuery.isPending || (latest !== null && yearQuery.isPending)
+  const failure = latestQuery.error ?? yearQuery.error
+
+  return (
+    <>
+      <SectionError error={failure ? apiErrorMessage(failure) : null} />
+      <Toolbar hint="Phiếu lương của các kỳ đã tính, theo từng năm.">
+        {latest && year !== undefined && <YearPicker year={year} maxYear={latest.periodYear} onChange={setPickedYear} />}
+      </Toolbar>
+      <ListTable headers={["Tháng", "Tổng thu nhập", "Khấu trừ", "Thực nhận", "Thao tác"]} alignRight={[1, 2, 3, 4]}
+        empty={loading ? "Đang tải…" : latest ? `Không có phiếu lương năm ${year}.` : "Chưa có phiếu lương."}>
+        {payslips.map((slip) => (
+          <TableRow key={slip.id} className="cursor-pointer" onClick={() => onSelect(slip)}>
+            <TableCell className="font-medium">{periodLabel(slip.periodYear, slip.periodMonth)}</TableCell>
+            <TableCell className="text-right tabular-nums">{money(slip.grossPay)}</TableCell>
+            <TableCell className="text-right tabular-nums">−{money(payslipDeductions(slip))}</TableCell>
+            <TableCell className="text-right font-semibold tabular-nums">{money(slip.netPay)}</TableCell>
+            <RowActionsCell label={periodLabel(slip.periodYear, slip.periodMonth)}>
+              <RowActionItem icon={Eye} onClick={() => onSelect(slip)}>Xem phiếu lương</RowActionItem>
+            </RowActionsCell>
+          </TableRow>
+        ))}
+      </ListTable>
+    </>
   )
 }
 
