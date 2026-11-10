@@ -89,7 +89,7 @@ export function AttendancePage({ initialTab, initialEmployeeId }: { initialTab?:
             <div className="flex items-center gap-1">
               <Button type="button" variant="outline" size="icon" aria-label="Tháng trước"
                 onClick={() => setMonth(shiftMonth(month, -1))}><ChevronLeft /></Button>
-              <Input id="attendance-month" type="month" className="w-44" value={month}
+              <Input id="attendance-month" type="month" className="w-56" value={month}
                 onChange={(event) => { if (event.target.value) setMonth(event.target.value) }} />
               <Button type="button" variant="outline" size="icon" aria-label="Tháng sau"
                 onClick={() => setMonth(shiftMonth(month, 1))}><ChevronRight /></Button>
