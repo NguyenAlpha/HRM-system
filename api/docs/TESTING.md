@@ -3,7 +3,7 @@
 Tài liệu mô tả bộ test của API (`api/src/test/java`) và các bước kiểm tra của web (`apps/web`):
 cách chạy, các loại test, quy ước khi viết test mới và danh mục test theo module.
 
-Số liệu tính tại lần chạy đầy đủ ngày 10/11/2026: **92 lớp test, 611 test, tất cả pass**, chạy hết
+Số liệu tính tại lần chạy đầy đủ ngày 10/11/2026: **92 lớp test, 613 test, tất cả pass**, chạy hết
 khoảng 5–6 phút. Web có 16 test E2E Playwright.
 
 ## 1. Chạy test API
@@ -217,13 +217,13 @@ Chi tiết từng lớp ở [RATE_LIMIT.md §10](concepts/RATE_LIMIT.md#10-kiể
 | `AttendanceAutoPrepareJobTest` | 4 | Job chuẩn bị bảng công hằng đêm; một người lỗi không chặn người khác; kỳ lương đã khoá thì dừng |
 | `AttendanceCalendarServiceTest` | 1 | Lịch làm thứ 2–thứ 7, trừ ngày lễ |
 
-### 4.10. Lương (57 test)
+### 4.10. Lương (59 test)
 
 | Lớp | Số test | Kiểm tra |
 | --- | ---: | --- |
 | `PayrollServiceTest` | 20 | Tính phiếu lương: lương theo công, phụ cấp, tăng ca, khoản điều chỉnh, chia theo ngày khi đổi lương hoặc nghỉ giữa tháng; thiếu dữ liệu thì không đánh dấu đã tính; người tính không tự duyệt; huỷ, mở lại kỳ; ngày trả lương |
 | `PayrollAdjustmentServiceTest` | 8 | Thêm/xoá khoản điều chỉnh đưa kỳ về nháp; khoá sau khi rời bước tính; không điều chỉnh cho người đã nghỉ trước kỳ |
-| `PayrollQueryServiceTest` | 7 | Nhân viên chỉ xem phiếu của mình sau khi kỳ được duyệt; người đọc lương xem trong phạm vi |
+| `PayrollQueryServiceTest` | 9 | Nhân viên chỉ xem phiếu của mình sau khi kỳ được duyệt; người đọc lương xem phiếu người khác trong phạm vi ở mọi trạng thái kỳ, còn danh sách phiếu của chính họ chỉ gồm kỳ đã duyệt |
 | `PayslipCalculationServiceTest` | 3 | Tham số giải thích cách tính: mỗi bậc thuế chỉ đánh phần thu nhập trong bậc; người phụ thuộc của người nghỉ việc đếm tại ngày làm cuối; ai không xem được phiếu thì không xem được cách tính |
 | `AllowancePolicyServiceTest` | 6 | Phụ cấp chức vụ và bảng thâm niên: đưa kỳ đã tính về nháp, từ chối khi chạm kỳ đã duyệt, bảng thâm niên phủ mọi năm từ 0 |
 | `PayrollDeductionsIntegrationTest` | 5 | BHXH/BHYT/BHTN với trần riêng, giảm trừ người phụ thuộc; thiếu quy tắc thuế thì dừng; nghỉ từ 14 ngày không đóng bảo hiểm |

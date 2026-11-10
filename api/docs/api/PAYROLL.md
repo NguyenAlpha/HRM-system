@@ -751,7 +751,7 @@ lương** ở trang `/payslips` (thẻ tháng mới nhất và menu "…" của 
 
 ### GET `/api/payroll/employees/{employeeId}/payslips`
 
-Phiếu lương của một nhân viên, có phân trang (`page`, `size` mặc định 20, `sort` chỉ theo `payrollPeriod.periodStart`, mặc định giảm dần; trường khác → `400 VALIDATION_ERROR`). Query `year` (không bắt buộc) chỉ lấy phiếu của các kỳ trong năm đó. Trả `PagedResult<PayslipResponse>`. Người không có `report.payroll.read` chỉ thấy phiếu của kỳ `APPROVED`, `PAID`, `LOCKED`.
+Phiếu lương của một nhân viên, có phân trang (`page`, `size` mặc định 20, `sort` chỉ theo `payrollPeriod.periodStart`, mặc định giảm dần; trường khác → `400 VALIDATION_ERROR`). Query `year` (không bắt buộc) chỉ lấy phiếu của các kỳ trong năm đó. Trả `PagedResult<PayslipResponse>`. Chỉ phiếu của kỳ `APPROVED`, `PAID`, `LOCKED` được trả, trừ khi người có `report.payroll.read` xem phiếu của **nhân viên khác**: khi đó thấy cả kỳ `CALCULATED` để kiểm tra trước khi duyệt. Danh sách phiếu của chính mình luôn chỉ gồm kỳ đã duyệt, kể cả với người đọc được bảng lương, để trang "Phiếu lương của tôi" và dashboard không hiện phiếu còn có thể bị tính lại; phiếu chưa duyệt của chính mình vẫn xem được trong bảng lương của kỳ.
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|

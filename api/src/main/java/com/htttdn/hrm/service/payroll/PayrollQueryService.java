@@ -79,11 +79,17 @@ public class PayrollQueryService {
         return payrollMapper.toResponse(payslip);
     }
 
+    /**
+     * Payslips of one employee, newest first. A payroll reader sees another employee's payslips in every
+     * period state, to check them before approval; one's own list only shows released periods, even for a
+     * payroll reader, so "my payslips" and the dashboard never show a payslip that can still be recalculated.
+     */
     @PreAuthorize("hasAnyAuthority('payroll.self.read', 'report.payroll.read')")
     public Page<PayslipResponse> listPayslipsForEmployee(Long employeeId, Short year, Pageable pageable) {
         SearchPatterns.requireSortable(pageable, PAYSLIP_SORTABLE);
         requirePayslipAccess(employeeId);
-        if (currentAccountProvider.hasAuthority("report.payroll.read")) {
+        if (currentAccountProvider.hasAuthority("report.payroll.read")
+            && !currentAccountProvider.account().belongsTo(employeeId)) {
             return (year == null
                 ? payslipRepository.findByEmployeeId(employeeId, pageable)
                 : payslipRepository.findByEmployeeIdAndPayrollPeriodYear(employeeId, year, pageable))

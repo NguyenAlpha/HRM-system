@@ -83,6 +83,28 @@ class PayrollQueryServiceTest {
         assertEquals(0, service().listPayslipsForEmployee(2L, (short) 2026, page).getTotalElements());
     }
 
+    @Test
+    void aPayrollReadersOwnListShowsOnlyReleasedPayslips() {
+        signInAsEmployee(2L);
+        when(currentAccountProvider.hasAuthority("report.payroll.read")).thenReturn(true);
+        PageRequest page = PageRequest.of(0, 20);
+        when(payslipRepository.findByEmployeeIdAndPayrollPeriodStatusIn(2L, PayrollPeriodStatus.RELEASED, page))
+            .thenReturn(new PageImpl<>(List.of()));
+
+        assertEquals(0, service().listPayslipsForEmployee(2L, null, page).getTotalElements());
+    }
+
+    @Test
+    void aPayrollReaderListsAnotherEmployeesPayslipsInEveryPeriodState() {
+        signInAsEmployee(2L);
+        when(currentAccountProvider.hasAuthority("report.payroll.read")).thenReturn(true);
+        PageRequest page = PageRequest.of(0, 20);
+        when(payslipRepository.findByEmployeeId(3L, page)).thenReturn(new PageImpl<>(List.of()));
+
+        assertEquals(0, service().listPayslipsForEmployee(3L, null, page).getTotalElements());
+        verify(employeeAccessScopeService).requireEmployeeAccess(3L, "report.payroll.read");
+    }
+
     private void signInAsEmployee(Long employeeId) {
         when(currentAccountProvider.hasAuthority("payroll.self.read")).thenReturn(true);
         when(currentAccountProvider.account())
