@@ -324,7 +324,7 @@ export function RoleAssignmentManager({ currentAccountId, canRequest, canApprove
             )}
           </div>
         </CardHeader>
-        <CardContent className="grid gap-4">
+        <CardContent className="grid grid-cols-1 gap-4">
           <ErrorAlert error={error} />
 
           <Select

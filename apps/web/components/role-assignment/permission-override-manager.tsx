@@ -249,7 +249,7 @@ export function PermissionOverrideManager({ portal, onSessionExpired }: {
             Cấp thêm hoặc thu hồi một permission trên đúng role assignment và phạm vi được chọn.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-5">
+        <CardContent className="grid grid-cols-1 gap-5">
           <ErrorAlert error={error} />
 
           <div className="grid gap-4 sm:grid-cols-2">

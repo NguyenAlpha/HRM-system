@@ -218,7 +218,7 @@ function AllResignations({ revision, actions }: { revision: number; actions: Act
         <CardTitle>Tất cả đơn nghỉ việc</CardTitle>
         <CardDescription>Đơn của nhân viên trong phạm vi bạn được giao. HR theo dõi để chuẩn bị bàn giao và tuyển thay thế.</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent className="grid grid-cols-1 gap-4">
         <ErrorAlert error={error} />
         <ListToolbar
           keyword={filters.keyword}

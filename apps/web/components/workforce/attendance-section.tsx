@@ -206,7 +206,7 @@ export function AttendanceSection({ employeeId, permissions, month }: WorkforceC
             )}
           </CardAction>
         </CardHeader>
-        <CardContent className="grid gap-4">
+        <CardContent className="grid grid-cols-1 gap-4">
           <SectionError error={error} />
           {employeeId > 0 && rows && <MonthSummary days={days} />}
           {view === "calendar"

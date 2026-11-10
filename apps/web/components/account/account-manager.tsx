@@ -134,7 +134,7 @@ export function AccountManager({ portal, viewer, onSessionExpired }: {
             </CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="grid gap-4">
+        <CardContent className="grid grid-cols-1 gap-4">
           <ErrorAlert error={error} />
 
           <ListToolbar

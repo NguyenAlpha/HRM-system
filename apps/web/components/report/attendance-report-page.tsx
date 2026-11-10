@@ -125,7 +125,7 @@ export function AttendanceReportPage() {
                   <ExportButton onClick={exportLines} disabled={!lines || lines.length === 0} />
                 </CardAction>
               </CardHeader>
-              <CardContent className="grid gap-4">
+              <CardContent className="grid grid-cols-1 gap-4">
                 <ListToolbar keyword={keywordInput} onKeywordChange={setKeywordInput} placeholder="Tìm theo họ tên hoặc mã nhân viên"
                   activeFilters={(unitId ? 1 : 0) + (order !== "code" ? 1 : 0)}
                   onReset={() => { setKeywordInput(""); setUnitId(""); setOrder("code") }}>

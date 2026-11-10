@@ -105,7 +105,7 @@ export function MonthlyStatusReportPage() {
                 </CardDescription>
                 <CardAction><ExportButton onClick={exportRows} disabled={data.rows.length === 0} /></CardAction>
               </CardHeader>
-              <CardContent className="grid gap-4">
+              <CardContent className="grid grid-cols-1 gap-4">
                 <ListToolbar keyword={keywordInput} onKeywordChange={setKeywordInput} placeholder="Tìm theo họ tên hoặc mã nhân viên"
                   activeFilters={filter === ALL_OPTION ? 0 : 1} onReset={() => { setKeywordInput(""); setFilter(ALL_OPTION) }}>
                   <FilterSelect id="monthly-status-filter" label="Tình hình" value={filter} onChange={setFilter}

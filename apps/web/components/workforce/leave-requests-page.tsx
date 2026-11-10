@@ -288,7 +288,7 @@ function AllLeaves({ revision, actions }: { revision: number; actions: LeaveActi
         <CardTitle>Tất cả đơn nghỉ</CardTitle>
         <CardDescription>Đơn đã gửi của nhân viên trong phạm vi bạn được giao; đơn nháp chỉ người tạo thấy.</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent className="grid grid-cols-1 gap-4">
         <ErrorAlert error={error} />
         <ListToolbar
           keyword={filters.keyword}

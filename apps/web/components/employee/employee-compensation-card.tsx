@@ -120,7 +120,7 @@ export function EmployeeCompensationCard({ employeeId, hireDate, lastDay, permis
           </div>
         )}
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent className="grid grid-cols-1 gap-4">
         <SectionError error={error} />
         {lastDay && (
           <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
