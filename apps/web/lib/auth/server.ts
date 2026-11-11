@@ -400,7 +400,7 @@ const RBAC_ROUTES: Route[] = [
 export async function handleRbacRequest(request: Request, segments: string[], portal: Portal): Promise<NextResponse> {
   const path = segments.join("/")
   return rejectUnlisted(RBAC_ROUTES, path, request.method)
-    ?? forwardWithSession(request, portal, `/api/${path}`, ["page", "size", "sort", "module"])
+    ?? forwardWithSession(request, portal, `/api/${path}`, ["page", "size", "sort", "module", "keyword"])
 }
 
 const EMPLOYEE_ROUTES: Route[] = [

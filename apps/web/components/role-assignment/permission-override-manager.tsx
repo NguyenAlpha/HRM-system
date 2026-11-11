@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Loader2, Plus, ShieldMinus } from "lucide-react"
 import { toast } from "sonner"
+import { Combobox as ComboboxPrimitive } from "@base-ui/react"
 
 import { todayIso } from "@/components/account/account-access"
 import { ErrorAlert } from "@/components/common/list-controls"
@@ -24,6 +25,14 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -45,6 +54,12 @@ import {
   type PermissionOverrideOption,
 } from "@/lib/role-assignment"
 import { formatDateRange } from "@/lib/format-date"
+
+const permissionLabel = (permission: PermissionOverrideOption) =>
+  `${permission.permissionName} · ${PERMISSION_OVERRIDE_EFFECT_LABELS[permission.effect]}`
+
+const permissionSearchText = (permission: PermissionOverrideOption) =>
+  `${permissionLabel(permission)} ${permission.permissionCode}`
 
 const overrideSchema = z.object({
   permissionId: z.string().min(1, "Bắt buộc"),
@@ -110,13 +125,7 @@ export function PermissionOverrideManager({ portal, onSessionExpired }: {
     ])),
     [assignments],
   )
-  const permissionItems = useMemo(
-    () => Object.fromEntries(permissionOptions.map((permission) => [
-      String(permission.permissionId),
-      `${permission.permissionName} · ${PERMISSION_OVERRIDE_EFFECT_LABELS[permission.effect]}`,
-    ])),
-    [permissionOptions],
-  )
+  const { contains } = ComboboxPrimitive.useFilter()
 
 
   async function selectAccount(nextAccountId: string | null) {
@@ -297,18 +306,28 @@ export function PermissionOverrideManager({ portal, onSessionExpired }: {
                   control={control}
                   name="permissionId"
                   render={({ field }) => (
-                    <Select value={field.value} items={permissionItems} onValueChange={field.onChange} disabled={loadingOverrides}>
-                      <SelectTrigger id="override-permission" className="w-full" aria-invalid={!!errors.permissionId}>
-                        <SelectValue placeholder={loadingOverrides ? "Đang tải..." : "Chọn permission..."} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {permissionOptions.map((permission) => (
-                          <SelectItem key={permission.permissionId} value={String(permission.permissionId)}>
-                            {permission.permissionName} · {PERMISSION_OVERRIDE_EFFECT_LABELS[permission.effect]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Combobox
+                      items={permissionOptions}
+                      value={permissionOptions.find((option) => String(option.permissionId) === field.value) ?? null}
+                      onValueChange={(option) => field.onChange(option ? String(option.permissionId) : "")}
+                      itemToStringLabel={permissionLabel}
+                      isItemEqualToValue={(item, current) => item.permissionId === current.permissionId}
+                      // Typing also matches the permission code, which the label does not show.
+                      filter={(item, query) => contains(item, query, permissionSearchText)}
+                      disabled={loadingOverrides}
+                    >
+                      <ComboboxInput id="override-permission" className="w-full" aria-invalid={!!errors.permissionId}
+                        disabled={loadingOverrides}
+                        placeholder={loadingOverrides ? "Đang tải..." : "Gõ tên hoặc mã permission..."} />
+                      <ComboboxContent>
+                        <ComboboxEmpty>Không tìm thấy permission phù hợp.</ComboboxEmpty>
+                        <ComboboxList>
+                          {(permission: PermissionOverrideOption) => (
+                            <ComboboxItem key={permission.permissionId} value={permission}>{permissionLabel(permission)}</ComboboxItem>
+                          )}
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
                   )}
                 />
                 {errors.permissionId && <p className="text-xs font-medium text-destructive">{errors.permissionId.message}</p>}

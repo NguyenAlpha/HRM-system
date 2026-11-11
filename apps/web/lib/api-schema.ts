@@ -6710,6 +6710,7 @@ export interface operations {
         parameters: {
             query: {
                 module?: "EMPLOYEE" | "ACCOUNT" | "ORGANIZATION" | "REQUEST" | "ATTENDANCE" | "PAYROLL" | "RBAC" | "REPORT";
+                keyword?: string;
                 pageable: components["schemas"]["Pageable"];
             };
             header?: never;

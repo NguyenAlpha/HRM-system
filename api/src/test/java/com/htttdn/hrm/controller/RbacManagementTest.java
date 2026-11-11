@@ -44,6 +44,8 @@ import com.htttdn.hrm.service.rbac.RoleService;
 
 import tools.jackson.databind.ObjectMapper;
 
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasItem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -336,11 +338,25 @@ class RbacManagementTest {
     }
 
     @Test
+    void permissionCatalogueSearchesCodeNameAndDescription() throws Exception {
+        // Seeded catalogue: payroll.self.read is "Xem phiếu lương cá nhân", described "Xem phiếu lương của chính mình".
+        admin(get("/api/permissions").param("keyword", "PAYROLL.SELF"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content[*].code", hasItem("payroll.self.read")));
+        admin(get("/api/permissions").param("keyword", "phiếu lương cá nhân"))
+            .andExpect(jsonPath("$.data.content[*].code", contains("payroll.self.read")));
+        admin(get("/api/permissions").param("keyword", "của chính mình").param("module", "PAYROLL"))
+            .andExpect(jsonPath("$.data.content[*].code", contains("payroll.self.read")));
+        admin(get("/api/permissions").param("keyword", "100%_"))
+            .andExpect(jsonPath("$.data.totalElements").value(0));
+    }
+
+    @Test
     @WithMockUser(roles = "EMPLOYEE")
     void serviceCallsAreProtectedWithoutGoingThroughControllers() {
         assertThrows(AccessDeniedException.class, () -> roleService.list(Pageable.unpaged()));
         assertThrows(AccessDeniedException.class, roleService::listWithPermissions);
-        assertThrows(AccessDeniedException.class, () -> permissionService.list(Pageable.unpaged()));
+        assertThrows(AccessDeniedException.class, () -> permissionService.list(null, null, Pageable.unpaged()));
     }
 
     private ResultActions admin(MockHttpServletRequestBuilder request) throws Exception {

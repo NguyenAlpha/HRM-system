@@ -26,11 +26,10 @@ public class PermissionController {
     @GetMapping
     public ApiResult<PagedResult<PermissionResponse>> list(
         @RequestParam(required = false) PermissionModule module,
+        @RequestParam(required = false) String keyword,
         @PageableDefault(sort = "id", size = 20) Pageable pageable
     ) {
-        return ApiResult.ok(PagedResult.of(module == null
-            ? permissionService.list(pageable)
-            : permissionService.listByModule(module, pageable)));
+        return ApiResult.ok(PagedResult.of(permissionService.list(module, keyword, pageable)));
     }
 
     @GetMapping("/{id}")

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 
 import { Pagination, ErrorAlert } from "@/components/common/list-controls"
+import { ALL_OPTION, FilterSelect, ListToolbar, useDebouncedValue } from "@/components/common/list-filters"
 import { Badge } from "@/components/ui/badge"
 import {
   Card,
@@ -11,13 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -37,35 +31,45 @@ import {
   type Permission,
 } from "@/lib/rbac"
 
-const ALL_MODULES = "ALL"
+/** What one request asked for, so a reply that no longer matches the filters does not count as loaded. */
+function requestKey(page: number, moduleFilter: string, keyword: string) {
+  return JSON.stringify([page, moduleFilter, keyword])
+}
 
 export function PermissionManager({ portal, onSessionExpired }: { portal: Portal; onSessionExpired: () => void }) {
-  const [data, setData] = useState<Page<Permission> | null>(null)
   const [page, setPage] = useState(0)
   const [moduleFilter, setModuleFilter] = useState("")
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [keywordInput, setKeywordInput] = useState("")
+  // The keyword goes through its debounced copy so typing does not fire a request per key.
+  const keyword = useDebouncedValue(keywordInput.trim())
+  const [result, setResult] = useState<{ key: string; data: Page<Permission> | null; error: string | null } | null>(null)
+
+  const key = requestKey(page, moduleFilter, keyword)
+  const loading = result?.key !== key || keyword !== keywordInput.trim()
+  const data = result?.data ?? null
+  const error = result?.key === key ? result.error : null
 
   useEffect(() => {
     let active = true
-    rbacRequest<Page<Permission>>(portal, `/permissions?page=${page}&size=20&sort=id,desc${moduleFilter ? `&module=${moduleFilter}` : ""}`)
-      .then((result) => {
+    const query = new URLSearchParams({ page: String(page), size: "20", sort: "id,desc" })
+    if (moduleFilter) query.set("module", moduleFilter)
+    if (keyword) query.set("keyword", keyword)
+    rbacRequest<Page<Permission>>(portal, `/permissions?${query}`)
+      .then((fetched) => {
         if (!active) return
-        if (page > 0 && page >= result.totalPages) {
-          setPage(Math.max(0, result.totalPages - 1))
+        if (page > 0 && page >= fetched.totalPages) {
+          setPage(Math.max(0, fetched.totalPages - 1))
           return
         }
-        setData(result)
-        setLoading(false)
+        setResult({ key, data: fetched, error: null })
       })
       .catch((caught: unknown) => {
         if (!active) return
         if (isPortalSessionExpired(caught)) onSessionExpired()
-        setError(apiErrorMessage(caught))
-        setLoading(false)
+        setResult((previous) => ({ key, data: previous?.data ?? null, error: apiErrorMessage(caught) }))
       })
     return () => { active = false }
-  }, [portal, page, moduleFilter, onSessionExpired])
+  }, [portal, page, moduleFilter, keyword, key, onSessionExpired])
 
   return (
     <Card>
@@ -80,30 +84,22 @@ export function PermissionManager({ portal, onSessionExpired }: { portal: Portal
       <CardContent className="grid grid-cols-1 gap-4">
         <ErrorAlert error={error} />
 
-        <Select
-          value={moduleFilter || ALL_MODULES}
-          items={{ [ALL_MODULES]: "Tất cả module", ...Object.fromEntries(PERMISSION_MODULES.map((module) => [module, module])) }}
-          disabled={loading}
-          onValueChange={(value) => {
-            const next = !value || value === ALL_MODULES ? "" : value
-            // The same value starts no request, so nothing would clear the loading state.
-            if (next === moduleFilter) return
-            setModuleFilter(next)
-            setPage(0)
-            setLoading(true)
-            setError(null)
-          }}
+        <ListToolbar
+          keyword={keywordInput}
+          onKeywordChange={(value) => { setKeywordInput(value); setPage(0) }}
+          placeholder="Tìm theo mã, tên hoặc mô tả quyền..."
+          activeFilters={moduleFilter ? 1 : 0}
+          onReset={() => { setKeywordInput(""); setModuleFilter(""); setPage(0) }}
         >
-          <SelectTrigger className="w-52">
-            <SelectValue placeholder="Tất cả module" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_MODULES}>Tất cả module</SelectItem>
-            {PERMISSION_MODULES.map((module) => (
-              <SelectItem key={module} value={module}>{module}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <FilterSelect
+            id="permission-module"
+            label="Module"
+            value={moduleFilter || ALL_OPTION}
+            onChange={(value) => { setModuleFilter(value === ALL_OPTION ? "" : value); setPage(0) }}
+            options={PERMISSION_MODULES.map((module) => ({ value: module, label: module }))}
+            allLabel="Tất cả module"
+          />
+        </ListToolbar>
 
         <div className="rounded-xl border">
           <Table>
@@ -151,7 +147,7 @@ export function PermissionManager({ portal, onSessionExpired }: { portal: Portal
               {!loading && data?.content.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                    Chưa có quyền trong danh sách này.
+                    {keyword || moduleFilter ? "Không tìm thấy quyền phù hợp." : "Chưa có quyền trong danh sách này."}
                   </TableCell>
                 </TableRow>
               )}
@@ -160,7 +156,7 @@ export function PermissionManager({ portal, onSessionExpired }: { portal: Portal
         </div>
 
         <Pagination page={page} totalPages={data?.totalPages ?? 0} totalElements={data?.totalElements ?? 0} disabled={loading}
-          onChange={(next) => { setLoading(true); setError(null); setPage(next) }} />
+          onChange={setPage} />
       </CardContent>
     </Card>
   )

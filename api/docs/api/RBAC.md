@@ -589,22 +589,24 @@ Gỡ một permission khỏi custom role. Endpoint không cần request body; sy
 | 404 | `ROLE_NOT_FOUND` | Role không tồn tại hoặc đã bị xóa mềm |
 | 404 | `PERMISSION_NOT_FOUND` | Role không có mapping với permission này |
 | 409 | `CONFLICT` | Role đích là system role |
+| 409 | `ROLE_SCOPE_CONFLICT` | Bỏ permission tự phục vụ cuối cùng trong khi role đang có assignment `SELF` |
 
 ---
 
 ## GET `/api/permissions`
 
-Lấy danh mục permission do ứng dụng định nghĩa, bao gồm cả permission active và inactive. Có thể lọc theo module. Client chỉ hiển thị permission `DELEGABLE` trong lựa chọn gán cho custom role; permission `SYSTEM_ONLY` vẫn xuất hiện để người quản trị hiểu đầy đủ catalog.
+Lấy danh mục permission do ứng dụng định nghĩa, bao gồm cả permission active và inactive. Có thể lọc theo module và tìm theo từ khóa. Client chỉ hiển thị permission `DELEGABLE` trong lựa chọn gán cho custom role; permission `SYSTEM_ONLY` vẫn xuất hiện để người quản trị hiểu đầy đủ catalog.
 
 ### Query parameters
 
 ```http
-GET /api/permissions?module=RBAC&page=0&size=20&sort=code,asc
+GET /api/permissions?module=RBAC&keyword=role&page=0&size=20&sort=code,asc
 ```
 
 | Parameter | Type | Bắt buộc | Ý nghĩa |
 |:----------|:-----|:--------:|:--------|
 | `module` | string | ❌ | Một trong `EMPLOYEE`, `ACCOUNT`, `ORGANIZATION`, `REQUEST`, `ATTENDANCE`, `PAYROLL`, `RBAC`, `REPORT` |
+| `keyword` | string | ❌ | Khớp một phần mã, tên hoặc mô tả, không phân biệt hoa thường |
 | `page` | integer | ❌ | Số trang, mặc định `0` |
 | `size` | integer | ❌ | Số phần tử mỗi trang, mặc định `20` |
 | `sort` | string | ❌ | Sắp xếp, mặc định `id,asc` |
