@@ -779,6 +779,8 @@ Permission đánh dấu `(S)` là `SYSTEM_ONLY` nên không gán được cho cu
 | `attendance.self.read` | ✓ | | | | | | | |
 | `attendance.read` | | ✓ | ✓ | | | | ✓ | |
 | `attendance.manage` | | ✓ | | | | | | |
+| `attendance.self.check_in` | ✓ | | | | | | | |
+| `attendance.web_check_in.manage` `(C)` | | | | | | | ✓ | ✓ |
 | `holiday.read` | ✓ | ✓ | | | | | ✓ | |
 
 ### Module `PAYROLL`

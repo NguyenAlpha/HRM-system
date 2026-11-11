@@ -451,6 +451,7 @@ erDiagram
 | `logo` | BYTEA | | Logo hiển thị trên giao diện (PNG/JPEG/WebP, tối đa 512 KB) |
 | `logo_content_type` | VARCHAR(20) | | Kiểu MIME của logo |
 | `logo_updated_at` | TIMESTAMPTZ | | Thời điểm cập nhật logo |
+| `web_check_in_enabled` | BOOLEAN | NOT NULL, DEFAULT `FALSE` | Nhân viên tự chấm công Vào ca / Ra ca trên web; tắt khi dùng máy chấm công |
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 

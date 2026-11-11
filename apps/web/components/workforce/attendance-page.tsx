@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AttendanceSection, OvertimeApprovals } from "@/components/workforce/attendance-section"
 import { AttendanceTimesheet, type TimesheetEmployee } from "@/components/workforce/attendance-timesheet"
+import { WebCheckInCard } from "@/components/workforce/web-check-in"
 import { today, workforceApi } from "@/components/workforce/workforce-shared"
 import { employeeRequest, type EmployeeDetail } from "@/lib/employee"
 import type { OvertimeApprovalItem } from "@/lib/workforce"
@@ -39,6 +40,9 @@ export function AttendancePage({ initialTab, initialEmployeeId }: { initialTab?:
   )
   const canReadOwn = !!self && permissions.has("attendance.self.read")
   const canReadAll = permissions.has("attendance.read")
+  const canCheckIn = !!self && permissions.has("attendance.self.check_in")
+  // Bumped after each web punch so the month below reloads.
+  const [punches, setPunches] = useState(0)
   const canReadEmployee = permissions.has("employee.read")
   const [month, setMonth] = useState(today().slice(0, 7))
   const defaultTab: Tab = canReadAll ? "sheet" : "mine"
@@ -117,8 +121,11 @@ export function AttendancePage({ initialTab, initialEmployeeId }: { initialTab?:
             onDecided={() => setOvertimeRevision((value) => value + 1)} />
         )}
 
+        {tab === "mine" && canCheckIn && self && (
+          <WebCheckInCard employeeId={self.id} onPunched={() => setPunches((value) => value + 1)} />
+        )}
         {tab === "mine" && canReadOwn && self && (
-          <AttendanceSection employeeId={self.id} employeeLabel={`${self.employeeCode} · ${self.fullName}`}
+          <AttendanceSection key={punches} employeeId={self.id} employeeLabel={`${self.employeeCode} · ${self.fullName}`}
             permissions={permissions} month={month} />
         )}
 

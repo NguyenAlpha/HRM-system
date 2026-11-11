@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { WebCheckInSettingCard } from "@/components/workforce/web-check-in"
 import { apiErrorMessage } from "@/lib/api-helpers"
 import { PORTAL_CONFIG } from "@/lib/auth/config"
 import { changePassword, refreshSession } from "@/lib/auth/client"
@@ -32,6 +33,7 @@ export function PortalDashboard() {
   const router = useRouter()
   const { portal, session, setSession } = usePortalSession()
   const config = PORTAL_CONFIG[portal]
+  const canManageWebCheckIn = session.account.permissions.some((permission) => permission.code === "attendance.web_check_in.manage")
   const [working, setWorking] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -148,6 +150,8 @@ export function PortalDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {canManageWebCheckIn && <WebCheckInSettingCard portal={portal} />}
 
         <Card>
           <CardHeader>

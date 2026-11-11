@@ -244,6 +244,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/attendance/me/check-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["checkIn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/attendance/me/check-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["checkOut"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/attendance/overtime/pending": {
         parameters: {
             query?: never;
@@ -301,6 +333,22 @@ export interface paths {
         };
         get: operations["timesheet"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/attendance/web-check-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["webCheckIn"];
+        put: operations["setWebCheckIn"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2448,6 +2496,11 @@ export interface components {
             error: components["schemas"]["ErrorDetail"] | null;
             success: boolean;
         };
+        ApiResultWebCheckInSettingResponse: {
+            data: components["schemas"]["WebCheckInSettingResponse"] | null;
+            error: components["schemas"]["ErrorDetail"] | null;
+            success: boolean;
+        };
         ApiResultWorkLocationResponse: {
             data: components["schemas"]["WorkLocationResponse"] | null;
             error: components["schemas"]["ErrorDetail"] | null;
@@ -3958,6 +4011,12 @@ export interface components {
             standardWorkMinutes: number;
             startTime: string;
         };
+        WebCheckInSettingRequest: {
+            enabled: boolean;
+        };
+        WebCheckInSettingResponse: {
+            enabled: boolean;
+        };
         WorkLocationResponse: {
             address: string;
             code: string;
@@ -4454,6 +4513,46 @@ export interface operations {
             };
         };
     };
+    checkIn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAttendanceRecordResponse"];
+                };
+            };
+        };
+    };
+    checkOut: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultAttendanceRecordResponse"];
+                };
+            };
+        };
+    };
     listOvertimeAwaitingDecision: {
         parameters: {
             query?: never;
@@ -4542,6 +4641,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiResultListTimesheetRowResponse"];
+                };
+            };
+        };
+    };
+    webCheckIn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultWebCheckInSettingResponse"];
+                };
+            };
+        };
+    };
+    setWebCheckIn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WebCheckInSettingRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResultWebCheckInSettingResponse"];
                 };
             };
         };

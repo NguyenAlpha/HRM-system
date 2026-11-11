@@ -18,14 +18,17 @@ import org.springframework.validation.annotation.Validated;
 import com.htttdn.hrm.dto.request.attendance.AdjustAttendanceRequest;
 import com.htttdn.hrm.dto.request.attendance.ApproveOvertimeRequest;
 import com.htttdn.hrm.dto.request.attendance.RecordPunchesRequest;
+import com.htttdn.hrm.dto.request.attendance.WebCheckInSettingRequest;
 import com.htttdn.hrm.dto.response.attendance.AttendanceRecordResponse;
 import com.htttdn.hrm.dto.response.attendance.OvertimeApprovalItemResponse;
 import com.htttdn.hrm.dto.response.attendance.TimesheetRowResponse;
+import com.htttdn.hrm.dto.response.attendance.WebCheckInSettingResponse;
 import com.htttdn.hrm.dto.response.common.ApiResult;
 import com.htttdn.hrm.dto.response.common.PagedResult;
 import com.htttdn.hrm.service.attendance.AttendanceQueryService;
 import com.htttdn.hrm.service.attendance.AttendanceService;
 import com.htttdn.hrm.service.attendance.OvertimeService;
+import com.htttdn.hrm.service.attendance.WebCheckInService;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -41,11 +44,35 @@ public class AttendanceController {
     private final AttendanceService service;
     private final OvertimeService overtimeService;
     private final AttendanceQueryService queryService;
+    private final WebCheckInService webCheckInService;
 
     @PostMapping("/prepare")
     public ApiResult<Integer> prepare(@RequestParam @Min(2000) @Max(9999) int year,
         @RequestParam @Min(1) @Max(12) int month) {
         return ApiResult.ok(service.prepareMonth(year, month));
+    }
+
+    /** Whether employees may check in and out themselves on the web. */
+    @GetMapping("/web-check-in")
+    public ApiResult<WebCheckInSettingResponse> webCheckIn() {
+        return ApiResult.ok(webCheckInService.getSetting());
+    }
+
+    @PutMapping("/web-check-in")
+    public ApiResult<WebCheckInSettingResponse> setWebCheckIn(@Valid @RequestBody WebCheckInSettingRequest request) {
+        return ApiResult.ok(webCheckInService.setEnabled(request.enabled()));
+    }
+
+    /** The signed-in employee checks in for today, at the server's time. */
+    @PostMapping("/me/check-in")
+    public ApiResult<AttendanceRecordResponse> checkIn() {
+        return ApiResult.ok(webCheckInService.checkIn());
+    }
+
+    /** The signed-in employee checks out of the day they checked in, at the server's time. */
+    @PostMapping("/me/check-out")
+    public ApiResult<AttendanceRecordResponse> checkOut() {
+        return ApiResult.ok(webCheckInService.checkOut());
     }
 
     @PostMapping("/punches")

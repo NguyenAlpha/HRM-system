@@ -651,6 +651,42 @@
         "tags" : [ "attendance-controller" ]
       }
     },
+    "/api/attendance/me/check-in" : {
+      "post" : {
+        "operationId" : "checkIn",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultAttendanceRecordResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-controller" ]
+      }
+    },
+    "/api/attendance/me/check-out" : {
+      "post" : {
+        "operationId" : "checkOut",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultAttendanceRecordResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-controller" ]
+      }
+    },
     "/api/attendance/overtime/pending" : {
       "get" : {
         "operationId" : "listOvertimeAwaitingDecision",
@@ -781,6 +817,50 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ApiResultListTimesheetRowResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-controller" ]
+      }
+    },
+    "/api/attendance/web-check-in" : {
+      "get" : {
+        "operationId" : "webCheckIn",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultWebCheckInSettingResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "attendance-controller" ]
+      },
+      "put" : {
+        "operationId" : "setWebCheckIn",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/WebCheckInSettingRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResultWebCheckInSettingResponse"
                 }
               }
             },
@@ -7114,6 +7194,29 @@
         },
         "required" : [ "data", "error", "success" ]
       },
+      "ApiResultWebCheckInSettingResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/WebCheckInSettingResponse"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "error" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ErrorDetail"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "error", "success" ]
+      },
       "ApiResultWorkLocationResponse" : {
         "type" : "object",
         "properties" : {
@@ -11230,6 +11333,24 @@
           }
         },
         "required" : [ "breakMinutes", "crossesMidnight", "endTime", "graceLateMinutes", "isActive", "name", "standardWorkMinutes", "startTime" ]
+      },
+      "WebCheckInSettingRequest" : {
+        "type" : "object",
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "enabled" ]
+      },
+      "WebCheckInSettingResponse" : {
+        "type" : "object",
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "enabled" ]
       },
       "WorkLocationResponse" : {
         "type" : "object",

@@ -423,11 +423,14 @@ export async function handleEmployeeRequest(request: Request, segments: string[]
       ["page", "size", "sort", "keyword", "employmentStatus", "organizationUnitId", "positionId"])
 }
 
-const PAYROLL_EXPORT = new RegExp(`^payroll/periods/${ID}/export$`)
+// XLSX downloads: a period's payroll sheet and one employee's yearly sheet.
+const PAYROLL_EXPORT = new RegExp(`^payroll/(?:periods/${ID}/export|employees/${ID}/payslips/export)$`)
 
 const WORKFORCE_ROUTES: Route[] = [
   { pattern: /^attendance\/prepare$/, methods: ["POST"] },
   { pattern: /^attendance\/punches$/, methods: ["POST"] },
+  { pattern: /^attendance\/web-check-in$/, methods: ["GET", "PUT"] },
+  { pattern: /^attendance\/me\/(?:check-in|check-out)$/, methods: ["POST"] },
   { pattern: new RegExp(`^attendance/employees/${ID}$`), methods: ["GET"] },
   { pattern: new RegExp(`^attendance/${ID}$`), methods: ["GET", "PUT"] },
   { pattern: new RegExp(`^attendance/${ID}/overtime-approval$`), methods: ["POST"] },
@@ -484,7 +487,7 @@ export async function handleWorkforceRequest(request: Request, segments: string[
 
   const accessToken = await sessionAccessToken(request, "hrm")
   if (accessToken instanceof NextResponse) return accessToken
-  if (exportFile) return proxyDownload(`/api/${path}`, accessToken)
+  if (exportFile) return proxyDownload(`/api/${path}${path.startsWith("payroll/employees/") ? yearQuery(request) : ""}`, accessToken)
   // The logo goes up as multipart form data; pass it through untouched.
   return apiResult(await callApi<unknown>("/api/company/logo", {
     method: "PUT",
@@ -692,6 +695,17 @@ export async function handleSystemStatsRequest(
   return apiResult(await callApi<unknown>(query?.size ? `${apiPath}?${query}` : apiPath, {
     headers: { Authorization: `Bearer ${accessToken}` },
   }))
+}
+
+/** `?year=` of the request when it is a plain year, else nothing (the API then answers 400). */
+function yearQuery(request: Request): string {
+  const year = new URL(request.url).searchParams.get("year")
+  return year && /^\d{4}$/.test(year) ? `?year=${year}` : ""
+}
+
+// Reads (GET) or switches (PUT) web check-in for the admin portal; the API checks the permission.
+export async function handleAdminWebCheckInRequest(request: Request): Promise<NextResponse> {
+  return forwardWithSession(request, "admin", "/api/attendance/web-check-in")
 }
 
 // Edits (PUT) or resets (DELETE) one rate-limit policy for the admin portal; the API checks the permission.

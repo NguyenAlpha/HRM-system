@@ -37,6 +37,7 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { COMPANY_PROFILE_KEY, SectionError, useCompanyProfile, workforceApi } from "@/components/workforce/workforce-shared"
+import { WebCheckInSettingCard } from "@/components/workforce/web-check-in"
 import { apiErrorMessage, friendlyErrorMessage } from "@/lib/api-helpers"
 import { authorizedRequest } from "@/lib/auth/client"
 import { formatDateTime } from "@/lib/format-date"
@@ -49,6 +50,7 @@ export function CompanyProfilePage() {
   const { session } = usePortalSession()
   const canManage = session.account.permissions.some((permission) => permission.code === "company.manage")
   const isCompanyOwner = session.account.roles.some((role) => role.code === "COMPANY_OWNER")
+  const canManageWebCheckIn = session.account.permissions.some((permission) => permission.code === "attendance.web_check_in.manage")
   const queryClient = useQueryClient()
   const { data: company, error: loadError } = useCompanyProfile()
   const error = loadError ? apiErrorMessage(loadError) : null
@@ -96,6 +98,7 @@ export function CompanyProfilePage() {
             </CardContent>
           </Card>
         )}
+        {canManageWebCheckIn && <WebCheckInSettingCard portal="hrm" />}
         {isCompanyOwner && <CompanyOwnerTransferCard ownAccountId={session.account.accountId} />}
       </div>
 

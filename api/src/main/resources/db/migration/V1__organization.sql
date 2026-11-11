@@ -16,6 +16,8 @@ CREATE TABLE company_profile (
     logo BYTEA,
     logo_content_type VARCHAR(20),
     logo_updated_at TIMESTAMPTZ,
+    -- Nhân viên tự bấm Vào ca / Ra ca trên web; tắt khi công ty dùng máy chấm công.
+    web_check_in_enabled BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT chk_company_profile_single CHECK (id = 1),

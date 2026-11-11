@@ -24,6 +24,10 @@ Quy trình một tháng:
 | `DELETE /api/company-holidays/{id}` | `organization.manage`, phạm vi `COMPANY` | Xóa ngày lễ |
 | `POST /api/attendance/prepare` | `attendance.manage`, phạm vi `COMPANY` | Tạo bản ghi `MISSING_PUNCH` cho các ngày làm việc của tháng |
 | `POST /api/attendance/punches` | `attendance.manage` (trong scope) | Ghi hoặc sửa giờ vào/ra của một ngày công |
+| `GET /api/attendance/web-check-in` | `attendance.self.check_in` hoặc `attendance.web_check_in.manage` | Chấm công trên web đang bật hay tắt |
+| `PUT /api/attendance/web-check-in` | `attendance.web_check_in.manage`, phạm vi `COMPANY` | Bật/tắt chấm công trên web |
+| `POST /api/attendance/me/check-in` | `attendance.self.check_in` | Nhân viên tự Vào ca hôm nay |
+| `POST /api/attendance/me/check-out` | `attendance.self.check_in` | Nhân viên tự Ra ca |
 | `PUT /api/attendance/{id}` | `attendance.manage` | Điều chỉnh / đối soát bản ghi công |
 | `POST /api/attendance/{id}/overtime-approval` | [Người duyệt](#người-duyệt) của nhân viên | Quyết định tăng ca của một ngày |
 | `GET /api/attendance/overtime/pending` | Đăng nhập | Các ngày có giờ làm vượt công thường đang chờ người gọi quyết định |
@@ -238,6 +242,48 @@ Trả `AttendanceRecordResponse` (xem [GET `/api/attendance/{id}`](#get-apiatten
 | 404 | `EMPLOYEE_NOT_FOUND` | Nhân viên không tồn tại |
 | 409 | `ATTENDANCE_FULL_DAY_LEAVE` | Ngày nghỉ cả ngày theo đơn đã duyệt |
 | 409 | `ATTENDANCE_OVERLAPS_LEAVE` | Giờ làm trùng đơn nghỉ nửa ngày đã duyệt |
+| 409 | `PAYROLL_PERIOD_LOCKED` | Ngày thuộc kỳ lương đã duyệt, đã trả hoặc đã khóa |
+
+---
+
+## Chấm công trên web
+
+Công ty thường lấy giờ vào/ra từ máy chấm công. Khi chưa có máy, Company Owner hoặc System Admin bật
+**chấm công trên web**: nhân viên tự bấm **Vào ca** rồi **Ra ca** trên trang Chấm công. Giờ ghi nhận là giờ
+của máy chủ lúc bấm, nhân viên không tự khai giờ. Cờ lưu ở `company_profile.web_check_in_enabled`, mặc định tắt.
+
+### GET `/api/attendance/web-check-in`
+
+Trả `{ "enabled": true | false }`. Chưa có hồ sơ doanh nghiệp thì coi như tắt.
+
+### PUT `/api/attendance/web-check-in`
+
+Body `{ "enabled": true }`. Cần `attendance.web_check_in.manage` phạm vi `COMPANY` (seed cho `COMPANY_OWNER` và
+`SYSTEM_ADMIN`). Chưa có hồ sơ doanh nghiệp → `404 RESOURCE_NOT_FOUND`.
+
+### POST `/api/attendance/me/check-in`
+
+Ghi giờ hiện tại làm giờ vào của **hôm nay** (giờ Việt Nam) cho nhân viên gắn với tài khoản, tạo ngày công nếu
+chưa có. Chưa có giờ ra nên chỉ tính đi muộn, ngày giữ `MISSING_PUNCH`; ghi chú ngày công là "Chấm công trên web"
+nếu trước đó trống. Trả [`AttendanceRecordResponse`](#get-apiattendanceid).
+
+### POST `/api/attendance/me/check-out`
+
+Ghi giờ hiện tại làm giờ ra của ngày đã Vào ca và tính công như [`POST /api/attendance/punches`](#post-apiattendancepunches):
+ngày thành `PRESENT`, quyết định tăng ca cũ bị xóa. Bấm lại thì giờ ra được cập nhật. Ca qua đêm Ra ca vào sáng
+hôm sau: hôm qua còn dở (có giờ vào, chưa có giờ ra, ca `crossesMidnight`) cũng được nhận. Quên Ra ca thì ngày vẫn
+`MISSING_PUNCH`, HR sửa bằng `PUT /api/attendance/{id}` hoặc `POST /api/attendance/punches`.
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 400 | `VALIDATION_ERROR` | Hôm nay nhân viên chưa vào làm hoặc đã nghỉ việc |
+| 400 | `ATTENDANCE_SCHEDULE_MISSING` | Vào ca khi không có phân công chính hôm nay |
+| 404 | `EMPLOYEE_NOT_FOUND` | Tài khoản không gắn nhân viên |
+| 409 | `ATTENDANCE_WEB_CHECK_IN_DISABLED` | Chấm công trên web đang tắt |
+| 409 | `ATTENDANCE_ALREADY_CHECKED_IN` | Vào ca lần hai trong ngày |
+| 409 | `ATTENDANCE_NOT_CHECKED_IN` | Ra ca khi chưa Vào ca |
+| 409 | `ATTENDANCE_FULL_DAY_LEAVE` | Hôm nay là ngày nghỉ trọn ca đã duyệt |
+| 409 | `ATTENDANCE_OVERLAPS_LEAVE` | Vào ca trong khoảng nghỉ đã duyệt, hoặc giờ làm trùng khoảng nghỉ |
 | 409 | `PAYROLL_PERIOD_LOCKED` | Ngày thuộc kỳ lương đã duyệt, đã trả hoặc đã khóa |
 
 ---

@@ -55,4 +55,9 @@ public class CompanyProfile extends AuditedEntity {
 
     @Column(name = "logo_updated_at")
     private Instant logoUpdatedAt;
+
+    /** Employees check in and out themselves on the web; off while a time clock feeds attendance. */
+    @Builder.Default
+    @Column(name = "web_check_in_enabled", nullable = false)
+    private Boolean webCheckInEnabled = false;
 }
