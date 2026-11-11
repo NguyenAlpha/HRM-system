@@ -38,6 +38,7 @@ public class PayrollMapper {
             period.getApprovedAt(),
             period.getPaidByAccount() != null ? period.getPaidByAccount().getId() : null,
             period.getPaidAt(),
+            period.getPaymentReference(),
             period.getLockedByAccount() != null ? period.getLockedByAccount().getId() : null,
             period.getLockedAt(),
             period.getReopenedByAccount() != null ? period.getReopenedByAccount().getId() : null,
@@ -73,6 +74,8 @@ public class PayrollMapper {
             payslip.getPositionSnapshot(),
             payslip.getWorkLocationSnapshot(),
             payslip.getOrganizationUnitSnapshot(),
+            payslip.getBankNameSnapshot(),
+            masked(payslip.getBankAccountNumberSnapshot()),
             payslip.getContractualBaseSalary(),
             payslip.getScheduledWorkMinutes(),
             payslip.getPayableWorkMinutes(),
@@ -94,5 +97,14 @@ public class PayrollMapper {
             payslip.getNetPay(),
             items
         );
+    }
+
+    /** "0071000845213" → "••••5213": payslips name the account without spelling it out. */
+    static String masked(String accountNumber) {
+        if (accountNumber == null || accountNumber.isBlank()) {
+            return null;
+        }
+        String digits = accountNumber.strip();
+        return "••••" + digits.substring(Math.max(0, digits.length() - 4));
     }
 }

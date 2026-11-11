@@ -103,8 +103,14 @@ public class PayrollController {
 
     @PostMapping("/periods/{id}/mark-paid")
     public ApiResult<PayrollPeriodResponse> markPaid(@PathVariable Long id,
-        @RequestBody(required = false) MarkPayrollPaidRequest request) {
-        return ApiResult.ok(service.markPaid(id, request == null ? null : request.paidOn()));
+        @Valid @RequestBody MarkPayrollPaidRequest request) {
+        return ApiResult.ok(service.markPaid(id, request.paidOn(), request.paymentReference()));
+    }
+
+    /** The bank transfer sheet of an approved period: one row per employee with their account and net pay. */
+    @GetMapping(value = "/periods/{id}/bank-transfer/export", produces = XLSX)
+    public ResponseEntity<byte[]> exportBankTransfer(@PathVariable Long id) {
+        return xlsx(exportService.exportBankTransfer(id));
     }
 
     @PostMapping("/periods/{id}/lock")

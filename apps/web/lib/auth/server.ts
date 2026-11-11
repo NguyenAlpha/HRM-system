@@ -423,8 +423,9 @@ export async function handleEmployeeRequest(request: Request, segments: string[]
       ["page", "size", "sort", "keyword", "employmentStatus", "organizationUnitId", "positionId"])
 }
 
-// XLSX downloads: a period's payroll sheet and one employee's yearly sheet.
-const PAYROLL_EXPORT = new RegExp(`^payroll/(?:periods/${ID}/export|employees/${ID}/payslips/export)$`)
+// XLSX downloads: a period's payroll and bank transfer sheets, and one employee's yearly sheet.
+const PAYROLL_EXPORT = new RegExp(
+  `^payroll/(?:periods/${ID}/export|periods/${ID}/bank-transfer/export|employees/${ID}/payslips/export)$`)
 
 const WORKFORCE_ROUTES: Route[] = [
   { pattern: /^attendance\/prepare$/, methods: ["POST"] },

@@ -102,6 +102,8 @@ CREATE TABLE payroll_periods (
     approved_at TIMESTAMPTZ,
     paid_by_account_id BIGINT REFERENCES accounts (id),
     paid_at TIMESTAMPTZ,
+    -- Mã giao dịch / số ủy nhiệm chi ngân hàng trả về khi chuyển lương; bắt buộc khi ghi nhận đã trả.
+    payment_reference VARCHAR(100),
     locked_by_account_id BIGINT REFERENCES accounts (id),
     locked_at TIMESTAMPTZ,
     -- Kỳ đã duyệt nhưng chưa trả có thể được hủy duyệt (VD trả lương lệch sang tháng khác nên phải tính lại
@@ -119,6 +121,7 @@ CREATE TABLE payroll_periods (
         OR approved_by_account_id IS NULL
         OR calculated_by_account_id <> approved_by_account_id
     ),
+    CONSTRAINT chk_payroll_periods_payment_reference CHECK (paid_at IS NULL OR payment_reference IS NOT NULL),
     CONSTRAINT chk_payroll_periods_reopen CHECK (
         (reopened_by_account_id IS NULL AND reopened_at IS NULL AND reopen_reason IS NULL)
         OR (reopened_by_account_id IS NOT NULL AND reopened_at IS NOT NULL AND reopen_reason IS NOT NULL)
@@ -157,6 +160,10 @@ CREATE TABLE payslips (
     work_location_snapshot VARCHAR(150) NOT NULL,
     organization_unit_snapshot VARCHAR(150) NOT NULL,
     position_snapshot VARCHAR(150) NOT NULL,
+    -- Tài khoản nhận lương lúc tính kỳ; trống khi nhân viên chưa khai (khi đó kế toán phải bổ sung trước khi chi).
+    bank_name_snapshot VARCHAR(150),
+    bank_account_number_snapshot VARCHAR(50),
+    bank_account_holder_snapshot VARCHAR(200),
     contractual_base_salary NUMERIC(15,2) NOT NULL CHECK (contractual_base_salary >= 0),
     scheduled_work_minutes INTEGER NOT NULL CHECK (scheduled_work_minutes > 0),
     payable_work_minutes INTEGER NOT NULL CHECK (payable_work_minutes >= 0),

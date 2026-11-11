@@ -76,6 +76,10 @@ public class PayrollPeriod extends AuditedEntity {
     @Column(name = "paid_at")
     private Instant paidAt;
 
+    /** The bank's transaction or payment-order number for the salary transfer; set when marked paid. */
+    @Column(name = "payment_reference", length = 100)
+    private String paymentReference;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "locked_by_account_id")
     private Account lockedByAccount;

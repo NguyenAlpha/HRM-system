@@ -3,6 +3,7 @@ package com.htttdn.hrm.service.payroll;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
@@ -19,6 +20,8 @@ import com.htttdn.hrm.entity.PayrollPeriod;
 import com.htttdn.hrm.entity.Payslip;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
 import com.htttdn.hrm.repository.PayslipRepository;
+import com.htttdn.hrm.dto.response.common.ErrorCode;
+import com.htttdn.hrm.exception.ConflictException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -80,6 +83,40 @@ public class PayrollExportService {
             .toList();
         String label = "%d-%02d".formatted(period.getYear(), period.getMonth());
         return new PayrollExport("bang-luong-" + label + ".xlsx", write("Bảng lương " + label, COLUMNS, payslips));
+    }
+
+    /**
+     * Bảng chi lương của kỳ đã duyệt: mỗi nhân viên một dòng với tài khoản nhận (chụp lúc tính kỳ), số thực nhận
+     * và nội dung chuyển khoản không dấu. Kế toán tải file này lên internet banking doanh nghiệp để ngân hàng chuyển
+     * lương; hệ thống không tự chuyển tiền. Nhân viên chưa khai tài khoản vẫn có dòng, các ô tài khoản để trống.
+     *
+     * @throws ConflictException kỳ chưa duyệt (→ 409 {@code CONFLICT})
+     */
+    @PreAuthorize("hasAuthority('report.payroll.read')")
+    @Transactional(readOnly = true)
+    public PayrollExport exportBankTransfer(Long periodId) {
+        employeeAccessScopeService.requireCompanyWide("report.payroll.read");
+        PayrollPeriod period = payrollPeriodRepository.getRequired(periodId);
+        if (!period.getStatus().isReleased()) {
+            throw new ConflictException(ErrorCode.CONFLICT, "Only an approved period can be paid out");
+        }
+        List<Payslip> payslips = payslipRepository.findByPayrollPeriodId(periodId).stream()
+            .sorted(Comparator.comparing(Payslip::getEmployeeCodeSnapshot))
+            .toList();
+        String month = "%02d/%d".formatted(period.getMonth(), period.getYear());
+        List<Column> columns = List.of(
+            new Column("STT", payslip -> payslips.indexOf(payslip) + 1, false),
+            new Column("Mã NV", Payslip::getEmployeeCodeSnapshot, false),
+            new Column("Họ tên", Payslip::getEmployeeNameSnapshot, false),
+            new Column("Ngân hàng", Payslip::getBankNameSnapshot, false),
+            new Column("Số tài khoản", Payslip::getBankAccountNumberSnapshot, false),
+            new Column("Chủ tài khoản", Payslip::getBankAccountHolderSnapshot, false),
+            // Đồng không có đơn vị lẻ, ngân hàng chỉ nhận số nguyên; phiếu lương vẫn giữ số lẻ.
+            new Column("Số tiền", payslip -> payslip.getNetPay().setScale(0, RoundingMode.HALF_UP), true),
+            new Column("Nội dung", payslip -> "Luong T%s %s".formatted(month, payslip.getEmployeeCodeSnapshot()), false)
+        );
+        String label = "%d-%02d".formatted(period.getYear(), period.getMonth());
+        return new PayrollExport("chi-luong-" + label + ".xlsx", write("Chi lương " + label, columns, payslips));
     }
 
     /**

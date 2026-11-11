@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
-import { ArrowLeft, Ban, Calculator, CheckCheck, Eye, FileSpreadsheet, Loader2, Lock, Search, Undo2, Wallet } from "lucide-react"
+import { ArrowLeft, Ban, Calculator, CheckCheck, Eye, FileSpreadsheet, Landmark, Loader2, Lock, Search, TriangleAlert, Undo2, Wallet } from "lucide-react"
 
 import { ActionsMenu, RowActionItem, RowActionsCell } from "@/components/common/row-actions"
 import {
@@ -27,6 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -137,6 +138,9 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
   const canLock = permissions.has("payroll.lock") && status === "PAID"
   const canCancel = permissions.has("payroll.calculate") && editable
   const canExport = status !== undefined && status !== "DRAFT" && status !== "CANCELLED"
+  // The bank pays out an approved sheet only.
+  const canExportBankTransfer = status === "APPROVED" || status === "PAID" || status === "LOCKED"
+  const withoutAccount = payslips.filter((slip) => !slip.bankAccountMasked)
   const action = (path: string, success: string, body?: unknown) =>
     run(success, () => workforceApi(`payroll/periods/${periodId}/${path}`, "POST", body))
 
@@ -152,6 +156,12 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
           {period && (
             <p className="mt-1.5 text-[var(--muted-ink)]">
               {formatDateRange(period.periodStart, period.periodEnd)} · Ngày trả lương {period.taxPaymentDate ? formatDate(period.taxPaymentDate) : "chưa đặt"}
+            </p>
+          )}
+          {period?.paidAt && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Đã chuyển khoản ngày {period.taxPaymentDate ? formatDate(period.taxPaymentDate) : "—"}
+              {period.paymentReference && <> · Mã giao dịch <span className="font-medium text-foreground">{period.paymentReference}</span></>}
             </p>
           )}
           {period?.reopenedAt && editable && (
@@ -175,6 +185,13 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
               <FileSpreadsheet /> Xuất Excel
             </Button>
           )}
+          {canExportBankTransfer && (
+            <Button type="button" variant="outline" disabled={busy}
+              onClick={() => void run("Đã tải bảng chi lương",
+                () => authorizedDownload("hrm", `/workforce/payroll/periods/${periodId}/bank-transfer/export`))}>
+              <Landmark /> Xuất bảng chi lương
+            </Button>
+          )}
           {(canReopen || canCancel) && (
             <ActionsMenu label={title} outline>
               {canReopen && <RowActionItem icon={Undo2} disabled={busy} onClick={() => setReopening(true)}>Hủy duyệt</RowActionItem>}
@@ -186,6 +203,32 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
 
       <div className="mt-8 grid gap-6">
         <SectionError error={error} />
+
+        {withoutAccount.length > 0 && (
+          <Alert>
+            <TriangleAlert />
+            <AlertTitle>{withoutAccount.length} nhân viên chưa có tài khoản ngân hàng nhận lương</AlertTitle>
+            <AlertDescription>
+              <p>
+                Bảng chi lương để trống số tài khoản của:{" "}
+                {withoutAccount.map((slip, index) => (
+                  <span key={slip.id}>
+                    {index > 0 && ", "}
+                    <Link href={`/employees/${slip.employeeId}`} className="font-medium underline-offset-2 hover:underline">
+                      {slip.employeeNameSnapshot}
+                    </Link>
+                  </span>
+                ))}
+                .
+              </p>
+              <p>
+                {editable
+                  ? "Bổ sung tài khoản ở mục Thông tin nhạy cảm của hồ sơ nhân sự rồi tính lại kỳ trước khi duyệt."
+                  : "Kỳ đã duyệt dùng tài khoản lúc tính lương; những người này cần được chi riêng."}
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {period && (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card px-4 py-3">
@@ -346,8 +389,7 @@ export function PayrollPeriodPage({ periodId }: { periodId: string }) {
 
       {markingPaid && period && (
         <MarkPaidDialog period={period} busy={busy} onClose={() => setMarkingPaid(false)}
-          onSubmit={(paidOn) => action("mark-paid", "Đã ghi nhận trả lương",
-            { paidOn } satisfies WorkforceBody["MarkPayrollPaidRequest"])} />
+          onSubmit={(body) => action("mark-paid", "Đã ghi nhận trả lương", body)} />
       )}
 
       <AlertDialog open={confirm !== null} onOpenChange={(open) => { if (!open && !busy) setConfirm(null) }}>
@@ -463,32 +505,44 @@ function ReopenDialog({ title, busy, onClose, onSubmit }: {
   )
 }
 
-/** The actual payment date; it must stay in the planned payment month, since tax was withheld for that month. */
+/**
+ * Records the transfer the bank made from the bank transfer sheet: its date, which must stay in the planned
+ * payment month since tax was withheld for that month, and the bank's transaction number.
+ */
 function MarkPaidDialog({ period, busy, onClose, onSubmit }: {
   period: PayrollPeriod
   busy: boolean
   onClose: () => void
-  onSubmit: (paidOn: string) => Promise<boolean>
+  onSubmit: (body: WorkforceBody["MarkPayrollPaidRequest"]) => Promise<boolean>
 }) {
   const planned = period.taxPaymentDate ?? today()
   const [paidOn, setPaidOn] = useState(today().slice(0, 7) === planned.slice(0, 7) ? today() : planned)
+  const [paymentReference, setPaymentReference] = useState("")
   return (
     <Dialog open onOpenChange={(open) => { if (!open && !busy) onClose() }}>
       <DialogContent className="sm:max-w-sm">
         <form onSubmit={(event) => {
           event.preventDefault()
-          void onSubmit(paidOn).then((ok) => { if (ok) onClose() })
+          void onSubmit({ paidOn, paymentReference: paymentReference.trim() }).then((ok) => { if (ok) onClose() })
         }}>
           <DialogHeader>
             <DialogTitle>Xác nhận đã trả lương</DialogTitle>
             <DialogDescription>
-              Ngày trả thực tế phải trong tháng {planned.slice(5, 7)}/{planned.slice(0, 4)} như đã dự kiến, vì thuế TNCN
-              đã tính theo tháng đó.
+              Sau khi tải bảng chi lương lên internet banking và ngân hàng đã chuyển, ghi lại ngày chuyển và mã giao dịch.
+              Ngày trả phải trong tháng {planned.slice(5, 7)}/{planned.slice(0, 4)} như đã dự kiến, vì thuế TNCN đã tính
+              theo tháng đó.
             </DialogDescription>
           </DialogHeader>
-          <div className="mt-4 grid gap-1.5">
-            <Label htmlFor="paid-on">Ngày trả thực tế</Label>
-            <Input id="paid-on" type="date" required max={today()} value={paidOn} onChange={(event) => setPaidOn(event.target.value)} />
+          <div className="mt-4 grid gap-4">
+            <div className="grid gap-1.5">
+              <Label htmlFor="paid-on">Ngày chuyển khoản</Label>
+              <Input id="paid-on" type="date" required max={today()} value={paidOn} onChange={(event) => setPaidOn(event.target.value)} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="payment-reference">Mã giao dịch / số ủy nhiệm chi</Label>
+              <Input id="payment-reference" required maxLength={100} placeholder="VD: FT26305123456789" value={paymentReference}
+                onChange={(event) => setPaymentReference(event.target.value)} />
+            </div>
           </div>
           <DialogFooter className="mt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={busy}>Hủy</Button>

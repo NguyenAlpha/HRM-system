@@ -220,14 +220,17 @@ public class PayrollService {
     }
 
     /**
-     * Ghi nhận đã trả lương và chốt ngày trả thực tế.
+     * Ghi nhận đã trả lương và chốt ngày trả thực tế. Tiền được chuyển ngoài hệ thống: kế toán tải bảng chi
+     * lương ({@code PayrollExportService#exportBankTransfer}) lên internet banking doanh nghiệp, rồi ghi lại mã
+     * giao dịch ngân hàng trả về ở đây.
      *
      * @param paidOn ngày trả thực tế (null → hôm nay); thành ngày trả lương của kỳ
+     * @param paymentReference mã giao dịch / số ủy nhiệm chi của lần chuyển lương
      * @throws ConflictException kỳ chưa duyệt (→ 409 {@code CONFLICT}), hoặc ngày trả thực tế khác tháng với
      *         ngày trả đã dùng để tính thuế (→ 409 {@code PAYROLL_PAYMENT_MONTH_MISMATCH})
      */
     @PreAuthorize("hasAuthority('payroll.mark_paid')")
-    public PayrollPeriodResponse markPaid(Long periodId, @Nullable LocalDate paidOn) {
+    public PayrollPeriodResponse markPaid(Long periodId, @Nullable LocalDate paidOn, String paymentReference) {
         employeeAccessScopeService.requireCompanyWide("payroll.mark_paid");
         PayrollPeriod period = payrollPeriodRepository.getRequiredForUpdate(periodId);
         if (period.getStatus() != PayrollPeriodStatus.APPROVED) {
@@ -253,6 +256,7 @@ public class PayrollService {
         period.setTaxPaymentDate(actualPaymentDate);
         period.setPaidByAccount(payer);
         period.setPaidAt(Instant.now(clock));
+        period.setPaymentReference(paymentReference.strip());
 
         return payrollMapper.toResponse(period);
     }

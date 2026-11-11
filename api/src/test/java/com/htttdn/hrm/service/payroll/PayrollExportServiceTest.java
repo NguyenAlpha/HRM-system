@@ -23,6 +23,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.htttdn.hrm.dto.response.common.ErrorCode;
 import com.htttdn.hrm.entity.PayrollPeriod;
 import com.htttdn.hrm.entity.Payslip;
+import com.htttdn.hrm.entity.enums.PayrollPeriodStatus;
+import com.htttdn.hrm.exception.ConflictException;
 import com.htttdn.hrm.exception.ForbiddenException;
 import com.htttdn.hrm.exception.ResourceNotFoundException;
 import com.htttdn.hrm.repository.PayrollPeriodRepository;
@@ -81,6 +83,45 @@ class PayrollExportServiceTest {
         assertTrue(strings.indexOf("01/2026") < strings.indexOf("02/2026"), "a row per month, January first");
         // The month column shifts net pay to the 22nd column (V).
         assertTrue(sheet.contains("SUM(V2:V3)"), sheet);
+    }
+
+    @Test
+    void bankTransferSheetListsEachAccountAndNetPayOfAnApprovedPeriod() throws IOException {
+        PayrollPeriod period = PayrollPeriod.builder().id(3L).year((short) 2026).month((short) 10)
+            .status(PayrollPeriodStatus.APPROVED).build();
+        when(payrollPeriodRepository.getRequired(3L)).thenReturn(period);
+        Payslip withAccount = payslip("NV002", "Trần Thị B", "9000000");
+        withAccount.setBankNameSnapshot("Vietcombank");
+        withAccount.setBankAccountNumberSnapshot("0071000845213");
+        withAccount.setBankAccountHolderSnapshot("TRAN THI B");
+        when(payslipRepository.findByPayrollPeriodId(3L)).thenReturn(List.of(withAccount,
+            payslip("NV001", "Nguyễn Văn A", "11000000")));
+
+        var export = service().exportBankTransfer(3L);
+
+        assertEquals("chi-luong-2026-10.xlsx", export.fileName());
+        Map<String, String> parts = unzip(export.content());
+        String sheet = parts.get("xl/worksheets/sheet1.xml");
+        String strings = parts.getOrDefault("xl/sharedStrings.xml", "") + sheet;
+        assertTrue(strings.contains("0071000845213"));
+        assertTrue(strings.contains("Luong T10/2026 NV002"));
+        // Amount is the 7th column (G); the total sums both rows, the one without an account included.
+        assertTrue(sheet.contains("SUM(G2:G3)"), sheet);
+    }
+
+    @Test
+    void bankTransferSheetNeedsAnApprovedPeriod() {
+        when(payrollPeriodRepository.getRequired(3L)).thenReturn(PayrollPeriod.builder().id(3L)
+            .year((short) 2026).month((short) 10).status(PayrollPeriodStatus.CALCULATED).build());
+
+        assertThrows(ConflictException.class, () -> service().exportBankTransfer(3L));
+        verifyNoInteractions(payslipRepository);
+    }
+
+    @Test
+    void payslipsShowOnlyTheLastFourDigitsOfTheAccount() {
+        assertEquals("••••5213", PayrollMapper.masked("0071000845213"));
+        assertEquals(null, PayrollMapper.masked(" "));
     }
 
     @Test

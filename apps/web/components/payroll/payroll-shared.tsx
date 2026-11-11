@@ -129,6 +129,14 @@ export function PayslipDialog({ payslip, onClose }: { payslip: Payslip; onClose:
             <dt className="text-xs text-muted-foreground">Công được trả lương · Tăng ca</dt>
             <dd>{hours(payslip.payableWorkMinutes)} / {hours(payslip.scheduledWorkMinutes)} · {hours(payslip.approvedOvertimeMinutes)}</dd>
           </div>
+          <div className="sm:col-span-2">
+            <dt className="text-xs text-muted-foreground">Nhận lương</dt>
+            <dd>
+              {payslip.bankAccountMasked
+                ? `Chuyển khoản ${payslip.bankName ?? ""} ${payslip.bankAccountMasked}`
+                : <span className="text-destructive">Chưa có tài khoản ngân hàng, liên hệ phòng Nhân sự</span>}
+            </dd>
+          </div>
         </dl>
 
         <div className="grid gap-4 sm:grid-cols-2">

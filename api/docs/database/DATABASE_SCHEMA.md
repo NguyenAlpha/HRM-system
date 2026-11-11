@@ -1180,6 +1180,7 @@ Số liệu cụ thể của từng bộ quy tắc và nguồn tham chiếu nằ
 | `approved_at` | TIMESTAMPTZ | | Thời điểm duyệt |
 | `paid_by_account_id` | BIGINT | FK → accounts | Người xác nhận trả |
 | `paid_at` | TIMESTAMPTZ | | Thời điểm xác nhận trả |
+| `payment_reference` | VARCHAR(100) | | Mã giao dịch / số ủy nhiệm chi ngân hàng trả về khi chuyển lương |
 | `locked_by_account_id` | BIGINT | FK → accounts | Người khóa |
 | `locked_at` | TIMESTAMPTZ | | Thời điểm khóa |
 | `reopened_by_account_id` | BIGINT | FK → accounts | Người hủy duyệt gần nhất |
@@ -1188,7 +1189,7 @@ Số liệu cụ thể của từng bộ quy tắc và nguồn tham chiếu nằ
 | `created_at` | TIMESTAMPTZ | NOT NULL | Thời điểm tạo |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Thời điểm cập nhật |
 
-> Unique index một phần `uq_payroll_periods_year_month (year, month) WHERE status <> 'CANCELLED'`: mỗi tháng chỉ có một kỳ còn hiệu lực, kỳ đã hủy không chặn việc tạo lại. Vòng đời: `DRAFT` → `CALCULATED` → `APPROVED` → `PAID` → `LOCKED`. Có thể `CANCELLED` trước khi duyệt; kỳ `APPROVED` chưa trả có thể hủy duyệt về `DRAFT`. `chk_payroll_periods_reopen`: ba cột hủy duyệt cùng có hoặc cùng trống.
+> Unique index một phần `uq_payroll_periods_year_month (year, month) WHERE status <> 'CANCELLED'`: mỗi tháng chỉ có một kỳ còn hiệu lực, kỳ đã hủy không chặn việc tạo lại. Vòng đời: `DRAFT` → `CALCULATED` → `APPROVED` → `PAID` → `LOCKED`. Có thể `CANCELLED` trước khi duyệt; kỳ `APPROVED` chưa trả có thể hủy duyệt về `DRAFT`. `chk_payroll_periods_reopen`: ba cột hủy duyệt cùng có hoặc cùng trống. `chk_payroll_periods_payment_reference`: đã xác nhận trả (`paid_at`) thì phải có mã giao dịch.
 
 ### `payroll_adjustments` — Khoản cộng/trừ nhập tay theo kỳ
 
@@ -1218,6 +1219,9 @@ Số liệu cụ thể của từng bộ quy tắc và nguồn tham chiếu nằ
 | `position_snapshot` | VARCHAR(150) | NOT NULL | Chức vụ lúc tính |
 | `work_location_snapshot` | VARCHAR(150) | NOT NULL | Địa điểm lúc tính |
 | `organization_unit_snapshot` | VARCHAR(150) | NOT NULL | Phòng ban lúc tính |
+| `bank_name_snapshot` | VARCHAR(150) | | Ngân hàng nhận lương lúc tính; trống khi nhân viên chưa khai |
+| `bank_account_number_snapshot` | VARCHAR(50) | | Số tài khoản nhận lương lúc tính |
+| `bank_account_holder_snapshot` | VARCHAR(200) | | Chủ tài khoản nhận lương lúc tính |
 | `contractual_base_salary` | NUMERIC(15,2) | NOT NULL, CHECK >= 0 | Lương cơ bản tháng snapshot |
 | `scheduled_work_minutes` | INTEGER | NOT NULL, CHECK > 0 | Tổng phút công chuẩn |
 | `payable_work_minutes` | INTEGER | NOT NULL, CHECK >= 0 | Tổng phút hưởng lương |

@@ -3108,6 +3108,34 @@
         "tags" : [ "payroll-controller" ]
       }
     },
+    "/api/payroll/periods/{id}/bank-transfer/export" : {
+      "get" : {
+        "operationId" : "exportBankTransfer",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "payroll-controller" ]
+      }
+    },
     "/api/payroll/periods/{id}/calculate" : {
       "post" : {
         "operationId" : "calculate",
@@ -3245,7 +3273,8 @@
                 "$ref" : "#/components/schemas/MarkPayrollPaidRequest"
               }
             }
-          }
+          },
+          "required" : true
         },
         "responses" : {
           "200" : {
@@ -8969,8 +8998,14 @@
           "paidOn" : {
             "type" : [ "string", "null" ],
             "format" : "date"
+          },
+          "paymentReference" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
           }
-        }
+        },
+        "required" : [ "paymentReference" ]
       },
       "MonthlyHrStatusReportResponse" : {
         "type" : "object",
@@ -9582,6 +9617,9 @@
             "type" : [ "integer", "null" ],
             "format" : "int64"
           },
+          "paymentReference" : {
+            "type" : [ "string", "null" ]
+          },
           "payslipCount" : {
             "type" : "integer",
             "format" : "int64"
@@ -9624,7 +9662,7 @@
             "format" : "int32"
           }
         },
-        "required" : [ "approvedAt", "approvedByAccountId", "calculatedAt", "calculatedByAccountId", "id", "lockedAt", "lockedByAccountId", "month", "paidAt", "paidByAccountId", "payslipCount", "periodEnd", "periodStart", "reopenReason", "reopenedAt", "reopenedByAccountId", "status", "taxPaymentDate", "totalGrossPay", "totalNetPay", "year" ]
+        "required" : [ "approvedAt", "approvedByAccountId", "calculatedAt", "calculatedByAccountId", "id", "lockedAt", "lockedByAccountId", "month", "paidAt", "paidByAccountId", "paymentReference", "payslipCount", "periodEnd", "periodStart", "reopenReason", "reopenedAt", "reopenedByAccountId", "status", "taxPaymentDate", "totalGrossPay", "totalNetPay", "year" ]
       },
       "PayrollSalaryReportResponse" : {
         "type" : "object",
@@ -9777,6 +9815,12 @@
             "type" : "integer",
             "format" : "int32"
           },
+          "bankAccountMasked" : {
+            "type" : [ "string", "null" ]
+          },
+          "bankName" : {
+            "type" : [ "string", "null" ]
+          },
           "basicSalaryPay" : {
             "type" : "number"
           },
@@ -9872,7 +9916,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "allowancePay", "approvedOvertimeMinutes", "basicSalaryPay", "contractualBasicSalary", "employeeCodeSnapshot", "employeeHealthInsurance", "employeeId", "employeeNameSnapshot", "employeeSocialInsurance", "employeeUnemploymentInsurance", "grossPay", "id", "insuranceSalaryBase", "items", "netPay", "organizationUnitSnapshot", "otherDeductions", "otherEarningsPay", "overtimePay", "payableWorkMinutes", "payrollPeriodId", "periodMonth", "periodYear", "personalIncomeTax", "positionSnapshot", "scheduledWorkMinutes", "taxExemptOtherEarnings", "taxableIncome", "unemploymentInsuranceBase", "workLocationSnapshot" ]
+        "required" : [ "allowancePay", "approvedOvertimeMinutes", "bankAccountMasked", "bankName", "basicSalaryPay", "contractualBasicSalary", "employeeCodeSnapshot", "employeeHealthInsurance", "employeeId", "employeeNameSnapshot", "employeeSocialInsurance", "employeeUnemploymentInsurance", "grossPay", "id", "insuranceSalaryBase", "items", "netPay", "organizationUnitSnapshot", "otherDeductions", "otherEarningsPay", "overtimePay", "payableWorkMinutes", "payrollPeriodId", "periodMonth", "periodYear", "personalIncomeTax", "positionSnapshot", "scheduledWorkMinutes", "taxExemptOtherEarnings", "taxableIncome", "unemploymentInsuranceBase", "workLocationSnapshot" ]
       },
       "PermissionGrantSource" : {
         "type" : "object",

@@ -22,6 +22,8 @@ public record PayrollPeriodResponse(
     @Nullable Instant approvedAt,
     @Nullable Long paidByAccountId,
     @Nullable Instant paidAt,
+    /** The bank's transaction number for the salary transfer, recorded with the payment. */
+    @Nullable String paymentReference,
     @Nullable Long lockedByAccountId,
     @Nullable Instant lockedAt,
     /** The last time an approved period was sent back to DRAFT, and why; null if never. */

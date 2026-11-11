@@ -534,7 +534,7 @@ class PayrollServiceTest {
             .status(PayrollPeriodStatus.APPROVED).build();
         when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
 
-        BusinessException error = assertThrows(BusinessException.class, () -> service().markPaid(1L, later));
+        BusinessException error = assertThrows(BusinessException.class, () -> service().markPaid(1L, later, "UNC-1"));
         assertEquals(ErrorCode.VALIDATION_ERROR, error.getErrorCode());
         assertEquals("paidOn", error.getField());
         assertEquals(PayrollPeriodStatus.APPROVED, period.getStatus());
@@ -564,7 +564,7 @@ class PayrollServiceTest {
         when(payrollPeriodRepository.getRequiredForUpdate(1L)).thenReturn(period);
 
         ConflictException error = assertThrows(ConflictException.class, () -> service().markPaid(1L,
-            LocalDate.of(2026, 10, 1)));
+            LocalDate.of(2026, 10, 1), "UNC-1"));
         assertEquals(ErrorCode.PAYROLL_PAYMENT_MONTH_MISMATCH, error.getErrorCode());
         assertEquals(PayrollPeriodStatus.APPROVED, period.getStatus());
     }

@@ -1172,6 +1172,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payroll/periods/{id}/bank-transfer/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["exportBankTransfer"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/payroll/periods/{id}/calculate": {
         parameters: {
             query?: never;
@@ -3130,6 +3146,7 @@ export interface components {
         MarkPayrollPaidRequest: {
             /** Format: date */
             paidOn?: string | null;
+            paymentReference: string;
         };
         MonthlyHrStatusReportResponse: {
             /** Format: int64 */
@@ -3374,6 +3391,7 @@ export interface components {
             paidAt: string | null;
             /** Format: int64 */
             paidByAccountId: number | null;
+            paymentReference: string | null;
             /** Format: int64 */
             payslipCount: number;
             /** Format: date */
@@ -3447,6 +3465,8 @@ export interface components {
             allowancePay: number;
             /** Format: int32 */
             approvedOvertimeMinutes: number;
+            bankAccountMasked: string | null;
+            bankName: string | null;
             basicSalaryPay: number;
             contractualBasicSalary: number;
             employeeCodeSnapshot: string;
@@ -6427,6 +6447,28 @@ export interface operations {
             };
         };
     };
+    exportBankTransfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
+                };
+            };
+        };
+    };
     calculate: {
         parameters: {
             query?: never;
@@ -6528,7 +6570,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: {
+        requestBody: {
             content: {
                 "application/json": components["schemas"]["MarkPayrollPaidRequest"];
             };

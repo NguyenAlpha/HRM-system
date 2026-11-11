@@ -48,6 +48,16 @@ public class Payslip extends AuditedEntity {
     @Column(name = "position_snapshot", nullable = false, length = 150)
     private String positionSnapshot;
 
+    /** Receiving bank account when the period was calculated; null when the employee had none. */
+    @Column(name = "bank_name_snapshot", length = 150)
+    private String bankNameSnapshot;
+
+    @Column(name = "bank_account_number_snapshot", length = 50)
+    private String bankAccountNumberSnapshot;
+
+    @Column(name = "bank_account_holder_snapshot", length = 200)
+    private String bankAccountHolderSnapshot;
+
     @Column(name = "work_location_snapshot", nullable = false, length = 150)
     private String workLocationSnapshot;
 

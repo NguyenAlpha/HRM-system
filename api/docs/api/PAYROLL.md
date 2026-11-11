@@ -35,6 +35,7 @@ Quy trình một tháng:
 | `POST /api/payroll/periods/{id}/lock` | `payroll.lock`, phạm vi `COMPANY` | Khóa kỳ |
 | `POST /api/payroll/periods/{id}/cancel` | `payroll.calculate`, phạm vi `COMPANY` | Hủy kỳ chưa duyệt |
 | `GET /api/payroll/periods/{id}/export` | `report.payroll.read`, phạm vi `COMPANY` | Tải bảng lương Excel |
+| `GET /api/payroll/periods/{id}/bank-transfer/export` | `report.payroll.read`, phạm vi `COMPANY` | Tải bảng chi lương (tài khoản và số tiền) của kỳ đã duyệt |
 | `GET /api/payroll/periods/{id}/payslips` | `report.payroll.read`, phạm vi `COMPANY` | Bảng lương: mọi phiếu của kỳ |
 | `GET /api/payroll/periods/{periodId}/adjustments` | `report.payroll.read`, phạm vi `COMPANY` | Khoản cộng/trừ của kỳ |
 | `POST /api/payroll/periods/{periodId}/adjustments` | `payroll.calculate`, phạm vi `COMPANY` | Thêm khoản cộng/trừ |
@@ -185,6 +186,7 @@ Tiền là số thập phân VND (`BigDecimal`, 2 chữ số thập phân). Ngà
   "approvedAt": null,
   "paidByAccountId": null,
   "paidAt": null,
+  "paymentReference": null,
   "lockedByAccountId": null,
   "lockedAt": null,
   "reopenedByAccountId": null,
@@ -202,6 +204,7 @@ Tiền là số thập phân VND (`BigDecimal`, 2 chữ số thập phân). Ngà
 | `taxPaymentDate` | Ngày trả lương dự kiến (sau `mark-paid` là ngày trả thực tế); quyết định quy tắc thuế và số người phụ thuộc |
 | `status` | `DRAFT`, `CALCULATED`, `APPROVED`, `PAID`, `LOCKED`, `CANCELLED` (xem [Vòng đời kỳ lương](#vòng-đời-kỳ-lương)) |
 | `*ByAccountId`, `*At` | Ai và khi nào tính, duyệt, ghi nhận trả, khóa; `null` khi chưa xảy ra. Tính lại sau khi dữ liệu đổi xóa thông tin tính trước đó |
+| `paymentReference` | Mã giao dịch ngân hàng ghi khi [xác nhận đã trả](#post-apipayrollperiodsidmark-paid); `null` khi chưa trả |
 | `reopenedByAccountId`, `reopenedAt`, `reopenReason` | Lần [hủy duyệt](#post-apipayrollperiodsidreopen) gần nhất; `null` khi chưa từng hủy duyệt |
 | `payslipCount`, `totalGrossPay`, `totalNetPay` | Số phiếu lương hiện có của kỳ và tổng thu nhập, tổng thực nhận của các phiếu đó; `0` khi kỳ chưa tính |
 
@@ -219,6 +222,8 @@ Tiền là số thập phân VND (`BigDecimal`, 2 chữ số thập phân). Ngà
   "positionSnapshot": "Chuyên viên nhân sự",
   "workLocationSnapshot": "Trụ sở chính",
   "organizationUnitSnapshot": "Phòng Nhân sự",
+  "bankName": "Vietcombank",
+  "bankAccountMasked": "••••5213",
   "contractualBasicSalary": 15000000.00,
   "scheduledWorkMinutes": 12960,
   "payableWorkMinutes": 12900,
@@ -256,6 +261,7 @@ Tiền là số thập phân VND (`BigDecimal`, 2 chữ số thập phân). Ngà
 |:------|:------|
 | `periodYear`, `periodMonth` | Tháng của kỳ, để hiển thị phiếu mà không cần quyền đọc kỳ lương |
 | `*Snapshot` | Mã, họ tên, chức danh, địa điểm, đơn vị của nhân viên lúc tính |
+| `bankName`, `bankAccountMasked` | Tài khoản nhận lương lúc tính kỳ; số tài khoản chỉ hiện 4 số cuối (`••••5213`), đầy đủ chỉ có trong [bảng chi lương](#get-apipayrollperiodsidbank-transferexport). `null` khi nhân viên chưa khai |
 | `contractualBasicSalary` | Mức lương có hiệu lực vào ngày làm việc cuối của nhân viên trong kỳ |
 | `scheduledWorkMinutes` / `payableWorkMinutes` | Phút công chuẩn theo lịch / phút được trả lương thường |
 | `approvedOvertimeMinutes` | Tổng phút tăng ca đã duyệt |
@@ -637,19 +643,21 @@ Trả [`PayrollPeriodResponse`](#payrollperiodresponse) với `status: "DRAFT"` 
 
 ### POST `/api/payroll/periods/{id}/mark-paid`
 
-Ghi nhận kỳ đã trả lương.
+Ghi nhận kỳ đã trả lương. Hệ thống không tự chuyển tiền: kế toán [tải bảng chi lương](#get-apipayrollperiodsidbank-transferexport)
+lên internet banking doanh nghiệp, ngân hàng chuyển cho từng người, rồi người duyệt ghi lại ngày chuyển và mã giao dịch ở đây.
 
-#### Request (không bắt buộc)
+#### Request
 
 ```json
-{ "paidOn": "2026-11-05" }
+{ "paidOn": "2026-11-05", "paymentReference": "FT26309123456789" }
 ```
 
-`paidOn` là ngày trả **thực tế**, không được sau hôm nay; bỏ trống thì lấy hôm nay (giờ Việt Nam). Ngày này phải cùng tháng với ngày trả dự kiến đã duyệt, vì thuế đã tính theo tháng đó; khác tháng thì [hủy duyệt](#post-apipayrollperiodsidreopen), đặt lại ngày trả lương và tính lại. Sau khi ghi nhận, `taxPaymentDate` của kỳ là ngày thực tế.
+`paymentReference` (bắt buộc, tối đa 100 ký tự) là mã giao dịch / số ủy nhiệm chi ngân hàng trả về; kỳ trả về nó trong
+`paymentReference`. `paidOn` là ngày trả **thực tế**, không được sau hôm nay; bỏ trống thì lấy hôm nay (giờ Việt Nam). Ngày này phải cùng tháng với ngày trả dự kiến đã duyệt, vì thuế đã tính theo tháng đó; khác tháng thì [hủy duyệt](#post-apipayrollperiodsidreopen), đặt lại ngày trả lương và tính lại. Sau khi ghi nhận, `taxPaymentDate` của kỳ là ngày thực tế.
 
 | HTTP | `error.code` | Nguyên nhân |
 |:----:|:-------------|:-----------|
-| 400 | `VALIDATION_ERROR` | `paidOn` sau hôm nay (`field: paidOn`) |
+| 400 | `VALIDATION_ERROR` | `paidOn` sau hôm nay (`field: paidOn`), hoặc thiếu `paymentReference` |
 | 403 | `FORBIDDEN` | Không có `payroll.mark_paid` phạm vi `COMPANY` |
 | 404 | `PAYROLL_PERIOD_NOT_FOUND` | Kỳ không tồn tại |
 | 409 | `CONFLICT` | Kỳ không ở `APPROVED` |
@@ -691,6 +699,20 @@ File có một sheet, mỗi dòng một phiếu lương của kỳ, sắp theo m
 |:----:|:-------------|:-----------|
 | 403 | `FORBIDDEN` | Không có `report.payroll.read` phạm vi `COMPANY` |
 | 404 | `PAYROLL_PERIOD_NOT_FOUND` | Kỳ không tồn tại |
+
+### GET `/api/payroll/periods/{id}/bank-transfer/export`
+
+Tải bảng chi lương `chi-luong-<năm>-<tháng>.xlsx` để kế toán tải lên internet banking. Chỉ kỳ `APPROVED`, `PAID`,
+`LOCKED`; kỳ chưa duyệt → `409 CONFLICT`. Mỗi nhân viên một dòng, sắp theo mã: STT, mã NV, họ tên, ngân hàng, số tài
+khoản, chủ tài khoản (chụp lúc tính kỳ), số tiền thực nhận làm tròn tới đồng, nội dung `Luong T<MM/yyyy> <mã NV>`
+không dấu; dòng cuối là `SUM` số tiền. Nhân viên chưa khai tài khoản vẫn có dòng với các ô tài khoản trống. Trang
+bảng lương cảnh báo những người này (phiếu có `bankAccountMasked` null) để HR bổ sung rồi tính lại trước khi duyệt.
+
+| HTTP | `error.code` | Nguyên nhân |
+|:----:|:-------------|:-----------|
+| 403 | `FORBIDDEN` | Không có `report.payroll.read` phạm vi `COMPANY` |
+| 404 | `PAYROLL_PERIOD_NOT_FOUND` | Kỳ không tồn tại |
+| 409 | `CONFLICT` | Kỳ chưa duyệt |
 
 ### GET `/api/payroll/periods/{id}/payslips`
 
