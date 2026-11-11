@@ -217,6 +217,57 @@ class RoleServiceTest {
         verify(rolePermissionRepository, never()).saveAll(any());
     }
 
+    @Test
+    void replacePermissionsRejectsDroppingEverySelfServicePermissionWhileRoleIsAssignedSelf() {
+        Role role = role(false);
+        Permission selfService = permission(6L, "payroll.self.read", PermissionAssignmentPolicy.DELEGABLE);
+        Permission other = permission(1L, "employee.read", PermissionAssignmentPolicy.DELEGABLE);
+        when(roleRepository.getRequiredForUpdate(10L)).thenReturn(role);
+        when(permissionRepository.findAllById(any())).thenReturn(List.of(other));
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(99L).build());
+        when(rolePermissionRepository.findByIdRoleId(10L)).thenReturn(List.of(mapping(role, selfService)));
+        when(accountRoleAssignmentRepository.existsCurrentOrFutureSelfByRoleId(eq(10L), any())).thenReturn(true);
+
+        ConflictException exception = assertThrows(
+            ConflictException.class,
+            () -> service().replacePermissions(10L, new ReplaceRolePermissionsRequest(List.of(1L)))
+        );
+
+        assertEquals(ErrorCode.ROLE_SCOPE_CONFLICT, exception.getErrorCode());
+        assertEquals("permissionIds", exception.getField());
+    }
+
+    @Test
+    void replacePermissionsKeepingASelfServicePermissionIgnoresSelfAssignments() {
+        Role role = role(false);
+        Permission selfService = permission(6L, "payroll.self.read", PermissionAssignmentPolicy.DELEGABLE);
+        when(roleRepository.getRequiredForUpdate(10L)).thenReturn(role);
+        when(permissionRepository.findAllById(any())).thenReturn(List.of(selfService));
+        when(currentAccountProvider.account()).thenReturn(Account.builder().id(99L).build());
+        when(rolePermissionRepository.findByIdRoleId(10L)).thenReturn(List.of(mapping(role, selfService)));
+
+        service().replacePermissions(10L, new ReplaceRolePermissionsRequest(List.of(6L)));
+
+        verify(accountRoleAssignmentRepository, never()).existsCurrentOrFutureSelfByRoleId(any(), any());
+    }
+
+    @Test
+    void revokePermissionRejectsRemovingTheLastSelfServicePermissionWhileRoleIsAssignedSelf() {
+        Role role = role(false);
+        when(roleRepository.getRequired(10L)).thenReturn(role);
+        when(rolePermissionRepository.existsById(new RolePermissionId(10L, 6L))).thenReturn(true);
+        when(roleAssignmentPolicy.hasSelfServicePermission(role)).thenReturn(false);
+        when(accountRoleAssignmentRepository.existsCurrentOrFutureSelfByRoleId(eq(10L), any())).thenReturn(true);
+
+        ConflictException exception = assertThrows(
+            ConflictException.class,
+            () -> service().revokePermission(10L, 6L)
+        );
+
+        assertEquals(ErrorCode.ROLE_SCOPE_CONFLICT, exception.getErrorCode());
+        assertEquals("permissionId", exception.getField());
+    }
+
     private Role role(boolean system) {
         return Role.builder().id(10L).code("CUSTOM_ROLE").name("Custom role").isSystem(system).build();
     }

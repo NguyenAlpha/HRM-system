@@ -2,6 +2,7 @@ package com.htttdn.hrm.service.rbac;
 
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,10 +37,18 @@ class SystemRoleScopeIntegrationTest {
         assertEquals(List.of(RoleScopeType.COMPANY), roleAssignmentPolicy.allowedScopes(role(roleCode)));
     }
 
+    @Test
+    void theSelfServiceRoleTakesAnyScope() {
+        assertEquals(List.of(RoleScopeType.values()), roleAssignmentPolicy.allowedScopes(role("EMPLOYEE")));
+    }
+
     @ParameterizedTest
-    @ValueSource(strings = {"EMPLOYEE", "HR_MANAGER", "MANAGER"})
-    void rolesWorkingPerEmployeeTakeAnyScope(String roleCode) {
-        assertEquals(List.of(RoleScopeType.values()), roleAssignmentPolicy.allowedScopes(role(roleCode)));
+    @ValueSource(strings = {"HR_MANAGER", "MANAGER"})
+    void rolesManagingOthersTakeAnyScopeButSelf(String roleCode) {
+        assertEquals(
+            List.of(RoleScopeType.COMPANY, RoleScopeType.ORG_UNIT, RoleScopeType.LOCATION),
+            roleAssignmentPolicy.allowedScopes(role(roleCode))
+        );
     }
 
     private Role role(String code) {

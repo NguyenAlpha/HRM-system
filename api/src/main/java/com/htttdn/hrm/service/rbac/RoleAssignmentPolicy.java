@@ -6,6 +6,7 @@ import java.util.Set;
 import org.springframework.stereotype.Component;
 
 import com.htttdn.hrm.dto.response.common.ErrorCode;
+import com.htttdn.hrm.entity.Permission;
 import com.htttdn.hrm.entity.Role;
 import com.htttdn.hrm.entity.enums.RoleGrantPolicy;
 import com.htttdn.hrm.entity.enums.RoleScopeType;
@@ -19,8 +20,10 @@ import lombok.RequiredArgsConstructor;
  *
  * <p>Phạm vi được phép suy ra từ permission của role, áp dụng như nhau cho role hệ thống và role tự tạo: role có
  * permission chỉ dùng được ở phạm vi toàn công ty ({@code Permission.companyWide}, VD {@code payroll.calculate})
- * chỉ được gán {@code COMPANY}; role khác được chọn mọi phạm vi. Ngoại lệ duy nhất là {@link #COMPANY_IDENTITY_ROLES}:
- * code coi người giữ hai role này là của cả công ty, không phải do permission.
+ * chỉ được gán {@code COMPANY}; role khác được chọn mọi phạm vi, trừ {@code SELF} khi role không có permission tự
+ * phục vụ nào ({@link Permission#isSelfService}), vì quyền quản lý người khác gán cho bản thân thì không dùng được.
+ * Ngoại lệ duy nhất là {@link #COMPANY_IDENTITY_ROLES}: code coi người giữ hai role này là của cả công ty, không
+ * phải do permission.
  */
 @Component
 @RequiredArgsConstructor
@@ -32,6 +35,10 @@ public class RoleAssignmentPolicy {
     );
 
     private static final List<RoleScopeType> ALL_SCOPES = List.of(RoleScopeType.values());
+
+    private static final List<RoleScopeType> SCOPES_WITHOUT_SELF = ALL_SCOPES.stream()
+        .filter(scope -> scope != RoleScopeType.SELF)
+        .toList();
 
     /**
      * Giám đốc và Chủ sở hữu là người duyệt dự phòng cho mọi nhân viên ({@code ApproverResolver}) và mỗi lúc chỉ có
@@ -47,12 +54,22 @@ public class RoleAssignmentPolicy {
     }
 
     /**
-     * Phạm vi được phép của role: chỉ {@code COMPANY} nếu role có permission toàn công ty, ngược lại mọi phạm vi.
+     * Phạm vi được phép của role: chỉ {@code COMPANY} nếu role có permission toàn công ty; ngược lại mọi phạm vi,
+     * bỏ {@code SELF} nếu role không có permission tự phục vụ.
      *
      * @return theo thứ tự khai báo của {@link RoleScopeType}, để web hiển thị ổn định
      */
     public List<RoleScopeType> allowedScopes(Role role) {
-        return requiresCompanyScope(role) ? List.of(RoleScopeType.COMPANY) : ALL_SCOPES;
+        if (requiresCompanyScope(role)) {
+            return List.of(RoleScopeType.COMPANY);
+        }
+        return hasSelfServicePermission(role) ? ALL_SCOPES : SCOPES_WITHOUT_SELF;
+    }
+
+    /** Role có permission tự phục vụ ({@link Permission#isSelfService}), nên gán {@code SELF} mới có tác dụng. */
+    public boolean hasSelfServicePermission(Role role) {
+        return rolePermissionRepository.existsByRoleIdAndPermissionCodeContaining(
+            role.getId(), Permission.SELF_SERVICE_MARKER);
     }
 
     /** Role chỉ gán được toàn công ty: Giám đốc/Chủ sở hữu, hoặc role có permission chỉ dùng ở phạm vi toàn công ty. */

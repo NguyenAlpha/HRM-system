@@ -29,6 +29,15 @@ public interface RolePermissionRepository extends JpaRepository<RolePermission, 
     /** Role có permission nào chỉ dùng được ở phạm vi toàn công ty không. */
     boolean existsByIdRoleIdAndPermissionCompanyWideTrue(Long roleId);
 
+    /** Role có permission tự phục vụ nào không ({@link com.htttdn.hrm.entity.Permission#isSelfService}). */
+    @Query("""
+        SELECT CASE WHEN COUNT(rolePermission) > 0 THEN true ELSE false END
+        FROM RolePermission rolePermission
+        WHERE rolePermission.id.roleId = :roleId
+          AND rolePermission.permission.code LIKE CONCAT('%', :marker, '%')
+        """)
+    boolean existsByRoleIdAndPermissionCodeContaining(@Param("roleId") Long roleId, @Param("marker") String marker);
+
     @Query("""
         SELECT rolePermission
         FROM RolePermission rolePermission

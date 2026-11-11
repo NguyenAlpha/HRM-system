@@ -65,7 +65,11 @@ class RoleAssignmentOptionIntegrationTest {
 
         assertEquals(List.of("HR_" + marker, "OA_" + marker), offered.keySet().stream().sorted().toList());
         assertFalse(offered.get("HR_" + marker).requiresApproval());
-        assertEquals(List.of(RoleScopeType.values()), offered.get("HR_" + marker).allowedScopeTypes());
+        // No self-service permission, so it cannot be scoped to oneself.
+        assertEquals(
+            List.of(RoleScopeType.COMPANY, RoleScopeType.ORG_UNIT, RoleScopeType.LOCATION),
+            offered.get("HR_" + marker).allowedScopeTypes()
+        );
         assertTrue(offered.get("OA_" + marker).requiresApproval());
         assertEquals(List.of(RoleScopeType.COMPANY), offered.get("OA_" + marker).allowedScopeTypes());
     }

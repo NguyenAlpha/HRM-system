@@ -229,7 +229,8 @@ public class RoleService {
      * @throws com.htttdn.hrm.exception.ResourceNotFoundException role hoặc một permission không có
      *         (→ 404 {@code ROLE_NOT_FOUND} / {@code PERMISSION_NOT_FOUND})
      * @throws ConflictException role hệ thống hoặc có permission {@code SYSTEM_ONLY} (→ 409 {@code CONFLICT});
-     *         thêm permission toàn công ty cho role đang gán theo phạm vi hẹp hơn (→ 409 {@code ROLE_SCOPE_CONFLICT})
+     *         thêm permission toàn công ty cho role đang gán theo phạm vi hẹp hơn, hoặc bỏ hết permission tự phục vụ
+     *         của role đang gán phạm vi bản thân (→ 409 {@code ROLE_SCOPE_CONFLICT})
      */
     public List<PermissionResponse> replacePermissions(
         Long roleId,
@@ -285,6 +286,9 @@ public class RoleService {
         if (!addedMappings.isEmpty()) {
             rolePermissionRepository.saveAll(addedMappings);
         }
+        if (requestedPermissions.stream().noneMatch(Permission::isSelfService)) {
+            rejectSelfAssignments(role, "permissionIds");
+        }
 
         return requestedPermissions.stream()
             .sorted(Comparator.comparing(Permission::getCode))
@@ -297,7 +301,8 @@ public class RoleService {
      *
      * @throws com.htttdn.hrm.exception.ResourceNotFoundException role không có, hoặc role không có permission
      *         này (→ 404 {@code PERMISSION_NOT_FOUND})
-     * @throws ConflictException role hệ thống (→ 409 {@code CONFLICT})
+     * @throws ConflictException role hệ thống (→ 409 {@code CONFLICT}); bỏ permission tự phục vụ cuối cùng của role
+     *         đang gán phạm vi bản thân (→ 409 {@code ROLE_SCOPE_CONFLICT})
      */
     public void revokePermission(Long roleId, Long permissionId) {
         Role role = roleRepository.getRequired(roleId);
@@ -307,6 +312,10 @@ public class RoleService {
             throw new ResourceNotFoundException(ErrorCode.PERMISSION_NOT_FOUND, "Role does not have this permission");
         }
         rolePermissionRepository.deleteById(id);
+        rolePermissionRepository.flush();
+        if (!roleAssignmentPolicy.hasSelfServicePermission(role)) {
+            rejectSelfAssignments(role, "permissionId");
+        }
     }
 
     private void rejectSystemRolePermissionChange(Role role) {
@@ -330,6 +339,23 @@ public class RoleService {
             throw new ConflictException(
                 ErrorCode.ROLE_SCOPE_CONFLICT,
                 "Company-wide permissions need COMPANY scope, but this role is assigned with a narrower scope",
+                field
+            );
+        }
+    }
+
+    /**
+     * Role không còn permission tự phục vụ chỉ gán được với phạm vi khác {@code SELF}
+     * ({@link RoleAssignmentPolicy#allowedScopes}), nên không bỏ được permission đó khi role còn lần gán phạm vi bản
+     * thân chưa hết hạn (→ 409 {@code ROLE_SCOPE_CONFLICT}). Gọi sau khi đã đổi permission; lỗi làm cả giao dịch rollback.
+     */
+    private void rejectSelfAssignments(Role role, String field) {
+        if (accountRoleAssignmentRepository.existsCurrentOrFutureSelfByRoleId(role.getId(), LocalDate.now(clock))) {
+            throw new ConflictException(
+                ErrorCode.ROLE_SCOPE_CONFLICT,
+                // Câu tiếng Việt để web hiện nguyên văn: mã lỗi này có câu mặc định cho quyền toàn công ty.
+                "Vai trò đang được gán với phạm vi Bản thân nên phải giữ ít nhất một quyền trên dữ liệu của chính "
+                    + "mình. Hãy thu hồi các lần gán đó trước.",
                 field
             );
         }

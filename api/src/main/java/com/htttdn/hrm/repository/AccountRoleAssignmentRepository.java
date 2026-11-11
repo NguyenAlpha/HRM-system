@@ -107,6 +107,20 @@ public interface AccountRoleAssignmentRepository extends JpaRepository<AccountRo
         @Param("date") LocalDate date
     );
 
+    /** Role có lần gán chưa thu hồi, chưa hết hạn tại {@code date}, với scope {@code SELF} không. */
+    @Query("""
+        SELECT CASE WHEN COUNT(assignment) > 0 THEN true ELSE false END
+        FROM AccountRoleAssignment assignment
+        WHERE assignment.role.id = :roleId
+          AND assignment.scopeType = com.htttdn.hrm.entity.enums.RoleScopeType.SELF
+          AND assignment.revokedAt IS NULL
+          AND (assignment.effectiveTo IS NULL OR assignment.effectiveTo >= :date)
+        """)
+    boolean existsCurrentOrFutureSelfByRoleId(
+        @Param("roleId") Long roleId,
+        @Param("date") LocalDate date
+    );
+
     boolean existsByAccountIdAndRoleIdAndScopeTypeAndEffectiveToIsNull(
         Long accountId,
         Long roleId,

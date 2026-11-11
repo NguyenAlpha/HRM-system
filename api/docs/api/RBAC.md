@@ -47,8 +47,13 @@ Scope được phép của một role suy ra từ permission của nó, như nha
 - Role có ít nhất một permission `companyWide` chỉ gán được với scope `COMPANY`.
 - `DIRECTOR` và `COMPANY_OWNER` luôn chỉ gán `COMPANY`, không do permission: code coi người giữ hai role này là người
   duyệt dự phòng cho mọi nhân viên (`ApproverResolver`) và mỗi lúc chỉ có một người.
-- Role khác gán được với `SELF`, `COMPANY`, `ORG_UNIT` hoặc `LOCATION`; chọn scope nào là quyết định nghiệp vụ của
+- Role khác gán được với `COMPANY`, `ORG_UNIT` hoặc `LOCATION`; chọn scope nào là quyết định nghiệp vụ của
   người gán (VD `HR_MANAGER` theo một chi nhánh, `MANAGER` toàn công ty).
+- `SELF` chỉ gán được cho role có ít nhất một permission tự phục vụ, tức mã có đoạn `.self.` (VD `payroll.self.read`,
+  `request.self.create`). Role chỉ có quyền trên người khác (`HR_MANAGER`, `MANAGER`) gán `SELF` thì không làm được gì.
+  Trong system role, chỉ `EMPLOYEE` gán được `SELF`.
+- Không bỏ được permission tự phục vụ cuối cùng của custom role đang có assignment `SELF` chưa hết hạn
+  (`409 ROLE_SCOPE_CONFLICT`).
 - Không thêm được permission `companyWide` vào custom role đang có assignment `SELF`/`ORG_UNIT`/`LOCATION` chưa hết hạn
   (`409 ROLE_SCOPE_CONFLICT`), và không `GRANT` được nó bằng permission override trên assignment như vậy.
 
@@ -556,7 +561,7 @@ API lưu quan hệ ngay cả khi permission đang inactive. Role chưa bị xóa
 | 404 | `PERMISSION_NOT_FOUND` | Có permission ID không tồn tại |
 | 404 | `RESOURCE_NOT_FOUND` | Account trong claim `accountId` không còn tồn tại |
 | 409 | `CONFLICT` | Role đích là system role hoặc danh sách chứa permission `SYSTEM_ONLY` |
-| 409 | `ROLE_SCOPE_CONFLICT` | Thêm permission `companyWide` trong khi role đang có assignment scope hẹp hơn `COMPANY` |
+| 409 | `ROLE_SCOPE_CONFLICT` | Thêm permission `companyWide` trong khi role đang có assignment scope hẹp hơn `COMPANY`, hoặc danh sách không còn permission tự phục vụ trong khi role đang có assignment `SELF` |
 
 ---
 

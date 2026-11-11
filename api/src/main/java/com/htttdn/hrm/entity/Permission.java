@@ -54,4 +54,12 @@ public class Permission extends AuditedEntity {
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
+
+    /** Đoạn mã của permission tự phục vụ, VD {@code payroll.self.read}: chỉ tác động lên dữ liệu của chính mình. */
+    public static final String SELF_SERVICE_MARKER = ".self.";
+
+    /** Permission tự phục vụ: role có ít nhất một permission như vậy mới gán được với scope {@code SELF}. */
+    public boolean isSelfService() {
+        return code.contains(SELF_SERVICE_MARKER);
+    }
 }

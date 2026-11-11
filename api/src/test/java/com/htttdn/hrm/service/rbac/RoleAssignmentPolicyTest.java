@@ -46,13 +46,28 @@ class RoleAssignmentPolicyTest {
     }
 
     @Test
-    void roleWithoutCompanyWidePermissionsTakesAnyScope() {
+    void roleWithASelfServicePermissionTakesAnyScope() {
         when(rolePermissionRepository.existsByIdRoleIdAndPermissionCompanyWideTrue(5L)).thenReturn(false);
+        when(rolePermissionRepository.existsByRoleIdAndPermissionCodeContaining(5L, ".self.")).thenReturn(true);
         RoleAssignmentPolicy policy = new RoleAssignmentPolicy(rolePermissionRepository);
 
         assertEquals(List.of(RoleScopeType.values()), policy.allowedScopes(role));
         for (RoleScopeType scope : RoleScopeType.values()) {
             assertDoesNotThrow(() -> policy.validateScope(role, scope));
         }
+    }
+
+    @Test
+    void roleWithoutSelfServicePermissionsCannotBeAssignedToOneself() {
+        // A manager role scoped to oneself would manage nobody.
+        when(rolePermissionRepository.existsByIdRoleIdAndPermissionCompanyWideTrue(5L)).thenReturn(false);
+        when(rolePermissionRepository.existsByRoleIdAndPermissionCodeContaining(5L, ".self.")).thenReturn(false);
+        RoleAssignmentPolicy policy = new RoleAssignmentPolicy(rolePermissionRepository);
+
+        assertEquals(
+            List.of(RoleScopeType.COMPANY, RoleScopeType.ORG_UNIT, RoleScopeType.LOCATION),
+            policy.allowedScopes(role)
+        );
+        assertThrows(BusinessException.class, () -> policy.validateScope(role, RoleScopeType.SELF));
     }
 }
