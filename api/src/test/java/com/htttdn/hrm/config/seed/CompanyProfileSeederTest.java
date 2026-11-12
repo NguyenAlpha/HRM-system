@@ -46,11 +46,11 @@ class CompanyProfileSeederTest {
         verify(companyProfileRepository).save(profileCaptor.capture());
         CompanyProfile profile = profileCaptor.getValue();
         assertEquals(CompanyProfileSeeder.COMPANY_PROFILE_ID, profile.getId());
-        assertEquals("HRM", profile.getCode());
-        assertEquals("HRM Demo Company", profile.getName());
+        assertEquals("QM", profile.getCode());
+        assertEquals("Công ty TNHH Thiết bị Điện tử Quang Minh", profile.getName());
         assertEquals("0312345678", profile.getTaxCode());
         assertEquals("02812345678", profile.getPhone());
-        assertEquals("contact@hrm.local", profile.getEmail());
+        assertEquals("contact@quangminh.vn", profile.getEmail());
         assertEquals("Ho Chi Minh City, Vietnam", profile.getAddress());
         assertEquals("Asia/Ho_Chi_Minh", profile.getTimezone());
         assertEquals("image/png", profile.getLogoContentType());
